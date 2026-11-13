@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyberrange/contracts/environment-plan.schema.json",
+  "title": "EnvironmentPlan",
+  "description": "Module 5 output: host roles, networks, connections, access rules. Input to module 6 IaC generation.",
+  "type": "object",
+  "required": ["hosts", "networks"],
+  "properties": {
+    "hosts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "networks"],
+        "properties": {
+          "id": { "type": "string" },
+          "role": { "type": "string" },
+          "image_hint": { "type": "string", "description": "catalogue component or base image id; not a literal docker image string (module 6 resolves)." },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "port"],
+              "properties": {
+                "name": { "type": "string" },
+                "port": { "type": "integer" },
+                "protocol": { "type": "string", "enum": ["tcp", "udp"] }
+              }
+            }
+          },
+          "networks": { "type": "array", "items": { "type": "string" }, "description": "network ids this host is on" }
+        }
+      }
+    },
+    "networks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "segment": { "type": "string", "description": "logical segment name, e.g. dmz, internal" },
+          "internal": { "type": "boolean", "description": "true = no external access" }
+        }
+      }
+    },
+    "connections": {
+      "type": "array",
+      "description": "Required host-to-host / host-to-service reachability.",
+      "items": {
+        "type": "object",
+        "required": ["from_host", "to_host"],
+        "properties": {
+          "from_host": { "type": "string" },
+          "to_host": { "type": "string" },
+          "port": { "type": "integer" },
+          "protocol": { "type": "string", "enum": ["tcp", "udp"] },
+          "reason": { "type": "string", "description": "which action/dependency requires this path" }
+        }
+      }
+    },
+    "access_rules": {
+      "type": "array",
+      "description": "Minimal necessary network access rules (default deny posture).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "port": { "type": "integer" },
+          "action": { "type": "string", "enum": ["allow", "deny"] }
+        }
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  }
+}
