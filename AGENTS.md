@@ -34,11 +34,25 @@
 hc run --bg --name <名稱> --cwd <worktree 路徑> \
   codex --no-daemon -s workspace-write -a never \
   -c sandbox_workspace_write.network_access=true \
-  --add-dir <主 Repo>/.git \
   "<任務；結尾註明用 hc send $HC_TERMINAL_ID 回報>"
 ```
 
-`--add-dir <主 Repo>/.git` 是為了讓 Codex 能在自己的 Worktree 裡提交。
+Claude Code Worker：
+
+```sh
+hc run --bg --name <名稱> --cwd <worktree 路徑> \
+  claude --permission-mode acceptEdits
+hc wait <名稱>          # 等它就緒
+hc send <名稱> "<任務；結尾註明用 hc send $HC_TERMINAL_ID 回報>"
+```
+
+已實測的注意事項（紀錄見 `docs/collab-test.md`）：
+
+- **Codex 不能自己提交**：沙盒把 `.git` 保護成唯讀。Codex 只負責在 Worktree 裡改檔案並回報，
+  由 Lead 檢查後代為提交。
+- Codex 第一次進入新資料夾會跳「信任此資料夾」，Lead 用 `hc read` 確認後按 `hc keys <名稱> enter`。
+- Claude Code 直接把任務放在啟動指令裡可能收不到，所以先啟動、等就緒、再 `hc send`。
+- 啟動後一律檢查 Worker 是否真的開始工作，不要假設任務已送達。
 
 ## 紀錄
 
