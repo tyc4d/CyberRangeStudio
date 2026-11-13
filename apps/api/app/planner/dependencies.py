@@ -15,6 +15,8 @@ _UNSUPPORTED_NAMES = [
     "Exchange Server", "Apache Tomcat", "Tomcat", "MySQL", "MariaDB", "Redis", "OpenSSH",
 ]
 _SOFTWARE_KEYS = {"service", "services", "software", "products", "applications", "dependencies", "components"}
+_ROLE_STOPWORDS = {"attacker", "exposed", "external", "internet", "public", "internal", "dmz",
+                   "host", "server", "target", "victim", "machine", "the", "an", "a"}
 
 
 def _slug(value: str) -> str:
@@ -25,6 +27,48 @@ def _slug(value: str) -> str:
 def _host_id(raw: Any) -> str:
     value = str(raw or "target").strip()
     return _slug(value).replace("-", "_")
+
+
+def _mentions(text: str, phrase: str) -> bool:
+    phrase = phrase.strip()
+    return bool(phrase and re.search(rf"(?<![a-z0-9]){re.escape(phrase.casefold())}(?![a-z0-9])", text.casefold()))
+
+
+def _is_attacker_role(role: str) -> bool:
+    return (_mentions(role, "attacker") or _mentions(role, "red team") or _mentions(role, "red-team")
+            or _mentions(role, "operator"))
+
+
+def _role_terms(role: str) -> set[str]:
+    role_text = role.casefold()
+    terms = {keyword.casefold() for component in load_components()
+             if component.get("id") != "oss-attacker"
+             for keyword in component.get("role_keywords", [])
+             if _mentions(role_text, keyword)}
+    terms.update(token for token in re.findall(r"[a-z0-9]+", role_text) if token not in _ROLE_STOPWORDS)
+    return terms
+
+
+def _infer_action_host_refs(actions: list[dict[str, Any]], hosts: dict[str, dict[str, Any]]) -> None:
+    for action in actions:
+        if action.get("target_host_ref"):
+            continue
+        text = " ".join(str(action.get(key, "")) for key in ("name", "description")).casefold()
+        if not text.strip():
+            continue
+        explicit = [hid for hid in hosts if _mentions(text, hid.replace("_", "-")) or _mentions(text, hid)]
+        if len(explicit) == 1:
+            selected = explicit[0]
+        else:
+            matches = [hid for hid, host in hosts.items()
+                       if not _is_attacker_role(str(host.get("role", "")))
+                       and any(_mentions(text, term) for term in _role_terms(str(host.get("role", ""))))]
+            if len(matches) != 1:
+                continue
+            selected = matches[0]
+        action["target_host_ref"] = selected
+        action["target_host_ref_source"] = "program"
+        action["target_host_ref_epistemic_status"] = "inferred"
 
 
 def _cves(value: Any) -> list[str]:
@@ -224,6 +268,18 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     result = copy.deepcopy(ir)
     actions = result.get("actions", [])
     hosts = _collect_hosts(result.get("target_context", {}), actions)
+    for existing_host in result.get("hosts", []):
+        raw_id = existing_host.get("id")
+        if not raw_id:
+            continue
+        hid = _host_id(raw_id)
+        if hid not in hosts:
+            hosts[hid] = {**copy.deepcopy(existing_host), "id": hid}
+        else:
+            for key, value in existing_host.items():
+                if key != "id":
+                    hosts[hid].setdefault(key, copy.deepcopy(value))
+    _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
 
     existing_user_services = [item for item in result.get("services", []) if item.get("source") == "user"]
@@ -322,6 +378,8 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             service["version"] = candidate["version"]
         if candidate.get("port"):
             service["port"] = candidate["port"]
+        if host_ref:
+            service["host_ref"] = host_ref
         if is_substitute:
             substitute_info = next((entry for entry in component.get("substitutes_for", [])
                                     if name.casefold() in {n.casefold() for n in entry.get("names", [])}), {})
@@ -336,6 +394,59 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         services.append(service)
         if host_ref:
             generated_host_refs.setdefault(host_ref, []).append(service_id)
+
+    # A role can seed a clearly labelled substitute when the report names a host
+    # function but no service. This fills a deployable lab role without guessing
+    # which real product or version was present.
+    for hid, host in hosts.items():
+        role = str(host.get("role", ""))
+        if _is_attacker_role(role):
+            continue
+        host_refs = set(host.get("service_refs", [])) | set(generated_host_refs.get(hid, []))
+        if any(service.get("id") in host_refs or service.get("host_ref") == hid for service in services):
+            continue
+        matched = [component for component in load_components()
+                   if component.get("id") != "oss-attacker"
+                   and any(_mentions(role, keyword) for keyword in component.get("role_keywords", []))]
+        if not matched:
+            continue
+        component = matched[0]
+        ports = component.get("default_ports", [])
+        if not ports:
+            continue
+        if component["id"] in {"oss-nginx", "oss-httpd"}:
+            service_name = "web server (substitute)"
+        elif component["id"] == "oss-postgres":
+            service_name = "database (substitute)"
+        else:
+            service_name = f"{component.get('software', component['name'])} (substitute)"
+        service_id = f"svc-role-{component['id']}-{hid}"
+        serial = 2
+        base_id = service_id
+        while service_id in used_ids:
+            service_id = f"{base_id}-{serial}"
+            serial += 1
+        used_ids.add(service_id)
+        port = ports[0]
+        services.append({
+            "id": service_id,
+            "name": service_name,
+            "host_ref": hid,
+            "port": port["port"],
+            "protocol": port.get("protocol", "tcp"),
+            "catalogue_component": component["id"],
+            "is_substitute": True,
+            "epistemic_status": "inferred",
+            "source": "program",
+        })
+        generated_host_refs.setdefault(hid, []).append(service_id)
+        add_missing(
+            f"role-substitute-{hid}-{component['id']}",
+            f"Exact software and version for host {hid} (role: {role})",
+            f"The host role indicates a generic {service_name.removesuffix(' (substitute)')} function, but the report does not identify its exact software or version.",
+            status="substitute_chosen",
+            resolution=f"Used {component['name']} ({component['id']}) as a role-based substitute. This is not asserted to be the original software or a full recreation.",
+        )
 
     for action in actions:
         text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
