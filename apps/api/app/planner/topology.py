@@ -1,0 +1,225 @@
+"""Deterministic least-access topology builder for a Scenario IR."""
+from __future__ import annotations
+
+import copy
+import re
+from typing import Any
+
+from cr_contracts import iter_errors
+
+from app.planner.catalogue import component_by_id
+
+
+def _host_id(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "target").casefold()).strip("_") or "target"
+
+
+def _is_attacker(host: dict[str, Any]) -> bool:
+    role = str(host.get("role", "")).casefold()
+    return any(label in role for label in ("attacker", "red-team", "red team", "operator"))
+
+
+def _port_for(service: dict[str, Any]) -> tuple[int, str] | None:
+    try:
+        port = int(service.get("port"))
+        if 1 <= port <= 65535:
+            protocol = str(service.get("protocol", "tcp")).casefold()
+            return port, protocol if protocol in {"tcp", "udp"} else "tcp"
+    except (TypeError, ValueError):
+        pass
+    component = component_by_id(service.get("catalogue_component"))
+    if component and component.get("default_ports"):
+        entry = component["default_ports"][0]
+        return int(entry["port"]), str(entry.get("protocol", "tcp"))
+    name = str(service.get("name", "")).casefold()
+    known_ports = {"http": (80, "tcp"), "https": (443, "tcp"), "ssh": (22, "tcp"),
+                   "mysql": (3306, "tcp"), "postgres": (5432, "tcp"),
+                   "postgresql": (5432, "tcp"), "redis": (6379, "tcp"), "dns": (53, "udp"),
+                   "smb": (445, "tcp")}
+    for label, result in known_ports.items():
+        if label in name:
+            return result
+    return None
+
+
+def _service_matches_action(service: dict[str, Any], action: dict[str, Any]) -> bool:
+    text = " ".join(str(action.get(key, "")) for key in ("name", "description")).casefold()
+    if not text:
+        return False
+    if any(str(cve).casefold() in text for cve in service.get("cve", [])):
+        return True
+    labels = [str(service.get("name", ""))]
+    component = component_by_id(service.get("catalogue_component"))
+    if component:
+        labels.extend(component.get("aliases", []))
+        for substitute in component.get("substitutes_for", []):
+            labels.extend(substitute.get("names", []))
+    return any(label and re.search(rf"(?<![\w]){re.escape(label.casefold())}(?![\w])", text)
+               for label in labels)
+
+
+def _required_services(services: list[dict[str, Any]], actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matched = [service for service in services
+               if any(_service_matches_action(service, action) for action in actions)]
+    if matched:
+        return matched
+    return services if len(services) == 1 else []
+
+
+def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
+    hosts = [copy.deepcopy(host) for host in ir.get("hosts", []) if host.get("id")]
+    seen = {_host_id(host["id"]) for host in hosts}
+    hosts_by_id = {_host_id(host["id"]): host for host in hosts}
+    target_hosts = [host for host in hosts if not _is_attacker(host)]
+    if not target_hosts:
+        target = {"id": "target", "role": "target", "service_refs": []}
+        hosts.append(target)
+        hosts_by_id["target"] = target
+        target_hosts = [target]
+
+    attacker_hosts = [host for host in hosts if _is_attacker(host)]
+    notes: list[str] = []
+    if not attacker_hosts and ir.get("actions"):
+        attacker_id = "attacker"
+        serial = 2
+        while attacker_id in seen:
+            attacker_id = f"attacker_{serial}"
+            serial += 1
+        attacker = {"id": attacker_id, "role": "attacker", "service_refs": []}
+        hosts.append(attacker)
+        hosts_by_id[attacker_id] = attacker
+        attacker_hosts = [attacker]
+        notes.append("An attacker host was added as a lab scaffold because the IR did not define one.")
+
+    services = [item for item in ir.get("services", []) if item.get("id")]
+    target_ids = {_host_id(host["id"]) for host in target_hosts}
+    assigned: dict[str, list[dict[str, Any]]] = {hid: [] for hid in target_ids}
+    unassigned: list[str] = []
+    for service in services:
+        refs = [hid for hid, host in hosts_by_id.items() if service.get("id") in host.get("service_refs", [])]
+        if not refs and len(target_ids) == 1:
+            refs = list(target_ids)
+        for hid in refs:
+            if hid in assigned:
+                assigned[hid].append(service)
+        if not refs:
+            unassigned.append(service["id"])
+
+    environment_hosts: list[dict[str, Any]] = []
+    host_services: dict[str, list[dict[str, Any]]] = {}
+    for host in hosts:
+        hid = _host_id(host["id"])
+        entries = []
+        if hid in assigned:
+            for service in assigned[hid]:
+                port_proto = _port_for(service)
+                if not port_proto:
+                    notes.append(f"No port is known for service {service.get('name')} ({service.get('id')}); it remains unreachable by default.")
+                    continue
+                port, protocol = port_proto
+                entries.append({"name": str(service.get("name", service["id"])), "port": port, "protocol": protocol})
+        host_services[hid] = entries
+        env_host: dict[str, Any] = {
+            "id": hid,
+            "role": str(host.get("role", "host")),
+            "networks": ["scenario-internal"],
+            "services": entries,
+        }
+        component_ids = list(dict.fromkeys(service.get("catalogue_component") for service in assigned.get(hid, [])
+                                           if service.get("catalogue_component")))
+        if len(component_ids) > 1:
+            notes.append(f"Host {hid} has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.")
+        for service in assigned.get(hid, []):
+            if service.get("catalogue_component"):
+                env_host["image_hint"] = service["catalogue_component"]
+                break
+        environment_hosts.append(env_host)
+
+    if unassigned:
+        notes.append("Services without a resolved host association were left out of host service lists: " + ", ".join(unassigned) + ".")
+
+    connections: list[dict[str, Any]] = []
+    rules: list[dict[str, Any]] = [{"from": "*", "to": "*", "action": "deny"}]
+    action_by_id = {action.get("id"): action for action in ir.get("actions", [])}
+    attacker_id = _host_id(attacker_hosts[0]["id"]) if attacker_hosts else None
+
+    def add_connection(source_id: str, dest_id: str, port_proto: tuple[int, str] | None, reason: str) -> None:
+        if source_id == dest_id:
+            return
+        connection: dict[str, Any] = {"from_host": source_id, "to_host": dest_id, "reason": reason}
+        rule: dict[str, Any] = {"from": source_id, "to": dest_id, "action": "allow"}
+        if port_proto:
+            port, protocol = port_proto
+            connection.update({"port": port, "protocol": protocol})
+            rule["port"] = port
+        else:
+            notes.append(f"Connection {source_id} to {dest_id} has no known destination port and was not allowed.")
+            return
+        identity = (connection["from_host"], connection["to_host"], connection["port"], connection["protocol"])
+        if any((item.get("from_host"), item.get("to_host"), item.get("port"), item.get("protocol")) == identity for item in connections):
+            return
+        connections.append(connection)
+        rules.append(rule)
+
+    # Permit the lab attacker to reach only mapped target service ports.
+    if attacker_id:
+        targeted_refs = {_host_id(action.get("target_host_ref")) for action in ir.get("actions", []) if action.get("target_host_ref")}
+        reachable_targets = [hid for hid in target_ids if not targeted_refs or hid in targeted_refs]
+        for hid in reachable_targets:
+            related_actions = [action for action in ir.get("actions", [])
+                               if not action.get("target_host_ref") or _host_id(action.get("target_host_ref")) == hid]
+            action_label = ", ".join(str(action.get("id")) for action in related_actions) or "scenario service dependency"
+            required_services = _required_services(assigned.get(hid, []), related_actions)
+            if assigned.get(hid) and not required_services:
+                notes.append(f"Actions for host {hid} do not identify one of its multiple services; no inbound service port was opened.")
+            for service in required_services:
+                port_proto = _port_for(service)
+                if port_proto:
+                    add_connection(attacker_id, hid, port_proto,
+                                   f"Scenario action(s) {action_label} require access to {service.get('name')}.")
+
+    # Only explicit, confirmed dependency edges may add host-to-host paths. Temporal order alone never opens a connection.
+    for relation in ir.get("relations", []):
+        if relation.get("kind") != "dependency" or relation.get("confirmed", False) is not True:
+            continue
+        first = action_by_id.get(relation.get("from_action"), {})
+        second = action_by_id.get(relation.get("to_action"), {})
+        source_id = _host_id(first.get("target_host_ref")) if first.get("target_host_ref") else None
+        dest_id = _host_id(second.get("target_host_ref")) if second.get("target_host_ref") else None
+        if not source_id or not dest_id or source_id == dest_id:
+            continue
+        rationale = relation.get("rationale") or f"{first.get('id')} -> {second.get('id')}"
+        reason = f"Confirmed dependency {relation.get('id')}: {rationale}"
+        destination_services = _required_services(assigned.get(dest_id, []), [second])
+        ports = [_port_for(service) for service in destination_services]
+        ports = [entry for entry in ports if entry]
+        if ports:
+            for port_proto in ports:
+                add_connection(source_id, dest_id, port_proto, reason)
+        else:
+            # An ambiguous destination service or missing port remains denied.
+            notes.append(f"Confirmed dependency {relation.get('id')} has no uniquely identified destination service port; default deny remains in effect.")
+
+    plan: dict[str, Any] = {
+        "hosts": environment_hosts,
+        "networks": [{"id": "scenario-internal", "segment": "scenario", "internal": True}],
+        "connections": connections,
+        "access_rules": rules,
+    }
+    if notes:
+        plan["notes"] = list(dict.fromkeys(notes))
+
+    environment_errors = iter_errors("environment-plan", plan)
+    if environment_errors:
+        raise ValueError(f"Generated environment_plan failed validation: {environment_errors}")
+    return plan
+
+
+def attach_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
+    result = copy.deepcopy(ir)
+    plan = build_environment_plan(result)
+    result["environment_plan"] = plan
+    errors = iter_errors("scenario-ir", result)
+    if errors:
+        raise ValueError(f"Scenario IR with environment_plan failed validation: {errors}")
+    return result
