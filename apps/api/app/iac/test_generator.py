@@ -41,8 +41,16 @@ class ComposeGeneratorTests(unittest.TestCase):
         self.assertNotIn("api_key", compose.lower())
 
 
-    def test_unknown_image_hint_is_reported_not_deployed(self):
-        plan = {**DEMO_PLAN, "hosts": [{**DEMO_PLAN["hosts"][0], "image_hint": "arbitrary-registry/image:latest"}, DEMO_PLAN["hosts"][1]]}
+    def test_arbitrary_image_hint_is_never_used_as_image(self):
+        # Safety: an arbitrary/untrusted image hint must NEVER become the deployed image.
+        # The host is mapped to a harmless local stand-in instead and flagged as a substitute.
+        arbitrary = "arbitrary-registry/image:latest"
+        plan = {**DEMO_PLAN, "hosts": [{**DEMO_PLAN["hosts"][0], "image_hint": arbitrary}, DEMO_PLAN["hosts"][1]]}
         _, report = inspect_plan(plan, "offline-demo")
-        self.assertFalse(report["deployable"])
-        self.assertFalse(report["components"][0]["deployable"])
+        host0 = report["components"][0]
+        self.assertIn(host0["component"], {"demo-api", "demo-client"})
+        self.assertNotIn(arbitrary, str(host0.get("image")))
+        self.assertTrue(host0["substitute"])  # benign stand-in, not the named software
+        doc = yaml.safe_load(compose_document(plan, "offline-demo"))
+        for service in doc["services"].values():
+            self.assertNotIn(arbitrary, service.get("image", ""))

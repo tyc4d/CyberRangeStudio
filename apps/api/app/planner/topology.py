@@ -120,8 +120,14 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             unassigned.append(service["id"])
 
     environment_hosts: list[dict[str, Any]] = []
+    _emitted: set[str] = set()
     for host in hosts:
         hid = _host_id(host["id"])
+        if hid in _emitted:
+            # Upstream may carry two host records that normalize to the same id
+            # (e.g. "victim-web" and "victim_web"); emit each host once.
+            continue
+        _emitted.add(hid)
         entries = []
         if hid in assigned:
             for service in assigned[hid]:

@@ -52,12 +52,23 @@ def generated_dir(scenario_id: str, create: bool = False) -> Path:
 
 
 def _resolved_component(host: dict[str, Any]) -> tuple[str | None, str | None, bool]:
+    """Resolve a plan host to a harmless local component.
+
+    By design the range never deploys the real-world software (nginx, postgres, ...).
+    A host that exposes a listening service becomes a harmless HTTP stand-in (demo-api)
+    on that port; a host with no service becomes a sleeping client/toolbox (demo-client).
+    The catalogue component (what it STANDS FOR) travels on the service as is_substitute,
+    and module 8 records the difference in the fidelity report. `substitute=True` here
+    marks that this image is a benign stand-in, not the real software.
+    """
     hint = (host.get("image_hint") or host.get("role") or "").strip().lower()
+    if hint in {"demo-client", "cr-demo-client", "python", "python-worker"}:
+        return "demo-client", _DEMO_IMAGE, False
     if hint in {"demo-api", "cr-demo-api", "harmless-http-demo"}:
         return "demo-api", None, True
-    if hint in {"demo-client", "cr-demo-client", "python", "python-worker"}:
-        return "demo-client", _DEMO_IMAGE, hint not in {"demo-client", "cr-demo-client"}
-    return None, None, False
+    if host.get("services"):
+        return "demo-api", None, True
+    return "demo-client", _DEMO_IMAGE, True
 
 
 def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -166,7 +177,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "deployable": not errors,
         "components": components,
         "host_port_mappings": mappings,
-        "networks": [{"id": n.get("id"), "internal": True} for n in networks],
+        "networks": [{"id": n.get("id"), "internal": bool(n.get("internal", True))} for n in networks],
         "errors": errors,
     }
     return {"hosts": hosts, "networks": networks, "components": supported_by_host, "mappings": mappings}, report
