@@ -99,7 +99,10 @@ class LocalComposeIntegrationTests(unittest.TestCase):
                 self.assertEqual(status_after.status_code, 200)
                 self.assertEqual(status_after.json()["state"], "not_created")
                 actions = {record["action"] for record in client.get(f"/api/deploy/{scenario_id}/records").json()["records"]}
-                self.assertTrue({"up", "status", "health", "down"}.issubset(actions))
+                # Only state-changing actions are audited; status/health are read-only polls (not logged).
+                self.assertTrue({"up", "down"}.issubset(actions))
+                self.assertNotIn("status", actions)
+                self.assertNotIn("health", actions)
             finally:
                 if deployed:
                     client.post(f"/api/deploy/{scenario_id}/down")
