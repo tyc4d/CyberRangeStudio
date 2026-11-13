@@ -1,0 +1,115 @@
+# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
+name: cr-demo-scn_570f25f1d42b
+x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
+services:
+  victim_web:
+    container_name: cr-demo-scn_570f25f1d42b-victim_web
+    networks:
+    - scenario-internal
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: cr-demo-scn_570f25f1d42b-victim_web:local
+    build:
+      context: ../../templates/demo-app
+      dockerfile: Dockerfile
+      pull: false
+    environment:
+      PORT: '80'
+    user: 10001:10001
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health',
+        timeout=2).read()
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    ports:
+    - target: 80
+      published: '42000'
+      host_ip: 127.0.0.1
+      protocol: tcp
+    expose:
+    - '80'
+  db:
+    container_name: cr-demo-scn_570f25f1d42b-db
+    networks:
+    - scenario-internal
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: cr-demo-scn_570f25f1d42b-db:local
+    build:
+      context: ../../templates/demo-app
+      dockerfile: Dockerfile
+      pull: false
+    environment:
+      PORT: '5432'
+    user: 10001:10001
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5432/health',
+        timeout=2).read()
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    ports:
+    - target: 5432
+      published: '42001'
+      host_ip: 127.0.0.1
+      protocol: tcp
+    expose:
+    - '5432'
+  attacker:
+    container_name: cr-demo-scn_570f25f1d42b-attacker
+    networks:
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command:
+    - python
+    - -c
+    - import time; time.sleep(2147483647)
+    user: 65532:65532
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - pass
+      interval: 10s
+      timeout: 3s
+      retries: 3
+networks:
+  external:
+    name: cr-demo-scn_570f25f1d42b-external
+    internal: true
+  scenario-internal:
+    name: cr-demo-scn_570f25f1d42b-scenario-internal
+    internal: true
