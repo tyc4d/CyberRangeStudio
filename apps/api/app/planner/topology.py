@@ -19,6 +19,19 @@ def _is_attacker(host: dict[str, Any]) -> bool:
     return any(label in role for label in ("attacker", "red-team", "red team", "operator"))
 
 
+def _role_contains(role: str, term: str) -> bool:
+    return bool(re.search(rf"(?<![a-z0-9]){re.escape(term.casefold())}(?![a-z0-9])", role.casefold()))
+
+
+def _is_exposed(host: dict[str, Any]) -> bool:
+    if _is_attacker(host):
+        return True
+    role = str(host.get("role", ""))
+    if _role_contains(role, "internal"):
+        return False
+    return any(_role_contains(role, term) for term in ("exposed", "external", "internet", "public", "web", "dmz"))
+
+
 def _port_for(service: dict[str, Any]) -> tuple[int, str] | None:
     try:
         port = int(service.get("port"))
@@ -96,7 +109,8 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
     assigned: dict[str, list[dict[str, Any]]] = {hid: [] for hid in target_ids}
     unassigned: list[str] = []
     for service in services:
-        refs = [hid for hid, host in hosts_by_id.items() if service.get("id") in host.get("service_refs", [])]
+        refs = [hid for hid, host in hosts_by_id.items()
+                if service.get("id") in host.get("service_refs", []) or _host_id(service.get("host_ref")) == hid]
         if not refs and len(target_ids) == 1:
             refs = list(target_ids)
         for hid in refs:
@@ -106,7 +120,6 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             unassigned.append(service["id"])
 
     environment_hosts: list[dict[str, Any]] = []
-    host_services: dict[str, list[dict[str, Any]]] = {}
     for host in hosts:
         hid = _host_id(host["id"])
         entries = []
@@ -118,21 +131,26 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                     continue
                 port, protocol = port_proto
                 entries.append({"name": str(service.get("name", service["id"])), "port": port, "protocol": protocol})
-        host_services[hid] = entries
+        network_refs = [] if _is_attacker(host) else ["scenario-internal"]
+        if _is_exposed(host):
+            network_refs.append("external")
         env_host: dict[str, Any] = {
             "id": hid,
             "role": str(host.get("role", "host")),
-            "networks": ["scenario-internal"],
+            "networks": network_refs,
             "services": entries,
         }
         component_ids = list(dict.fromkeys(service.get("catalogue_component") for service in assigned.get(hid, [])
                                            if service.get("catalogue_component")))
         if len(component_ids) > 1:
             notes.append(f"Host {hid} has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.")
-        for service in assigned.get(hid, []):
-            if service.get("catalogue_component"):
-                env_host["image_hint"] = service["catalogue_component"]
-                break
+        if _is_attacker(host):
+            env_host["image_hint"] = "oss-attacker"
+        else:
+            for service in assigned.get(hid, []):
+                if service.get("catalogue_component"):
+                    env_host["image_hint"] = service["catalogue_component"]
+                    break
         environment_hosts.append(env_host)
 
     if unassigned:
@@ -164,7 +182,8 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
     # Permit the lab attacker to reach only mapped target service ports.
     if attacker_id:
         targeted_refs = {_host_id(action.get("target_host_ref")) for action in ir.get("actions", []) if action.get("target_host_ref")}
-        reachable_targets = [hid for hid in target_ids if not targeted_refs or hid in targeted_refs]
+        exposed_targets = {hid for hid in target_ids if _is_exposed(hosts_by_id[hid])}
+        reachable_targets = [hid for hid in exposed_targets if not targeted_refs or hid in targeted_refs]
         for hid in reachable_targets:
             related_actions = [action for action in ir.get("actions", [])
                                if not action.get("target_host_ref") or _host_id(action.get("target_host_ref")) == hid]
@@ -200,9 +219,12 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             # An ambiguous destination service or missing port remains denied.
             notes.append(f"Confirmed dependency {relation.get('id')} has no uniquely identified destination service port; default deny remains in effect.")
 
+    network_plan = [{"id": "scenario-internal", "segment": "scenario", "internal": True}]
+    if any("external" in host["networks"] for host in environment_hosts):
+        network_plan.append({"id": "external", "segment": "external", "internal": False})
     plan: dict[str, Any] = {
         "hosts": environment_hosts,
-        "networks": [{"id": "scenario-internal", "segment": "scenario", "internal": True}],
+        "networks": network_plan,
         "connections": connections,
         "access_rules": rules,
     }
