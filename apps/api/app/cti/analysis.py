@@ -163,6 +163,26 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         item["epistemic_status"] = status
         return status
 
+    def _ref_verified(ref: str) -> bool:
+        rec = next((e for e in evidence if e["id"] == ref), None)
+        return bool(rec and rec.get("quote_verified"))
+
+    def settle_status(item: dict[str, Any], refs: list[str]) -> str:
+        """Deterministic epistemic rule, overriding the model's conservatism.
+
+        - 'inferred' / 'absent' kept as the model reasoned/declared them.
+        - otherwise: a program-VERIFIED verbatim quote => 'supported' (explicit in source);
+          no verified quote => 'insufficient'.
+        A verified quote proves the text exists at the locator; whether the quote
+        semantically supports the claim is the staged_review / human layer (documented).
+        """
+        status = normalize_status(item)
+        if status in ("inferred", "absent"):
+            return status
+        if refs and any(_ref_verified(r) for r in refs):
+            return "supported"
+        return "insufficient"
+
     actions_raw = _array(result, "actions")
     actions: list[dict[str, Any]] = []
     action_ids: set[str] = set()
@@ -178,8 +198,9 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         for key in ("description", "attack_technique", "attack_tactic", "target_host_ref", "precondition", "initial_access"):
             if isinstance(item.get(key), str) and item[key].strip():
                 action[key] = item[key].strip()
-        action["evidence_refs"] = attach(item)
-        action["epistemic_status"] = normalize_status(item)
+        _refs = attach(item)
+        action["evidence_refs"] = _refs
+        action["epistemic_status"] = settle_status(item, _refs)
         actions.append(action)
 
     relations_raw = _array(result, "relations")
@@ -205,8 +226,9 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         if isinstance(item.get("rationale"), str) and item["rationale"].strip():
             relation["rationale"] = item["rationale"].strip()
         unsupported_before_relation = unsupported
-        relation["evidence_refs"] = attach(item)
-        relation["epistemic_status"] = normalize_status(item)
+        _refs = attach(item)
+        relation["evidence_refs"] = _refs
+        relation["epistemic_status"] = settle_status(item, _refs)
         if invalid_endpoints:
             relation["epistemic_status"] = "insufficient"
             if unsupported == unsupported_before_relation:
@@ -230,8 +252,9 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         for key in ("os", "os_version", "network_placement"):
             if isinstance(item.get(key), str) and item[key].strip():
                 host[key] = item[key].strip()
-        host["evidence_refs"] = attach(item)
-        host["epistemic_status"] = normalize_status(item)
+        _refs = attach(item)
+        host["evidence_refs"] = _refs
+        host["epistemic_status"] = settle_status(item, _refs)
         hosts.append(host)
     for index, raw in enumerate(services_raw, start=1):
         item = dict(raw)
@@ -245,8 +268,9 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
                 service[key] = item[key].strip()
         if isinstance(item.get("cve"), list):
             service["cve"] = [v for v in item["cve"] if isinstance(v, str)]
-        service["evidence_refs"] = attach(item)
-        service["epistemic_status"] = normalize_status(item)
+        _refs = attach(item)
+        service["evidence_refs"] = _refs
+        service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
 
     # Explicit non-factual seeds keep downstream modules aware that target data
@@ -265,8 +289,9 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         artifact["id"] = _unique_id(item.get("id"), f"artifact-{index}", artifact_ids)
         artifact_ids.add(artifact["id"])
         artifact["source"] = "llm"
-        artifact["evidence_refs"] = attach(item)
-        artifact["epistemic_status"] = normalize_status(item)
+        _refs = attach(item)
+        artifact["evidence_refs"] = _refs
+        artifact["epistemic_status"] = settle_status(item, _refs)
         artifacts.append(artifact)
 
     # Program placeholders are not claims; count only analyst-produced entities.
