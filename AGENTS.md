@@ -25,34 +25,26 @@
 - 完成或卡住時，用 `hc send <Lead 位址> "<結果或阻礙>"` 回報。長內容寫成檔案，只回報路徑。
 - 回報要如實：測試沒過就說沒過，沒做的步驟就說沒做。
 
-## Lead 啟動 Worker 的方式
+## 權限與啟動方式
 
-控制指令以 `hc --skill` 為準。這台機器上 Codex 需要以下參數才能正常運作
-（沙盒預設的網路隔離在此主機無法啟動；開啟網路後檔案保護仍然有效）：
-
-```sh
-hc run --bg --name <名稱> --cwd <worktree 路徑> \
-  codex --no-daemon -s workspace-write -a never \
-  -c sandbox_workspace_write.network_access=true \
-  "<任務；結尾註明用 hc send $HC_TERMINAL_ID 回報>"
-```
-
-Claude Code Worker：
+- 日常工程決策由 Lead 決定，不必詢問產品負責人；產品功能與規劃變更才需要確認。
+- Worker 以自動授權模式執行，不逐項詢問 Permission：
+  - **Claude Code**：`--permission-mode auto`，可在自己的分支提交。
+  - **Codex**：`-a never`（不詢問）＋ `-s workspace-write`（只能寫自己的 Worktree）。
+    沙盒保留，不為了提交而關閉。**Codex 改完檔案後由 Lead 檢查並代為提交。**
+- 啟動設定固定在 Herdr 範本 `cr-claude`、`cr-codex`
+  （`~/.config/herdr-core/templates/`），Lead 一律用範本啟動，控制指令以 `hc --skill` 為準：
 
 ```sh
-hc run --bg --name <名稱> --cwd <worktree 路徑> \
-  claude --permission-mode acceptEdits
-hc wait <名稱>          # 等它就緒
-hc send <名稱> "<任務；結尾註明用 hc send $HC_TERMINAL_ID 回報>"
+git worktree add .worktrees/<名稱> -b agent/<名稱>
+hc run --bg --name <名稱> --cwd .worktrees/<名稱> cr-codex "<任務；結尾註明用 hc send $HC_TERMINAL_ID 回報>"
+hc run --bg --name <名稱> --cwd .worktrees/<名稱> cr-claude "<任務；同上>"
 ```
 
-已實測的注意事項（紀錄見 `docs/collab-test.md`）：
-
-- **Codex 不能自己提交**：沙盒把 `.git` 保護成唯讀。Codex 只負責在 Worktree 裡改檔案並回報，
-  由 Lead 檢查後代為提交。
-- Codex 第一次進入新資料夾會跳「信任此資料夾」，Lead 用 `hc read` 確認後按 `hc keys <名稱> enter`。
-- Claude Code 直接把任務放在啟動指令裡可能收不到，所以先啟動、等就緒、再 `hc send`。
-- 啟動後一律檢查 Worker 是否真的開始工作，不要假設任務已送達。
+- 啟動後 Lead 要確認：任務確實送達（`first_message.sent`）、畫面上的權限模式正確、
+  沒有卡在對話框。Codex 首次進入新資料夾的「信任此資料夾」由 Lead 確認後按 Enter。
+- Codex 的沙盒在此主機需開啟網路才能啟動（`network_access=true`），檔案寫入保護仍有效。
+  實測紀錄見 `docs/collab-test.md`。
 
 ## 紀錄
 
