@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "id": "scn_offline_fixture",
+  "name": "Offline dependency and topology fixture",
+  "ir_version": 1,
+  "provenance": {"input_kind": "markdown", "input_sha256": "offline-fixture"},
+  "evidence": [
+    {"id": "ev-nginx", "quote": "NGINX 1.24", "locator": {"kind": "paragraph", "ref": "1"}}
+  ],
+  "actions": [
+    {"id": "a-web", "name": "Reach nginx CVE-2024-12345", "target_host_ref": "web-1", "epistemic_status": "supported", "source": "llm", "evidence_refs": ["ev-nginx"]},
+    {"id": "a-iis", "name": "Continue on IIS host", "target_host_ref": "win-1", "epistemic_status": "inferred", "source": "user"},
+    {"id": "a-db", "name": "Inspect database host", "target_host_ref": "db-1", "epistemic_status": "inferred", "source": "user"}
+  ],
+  "relations": [
+    {"id": "r-temporal", "from_action": "a-web", "to_action": "a-iis", "kind": "temporal", "epistemic_status": "supported", "source": "llm", "evidence_refs": ["ev-nginx"]},
+    {"id": "r-unconfirmed-dependency", "from_action": "a-web", "to_action": "a-iis", "kind": "dependency", "rationale": "Needs explicit review", "epistemic_status": "inferred", "source": "user", "confirmed": false}
+  ],
+  "target_context": {
+    "hosts": [
+      {"id": "web-1", "role": "victim-web", "os": "Linux", "services": [{"name": "nginx", "version": "1.24", "port": 8080, "cve": ["CVE-2024-12345"]}]},
+      {"id": "win-1", "role": "victim-web", "os": "Windows", "services": [{"name": "IIS", "version": "10.0"}]},
+      {"id": "db-1", "role": "database", "os": "Windows", "services": [{"name": "Microsoft SQL Server", "version": "2019"}]}
+    ]
+  }
+}
