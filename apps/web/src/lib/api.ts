@@ -1,4 +1,8 @@
 // Thin API client. All backend calls go through here. Never touches API keys.
+// Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
+// are the frontend's working assumption (see apps/web/README.md). They live only in this file.
+import type { ScenarioIR, ValidationReport } from "@contracts";
+
 export interface Budget {
   est_total_usd: number;
   calls: number;
@@ -8,18 +12,76 @@ export interface Budget {
   by_model: { model: string; calls: number; est_cost_usd: number; input_tokens: number; output_tokens: number }[];
 }
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(path, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-  });
-  if (!r.ok) {
-    let detail = r.statusText;
-    try { detail = (await r.json()).detail ?? detail; } catch { /* ignore */ }
-    throw new Error(`${r.status} ${detail}`);
+export interface ScenarioSummary { id: string; name: string; created_at: string; updated_at: string }
+export interface VersionEntry { ir_version: number; note?: string; ts?: string }
+
+/** unimplemented = route not there yet; offline = backend unreachable; error = backend answered with a failure. */
+export type ApiErrorKind = "unimplemented" | "offline" | "error";
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public detail: string,
+    public method: string,
+    public path: string,
+    public kind: ApiErrorKind,
+    /** Structured error payload (e.g. validation errors, a failed deploy result), when the backend sent one. */
+    public data?: unknown,
+  ) {
+    super(`${status || "網路錯誤"} ${detail}`);
   }
-  return r.json() as Promise<T>;
 }
+
+export function toApiError(e: unknown): ApiError {
+  if (e instanceof ApiError) return e;
+  return new ApiError(0, e instanceof Error ? e.message : String(e), "", "", "error");
+}
+
+async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = init?.method ?? "GET";
+  let r: Response;
+  try {
+    r = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
+  } catch (e) {
+    throw new ApiError(0, e instanceof Error ? e.message : "無法連線", method, path, "offline");
+  }
+  const text = await r.text();
+  let body: any = undefined;
+  let isJson = false;
+  if (text) {
+    try { body = JSON.parse(text); isJson = true; } catch { /* non-JSON body */ }
+  }
+  if (!r.ok) {
+    const raw = body?.detail ?? body?.message ?? (isJson ? body : text) ?? r.statusText;
+    const detail = typeof raw === "string" ? raw : JSON.stringify(raw);
+    let kind: ApiErrorKind = "error";
+    // FastAPI answers an unknown route with exactly {"detail":"Not Found"}; a real "scenario not found" has its own text.
+    if (r.status === 501 || r.status === 405 || (r.status === 404 && (!isJson || detail === "Not Found"))) kind = "unimplemented";
+    // A 5xx without a JSON body comes from the dev proxy / a gateway, i.e. the API process is not reachable.
+    // (The API itself uses 502/503 with a JSON detail for real failures such as a failed analysis or deploy.)
+    else if (r.status >= 500 && !isJson) kind = "offline";
+    throw new ApiError(r.status, detail || r.statusText, method, path, kind, typeof raw === "object" && raw !== null ? raw : undefined);
+  }
+  return body as T;
+}
+
+const post = <T,>(path: string, body?: unknown) =>
+  req<T>(path, { method: "POST", body: JSON.stringify(body ?? {}) });
+
+/** Backends may return the IR bare or wrapped; accept the common shapes, never invent content. */
+export function extractIr(resp: any): ScenarioIR | null {
+  for (const c of [resp, resp?.scenario, resp?.ir, resp?.scenario_ir, resp?.result]) {
+    if (c && typeof c === "object" && Array.isArray(c.actions) && Array.isArray(c.relations)) return c as ScenarioIR;
+  }
+  return null;
+}
+export function extractScenarioId(resp: any): string | null {
+  const ir = extractIr(resp);
+  const id = ir?.id ?? resp?.scenario_id ?? resp?.id;
+  return typeof id === "string" ? id : null;
+}
+
+const enc = encodeURIComponent;
 
 export const api = {
   health: () => req<{ status: string }>("/api/health"),
@@ -27,13 +89,36 @@ export const api = {
   routers: () => req<Record<string, string>>("/api/_routers"),
 
   // scenarios (module 3 store)
-  listScenarios: () => req<{ id: string; name: string; created_at: string; updated_at: string }[]>("/api/scenario/list").catch(() => []),
-  getScenario: (id: string) => req<any>(`/api/scenario/${id}`),
+  listScenarios: () => req<ScenarioSummary[]>("/api/scenario/list"),
+  getScenario: (id: string) => req<any>(`/api/scenario/${enc(id)}`),
+  saveScenario: (id: string, ir: ScenarioIR, note: string) =>
+    req<any>(`/api/scenario/${enc(id)}`, { method: "PUT", body: JSON.stringify({ ir, note }) }),
+  listVersions: (id: string) => req<VersionEntry[]>(`/api/scenario/${enc(id)}/versions`),
 
-  // module 1-2 ingest/analyze
-  analyze: (body: { input_kind: string; content?: string; method?: string; name?: string }) =>
-    req<any>("/api/ingest/analyze", { method: "POST", body: JSON.stringify(body) }),
+  // module 1-2 ingest / supplement
+  analyze: (body: { input_kind: string; content: string; method?: string; name?: string }) =>
+    post<any>("/api/ingest/analyze", body),
+  supplement: (id: string, body: { text: string; targets_missing_item?: string; status?: string }) =>
+    // `missing_item_id` duplicates `targets_missing_item` for backends that named the field that way.
+    post<any>(`/api/ingest/${enc(id)}/supplement`, { ...body, ...(body.targets_missing_item ? { missing_item_id: body.targets_missing_item } : {}) }),
 
-  get: <T = any>(path: string) => req<T>(path),
-  post: <T = any>(path: string, body: unknown) => req<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  // module 4-5 planning
+  analyzeDependencies: (id: string) => post<any>(`/api/planning/${enc(id)}/dependencies`),
+  catalogue: () => req<any>("/api/planning/catalogue"),
+  planTopology: (id: string) => post<any>(`/api/planning/${enc(id)}/topology`),
+
+  // module 6 IaC
+  getIac: (id: string) => req<any>(`/api/iac/${enc(id)}`),
+  generateIac: (id: string) => post<any>(`/api/iac/${enc(id)}/generate`),
+
+  // module 7 deploy
+  /** `test_approved` is the backend's explicit-approval gate; callers must only invoke this after the user confirms. */
+  deployUp: (id: string) => post<any>(`/api/deploy/${enc(id)}/up`, { test_approved: true }),
+  deployDown: (id: string) => post<any>(`/api/deploy/${enc(id)}/down`),
+  deployStatus: (id: string) => req<any>(`/api/deploy/${enc(id)}/status`),
+  deployHealth: (id: string) => req<any>(`/api/deploy/${enc(id)}/health`),
+
+  // module 8 validation
+  getReport: (id: string) => req<ValidationReport | any>(`/api/validate/${enc(id)}/report`),
+  runValidation: (id: string) => post<ValidationReport | any>(`/api/validate/${enc(id)}/run`),
 };
