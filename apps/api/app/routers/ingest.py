@@ -24,8 +24,16 @@ class AnalyzeRequest(BaseModel):
 
 
 class SupplementRequest(BaseModel):
-    missing_item_id: str = Field(min_length=1)
     text: str = Field(min_length=1)
+    # Target is optional: a supplement may resolve a specific missing item or be a free-form note.
+    # Accept both field names the frontend may send.
+    missing_item_id: str | None = None
+    targets_missing_item: str | None = None
+    # Allowed resolution statuses when a target is given.
+    status: str | None = None
+
+    def target_id(self) -> str | None:
+        return self.missing_item_id or self.targets_missing_item
 
 
 @router.post("/analyze")
@@ -68,24 +76,27 @@ def supplement(scenario_id: str, request: SupplementRequest):
     ir = store.get(scenario_id)
     if ir is None:
         raise HTTPException(status_code=404, detail="Scenario not found.")
-    missing_items = ir.get("missing_items", [])
-    target = next((item for item in missing_items if item.get("id") == request.missing_item_id), None)
-    if target is None:
-        raise HTTPException(status_code=404, detail="Missing item not found.")
-
     text = request.text.strip()
     if not text:
         raise HTTPException(status_code=422, detail="Supplement text must not be empty.")
+    target_id = request.target_id()
+    missing_items = ir.get("missing_items", [])
+    target = next((item for item in missing_items if item.get("id") == target_id), None)
+    if target_id and target is None:
+        raise HTTPException(status_code=404, detail="Missing item not found.")
+
     supplement_id = "supplement-" + uuid.uuid4().hex[:12]
     ir.setdefault("supplements", []).append({
         "id": supplement_id,
         "text": text,
-        "targets_missing_item": request.missing_item_id,
+        **({"targets_missing_item": target_id} if target_id else {}),
         "source": "user",
     })
-    target["status"] = "user_supplied"
-    target["resolution"] = text
-    target["resolution_source"] = "user"
+    if target is not None:
+        _allowed = {"user_supplied", "substitute_chosen", "accepted_unknown"}
+        target["status"] = request.status if request.status in _allowed else "user_supplied"
+        target["resolution"] = text
+        target["resolution_source"] = "user"
 
     # Keep the generated checklist and record this response as a separate user
     # supplement instead of rewriting original report evidence or inventing a
