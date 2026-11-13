@@ -4,7 +4,7 @@
 
 ## 現在能做什麼
 
-（建置中，T0 = 2026-11-14 04:55 CST）
+一份情資 → 分析 → 規劃 → 生成 IaC → 本機部署 3 容器 → 無害驗證 → 三層報告，全程跑通。詳見 `docs/overnight-report.md`。
 
 ## 架構（已定）
 
@@ -19,27 +19,27 @@
 
 | # | 模組 | 狀態 | 負責 | 備註 |
 |---|---|---|---|---|
-| 1 | 情資報告分析 | ⬜ | Codex backend | 契約已定，待實作 |
-| 2 | 缺失項目補齊 | ⬜ | Codex backend | |
-| 3 | 攻擊流程編輯 | ⬜ | Codex scenario + 前端 | |
-| 4 | 軟體依賴分析 | ⬜ | Codex scenario | |
-| 5 | 拓樸分析 | ⬜ | Codex scenario | |
-| 6 | IaC 生成 | ⬜ | Codex infra | Docker Compose |
-| 7 | 部署 | ⬜ | Codex infra | 本機隔離 |
-| 8 | PoC 驗證 | ⬜ | Codex infra | 只做無害檢查 |
-| — | GUI | ⬜ | Claude 前端 | 10 個頁面 |
+| 1 | 情資報告分析 | ✅ 實作+實際驗證 | Codex be-cti | 真實 LLM 驗過 |
+| 2 | 缺失項目補齊 | ✅ 實作+實際驗證 | Codex be-cti | |
+| 3 | 攻擊流程編輯 | 🟡 後端驗證，GUI 未逐頁測 | sc-plan+前端 | |
+| 4 | 軟體依賴分析 | ✅ 實作+實際驗證 | Codex sc-plan | |
+| 5 | 拓樸分析 | ✅ 實作+實際驗證 | Codex sc-plan | |
+| 6 | IaC 生成 | ✅ 實作+實際驗證 | Codex infra | |
+| 7 | 部署 | ✅ 實作+實際驗證 | Codex infra | 真實 docker |
+| 8 | PoC 驗證 | ✅ 實作+實際驗證 | Codex infra | 三層+忠實度 |
+| — | GUI | 🟡 實作、未完整驗證 | Claude 前端 | build/proxy 過 |
 
 ## 已通過的測試
 
-（待補）
+25 項 pytest 全過＋端到端示範（證據 `docs/e2e-evidence/`）。
 
 ## 已知問題
 
-（待補）
+見 `docs/overnight-report.md`「尚未完成/已知問題」。
 
 ## 下一個待處理
 
-- 啟動 5 個 Worker 平行開發核心骨架之上的各模組。
+見 `docs/overnight-report.md` 末「需要你決定的產品問題」。
 
 ## API 預算使用
 

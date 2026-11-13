@@ -15,3 +15,19 @@
 ## 團隊規則
 
 人與 Agent 的分工、協作方式見 [`AGENTS.md`](AGENTS.md)。
+
+## 啟動
+
+完整說明見 [`docs/overnight-report.md`](docs/overnight-report.md)。速記：
+
+```bash
+bash scripts/setup.sh                                   # 一次性：建 venv、裝依賴
+source .venv/bin/activate && set -a && . ./.env && set +a
+cd apps/api && CR_DATA_DIR=$PWD/data uvicorn app.main:app --port 8077   # 後端
+# 另一個終端：
+cd apps/web && export PATH=$HOME/.nvm/versions/node/v22.23.3/bin:$PATH && npm install && npm run dev
+# 完整後端示範（需 Docker）：
+API=http://localhost:8077 bash scripts/e2e_demo.sh
+```
+
+目前進度：[`docs/progress.md`](docs/progress.md)。
