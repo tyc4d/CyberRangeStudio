@@ -301,6 +301,11 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             "digest": resolved["digest"],
             "substitute": resolved["substitute"],
         }
+        if host.get("substitute_for") and component is not None:
+            # Module 5 says this real image stands in for other software named by the source.
+            host_report["substitute"] = True
+            host_report["substitute_for"] = str(host["substitute_for"])
+            host_report["substitute_basis"] = str(host.get("substitute_basis") or "catalogue_substitute")
         if resolved.get("base_image"):
             host_report["base_image"] = resolved["base_image"]
         if resolved.get("catalogue"):
@@ -321,7 +326,12 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             host_report["cves"] = list(catalogue_for_host.get("cves", []))
             host_report["isolation"] = ("deliberately vulnerable exercise image: joined only to internal networks, "
                                         "never published to a host port")
-        if resolved["substitute"]:
+        if host_report.get("substitute_for"):
+            host_report["fidelity_difference"] = (
+                f"deployed as {resolved['component']} in place of {host_report['substitute_for']}; "
+                "does not reproduce that software or its vulnerabilities"
+            )
+        elif resolved["substitute"]:
             host_report["fidelity_difference"] = (
                 "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
             )

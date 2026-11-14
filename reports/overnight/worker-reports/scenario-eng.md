@@ -152,7 +152,7 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 
 ## 4. 測試
 
-`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **132 passed**（開工時 54 passed, 1 failed）。
+`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **144 passed**（開工時 54 passed, 1 failed）。
 
 ### apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker）
 
@@ -184,6 +184,18 @@ cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-
 內建 demo 在最新 commit 不需要使用者選替代品（只有功能名稱的服務會自動得到標示清楚的替身）；上面第三項處理的是有產品名但 catalogue 沒有的一般情況（例如 MOVEit）。
 
 注意：`component_mode` 對 Struts 仍是 `real`（部署的確實是 Struts），「版本是假設」由 `version_basis` 表示。前端目前不會顯示 `version_basis`，需要 frontend-eng 接上。
+
+### 批次 7 — Reviewer M1
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 替代品在主機層也看得出來 | M1(a) | 主機的映像來自替代服務時，環境計畫主機加 `substitute_for`（被頂替的原服務名稱）與 `substitute_basis`（`user_chosen`／`catalogue_substitute`）；IaC 元件報告據此把該主機標 `substitute=true` 並寫明「以 X 頂替 Y」，驗證報告的「使用的替代品」會列出。只以功能命名的服務（demo 的 web／database service）同樣處理 | `planner/topology.py`、`iac/generator.py`（見下） | `test_substitute_is_labelled_at_host_level_and_through_iac`、`test_function_substitute_hosts_are_reported_as_substitutes` |
+| 替代品不支援原服務的連接埠 | M1(b) | 替代品只能聽自己的埠：環境計畫改用替代元件的埠，服務項目保留 `stated_port`（原文的埠）並標 `port_basis=substitute_default`，連線規則用新埠，notes 寫明「這個埠是替代，不是原文事實」。IR 的服務仍保留原文的埠。真元件（非替代）遇到不支援的埠不會被偷偷改掉，只在 notes 說明 IaC 會拒絕 | `planner/topology.py` | `test_port_the_substitute_cannot_serve_is_replaced_and_said_so`、`test_real_component_on_a_port_it_does_not_serve…` |
+
+**改到別人的檔案（最小修改）**：`apps/api/app/iac/generator.py`（infra-eng）— 在 `inspect_plan` 的主機報告加 9 行：計畫主機帶 `substitute_for` 時設 `substitute=true`、帶出 `substitute_for`／`substitute_basis`，並用對應的 `fidelity_difference` 文字。沒有改任何映像解析或安全檢查。
+
+`component_mode` 仍是 `real`：依 IaC 現行語意，`substitute` 代表部署 Python 示範程式而不是使用者選的 nginx，改它會讓實際部署的東西變掉。
+驗證報告的替代品清單目前 `real` 欄位顯示的是映像代號（如 `oss-nginx`），原軟體名稱在 `difference` 文字裡；要把 `real` 改成原軟體名稱需 poc-eng 在 `validator/runner.py` 讀 `substitute_for`。
 
 ## 5. 未完成／未解
 
