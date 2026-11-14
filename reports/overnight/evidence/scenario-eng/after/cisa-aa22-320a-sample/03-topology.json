@@ -1,0 +1,167 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access point",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "unsupported-vmware-horizon",
+   "runtime": "external_platform",
+   "deployable": false
+  },
+  {
+   "id": "h2",
+   "role": "lateral movement target and credential harvesting host",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "RDP",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h3",
+   "role": "hosts targeted for lateral movement, disabling Defender, implanting Ngrok, and password changes",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "RDP",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h4",
+   "role": "domain controller targeted for enumeration and lateral movement",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "h1",
+   "to_host": "h2",
+   "reason": "Action a7 is stated to run from h1 against h2.",
+   "port": 3389,
+   "protocol": "tcp"
+  },
+  {
+   "from_host": "h2",
+   "to_host": "h3",
+   "reason": "Action a11 is stated to run from h2 against h3.",
+   "port": 3389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "h1",
+   "to": "h2",
+   "action": "allow",
+   "port": 3389
+  },
+  {
+   "from": "h2",
+   "to": "h3",
+   "action": "allow",
+   "port": 3389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h3:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service VMware Horizon server (s1); it remains unreachable by default.",
+  "No port is known for service Log4j application (svc-unsupported-log4j-unspecified-h1); it remains unreachable by default.",
+  "Host h1 has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.",
+  "Host h1 needs VMware Horizon (external platform required), which the catalogue cannot deploy (not reproducible without supported external VMware Horizon backend). It is not replaced by a stand-in.",
+  "Host h4 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology)."
+ ]
+}

@@ -52,6 +52,7 @@ _IOC_CONTEXT_RE = re.compile(
     re.IGNORECASE,
 )
 # Placeholder words a model may use where the source names no machine. They are never host ids.
+_NON_ATTACKER_ACTORS = frozenset({"defender", "victim", "responder", "analyst", "investigator", "vendor", "other"})
 _RESERVED_HOST_IDS = frozenset({"unknown", "unspecified", "none", "null", "n/a", "na", "any", "various", "multiple"})
 
 # Words by which a source sentence itself states order or enablement. A relation is only
@@ -68,7 +69,8 @@ _DEPENDENCY_CUE_RE = re.compile(
     r"via\s+(?:the|this|these|those|that)|through\s+(?:the|this|these|those|that)|enabl\w+|allow\w+|"
     r"prerequisites?|requir\w+|depend\w+|in\s+order\s+to|so\s+that|newly\s+(?:created|obtained|acquired)|"
     r"(?:stolen|harvested|obtained|compromised|downloaded|created)\s+\w+(?:\s+\w+)?\s+to\b|"
-    r"when\s+executed|which\s+(?:was|were)\s+(?:then\s+)?used)\b|利用|藉由|透過|憑藉|使用(?:該|此|這)",
+    r"when\s+executed|which\s+(?:was|were)\s+(?:then\s+)?used|as\s+a\s+result\s+of|result(?:ed|ing)\s+in|"
+    r"led\s+to|thereby|after\s+(?:gaining|obtaining|acquiring|establishing)|because)\b|利用|藉由|透過|憑藉|使用(?:該|此|這)",
     re.IGNORECASE,
 )
 _PROVENANCE_LABEL_RE = re.compile(
@@ -77,6 +79,35 @@ _PROVENANCE_LABEL_RE = re.compile(
 _PROVENANCE_LINK_LABEL_RE = re.compile(r"\b(?:url|link)\b[^:\n]{0,20}:", re.IGNORECASE)
 _PROVENANCE_HASH_LABEL_RE = re.compile(
     r"\b(?:source|document|advisory|report|pdf)\b[^:\n]{0,30}\b(?:sha-?\d*|md5|checksum|hash)\b", re.IGNORECASE)
+
+
+# Wording by which a source marks its own statement as uncertain or unconfirmed.
+_HEDGE_RE = re.compile(
+    r"\b(?:may|might|could)\s+have\b|\bappears?\s+to\b|\bseems?\s+to\b|\bwe\s+believe\b|\bis\s+believed\b|"
+    r"\b(?:possibly|reportedly|allegedly|presumably|purportedly|unconfirmed|suspected)\b|\breason\s+to\s+believe\b|"
+    r"\bnot\s+(?:able\s+to\s+)?confirm(?:ed)?\b|可能|疑似|據稱|尚未證實|未經證實",
+    re.IGNORECASE,
+)
+
+
+def _hedged_statement(quotes: list[str], unit_texts: list[str]) -> bool:
+    """True when a sentence the quote comes from is itself hedged ("may have", "appears to").
+
+    The quote can be clipped after the hedge, so the enclosing source sentence is checked.
+    """
+    normalise = lambda value: re.sub(r"\s+", " ", value).strip().casefold()
+    for quote in quotes:
+        needle = normalise(quote)
+        if not needle:
+            continue
+        if _HEDGE_RE.search(quote):
+            return True
+        for text in unit_texts:
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                plain = normalise(sentence)
+                if plain and (needle in plain or plain in needle) and _HEDGE_RE.search(sentence):
+                    return True
+    return False
 
 
 def _relation_cue(kind: str, quotes: list[str]) -> str | None:
@@ -194,6 +225,17 @@ def _is_source_reference_url(text: str, start: int) -> bool:
     return bool(_PROVENANCE_LINK_LABEL_RE.search(prefix) and _PROVENANCE_LABEL_RE.search(text[:line_start]))
 
 
+_METADATA_LINE_RE = re.compile(r"^[\s>*•-]*[A-Za-z][\w /()-]{1,40}:\s+\S", re.MULTILINE)
+_PROVENANCE_KEY_RE = re.compile(
+    r"^[\s>*•-]*(?:source|publisher|published|licen[sc]e|retrieved|accessed|author|document|report)\b[^:\n]{0,40}:",
+    re.IGNORECASE | re.MULTILINE)
+
+
+def _is_provenance_block(text: str) -> bool:
+    """A key: value header describing the document itself (publisher, URL, licence, checksum)."""
+    return len(_METADATA_LINE_RE.findall(text)) >= 3 and bool(_PROVENANCE_KEY_RE.search(text))
+
+
 def _is_source_checksum(text: str, start: int) -> bool:
     """A checksum labelled as belonging to the source document is provenance, not an IOC."""
     line_start = text.rfind("\n", 0, start) + 1
@@ -214,6 +256,8 @@ def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]
 
     for unit in units:
         text = unit.text
+        # In a document-metadata header only defanged values can be indicators.
+        provenance_block = _is_provenance_block(text)
         url_matches = []
         for match in _URL_RE.finditer(text):
             raw = match.group(0).rstrip(".,;:!?)]}")
@@ -221,6 +265,8 @@ def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]
             if not raw or _is_source_reference_url(text, match.start()):
                 continue
             url_matches.append((match.start(), end))
+            if provenance_block and not (raw.casefold().startswith("hxxp") or "[.]" in raw):
+                continue
             if raw.casefold().startswith("hxxp") or "[.]" in raw or _near_ioc_context(text, match.start(), end):
                 add("url", raw, raw, unit)
 
@@ -241,13 +287,15 @@ def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]
             })
             if _is_source_reference_url(text, match.start()) or is_ipv4_fragment or is_technique_id or is_file_extension:
                 continue
+            if provenance_block and "[.]" not in value:
+                continue
             if "[.]" in value or in_url or _near_ioc_context(text, match.start(), match.end()):
                 add("domain", value, value, unit)
 
         for match in _HASH_RE.finditer(text):
             value = match.group(0)
             # A checksum of the report/source document itself is provenance, not an IOC.
-            if _is_source_checksum(text, match.start()):
+            if provenance_block or _is_source_checksum(text, match.start()):
                 continue
             add("hash", value, value, unit)
 
@@ -330,10 +378,127 @@ def analyze_source(
             )
         else:
             result = draft
+    _merge_target_context(result, source_payload)
+    _merge_relations(result, source_payload)
     return _build_ir(
         result, input_kind=input_kind, content=content, source_name=source_name,
         units=units, parsed_source=parsed_source, method=method, name=name,
     )
+
+
+_CONTEXT_RULES = (
+    "Return only a JSON object {\"hosts\":[],\"services\":[],\"artifacts\":[],\"action_hosts\":[]}. Use only facts stated in the "
+    "source units; never invent hosts, products, versions, ports or CVE ids. Every host, service and artifact needs "
+    "evidence:[{quote,source_ref}] where quote is an exact, unaltered substring of the source unit and source_ref is that unit's "
+    "source_ref, and an epistemic_status of 'supported' (explicitly stated) or 'inferred'. "
+    "hosts: one entry for each distinct machine, system, database or explicitly described group of machines that the listed "
+    "attacker actions targeted, used or moved through. Never merge differently named or differently described machines and "
+    "never add a catch-all entry for unidentified hosts. Fields: id (h1, h2, ...; never 'unknown'), name (hostname or label if "
+    "given), role (the report's words), and os, os_version, network_placement only when stated. "
+    "services: each product, application, protocol service or security product on those machines that an action exploits, logs "
+    "in to, queries, disables or otherwise depends on. Fields: id (s1, ...), name (the report's words; a vulnerability nickname "
+    "or CVE id is not a name: name the affected product), host_ref (a host id above), and version, port (integer), protocol "
+    "(tcp/udp), cve (array of CVE ids) only when the report states them. "
+    "artifacts: each tool, malware family, script, file, scheduled task or account the report names as used, created or "
+    "dropped. Fields: id, name, type (tool, malware, file, script, account or other). "
+    "action_hosts: for each listed action {action_id, target_host_ref, source_host_ref}. target_host_ref is the host id the "
+    "action took effect on (for lateral movement or a remote query, the destination), or 'unknown' when the report does not "
+    "identify the machine. source_host_ref is the host id the action was launched from, only when the report states it."
+)
+
+
+def _merge_target_context(result: dict[str, Any], source_payload: list[dict[str, Any]]) -> None:
+    """Second, focused pass for hosts/services/artifacts and each action's machines.
+
+    Asked together with the whole flow, models routinely return these arrays empty even when
+    the report names every machine and product. A dedicated question fixes that at source.
+    If the pass fails or returns nothing usable, the first pass's context is kept as it was.
+    """
+    actions = [{"action_id": item.get("id"), "name": item.get("name"), "description": item.get("description", "")}
+               for item in result.get("actions") or [] if isinstance(item, dict)
+               and str(item.get("actor") or "attacker").strip().casefold() not in _NON_ATTACKER_ACTORS]
+    if not actions:
+        return
+    messages = [
+        {"role": "system", "content": "You are a careful cyber threat intelligence analyst producing provisional, evidence-grounded data."},
+        {"role": "user", "content": json.dumps({
+            "task": "Identify the target environment of these attacker actions",
+            "rules": _CONTEXT_RULES, "actions": actions, "source_units": source_payload,
+        }, ensure_ascii=False)},
+    ]
+    try:
+        context = _call_json(messages, purpose="cti_analysis_context")
+    except AnalysisError:
+        return
+    hosts = context.get("hosts")
+    if not isinstance(hosts, list) or not all(isinstance(item, dict) for item in hosts):
+        return
+    def objects(key: str) -> list[dict[str, Any]]:
+        value = context.get(key)
+        return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+    previous = result.get("target_context") if isinstance(result.get("target_context"), dict) else {}
+    result["target_context"] = {"hosts": hosts, "services": objects("services") or previous.get("services") or []}
+    if objects("artifacts"):
+        result["artifacts"] = objects("artifacts")
+    placement = {str(item.get("action_id")): item for item in objects("action_hosts")}
+    for action in result.get("actions") or []:
+        entry = placement.get(str(action.get("id"))) if isinstance(action, dict) else None
+        # The first pass named hosts by its own ids, which the new host list replaces.
+        action["target_host_ref"] = (entry or {}).get("target_host_ref") or "unknown"
+        action.pop("source_host_ref", None)
+        if entry and entry.get("source_host_ref"):
+            action["source_host_ref"] = entry["source_host_ref"]
+
+
+_RELATION_RULES = (
+    "Return only a JSON object {\"relations\":[{id, from_action, to_action, kind, epistemic_status, rationale, "
+    "evidence:[{quote, source_ref}]}]}. Connect the listed attacker actions the way the source describes; use only the listed "
+    "action ids. Work in two steps. "
+    "Step 1 - stated links: for each action, find the source wording that says what it came after or what it relied on. Such "
+    "wording is usually in the sentence about the later action and refers back to the earlier one: 'then', 'after ...', "
+    "'following ...', 'once ...', 'upon ...', 'subsequently', 'next', 'finally', 'as a result of ...', 'using the newly created "
+    "account', 'with these credentials', 'leveraged ... to', 'by exploiting ...', 'after gaining ...', 'when executed, X ...'. "
+    "Add an edge from the earlier action to the later one with epistemic_status 'supported' and one evidence quote that is an "
+    "exact, unaltered substring of a source unit and includes those linking words themselves (quote the whole clause, not only "
+    "the part describing the action). kind is 'dependency' when the later action uses something the earlier one produced "
+    "(access, a foothold, an account, credentials, a downloaded tool or file) and rationale names that thing; kind is "
+    "'temporal' when the wording gives only the order. Where the source says two events were separate or independent, do not "
+    "make one depend on the other. "
+    "Step 2 - narrative order: only for an action that step 1 left unconnected, add one edge from the action narrated just "
+    "before it, with kind 'temporal', epistemic_status 'inferred', no evidence, and rationale 'narrative order only'. "
+    "The edges must form a directed acyclic graph with at most one edge per ordered pair. Never alter a quote and never add "
+    "ATT&CK ids or bracketed notes to it; the program checks every quote against the source and rejects edges whose quote "
+    "does not state the link."
+)
+
+
+def _merge_relations(result: dict[str, Any], source_payload: list[dict[str, Any]]) -> None:
+    """Focused pass that connects the final action list and cites the wording stating each link.
+
+    In the combined pass models mostly return edges without evidence, or cite a sentence that
+    only describes one endpoint. If this pass fails, the first pass's relations are kept.
+    """
+    actions = [{"id": item.get("id"), "name": item.get("name"),
+                "evidence": [entry.get("quote") for entry in item.get("evidence") or [] if isinstance(entry, dict)]}
+               for item in result.get("actions") or [] if isinstance(item, dict)
+               and str(item.get("actor") or "attacker").strip().casefold() not in _NON_ATTACKER_ACTORS]
+    if len(actions) < 2:
+        return
+    messages = [
+        {"role": "system", "content": "You are a careful cyber threat intelligence analyst producing provisional, evidence-grounded data."},
+        {"role": "user", "content": json.dumps({
+            "task": "State how these attacker actions are ordered and which depend on which",
+            "rules": _RELATION_RULES, "actions": actions, "source_units": source_payload,
+        }, ensure_ascii=False)},
+    ]
+    try:
+        answer = _call_json(messages, purpose="cti_analysis_relations")
+    except AnalysisError:
+        return
+    relations = answer.get("relations")
+    if isinstance(relations, list) and relations and all(isinstance(item, dict) for item in relations):
+        result["relations"] = relations
 
 
 def _call_json(messages: list[dict[str, str]], *, purpose: str) -> dict[str, Any]:
@@ -389,7 +554,9 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             " Return JSON with arrays actions, relations, artifacts, and target_context {hosts, services}. "
             "Each item may contain evidence:[{quote,source_ref}]. Actions need id,name,target_host_ref; relations need id,from_action,to_action,kind; "
             "hosts need id,role; services need id,name. Include only information found in the report. "
-            "ACTIONS: an action is something the threat actor did. Name it with the report's own wording for that behaviour, not "
+            "ACTIONS: an action is something the threat actor did. Give every action an actor field: 'attacker' for the threat "
+            "actor, 'defender' for the victim organisation, responders, vendors or investigators (detecting, patching, blocking, "
+            "notifying, investigating), 'other' otherwise. Name it with the report's own wording for that behaviour, not "
             "with a tactic or category label. Do not create actions for what a defender or analyst observed, assessed or detected, "
             "for a description of what a file or tool contains, or for a restatement of an earlier action's effect; cite such "
             "sentences as additional evidence of the attacker action they describe. One behaviour is one action even if the report "
@@ -412,9 +579,11 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             "created or dropped, with name, type (tool, malware, file, script, account or other) and evidence. "
             "RELATIONS: add an edge only between two actions of this analysis. When the report states the order or the dependency, "
             "the relation's evidence quote must be the exact words that state it, including the ordering or enabling words themselves "
-            "(for example 'then', 'after', 'following', 'once', 'upon', 'using the newly created account', 'by exploiting'). A sentence "
-            "that merely describes one of the two actions is not evidence of their order. When you connect two actions only because "
-            "the report narrates them one after the other, give that edge epistemic_status 'inferred' and no evidence. Prefer "
+            "(for example 'then', 'after', 'following', 'once', 'upon', 'using the newly created account', 'by exploiting', "
+            "'as a result of', 'leverage these credentials', 'after gaining'). For every edge, first look for that wording: it is "
+            "usually in the sentence about the later action, which refers back to the earlier one. Quote it and mark the edge "
+            "'supported'. Only when the report has no such wording and you connect two actions merely because it narrates them one "
+            "after the other, give the edge epistemic_status 'inferred' and no evidence. Prefer "
             "'dependency' when the later action uses something the earlier one produced (access, an account, credentials, a downloaded "
             "tool or file), and say what in rationale. "
             "When the report states or lists a MITRE ATT&CK technique for an action (for example a TTP/MITRE ATT&CK table), set "
@@ -513,7 +682,15 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             return "supported"
         return "insufficient"
 
-    actions_raw = _array(result, "actions")
+    all_actions_raw = _array(result, "actions")
+    # The flow is the attacker's. What defenders did is kept out of it (and reported in quality)
+    # rather than silently presented as attack steps.
+    actions_raw = [raw for raw in all_actions_raw
+                   if str(raw.get("actor") or "attacker").strip().casefold() not in _NON_ATTACKER_ACTORS]
+    excluded_actions = [{"id": _string(raw.get("id")) or "", "name": _string(raw.get("name")) or "",
+                         "actor": str(raw.get("actor")).strip().casefold()}
+                        for raw in all_actions_raw if raw not in actions_raw]
+    excluded_action_ids = {item["id"] for item in excluded_actions if item["id"]}
     actions: list[dict[str, Any]] = []
     action_ids: set[str] = set()
     action_id_map: dict[str, str] = {}
@@ -538,6 +715,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         _refs = attach(item)
         action["evidence_refs"] = _refs
         action["epistemic_status"] = settle_status(item, _refs)
+        if action["epistemic_status"] == "supported":
+            cited = [rec for rec in evidence if rec["id"] in _refs]
+            unit_texts = [unit.text for unit in units if any(unit.locator == rec["locator"] for rec in cited)]
+            if _hedged_statement([rec["quote"] for rec in cited], unit_texts):
+                # The report says this, but says it is not sure. Keep that visible.
+                action["source_certainty"] = "hedged"
+                action["epistemic_reason"] = "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
         actions.append(action)
 
     relations_raw = _array(result, "relations")
@@ -562,6 +746,8 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
 
     for index, raw in enumerate(relations_raw, start=1):
         item = dict(raw)
+        if {_string(item.get("from_action")), _string(item.get("to_action"))} & excluded_action_ids:
+            continue  # an edge to a step that is not part of the attack flow
         kind = item.get("kind")
         coerced_kind = kind not in _RELATION_KINDS
         if coerced_kind:
@@ -749,6 +935,8 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "method": method,
             "provisional": True,
             "dropped_placeholder_hosts": dropped_placeholder_hosts,
+            "excluded_non_attacker_actions": excluded_actions,
+            "hedged_action_count": sum(1 for action in actions if action.get("source_certainty") == "hedged"),
         },
     }
     ir["missing_items"] = calculate_missing_items(ir)

@@ -145,5 +145,100 @@ class RelationAndHostRules(unittest.TestCase):
         self.assertIn("hxxp://bad[.]example/x", values)
 
 
+class HedgedSourceStatements(unittest.TestCase):
+    SOURCE = ("The unauthorized party may have taken advantage of a weakness in an internet-facing system.\n\n"
+              "The actor deleted the web server logs.")
+
+    def test_hedged_sentence_is_flagged_even_when_the_quote_omits_the_hedge(self):
+        ir = run(self.SOURCE, {
+            "actions": [
+                {"id": "a1", "name": "took advantage of a weakness", "epistemic_status": "supported",
+                 "evidence": [{"quote": "taken advantage of a weakness in an internet-facing system", "source_ref": "p1"}]},
+                {"id": "a2", "name": "deleted logs", "epistemic_status": "supported",
+                 "evidence": [{"quote": "The actor deleted the web server logs.", "source_ref": "p2"}]},
+            ], "relations": [], "target_context": {"hosts": [], "services": []}, "artifacts": []}, "text")
+        a1, a2 = ir["actions"]
+        self.assertEqual((a1["epistemic_status"], a1.get("source_certainty")), ("supported", "hedged"))
+        self.assertIn("epistemic_reason", a1)
+        self.assertNotIn("source_certainty", a2)
+        self.assertEqual(ir["quality"]["hedged_action_count"], 1)
+
+
+class ActorFilter(unittest.TestCase):
+    def test_defender_actions_and_their_edges_stay_out_of_the_attack_flow(self):
+        source = "The actor exploited the portal.\n\nThen the company blocked the addresses and notified the FBI."
+        ir = run(source, {
+            "actions": [
+                {"id": "a1", "name": "exploited the portal", "actor": "attacker", "epistemic_status": "supported",
+                 "evidence": [{"quote": "The actor exploited the portal.", "source_ref": "p1"}]},
+                {"id": "a2", "name": "blocked the addresses", "actor": "defender", "epistemic_status": "supported",
+                 "evidence": [{"quote": "the company blocked the addresses", "source_ref": "p2"}]},
+            ],
+            "relations": [{"id": "r1", "from_action": "a1", "to_action": "a2", "kind": "temporal", "epistemic_status": "supported",
+                           "evidence": [{"quote": "Then the company blocked the addresses", "source_ref": "p2"}]}],
+            "target_context": {"hosts": [], "services": []}, "artifacts": []}, "text")
+        self.assertEqual([action["id"] for action in ir["actions"]], ["a1"])
+        self.assertEqual(ir["relations"], [])
+        self.assertEqual(ir["quality"]["excluded_non_attacker_actions"],
+                         [{"id": "a2", "name": "blocked the addresses", "actor": "defender"}])
+
+
+class FocusedPasses(unittest.TestCase):
+    """The environment and relation passes replace the first pass's answers; a bad pass is ignored."""
+
+    SOURCE = ("The actor exploited the portal server WEB-1.\n\n"
+              "Using the portal foothold, the actor queried the database DB-1 over TCP/5432.")
+    FIRST = {"actions": [
+        {"id": "a1", "name": "exploited the portal", "target_host_ref": "x", "epistemic_status": "supported",
+         "evidence": [{"quote": "The actor exploited the portal server WEB-1.", "source_ref": "p1"}]},
+        {"id": "a2", "name": "queried the database", "target_host_ref": "x", "epistemic_status": "supported",
+         "evidence": [{"quote": "the actor queried the database DB-1", "source_ref": "p2"}]}],
+        "relations": [{"id": "r1", "from_action": "a1", "to_action": "a2", "kind": "temporal", "epistemic_status": "inferred"}],
+        "target_context": {"hosts": [], "services": []}, "artifacts": []}
+    CONTEXT = {"hosts": [
+        {"id": "h1", "name": "WEB-1", "role": "portal server", "epistemic_status": "supported",
+         "evidence": [{"quote": "the portal server WEB-1", "source_ref": "p1"}]},
+        {"id": "h2", "name": "DB-1", "role": "database", "epistemic_status": "supported",
+         "evidence": [{"quote": "the database DB-1", "source_ref": "p2"}]}],
+        "services": [{"id": "s1", "name": "database", "host_ref": "h2", "port": 5432, "protocol": "tcp",
+                      "epistemic_status": "supported", "evidence": [{"quote": "over TCP/5432", "source_ref": "p2"}]}],
+        "artifacts": [],
+        "action_hosts": [{"action_id": "a1", "target_host_ref": "h1"},
+                         {"action_id": "a2", "target_host_ref": "h2", "source_host_ref": "h1"}]}
+    RELATIONS = {"relations": [{"id": "r1", "from_action": "a1", "to_action": "a2", "kind": "dependency",
+                                "epistemic_status": "supported", "rationale": "portal foothold",
+                                "evidence": [{"quote": "Using the portal foothold, the actor queried the database DB-1", "source_ref": "p2"}]}]}
+
+    def analyse(self, replies):
+        units, parsed = parse_source("text", self.SOURCE)
+        calls = []
+
+        def fake(messages, **kwargs):
+            calls.append(kwargs["purpose"])
+            return {"text": json.dumps(replies[kwargs["purpose"]]) if not isinstance(replies[kwargs["purpose"]], str)
+                    else replies[kwargs["purpose"]]}
+
+        with patch.object(analysis, "complete", fake):
+            ir = analysis.analyze_source(input_kind="text", content=self.SOURCE, source_name="t", units=units,
+                                         parsed_source=parsed, method="single_pass", name="t")
+        return ir, calls
+
+    def test_passes_supply_hosts_services_action_placement_and_cited_relations(self):
+        ir, calls = self.analyse({"cti_analysis_single_pass": self.FIRST, "cti_analysis_context": self.CONTEXT,
+                                  "cti_analysis_relations": self.RELATIONS})
+        self.assertEqual(calls, ["cti_analysis_single_pass", "cti_analysis_context", "cti_analysis_relations"])
+        self.assertEqual([(h["id"], h["name"]) for h in ir["hosts"]], [("h1", "WEB-1"), ("h2", "DB-1")])
+        self.assertEqual([(a["target_host_ref"], a.get("source_host_ref")) for a in ir["actions"]], [("h1", None), ("h2", "h1")])
+        self.assertEqual((ir["services"][0]["host_ref"], ir["services"][0]["port"]), ("h2", 5432))
+        relation = ir["relations"][0]
+        self.assertEqual((relation["kind"], relation["epistemic_status"]), ("dependency", "supported"))
+
+    def test_unusable_pass_output_falls_back_to_the_first_pass(self):
+        ir, _ = self.analyse({"cti_analysis_single_pass": self.FIRST, "cti_analysis_context": "not json",
+                              "cti_analysis_relations": {"relations": "nope"}})
+        self.assertEqual([a["target_host_ref"] for a in ir["actions"]], ["unknown", "unknown"])
+        self.assertEqual((ir["relations"][0]["kind"], ir["relations"][0]["epistemic_status"]), ("temporal", "inferred"))
+
+
 if __name__ == "__main__":
     unittest.main()

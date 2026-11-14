@@ -1,0 +1,68 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "server housing Equifax’s online dispute portal",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h2",
+   "role": "databases containing PII and credentials",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a2)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Apache Struts Web Framework (s1); it remains unreachable by default.",
+  "Action a5 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a6 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a7 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a8 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied."
+ ]
+}

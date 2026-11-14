@@ -1,0 +1,16 @@
+{
+  "hosts": [
+    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["external"]},
+    {"id": "web", "role": "exposed web application", "image_hint": "oss-wordpress", "component_mode": "real",
+     "services": [{"name": "wordpress", "port": 80, "protocol": "tcp"}], "networks": ["external", "scenario-internal"]},
+    {"id": "db", "role": "internal database", "image_hint": "oss-mysql", "component_mode": "real",
+     "services": [{"name": "mysql", "port": 3306, "protocol": "tcp"}], "networks": ["scenario-internal"]}
+  ],
+  "networks": [{"id": "scenario-internal", "segment": "scenario", "internal": true}, {"id": "external", "segment": "external", "internal": false}],
+  "connections": [
+    {"from_host": "attacker", "to_host": "web", "port": 80, "protocol": "tcp", "reason": "attacker reaches the web application"},
+    {"from_host": "web", "to_host": "db", "port": 3306, "protocol": "tcp", "reason": "WordPress stores its data in MySQL"}
+  ],
+  "verify_blocked": [{"from_host": "attacker", "to_host": "db", "port": 3306, "protocol": "tcp", "reason": "attacker must not reach db"}],
+  "approval": {"approved": false}
+}

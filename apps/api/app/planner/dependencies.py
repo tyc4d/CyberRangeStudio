@@ -174,6 +174,27 @@ def _context_text_candidates(node: Any, host_ref: str | None = None, key: str | 
         yield from _candidate_from_mentions(node, host_ref)
 
 
+# Words that may follow a product name without making it a different product.
+_GENERIC_AFTER_PRODUCT = frozenset({
+    "server", "servers", "service", "services", "web", "http", "https", "httpd", "database", "databases", "db",
+    "version", "container", "image", "host", "hosts", "instance", "instances", "application", "applications", "app",
+    "software", "daemon", "process", "port", "tcp", "udp", "on", "in", "at", "to", "and", "or", "the", "a",
+})
+
+
+def _is_part_of_other_product(text: str, end: int) -> bool:
+    """True when the matched alias is only the first word of a longer product name.
+
+    "Apache Struts", "Apache Tomcat" or "Apache Log4j" are not the Apache HTTP Server: a
+    capitalised word right after the alias that is not a generic noun names another product.
+    """
+    following = re.match(r"[ \t]+([A-Za-z][\w-]*)", text[end:])
+    if not following:
+        return False
+    word = following.group(1)
+    return word[0].isupper() and word.casefold() not in _GENERIC_AFTER_PRODUCT
+
+
 def _candidate_from_mentions(text: str, host_ref: str | None = None):
     aliases: list[str] = []
     for item in load_components():
@@ -187,7 +208,7 @@ def _candidate_from_mentions(text: str, host_ref: str | None = None):
         for match in re.finditer(rf"(?<![\w]){re.escape(alias)}(?![\w])", text, flags=re.IGNORECASE):
             if any(match.start() < end and start < match.end() for start, end in occupied):
                 continue
-            if alias.casefold() == "apache" and re.match(r"\s+tomcat\b", text[match.end():], re.IGNORECASE):
+            if _is_part_of_other_product(text, match.end()):
                 continue
             occupied.append((match.start(), match.end()))
             name = text[match.start():match.end()]
@@ -286,6 +307,47 @@ def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallba
             yield candidate
 
 
+def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Ports the verified source text states next to a host name, one unambiguous port per host.
+
+    Reads the verified quotes cited by actions, hosts and services. A port is attributed to the
+    host named closest before it in the same clause; a host with two different stated ports is
+    left out, because the text does not say which one a given service uses.
+    """
+    verified = {str(item.get("id")): str(item.get("quote") or "") for item in ir.get("evidence", []) or []
+                if isinstance(item, dict) and item.get("quote_verified") is True}
+    texts: list[str] = []
+    for collection in ("actions", "hosts", "services"):
+        for entity in ir.get(collection, []) or []:
+            if isinstance(entity, dict):
+                texts.extend(verified[str(ref)] for ref in entity.get("evidence_refs", []) or [] if str(ref) in verified)
+    found: dict[str, set[int]] = {}
+    for text in dict.fromkeys(texts):
+        for clause in _CLAUSE_SPLIT_RE.split(text):
+            spans = _host_name_spans(clause, hosts)
+            for match in _PORT_RE.finditer(clause):
+                port = int(match.group(1))
+                before = [hid for start, hid in spans if start < match.start()]
+                if before and 1 <= port <= 65535:
+                    found.setdefault(before[-1], set()).add(port)
+    return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
+
+
+def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None:
+    """The host a supplement is about when it answers a question scoped to a host or its service."""
+    item = next((entry for entry in ir.get("missing_items", []) or []
+                 if isinstance(entry, dict) and entry.get("id") == supplement.get("targets_missing_item")), None)
+    where = (item or {}).get("applied_to") or (item or {}).get("target")
+    if not isinstance(where, dict):
+        return None
+    if where.get("collection") == "hosts":
+        return str(where.get("id"))
+    if where.get("collection") == "services":
+        service = next((entry for entry in ir.get("services", []) or [] if entry.get("id") == where.get("id")), None)
+        return service.get("host_ref") if service else None
+    return None
+
+
 def _is_recorded_service(service: dict[str, Any]) -> bool:
     """A service stated by the analysis or the user (not a placeholder, not module-4 output)."""
     return (bool(str(service.get("name") or "").strip())
@@ -293,6 +355,29 @@ def _is_recorded_service(service: dict[str, Any]) -> bool:
             and service.get("source") != "program"
             # services derived from a supplement are rebuilt from that supplement on every run
             and not service.get("supplement_ref"))
+
+
+def _match_component(name: str) -> tuple[dict[str, Any] | None, bool]:
+    """Catalogue match for a recorded name, also when the product is only part of it.
+
+    "VMware Horizon server" is VMware Horizon; a name that mentions two different catalogue
+    products is ambiguous and stays unmatched.
+    """
+    component, is_substitute = match_software(name)
+    if component is not None:
+        return component, is_substitute
+    found = {}
+    remainder = name
+    for mention in _candidate_from_mentions(name):
+        matched, substitute = match_software(mention["name"])
+        if matched is not None:
+            found[matched["id"]] = (matched, substitute)
+            remainder = re.sub(re.escape(mention["name"]), " ", remainder, flags=re.IGNORECASE)
+    # Whatever the name says beyond the product must be generic ("server", "service"); any
+    # other word means it names something else that merely contains a known product word.
+    extra = [word for word in re.findall(r"[A-Za-z][\w-]*", remainder)
+             if word.casefold() not in _GENERIC_AFTER_PRODUCT and word.casefold() not in {"unpatched", "vulnerable", "exposed"}]
+    return next(iter(found.values())) if len(found) == 1 and not extra else (None, False)
 
 
 def _display_name(candidate: dict[str, Any], component: dict[str, Any]) -> str:
@@ -334,7 +419,7 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     for supplement in ir.get("supplements", []) or []:
         if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
             continue
-        for mention in _mentions_bound_to_hosts(supplement["text"], hosts):
+        for mention in _mentions_bound_to_hosts(supplement["text"], hosts, _answered_host(ir, supplement)):
             mention["from_supplement"] = str(supplement.get("id") or "supplement")
             candidates.append(mention)
 
@@ -365,10 +450,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         name = candidate["name"].strip()
         if not name:
             continue
-        component, _ = match_software(name)
+        component, _ = _match_component(name)
         normalized_name = component["id"] if component else name.casefold()
         same_product = [item for item in unique
-                        if (match_software(item["name"])[0] or {}).get("id", item["name"].casefold()) == normalized_name]
+                        if (_match_component(item["name"])[0] or {}).get("id", item["name"].casefold()) == normalized_name]
         matches = [item for item in same_product if item.get("host_ref") == candidate.get("host_ref")]
         if not matches and candidate.get("from_mention") and not candidate.get("host_explicit") and len(same_product) == 1:
             # The text does not say where this product runs; it is the one already known.
@@ -451,14 +536,14 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         return f"missing-product-{_slug56(name)}-version" in analysis_question_ids
 
     def add_missing(key: str, field: str, reason: str, *, category: str = "software", status: str = "open",
-                    resolution: str | None = None) -> None:
+                    resolution: str | None = None, severity: str = "major") -> None:
         ident = "planner_dep_" + _slug(key)
         if ident in seen_missing:
             return
         seen_missing.add(ident)
         entry: dict[str, Any] = {
             "id": ident, "field": field, "category": category, "reason": reason,
-            "severity": "major", "status": status,
+            "severity": severity, "status": status,
         }
         if resolution:
             entry["resolution"] = resolution
@@ -474,7 +559,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     used_user_ids: set[str] = set()
     for candidate in candidates:
         name = candidate["name"]
-        component, is_substitute = match_software(name)
+        component, is_substitute = _match_component(name)
         existing_user = next((item for item in existing_user_services
                               if item.get("name", "").casefold() == name.casefold()
                               and (not item.get("version") or not candidate.get("version")
@@ -492,7 +577,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained["is_substitute"] = False
                 if retained not in services:
                     services.append(retained)
-            add_missing(f"software-{name}-{candidate.get('version', '')}",
+                    if retained.get("host_ref"):
+                        # Still this host's service, even without a catalogue component.
+                        generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
+            add_missing(f"software-{name}-{candidate.get('version') or ''}",
                         f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
                         "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.")
             continue
@@ -641,6 +729,16 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 add_missing(f"cve-{cve}", f"affected software for {cve}",
                             "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.")
 
+    # A port the source states for a host ("to victim-web over TCP/80") belongs to that host's
+    # service when the host has exactly one service still lacking a port.
+    for hid, port in _stated_host_ports(result, hosts).items():
+        portless = [service for service in services if service.get("host_ref") == hid and not service.get("port")
+                    and service.get("id") not in _PLACEHOLDER_SERVICE_IDS]
+        taken = {service.get("port") for service in services if service.get("host_ref") == hid}
+        if len(portless) == 1 and port not in taken:
+            portless[0]["port"] = port
+            portless[0].setdefault("field_sources", {})["port"] = "source_quote"
+
     # Keep user-defined hosts intact; remove only links to module-4 generated services from the prior run.
     old_hosts = result.get("hosts", [])
     by_id: dict[str, dict[str, Any]] = {host.get("id"): copy.deepcopy(host) for host in old_hosts if host.get("id")}
@@ -669,6 +767,11 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    if actions and not any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
+        # Nothing to build: say so as a blocker instead of letting an empty plan look deployable.
+        add_missing("no-target-software", "目標軟體／服務",
+                    "來源與補件都沒有指出任何目標軟體、服務或弱點，無法規劃可重現的環境。請補上受害系統的產品與版本，或確認此情境不部署。",
+                    severity="blocker")
     # The "no service known yet" placeholder has done its job once real services exist.
     if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]

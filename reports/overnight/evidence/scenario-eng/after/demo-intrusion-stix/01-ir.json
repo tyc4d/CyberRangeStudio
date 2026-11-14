@@ -1,0 +1,495 @@
+{
+ "schema_version": "1.0",
+ "name": "demo-intrusion.stix",
+ "provenance": {
+  "input_kind": "stix2.1",
+  "input_sha256": "04a164b0513261a6d19d0e8fc361c8bb352f6ef194f5e8532ee6c89af0474412",
+  "source_name": "demo-intrusion.stix"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "External web reconnaissance",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "Public web application exploitation",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "Internal database discovery",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a4",
+   "name": "Database collection from web host",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The reconnaissance preceded the exploitation activity",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "With the web-shell foothold on victim-web",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The web-shell foothold and discovery of db were prerequisites for this access",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing web application host",
+   "source": "llm",
+   "name": "victim-web",
+   "network_placement": "external network",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "internal database host",
+   "source": "llm",
+   "name": "db",
+   "network_placement": "internal network",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "web service",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "database service",
+   "source": "llm",
+   "host_ref": "h2",
+   "port": 5432,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "From the external network, the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the internet-facing web application; this reconnaissance preceded the exploitation activity and selected the exposed service as the target.",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[0].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "From the external network, the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the internet-facing web application; this reconnaissanc"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Next, the attacker exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell; the exposed application was the entry point for this initial access.",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[1].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Next, the attacker exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell; the exposed application was the ent"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network and identified `db` as an internal database host; `db` was not directly reachable from the external network.",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[2].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network and identified `db` as an internal database host; `db` was not directl"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records.",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[3].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Finally, the attacker used `victim web` to connect to `db` over TCP/5432 and collect records."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "this reconnaissance preceded the exploitation activity",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[0].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "this reconnaissance preceded the exploitation activity"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[2].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With the web shell foothold on `victim web`, the attacker enumerated the internal network"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records. The web-shell foothold and discovery of `db` were prerequisites for this access",
+   "locator": {
+    "kind": "stix_path",
+    "ref": "objects[3].description"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Finally, the attacker used `victim web` to connect to `db` over TCP/5432 and collect records. The web shell foothold and discovery of `db` were prerequisites fo"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim-web — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim-web 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim-web",
+    "action:a1 — External web reconnaissance",
+    "action:a2 — Public web application exploitation"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim-web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim-web — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim-web 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim-web",
+    "action:a1 — External web reconnaissance",
+    "action:a2 — Public web application exploitation"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim-web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim-web — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim-web 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim-web",
+    "action:a1 — External web reconnaissance",
+    "action:a2 — Public web application exploitation"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim-web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "external network",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "db — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a3 — Internal database discovery",
+    "action:a4 — Database collection from web host"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "db — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a3 — Internal database discovery",
+    "action:a4 — Database collection from web host"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "db — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a3 — Internal database discovery",
+    "action:a4 — Database collection from web host"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internal network",
+     "source_ref": "hosts:h2.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 4,
+  "inferred_count": 0,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": []
+ },
+ "id": "scn_evidence"
+}

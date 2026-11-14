@@ -1,0 +1,13 @@
+# db container networks / routes (is the 'internal database' on a non-internal bridge with a default route?)
+cr-demo-infra-eng-2dab330a-edge ip=172.26.0.2 gw=172.26.0.1
+cr-demo-infra-eng-2dab330a-internal ip=172.29.0.2 gw=invalid IP
+
+cr-demo-infra-eng-2dab330a-edge internal=false
+cr-demo-infra-eng-2dab330a-internal internal=true
+cr-demo-infra-eng-2dab330a-dmz internal=true
+default via 172.26.0.1 dev eth0 
+172.26.0.0/16 dev eth0 scope link  src 172.26.0.2 
+172.29.0.0/16 dev eth1 scope link  src 172.29.0.2 
+# web -> db via every db IP
+172.26.0.2 CONNECTED
+172.29.0.2 BLOCKED timed out

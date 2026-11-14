@@ -460,6 +460,9 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
 
 
 _PLACEHOLDER_SERVICE_IDS = {"service-unspecified"}
+# Exploitation techniques: of a public-facing app, for client execution, of remote services,
+# for privilege escalation, credential access and defense evasion.
+_EXPLOIT_TECHNIQUES = ("T1190", "T1203", "T1210", "T1068", "T1212", "T1211")
 _VERSION_IN_TEXT = re.compile(r"(?i)(?:\b\d{1,4}\.){1,3}\d{1,4}(?:[-+][a-z0-9.]+)?")
 
 
@@ -488,6 +491,14 @@ def _generic_service_version_questions(ir: dict[str, Any], services: list[dict[s
                        if action.get("id") and name_key in _text(action).casefold() and str(action.get("id")) not in linked_ids]
         linked = [action for action in actions if str(action.get("id")) in linked_ids]
         cves = [str(cve) for cve in (service.get("cve") or [])]
+        # The release matters when the service is what gets exploited. A service that is merely
+        # logged in to or switched off (RDP, an antivirus) is covered by its configuration question.
+        exploited = any(
+            str(action.get("attack_technique") or "").upper().startswith(_EXPLOIT_TECHNIQUES)
+            or re.search(r"\b(?:exploit\w*|vulnerab\w*|injection|CVE-\d{4}-\d+)\b", _text(action), re.IGNORECASE)
+            for action in linked)
+        if not cves and not exploited:
+            continue
         known = [fact for fact in [
             _known_fact("受害軟體/服務", name, f"services:{service_id}.name", service),
             _known_fact("相關漏洞", ", ".join(cves), f"services:{service_id}.cve", service) if cves else None,
