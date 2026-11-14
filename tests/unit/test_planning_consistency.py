@@ -315,6 +315,42 @@ class ProtocolPorts(unittest.TestCase):
         self.assertEqual(_port_for({"name": "HTTPS listener"}), (443, "tcp"))
 
 
+class StatedPortsForGenericServices(unittest.TestCase):
+    """Built-in demo regression: a generically named service still gets the port the source states."""
+
+    def ir(self):
+        quotes = ["the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the web application",
+                  "the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records"]
+        return base_ir(
+            actions=[action("a1", "sent HTTP requests", "h1", evidence_refs=["e1"]),
+                     action("a4", "collect records", "h2", source_host_ref="h1", evidence_refs=["e2"])],
+            hosts=[{"id": "h1", "name": "victim-web", "role": "internet-facing web application host",
+                    "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "name": "db", "role": "internal database host", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "web service", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s2", "name": "database service", "host_ref": "h2", "epistemic_status": "supported", "source": "llm"}],
+            evidence=[{"id": f"e{i}", "quote": quote, "locator": {"kind": "paragraph", "ref": str(i)}, "quote_verified": True}
+                      for i, quote in enumerate(quotes, start=1)])
+
+    def test_ports_hosts_and_paths_follow_the_source(self):
+        planned = plan_dependencies(self.ir())
+        services = {service["id"]: service for service in planned["services"]}
+        self.assertEqual((services["s1"]["port"], services["s2"]["port"]), (80, 5432))
+        self.assertEqual(services["s1"]["field_sources"], {"port": "source_quote"})
+        self.assertEqual({host["id"]: host["service_refs"] for host in planned["hosts"]}, {"h1": ["s1"], "h2": ["s2"]})
+        plan = build_environment_plan(planned)
+        self.assertEqual({(c["from_host"], c["to_host"], c["port"]) for c in plan["connections"]},
+                         {("attacker", "h1", 80), ("h1", "h2", 5432)})
+        self.assertEqual([(b["from_host"], b["to_host"], b["port"]) for b in plan["verify_blocked"]], [("attacker", "h2", 5432)])
+
+    def test_unverified_quote_or_two_ports_for_one_host_assign_nothing(self):
+        ir = self.ir()
+        ir["evidence"][0]["quote_verified"] = False
+        ir["evidence"][1]["quote"] += "; `db` also listened on TCP/3306"
+        planned = plan_dependencies(ir)
+        self.assertFalse(any("port" in service for service in planned["services"]))
+
+
 class UnsupportedComponents(unittest.TestCase):
     def test_undeployable_platform_is_not_presented_as_real_or_substitute(self):
         ir = base_ir(actions=[action("a1", "Exploit VMware Horizon", "h1", attack_technique="T1190")],

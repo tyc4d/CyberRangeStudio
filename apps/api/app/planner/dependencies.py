@@ -307,6 +307,32 @@ def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallba
             yield candidate
 
 
+def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Ports the verified source text states next to a host name, one unambiguous port per host.
+
+    Reads the verified quotes cited by actions, hosts and services. A port is attributed to the
+    host named closest before it in the same clause; a host with two different stated ports is
+    left out, because the text does not say which one a given service uses.
+    """
+    verified = {str(item.get("id")): str(item.get("quote") or "") for item in ir.get("evidence", []) or []
+                if isinstance(item, dict) and item.get("quote_verified") is True}
+    texts: list[str] = []
+    for collection in ("actions", "hosts", "services"):
+        for entity in ir.get(collection, []) or []:
+            if isinstance(entity, dict):
+                texts.extend(verified[str(ref)] for ref in entity.get("evidence_refs", []) or [] if str(ref) in verified)
+    found: dict[str, set[int]] = {}
+    for text in dict.fromkeys(texts):
+        for clause in _CLAUSE_SPLIT_RE.split(text):
+            spans = _host_name_spans(clause, hosts)
+            for match in _PORT_RE.finditer(clause):
+                port = int(match.group(1))
+                before = [hid for start, hid in spans if start < match.start()]
+                if before and 1 <= port <= 65535:
+                    found.setdefault(before[-1], set()).add(port)
+    return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
+
+
 def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None:
     """The host a supplement is about when it answers a question scoped to a host or its service."""
     item = next((entry for entry in ir.get("missing_items", []) or []
@@ -551,6 +577,9 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained["is_substitute"] = False
                 if retained not in services:
                     services.append(retained)
+                    if retained.get("host_ref"):
+                        # Still this host's service, even without a catalogue component.
+                        generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
             add_missing(f"software-{name}-{candidate.get('version') or ''}",
                         f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
                         "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.")
@@ -699,6 +728,16 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             for cve in cves:
                 add_missing(f"cve-{cve}", f"affected software for {cve}",
                             "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.")
+
+    # A port the source states for a host ("to victim-web over TCP/80") belongs to that host's
+    # service when the host has exactly one service still lacking a port.
+    for hid, port in _stated_host_ports(result, hosts).items():
+        portless = [service for service in services if service.get("host_ref") == hid and not service.get("port")
+                    and service.get("id") not in _PLACEHOLDER_SERVICE_IDS]
+        taken = {service.get("port") for service in services if service.get("host_ref") == hid}
+        if len(portless) == 1 and port not in taken:
+            portless[0]["port"] = port
+            portless[0].setdefault("field_sources", {})["port"] = "source_quote"
 
     # Keep user-defined hosts intact; remove only links to module-4 generated services from the prior run.
     old_hosts = result.get("hosts", [])

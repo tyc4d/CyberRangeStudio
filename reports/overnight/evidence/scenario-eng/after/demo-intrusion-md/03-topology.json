@@ -7,7 +7,13 @@
     "scenario-internal",
     "external"
    ],
-   "services": [],
+   "services": [
+    {
+     "name": "web service",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
    "exposure_basis": "stated",
    "runtime": "container",
    "component_mode": "substitute"
@@ -54,6 +60,13 @@
  ],
  "connections": [
   {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2 require access to web service.",
+   "port": 80,
+   "protocol": "tcp"
+  },
+  {
    "from_host": "h1",
    "to_host": "h2",
    "reason": "Action a3 is stated to run from h1 against h2.",
@@ -66,6 +79,12 @@
    "from": "*",
    "to": "*",
    "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 80
   },
   {
    "from": "h1",
@@ -87,7 +106,6 @@
   }
  ],
  "notes": [
-  "An attacker host was added as a lab scaffold because the IR did not define one.",
-  "No port is known for service web service (s1); it remains unreachable by default."
+  "An attacker host was added as a lab scaffold because the IR did not define one."
  ]
 }
