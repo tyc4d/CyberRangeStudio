@@ -157,3 +157,25 @@ test("參照不一致的情境：依賴→拓樸→IaC→部署→驗證 每一�
   const rec = await (await page.request.get(`/api/deploy/${id}/records`)).json();
   expect(rec.records ?? []).toEqual([]);
 });
+
+test("部署紀錄：失敗的嘗試顯示原因，不是「—」", async ({ page }) => {
+  const id = seed();
+  // A real refused/failed attempt, made against the real API (the UI now disables this button in this state).
+  const r = await page.request.post(`/api/deploy/${id}/down`, { data: {} });
+  expect(r.status(), "down without a compose file fails").toBeGreaterThanOrEqual(400);
+  await open(page, id, "/deploy");
+  const row = page.getByTestId("deploy-records").locator("tbody tr").first();
+  await expect(row).toContainText("關閉");
+  await expect(row).toContainText("failed");
+  await expect(row.locator("td").last()).not.toHaveText("—");
+  await shot(page, { path: path.join(EVIDENCE, "07-deploy-record-reason.png"), fullPage: true });
+});
+
+test("攻擊流程：1280×720 展開設計檢查（截圖供人工檢視重疊）", async ({ page }) => {
+  const id = seed();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await open(page, id, "/flow");
+  await expect(page.locator(".react-flow")).toBeVisible();
+  await page.getByText("隨畫布即時計算").click();
+  await shot(page, { path: path.join(EVIDENCE, "08-flow-1280x720.png") });
+});

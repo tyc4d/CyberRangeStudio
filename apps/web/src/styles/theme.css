@@ -430,7 +430,12 @@ a.next-action-link { display: block; } a.next-action-link:hover { text-decoratio
 .console-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--standard) var(--ease); }
 .console.open .console-body { grid-template-rows: 1fr; }
 .console-body > div { overflow: hidden; min-height: 0; }
-.console-list { height: 210px; max-height: 28vh; overflow: auto; border-top: 1px solid var(--border); margin: 0; padding: 10px 16px; list-style: none; }
+.console-list { height: auto; max-height: min(210px, 28vh); overflow: auto; border-top: 1px solid var(--border); margin: 0; padding: 10px 16px; list-style: none; }
+/* Short viewports: an open console must not squeeze the canvas until the legend and minimap cover the nodes. */
+@media (max-height: 800px) {
+  .console-list { max-height: 18vh; }
+  .canvas-col:has(.console.open) .react-flow__minimap { display: none; }
+}
 .console-empty { display: flex; align-items: center; gap: 15px; padding: 16px; font-size: 12px; color: var(--text-dim); }
 .finding { display: flex; width: 100%; justify-content: flex-start; align-items: flex-start; gap: 12px; text-align: left; white-space: normal; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 12px 4px; background: transparent; font-weight: 400; }
 .finding:active:not(:disabled) { transform: none; }

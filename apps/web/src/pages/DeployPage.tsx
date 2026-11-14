@@ -91,6 +91,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const rest = s && typeof s === "object" && !Array.isArray(s)
     ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services"].includes(k)))
     : null;
+  // The status endpoint answers state=error with this text when no compose file exists. That is "nothing to deploy yet", not a fault.
+  const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
   const ACTION: Record<string, string> = { up: "啟動", down: "關閉" };
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
   const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details) }));
@@ -131,7 +133,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
       <div className="card flush">
         <div className="card-head">
           <h2>目前狀態</h2>
-          {state && <span className={`pill ${stateClass(state)}`} data-testid="deploy-state">{state}</span>}
+          {state && (noCompose(s)
+            ? <span className="pill status-NOT_TESTED" data-testid="deploy-state" title="後端狀態：error（compose file has not been generated）">未部署（尚未生成 IaC）</span>
+            : <span className={`pill ${stateClass(state)}`} data-testid="deploy-state">{state}</span>)}
           <div className="right">
             {status.data && lastAt && <span className="muted" style={{ fontSize: 12 }}>更新於 {lastAt.toLocaleTimeString("zh-TW", { hour12: false })}</span>}
             <label className="row muted" style={{ gap: 5, fontSize: 12 }}>
@@ -144,7 +148,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
           {status.error && <ApiNotice error={status.error} what="部署狀態" onRetry={() => status.reload()} />}
           {status.error && status.data && <div className="muted" style={{ fontSize: 12 }}>以下是最後一次成功取得的狀態，可能已過期。</div>}
           {status.loading && !status.data && !status.error && <Busy label="讀取部署狀態…" />}
-          {status.data !== null && status.data !== undefined && (
+          {noCompose(s) && <span className="muted" style={{ fontSize: 13 }}>這個情境還沒有生成部署設定（IaC），所以沒有任何容器，也沒有可查詢的部署。</span>}
+          {status.data !== null && status.data !== undefined && !noCompose(s) && (
             <>
               {containers !== undefined && (
                 <div>
@@ -162,7 +167,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
       <div className="card flush">
         <div className="card-head">
           <h2>健康檢查</h2>
-          {typeof health.data?.state === "string" && <span className={`pill ${stateClass(health.data.state)}`} data-testid="health-state">{health.data.state}</span>}
+          {typeof health.data?.state === "string" && (noCompose(health.data)
+            ? <span className="pill status-NOT_TESTED" data-testid="health-state">未檢查（未部署）</span>
+            : <span className={`pill ${stateClass(health.data.state)}`} data-testid="health-state">{health.data.state}</span>)}
           <div className="right">
             {health.loading && <span className="spinner" />}
             <button className="small" onClick={() => health.reload()} disabled={health.loading}>重新檢查</button>
@@ -172,6 +179,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
           {health.error ? <ApiNotice error={health.error} what="健康檢查" onRetry={() => health.reload()} />
             : health.loading && !health.data ? <Busy label="檢查中…" />
             : health.data === null || health.data === undefined ? <span className="muted">沒有健康檢查結果。</span>
+            : noCompose(health.data) ? <span className="muted" style={{ fontSize: 13 }}>尚未部署，沒有可檢查的容器。這不是健康，也不是故障。</span>
             : <DataView data={health.data} />}
         </div>
       </div>
