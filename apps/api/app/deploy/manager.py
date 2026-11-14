@@ -21,6 +21,11 @@ from app.planner.catalogue import load_components
 
 _BASE_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
 
+# VM settings are deliberately bounded independently of the Compose backend.
+VM_LIMITS = {"vcpus": 4, "memory_mib": 8192, "disk_gib": 100, "count": 4}
+VM_OWNER = "cyberrange"
+VM_URI = "qemu:///system"
+
 
 def project_name(scenario_id: str) -> str:
     return f"cr-demo-{validate_id(scenario_id)}"
@@ -69,6 +74,278 @@ def records(scenario_id: str, limit: int = 100) -> list[dict[str, Any]]:
     return [{"id": row["id"], "scenario_id": row["scenario_id"], "project_name": row["project_name"],
              "action": row["action"], "state": row["state"], "details": json.loads(row["details"]),
              "recorded_at": row["recorded_at"]} for row in rows]
+
+
+def vm_preflight(image: str | Path | None = None, *, authorized: bool = False) -> dict[str, Any]:
+    """Check the optional local libvirt/KVM backend without changing the host."""
+    required = ("qemu-system-x86_64", "qemu-img", "virsh", "libvirtd")
+    paths = {name: shutil.which(name) for name in required}
+    missing = [name for name, path in paths.items() if not path]
+    if missing:
+        return {"ok": False, "backend": "libvirt-qemu", "category": "tools_unavailable",
+                "message": "VM 工具未安裝", "missing_tools": missing, "tools": paths,
+                "kvm": Path("/dev/kvm").exists(), "image": str(image) if image else None}
+    kvm = Path("/dev/kvm")
+    if not kvm.exists() or not os.access(kvm, os.R_OK | os.W_OK):
+        return {"ok": False, "backend": "libvirt-qemu", "category": "hardware_or_permission",
+                "message": "KVM 硬體或權限不足", "missing_tools": [], "tools": paths,
+                "kvm": kvm.exists(), "image": str(image) if image else None}
+    if not image or not Path(image).is_file():
+        return {"ok": False, "backend": "libvirt-qemu", "category": "image_missing",
+                "message": "VM 映像缺失", "missing_tools": [], "tools": paths,
+                "kvm": True, "image": str(image) if image else None}
+    if not authorized:
+        return {"ok": False, "backend": "libvirt-qemu", "category": "authorization_or_configuration",
+                "message": "授權或設定尚未完成：需明確確認映像授權", "missing_tools": [], "tools": paths,
+                "kvm": True, "image": str(image)}
+    # A readable image alone does not establish libvirt authorization.
+    return {"ok": False, "backend": "libvirt-qemu", "category": "authorization_or_configuration",
+            "message": "授權或 libvirt 設定尚未確認", "missing_tools": [], "tools": paths,
+            "kvm": True, "image": str(image), "requires_explicit_authorized_image": True}
+
+
+def _vm_run(args: list[str], timeout: int = 30) -> dict[str, Any]:
+    return _run(args, timeout=timeout)
+
+
+def _vm_preflight_pass(image: str | Path | None, *, authorized: bool = False) -> dict[str, Any]:
+    result = vm_preflight(image, authorized=authorized)
+    if result["category"] == "authorization_or_configuration" and authorized:
+        # Confirm local system libvirt is actually reachable. Never infer authorization
+        # from installed binaries or silently elevate privileges.
+        virsh = shutil.which("virsh")
+        probe = _vm_run([virsh, "-c", VM_URI, "uri"], timeout=5) if virsh else {"returncode": 127}
+        if probe["returncode"] == 0:
+            result.update(ok=True, category="ready", message="VM backend 可用")
+        else:
+            result.update(category="authorization_or_configuration", message="授權或 libvirt 設定尚未完成",
+                          detail=probe.get("stderr", "libvirt 不可達")[:500])
+    return result
+
+
+def _vm_identity(scenario_id: str, vm_id: str) -> str:
+    return f"cr-{validate_id(scenario_id)}-{validate_id(vm_id)}"
+
+
+def _vm_inspect(scenario_id: str, vm_id: str) -> dict[str, Any]:
+    name = _vm_identity(scenario_id, vm_id)
+    virsh = shutil.which("virsh")
+    if not virsh:
+        return {"state": "unavailable", "error": "virsh executable is not installed"}
+    result = _vm_run([virsh, "-c", VM_URI, "domstate", name], timeout=10)
+    if result["returncode"]:
+        return {"state": "absent", "name": name}
+    if not _vm_owned(scenario_id, vm_id):
+        return {"state": "unverified", "name": name, "error": "VM ownership metadata is absent"}
+    state = result["stdout"].strip().lower()
+    return {"state": "running" if state == "running" else "stopped", "name": name}
+
+
+def vm_status(scenario_id: str, vm_id: str) -> dict[str, Any]:
+    """Read-only VM status, including ownership verification."""
+    scenario_id = validate_id(scenario_id)
+    result = _vm_inspect(scenario_id, vm_id)
+    return {"scenario_id": scenario_id, "vm_id": validate_id(vm_id), **result}
+
+
+def vm_create(scenario_id: str, vm_id: str, image: str | Path, *, authorized: bool = False, vcpus: int = 2,
+              memory_mib: int = 2048, disk_gib: int = 30, timeout: int = 60,
+              cancel_event: Any = None) -> dict[str, Any]:
+    """Create a bounded, owned VM from an explicitly supplied local image."""
+    scenario_id, vm_id = validate_id(scenario_id), validate_id(vm_id)
+    if not (1 <= vcpus <= VM_LIMITS["vcpus"] and 512 <= memory_mib <= VM_LIMITS["memory_mib"]
+            and 8 <= disk_gib <= VM_LIMITS["disk_gib"]):
+        raise PlanError(["VM resources exceed configured limits"])
+    preflight = _vm_preflight_pass(image, authorized=authorized)
+    if not preflight["ok"]:
+        record(scenario_id, "vm_create", "preflight_failed", {k: v for k, v in preflight.items() if k != "detail"})
+        return {"ok": False, "state": "preflight_failed", "preflight": preflight}
+    virsh = shutil.which("virsh")
+    name = _vm_identity(scenario_id, vm_id)
+    existing = vm_status(scenario_id, vm_id)
+    if existing["state"] != "absent":
+        return {"ok": False, "state": existing["state"], "error": "refusing to replace an existing or unverified VM"}
+    list_result = _vm_run([virsh, "-c", VM_URI, "list", "--all", "--name"], timeout=10)
+    owned_count = 0
+    for candidate in list_result.get("stdout", "").splitlines():
+        if not candidate.startswith("cr-"):
+            continue
+        metadata = _vm_run([virsh, "-c", VM_URI, "dumpxml", candidate], timeout=10)
+        if metadata["returncode"] == 0 and (f"owner='{VM_OWNER}'" in metadata["stdout"]
+                                            or f'owner="{VM_OWNER}"' in metadata["stdout"]):
+            owned_count += 1
+    if owned_count >= VM_LIMITS["count"]:
+        return {"ok": False, "state": "resource_limit", "error": "VM count limit reached"}
+    image_path = Path(image).resolve()
+    # Create an owned qcow2 overlay so the supplied source image remains untouched.
+    # The guest NIC has no host port forwards; management ports stay guest-only.
+    vm_dir = config.DATA_DIR / "vms" / scenario_id
+    vm_dir.mkdir(parents=True, exist_ok=True)
+    disk_path = vm_dir / f"{vm_id}.qcow2"
+    disk_result = _vm_run([shutil.which("qemu-img") or "qemu-img", "create", "-f", "qcow2", "-F", "qcow2",
+                           "-b", str(image_path), str(disk_path), f"{disk_gib}G"], timeout=timeout)
+    if disk_result["returncode"]:
+        return {"ok": False, "state": "failed", "error": disk_result["stderr"],
+                "preflight": preflight}
+    xml = (f"<domain type='kvm' xmlns:cr='https://cyberrange.local/libvirt/1.0'><name>{name}</name>"
+           f"<metadata><cr:ownership owner='{VM_OWNER}' scenario='{scenario_id}' vmid='{vm_id}'/>"
+           f"</metadata><memory unit='MiB'>{memory_mib}</memory>"
+           f"<vcpu>{vcpus}</vcpu><os><type arch='x86_64'>hvm</type></os><devices>"
+           f"<disk type='file' device='disk'><driver name='qemu' type='qcow2'/><source file='{disk_path}'/>"
+           f"<target dev='vda' bus='virtio'/></disk><interface type='network'><source network='default'/>"
+           "<model type='virtio'/></interface><graphics type='none'/></devices></domain>")
+    if cancel_event is not None and cancel_event.is_set():
+        return {"ok": False, "state": "cancelled", "preflight": preflight}
+    import tempfile
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".xml", encoding="utf-8") as domain_file:
+            domain_file.write(xml)
+            domain_file.flush()
+            result = _vm_run([virsh, "-c", VM_URI, "define", domain_file.name], timeout=timeout)
+        if result["returncode"]:
+            outcome = {"ok": False, "state": "failed", "error": result["stderr"]}
+            disk_path.unlink(missing_ok=True)
+        else:
+            outcome = {"ok": True, "state": "defined", "name": name, "preflight": preflight}
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        outcome = {"ok": False, "state": "failed", "error": str(exc)}
+        # Cleanup only after verifying the exact product owner/scenario metadata.
+        current = _vm_inspect(scenario_id, vm_id)
+        if current.get("state") in {"running", "stopped"}:
+            vm_destroy(scenario_id, vm_id, timeout=timeout)
+        else:
+            disk_path.unlink(missing_ok=True)
+    audit = record(scenario_id, "vm_create", outcome["state"],
+                   {"vm_id": vm_id, "owner": VM_OWNER, "backend": "libvirt-qemu", "resources":
+                    {"vcpus": vcpus, "memory_mib": memory_mib, "disk_gib": disk_gib},
+                    "image": str(image_path), "disk": str(disk_path), "result": outcome})
+    outcome["deployment_record"] = audit
+    return outcome
+
+
+def _vm_owned(scenario_id: str, vm_id: str) -> bool:
+    """Verify exact domain metadata before any destructive operation."""
+    name = _vm_identity(scenario_id, vm_id)
+    virsh = shutil.which("virsh")
+    if not virsh:
+        return False
+    result = _vm_run([virsh, "-c", VM_URI, "dumpxml", name], timeout=10)
+    xml = result.get("stdout", "")
+    return (result["returncode"] == 0 and f"<name>{name}</name>" in xml
+            and (f"owner='{VM_OWNER}'" in xml or f'owner="{VM_OWNER}"' in xml)
+            and (f"scenario='{scenario_id}'" in xml or f'scenario="{scenario_id}"' in xml)
+            and (f"vmid='{validate_id(vm_id)}'" in xml or f'vmid="{validate_id(vm_id)}"' in xml))
+
+
+def vm_boot(scenario_id: str, vm_id: str, *, timeout: int = 120, cancel_event: Any = None,
+            authorized: bool = False) -> dict[str, Any]:
+    scenario_id, vm_id = validate_id(scenario_id), validate_id(vm_id)
+    virsh = shutil.which("virsh")
+    preflight = _vm_preflight_pass("/nonexistent/validated-image-sentinel", authorized=authorized)
+    # An existing defined domain carries its image, so only runtime/tool/authorization
+    # checks apply here. Keep KVM and libvirt checks explicit.
+    if preflight["category"] not in {"image_missing", "authorization_or_configuration"}:
+        if not preflight["ok"]:
+            return {"ok": False, "state": "preflight_failed", "preflight": preflight}
+    if preflight["category"] in {"image_missing", "authorization_or_configuration"}:
+        tools_ready = all(shutil.which(tool) for tool in ("qemu-system-x86_64", "qemu-img", "virsh", "libvirtd"))
+        if not tools_ready or not Path("/dev/kvm").exists() or not os.access("/dev/kvm", os.R_OK | os.W_OK):
+            return {"ok": False, "state": "preflight_failed", "preflight": vm_preflight()}
+        if not authorized:
+            return {"ok": False, "state": "preflight_failed", "preflight": vm_preflight(authorized=False)}
+        probe = _vm_run([virsh, "-c", VM_URI, "uri"], timeout=5) if virsh else {"returncode": 127}
+        if probe["returncode"]:
+            return {"ok": False, "state": "preflight_failed", "preflight": {"ok": False,
+                    "category": "authorization_or_configuration", "message": "授權或 libvirt 設定尚未完成"}}
+    if not _vm_owned(scenario_id, vm_id):
+        return {"ok": False, "state": "unverified", "error": "VM ownership could not be verified"}
+    if cancel_event is not None and cancel_event.is_set():
+        return {"ok": False, "state": "cancelled"}
+    result = _vm_run([virsh, "-c", VM_URI, "start", _vm_identity(scenario_id, vm_id)], timeout=timeout)
+    state = "booting" if result["returncode"] == 0 else "failed"
+    if result["returncode"] and _vm_owned(scenario_id, vm_id):
+        cleanup = vm_destroy(scenario_id, vm_id, timeout=min(timeout, 30))
+    else:
+        cleanup = None
+    audit = record(scenario_id, "vm_boot", state, {"vm_id": vm_id, "backend": "libvirt-qemu",
+                                                     "exit_code": result["returncode"],
+                                                     "stderr": result["stderr"], "cleanup": cleanup})
+    return {"ok": result["returncode"] == 0, "state": state, "vm_id": vm_id,
+            "command_result": result, "deployment_record": audit}
+
+
+def vm_readiness(scenario_id: str, vm_id: str, *, timeout: int = 60, cancel_event: Any = None,
+                 guest_command: list[str] | None = None) -> dict[str, Any]:
+    """Poll hypervisor state only; guest readiness requires an explicit safe agent command."""
+    scenario_id, vm_id = validate_id(scenario_id), validate_id(vm_id)
+    deadline = time.monotonic() + max(1, timeout)
+    virsh = shutil.which("virsh")
+    if not virsh or not _vm_owned(scenario_id, vm_id):
+        return {"ready": False, "state": "unverified", "guest_ready": False}
+    while time.monotonic() < deadline:
+        if cancel_event is not None and cancel_event.is_set():
+            return {"ready": False, "state": "cancelled", "guest_ready": False}
+        state = _vm_inspect(scenario_id, vm_id).get("state")
+        if state != "running":
+            return {"ready": False, "state": state, "guest_ready": False}
+        # Never count hypervisor running alone as Windows ready.
+        if guest_command:
+            if any(token.lower() in {"cmdkey", "password", "passwd", "secret"} for token in guest_command):
+                return {"ready": False, "state": "unsafe_probe_rejected", "guest_ready": False}
+            result = _vm_run([virsh, "-c", VM_URI, "qemu-agent-command", _vm_identity(scenario_id, vm_id),
+                              json.dumps({"execute": "guest-ping"})], timeout=5)
+            if result["returncode"] == 0:
+                return {"ready": True, "state": "running", "guest_ready": True,
+                        "probe": "libvirt qemu guest-ping"}
+        else:
+            return {"ready": False, "state": "running", "guest_ready": False,
+                    "reason": "guest readiness probe is not configured"}
+        time.sleep(min(1, max(0, deadline - time.monotonic())))
+    return {"ready": False, "state": "timeout", "guest_ready": False}
+
+
+def vm_stop(scenario_id: str, vm_id: str, *, timeout: int = 30) -> dict[str, Any]:
+    scenario_id, vm_id = validate_id(scenario_id), validate_id(vm_id)
+    virsh = shutil.which("virsh")
+    if not virsh or not _vm_owned(scenario_id, vm_id):
+        return {"ok": False, "state": "unverified", "error": "VM ownership could not be verified"}
+    result = _vm_run([virsh, "-c", VM_URI, "shutdown", _vm_identity(scenario_id, vm_id)], timeout=timeout)
+    state = "stopping" if result["returncode"] == 0 else "failed"
+    audit = record(scenario_id, "vm_stop", state, {"vm_id": vm_id, "exit_code": result["returncode"],
+                                                     "stderr": result["stderr"]})
+    return {"ok": result["returncode"] == 0, "state": state, "command_result": result,
+            "deployment_record": audit}
+
+
+def vm_destroy(scenario_id: str, vm_id: str, *, timeout: int = 30) -> dict[str, Any]:
+    scenario_id, vm_id = validate_id(scenario_id), validate_id(vm_id)
+    virsh = shutil.which("virsh")
+    if not virsh or not _vm_owned(scenario_id, vm_id):
+        return {"ok": False, "state": "unverified", "error": "VM ownership could not be verified"}
+    name = _vm_identity(scenario_id, vm_id)
+    state = _vm_inspect(scenario_id, vm_id).get("state")
+    stop = None
+    if state == "running":
+        stop = _vm_run([virsh, "-c", VM_URI, "destroy", name], timeout=timeout)
+        if stop["returncode"]:
+            return {"ok": False, "state": "failed", "error": stop["stderr"]}
+    result = _vm_run([virsh, "-c", VM_URI, "undefine", name], timeout=timeout)
+    final_state = "destroyed" if result["returncode"] == 0 else "failed"
+    removed_storage = False
+    if result["returncode"] == 0:
+        disk = config.DATA_DIR / "vms" / scenario_id / f"{vm_id}.qcow2"
+        try:
+            if disk.resolve().parent == (config.DATA_DIR / "vms" / scenario_id).resolve():
+                disk.unlink(missing_ok=True)
+                removed_storage = True
+        except OSError:
+            removed_storage = False
+    audit = record(scenario_id, "vm_destroy", final_state, {"vm_id": vm_id, "verified_owner": VM_OWNER,
+                                                              "exit_code": result["returncode"],
+                                                              "stderr": result["stderr"],
+                                                              "removed_storage": removed_storage})
+    return {"ok": result["returncode"] == 0, "state": final_state,
+            "deployment_record": audit}
 
 
 def _docker_context_preflight() -> tuple[str | None, str | None]:

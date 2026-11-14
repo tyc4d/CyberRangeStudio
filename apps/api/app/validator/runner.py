@@ -201,6 +201,26 @@ def _probe_status(result: dict[str, Any], should_connect: bool, docker_unavailab
     return "NOT_TESTED", observed
 
 
+def _vm_guest_readonly(scenario_id: str, host_id: str) -> dict[str, Any]:
+    """Read Windows identity/version through the libvirt guest agent, never run actions."""
+    state = manager.vm_status(scenario_id, host_id)
+    if state.get("state") != "running":
+        return {"returncode": 2, "stdout": "", "stderr": f"VM hypervisor state={state.get('state')}"}
+    virsh = __import__("shutil").which("virsh")
+    if not virsh:
+        return {"returncode": 127, "stdout": "", "stderr": "virsh executable is not installed"}
+    # Guest-exec invokes only fixed read-only PowerShell commands. Credentials are
+    # intentionally not accepted or included in command arguments/audit data.
+    command = ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+               "$os=Get-CimInstance Win32_OperatingSystem; $cs=Get-CimInstance Win32_ComputerSystem; "
+               "[pscustomobject]@{Version=$os.Version;Caption=$os.Caption;Hostname=$cs.Name}|ConvertTo-Json -Compress"]
+    result = manager._vm_run([virsh, "-c", manager.VM_URI, "qemu-agent-command",
+                              manager._vm_identity(scenario_id, host_id),
+                              json.dumps({"execute": "guest-exec", "arguments": {
+                                  "path": command[0], "arg": command[1:], "capture-output": True}})], timeout=15)
+    return result
+
+
 def run(scenario_id: str) -> dict[str, Any]:
     scenario_id = validate_id(scenario_id)
     ir = store.get(scenario_id)
@@ -225,7 +245,8 @@ def run(scenario_id: str) -> dict[str, Any]:
     artifact_path = artifact_dir / f"{run_id}.json"
     evidence_path = f"validation-runs/{scenario_id}/{run_id}.json"
 
-    ps = manager.compose_ps_result(scenario_id)
+    vm_hosts = [host for host in plan.get("hosts", []) if host.get("runtime") == "vm"]
+    ps = manager.compose_ps_result(scenario_id) if not vm_hosts else {"returncode": 0, "stdout": "", "stderr": ""}
     containers = manager._parse_compose_ps(ps["stdout"]) if ps["returncode"] == 0 else []
     container_by_service = {container.get("service"): container for container in containers}
     for host in hosts:
@@ -240,6 +261,17 @@ def run(scenario_id: str) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     for host in hosts:
         host_id = host["id"]
+        if host.get("runtime") == "vm":
+            state = manager.vm_status(scenario_id, host_id)
+            running = state.get("state") == "running"
+            status = "PASS" if running else "NOT_TESTED" if state.get("state") in {"unavailable", "absent", "unverified"} else "FAIL"
+            observed = f"VM hypervisor state={state.get('state')}"
+            check = _check(f"service-up-{host_id}", f"{host_id} VM 執行狀態", "service_up", status,
+                           "hypervisor reports VM running", observed)
+            check["evidence"] = evidence_path
+            service_checks.append(check)
+            checks.append(check)
+            continue
         container = container_by_service.get(host_id)
         running = bool(container and container.get("state") == "running")
         status = "PASS" if running else ("NOT_TESTED" if docker_unavailable else "FAIL")
@@ -253,6 +285,20 @@ def run(scenario_id: str) -> dict[str, Any]:
 
     for host in hosts:
         host_id = host["id"]
+        if host.get("runtime") == "vm":
+            state = manager.vm_status(scenario_id, host_id)
+            if state.get("state") != "running":
+                check = _check(f"os-{host_id}", f"{host_id} Windows 版本與主機名稱", "os_identity", "NOT_TESTED",
+                               "read-only Windows version and hostname", f"VM state={state.get('state')}")
+            else:
+                result = _vm_guest_readonly(scenario_id, host_id)
+                observed = _result_output(result)
+                status = "PASS" if result.get("returncode") == 0 and "Hostname" in observed and "Version" in observed else "NOT_TESTED"
+                check = _check(f"os-{host_id}", f"{host_id} Windows 版本與主機名稱", "os_identity", status,
+                               "read-only Windows version and hostname", observed)
+            check["evidence"] = evidence_path
+            checks.append(check)
+            continue
         if not container_by_service.get(host_id) or container_by_service[host_id].get("state") != "running":
             continue
         resolved = component_by_id[host_id]
@@ -292,13 +338,23 @@ def run(scenario_id: str) -> dict[str, Any]:
         protocol = connection.get("protocol", "tcp")
         action_refs = _action_refs_for_connection(connection, actions)
         action_ref = action_refs[0] if action_refs else None
-        source_running = bool(container_by_service.get(source) and container_by_service[source].get("state") == "running")
-        target_running = bool(container_by_service.get(target) and container_by_service[target].get("state") == "running")
+        source_host = next((h for h in hosts if h["id"] == source), {})
+        target_host = next((h for h in hosts if h["id"] == target), {})
+        source_vm = source_host.get("runtime") == "vm"
+        target_vm = target_host.get("runtime") == "vm"
+        source_running = (manager.vm_status(scenario_id, source).get("state") == "running" if source_vm else
+                          bool(container_by_service.get(source) and container_by_service[source].get("state") == "running"))
+        target_running = (manager.vm_status(scenario_id, target).get("state") == "running" if target_vm else
+                          bool(container_by_service.get(target) and container_by_service[target].get("state") == "running"))
         if protocol != "tcp" or port is None:
             connectivity_status, connectivity_observed = "NOT_TESTED", "only declared TCP service ports are probed"
         elif not source_running or not target_running:
             connectivity_status = "NOT_TESTED" if docker_unavailable else "NOT_TESTED"
             connectivity_observed = "source or target container is not running; this path was not probed"
+        elif source_vm or target_vm:
+            # Host-only addressing is not currently persisted by the VM adapter.
+            # Do not substitute the validator host or claim an unexecuted probe.
+            connectivity_status, connectivity_observed = "NOT_TESTED", "VM TCP probe requires configured isolated guest addressing"
         else:
             result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target, int(port)), timeout=10)
             connectivity_status, connectivity_observed = _probe_status(result, should_connect=True,
@@ -313,7 +369,14 @@ def run(scenario_id: str) -> dict[str, Any]:
 
         resolved_target = component_by_id[target]
         target_component = resolved_target.get("catalogue", {}).get("id") if resolved_target.get("catalogue") else None
-        if target_component in {"oss-nginx", "oss-httpd", "oss-postgres"} or resolved_target["runtime_component"] == "demo-api":
+        if target_vm:
+            behavior = _check(f"behavior-{index}", f"{target} 服務行為", "behavior", "NOT_TESTED",
+                              "mapped safe behavior probe", "Windows service behavior mapping is not configured", action_ref)
+            behavior["evidence"] = evidence_path
+            checks.append(behavior)
+            behavior_checks.append(behavior)
+            behavior_by_index[index] = behavior
+        elif target_component in {"oss-nginx", "oss-httpd", "oss-postgres"} or resolved_target["runtime_component"] == "demo-api":
             if target_component == "oss-postgres":
                 if target_running:
                     behavior_result = manager.exec_in_service(
