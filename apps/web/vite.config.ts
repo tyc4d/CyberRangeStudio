@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: { "/api": { target: process.env.CR_API_URL ?? "http://127.0.0.1:8077", changeOrigin: true } },
+    proxy: { "/api": { target: process.env.CR_API_URL ?? "http://0.0.0.0:8077", changeOrigin: true } },
   },
 });
