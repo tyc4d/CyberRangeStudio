@@ -1,0 +1,1134 @@
+{
+  "scenario_id": "infra-eng-f9988963",
+  "steps": [
+    {
+      "step": "generate",
+      "at": "02:27:00",
+      "result": {
+        "status": 200,
+        "body": {
+          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-f9988963\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  attacker:\n    container_name: cr-demo-infra-eng-f9988963-attacker\n    networks:\n    - external\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f\n    user: 65532:65532\n    command:\n    - sh\n    - -c\n    - sleep 2147483647\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      web:\n        condition: service_healthy\n  web:\n    container_name: cr-demo-infra-eng-f9988963-web\n    networks:\n    - scenario-internal\n    - external\n    - edge\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755\n    - /var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755\n    - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82\n    user: 101:101\n    cap_add:\n    - NET_BIND_SERVICE\n    healthcheck:\n      test:\n      - CMD\n      - curl\n      - -fsS\n      - -o\n      - /dev/null\n      - http://127.0.0.1:80/\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    ports:\n    - target: 80\n      published: ${CR_HOSTPORT_0:-42000}\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    expose:\n    - '80'\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      db:\n        condition: service_healthy\n  db:\n    container_name: cr-demo-infra-eng-f9988963-db\n    networks:\n    - scenario-internal\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700\n    - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2\n    user: 70:70\n    environment:\n      POSTGRES_PASSWORD: ${CR_PG_PASSWORD:?set at deploy time}\n      POSTGRES_HOST_AUTH_METHOD: ${CR_PG_AUTH_METHOD:-trust}\n    healthcheck:\n      test:\n      - CMD\n      - pg_isready\n      - -h\n      - 127.0.0.1\n      - -p\n      - '5432'\n      - -U\n      - postgres\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    mem_limit: 512m\n    cpus: 1.0\n    pids_limit: 256\nnetworks:\n  external:\n    name: cr-demo-infra-eng-f9988963-external\n    internal: true\n  scenario-internal:\n    name: cr-demo-infra-eng-f9988963-scenario-internal\n    internal: true\n  edge:\n    name: cr-demo-infra-eng-f9988963-edge\n    internal: false\n    driver_opts:\n      com.docker.network.bridge.enable_icc: 'false'\n      com.docker.network.bridge.enable_ip_masquerade: 'false'\n",
+          "report": {
+            "scenario_id": "infra-eng-f9988963",
+            "deployable": true,
+            "components": [
+              {
+                "host_id": "attacker",
+                "image_hint": "oss-attacker",
+                "component": "oss-attacker",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "version": "3.22",
+                "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "substitute": false,
+                "catalogue_component": "oss-attacker",
+                "published": false,
+                "exposure": "publishable",
+                "healthcheck": false,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "web",
+                "image_hint": "oss-nginx",
+                "component": "oss-nginx",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "version": "1.31.8",
+                "digest": "sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "substitute": false,
+                "catalogue_component": "oss-nginx",
+                "published": true,
+                "exposure": "publishable",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "db",
+                "image_hint": "oss-postgres",
+                "component": "oss-postgres",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+                "version": "16.16",
+                "digest": "sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+                "substitute": false,
+                "catalogue_component": "oss-postgres",
+                "published": false,
+                "exposure": "internal_only",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "512m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              }
+            ],
+            "vms": [],
+            "host_port_mappings": [
+              {
+                "host_id": "web",
+                "container_port": 80,
+                "host_port": 42000,
+                "env": "CR_HOSTPORT_0"
+              }
+            ],
+            "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+            "networks": [
+              {
+                "id": "scenario-internal",
+                "name": "cr-demo-infra-eng-f9988963-scenario-internal",
+                "internal": true,
+                "plan_internal": true
+              },
+              {
+                "id": "external",
+                "name": "cr-demo-infra-eng-f9988963-external",
+                "internal": true,
+                "plan_internal": false
+              }
+            ],
+            "errors": []
+          }
+        }
+      }
+    },
+    {
+      "step": "docker_compose_config",
+      "at": "02:27:00",
+      "result": {
+        "cmd": "env CR_PG_PASSWORD=x CR_DB_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-f9988963/docker-compose.yml config --quiet",
+        "rc": 0,
+        "out": "",
+        "err": ""
+      }
+    },
+    {
+      "step": "approve",
+      "at": "02:27:00",
+      "result": {
+        "status": 200
+      }
+    },
+    {
+      "step": "up_1",
+      "at": "02:27:23",
+      "result": {
+        "status": 200,
+        "seconds": 23.1,
+        "body": {
+          "scenario_id": "infra-eng-f9988963",
+          "project_name": "cr-demo-infra-eng-f9988963",
+          "state": "running",
+          "containers": [
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-f9988963-attacker",
+              "id": "7b51b53497ab",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "db",
+              "name": "cr-demo-infra-eng-f9988963-db",
+              "id": "052e71d5e570",
+              "state": "running",
+              "status": "Up 11 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "web",
+              "name": "cr-demo-infra-eng-f9988963-web",
+              "id": "ef8bbba292d9",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": [
+                {
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42029,
+                  "container_port": 80,
+                  "protocol": "tcp"
+                }
+              ]
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n"
+          },
+          "deployment_record": {
+            "id": 6,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42029
+                  }
+                }
+              ],
+              "scenario_id": "infra-eng-f9988963",
+              "project_name": "cr-demo-infra-eng-f9988963",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-f9988963-attacker",
+                  "id": "7b51b53497ab",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "db",
+                  "name": "cr-demo-infra-eng-f9988963-db",
+                  "id": "052e71d5e570",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-f9988963-web",
+                  "id": "ef8bbba292d9",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42029,
+                      "container_port": 80,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:27:23Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "exit_code": 0,
+              "host_ports": {
+                "CR_HOSTPORT_0": 42029
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "status_1",
+      "at": "02:27:23",
+      "result": {
+        "scenario_id": "infra-eng-f9988963",
+        "project_name": "cr-demo-infra-eng-f9988963",
+        "state": "running",
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-f9988963-attacker",
+            "id": "7b51b53497ab",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-f9988963-db",
+            "id": "052e71d5e570",
+            "state": "running",
+            "status": "Up 11 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-f9988963-web",
+            "id": "ef8bbba292d9",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42029,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_1",
+      "at": "02:27:23",
+      "result": {
+        "scenario_id": "infra-eng-f9988963",
+        "project_name": "cr-demo-infra-eng-f9988963",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-f9988963-attacker",
+            "id": "7b51b53497ab",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-f9988963-db",
+            "id": "052e71d5e570",
+            "state": "running",
+            "status": "Up 12 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-f9988963-web",
+            "id": "ef8bbba292d9",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42029,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_1",
+      "at": "02:27:23",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-f9988963 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-f9988963-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-f9988963-web|nginx:1.31.8|Up 6 seconds (healthy)|127.0.0.1:42029->80/tcp\ncr-demo-infra-eng-f9988963-db|postgres:16.16-alpine3.23|Up 12 seconds (healthy)|5432/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_1",
+      "at": "02:27:25",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-f9988963",
+          "deployment_id": "cr-demo-infra-eng-f9988963",
+          "run_at": "2026-11-14T18:27:23.641782+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "PASS",
+            "full_chain": "PASS"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "service-up-web",
+              "name": "web 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "service-up-db",
+              "name": "db 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "version-web",
+              "name": "web 執行指定版本 1.31.8",
+              "category": "version",
+              "status": "PASS",
+              "expected": "1.31.8",
+              "observed": "nginx version: nginx/1.31.8",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "version-db",
+              "name": "db 執行指定版本 16.16",
+              "category": "version",
+              "status": "PASS",
+              "expected": "16.16",
+              "observed": "postgres (PostgreSQL) 16.16",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 web:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 web:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "behavior-1",
+              "name": "web 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+              "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 web 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "connectivity-2",
+              "name": "web 可連線至 db:5432",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 db:5432",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "behavior-2",
+              "name": "db 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "pg_isready 回報可接受連線",
+              "observed": "127.0.0.1:5432 - 正在接受連線",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "chain-2",
+              "name": "web 完成至 db 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 127.0.0.1:5432 - 正在接受連線",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "attacker 無法連線至 db:5432",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to db:5432 遭封鎖",
+              "observed": "probed db=192.168.64.2:5432 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-f9988963/b13c3d56fa4f493e9c26255d7c397e50.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "down_1",
+      "at": "02:27:36",
+      "result": {
+        "status": 200,
+        "state": "stopped"
+      }
+    },
+    {
+      "step": "leftovers_1",
+      "at": "02:27:36",
+      "result": {
+        "containers": [
+          ""
+        ],
+        "networks": [
+          ""
+        ],
+        "volumes": [
+          ""
+        ]
+      }
+    },
+    {
+      "step": "up_2",
+      "at": "02:27:59",
+      "result": {
+        "status": 200,
+        "seconds": 23.0,
+        "body": {
+          "scenario_id": "infra-eng-f9988963",
+          "project_name": "cr-demo-infra-eng-f9988963",
+          "state": "running",
+          "containers": [
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-f9988963-attacker",
+              "id": "508515bb892d",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "db",
+              "name": "cr-demo-infra-eng-f9988963-db",
+              "id": "7677b275d257",
+              "state": "running",
+              "status": "Up 11 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "web",
+              "name": "cr-demo-infra-eng-f9988963-web",
+              "id": "319e36863359",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": [
+                {
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42774,
+                  "container_port": 80,
+                  "protocol": "tcp"
+                }
+              ]
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n"
+          },
+          "deployment_record": {
+            "id": 8,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42774
+                  }
+                }
+              ],
+              "scenario_id": "infra-eng-f9988963",
+              "project_name": "cr-demo-infra-eng-f9988963",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-f9988963-attacker",
+                  "id": "508515bb892d",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "db",
+                  "name": "cr-demo-infra-eng-f9988963-db",
+                  "id": "7677b275d257",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-f9988963-web",
+                  "id": "319e36863359",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42774,
+                      "container_port": 80,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:27:59Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "exit_code": 0,
+              "host_ports": {
+                "CR_HOSTPORT_0": 42774
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "status_2",
+      "at": "02:27:59",
+      "result": {
+        "scenario_id": "infra-eng-f9988963",
+        "project_name": "cr-demo-infra-eng-f9988963",
+        "state": "running",
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-f9988963-attacker",
+            "id": "508515bb892d",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-f9988963-db",
+            "id": "7677b275d257",
+            "state": "running",
+            "status": "Up 11 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-f9988963-web",
+            "id": "319e36863359",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42774,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_2",
+      "at": "02:27:59",
+      "result": {
+        "scenario_id": "infra-eng-f9988963",
+        "project_name": "cr-demo-infra-eng-f9988963",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-f9988963-attacker",
+            "id": "508515bb892d",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-f9988963-db",
+            "id": "7677b275d257",
+            "state": "running",
+            "status": "Up 12 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-f9988963-web",
+            "id": "319e36863359",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42774,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_2",
+      "at": "02:27:59",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-f9988963 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-f9988963-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-f9988963-web|nginx:1.31.8|Up 6 seconds (healthy)|127.0.0.1:42774->80/tcp\ncr-demo-infra-eng-f9988963-db|postgres:16.16-alpine3.23|Up 12 seconds (healthy)|5432/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_2",
+      "at": "02:28:00",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-f9988963",
+          "deployment_id": "cr-demo-infra-eng-f9988963",
+          "run_at": "2026-11-14T18:27:59.415237+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "PASS",
+            "full_chain": "PASS"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "service-up-web",
+              "name": "web 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "service-up-db",
+              "name": "db 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "version-web",
+              "name": "web 執行指定版本 1.31.8",
+              "category": "version",
+              "status": "PASS",
+              "expected": "1.31.8",
+              "observed": "nginx version: nginx/1.31.8",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "version-db",
+              "name": "db 執行指定版本 16.16",
+              "category": "version",
+              "status": "PASS",
+              "expected": "16.16",
+              "observed": "postgres (PostgreSQL) 16.16",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 web:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 web:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "behavior-1",
+              "name": "web 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+              "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 web 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "connectivity-2",
+              "name": "web 可連線至 db:5432",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 db:5432",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "behavior-2",
+              "name": "db 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "pg_isready 回報可接受連線",
+              "observed": "127.0.0.1:5432 - 正在接受連線",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "chain-2",
+              "name": "web 完成至 db 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 127.0.0.1:5432 - 正在接受連線",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "attacker 無法連線至 db:5432",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to db:5432 遭封鎖",
+              "observed": "probed db=172.29.0.2:5432 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-f9988963/bcfeab7865b24bc99758b7dbd499989f.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "down_2",
+      "at": "02:28:11",
+      "result": {
+        "status": 200,
+        "state": "stopped"
+      }
+    },
+    {
+      "step": "leftovers_2",
+      "at": "02:28:11",
+      "result": {
+        "containers": [
+          ""
+        ],
+        "networks": [
+          ""
+        ],
+        "volumes": [
+          ""
+        ]
+      }
+    },
+    {
+      "step": "records",
+      "at": "02:28:11",
+      "result": {
+        "scenario_id": "infra-eng-f9988963",
+        "records": [
+          {
+            "id": 9,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "down",
+            "state": "stopped",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Container cr-demo-infra-eng-f9988963-attacker Stopping \n Container cr-demo-infra-eng-f9988963-attacker Stopped \n Container cr-demo-infra-eng-f9988963-attacker Removing \n Container cr-demo-infra-eng-f9988963-attacker Removed \n Container cr-demo-infra-eng-f9988963-web Stopping \n Container cr-demo-infra-eng-f9988963-web Stopped \n Container cr-demo-infra-eng-f9988963-web Removing \n Container cr-demo-infra-eng-f9988963-web Removed \n Container cr-demo-infra-eng-f9988963-db Stopping \n Container cr-demo-infra-eng-f9988963-db Stopped \n Container cr-demo-infra-eng-f9988963-db Removing \n Container cr-demo-infra-eng-f9988963-db Removed \n Network cr-demo-infra-eng-f9988963-external Removing \n Network cr-demo-infra-eng-f9988963-edge Removing \n Network cr-demo-infra-eng-f9988963-scenario-internal Removing \n Network cr-demo-infra-eng-f9988963-external Removed \n Network cr-demo-infra-eng-f9988963-edge Removed \n Network cr-demo-infra-eng-f9988963-scenario-internal Removed \n"
+            },
+            "recorded_at": "2026-11-14T18:28:11Z"
+          },
+          {
+            "id": 8,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42774
+                  }
+                }
+              ],
+              "scenario_id": "infra-eng-f9988963",
+              "project_name": "cr-demo-infra-eng-f9988963",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-f9988963-attacker",
+                  "id": "508515bb892d",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "db",
+                  "name": "cr-demo-infra-eng-f9988963-db",
+                  "id": "7677b275d257",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-f9988963-web",
+                  "id": "319e36863359",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42774,
+                      "container_port": 80,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:27:59Z"
+          },
+          {
+            "id": 7,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "down",
+            "state": "stopped",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Container cr-demo-infra-eng-f9988963-attacker Stopping \n Container cr-demo-infra-eng-f9988963-attacker Stopped \n Container cr-demo-infra-eng-f9988963-attacker Removing \n Container cr-demo-infra-eng-f9988963-attacker Removed \n Container cr-demo-infra-eng-f9988963-web Stopping \n Container cr-demo-infra-eng-f9988963-web Stopped \n Container cr-demo-infra-eng-f9988963-web Removing \n Container cr-demo-infra-eng-f9988963-web Removed \n Container cr-demo-infra-eng-f9988963-db Stopping \n Container cr-demo-infra-eng-f9988963-db Stopped \n Container cr-demo-infra-eng-f9988963-db Removing \n Container cr-demo-infra-eng-f9988963-db Removed \n Network cr-demo-infra-eng-f9988963-external Removing \n Network cr-demo-infra-eng-f9988963-scenario-internal Removing \n Network cr-demo-infra-eng-f9988963-edge Removing \n Network cr-demo-infra-eng-f9988963-scenario-internal Removed \n Network cr-demo-infra-eng-f9988963-external Removed \n Network cr-demo-infra-eng-f9988963-edge Removed \n"
+            },
+            "recorded_at": "2026-11-14T18:27:36Z"
+          },
+          {
+            "id": 6,
+            "scenario_id": "infra-eng-f9988963",
+            "project_name": "cr-demo-infra-eng-f9988963",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-f9988963-external Creating \n Network cr-demo-infra-eng-f9988963-external Created \n Network cr-demo-infra-eng-f9988963-edge Creating \n Network cr-demo-infra-eng-f9988963-edge Created \n Network cr-demo-infra-eng-f9988963-scenario-internal Creating \n Network cr-demo-infra-eng-f9988963-scenario-internal Created \n Container cr-demo-infra-eng-f9988963-db Creating \n Container cr-demo-infra-eng-f9988963-db Created \n Container cr-demo-infra-eng-f9988963-web Creating \n Container cr-demo-infra-eng-f9988963-web Created \n Container cr-demo-infra-eng-f9988963-attacker Creating \n Container cr-demo-infra-eng-f9988963-attacker Created \n Container cr-demo-infra-eng-f9988963-db Starting \n Container cr-demo-infra-eng-f9988963-db Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-db Healthy \n Container cr-demo-infra-eng-f9988963-web Starting \n Container cr-demo-infra-eng-f9988963-web Started \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Starting \n Container cr-demo-infra-eng-f9988963-attacker Started \n Container cr-demo-infra-eng-f9988963-db Waiting \n Container cr-demo-infra-eng-f9988963-attacker Waiting \n Container cr-demo-infra-eng-f9988963-web Waiting \n Container cr-demo-infra-eng-f9988963-web Healthy \n Container cr-demo-infra-eng-f9988963-attacker Healthy \n Container cr-demo-infra-eng-f9988963-db Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42029
+                  }
+                }
+              ],
+              "scenario_id": "infra-eng-f9988963",
+              "project_name": "cr-demo-infra-eng-f9988963",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-f9988963-attacker",
+                  "id": "7b51b53497ab",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "db",
+                  "name": "cr-demo-infra-eng-f9988963-db",
+                  "id": "052e71d5e570",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-f9988963-web",
+                  "id": "ef8bbba292d9",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42029,
+                      "container_port": 80,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:27:23Z"
+          }
+        ]
+      }
+    }
+  ]
+}

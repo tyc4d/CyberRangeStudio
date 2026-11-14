@@ -1,0 +1,22 @@
+{
+  "hosts": [
+    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["dmz"]},
+    {"id": "solr", "role": "exposed web application", "image_hint": "vuln-log4shell-solr", "component_mode": "real",
+     "services": [{"name": "Apache Solr", "port": 8983, "protocol": "tcp"}], "networks": ["dmz", "inside"]},
+    {"id": "app", "role": "internal application server", "image_hint": "oss-tomcat", "component_mode": "real",
+     "services": [{"name": "tomcat", "port": 8080, "protocol": "tcp"}], "networks": ["inside"]},
+    {"id": "cache", "role": "internal cache", "image_hint": "oss-redis", "component_mode": "real",
+     "services": [{"name": "redis", "port": 6379, "protocol": "tcp"}], "networks": ["inside"]},
+    {"id": "legacy", "role": "internal web", "image_hint": "oss-httpd", "component_mode": "real",
+     "services": [{"name": "http", "port": 80, "protocol": "tcp"}], "networks": ["inside"]}
+  ],
+  "networks": [{"id": "dmz", "segment": "dmz", "internal": false}, {"id": "inside", "segment": "inside", "internal": true}],
+  "connections": [
+    {"from_host": "attacker", "to_host": "solr", "port": 8983, "protocol": "tcp", "reason": "attacker reaches Solr"},
+    {"from_host": "solr", "to_host": "app", "port": 8080, "protocol": "tcp", "reason": "lateral path"},
+    {"from_host": "app", "to_host": "cache", "port": 6379, "protocol": "tcp", "reason": "app uses cache"},
+    {"from_host": "solr", "to_host": "legacy", "port": 80, "protocol": "tcp", "reason": "lateral path"}
+  ],
+  "verify_blocked": [{"from_host": "attacker", "to_host": "cache", "port": 6379, "protocol": "tcp", "reason": "no direct path"}],
+  "approval": {"approved": false}
+}

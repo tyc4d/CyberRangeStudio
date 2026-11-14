@@ -17,6 +17,7 @@ import yaml
 
 from app import config
 from app.iac.generator import PlanError, generated_dir, get_generated, validate_id
+from app.iac.generator import _PUBLISHED_PORT_MAX, _PUBLISHED_PORT_MIN
 from app.planner.catalogue import load_components
 
 _BASE_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
@@ -25,6 +26,11 @@ _BASE_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e
 VM_LIMITS = {"vcpus": 4, "memory_mib": 8192, "disk_gib": 100, "count": 4}
 VM_OWNER = "cyberrange"
 VM_URI = "qemu:///system"
+
+# `compose up --wait` blocks until every service is running (and healthy when it has a
+# healthcheck). JVM-based exercise targets need the longer bound.
+_UP_WAIT_SECONDS = 240
+_UP_ATTEMPTS = 3
 
 
 def project_name(scenario_id: str) -> str:
@@ -430,9 +436,53 @@ def _real_image_refs(scenario_id: str) -> tuple[list[str] | None, str | None]:
     return images, None
 
 
+def _port_is_free(bind_ip: str, port: int) -> bool:
+    """True when nothing (including a Docker proxy) is listening on bind_ip:port."""
+    for address in {bind_ip, "0.0.0.0"}:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            probe.bind((address, port))
+        except OSError:
+            return False
+        finally:
+            probe.close()
+    return True
+
+
+def allocate_host_ports(scenario_id: str, bind_ip: str = "127.0.0.1",
+                        avoid: set[int] | None = None) -> dict[str, str]:
+    """Pick a free host port in the allowed range for every published service.
+
+    The generated Compose file only carries defaults (42000, 42001, ...); two scenarios
+    deployed at the same time would otherwise fight over the same ports.
+    """
+    try:
+        mappings = get_generated(scenario_id)["report"].get("host_port_mappings", [])
+    except (FileNotFoundError, PlanError):
+        return {}
+    taken = set(avoid or ())
+    span = _PUBLISHED_PORT_MAX - _PUBLISHED_PORT_MIN + 1
+    start = secrets.randbelow(span)
+    assigned: dict[str, str] = {}
+    for mapping in mappings:
+        chosen = None
+        for offset in range(span):
+            candidate = _PUBLISHED_PORT_MIN + (start + offset) % span
+            if candidate not in taken and _port_is_free(bind_ip, candidate):
+                chosen = candidate
+                break
+        if chosen is None:
+            raise PlanError(["no free host port is available in 42000-42999"])
+        taken.add(chosen)
+        start = (chosen - _PUBLISHED_PORT_MIN + 1) % span
+        assigned[mapping["env"]] = str(chosen)
+    return assigned
+
+
 def _compose_command(scenario_id: str, operation: str, extra: list[str] | None = None,
                      timeout: int = 60, *, expose: str = "internal", lan_host: str | None = None,
-                     pg_password: str | None = None) -> dict[str, Any]:
+                     pg_password: str | None = None,
+                     host_ports: dict[str, str] | None = None) -> dict[str, Any]:
     docker, error = _docker_context_preflight()
     if error:
         return {"returncode": 127, "stdout": "", "stderr": error}
@@ -444,18 +494,20 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
     bind_ip = "127.0.0.1"
     # Compose requires a non-empty value for interpolation even in internal mode.
     # Internal PostgreSQL still uses trust auth and this throwaway value is never persisted.
+    generated_secret = pg_password or secrets.token_urlsafe(24)
     env_overrides = {"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "trust",
-                     "CR_PG_PASSWORD": pg_password or secrets.token_urlsafe(24)}
+                     "CR_PG_PASSWORD": generated_secret, "CR_DB_PASSWORD": generated_secret}
     if expose == "lan":
         bind_ip = lan_host or detect_lan_ipv4()
-        env_overrides.update({"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "scram-sha-256",
-                              "CR_PG_PASSWORD": pg_password or secrets.token_urlsafe(24)})
+        env_overrides.update({"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "scram-sha-256"})
+    if host_ports:
+        env_overrides.update(host_ports)
     config_check = _run(prefix + ["config", "--quiet"], timeout=15, env_overrides=env_overrides)
     if config_check["returncode"] != 0:
         return {"returncode": config_check["returncode"], "stdout": config_check["stdout"],
                 "stderr": f"compose configuration rejected: {config_check['stderr']}"}
     if operation == "up":
-        helper_pull = _run([docker, "pull", _BASE_IMAGE], timeout=180)
+        helper_pull = _run([docker, "pull", _BASE_IMAGE], timeout=300)
         if helper_pull["returncode"] != 0:
             return {"returncode": helper_pull["returncode"], "stdout": helper_pull["stdout"],
                     "stderr": f"could not pull pinned local demo/probe base image {_BASE_IMAGE}: {helper_pull['stderr']}"}
@@ -463,7 +515,7 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
         if image_error:
             return {"returncode": 2, "stdout": "", "stderr": image_error}
         for image in real_images or []:
-            pulled = _run([docker, "pull", image], timeout=180)
+            pulled = _run([docker, "pull", image], timeout=900)
             if pulled["returncode"] != 0:
                 return {"returncode": pulled["returncode"], "stdout": pulled["stdout"],
                         "stderr": f"could not pull pinned catalogue image {image}: {pulled['stderr']}"}
@@ -509,30 +561,59 @@ def probe_in_service(scenario_id: str, service_id: str, python_script: str, time
     return _run(command, timeout=timeout)
 
 
-def container_ipv4(scenario_id: str, service_id: str) -> str | None:
-    """Return a running container's first non-loopback IPv4, for IP-based probing.
+def container_ipv4_addresses(scenario_id: str, service_id: str) -> list[dict[str, str]]:
+    """IPv4 addresses of a running container on the networks declared in the plan.
 
-    Used by segmentation checks so a blocked path is proven by an actual TCP outcome
-    to the target IP, never by a hostname that merely failed to resolve.
+    The generated ``edge`` network is deliberately excluded: it exists only to publish a
+    host port, inter-container traffic on it is disabled, and no other host's declared
+    path runs through it. Probing an edge address says nothing about plan segmentation.
+    Result is sorted by network id so callers get a stable order.
     """
     scenario_id = validate_id(scenario_id)
     validate_id(service_id)
     docker, error = _docker_context_preflight()
     if error or not docker:
-        return None
-    name = f"{project_name(scenario_id)}-{service_id}"
-    result = _run([docker, "inspect", "-f",
-                   "{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}", name], timeout=15)
+        return []
+    prefix = project_name(scenario_id) + "-"
+    result = _run([docker, "inspect", "-f", "{{json .NetworkSettings.Networks}}", prefix + service_id], timeout=15)
     if result["returncode"] != 0:
-        return None
-    for token in result["stdout"].split():
+        return []
+    try:
+        networks = json.loads(result["stdout"])
+    except json.JSONDecodeError:
+        return []
+    addresses: list[dict[str, str]] = []
+    for name, settings in sorted((networks or {}).items()):
+        if not name.startswith(prefix) or name == prefix + "edge":
+            continue
         try:
-            ip = ipaddress.IPv4Address(token)
+            ip = ipaddress.IPv4Address((settings or {}).get("IPAddress", ""))
         except ValueError:
             continue
         if not ip.is_loopback and not ip.is_unspecified:
-            return str(ip)
-    return None
+            addresses.append({"network": name[len(prefix):], "ip": str(ip)})
+    return addresses
+
+
+def container_ipv4(scenario_id: str, service_id: str, from_service: str | None = None) -> str | None:
+    """Return the target's IPv4 on a plan network, for IP-based probing.
+
+    Used by segmentation checks so a blocked path is proven by an actual TCP outcome
+    to the target IP, never by a hostname that merely failed to resolve. The address is
+    never taken from the publishing-only ``edge`` network. When ``from_service`` is
+    given and it shares a plan network with the target, the address on that shared
+    network is returned, so a closed port on a reachable host shows up as a refusal
+    rather than as "network unreachable".
+    """
+    addresses = container_ipv4_addresses(scenario_id, service_id)
+    if not addresses:
+        return None
+    if from_service:
+        source_networks = {item["network"] for item in container_ipv4_addresses(scenario_id, from_service)}
+        for item in addresses:
+            if item["network"] in source_networks:
+                return item["ip"]
+    return addresses[0]["ip"]
 
 
 def _parse_compose_ps(output: str) -> list[dict[str, Any]]:
@@ -559,6 +640,10 @@ def _parse_compose_ps(output: str) -> list[dict[str, Any]]:
             "state": row.get("State", "unknown").lower(),
             "status": row.get("Status", ""),
             "health": row.get("Health", "").lower(),
+            "exit_code": row.get("ExitCode"),
+            "ports": [{"host_ip": pub.get("URL"), "host_port": pub.get("PublishedPort"),
+                       "container_port": pub.get("TargetPort"), "protocol": pub.get("Protocol")}
+                      for pub in (row.get("Publishers") or []) if pub.get("PublishedPort")],
         })
     return containers
 
@@ -613,25 +698,91 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
             raise PlanError(["lan_host must be a usable LAN IPv4 address"] if lan_host else
                             ["could not detect a primary LAN IPv4 address; provide lan_host explicitly"]) from exc
         password = secrets.token_urlsafe(24)
-    result = _compose_command(scenario_id, "up", ["-d", "--pull", "never"], timeout=180,
-                              expose=expose, lan_host=resolved_host, pg_password=password)
-    if password:
-        result = {**result,
-                  "stdout": result.get("stdout", "").replace(password, "[REDACTED]"),
-                  "stderr": result.get("stderr", "").replace(password, "[REDACTED]")}
-    live = live_containers(scenario_id) if result["returncode"] == 0 else {
-        "scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
-        "state": "error", "containers": [], "error": result["stderr"],
-    }
-    success = result["returncode"] == 0 and live["state"] == "running"
+    bind_ip = resolved_host or "127.0.0.1"
+    attempts: list[dict[str, Any]] = []
+    cleanup = None
+    diagnostics = None
+    avoid: set[int] = set()
+    result: dict[str, Any] = {"returncode": 2, "stdout": "", "stderr": "deployment was not attempted"}
+    live: dict[str, Any] = {}
+    success = False
+    for attempt in range(1, _UP_ATTEMPTS + 1):
+        host_ports = allocate_host_ports(scenario_id, bind_ip, avoid)
+        result = _compose_command(
+            scenario_id, "up",
+            ["-d", "--pull", "never", "--wait", "--wait-timeout", str(_UP_WAIT_SECONDS)],
+            timeout=_UP_WAIT_SECONDS + 1200, expose=expose, lan_host=resolved_host, pg_password=password,
+            host_ports=host_ports)
+        if password:
+            result = {**result,
+                      "stdout": result.get("stdout", "").replace(password, "[REDACTED]"),
+                      "stderr": result.get("stderr", "").replace(password, "[REDACTED]")}
+        live = live_containers(scenario_id)
+        success = result["returncode"] == 0 and live["state"] == "running"
+        attempts.append({"attempt": attempt, "exit_code": result["returncode"],
+                         "host_ports": {key: int(value) for key, value in host_ports.items()}})
+        if success:
+            break
+        # A failed deployment must not leave half an environment behind: capture why it
+        # failed first, then remove everything this attempt created.
+        created_something = bool(live.get("containers")) or "Created" in result.get("stderr", "")
+        diagnostics = failure_diagnostics(scenario_id, live) if created_something else None
+        cleanup = _cleanup_failed_up(scenario_id) if created_something else None
+        port_clash = "port is already allocated" in result.get("stderr", "") or \
+            "address already in use" in result.get("stderr", "")
+        if not port_clash:
+            break
+        avoid.update(int(value) for value in host_ports.values())
+    if not success:
+        live = {**live, "state": "error", "error": result["stderr"] or live.get("error")}
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
-               "expose": expose, "password_set": password is not None, **live}
+               "expose": expose, "password_set": password is not None, "attempts": attempts, **live}
+    if diagnostics is not None:
+        details["diagnostics"] = diagnostics
+    if cleanup is not None:
+        details["cleanup"] = cleanup
     audit = record(scenario_id, "up", "running" if success else "failed", details)
     response = {**live, "ok": success, "command_result": result, "deployment_record": audit,
-                "expose": expose, "lan_host": resolved_host}
+                "expose": expose, "lan_host": resolved_host, "attempts": attempts}
+    if diagnostics is not None:
+        response["diagnostics"] = diagnostics
+    if cleanup is not None:
+        response["cleanup"] = cleanup
     if password is not None:
         response["db_password"] = password
     return response
+
+
+def failure_diagnostics(scenario_id: str, live: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Per-container state, exit code and last log lines for a deployment that did not come up."""
+    live = live or live_containers(scenario_id)
+    docker, error = _docker_context_preflight()
+    report: dict[str, Any] = {"containers": []}
+    if error or not docker:
+        report["error"] = error
+        return report
+    for container in live.get("containers", []):
+        ok = container.get("state") == "running" and container.get("health") in {"", "healthy"}
+        entry = {key: container.get(key) for key in ("service", "state", "status", "health", "exit_code")}
+        entry["ok"] = ok
+        if not ok and container.get("name", "").startswith(project_name(scenario_id) + "-"):
+            logs = _run([docker, "logs", "--tail", "40", container["name"]], timeout=20)
+            entry["log_tail"] = (logs.get("stdout", "") + logs.get("stderr", ""))[-3000:]
+            if container.get("health") == "unhealthy":
+                health = _run([docker, "inspect", "-f",
+                               "{{range .State.Health.Log}}{{.ExitCode}} {{.Output}}{{end}}", container["name"]],
+                              timeout=15)
+                entry["healthcheck_output"] = health.get("stdout", "")[-1000:]
+        report["containers"].append(entry)
+    return report
+
+
+def _cleanup_failed_up(scenario_id: str) -> dict[str, Any]:
+    down = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
+    remaining = live_containers(scenario_id)
+    return {"exit_code": down["returncode"], "stderr": down["stderr"][-1000:],
+            "remaining_containers": [c.get("name") for c in remaining.get("containers", [])],
+            "clean": down["returncode"] == 0 and not remaining.get("containers")}
 
 
 def do_status(scenario_id: str) -> dict[str, Any]:
@@ -659,7 +810,7 @@ def do_health(scenario_id: str) -> dict[str, Any]:
 
 
 def do_down(scenario_id: str) -> dict[str, Any]:
-    result = _compose_command(scenario_id, "down", ["-v"], timeout=120)
+    result = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
     state = "stopped" if result["returncode"] == 0 else "failed"
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"]}
     audit = record(scenario_id, "down", state, details)
