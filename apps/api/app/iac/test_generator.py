@@ -35,6 +35,136 @@ REAL_PLAN = {
 }
 
 
+EXPOSED_PLAN = {
+    "hosts": [
+        {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real",
+         "networks": ["external"]},
+        {"id": "web", "role": "exposed web", "image_hint": "oss-wordpress", "component_mode": "real",
+         "services": [{"name": "wordpress", "port": 80, "protocol": "tcp"}], "networks": ["external", "inside"]},
+        {"id": "db", "role": "internal database", "image_hint": "oss-mysql", "component_mode": "real",
+         "services": [{"name": "mysql", "port": 3306, "protocol": "tcp"}], "networks": ["inside"]},
+        {"id": "portal", "role": "exposed web", "image_hint": "vuln-struts2-s2-045", "component_mode": "real",
+         "services": [{"name": "struts", "port": 8080, "protocol": "tcp"}], "networks": ["external", "inside"]},
+    ],
+    "networks": [{"id": "inside", "internal": True}, {"id": "external", "internal": False}],
+    "connections": [
+        {"from_host": "attacker", "to_host": "web", "port": 80, "protocol": "tcp"},
+        {"from_host": "web", "to_host": "db", "port": 3306, "protocol": "tcp"},
+        {"from_host": "attacker", "to_host": "portal", "port": 8080, "protocol": "tcp"},
+    ],
+}
+
+
+class ExposureAndDependencyTests(unittest.TestCase):
+    def setUp(self):
+        _, self.report = inspect_plan(EXPOSED_PLAN, "exposure")
+        self.assertTrue(self.report["deployable"], self.report["errors"])
+        self.document = yaml.safe_load(compose_document(EXPOSED_PLAN, "exposure"))
+        self.by_host = {c["host_id"]: c for c in self.report["components"]}
+
+    def test_only_hosts_on_a_non_internal_plan_network_are_published(self):
+        services = self.document["services"]
+        self.assertEqual(self.report["host_port_mappings"],
+                         [{"host_id": "web", "container_port": 80, "host_port": 42000, "env": "CR_HOSTPORT_0"}])
+        self.assertEqual(services["web"]["ports"][0]["published"], "${CR_HOSTPORT_0:-42000}")
+        self.assertEqual(services["web"]["ports"][0]["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
+        self.assertIn("edge", services["web"]["networks"])
+        # internal database: no host port, no edge network, so no route out of the lab
+        self.assertNotIn("ports", services["db"])
+        self.assertEqual(services["db"]["networks"], ["inside"])
+        self.assertEqual(self.by_host["db"]["exposure"], "internal_only")
+
+    def test_vulnerable_exercise_image_is_never_published_even_when_exposed_in_the_plan(self):
+        portal = self.document["services"]["portal"]
+        self.assertNotIn("ports", portal)
+        self.assertNotIn("edge", portal["networks"])
+        self.assertEqual(self.by_host["portal"]["exposure"], "isolated_only")
+        self.assertTrue(self.by_host["portal"]["vulnerable"])
+        self.assertEqual(self.by_host["portal"]["cves"], ["CVE-2017-5638"])
+        self.assertFalse(self.by_host["portal"]["published"])
+
+    def test_edge_network_cannot_carry_traffic_between_hosts_or_outbound(self):
+        edge = self.document["networks"]["edge"]
+        self.assertFalse(edge["internal"])
+        self.assertEqual(edge["driver_opts"], {"com.docker.network.bridge.enable_icc": "false",
+                                               "com.docker.network.bridge.enable_ip_masquerade": "false"})
+        for network_id, network in self.document["networks"].items():
+            if network_id != "edge":
+                self.assertTrue(network["internal"])
+
+    def test_edge_is_a_reserved_network_id(self):
+        plan = {**EXPOSED_PLAN, "networks": [*EXPOSED_PLAN["networks"], {"id": "edge", "internal": True}]}
+        _, report = inspect_plan(plan, "exposure")
+        self.assertFalse(report["deployable"])
+
+    def test_connections_become_start_order_and_database_wiring(self):
+        services = self.document["services"]
+        self.assertEqual(services["web"]["depends_on"], {"db": {"condition": "service_healthy"}})
+        self.assertEqual(services["web"]["environment"]["WORDPRESS_DB_HOST"], "db:3306")
+        self.assertEqual(services["web"]["environment"]["WORDPRESS_DB_PASSWORD"],
+                         "${CR_DB_PASSWORD:?set at deploy time}")
+        self.assertEqual(self.by_host["web"]["wired_to"], [{"host": "db", "port": 3306, "software": "mysql"}])
+        self.assertIn("healthcheck", services["db"])
+        self.assertIn("healthcheck", services["web"])
+
+    def test_application_without_its_database_connection_is_not_deployable(self):
+        plan = {**EXPOSED_PLAN, "connections": [EXPOSED_PLAN["connections"][0]]}
+        _, report = inspect_plan(plan, "exposure")
+        self.assertFalse(report["deployable"])
+        self.assertTrue(any("needs a declared connection" in error for error in report["errors"]))
+
+    def test_connection_cycle_does_not_produce_a_dependency_cycle(self):
+        plan = {
+            "hosts": [{"id": name, "role": "web", "image_hint": "oss-nginx", "component_mode": "real",
+                       "services": [{"name": "http", "port": 80}], "networks": ["inside"]} for name in ("a", "b")],
+            "networks": [{"id": "inside", "internal": True}],
+            "connections": [{"from_host": "a", "to_host": "b", "port": 80}, {"from_host": "b", "to_host": "a", "port": 80}],
+        }
+        services = yaml.safe_load(compose_document(plan, "cycle"))["services"]
+        self.assertEqual(services["a"]["depends_on"], {"b": {"condition": "service_healthy"}})
+        self.assertNotIn("depends_on", services["b"])
+
+    def test_every_service_has_resource_limits_and_every_real_image_is_digest_pinned(self):
+        for service in self.document["services"].values():
+            self.assertTrue(service["mem_limit"] and service["cpus"] and service["pids_limit"])
+            self.assertRegex(service["image"], r"@sha256:[0-9a-f]{64}$")
+
+    def test_safety_check_rejects_unpinned_images_extra_capabilities_and_mounts(self):
+        from app.iac.generator import _assert_compose_safe, PlanError
+        good = compose_document(EXPOSED_PLAN, "exposure")
+        _assert_compose_safe(good, "exposure")
+        for mutate in (
+            lambda d: d["services"]["db"].__setitem__("image", "mysql:8.0.46"),
+            lambda d: d["services"]["db"].__setitem__("cap_add", ["NET_ADMIN"]),
+            lambda d: d["services"]["db"].__setitem__("volumes", ["/:/host"]),
+            lambda d: d["services"]["db"].pop("mem_limit"),
+            lambda d: d["networks"]["edge"].pop("driver_opts"),
+            lambda d: d["networks"]["inside"].__setitem__("internal", False),
+            lambda d: d["services"]["web"]["ports"][0].__setitem__("published", "8080"),
+            lambda d: d["services"]["web"]["ports"][0].__setitem__("host_ip", "0.0.0.0"),
+            lambda d: d["services"]["db"]["environment"].__setitem__("MYSQL_ROOT_PASSWORD", "hunter2"),
+        ):
+            document = yaml.safe_load(good)
+            mutate(document)
+            with self.assertRaises(PlanError):
+                _assert_compose_safe(yaml.safe_dump(document), "exposure")
+
+
+class CatalogueIntegrityTests(unittest.TestCase):
+    def test_container_components_are_pinned_and_vulnerable_ones_are_isolated(self):
+        from app.planner.catalogue import load_components
+        for entry in load_components():
+            if entry.get("runtime") != "container":
+                continue
+            self.assertRegex(entry["digest"], r"^sha256:[0-9a-f]{64}$", entry["id"])
+            self.assertEqual(entry["pinned_image"], f"{entry['image']}@{entry['digest']}", entry["id"])
+            self.assertNotIn(":latest", entry["image"])
+            self.assertIn(entry["version"], entry["image"], entry["id"])
+            if entry.get("vulnerable"):
+                self.assertEqual(entry.get("exposure"), "isolated_only", entry["id"])
+                self.assertTrue(entry.get("cves"), entry["id"])
+
+
 class ComposeGeneratorTests(unittest.TestCase):
     def test_environment_plan_generates_valid_safe_compose(self):
         self.assertEqual(iter_errors("environment-plan", DEMO_PLAN), [])
@@ -49,9 +179,9 @@ class ComposeGeneratorTests(unittest.TestCase):
         self.assertTrue(all(service["container_name"].startswith("cr-demo-") for service in document["services"].values()))
         self.assertTrue(all(service.get("privileged") is not True for service in document["services"].values()))
         self.assertTrue(document["networks"]["inside"]["internal"])
-        self.assertEqual(document["services"]["demo-api"]["ports"][0]["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
-        host_port = int(document["services"]["demo-api"]["ports"][0]["published"])
-        self.assertTrue(42000 <= host_port <= 42999)
+        # A host that sits only on internal networks is never published to the host.
+        self.assertNotIn("ports", document["services"]["demo-api"])
+        self.assertNotIn("edge", document["networks"])
         self.assertNotIn("password", compose.lower())
         self.assertNotIn("api_key", compose.lower())
 
@@ -91,15 +221,15 @@ class ComposeGeneratorTests(unittest.TestCase):
             self.assertIn("ALL", service["cap_drop"])
             self.assertIn("no-new-privileges:true", service["security_opt"])
             self.assertIsNot(service.get("privileged"), True)
-            for published in service.get("ports", []):
-                self.assertEqual(published["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
-                self.assertTrue(42000 <= int(published["published"]) <= 42999)
+            self.assertNotIn("ports", service)  # REAL_PLAN only has an internal network
+            for limit in ("mem_limit", "cpus", "pids_limit"):
+                self.assertTrue(service[limit])
         self.assertEqual(document["services"]["db"]["environment"], {
             "POSTGRES_PASSWORD": "${CR_PG_PASSWORD:?set at deploy time}",
             "POSTGRES_HOST_AUTH_METHOD": "${CR_PG_AUTH_METHOD:-trust}",
         })
         self.assertTrue(any("/var/lib/postgresql/data" in mount for mount in document["services"]["db"]["tmpfs"]))
-        self.assertFalse(document["networks"]["edge"]["internal"])
+        self.assertNotIn("edge", document["networks"])
         self.assertTrue(document["networks"]["inside"]["internal"])
         self.assertEqual(document["services"]["db"]["environment"]["POSTGRES_PASSWORD"],
                          "${CR_PG_PASSWORD:?set at deploy time}")

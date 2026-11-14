@@ -68,7 +68,7 @@ def main() -> int:
             if r.status_code != 200:
                 return 1
             compose = generated_dir(sid) / "docker-compose.yml"
-            env = ["env", "CR_PG_PASSWORD=x"]
+            env = ["env", "CR_PG_PASSWORD=x", "CR_DB_PASSWORD=x"]
             step("docker_compose_config", sh(env + ["docker", "compose", "-f", str(compose), "config", "--quiet"]))
             r = client.post(f"/api/planning/{sid}/topology/approve", json={"approved": True, "approved_by": "infra-eng"})
             step("approve", {"status": r.status_code})
