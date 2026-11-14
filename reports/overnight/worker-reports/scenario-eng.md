@@ -62,6 +62,77 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 - L2：`182.54.217[.]2/mdepoy.txt` 只抽到 IP，沒有抽成 URL。
 - L3：`reproducibility` 只寫在各 action 與 `fidelity`，沒有彙總欄位（非錯誤，記錄）。
 
+### 盤點後由 QA／Reviewer 追加的項目
+
+| # | 來源 | 問題 | 根因 |
+|---|---|---|---|
+| Q1 | qa-instructor（High） | 只改一個行為後，所有未動的關係來源變成「使用者」 | 補件回應的 IR 沒有 `confirmed` 預設值，前端原樣送回；後端比對時自己把舊資料補上 `confirmed=false`，於是判定每條都被改過 |
+| Q2 | qa-instructor | 20 條關係全部是推論、沒有依據 | 與 H2 同源：合併在一次提問時，模型幾乎不替關係附引句 |
+| Q3 | qa-admin／qa-ux | 原文明寫的服務↔主機對應遺失、零路徑、IaC 拒絕 | H8＋H11 |
+| Q4 | qa-admin | 補件後重新分析多出同名主機 `victim_web` | H6 |
+| Q5 | qa-admin | PostgreSQL 被掛到 web 主機、產生 attacker→web:5432 | 行為文字提到的軟體一律綁到該行為的 `target_host_ref` |
+| Q6 | qa-admin | 改名後舊的 `svc-oss-postgres-web` 殘留、主機顯示「—」 | 重新規劃時把上一輪模組 4 自己產生的服務當成「分析結果」保留 |
+| Q7 | qa-admin | 自由補充寫明 host↔service 對應，重新分析沒有採用 | 自由補充文字從未被模組 4 讀取 |
+| R1 | reviewer（P1，本分支新引入後已修） | `Apache Struts` 被比對成 Apache httpd，主機變 `real/oss-httpd` | 我加的「名稱內含產品字眼即比對」沒有排除「廠牌字＋另一個產品名」 |
+| R2 | reviewer（P2） | 「不確定…」被原樣寫進 `os_version` 並結案 | 回寫沒有判斷回答是否為可用的值 |
+| R3 | reviewer（P3） | 補件產生的服務沒綁到被回答的主機 | 補件文字沒寫主機名稱時沒有用「這題問的是哪台主機」當依據 |
+
 ## 2. 修復紀錄
 
-（後續批次接在下面）
+全部是規則層級的根因修正，沒有針對任何案例的字串或 id 做特判。每項都有單元／整合測試；測試中的 LLM 一律是
+`tests/fixtures/recorded/` 的錄製回應或手寫輸入，不呼叫真 API。
+
+### 批次 1 — 模組 1 分析（commit `4f…` 起，見 `git log agent/scenario-eng`）
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 關係只有在引句真的陳述先後／相依時才算「原文支持」 | H2、Q2 | 已驗證引句必須含先後或相依用語（then／after／following／using the…／as a result of…，含中文與 STIX `precedes` 等）；否則降為 `inferred` 並寫明 `epistemic_reason`。標成 dependency 但引句只有先後字眼，同樣降級 | `cti/analysis.py` | `test_cti_analysis_rules.py`（4 個） |
+| 關係改由專門一次提問產生 | H2、M5、Q2 | 新增「關係」專用提問：針對最終行為清單，要求引用陳述連結的原句；沒有原句才給 `inferred`。失敗時退回第一次提問的結果 | `cti/analysis.py` | 真實 LLM 驗證（§3） |
+| `unknown` 不是主機 | H1 | `unknown`／`unspecified`／`none` 等保留字的主機項目直接丟棄並計入 `quality.dropped_placeholder_hosts`；行為指到不存在的主機一律改回 `unknown` | `cti/analysis.py` | `test_catch_all_unknown_host_is_not_a_host`、`test_distinct_hosts_stay_distinct…` |
+| 主機／服務／工具改由專門一次提問產生 | H1、H11、M4、M7、Q3 | 新增「目標環境」專用提問：一台機器一筆、必附引句、服務帶 `host_ref`／版本／連接埠／CVE、每個行為的作用主機與（原文有寫時的）發動主機。失敗時退回 | `cti/analysis.py` | `test_service_keeps_stated_host_port_and_cve_only`、真實 LLM 驗證 |
+| 防守方行為不進攻擊流程 | M2 | 每個行為要標 `actor`；`defender`／`other` 不進 `actions`，改列在 `quality.excluded_non_attacker_actions`，指向它們的關係一併移除 | `cti/analysis.py` | 真實 LLM 驗證（Equifax：偵測、封鎖、通報 FBI 等 8 項被排除） |
+| 原文標的 tactic 不再遺失 | M1 | `attack_tactic` 接受陣列 | `cti/analysis.py` | `test_tactic_returned_as_list_is_kept` |
+| 文件出處不當成 IOC | M6 | 文件中繼資料區塊（多行 `鍵: 值` 且含 Source／Publisher／License 等）內未去活化的網址、網域、雜湊不列為 indicator；「Source SHA-256」類標籤的雜湊不列入。一般 IOC 表的 `SHA256:` 不受影響 | `cti/analysis.py` | `test_document_provenance_is_not_an_indicator`、`test_labelled_ioc_hash_is_kept…` |
+| 行為名稱保留原文用語 | M3 | 提示詞 | `cti/analysis.py` | 真實 LLM 驗證 |
+
+### 批次 2 — 模組 2 缺失與補件
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 補件寫回 IR | H3 | 缺失項帶 `target`（collection／id／field）；前端照原本方式只送文字與題目 id，後端就把答案寫進該主機／服務欄位，並記 `applied_to` | `cti/missing.py`、`routers/ingest.py` | `test_supplement_writeback.py::WriteBack`（6 個） |
+| 逐欄位來源 | H5 | 只有被補的欄位記 `field_sources[欄位]="user"`；整筆的 `source`／`epistemic_status` 不變 | `routers/ingest.py`、`cti/missing.py` | `test_answer_sent_the_way_the_ui_sends_it…` |
+| 非答案不寫入 | R2 | 「不確定／unknown／not sure」→ 不寫入，狀態改 `accepted_unknown`；「可能／maybe／？」這類猜測 → 不寫入、題目維持 `open`、文字保留為補充；過長的說明文字也不寫入。原因記在 `write_back` | `routers/ingest.py` | `NonAnswers`（3 個） |
+| IR 被編輯後缺失項重算並保留使用者決定 | M10 | `refresh_missing_items`：仍成立的題目保留狀態；已回答的題目留作紀錄；不再成立的未答題目移除；其他模組的題目不動。補件與模組 3 每次存檔都會呼叫 | `cti/missing.py`、`routers/scenario.py`、`routers/ingest.py` | `RefreshOnEdit`（2 個） |
+| 版本問題不再只認固定產品 | M8 | 任何「被利用」的服務（帶 CVE，或相關行為是利用類技術／文字）都會問版本，並帶回寫目標。舊的固定產品清單仍保留為相容路徑（見 §5） | `cti/missing.py` | `test_questions_name_where_their_answer_belongs` |
+| 同一帳號只問一次；攻擊機不問 OS | M9 | 同題目併入 `affects`；角色是 attacker 的主機不產生題目 | `cti/missing.py` | 既有測試＋真實驗證 |
+
+### 批次 3 — 模組 3 流程編輯
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 無關編輯不會把未動的項目洗成「使用者」 | Q1 | 比對時「缺欄位／null／空／false」視為相同；未動的項目沿用原來源，不採信前端回傳的 `source` | `scenario/graph.py` | `test_unedited_items_keep_provenance_when_client_omits_defaults`、`test_confirming_a_relation_is_a_user_change`；另以舊程式重現確認會變成 user |
+
+注意：已經被洗掉來源的既有情境不會自動還原（原來源已不在資料裡）。
+
+### 批次 4 — 模組 4 軟體依賴
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 主機 id 前後一致 | H6、Q4 | 內部正規化後一律映回 IR 原本的主機 id；`unknown` 不建立主機 | `planner/dependencies.py` | `HostIdentity`（2 個） |
+| 分析抽到的服務都納入規劃 | H8、Q3 | 不再只看使用者新增的服務；有 catalogue 對應就沿用原服務 id 標上元件，沒有就標 `no_component` 並產生缺失項 | 同上 | `RecordedServices`（3 個） |
+| 軟體綁到「該子句點名的主機」 | Q5 | 順序：同子句中緊接在後的主機名 → 子句唯一點名的主機 → 角色唯一相符的主機 → 行為的作用主機。同時讀出同子句的版本與連接埠 | 同上 | `HostBindingFromText`（6 個） |
+| 自由補充與題目回答都會被讀取 | Q7、R3 | 補件文字中的軟體以 `source=user`、`supplement_ref` 建立；回答某主機題目的補件以該主機為預設 | 同上 | `test_free_text_supplement_maps…`、`SupplementAnswersBindToTheAskedHost` |
+| 已驗證引句中的版本／連接埠補進服務 | H11 | 主機、服務自己引用的已驗證原文句子會被讀取，寫入時記 `field_sources="source_quote"`，並把對應的版本題目結掉 | 同上 | `test_version_stated_in_a_verified_host_quote…` |
+| 漏洞名／角色不當軟體名稱 | H7 | 由別名命中的服務以產品名命名，原字眼存 `matched_text` | 同上 | `MentionNaming` |
+| 不同產品不互相比對 | R1 | 別名後面緊跟另一個大寫產品字（Apache **Struts**／**Tomcat**／**ActiveMQ**）不算命中；名稱內含產品字眼時，其餘字必須是 server／service 這類通用詞 | 同上 | `DifferentProductsAreNotAliases`（2 個） |
+| 重新規劃保留使用者決定、不留殘留 | H4、Q6、M11 | 同 id 的 `planner_dep_*` 題目沿用使用者的狀態；上一輪模組 4 產生的服務不沿用；有真服務後移除佔位服務；模組 2 已問過的版本不重複問 | 同上 | `UserDecisionsSurviveReplanning`、`test_stale_planner_service…`、`test_placeholder_service_is_dropped…` |
+
+### 批次 5 — 模組 5 拓樸
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 攻擊鏈有入口 | H9 | 沒有任何主機被原文／使用者標為對外時，把初始入侵行為（initial-access tactic 或 T1190／T1133／T1189／T1566／T1195／T1199）的目標主機放上 external，標 `exposure_basis=inferred_entry_point` 並在 notes 要求人工確認；找不到就明講「攻擊機沒有路徑」 | `planner/topology.py` | `EntryPoint`（4 個） |
+| 使用者補的網路位置優先 | H3 | `network_placement`（含補件）先於角色字眼判斷；寫 internal 就不對外 | 同上 | `test_user_supplied_internal_placement_wins` |
+| 原文明寫的跨主機步驟開通該路徑 | H11、Q3 | 行為有 `source_host_ref`≠`target_host_ref`、且是原文支持或使用者建立時，開通「來源→目標：該步驟點名的服務埠」。只有先後順序仍不開路徑 | 同上 | `test_stated_cross_host_step_opens_exactly_that_path`、`test_inferred_step_does_not…`、`test_temporal_order_alone…` |
+| 不支援的元件不標成可部署 | H10 | catalogue runtime 為 `external_platform`／`unsupported` 的主機輸出 `runtime=<該值>`、`deployable=false`、不給 `component_mode`；無法建置的 VM 元件不再標 `real` | 同上 | `UnsupportedComponents` |
+

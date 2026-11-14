@@ -1,7 +1,7 @@
 {
  "hosts": [
   {
-   "id": "web",
+   "id": "h1",
    "role": "NGINX web server",
    "networks": [
     "scenario-internal",
@@ -20,14 +20,14 @@
    "component_mode": "real"
   },
   {
-   "id": "db",
+   "id": "h2",
    "role": "PostgreSQL database server",
    "networks": [
     "scenario-internal"
    ],
    "services": [
     {
-     "name": "PostgreSQL",
+     "name": "postgres",
      "port": 5432,
      "protocol": "tcp"
     }
@@ -62,15 +62,15 @@
  "connections": [
   {
    "from_host": "attacker",
-   "to_host": "web",
+   "to_host": "h1",
    "reason": "Scenario action(s) a1 require access to nginx.",
    "port": 80,
    "protocol": "tcp"
   },
   {
-   "from_host": "web",
-   "to_host": "db",
-   "reason": "Action a3 is stated to run from web against db.",
+   "from_host": "h1",
+   "to_host": "h2",
+   "reason": "Action a2 is stated to run from h1 against h2.",
    "port": 5432,
    "protocol": "tcp"
   }
@@ -83,13 +83,13 @@
   },
   {
    "from": "attacker",
-   "to": "web",
+   "to": "h1",
    "action": "allow",
    "port": 80
   },
   {
-   "from": "web",
-   "to": "db",
+   "from": "h1",
+   "to": "h2",
    "action": "allow",
    "port": 5432
   }
@@ -100,10 +100,10 @@
  "verify_blocked": [
   {
    "from_host": "attacker",
-   "to_host": "db",
+   "to_host": "h2",
    "port": 5432,
    "protocol": "tcp",
-   "reason": "attacker shares no network with internal service db:5432 and must not reach it."
+   "reason": "attacker shares no network with internal service h2:5432 and must not reach it."
   }
  ],
  "notes": [

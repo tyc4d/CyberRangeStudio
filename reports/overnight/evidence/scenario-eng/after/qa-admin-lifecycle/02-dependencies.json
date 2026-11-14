@@ -11,34 +11,42 @@
    "id": "a1",
    "name": "sends an HTTP GET request to NGINX on host `web` TCP/80",
    "source": "llm",
-   "target_host_ref": "web",
+   "target_host_ref": "h1",
    "evidence_refs": [
     "evidence-1"
    ],
-   "epistemic_status": "supported"
+   "epistemic_status": "supported",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component oss-nginx is available for this service-level check; this does not mean the attack action is executed."
   },
   {
    "id": "a2",
    "name": "identifies the PostgreSQL database server `db` from the web host",
    "source": "llm",
-   "target_host_ref": "db",
+   "target_host_ref": "h2",
    "evidence_refs": [
     "evidence-2",
     "evidence-3"
    ],
-   "epistemic_status": "supported"
+   "epistemic_status": "supported",
+   "source_host_ref": "h1",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component oss-postgres is available for this service-level check; this does not mean the attack action is executed."
   },
   {
    "id": "a3",
    "name": "connects to PostgreSQL on `db` TCP/5432 from `web`",
    "source": "llm",
-   "target_host_ref": "db",
+   "target_host_ref": "h2",
    "evidence_refs": [
     "evidence-4",
-    "evidence-5"
+    "evidence-5",
+    "evidence-6"
    ],
    "epistemic_status": "supported",
-   "source_host_ref": "web"
+   "source_host_ref": "h1",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component oss-postgres is available for this service-level check; this does not mean the attack action is executed."
   }
  ],
  "relations": [
@@ -48,8 +56,9 @@
    "to_action": "a2",
    "kind": "temporal",
    "source": "llm",
+   "rationale": "a2 happens after a1 as stated by 'This precedes the internal discovery step.'",
    "evidence_refs": [
-    "evidence-6"
+    "evidence-7"
    ],
    "epistemic_status": "supported"
   },
@@ -59,67 +68,139 @@
    "to_action": "a3",
    "kind": "dependency",
    "source": "llm",
-   "evidence_refs": [
-    "evidence-5"
-   ],
-   "epistemic_status": "supported"
-  }
- ],
- "hosts": [
-  {
-   "id": "web",
-   "role": "NGINX web server",
-   "source": "llm",
-   "os": "Linux",
-   "evidence_refs": [
-    "evidence-7"
-   ],
-   "epistemic_status": "supported"
-  },
-  {
-   "id": "db",
-   "role": "PostgreSQL database server",
-   "source": "llm",
-   "os": "Linux",
+   "rationale": "a3 depends on the discovery of db from a2 and on the supplied web foothold",
    "evidence_refs": [
     "evidence-8"
    ],
    "epistemic_status": "supported"
   }
  ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "NGINX web server",
+   "source": "llm",
+   "name": "web",
+   "os": "Linux",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "PostgreSQL database server",
+   "source": "llm",
+   "name": "db",
+   "os": "Linux",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s2"
+   ]
+  }
+ ],
  "services": [
   {
-   "id": "nginx",
+   "id": "s1",
    "name": "nginx",
    "source": "llm",
-   "host_ref": "web",
+   "version": "1.31.8",
+   "cve": [],
+   "host_ref": "h1",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "catalogue_component": "oss-nginx",
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "postgres",
+   "source": "llm",
+   "version": "16.16",
+   "cve": [],
+   "host_ref": "h2",
+   "port": 5432,
+   "protocol": "tcp",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "catalogue_component": "oss-postgres",
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "oss-nginx",
+   "type": "service",
+   "id": "artifact-1",
+   "source": "llm",
    "evidence_refs": [
     "evidence-9"
    ],
    "epistemic_status": "supported"
   },
   {
-   "id": "postgres",
-   "name": "PostgreSQL",
+   "name": "nginx",
+   "type": "service",
+   "id": "artifact-2",
    "source": "llm",
-   "host_ref": "db",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "oss-postgres",
+   "type": "service",
+   "id": "artifact-3",
+   "source": "llm",
    "evidence_refs": [
     "evidence-10"
    ],
    "epistemic_status": "supported"
+  },
+  {
+   "name": "postgres",
+   "type": "service",
+   "id": "artifact-4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "oss-attacker",
+   "type": "tool",
+   "id": "artifact-5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
   }
  ],
- "target_context": {
-  "host_refs": [
-   "web",
-   "db"
-  ],
-  "service_refs": [
-   "nginx",
-   "postgres"
-  ]
- },
- "artifacts": [],
  "indicators": [],
  "commands": [],
  "evidence": [
@@ -185,7 +266,7 @@
   },
   {
    "id": "evidence-6",
-   "quote": "This precedes the internal discovery step.",
+   "quote": "The result only establishes connectivity; database record collection and command execution remain NOT_TESTED.",
    "locator": {
     "kind": "paragraph",
     "ref": "6"
@@ -193,10 +274,34 @@
    "quote_verified": true,
    "quote_match": "exact",
    "match_score": 1.0,
-   "matched_text": "This precedes the internal discovery step."
+   "matched_text": "The result only establishes connectivity; database record collection and command execution remain NOT_TESTED."
   },
   {
    "id": "evidence-7",
+   "quote": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80. This precedes the internal discovery step.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80. This precedes the internal discovery step."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432. It depends on the discovery of db and on the supplied web foothold.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432. It depends on the discovery of db and on the supplied web footho"
+  },
+  {
+   "id": "evidence-9",
    "quote": "The host `web` has role `NGINX web server`, Linux OS, and runs nginx version 1.31.8 on TCP/80 using catalogue component oss-nginx.",
    "locator": {
     "kind": "paragraph",
@@ -208,7 +313,7 @@
    "matched_text": "The host `web` has role `NGINX web server`, Linux OS, and runs nginx version 1.31.8 on TCP/80 using catalogue component oss nginx."
   },
   {
-   "id": "evidence-8",
+   "id": "evidence-10",
    "quote": "The host `db` has role `PostgreSQL database server`, Linux OS, and runs PostgreSQL version 16.16 on TCP/5432 using catalogue component oss-postgres.",
    "locator": {
     "kind": "paragraph",
@@ -220,7 +325,7 @@
    "matched_text": "The host `db` has role `PostgreSQL database server`, Linux OS, and runs PostgreSQL version 16.16 on TCP/5432 using catalogue component oss postgres."
   },
   {
-   "id": "evidence-9",
+   "id": "evidence-11",
    "quote": "The service `nginx` belongs to host `web`.",
    "locator": {
     "kind": "paragraph",
@@ -232,7 +337,7 @@
    "matched_text": "The service `nginx` belongs to host `web`."
   },
   {
-   "id": "evidence-10",
+   "id": "evidence-12",
    "quote": "The service `postgres` belongs to host `db`.",
    "locator": {
     "kind": "paragraph",
@@ -242,19 +347,31 @@
    "quote_match": "exact",
    "match_score": 1.0,
    "matched_text": "The service `postgres` belongs to host `db`."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The local attacker host uses the Alpine attacker toolbox component oss-attacker.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The local attacker host uses the Alpine attacker toolbox component oss attacker."
   }
  ],
  "missing_items": [
   {
-   "id": "missing-hosts-web-os-version",
-   "field": "NGINX web server — 作業系統版本",
+   "id": "missing-hosts-h1-os-version",
+   "field": "web — 作業系統版本",
    "category": "version",
    "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
    "severity": "major",
    "status": "open",
-   "question": "NGINX web server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "question": "web 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
    "affects": [
-    "hosts:web — NGINX web server",
+    "hosts:h1 — web",
     "action:a1 — sends an HTTP GET request to NGINX on host `web` TCP/80"
    ],
    "suggestions": [
@@ -265,11 +382,11 @@
    "known": [
     {
      "field": "host role or asset",
-     "value": "NGINX web server",
-     "source_ref": "hosts:web.role",
+     "value": "web",
+     "source_ref": "hosts:h1.role",
      "epistemic_status": "supported",
      "evidence_refs": [
-      "evidence-7",
+      "evidence-9",
       "evidence-1"
      ]
     }
@@ -277,20 +394,20 @@
    "needs_user_decision": true,
    "target": {
     "collection": "hosts",
-    "id": "web",
+    "id": "h1",
     "field": "os_version"
    }
   },
   {
-   "id": "missing-hosts-web-network",
-   "field": "NGINX web server — 網段/網路位置",
+   "id": "missing-hosts-h1-network",
+   "field": "web — 網段/網路位置",
    "category": "network",
    "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
    "severity": "major",
    "status": "open",
-   "question": "NGINX web server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "question": "web 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
    "affects": [
-    "hosts:web — NGINX web server",
+    "hosts:h1 — web",
     "action:a1 — sends an HTTP GET request to NGINX on host `web` TCP/80"
    ],
    "suggestions": [
@@ -301,11 +418,11 @@
    "known": [
     {
      "field": "host role or asset",
-     "value": "NGINX web server",
-     "source_ref": "hosts:web.role",
+     "value": "web",
+     "source_ref": "hosts:h1.role",
      "epistemic_status": "supported",
      "evidence_refs": [
-      "evidence-7",
+      "evidence-9",
       "evidence-1"
      ]
     }
@@ -313,20 +430,20 @@
    "needs_user_decision": true,
    "target": {
     "collection": "hosts",
-    "id": "web",
+    "id": "h1",
     "field": "network_placement"
    }
   },
   {
-   "id": "missing-hosts-db-os-version",
-   "field": "PostgreSQL database server — 作業系統版本",
+   "id": "missing-hosts-h2-os-version",
+   "field": "db — 作業系統版本",
    "category": "version",
    "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
    "severity": "major",
    "status": "open",
-   "question": "PostgreSQL database server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "question": "db 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
    "affects": [
-    "hosts:db — PostgreSQL database server",
+    "hosts:h2 — db",
     "action:a2 — identifies the PostgreSQL database server `db` from the web host",
     "action:a3 — connects to PostgreSQL on `db` TCP/5432 from `web`"
    ],
@@ -338,35 +455,36 @@
    "known": [
     {
      "field": "host role or asset",
-     "value": "PostgreSQL database server",
-     "source_ref": "hosts:db.role",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
      "epistemic_status": "supported",
      "evidence_refs": [
-      "evidence-8",
+      "evidence-10",
       "evidence-2",
       "evidence-3",
       "evidence-4",
-      "evidence-5"
+      "evidence-5",
+      "evidence-6"
      ]
     }
    ],
    "needs_user_decision": true,
    "target": {
     "collection": "hosts",
-    "id": "db",
+    "id": "h2",
     "field": "os_version"
    }
   },
   {
-   "id": "missing-hosts-db-network",
-   "field": "PostgreSQL database server — 網段/網路位置",
+   "id": "missing-hosts-h2-network",
+   "field": "db — 網段/網路位置",
    "category": "network",
    "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
    "severity": "major",
    "status": "open",
-   "question": "PostgreSQL database server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "question": "db 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
    "affects": [
-    "hosts:db — PostgreSQL database server",
+    "hosts:h2 — db",
     "action:a2 — identifies the PostgreSQL database server `db` from the web host",
     "action:a3 — connects to PostgreSQL on `db` TCP/5432 from `web`"
    ],
@@ -378,94 +496,24 @@
    "known": [
     {
      "field": "host role or asset",
-     "value": "PostgreSQL database server",
-     "source_ref": "hosts:db.role",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
      "epistemic_status": "supported",
      "evidence_refs": [
-      "evidence-8",
+      "evidence-10",
       "evidence-2",
       "evidence-3",
       "evidence-4",
-      "evidence-5"
+      "evidence-5",
+      "evidence-6"
      ]
     }
    ],
    "needs_user_decision": true,
    "target": {
     "collection": "hosts",
-    "id": "db",
+    "id": "h2",
     "field": "network_placement"
-   }
-  },
-  {
-   "id": "missing-service-nginx-version",
-   "field": "nginx — 版本",
-   "category": "version",
-   "reason": "IR 指出 nginx，但沒有可重現所需的確切版本。",
-   "severity": "major",
-   "status": "open",
-   "question": "靶場要重建 nginx 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
-   "affects": [
-    "service:nginx — nginx",
-    "action:a1 — sends an HTTP GET request to NGINX on host `web` TCP/80"
-   ],
-   "suggestions": [
-    "填入來源或資產清單記載的確切版本",
-    "選用隔離靶場可取得的替代版本並標記為替代",
-    "無法確認；保留為未知"
-   ],
-   "known": [
-    {
-     "field": "受害軟體/服務",
-     "value": "nginx",
-     "source_ref": "services:nginx.name",
-     "epistemic_status": "supported",
-     "evidence_refs": [
-      "evidence-9"
-     ]
-    }
-   ],
-   "needs_user_decision": true,
-   "target": {
-    "collection": "services",
-    "id": "nginx",
-    "field": "version"
-   }
-  },
-  {
-   "id": "missing-service-postgres-version",
-   "field": "PostgreSQL — 版本",
-   "category": "version",
-   "reason": "IR 指出 PostgreSQL，但沒有可重現所需的確切版本。",
-   "severity": "major",
-   "status": "open",
-   "question": "靶場要重建 PostgreSQL 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
-   "affects": [
-    "service:postgres — PostgreSQL",
-    "action:a2 — identifies the PostgreSQL database server `db` from the web host",
-    "action:a3 — connects to PostgreSQL on `db` TCP/5432 from `web`"
-   ],
-   "suggestions": [
-    "填入來源或資產清單記載的確切版本",
-    "選用隔離靶場可取得的替代版本並標記為替代",
-    "無法確認；保留為未知"
-   ],
-   "known": [
-    {
-     "field": "受害軟體/服務",
-     "value": "PostgreSQL",
-     "source_ref": "services:postgres.name",
-     "epistemic_status": "supported",
-     "evidence_refs": [
-      "evidence-10"
-     ]
-    }
-   ],
-   "needs_user_decision": true,
-   "target": {
-    "collection": "services",
-    "id": "postgres",
-    "field": "version"
    }
   },
   {
@@ -505,7 +553,9 @@
   "absent_count": 0,
   "method": "single_pass",
   "provisional": true,
-  "dropped_placeholder_hosts": 0
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": []
  },
- "id": "scn_evidence"
+ "id": "scn_evidence",
+ "fidelity": "reproducible"
 }
