@@ -17,6 +17,8 @@ _STIX_PATH = re.compile(r"^(?:objects\[(\d+)\]|object)(?:\.([A-Za-z0-9_]+))?$")
 # real source wording. ATT&CK ids live in attack_technique/attack_tactic, not in quotes.
 _ATTACK_TAG = re.compile(r"\s*\[(?:T\d{4}(?:\.\d{3})?|TA\d{4})\]")
 _WS = re.compile(r"\s+")
+_ELLIPSIS = re.compile(r"(?:\.{3,}|…+)")
+_DASHES = re.compile(r"[-\u2010-\u2015\u2212]")
 
 # Conservative thresholds: require substantial contiguous/overall agreement for
 # strong support, and broad content-word coverage for partial support.
@@ -50,6 +52,32 @@ def grade_quote(quote: str, source_text: str) -> dict[str, Any]:
     result: dict[str, Any] = {"level": "none", "score": 0.0, "matched": ""}
     if not needle or not haystack:
         return result
+
+    # LLMs sometimes join two source excerpts with an ellipsis. Grade each
+    # excerpt independently; the ellipsis itself is editorial, not evidence.
+    fragments = [_match_norm(part) for part in _ELLIPSIS.split(quote)] if isinstance(quote, str) else []
+    fragments = [part for part in fragments if part]
+    if len(fragments) > 1:
+        grades = [_grade_normalized_quote(part, haystack) for part in fragments]
+        if all(grade["level"] in {"exact", "strong"} for grade in grades):
+            matched = " … ".join(grade["matched"] for grade in grades)
+            return {
+                "level": "strong",
+                "score": round(min(grade["score"] for grade in grades), 4),
+                "matched": matched[:_MATCHED_TEXT_MAX_CHARS],
+            }
+
+    # Preserve the source's original punctuation/layout in the common whole-unit
+    # exact case; normalization is for comparison, not for displayed evidence.
+    if needle == haystack and isinstance(source_text, str):
+        return {"level": "exact", "score": 1.0, "matched": source_text[:_MATCHED_TEXT_MAX_CHARS]}
+
+    return _grade_normalized_quote(needle, haystack)
+
+
+def _grade_normalized_quote(needle: str, haystack: str) -> dict[str, Any]:
+    """Grade already-normalized text, without interpreting editorial ellipses."""
+    result: dict[str, Any] = {"level": "none", "score": 0.0, "matched": ""}
 
     if needle in haystack:
         return {"level": "exact", "score": 1.0, "matched": needle[:_MATCHED_TEXT_MAX_CHARS]}
@@ -114,13 +142,14 @@ def strip_attack_tags(text: str) -> str:
 
 
 def _match_norm(text: str) -> str:
-    """Normalise for verbatim matching: drop injected ATT&CK tags and collapse whitespace.
+    """Normalize layout, dash variants, and injected ATT&CK annotations for matching.
 
     PDF extraction hard-wraps lines and pads columns, so the same words arrive with
     different whitespace; collapsing it is not a licence for paraphrase — any changed
     word still fails the substring test.
     """
-    return _WS.sub(" ", _ATTACK_TAG.sub("", text)).strip()
+    without_tags = _ATTACK_TAG.sub("", text)
+    return _WS.sub(" ", _DASHES.sub(" ", without_tags)).strip()
 
 
 def verify_quote(quote: str, locator: dict[str, str], units: list[SourceUnit], parsed_source: dict[str, Any] | None) -> bool:

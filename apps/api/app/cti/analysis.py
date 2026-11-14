@@ -51,6 +51,39 @@ _IOC_CONTEXT_RE = re.compile(
     r"connection|connected|callback|download(?:ed)?|beacon|resolved?|observed|phishing|infra)\b",
     re.IGNORECASE,
 )
+def _host_match_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", value.casefold())
+
+
+def _resolve_action_hosts(actions: list[dict[str, Any]], hosts: list[dict[str, Any]], evidence: list[dict[str, Any]]) -> None:
+    """Resolve only explicit host names/roles present in action text or its citations."""
+    by_id = {host["id"]: host for host in hosts}
+    evidence_by_id = {item["id"]: item.get("quote", "") for item in evidence}
+    aliases: list[tuple[str, dict[str, Any]]] = []
+    for host in hosts:
+        for key in ("name", "role"):
+            value = host.get(key)
+            if isinstance(value, str) and len(_host_match_key(value)) >= 3:
+                parts = re.split(r"[^A-Za-z0-9]+", value.strip())
+                pattern = r"(?<![A-Za-z0-9])" + r"[\s_-]*".join(map(re.escape, parts)) + r"(?![A-Za-z0-9])"
+                aliases.append((pattern, host))
+        label = " ".join(str(host.get(key, "")) for key in ("name", "role")).casefold()
+        if "domain controller" in label or re.search(r"\bdc\b", label):
+            aliases.append((r"(?<![A-Za-z0-9])domain\s+controller(?![A-Za-z0-9])", host))
+            aliases.append((r"(?<![A-Za-z0-9])DC(?![A-Za-z0-9])", host))
+    for action in actions:
+        current = action.get("target_host_ref")
+        if current in by_id:
+            continue
+        fragments = [str(action.get(key, "")) for key in ("name", "description", "precondition", "initial_access")]
+        fragments.extend(evidence_by_id.get(ref, "") for ref in action.get("evidence_refs", []))
+        text = " ".join(fragments)
+        candidates: dict[str, dict[str, Any]] = {}
+        for pattern, host in aliases:
+            if re.search(pattern, text, re.IGNORECASE):
+                candidates[host["id"]] = host
+        if len(candidates) == 1:
+            action["target_host_ref"] = next(iter(candidates))
 
 
 class AnalysisError(ValueError):
@@ -492,6 +525,8 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "role": _string(item.get("role")) or "target",
             "source": "llm",
         }
+        if isinstance(item.get("name"), str) and item["name"].strip():
+            host["name"] = item["name"].strip()
         for key in ("os", "os_version", "network_placement"):
             if isinstance(item.get(key), str) and item[key].strip():
                 host[key] = item[key].strip()
@@ -499,6 +534,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         host["evidence_refs"] = _refs
         host["epistemic_status"] = settle_status(item, _refs)
         hosts.append(host)
+    _resolve_action_hosts(actions, hosts, evidence)
     for index, raw in enumerate(services_raw, start=1):
         item = dict(raw)
         service: dict[str, Any] = {
