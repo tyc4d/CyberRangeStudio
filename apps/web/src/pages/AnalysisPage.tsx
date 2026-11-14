@@ -160,8 +160,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
                   <div className="row" style={{ gap: 8, marginBottom: 4 }}>
                     <span className={`chip ${activeEv === e.id ? "on" : ""}`} style={{ cursor: "default" }}>{e.id}</span>
                     {e.locator?.ref && <span className="muted mono">{e.locator.kind ?? "位置"} {e.locator.ref}</span>}
-                    {e.quote_verified === true && <span className="status-PASS" style={{ fontSize: 12 }}>✓ 引文已核對</span>}
-                    {e.quote_verified === false && <span className="status-FAIL" style={{ fontSize: 12 }}>✗ 原文找不到此引文</span>}
+                    {(() => {
+                      // Graded source support: exact/strong verify; partial = keyword/fragment; none = not found.
+                      const level = e.quote_match ?? (e.quote_verified === true ? "exact" : e.quote_verified === false ? "none" : undefined);
+                      if (!level) return null;
+                      const tip = e.matched_text ? `原文對應片段：${e.matched_text}` : undefined;
+                      if (level === "exact") return <span className="status-PASS" style={{ fontSize: 12 }} title={tip}>✓ 原文逐字核對</span>;
+                      if (level === "strong") return <span className="status-PASS" style={{ fontSize: 12 }} title={tip}>✓ 原文高度相符</span>;
+                      if (level === "partial") return <span className="status-PARTIAL" style={{ fontSize: 12 }} title={tip}>～ 關鍵字／片段相符</span>;
+                      return <span className="status-FAIL" style={{ fontSize: 12 }} title={tip}>✗ 原文找不到此引文</span>;
+                    })()}
                   </div>
                   <blockquote className="quote" style={activeEv === e.id ? { borderLeftColor: "var(--accent)" } : undefined}>{e.quote}</blockquote>
                 </div>
