@@ -1,0 +1,25 @@
+### solr (cr-demo-infra-eng-151ce7ca)
+- published ports: []  (empty = nothing published on the host)
+- networks: cr-demo-infra-eng-151ce7ca-dmz cr-demo-infra-eng-151ce7ca-inside 
+  - cr-demo-infra-eng-151ce7ca-dmz internal=true
+  - cr-demo-infra-eng-151ce7ca-inside internal=true
+- default route inside container: none
+- limits: mem=1610612736 nanocpus=2000000000 pids=512 capdrop=[ALL] privileged=false secopt=[no-new-privileges:true] readonly=false
+- attacker -> solr:8983/solr/admin/info/system?wt=json : 200 ['solr-spec-version":"8.11.0']
+### portal (cr-demo-infra-eng-e1eb7787)
+- published ports: [8080/tcp]  (empty = nothing published on the host)
+- networks: cr-demo-infra-eng-e1eb7787-data cr-demo-infra-eng-e1eb7787-dmz 
+  - cr-demo-infra-eng-e1eb7787-data internal=true
+  - cr-demo-infra-eng-e1eb7787-dmz internal=true
+- default route inside container: none
+- limits: mem=1073741824 nanocpus=2000000000 pids=512 capdrop=[ALL] privileged=false secopt=[no-new-privileges:true] readonly=false
+- attacker -> portal:8080/ : 200 ['<title>Struts2 Showcase - Fileupload sample']
+### version probes
+vuln-struts2-s2-045 OK | got /root/.m2/repository/org/apache/struts/struts2-core/2.3.30/struts2-core-2.3.30.jar
+oss-mariadb OK | got mariadbd  Ver 11.4.13-MariaDB-ubu2404 for debian-linux-gnu on x86_64 (mariadb.org binary distribution)
+oss-mysql OK | got /usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)
+oss-postgres OK | got postgres (PostgreSQL) 16.16
+### portal -> each database over the data network (TCP)
+  portal -> db-dispute:3306 CONNECTED
+  portal -> db-other-1:5432 CONNECTED
+  portal -> db-other-2:3306 CONNECTED

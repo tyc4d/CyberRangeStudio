@@ -1,0 +1,59 @@
+# Can a root container on a lab network open a TCP connection to the host's sshd (:22)? Every host IPv4 address and the bridge's IPv6 link-local address are tried.
+## A. plain internal network (what was generated before)
+   network opts: --internal | host bridge br-d8466cfd51b8 v4=[172.26.0.1/16] v6=[]
+   REACHED 172.26.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   RESULT HOST_REACHABLE
+## B. internal + gateway_mode_ipv4=isolated
+   network opts: --internal -o com.docker.network.bridge.gateway_mode_ipv4=isolated | host bridge br-5e29b3decb79 v4=[] v6=[]
+   RESULT HOST_UNREACHABLE
+## C. B + IPv6 disabled inside the container (sysctl)
+   network opts: --internal -o com.docker.network.bridge.gateway_mode_ipv4=isolated | host bridge br-45f7a138a898 v4=[] v6=[]
+   RESULT HOST_UNREACHABLE
+## D. non-internal edge-style network (icc off, no NAT)
+   network opts: -o com.docker.network.bridge.enable_icc=false -o com.docker.network.bridge.enable_ip_masquerade=false | host bridge br-aa586728d78f v4=[172.26.0.1/16] v6=[]
+   REACHED 192.168.16.213:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 100.115.198.213:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.21.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.18.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.17.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.23.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.25.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.28.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.20.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.24.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.22.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.19.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.27.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.30.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.31.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.32.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.112.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.128.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.48.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.26.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   RESULT HOST_REACHABLE
+## E. D + IPv6 disabled inside the container
+   network opts: -o com.docker.network.bridge.enable_icc=false -o com.docker.network.bridge.enable_ip_masquerade=false | host bridge br-3d94956e50fe v4=[172.26.0.1/16] v6=[]
+   REACHED 192.168.16.213:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 100.115.198.213:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.21.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.18.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.17.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.23.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.25.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.28.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.20.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.24.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.22.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.19.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.27.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.30.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.31.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.32.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.112.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.128.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 192.168.48.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   REACHED 172.26.0.1:22 banner=b'SSH-2.0-OpenSSH_9.6p'
+   RESULT HOST_REACHABLE

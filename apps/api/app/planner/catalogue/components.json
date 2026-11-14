@@ -79,6 +79,13 @@
       "limits": {
         "mem_limit": "256m"
       }
+    },
+    "version_probe": {
+      "command": [
+        "nginx",
+        "-v"
+      ],
+      "expect_substring": "1.31.8"
     }
   },
   {
@@ -148,6 +155,13 @@
       "limits": {
         "mem_limit": "256m"
       }
+    },
+    "version_probe": {
+      "command": [
+        "httpd",
+        "-v"
+      ],
+      "expect_substring": "2.4.71"
     }
   },
   {
@@ -218,6 +232,13 @@
         "retries": 12,
         "start_period": "5s"
       }
+    },
+    "version_probe": {
+      "command": [
+        "postgres",
+        "--version"
+      ],
+      "expect_substring": "16.16"
     }
   },
   {
@@ -267,6 +288,13 @@
       "limits": {
         "mem_limit": "256m"
       }
+    },
+    "version_probe": {
+      "command": [
+        "cat",
+        "/etc/alpine-release"
+      ],
+      "expect_substring": "3.22"
     }
   },
   {
@@ -336,7 +364,14 @@
         "mem_limit": "1g"
       }
     },
-    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment"
+    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment",
+    "version_probe": {
+      "command": [
+        "mysqld",
+        "--version"
+      ],
+      "expect_substring": "8.0.46"
+    }
   },
   {
     "id": "oss-mariadb",
@@ -404,7 +439,14 @@
         "mem_limit": "768m"
       }
     },
-    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment"
+    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment",
+    "version_probe": {
+      "command": [
+        "mariadbd",
+        "--version"
+      ],
+      "expect_substring": "11.4.13"
+    }
   },
   {
     "id": "oss-redis",
@@ -463,7 +505,14 @@
         "mem_limit": "256m"
       }
     },
-    "fidelity": "exact pinned Redis image, default configuration without authentication (lab network only)"
+    "fidelity": "exact pinned Redis image, default configuration without authentication (lab network only)",
+    "version_probe": {
+      "command": [
+        "redis-server",
+        "--version"
+      ],
+      "expect_substring": "v=7.4.12"
+    }
   },
   {
     "id": "oss-tomcat",
@@ -524,7 +573,14 @@
         "pids_limit": 512
       }
     },
-    "fidelity": "exact pinned servlet container with no web application deployed (GET / answers 404 from Tomcat itself)"
+    "fidelity": "exact pinned servlet container with no web application deployed (GET / answers 404 from Tomcat itself)",
+    "version_probe": {
+      "command": [
+        "catalina.sh",
+        "version"
+      ],
+      "expect_substring": "Apache Tomcat/9.0.124"
+    }
   },
   {
     "id": "oss-wordpress",
@@ -575,13 +631,16 @@
         "test": [
           "CMD",
           "curl",
-          "-fsS",
+          "-sS",
           "-o",
           "/dev/null",
-          "http://127.0.0.1:80/wp-admin/install.php"
+          "--max-time",
+          "8",
+          "--fail",
+          "http://127.0.0.1:80/wp-login.php"
         ],
         "interval": "5s",
-        "timeout": "4s",
+        "timeout": "10s",
         "retries": 12,
         "start_period": "20s"
       },
@@ -607,9 +666,21 @@
     "fidelity": "exact pinned application image; it only answers when its MySQL/MariaDB dependency is reachable and accepts the generated credentials",
     "behavior_probe": {
       "type": "http",
-      "path": "/wp-admin/install.php",
-      "expect_status": 200,
-      "proves": "web tier completed a real database handshake (WordPress returns HTTP 500 'Error establishing a database connection' otherwise)"
+      "path": "/wp-login.php",
+      "expect_status": [
+        200,
+        302
+      ],
+      "proves": "web tier completed a real database handshake (WordPress answers HTTP 500 'Error establishing a database connection' when MySQL is unreachable or rejects the generated credentials)"
+    },
+    "known_limits": "Pages that call api.wordpress.org (installer language list, update checks) wait for a network timeout because the lab has no outbound access.",
+    "version_probe": {
+      "command": [
+        "php",
+        "-r",
+        "include '/usr/src/wordpress/wp-includes/version.php'; echo $wp_version;"
+      ],
+      "expect_substring": "7.1.4"
     }
   },
   {
@@ -679,7 +750,15 @@
     "cves": [
       "CVE-2017-5638"
     ],
-    "fidelity": "real vulnerable Struts 2.3.30 (affected range 2.3.5-2.3.31) on Linux/Jetty; the version is an exercise choice, not a fact about any incident"
+    "fidelity": "real vulnerable Struts 2.3.30 (affected range 2.3.5-2.3.31) on Linux/Jetty; the version is an exercise choice, not a fact about any incident",
+    "version_probe": {
+      "command": [
+        "sh",
+        "-c",
+        "find / -name 'struts2-core-*.jar' 2>/dev/null | head -1"
+      ],
+      "expect_substring": "struts2-core-2.3.30.jar"
+    }
   },
   {
     "id": "vuln-log4shell-solr",
@@ -722,23 +801,20 @@
       "tmpfs": [],
       "healthcheck": {
         "test": [
-          "CMD",
-          "curl",
-          "-fsS",
-          "-o",
-          "/dev/null",
-          "http://127.0.0.1:8983/solr/admin/info/system?wt=json"
+          "CMD-SHELL",
+          "curl -fsS -o /dev/null \"http://$$(hostname -i | cut -d' ' -f1):8983/solr/demo/admin/ping\""
         ],
         "interval": "5s",
         "timeout": "4s",
-        "retries": 12,
-        "start_period": "40s"
+        "retries": 24,
+        "start_period": "90s"
       },
       "limits": {
         "mem_limit": "1536m",
         "cpus": 2.0,
         "pids_limit": 512
-      }
+      },
+      "healthcheck_note": "The image first runs a temporary loopback-only Solr to load demo data; the check therefore targets the container's network address and the demo core, not 127.0.0.1."
     },
     "vulnerable": true,
     "exposure": "isolated_only",
@@ -754,7 +830,15 @@
         "difference": "Same Log4j 2.14.1 JNDI lookup flaw, but a different product (Solr, Linux container) than VMware Horizon on Windows; a teaching substitute, never the incident's software."
       }
     ],
-    "fidelity": "real vulnerable Log4j 2.14.1 inside Solr 8.11.0; substitute for any other Log4Shell-affected product"
+    "fidelity": "real vulnerable Log4j 2.14.1 inside Solr 8.11.0; substitute for any other Log4Shell-affected product",
+    "version_probe": {
+      "command": [
+        "sh",
+        "-c",
+        "ls /opt/solr/server/lib/ext/log4j-core-*.jar"
+      ],
+      "expect_substring": "log4j-core-2.14.1.jar"
+    }
   },
   {
     "id": "windows-server-eval-vm",

@@ -1,0 +1,1366 @@
+{
+  "scenario_id": "infra-eng-596ce989",
+  "steps": [
+    {
+      "step": "generate",
+      "at": "02:38:23",
+      "result": {
+        "status": 200,
+        "body": {
+          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-596ce989\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  attacker:\n    container_name: cr-demo-infra-eng-596ce989-attacker\n    networks:\n    - dmz\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f\n    user: 65532:65532\n    command:\n    - sh\n    - -c\n    - sleep 2147483647\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      solr:\n        condition: service_healthy\n  solr:\n    container_name: cr-demo-infra-eng-596ce989-solr\n    networks:\n    - dmz\n    - inside\n    read_only: false\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: vulhub/solr:8.11.0@sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23\n    healthcheck:\n      test:\n      - CMD\n      - curl\n      - -fsS\n      - -o\n      - /dev/null\n      - http://127.0.0.1:8983/solr/admin/info/system?wt=json\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 40s\n    mem_limit: 1536m\n    cpus: 2.0\n    pids_limit: 512\n    depends_on:\n      app:\n        condition: service_healthy\n      legacy:\n        condition: service_healthy\n  app:\n    container_name: cr-demo-infra-eng-596ce989-app\n    networks:\n    - inside\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /usr/local/tomcat/logs:rw,noexec,nosuid,size=32m,uid=65532,gid=65532,mode=0755\n    - /usr/local/tomcat/work:rw,nosuid,size=64m,uid=65532,gid=65532,mode=0755\n    - /usr/local/tomcat/temp:rw,nosuid,size=64m,uid=65532,gid=65532,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: tomcat:9.0.124-jre25-temurin-noble@sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f\n    user: 65532:65532\n    healthcheck:\n      test:\n      - CMD\n      - bash\n      - -c\n      - exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET / HTTP/1.0\\r\\n\\r\\n' >&3 &&\n        grep -q 'HTTP/1.1' <&3\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 15s\n    mem_limit: 768m\n    cpus: 1.0\n    pids_limit: 512\n    depends_on:\n      cache:\n        condition: service_healthy\n  cache:\n    container_name: cr-demo-infra-eng-596ce989-cache\n    networks:\n    - inside\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /data:rw,noexec,nosuid,size=64m,uid=999,gid=1000,mode=0700\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: redis:7.4.12-alpine3.22@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe\n    user: 999:1000\n    healthcheck:\n      test:\n      - CMD\n      - redis-cli\n      - -h\n      - 127.0.0.1\n      - ping\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n  legacy:\n    container_name: cr-demo-infra-eng-596ce989-legacy\n    networks:\n    - inside\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9\n    user: '1:1'\n    cap_add:\n    - NET_BIND_SERVICE\n    healthcheck:\n      test:\n      - CMD\n      - httpd\n      - -t\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\nnetworks:\n  dmz:\n    name: cr-demo-infra-eng-596ce989-dmz\n    internal: true\n  inside:\n    name: cr-demo-infra-eng-596ce989-inside\n    internal: true\n",
+          "report": {
+            "scenario_id": "infra-eng-596ce989",
+            "deployable": true,
+            "components": [
+              {
+                "host_id": "attacker",
+                "image_hint": "oss-attacker",
+                "component": "oss-attacker",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "version": "3.22",
+                "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "substitute": false,
+                "catalogue_component": "oss-attacker",
+                "published": false,
+                "exposure": "publishable",
+                "healthcheck": false,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "solr",
+                "image_hint": "vuln-log4shell-solr",
+                "component": "vuln-log4shell-solr",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "vulhub/solr:8.11.0@sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+                "version": "8.11.0",
+                "digest": "sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+                "substitute": false,
+                "catalogue_component": "vuln-log4shell-solr",
+                "published": false,
+                "exposure": "isolated_only",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "1536m",
+                  "cpus": 2.0,
+                  "pids_limit": 512
+                },
+                "vulnerable": true,
+                "cves": [
+                  "CVE-2021-44228"
+                ],
+                "isolation": "deliberately vulnerable exercise image: joined only to internal networks, never published to a host port",
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "app",
+                "image_hint": "oss-tomcat",
+                "component": "oss-tomcat",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "tomcat:9.0.124-jre25-temurin-noble@sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+                "version": "9.0.124",
+                "digest": "sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+                "substitute": false,
+                "catalogue_component": "oss-tomcat",
+                "published": false,
+                "exposure": "internal_only",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "768m",
+                  "cpus": 1.0,
+                  "pids_limit": 512
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "cache",
+                "image_hint": "oss-redis",
+                "component": "oss-redis",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "redis:7.4.12-alpine3.22@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe",
+                "version": "7.4.12",
+                "digest": "sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe",
+                "substitute": false,
+                "catalogue_component": "oss-redis",
+                "published": false,
+                "exposure": "internal_only",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "legacy",
+                "image_hint": "oss-httpd",
+                "component": "oss-httpd",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
+                "version": "2.4.71",
+                "digest": "sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
+                "substitute": false,
+                "catalogue_component": "oss-httpd",
+                "published": false,
+                "exposure": "internal_only",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              }
+            ],
+            "vms": [],
+            "host_port_mappings": [],
+            "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+            "networks": [
+              {
+                "id": "dmz",
+                "name": "cr-demo-infra-eng-596ce989-dmz",
+                "internal": true,
+                "plan_internal": false
+              },
+              {
+                "id": "inside",
+                "name": "cr-demo-infra-eng-596ce989-inside",
+                "internal": true,
+                "plan_internal": true
+              }
+            ],
+            "errors": []
+          }
+        }
+      }
+    },
+    {
+      "step": "docker_compose_config",
+      "at": "02:38:23",
+      "result": {
+        "cmd": "env CR_PG_PASSWORD=x CR_DB_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-596ce989/docker-compose.yml config --quiet",
+        "rc": 0,
+        "out": "",
+        "err": ""
+      }
+    },
+    {
+      "step": "approve",
+      "at": "02:38:23",
+      "result": {
+        "status": 200
+      }
+    },
+    {
+      "step": "up_1",
+      "at": "02:38:55",
+      "result": {
+        "status": 200,
+        "seconds": 32.5,
+        "body": {
+          "scenario_id": "infra-eng-596ce989",
+          "project_name": "cr-demo-infra-eng-596ce989",
+          "state": "running",
+          "containers": [
+            {
+              "service": "app",
+              "name": "cr-demo-infra-eng-596ce989-app",
+              "id": "0c461b4bf26e",
+              "state": "running",
+              "status": "Up 11 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-596ce989-attacker",
+              "id": "0f8781617732",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "cache",
+              "name": "cr-demo-infra-eng-596ce989-cache",
+              "id": "d309437fd537",
+              "state": "running",
+              "status": "Up 17 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "legacy",
+              "name": "cr-demo-infra-eng-596ce989-legacy",
+              "id": "2a6659f55ddb",
+              "state": "running",
+              "status": "Up 17 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "solr",
+              "name": "cr-demo-infra-eng-596ce989-solr",
+              "id": "63ea9552eaf9",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n"
+          },
+          "deployment_record": {
+            "id": 19,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {}
+                }
+              ],
+              "scenario_id": "infra-eng-596ce989",
+              "project_name": "cr-demo-infra-eng-596ce989",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "app",
+                  "name": "cr-demo-infra-eng-596ce989-app",
+                  "id": "0c461b4bf26e",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-596ce989-attacker",
+                  "id": "0f8781617732",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "cache",
+                  "name": "cr-demo-infra-eng-596ce989-cache",
+                  "id": "d309437fd537",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "legacy",
+                  "name": "cr-demo-infra-eng-596ce989-legacy",
+                  "id": "2a6659f55ddb",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "solr",
+                  "name": "cr-demo-infra-eng-596ce989-solr",
+                  "id": "63ea9552eaf9",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:38:55Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "exit_code": 0,
+              "host_ports": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "status_1",
+      "at": "02:38:56",
+      "result": {
+        "scenario_id": "infra-eng-596ce989",
+        "project_name": "cr-demo-infra-eng-596ce989",
+        "state": "running",
+        "containers": [
+          {
+            "service": "app",
+            "name": "cr-demo-infra-eng-596ce989-app",
+            "id": "0c461b4bf26e",
+            "state": "running",
+            "status": "Up 11 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-596ce989-attacker",
+            "id": "0f8781617732",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cache",
+            "name": "cr-demo-infra-eng-596ce989-cache",
+            "id": "d309437fd537",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "legacy",
+            "name": "cr-demo-infra-eng-596ce989-legacy",
+            "id": "2a6659f55ddb",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "solr",
+            "name": "cr-demo-infra-eng-596ce989-solr",
+            "id": "63ea9552eaf9",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_1",
+      "at": "02:38:56",
+      "result": {
+        "scenario_id": "infra-eng-596ce989",
+        "project_name": "cr-demo-infra-eng-596ce989",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "app",
+            "name": "cr-demo-infra-eng-596ce989-app",
+            "id": "0c461b4bf26e",
+            "state": "running",
+            "status": "Up 12 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-596ce989-attacker",
+            "id": "0f8781617732",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cache",
+            "name": "cr-demo-infra-eng-596ce989-cache",
+            "id": "d309437fd537",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "legacy",
+            "name": "cr-demo-infra-eng-596ce989-legacy",
+            "id": "2a6659f55ddb",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "solr",
+            "name": "cr-demo-infra-eng-596ce989-solr",
+            "id": "63ea9552eaf9",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_1",
+      "at": "02:38:56",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-596ce989 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-596ce989-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-596ce989-solr|vulhub/solr:8.11.0|Up 6 seconds (healthy)|\ncr-demo-infra-eng-596ce989-app|tomcat:9.0.124-jre25-temurin-noble|Up 12 seconds (healthy)|8080/tcp\ncr-demo-infra-eng-596ce989-cache|redis:7.4.12-alpine3.22|Up 17 seconds (healthy)|6379/tcp\ncr-demo-infra-eng-596ce989-legacy|httpd:2.4.71|Up 17 seconds (healthy)|80/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_1",
+      "at": "02:38:57",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-596ce989",
+          "deployment_id": "cr-demo-infra-eng-596ce989",
+          "run_at": "2026-11-14T18:38:56.293006+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "PASS",
+            "full_chain": "FAIL"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "service-up-solr",
+              "name": "solr 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "service-up-app",
+              "name": "app 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "service-up-cache",
+              "name": "cache 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "service-up-legacy",
+              "name": "legacy 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "version-legacy",
+              "name": "legacy 執行指定版本 2.4.71",
+              "category": "version",
+              "status": "PASS",
+              "expected": "2.4.71",
+              "observed": "Server version: Apache/2.4.71 (Unix)\nServer built:   Nov 11 2026 22:59:24",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 solr:8983",
+              "category": "connectivity",
+              "status": "FAIL",
+              "expected": "對宣告服務建立一條 TCP 連線 solr:8983",
+              "observed": "連線遭拒（BLOCKED:）：ConnectionRefusedError:[Errno 111] Connection refused",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 solr 的宣告路徑",
+              "category": "chain",
+              "status": "FAIL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "連線遭拒（連線遭拒（BLOCKED:）：）：ConnectionRefusedError:[Errno 111] Connection refused; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "connectivity-2",
+              "name": "solr 可連線至 app:8080",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 app:8080",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "chain-2",
+              "name": "solr 完成至 app 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "connectivity-3",
+              "name": "app 可連線至 cache:6379",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 cache:6379",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "chain-3",
+              "name": "app 完成至 cache 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "connectivity-4",
+              "name": "solr 可連線至 legacy:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 legacy:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "behavior-4",
+              "name": "legacy 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+              "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<title>It works! Apache httpd</title>\n</head>\n<body>\n<p>It works!</p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "chain-4",
+              "name": "solr 完成至 legacy 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<title>It works! Apache httpd</title>\n</head>\n<body>\n<p>It works!</p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "attacker 無法連線至 cache:6379",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to cache:6379 遭封鎖",
+              "observed": "probed cache=172.29.0.3:6379 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-596ce989/3bad2b91a6e6424fa497e8c1f2c14c56.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "down_1",
+      "at": "02:39:09",
+      "result": {
+        "status": 200,
+        "state": "stopped"
+      }
+    },
+    {
+      "step": "leftovers_1",
+      "at": "02:39:09",
+      "result": {
+        "containers": [
+          ""
+        ],
+        "networks": [
+          ""
+        ],
+        "volumes": [
+          ""
+        ]
+      }
+    },
+    {
+      "step": "up_2",
+      "at": "02:39:42",
+      "result": {
+        "status": 200,
+        "seconds": 32.5,
+        "body": {
+          "scenario_id": "infra-eng-596ce989",
+          "project_name": "cr-demo-infra-eng-596ce989",
+          "state": "running",
+          "containers": [
+            {
+              "service": "app",
+              "name": "cr-demo-infra-eng-596ce989-app",
+              "id": "bc1e8ebcdd0e",
+              "state": "running",
+              "status": "Up 11 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-596ce989-attacker",
+              "id": "afce15d73ee6",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "cache",
+              "name": "cr-demo-infra-eng-596ce989-cache",
+              "id": "9caa46db8865",
+              "state": "running",
+              "status": "Up 17 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "legacy",
+              "name": "cr-demo-infra-eng-596ce989-legacy",
+              "id": "f92d6253fb14",
+              "state": "running",
+              "status": "Up 17 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "solr",
+              "name": "cr-demo-infra-eng-596ce989-solr",
+              "id": "3c8ea048e6db",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n"
+          },
+          "deployment_record": {
+            "id": 21,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {}
+                }
+              ],
+              "scenario_id": "infra-eng-596ce989",
+              "project_name": "cr-demo-infra-eng-596ce989",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "app",
+                  "name": "cr-demo-infra-eng-596ce989-app",
+                  "id": "bc1e8ebcdd0e",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-596ce989-attacker",
+                  "id": "afce15d73ee6",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "cache",
+                  "name": "cr-demo-infra-eng-596ce989-cache",
+                  "id": "9caa46db8865",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "legacy",
+                  "name": "cr-demo-infra-eng-596ce989-legacy",
+                  "id": "f92d6253fb14",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "solr",
+                  "name": "cr-demo-infra-eng-596ce989-solr",
+                  "id": "3c8ea048e6db",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:39:42Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "exit_code": 0,
+              "host_ports": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "status_2",
+      "at": "02:39:42",
+      "result": {
+        "scenario_id": "infra-eng-596ce989",
+        "project_name": "cr-demo-infra-eng-596ce989",
+        "state": "running",
+        "containers": [
+          {
+            "service": "app",
+            "name": "cr-demo-infra-eng-596ce989-app",
+            "id": "bc1e8ebcdd0e",
+            "state": "running",
+            "status": "Up 11 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-596ce989-attacker",
+            "id": "afce15d73ee6",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cache",
+            "name": "cr-demo-infra-eng-596ce989-cache",
+            "id": "9caa46db8865",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "legacy",
+            "name": "cr-demo-infra-eng-596ce989-legacy",
+            "id": "f92d6253fb14",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "solr",
+            "name": "cr-demo-infra-eng-596ce989-solr",
+            "id": "3c8ea048e6db",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_2",
+      "at": "02:39:42",
+      "result": {
+        "scenario_id": "infra-eng-596ce989",
+        "project_name": "cr-demo-infra-eng-596ce989",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "app",
+            "name": "cr-demo-infra-eng-596ce989-app",
+            "id": "bc1e8ebcdd0e",
+            "state": "running",
+            "status": "Up 12 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-596ce989-attacker",
+            "id": "afce15d73ee6",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cache",
+            "name": "cr-demo-infra-eng-596ce989-cache",
+            "id": "9caa46db8865",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "legacy",
+            "name": "cr-demo-infra-eng-596ce989-legacy",
+            "id": "f92d6253fb14",
+            "state": "running",
+            "status": "Up 17 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "solr",
+            "name": "cr-demo-infra-eng-596ce989-solr",
+            "id": "3c8ea048e6db",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_2",
+      "at": "02:39:42",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-596ce989 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-596ce989-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-596ce989-solr|vulhub/solr:8.11.0|Up 6 seconds (healthy)|\ncr-demo-infra-eng-596ce989-app|tomcat:9.0.124-jre25-temurin-noble|Up 12 seconds (healthy)|8080/tcp\ncr-demo-infra-eng-596ce989-cache|redis:7.4.12-alpine3.22|Up 17 seconds (healthy)|6379/tcp\ncr-demo-infra-eng-596ce989-legacy|httpd:2.4.71|Up 17 seconds (healthy)|80/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_2",
+      "at": "02:39:44",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-596ce989",
+          "deployment_id": "cr-demo-infra-eng-596ce989",
+          "run_at": "2026-11-14T18:39:42.773038+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "PASS",
+            "full_chain": "FAIL"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "service-up-solr",
+              "name": "solr 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "service-up-app",
+              "name": "app 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "service-up-cache",
+              "name": "cache 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "service-up-legacy",
+              "name": "legacy 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "version-legacy",
+              "name": "legacy 執行指定版本 2.4.71",
+              "category": "version",
+              "status": "PASS",
+              "expected": "2.4.71",
+              "observed": "Server version: Apache/2.4.71 (Unix)\nServer built:   Nov 11 2026 22:59:24",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 solr:8983",
+              "category": "connectivity",
+              "status": "FAIL",
+              "expected": "對宣告服務建立一條 TCP 連線 solr:8983",
+              "observed": "連線遭拒（BLOCKED:）：ConnectionRefusedError:[Errno 111] Connection refused",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 solr 的宣告路徑",
+              "category": "chain",
+              "status": "FAIL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "連線遭拒（連線遭拒（BLOCKED:）：）：ConnectionRefusedError:[Errno 111] Connection refused; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "connectivity-2",
+              "name": "solr 可連線至 app:8080",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 app:8080",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "chain-2",
+              "name": "solr 完成至 app 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "connectivity-3",
+              "name": "app 可連線至 cache:6379",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 cache:6379",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "chain-3",
+              "name": "app 完成至 cache 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "connectivity-4",
+              "name": "solr 可連線至 legacy:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 legacy:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "behavior-4",
+              "name": "legacy 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+              "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<title>It works! Apache httpd</title>\n</head>\n<body>\n<p>It works!</p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "chain-4",
+              "name": "solr 完成至 legacy 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n<head>\n<title>It works! Apache httpd</title>\n</head>\n<body>\n<p>It works!</p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "attacker 無法連線至 cache:6379",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to cache:6379 遭封鎖",
+              "observed": "probed cache=172.29.0.3:6379 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-596ce989/b5ba536fc7394e839c9a65d9f6e1a003.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "down_2",
+      "at": "02:39:56",
+      "result": {
+        "status": 200,
+        "state": "stopped"
+      }
+    },
+    {
+      "step": "leftovers_2",
+      "at": "02:39:56",
+      "result": {
+        "containers": [
+          ""
+        ],
+        "networks": [
+          ""
+        ],
+        "volumes": [
+          ""
+        ]
+      }
+    },
+    {
+      "step": "records",
+      "at": "02:39:56",
+      "result": {
+        "scenario_id": "infra-eng-596ce989",
+        "records": [
+          {
+            "id": 22,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "down",
+            "state": "stopped",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Container cr-demo-infra-eng-596ce989-attacker Stopping \n Container cr-demo-infra-eng-596ce989-attacker Stopped \n Container cr-demo-infra-eng-596ce989-attacker Removing \n Container cr-demo-infra-eng-596ce989-attacker Removed \n Container cr-demo-infra-eng-596ce989-solr Stopping \n Container cr-demo-infra-eng-596ce989-solr Stopped \n Container cr-demo-infra-eng-596ce989-solr Removing \n Container cr-demo-infra-eng-596ce989-solr Removed \n Container cr-demo-infra-eng-596ce989-legacy Stopping \n Container cr-demo-infra-eng-596ce989-app Stopping \n Container cr-demo-infra-eng-596ce989-app Stopped \n Container cr-demo-infra-eng-596ce989-app Removing \n Container cr-demo-infra-eng-596ce989-app Removed \n Container cr-demo-infra-eng-596ce989-cache Stopping \n Container cr-demo-infra-eng-596ce989-cache Stopped \n Container cr-demo-infra-eng-596ce989-cache Removing \n Container cr-demo-infra-eng-596ce989-cache Removed \n Container cr-demo-infra-eng-596ce989-legacy Stopped \n Container cr-demo-infra-eng-596ce989-legacy Removing \n Container cr-demo-infra-eng-596ce989-legacy Removed \n Network cr-demo-infra-eng-596ce989-inside Removing \n Network cr-demo-infra-eng-596ce989-dmz Removing \n Network cr-demo-infra-eng-596ce989-dmz Removed \n Network cr-demo-infra-eng-596ce989-inside Removed \n"
+            },
+            "recorded_at": "2026-11-14T18:39:56Z"
+          },
+          {
+            "id": 21,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {}
+                }
+              ],
+              "scenario_id": "infra-eng-596ce989",
+              "project_name": "cr-demo-infra-eng-596ce989",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "app",
+                  "name": "cr-demo-infra-eng-596ce989-app",
+                  "id": "bc1e8ebcdd0e",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-596ce989-attacker",
+                  "id": "afce15d73ee6",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "cache",
+                  "name": "cr-demo-infra-eng-596ce989-cache",
+                  "id": "9caa46db8865",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "legacy",
+                  "name": "cr-demo-infra-eng-596ce989-legacy",
+                  "id": "f92d6253fb14",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "solr",
+                  "name": "cr-demo-infra-eng-596ce989-solr",
+                  "id": "3c8ea048e6db",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:39:42Z"
+          },
+          {
+            "id": 20,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "down",
+            "state": "stopped",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Container cr-demo-infra-eng-596ce989-attacker Stopping \n Container cr-demo-infra-eng-596ce989-attacker Stopped \n Container cr-demo-infra-eng-596ce989-attacker Removing \n Container cr-demo-infra-eng-596ce989-attacker Removed \n Container cr-demo-infra-eng-596ce989-solr Stopping \n Container cr-demo-infra-eng-596ce989-solr Stopped \n Container cr-demo-infra-eng-596ce989-solr Removing \n Container cr-demo-infra-eng-596ce989-solr Removed \n Container cr-demo-infra-eng-596ce989-legacy Stopping \n Container cr-demo-infra-eng-596ce989-app Stopping \n Container cr-demo-infra-eng-596ce989-app Stopped \n Container cr-demo-infra-eng-596ce989-app Removing \n Container cr-demo-infra-eng-596ce989-app Removed \n Container cr-demo-infra-eng-596ce989-cache Stopping \n Container cr-demo-infra-eng-596ce989-cache Stopped \n Container cr-demo-infra-eng-596ce989-cache Removing \n Container cr-demo-infra-eng-596ce989-cache Removed \n Container cr-demo-infra-eng-596ce989-legacy Stopped \n Container cr-demo-infra-eng-596ce989-legacy Removing \n Container cr-demo-infra-eng-596ce989-legacy Removed \n Network cr-demo-infra-eng-596ce989-dmz Removing \n Network cr-demo-infra-eng-596ce989-inside Removing \n Network cr-demo-infra-eng-596ce989-dmz Removed \n Network cr-demo-infra-eng-596ce989-inside Removed \n"
+            },
+            "recorded_at": "2026-11-14T18:39:09Z"
+          },
+          {
+            "id": 19,
+            "scenario_id": "infra-eng-596ce989",
+            "project_name": "cr-demo-infra-eng-596ce989",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-596ce989-dmz Creating \n Network cr-demo-infra-eng-596ce989-dmz Created \n Network cr-demo-infra-eng-596ce989-inside Creating \n Network cr-demo-infra-eng-596ce989-inside Created \n Container cr-demo-infra-eng-596ce989-legacy Creating \n Container cr-demo-infra-eng-596ce989-cache Creating \n Container cr-demo-infra-eng-596ce989-legacy Created \n Container cr-demo-infra-eng-596ce989-cache Created \n Container cr-demo-infra-eng-596ce989-app Creating \n Container cr-demo-infra-eng-596ce989-app Created \n Container cr-demo-infra-eng-596ce989-solr Creating \n Container cr-demo-infra-eng-596ce989-solr Created \n Container cr-demo-infra-eng-596ce989-attacker Creating \n Container cr-demo-infra-eng-596ce989-attacker Created \n Container cr-demo-infra-eng-596ce989-legacy Starting \n Container cr-demo-infra-eng-596ce989-cache Starting \n Container cr-demo-infra-eng-596ce989-legacy Started \n Container cr-demo-infra-eng-596ce989-cache Started \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-app Starting \n Container cr-demo-infra-eng-596ce989-app Started \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n Container cr-demo-infra-eng-596ce989-solr Starting \n Container cr-demo-infra-eng-596ce989-solr Started \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-attacker Starting \n Container cr-demo-infra-eng-596ce989-attacker Started \n Container cr-demo-infra-eng-596ce989-app Waiting \n Container cr-demo-infra-eng-596ce989-cache Waiting \n Container cr-demo-infra-eng-596ce989-legacy Waiting \n Container cr-demo-infra-eng-596ce989-attacker Waiting \n Container cr-demo-infra-eng-596ce989-solr Waiting \n Container cr-demo-infra-eng-596ce989-attacker Healthy \n Container cr-demo-infra-eng-596ce989-cache Healthy \n Container cr-demo-infra-eng-596ce989-legacy Healthy \n Container cr-demo-infra-eng-596ce989-solr Healthy \n Container cr-demo-infra-eng-596ce989-app Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {}
+                }
+              ],
+              "scenario_id": "infra-eng-596ce989",
+              "project_name": "cr-demo-infra-eng-596ce989",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "app",
+                  "name": "cr-demo-infra-eng-596ce989-app",
+                  "id": "0c461b4bf26e",
+                  "state": "running",
+                  "status": "Up 11 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-596ce989-attacker",
+                  "id": "0f8781617732",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "cache",
+                  "name": "cr-demo-infra-eng-596ce989-cache",
+                  "id": "d309437fd537",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "legacy",
+                  "name": "cr-demo-infra-eng-596ce989-legacy",
+                  "id": "2a6659f55ddb",
+                  "state": "running",
+                  "status": "Up 17 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "solr",
+                  "name": "cr-demo-infra-eng-596ce989-solr",
+                  "id": "63ea9552eaf9",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:38:55Z"
+          }
+        ]
+      }
+    }
+  ]
+}

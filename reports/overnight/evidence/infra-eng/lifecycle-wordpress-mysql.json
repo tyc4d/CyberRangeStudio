@@ -1,15 +1,15 @@
 {
-  "scenario_id": "infra-eng-2f5d3c26",
+  "scenario_id": "infra-eng-96eaaf52",
   "steps": [
     {
       "step": "generate",
-      "at": "02:32:02",
+      "at": "06:06:36",
       "result": {
         "status": 200,
         "body": {
-          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-2f5d3c26\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  attacker:\n    container_name: cr-demo-infra-eng-2f5d3c26-attacker\n    networks:\n    - external\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f\n    user: 65532:65532\n    command:\n    - sh\n    - -c\n    - sleep 2147483647\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      web:\n        condition: service_healthy\n  web:\n    container_name: cr-demo-infra-eng-2f5d3c26-web\n    networks:\n    - external\n    - scenario-internal\n    - edge\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/www/html:rw,nosuid,size=384m,uid=33,gid=33,mode=0755\n    - /var/run/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755\n    - /var/lock/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755\n    - /var/log/apache2:rw,noexec,nosuid,size=16m,uid=33,gid=33,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: wordpress:7.1.4-php8.3-apache@sha256:8b64037bb2a3bdc41bebccb165f20ad5e4c786b684ae4a2bd5981f98aa1eb107\n    user: '33:33'\n    cap_add:\n    - NET_BIND_SERVICE\n    environment:\n      WORDPRESS_DB_HOST: db:3306\n      WORDPRESS_DB_NAME: app\n      WORDPRESS_DB_USER: app\n      WORDPRESS_DB_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n    healthcheck:\n      test:\n      - CMD\n      - curl\n      - -fsS\n      - -o\n      - /dev/null\n      - http://127.0.0.1:80/wp-admin/install.php\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 20s\n    ports:\n    - target: 80\n      published: ${CR_HOSTPORT_0:-42000}\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    expose:\n    - '80'\n    mem_limit: 768m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      db:\n        condition: service_healthy\n  db:\n    container_name: cr-demo-infra-eng-2f5d3c26-db\n    networks:\n    - scenario-internal\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/lib/mysql:rw,noexec,nosuid,size=768m,uid=999,gid=999,mode=0700\n    - /var/run/mysqld:rw,noexec,nosuid,size=8m,uid=999,gid=999,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b\n    user: 999:999\n    environment:\n      MYSQL_ROOT_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n      MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n      MYSQL_DATABASE: app\n      MYSQL_USER: app\n    healthcheck:\n      test:\n      - CMD\n      - mysqladmin\n      - ping\n      - -h\n      - 127.0.0.1\n      - --protocol=tcp\n      - --silent\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 20s\n    mem_limit: 1g\n    cpus: 1.0\n    pids_limit: 256\nnetworks:\n  external:\n    name: cr-demo-infra-eng-2f5d3c26-external\n    internal: true\n  scenario-internal:\n    name: cr-demo-infra-eng-2f5d3c26-scenario-internal\n    internal: true\n  edge:\n    name: cr-demo-infra-eng-2f5d3c26-edge\n    internal: false\n    driver_opts:\n      com.docker.network.bridge.enable_icc: 'false'\n      com.docker.network.bridge.enable_ip_masquerade: 'false'\n",
+          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-96eaaf52\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  attacker:\n    container_name: cr-demo-infra-eng-96eaaf52-attacker\n    networks:\n    - external\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f\n    user: 65532:65532\n    command:\n    - sh\n    - -c\n    - sleep 2147483647\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      web:\n        condition: service_healthy\n  web:\n    container_name: cr-demo-infra-eng-96eaaf52-web\n    networks:\n    - external\n    - scenario-internal\n    - edge\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/www/html:rw,nosuid,size=384m,uid=33,gid=33,mode=0755\n    - /var/run/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755\n    - /var/lock/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755\n    - /var/log/apache2:rw,noexec,nosuid,size=16m,uid=33,gid=33,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: wordpress:7.1.4-php8.3-apache@sha256:8b64037bb2a3bdc41bebccb165f20ad5e4c786b684ae4a2bd5981f98aa1eb107\n    user: '33:33'\n    cap_add:\n    - NET_BIND_SERVICE\n    environment:\n      WORDPRESS_DB_HOST: db:3306\n      WORDPRESS_DB_NAME: app\n      WORDPRESS_DB_USER: app\n      WORDPRESS_DB_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n    healthcheck:\n      test:\n      - CMD\n      - curl\n      - -sS\n      - -o\n      - /dev/null\n      - --max-time\n      - '8'\n      - --fail\n      - http://127.0.0.1:80/wp-login.php\n      interval: 5s\n      timeout: 10s\n      retries: 12\n      start_period: 20s\n    ports:\n    - target: 80\n      published: ${CR_HOSTPORT_0:-42000}\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    expose:\n    - '80'\n    mem_limit: 768m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      db:\n        condition: service_healthy\n  db:\n    container_name: cr-demo-infra-eng-96eaaf52-db\n    networks:\n    - scenario-internal\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/lib/mysql:rw,noexec,nosuid,size=768m,uid=999,gid=999,mode=0700\n    - /var/run/mysqld:rw,noexec,nosuid,size=8m,uid=999,gid=999,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b\n    user: 999:999\n    environment:\n      MYSQL_ROOT_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n      MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}\n      MYSQL_DATABASE: app\n      MYSQL_USER: app\n    healthcheck:\n      test:\n      - CMD\n      - mysqladmin\n      - ping\n      - -h\n      - 127.0.0.1\n      - --protocol=tcp\n      - --silent\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 20s\n    mem_limit: 1g\n    cpus: 1.0\n    pids_limit: 256\nnetworks:\n  external:\n    name: cr-demo-infra-eng-96eaaf52-external\n    internal: true\n  scenario-internal:\n    name: cr-demo-infra-eng-96eaaf52-scenario-internal\n    internal: true\n  edge:\n    name: cr-demo-infra-eng-96eaaf52-edge\n    internal: false\n    driver_opts:\n      com.docker.network.bridge.enable_icc: 'false'\n      com.docker.network.bridge.enable_ip_masquerade: 'false'\n",
           "report": {
-            "scenario_id": "infra-eng-2f5d3c26",
+            "scenario_id": "infra-eng-96eaaf52",
             "deployable": true,
             "components": [
               {
@@ -99,13 +99,13 @@
             "networks": [
               {
                 "id": "scenario-internal",
-                "name": "cr-demo-infra-eng-2f5d3c26-scenario-internal",
+                "name": "cr-demo-infra-eng-96eaaf52-scenario-internal",
                 "internal": true,
                 "plan_internal": true
               },
               {
                 "id": "external",
-                "name": "cr-demo-infra-eng-2f5d3c26-external",
+                "name": "cr-demo-infra-eng-96eaaf52-external",
                 "internal": true,
                 "plan_internal": false
               }
@@ -117,9 +117,9 @@
     },
     {
       "step": "docker_compose_config",
-      "at": "02:32:02",
+      "at": "06:06:36",
       "result": {
-        "cmd": "env CR_PG_PASSWORD=x CR_DB_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-2f5d3c26/docker-compose.yml config --quiet",
+        "cmd": "env CR_PG_PASSWORD=x CR_DB_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-96eaaf52/docker-compose.yml config --quiet",
         "rc": 0,
         "out": "",
         "err": ""
@@ -127,811 +127,374 @@
     },
     {
       "step": "approve",
-      "at": "02:32:02",
+      "at": "06:06:36",
       "result": {
         "status": 200
       }
     },
     {
       "step": "up_1",
-      "at": "02:34:29",
+      "at": "06:06:59",
       "result": {
-        "status": 503,
-        "seconds": 147.7,
+        "status": 200,
+        "seconds": 23.1,
         "body": {
-          "detail": {
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "state": "error",
-            "containers": [
-              {
-                "service": "attacker",
-                "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                "id": "befdbe131a8a",
-                "state": "created",
-                "status": "Created",
-                "health": "",
-                "exit_code": 0,
-                "ports": []
-              },
-              {
-                "service": "db",
-                "name": "cr-demo-infra-eng-2f5d3c26-db",
-                "id": "e5705aebcbdd",
-                "state": "running",
-                "status": "Up 2 minutes (healthy)",
-                "health": "healthy",
-                "exit_code": 0,
-                "ports": []
-              },
-              {
-                "service": "web",
-                "name": "cr-demo-infra-eng-2f5d3c26-web",
-                "id": "96a85bae9598",
-                "state": "running",
-                "status": "Up 2 minutes (unhealthy)",
-                "health": "unhealthy",
-                "exit_code": 0,
-                "ports": [
-                  {
-                    "host_ip": "127.0.0.1",
-                    "host_port": 42239,
-                    "container_port": 80,
-                    "protocol": "tcp"
-                  }
-                ]
-              }
-            ],
-            "error": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-            "ok": false,
-            "command_result": {
-              "returncode": 1,
+          "scenario_id": "infra-eng-96eaaf52",
+          "project_name": "cr-demo-infra-eng-96eaaf52",
+          "state": "running",
+          "containers": [
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-96eaaf52-attacker",
+              "id": "cdf89af1c6dd",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "db",
+              "name": "cr-demo-infra-eng-96eaaf52-db",
+              "id": "f8b5aa882ecf",
+              "state": "running",
+              "status": "Up 11 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "web",
+              "name": "cr-demo-infra-eng-96eaaf52-web",
+              "id": "bfef51244373",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": [
+                {
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42506,
+                  "container_port": 80,
+                  "protocol": "tcp"
+                }
+              ]
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-96eaaf52-scenario-internal Creating \n Network cr-demo-infra-eng-96eaaf52-scenario-internal Created \n Network cr-demo-infra-eng-96eaaf52-external Creating \n Network cr-demo-infra-eng-96eaaf52-external Created \n Network cr-demo-infra-eng-96eaaf52-edge Creating \n Network cr-demo-infra-eng-96eaaf52-edge Created \n Container cr-demo-infra-eng-96eaaf52-db Creating \n Container cr-demo-infra-eng-96eaaf52-db Created \n Container cr-demo-infra-eng-96eaaf52-web Creating \n Container cr-demo-infra-eng-96eaaf52-web Created \n Container cr-demo-infra-eng-96eaaf52-attacker Creating \n Container cr-demo-infra-eng-96eaaf52-attacker Created \n Container cr-demo-infra-eng-96eaaf52-db Starting \n Container cr-demo-infra-eng-96eaaf52-db Started \n Container cr-demo-infra-eng-96eaaf52-db Waiting \n Container cr-demo-infra-eng-96eaaf52-db Healthy \n Container cr-demo-infra-eng-96eaaf52-web Starting \n Container cr-demo-infra-eng-96eaaf52-web Started \n Container cr-demo-infra-eng-96eaaf52-web Waiting \n Container cr-demo-infra-eng-96eaaf52-web Healthy \n Container cr-demo-infra-eng-96eaaf52-attacker Starting \n Container cr-demo-infra-eng-96eaaf52-attacker Started \n Container cr-demo-infra-eng-96eaaf52-db Waiting \n Container cr-demo-infra-eng-96eaaf52-attacker Waiting \n Container cr-demo-infra-eng-96eaaf52-web Waiting \n Container cr-demo-infra-eng-96eaaf52-db Healthy \n Container cr-demo-infra-eng-96eaaf52-web Healthy \n Container cr-demo-infra-eng-96eaaf52-attacker Healthy \n"
+          },
+          "deployment_record": {
+            "id": 27,
+            "scenario_id": "infra-eng-96eaaf52",
+            "project_name": "cr-demo-infra-eng-96eaaf52",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
               "stdout": "",
-              "stderr": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n"
-            },
-            "deployment_record": {
-              "id": 11,
-              "scenario_id": "infra-eng-2f5d3c26",
-              "project_name": "cr-demo-infra-eng-2f5d3c26",
-              "action": "up",
-              "state": "failed",
-              "details": {
-                "exit_code": 1,
-                "stdout": "",
-                "stderr": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-                "expose": "internal",
-                "password_set": false,
-                "attempts": [
-                  {
-                    "attempt": 1,
-                    "exit_code": 1,
-                    "host_ports": {
-                      "CR_HOSTPORT_0": 42239
-                    }
-                  }
-                ],
-                "scenario_id": "infra-eng-2f5d3c26",
-                "project_name": "cr-demo-infra-eng-2f5d3c26",
-                "state": "error",
-                "containers": [
-                  {
-                    "service": "attacker",
-                    "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                    "id": "befdbe131a8a",
-                    "state": "created",
-                    "status": "Created",
-                    "health": "",
-                    "exit_code": 0,
-                    "ports": []
-                  },
-                  {
-                    "service": "db",
-                    "name": "cr-demo-infra-eng-2f5d3c26-db",
-                    "id": "e5705aebcbdd",
-                    "state": "running",
-                    "status": "Up 2 minutes (healthy)",
-                    "health": "healthy",
-                    "exit_code": 0,
-                    "ports": []
-                  },
-                  {
-                    "service": "web",
-                    "name": "cr-demo-infra-eng-2f5d3c26-web",
-                    "id": "96a85bae9598",
-                    "state": "running",
-                    "status": "Up 2 minutes (unhealthy)",
-                    "health": "unhealthy",
-                    "exit_code": 0,
-                    "ports": [
-                      {
-                        "host_ip": "127.0.0.1",
-                        "host_port": 42239,
-                        "container_port": 80,
-                        "protocol": "tcp"
-                      }
-                    ]
-                  }
-                ],
-                "error": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-                "diagnostics": {
-                  "containers": [
-                    {
-                      "service": "attacker",
-                      "state": "created",
-                      "status": "Created",
-                      "health": "",
-                      "exit_code": 0,
-                      "ok": false,
-                      "log_tail": ""
-                    },
-                    {
-                      "service": "db",
-                      "state": "running",
-                      "status": "Up 2 minutes (healthy)",
-                      "health": "healthy",
-                      "exit_code": 0,
-                      "ok": true
-                    },
-                    {
-                      "service": "web",
-                      "state": "running",
-                      "status": "Up 2 minutes (unhealthy)",
-                      "health": "unhealthy",
-                      "exit_code": 0,
-                      "ok": false,
-                      "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                      "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
-                    }
-                  ]
-                },
-                "cleanup": {
+              "stderr": " Network cr-demo-infra-eng-96eaaf52-scenario-internal Creating \n Network cr-demo-infra-eng-96eaaf52-scenario-internal Created \n Network cr-demo-infra-eng-96eaaf52-external Creating \n Network cr-demo-infra-eng-96eaaf52-external Created \n Network cr-demo-infra-eng-96eaaf52-edge Creating \n Network cr-demo-infra-eng-96eaaf52-edge Created \n Container cr-demo-infra-eng-96eaaf52-db Creating \n Container cr-demo-infra-eng-96eaaf52-db Created \n Container cr-demo-infra-eng-96eaaf52-web Creating \n Container cr-demo-infra-eng-96eaaf52-web Created \n Container cr-demo-infra-eng-96eaaf52-attacker Creating \n Container cr-demo-infra-eng-96eaaf52-attacker Created \n Container cr-demo-infra-eng-96eaaf52-db Starting \n Container cr-demo-infra-eng-96eaaf52-db Started \n Container cr-demo-infra-eng-96eaaf52-db Waiting \n Container cr-demo-infra-eng-96eaaf52-db Healthy \n Container cr-demo-infra-eng-96eaaf52-web Starting \n Container cr-demo-infra-eng-96eaaf52-web Started \n Container cr-demo-infra-eng-96eaaf52-web Waiting \n Container cr-demo-infra-eng-96eaaf52-web Healthy \n Container cr-demo-infra-eng-96eaaf52-attacker Starting \n Container cr-demo-infra-eng-96eaaf52-attacker Started \n Container cr-demo-infra-eng-96eaaf52-db Waiting \n Container cr-demo-infra-eng-96eaaf52-attacker Waiting \n Container cr-demo-infra-eng-96eaaf52-web Waiting \n Container cr-demo-infra-eng-96eaaf52-db Healthy \n Container cr-demo-infra-eng-96eaaf52-web Healthy \n Container cr-demo-infra-eng-96eaaf52-attacker Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
                   "exit_code": 0,
-                  "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n",
-                  "remaining_containers": [],
-                  "clean": true
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42506
+                  }
                 }
-              },
-              "recorded_at": "2026-11-14T18:34:29Z"
-            },
-            "expose": "internal",
-            "lan_host": null,
-            "attempts": [
-              {
-                "attempt": 1,
-                "exit_code": 1,
-                "host_ports": {
-                  "CR_HOSTPORT_0": 42239
-                }
-              }
-            ],
-            "diagnostics": {
+              ],
+              "scenario_id": "infra-eng-96eaaf52",
+              "project_name": "cr-demo-infra-eng-96eaaf52",
+              "state": "running",
               "containers": [
                 {
                   "service": "attacker",
-                  "state": "created",
-                  "status": "Created",
+                  "name": "cr-demo-infra-eng-96eaaf52-attacker",
+                  "id": "cdf89af1c6dd",
+                  "state": "running",
+                  "status": "Up Less than a second",
                   "health": "",
                   "exit_code": 0,
-                  "ok": false,
-                  "log_tail": ""
+                  "ports": []
                 },
                 {
                   "service": "db",
+                  "name": "cr-demo-infra-eng-96eaaf52-db",
+                  "id": "f8b5aa882ecf",
                   "state": "running",
-                  "status": "Up 2 minutes (healthy)",
+                  "status": "Up 11 seconds (healthy)",
                   "health": "healthy",
                   "exit_code": 0,
-                  "ok": true
+                  "ports": []
                 },
                 {
                   "service": "web",
+                  "name": "cr-demo-infra-eng-96eaaf52-web",
+                  "id": "bfef51244373",
                   "state": "running",
-                  "status": "Up 2 minutes (unhealthy)",
-                  "health": "unhealthy",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
                   "exit_code": 0,
-                  "ok": false,
-                  "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                  "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42506,
+                      "container_port": 80,
+                      "protocol": "tcp"
+                    }
+                  ]
                 }
-              ]
+              ],
+              "error": null
             },
-            "cleanup": {
+            "recorded_at": "2026-11-14T22:06:59Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
               "exit_code": 0,
-              "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n",
-              "remaining_containers": [],
-              "clean": true
+              "host_ports": {
+                "CR_HOSTPORT_0": 42506
+              }
             }
-          }
+          ]
         }
       }
     },
     {
       "step": "status_1",
-      "at": "02:34:29",
+      "at": "06:07:00",
       "result": {
-        "scenario_id": "infra-eng-2f5d3c26",
-        "project_name": "cr-demo-infra-eng-2f5d3c26",
-        "state": "not_created",
-        "containers": [],
+        "scenario_id": "infra-eng-96eaaf52",
+        "project_name": "cr-demo-infra-eng-96eaaf52",
+        "state": "running",
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-96eaaf52-attacker",
+            "id": "cdf89af1c6dd",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-96eaaf52-db",
+            "id": "f8b5aa882ecf",
+            "state": "running",
+            "status": "Up 11 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-96eaaf52-web",
+            "id": "bfef51244373",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42506,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
         "error": null
       }
     },
     {
       "step": "health_1",
-      "at": "02:34:29",
+      "at": "06:07:00",
       "result": {
-        "scenario_id": "infra-eng-2f5d3c26",
-        "project_name": "cr-demo-infra-eng-2f5d3c26",
-        "state": "not_created",
-        "healthy": false,
-        "containers": [],
+        "scenario_id": "infra-eng-96eaaf52",
+        "project_name": "cr-demo-infra-eng-96eaaf52",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-96eaaf52-attacker",
+            "id": "cdf89af1c6dd",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-96eaaf52-db",
+            "id": "f8b5aa882ecf",
+            "state": "running",
+            "status": "Up 12 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-96eaaf52-web",
+            "id": "bfef51244373",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42506,
+                "container_port": 80,
+                "protocol": "tcp"
+              }
+            ]
+          }
+        ],
         "error": null
       }
     },
     {
       "step": "docker_ps_1",
-      "at": "02:34:29",
+      "at": "06:07:00",
       "result": {
-        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-2f5d3c26 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-96eaaf52 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
         "rc": 0,
-        "out": "",
+        "out": "cr-demo-infra-eng-96eaaf52-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-96eaaf52-web|wordpress:7.1.4-php8.3-apache|Up 6 seconds (healthy)|127.0.0.1:42506->80/tcp\ncr-demo-infra-eng-96eaaf52-db|mysql:8.0.46|Up 12 seconds (healthy)|3306/tcp, 33060/tcp\n",
         "err": ""
       }
     },
     {
       "step": "validate_1",
-      "at": "02:34:30",
-      "result": {
-        "status": 400,
-        "body": {
-          "detail": "尚未部署，請先部署"
-        }
-      }
-    },
-    {
-      "step": "down_1",
-      "at": "02:34:30",
+      "at": "06:07:01",
       "result": {
         "status": 200,
-        "state": "stopped"
-      }
-    },
-    {
-      "step": "leftovers_1",
-      "at": "02:34:30",
-      "result": {
-        "containers": [
-          ""
-        ],
-        "networks": [
-          ""
-        ],
-        "volumes": [
-          ""
-        ]
-      }
-    },
-    {
-      "step": "up_2",
-      "at": "02:36:58",
-      "result": {
-        "status": 503,
-        "seconds": 148.1,
         "body": {
-          "detail": {
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "state": "error",
-            "containers": [
-              {
-                "service": "attacker",
-                "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                "id": "ca31acf59ed9",
-                "state": "created",
-                "status": "Created",
-                "health": "",
-                "exit_code": 0,
-                "ports": []
-              },
-              {
-                "service": "db",
-                "name": "cr-demo-infra-eng-2f5d3c26-db",
-                "id": "7f4eb36f8635",
-                "state": "running",
-                "status": "Up 2 minutes (healthy)",
-                "health": "healthy",
-                "exit_code": 0,
-                "ports": []
-              },
-              {
-                "service": "web",
-                "name": "cr-demo-infra-eng-2f5d3c26-web",
-                "id": "17881e926077",
-                "state": "running",
-                "status": "Up 2 minutes (unhealthy)",
-                "health": "unhealthy",
-                "exit_code": 0,
-                "ports": [
-                  {
-                    "host_ip": "127.0.0.1",
-                    "host_port": 42992,
-                    "container_port": 80,
-                    "protocol": "tcp"
-                  }
-                ]
-              }
-            ],
-            "error": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-            "ok": false,
-            "command_result": {
-              "returncode": 1,
-              "stdout": "",
-              "stderr": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n"
+          "scenario_id": "infra-eng-96eaaf52",
+          "deployment_id": "cr-demo-infra-eng-96eaaf52",
+          "run_at": "2026-11-14T22:07:00.243896+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "NOT_TESTED",
+            "full_chain": "PARTIAL"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
             },
-            "deployment_record": {
-              "id": 13,
-              "scenario_id": "infra-eng-2f5d3c26",
-              "project_name": "cr-demo-infra-eng-2f5d3c26",
-              "action": "up",
-              "state": "failed",
-              "details": {
-                "exit_code": 1,
-                "stdout": "",
-                "stderr": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-                "expose": "internal",
-                "password_set": false,
-                "attempts": [
-                  {
-                    "attempt": 1,
-                    "exit_code": 1,
-                    "host_ports": {
-                      "CR_HOSTPORT_0": 42992
-                    }
-                  }
-                ],
-                "scenario_id": "infra-eng-2f5d3c26",
-                "project_name": "cr-demo-infra-eng-2f5d3c26",
-                "state": "error",
-                "containers": [
-                  {
-                    "service": "attacker",
-                    "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                    "id": "ca31acf59ed9",
-                    "state": "created",
-                    "status": "Created",
-                    "health": "",
-                    "exit_code": 0,
-                    "ports": []
-                  },
-                  {
-                    "service": "db",
-                    "name": "cr-demo-infra-eng-2f5d3c26-db",
-                    "id": "7f4eb36f8635",
-                    "state": "running",
-                    "status": "Up 2 minutes (healthy)",
-                    "health": "healthy",
-                    "exit_code": 0,
-                    "ports": []
-                  },
-                  {
-                    "service": "web",
-                    "name": "cr-demo-infra-eng-2f5d3c26-web",
-                    "id": "17881e926077",
-                    "state": "running",
-                    "status": "Up 2 minutes (unhealthy)",
-                    "health": "unhealthy",
-                    "exit_code": 0,
-                    "ports": [
-                      {
-                        "host_ip": "127.0.0.1",
-                        "host_port": 42992,
-                        "container_port": 80,
-                        "protocol": "tcp"
-                      }
-                    ]
-                  }
-                ],
-                "error": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-                "diagnostics": {
-                  "containers": [
-                    {
-                      "service": "attacker",
-                      "state": "created",
-                      "status": "Created",
-                      "health": "",
-                      "exit_code": 0,
-                      "ok": false,
-                      "log_tail": ""
-                    },
-                    {
-                      "service": "db",
-                      "state": "running",
-                      "status": "Up 2 minutes (healthy)",
-                      "health": "healthy",
-                      "exit_code": 0,
-                      "ok": true
-                    },
-                    {
-                      "service": "web",
-                      "state": "running",
-                      "status": "Up 2 minutes (unhealthy)",
-                      "health": "unhealthy",
-                      "exit_code": 0,
-                      "ok": false,
-                      "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                      "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
-                    }
-                  ]
-                },
-                "cleanup": {
-                  "exit_code": 0,
-                  "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n",
-                  "remaining_containers": [],
-                  "clean": true
-                }
-              },
-              "recorded_at": "2026-11-14T18:36:58Z"
+            {
+              "id": "service-up-web",
+              "name": "web 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
             },
-            "expose": "internal",
-            "lan_host": null,
-            "attempts": [
-              {
-                "attempt": 1,
-                "exit_code": 1,
-                "host_ports": {
-                  "CR_HOSTPORT_0": 42992
-                }
-              }
-            ],
-            "diagnostics": {
-              "containers": [
-                {
-                  "service": "attacker",
-                  "state": "created",
-                  "status": "Created",
-                  "health": "",
-                  "exit_code": 0,
-                  "ok": false,
-                  "log_tail": ""
-                },
-                {
-                  "service": "db",
-                  "state": "running",
-                  "status": "Up 2 minutes (healthy)",
-                  "health": "healthy",
-                  "exit_code": 0,
-                  "ok": true
-                },
-                {
-                  "service": "web",
-                  "state": "running",
-                  "status": "Up 2 minutes (unhealthy)",
-                  "health": "unhealthy",
-                  "exit_code": 0,
-                  "ok": false,
-                  "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                  "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
-                }
-              ]
+            {
+              "id": "service-up-db",
+              "name": "db 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
             },
-            "cleanup": {
-              "exit_code": 0,
-              "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n",
-              "remaining_containers": [],
-              "clean": true
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 web:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 web:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 web 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
+            },
+            {
+              "id": "connectivity-2",
+              "name": "web 可連線至 db:3306",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 db:3306",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
+            },
+            {
+              "id": "chain-2",
+              "name": "web 完成至 db 的宣告路徑",
+              "category": "chain",
+              "status": "PARTIAL",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; 目標服務沒有適用的無害行為探測",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "attacker 無法連線至 db:3306",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to db:3306 遭封鎖",
+              "observed": "probed db=172.29.0.2:3306 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-96eaaf52/2891bc07e607416e80f43ca1de541539.json"
             }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
           }
         }
       }
     },
     {
-      "step": "status_2",
-      "at": "02:36:58",
-      "result": {
-        "scenario_id": "infra-eng-2f5d3c26",
-        "project_name": "cr-demo-infra-eng-2f5d3c26",
-        "state": "not_created",
-        "containers": [],
-        "error": null
-      }
-    },
-    {
-      "step": "health_2",
-      "at": "02:36:58",
-      "result": {
-        "scenario_id": "infra-eng-2f5d3c26",
-        "project_name": "cr-demo-infra-eng-2f5d3c26",
-        "state": "not_created",
-        "healthy": false,
-        "containers": [],
-        "error": null
-      }
-    },
-    {
-      "step": "docker_ps_2",
-      "at": "02:36:58",
-      "result": {
-        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-2f5d3c26 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
-        "rc": 0,
-        "out": "",
-        "err": ""
-      }
-    },
-    {
-      "step": "validate_2",
-      "at": "02:36:58",
-      "result": {
-        "status": 400,
-        "body": {
-          "detail": "尚未部署，請先部署"
-        }
-      }
-    },
-    {
-      "step": "down_2",
-      "at": "02:36:58",
-      "result": {
-        "status": 200,
-        "state": "stopped"
-      }
-    },
-    {
-      "step": "leftovers_2",
-      "at": "02:36:58",
-      "result": {
-        "containers": [
-          ""
-        ],
-        "networks": [
-          ""
-        ],
-        "volumes": [
-          ""
-        ]
-      }
-    },
-    {
-      "step": "records",
-      "at": "02:36:58",
-      "result": {
-        "scenario_id": "infra-eng-2f5d3c26",
-        "records": [
-          {
-            "id": 14,
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "action": "down",
-            "state": "stopped",
-            "details": {
-              "exit_code": 0,
-              "stdout": "",
-              "stderr": ""
-            },
-            "recorded_at": "2026-11-14T18:36:58Z"
-          },
-          {
-            "id": 13,
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "action": "up",
-            "state": "failed",
-            "details": {
-              "exit_code": 1,
-              "stdout": "",
-              "stderr": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-              "expose": "internal",
-              "password_set": false,
-              "attempts": [
-                {
-                  "attempt": 1,
-                  "exit_code": 1,
-                  "host_ports": {
-                    "CR_HOSTPORT_0": 42992
-                  }
-                }
-              ],
-              "scenario_id": "infra-eng-2f5d3c26",
-              "project_name": "cr-demo-infra-eng-2f5d3c26",
-              "state": "error",
-              "containers": [
-                {
-                  "service": "attacker",
-                  "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                  "id": "ca31acf59ed9",
-                  "state": "created",
-                  "status": "Created",
-                  "health": "",
-                  "exit_code": 0,
-                  "ports": []
-                },
-                {
-                  "service": "db",
-                  "name": "cr-demo-infra-eng-2f5d3c26-db",
-                  "id": "7f4eb36f8635",
-                  "state": "running",
-                  "status": "Up 2 minutes (healthy)",
-                  "health": "healthy",
-                  "exit_code": 0,
-                  "ports": []
-                },
-                {
-                  "service": "web",
-                  "name": "cr-demo-infra-eng-2f5d3c26-web",
-                  "id": "17881e926077",
-                  "state": "running",
-                  "status": "Up 2 minutes (unhealthy)",
-                  "health": "unhealthy",
-                  "exit_code": 0,
-                  "ports": [
-                    {
-                      "host_ip": "127.0.0.1",
-                      "host_port": 42992,
-                      "container_port": 80,
-                      "protocol": "tcp"
-                    }
-                  ]
-                }
-              ],
-              "error": " Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-              "diagnostics": {
-                "containers": [
-                  {
-                    "service": "attacker",
-                    "state": "created",
-                    "status": "Created",
-                    "health": "",
-                    "exit_code": 0,
-                    "ok": false,
-                    "log_tail": ""
-                  },
-                  {
-                    "service": "db",
-                    "state": "running",
-                    "status": "Up 2 minutes (healthy)",
-                    "health": "healthy",
-                    "exit_code": 0,
-                    "ok": true
-                  },
-                  {
-                    "service": "web",
-                    "state": "running",
-                    "status": "Up 2 minutes (unhealthy)",
-                    "health": "unhealthy",
-                    "exit_code": 0,
-                    "ok": false,
-                    "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                    "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
-                  }
-                ]
-              },
-              "cleanup": {
-                "exit_code": 0,
-                "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n",
-                "remaining_containers": [],
-                "clean": true
-              }
-            },
-            "recorded_at": "2026-11-14T18:36:58Z"
-          },
-          {
-            "id": 12,
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "action": "down",
-            "state": "stopped",
-            "details": {
-              "exit_code": 0,
-              "stdout": "",
-              "stderr": ""
-            },
-            "recorded_at": "2026-11-14T18:34:30Z"
-          },
-          {
-            "id": 11,
-            "scenario_id": "infra-eng-2f5d3c26",
-            "project_name": "cr-demo-infra-eng-2f5d3c26",
-            "action": "up",
-            "state": "failed",
-            "details": {
-              "exit_code": 1,
-              "stdout": "",
-              "stderr": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-              "expose": "internal",
-              "password_set": false,
-              "attempts": [
-                {
-                  "attempt": 1,
-                  "exit_code": 1,
-                  "host_ports": {
-                    "CR_HOSTPORT_0": 42239
-                  }
-                }
-              ],
-              "scenario_id": "infra-eng-2f5d3c26",
-              "project_name": "cr-demo-infra-eng-2f5d3c26",
-              "state": "error",
-              "containers": [
-                {
-                  "service": "attacker",
-                  "name": "cr-demo-infra-eng-2f5d3c26-attacker",
-                  "id": "befdbe131a8a",
-                  "state": "created",
-                  "status": "Created",
-                  "health": "",
-                  "exit_code": 0,
-                  "ports": []
-                },
-                {
-                  "service": "db",
-                  "name": "cr-demo-infra-eng-2f5d3c26-db",
-                  "id": "e5705aebcbdd",
-                  "state": "running",
-                  "status": "Up 2 minutes (healthy)",
-                  "health": "healthy",
-                  "exit_code": 0,
-                  "ports": []
-                },
-                {
-                  "service": "web",
-                  "name": "cr-demo-infra-eng-2f5d3c26-web",
-                  "id": "96a85bae9598",
-                  "state": "running",
-                  "status": "Up 2 minutes (unhealthy)",
-                  "health": "unhealthy",
-                  "exit_code": 0,
-                  "ports": [
-                    {
-                      "host_ip": "127.0.0.1",
-                      "host_port": 42239,
-                      "container_port": 80,
-                      "protocol": "tcp"
-                    }
-                  ]
-                }
-              ],
-              "error": " Network cr-demo-infra-eng-2f5d3c26-scenario-internal Creating \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Created \n Network cr-demo-infra-eng-2f5d3c26-edge Creating \n Network cr-demo-infra-eng-2f5d3c26-edge Created \n Network cr-demo-infra-eng-2f5d3c26-external Creating \n Network cr-demo-infra-eng-2f5d3c26-external Created \n Container cr-demo-infra-eng-2f5d3c26-db Creating \n Container cr-demo-infra-eng-2f5d3c26-db Created \n Container cr-demo-infra-eng-2f5d3c26-web Creating \n Container cr-demo-infra-eng-2f5d3c26-web Created \n Container cr-demo-infra-eng-2f5d3c26-attacker Creating \n Container cr-demo-infra-eng-2f5d3c26-attacker Created \n Container cr-demo-infra-eng-2f5d3c26-db Starting \n Container cr-demo-infra-eng-2f5d3c26-db Started \n Container cr-demo-infra-eng-2f5d3c26-db Waiting \n Container cr-demo-infra-eng-2f5d3c26-db Healthy \n Container cr-demo-infra-eng-2f5d3c26-web Starting \n Container cr-demo-infra-eng-2f5d3c26-web Started \n Container cr-demo-infra-eng-2f5d3c26-web Waiting \n Container cr-demo-infra-eng-2f5d3c26-web Error dependency web failed to start\ndependency failed to start: container cr-demo-infra-eng-2f5d3c26-web is unhealthy\n",
-              "diagnostics": {
-                "containers": [
-                  {
-                    "service": "attacker",
-                    "state": "created",
-                    "status": "Created",
-                    "health": "",
-                    "exit_code": 0,
-                    "ok": false,
-                    "log_tail": ""
-                  },
-                  {
-                    "service": "db",
-                    "state": "running",
-                    "status": "Up 2 minutes (healthy)",
-                    "health": "healthy",
-                    "exit_code": 0,
-                    "ok": true
-                  },
-                  {
-                    "service": "web",
-                    "state": "running",
-                    "status": "Up 2 minutes (unhealthy)",
-                    "health": "unhealthy",
-                    "exit_code": 0,
-                    "ok": false,
-                    "log_tail": "WordPress not found in /var/www/html - copying now...\nComplete! WordPress has been successfully copied to /var/www/html\nNo 'wp-config.php' found in /var/www/html, but 'WORDPRESS_...' variables supplied; copying 'wp-config-docker.php' (WORDPRESS_DB_HOST WORDPRESS_DB_NAME WORDPRESS_DB_PASSWORD WORDPRESS_DB_USER)\nAH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 192.168.96.2. Set the 'ServerName' directive globally to suppress this message\n",
-                    "healthcheck_output": "-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)-1 Health check exceeded timeout (4s)\n"
-                  }
-                ]
-              },
-              "cleanup": {
-                "exit_code": 0,
-                "stderr": " Container cr-demo-infra-eng-2f5d3c26-attacker Stopping \n Container cr-demo-infra-eng-2f5d3c26-attacker Stopped \n Container cr-demo-infra-eng-2f5d3c26-attacker Removing \n Container cr-demo-infra-eng-2f5d3c26-attacker Removed \n Container cr-demo-infra-eng-2f5d3c26-web Stopping \n Container cr-demo-infra-eng-2f5d3c26-web Stopped \n Container cr-demo-infra-eng-2f5d3c26-web Removing \n Container cr-demo-infra-eng-2f5d3c26-web Removed \n Container cr-demo-infra-eng-2f5d3c26-db Stopping \n Container cr-demo-infra-eng-2f5d3c26-db Stopped \n Container cr-demo-infra-eng-2f5d3c26-db Removing \n Container cr-demo-infra-eng-2f5d3c26-db Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removing \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removing \n Network cr-demo-infra-eng-2f5d3c26-external Removed \n Network cr-demo-infra-eng-2f5d3c26-scenario-internal Removed \n Network cr-demo-infra-eng-2f5d3c26-edge Removed \n",
-                "remaining_containers": [],
-                "clean": true
-              }
-            },
-            "recorded_at": "2026-11-14T18:34:29Z"
-          }
-        ]
-      }
+      "step": "kept",
+      "at": "06:07:01",
+      "result": "cr-demo-infra-eng-96eaaf52"
     }
   ]
 }
