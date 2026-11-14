@@ -8,14 +8,15 @@ import type { Action, EpistemicStatus, Relation, RelationKind, ScenarioIR } from
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { layeredLayout, loadPositions, savePositions } from "../lib/layout";
+import { CANVAS, GRID, ROUTE, TEMPORAL } from "../lib/palette";
+import type { RelationX } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
 import {
   ApiNotice, EPISTEMIC, EPISTEMIC_ORDER, EpistemicBadge, fmtTime, NextStep, Notice, PageHead, ScenarioGate, SourceTag,
 } from "../components/ui";
 
 const KIND_LABEL: Record<RelationKind, string> = { temporal: "時間先後", dependency: "依賴" };
-const DEP = "#4c9aff";
-const TEMPORAL = "#7d8aa0";
+const DEP = ROUTE;
 
 function ActionNode({ data }: NodeProps<{ action: Action }>) {
   const a = data.action;
@@ -39,12 +40,12 @@ function toEdge(r: Relation, selected: boolean): Edge {
   const color = dep ? DEP : TEMPORAL;
   return {
     id: r.id, source: r.from_action, target: r.to_action, selected,
-    label: KIND_LABEL[r.kind] ?? r.kind,
+    label: (KIND_LABEL[r.kind] ?? r.kind) + (dep ? ((r as RelationX).confirmed === true ? " ✓已確認" : "（未確認）") : ""),
     animated: false,
     style: { stroke: color, strokeWidth: selected ? 3 : dep ? 2 : 1.5, strokeDasharray: dep ? undefined : "6 5" },
     markerEnd: { type: dep ? MarkerType.ArrowClosed : MarkerType.Arrow, color, width: 18, height: 18 },
     labelStyle: { fill: color, fontSize: 10 },
-    labelBgStyle: { fill: "#0b0e14" },
+    labelBgStyle: { fill: CANVAS },
   };
 }
 
@@ -168,6 +169,15 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   });
   const discard = () => { setActions(ir.actions); setRelations(ir.relations); setDirty(false); setSel(null); setHint(null); };
 
+  const deps = relations.filter((r) => r.kind === "dependency");
+  const unconfirmed = deps.filter((r) => (r as RelationX).confirmed !== true);
+  // Confirming is the analyst's judgement on the link, not a rewrite of it, so the relation keeps its original source.
+  const setConfirmed = (which: (r: Relation) => boolean, confirmed: boolean) => {
+    setRelations((xs) => xs.map((r) => (r.kind === "dependency" && which(r) ? ({ ...r, confirmed } as Relation) : r)));
+    touch();
+  };
+  const confirmAllDeps = () => setConfirmed(() => true, true);
+
   const selAction = sel?.type === "action" ? actions.find((a) => a.id === sel.id) : undefined;
   const selRelation = sel?.type === "relation" ? relations.find((r) => r.id === sel.id) : undefined;
   const nameOf = useMemo(() => new Map(actions.map((a) => [a.id, a.name])), [actions]);
@@ -195,6 +205,15 @@ function Editor({ ir }: { ir: ScenarioIR }) {
         </div>
       </div>
       {hint && <Notice kind="warn">{hint}</Notice>}
+      {deps.length > 0 && (
+        <div className="row" data-testid="dep-confirm-bar" style={{ fontSize: 13 }}>
+          <span className={unconfirmed.length ? "status-PARTIAL" : "status-PASS"}>
+            依賴關係已確認 {deps.length - unconfirmed.length} / {deps.length}
+          </span>
+          <span className="muted" style={{ fontSize: 12 }}>只有經你確認的依賴關係，才會在拓樸規劃中開通主機間連線。</span>
+          {unconfirmed.length > 0 && <button className="small" onClick={confirmAllDeps}>確認全部依賴關係</button>}
+        </div>
+      )}
 
       <div className="canvas-wrap">
         <div className="canvas">
@@ -216,7 +235,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             fitView fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }} minZoom={0.2}
             proOptions={{ hideAttribution: true }}
           >
-            <Background color="#1c2534" gap={20} />
+            <Background color={GRID} gap={20} />
             <Controls showInteractive={false} />
           </ReactFlow>
         </div>
@@ -274,6 +293,13 @@ function Editor({ ir }: { ir: ScenarioIR }) {
                 <textarea rows={3} value={selRelation.rationale ?? ""} onChange={(e) => patchRelation(selRelation.id, { rationale: e.target.value || undefined })} />
               </label>
               <EpistemicSelect value={selRelation.epistemic_status} onChange={(v) => patchRelation(selRelation.id, { epistemic_status: v })} />
+              {selRelation.kind === "dependency" && (
+                <label className="row" style={{ gap: 6, fontSize: 13 }}>
+                  <input type="checkbox" style={{ width: "auto" }} checked={(selRelation as RelationX).confirmed === true}
+                    onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
+                  我確認這個依賴關係成立
+                </label>
+              )}
               <div><button className="danger small" onClick={() => removeRelations([selRelation.id])}>刪除關係</button></div>
             </div>
           ) : (

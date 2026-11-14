@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { stageState } from "../lib/stages";
 import { ApiNotice, Busy, Empty, fmtTime, PageHead } from "../components/ui";
 
 const MODULES: { key: string; label: string }[] = [
@@ -41,6 +42,38 @@ function BackendStatus() {
   );
 }
 
+// The nine stops a report passes on its way to a running range. Order is the real order of the workflow.
+const STOPS: { key: string; to: string; label: string }[] = [
+  { key: "import", to: "/import", label: "情資匯入" }, { key: "analysis", to: "/analysis", label: "分析結果" },
+  { key: "missing", to: "/missing", label: "缺失補充" }, { key: "flow", to: "/flow", label: "攻擊流程" },
+  { key: "deps", to: "/deps", label: "軟體依賴" }, { key: "topology", to: "/topology", label: "拓樸核准" },
+  { key: "iac", to: "/iac", label: "IaC 預覽" }, { key: "deploy", to: "/deploy", label: "部署" },
+  { key: "report", to: "/report", label: "驗證報告" },
+];
+
+function RangeLine() {
+  const { ir, runtime } = useScenario();
+  return (
+    <section className="rangeline" data-testid="rangeline">
+      <h2>{ir ? ir.name || ir.id : "把一份情資報告，變成一座可以驗證的靶場"}</h2>
+      <p>{ir
+        ? "這個情境目前走到哪一站。拓樸那一站是人工閘門：沒有人核准，後面的部署不會放行。"
+        : "報告進來後依序經過九站。拓樸那一站是人工閘門：沒有人核准，後面的部署不會放行。"}</p>
+      <div className="track">
+        {STOPS.map((s, i) => {
+          const st = stageState(s.key, ir, runtime);
+          return (
+            <Link key={s.key} to={s.to} className={`stop ${st?.dot ?? ""} ${s.key === "topology" ? "gate-stop" : ""}`} title={st?.title}>
+              <span className="n">{i + 1}</span>{s.label}
+              <span className="s">{ir ? st?.title ?? "隨時可看" : " "}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function HomePage() {
   const nav = useNavigate();
   const { id: currentId, select } = useScenario();
@@ -54,6 +87,8 @@ export function HomePage() {
       <PageHead title="專案首頁" desc="從一份威脅情資報告出發，依序完成分析、補充、流程編輯、環境規劃、部署與驗證。每個階段完成後仍可回頭修改。">
         <Link to="/import"><button className="primary">＋ 新建情境</button></Link>
       </PageHead>
+
+      <RangeLine />
 
       <div className="card flush">
         <div className="card-head">

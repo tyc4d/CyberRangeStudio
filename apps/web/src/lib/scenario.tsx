@@ -9,7 +9,11 @@ const writeStored = (id: string | null) => {
   try { id ? localStorage.setItem(KEY, id) : localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
 };
 
+/** Live facts the IR does not carry: whether containers are up, and the latest validation verdict. */
+export interface Runtime { deployState?: string; levels?: Record<string, string> }
+
 interface ScenarioState {
+  runtime: Runtime;
   id: string | null;
   ir: ScenarioIR | null;
   loading: boolean;
@@ -29,6 +33,15 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const seq = useRef(0);
+  const [runtime, setRuntime] = useState<Runtime>({});
+  const refreshRuntime = useCallback(async (sid: string) => {
+    const [st, rep] = await Promise.allSettled([api.deployStatus(sid), api.getReport(sid)]);
+    if (sid !== readStored()) return;
+    setRuntime({
+      deployState: st.status === "fulfilled" && typeof st.value?.state === "string" ? st.value.state : undefined,
+      levels: rep.status === "fulfilled" && rep.value?.levels ? rep.value.levels : undefined,
+    });
+  }, []);
 
   const load = useCallback(async (sid: string) => {
     const n = ++seq.current;
@@ -38,7 +51,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
       const resp = await api.getScenario(sid);
       if (n !== seq.current) return;
       const got = extractIr(resp);
-      if (got) setIr(got);
+      if (got) { setIr(got); void refreshRuntime(sid); }
       else { setIr(null); setError(new ApiError(0, "後端回傳的內容不是 Scenario IR", "GET", `/api/scenario/${sid}`, "error")); }
     } catch (e) {
       if (n !== seq.current) return;
@@ -47,7 +60,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
     } finally {
       if (n === seq.current) setLoading(false);
     }
-  }, []);
+  }, [refreshRuntime]);
 
   useEffect(() => { if (id && !ir) void load(id); /* initial load only */ }, []); // eslint-disable-line
 
@@ -57,6 +70,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
     setId(next);
     setError(null);
     setLoading(false);
+    setRuntime({});
     if (!next) { setIr(null); return; }
     if (given) setIr(given);
     else { setIr(null); void load(next); }
@@ -70,7 +84,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
     else if (id) await load(id);
   }, [id, load]);
 
-  return <Ctx.Provider value={{ id, ir, loading, error, select, reload, absorb }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ id, ir, runtime, loading, error, select, reload, absorb }}>{children}</Ctx.Provider>;
 }
 
 export function useScenario(): ScenarioState {

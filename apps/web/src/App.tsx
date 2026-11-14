@@ -1,7 +1,7 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 import { useEffect, useState, type ReactNode } from "react";
-import type { ScenarioIR } from "@contracts";
 import { api, type Budget } from "./lib/api";
+import { stageState } from "./lib/stages";
 import { ScenarioProvider, useScenario } from "./lib/scenario";
 import { HomePage } from "./pages/HomePage";
 import { ImportPage } from "./pages/ImportPage";
@@ -28,36 +28,6 @@ export const STAGES: { path: string; label: string; key: string; element: ReactN
   { path: "/report", label: "驗證報告", key: "report", element: <ReportPage /> },
 ];
 
-type StageState = { dot: "" | "done" | "warn" | "err"; text?: string; title: string };
-
-/** Progress markers derived only from what the loaded IR actually contains. */
-function stageState(key: string, ir: ScenarioIR | null): StageState | null {
-  if (!ir) return null;
-  const todo: StageState = { dot: "", title: "尚無資料" };
-  switch (key) {
-    case "import": return { dot: "done", title: "已匯入" };
-    case "analysis": return ir.actions.length ? { dot: "done", text: String(ir.actions.length), title: `${ir.actions.length} 個攻擊行為` } : todo;
-    case "missing": {
-      const items = ir.missing_items ?? [];
-      const open = items.filter((m) => m.status === "open").length;
-      if (!items.length) return todo;
-      return open ? { dot: "warn", text: String(open), title: `${open} 項待補充` } : { dot: "done", title: "缺失皆已處理" };
-    }
-    case "flow": return (ir.ir_version ?? 1) > 1 ? { dot: "done", text: `v${ir.ir_version}`, title: `目前版本 v${ir.ir_version}` } : todo;
-    case "deps": return ir.hosts?.length || ir.services?.length ? { dot: "done", title: "已有主機／服務" } : todo;
-    case "topology": return ir.environment_plan ? { dot: "done", title: "已有環境規劃" } : todo;
-    case "deploy": return ir.deployments?.length ? { dot: "done", title: "有部署紀錄" } : todo;
-    case "report": {
-      const lv = ir.validation?.levels;
-      if (!lv) return todo;
-      const all = [lv.env_build, lv.behavior_repro, lv.full_chain];
-      if (all.includes("FAIL")) return { dot: "err", title: "有驗證層失敗" };
-      return all.every((s) => s === "PASS") ? { dot: "done", title: "三層皆通過" } : { dot: "warn", title: "部分通過或未測" };
-    }
-    default: return null;
-  }
-}
-
 function BudgetChip() {
   const [b, setB] = useState<Budget | null>(null);
   useEffect(() => {
@@ -68,11 +38,11 @@ function BudgetChip() {
   }, []);
   if (!b || !b.hard_cap_usd) return null;
   const pct = Math.min(100, (b.est_total_usd / b.hard_cap_usd) * 100);
-  const color = pct > 90 ? "var(--err)" : pct > 80 ? "var(--warn)" : "var(--text-dim)";
+  const color = pct > 90 ? "#ff7a66" : pct > 80 ? "#f0b03f" : "var(--rail-dim)";
   return (
-    <div style={{ padding: "8px 14px", borderTop: "1px solid var(--border)", fontSize: 12, color }}>
+    <div style={{ padding: "8px 14px", borderTop: "1px solid #2f4450", fontSize: 12, color }}>
       API 估計花費 ${b.est_total_usd.toFixed(2)} / ${b.hard_cap_usd}
-      <div style={{ height: 4, background: "var(--bg)", borderRadius: 2, marginTop: 4 }}>
+      <div style={{ height: 4, background: "#2f4450", borderRadius: 2, marginTop: 4 }}>
         <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
       </div>
     </div>
@@ -80,7 +50,7 @@ function BudgetChip() {
 }
 
 function Sidebar() {
-  const { id, ir, loading } = useScenario();
+  const { id, ir, runtime, loading } = useScenario();
   return (
     <aside className="side">
       <div className="brand">CyberRange <span className="muted" style={{ fontWeight: 400 }}>Studio</span></div>
@@ -91,7 +61,7 @@ function Sidebar() {
       </div>
       <nav>
         {STAGES.map((s, i) => {
-          const st = stageState(s.key, ir);
+          const st = stageState(s.key, ir, runtime);
           return (
             <NavLink key={s.key} to={s.path} end={s.path === "/"} className={({ isActive }) => (isActive ? "active" : "")}>
               <span className="num">{i === 0 ? "" : i}</span>
