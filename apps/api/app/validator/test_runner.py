@@ -217,6 +217,29 @@ class ValidationRunnerTests(unittest.TestCase):
         actions = [{"id": f"a{i}", "name": f"step {i}", "target_host_ref": None} for i in range(1, 5)]
         self.assertEqual(runner._explicit_action_refs(connection, actions), [])
 
+    def test_substitutes_name_the_original_software(self):
+        # Module 5 substitute_for must surface as the "real" (original) name, so the
+        # report reads "以 <substitute> 頂替 <real>", not the stand-in's own image id.
+        components = [
+            {"host_id": "web", "component": "nginx", "image_hint": "oss-nginx",
+             "substitute": True, "substitute_for": "Microsoft IIS",
+             "substitute_basis": "catalogue_substitute",
+             "fidelity_difference": "deployed as nginx in place of Microsoft IIS; "
+                                    "does not reproduce that software or its vulnerabilities"},
+            {"host_id": "db", "component": "oss-postgres", "image_hint": "oss-postgres",
+             "substitute": False},  # real component, not a substitute -> excluded
+            {"host_id": "h1", "component": "demo-api", "image_hint": "demo-api",
+             "substitute": True},  # plain harmless demo substitute, no original named
+        ]
+        subs = runner._build_substitutes(components)
+        by_ref = {s["service_ref"]: s for s in subs}
+        self.assertNotIn("db", by_ref)
+        self.assertEqual(by_ref["web"]["real"], "Microsoft IIS")
+        self.assertEqual(by_ref["web"]["substitute"], "nginx")
+        self.assertIn("Microsoft IIS", by_ref["web"]["difference"])
+        # Plain substitute with no original falls back to its component/image hint.
+        self.assertEqual(by_ref["h1"]["real"], "demo-api")
+
     def test_explicit_mapping_requires_matching_target_host(self):
         # When an action both is named and targets the connection's host, it maps.
         connection = {"from_host": "attacker", "to_host": "web", "port": 80, "protocol": "tcp",
