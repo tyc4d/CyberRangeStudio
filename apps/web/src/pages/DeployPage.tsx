@@ -41,6 +41,12 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const down = useAction(async () => { try { await api.deployDown(ir.id); } finally { await after(); } });
   const busy = up.busy || down.busy;
   const approved = isPlanApproved(ir.environment_plan);
+  // Deploying needs a generated compose file. 404 with its own detail = not generated yet (same reading as the IaC page).
+  const iac = useLoad(() => api.getIac(ir.id), [ir.id]);
+  const iacMissing = !!iac.error && iac.error.status === 404 && iac.error.kind === "error";
+  // 409 = the stored plan no longer passes the IaC checks (the API answers with the failing report).
+  const iacBlocked = iac.data?.report?.deployable === false || iac.error?.status === 409;
+  const upBlock = !approved ? "需先在「拓樸」頁核准拓樸" : iacMissing ? "需先在「IaC 預覽」頁生成 IaC" : iacBlocked ? "IaC 檢查報告判定目前不可部署" : undefined;
 
   const s = status.data;
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
@@ -56,7 +62,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   return (
     <div className="page">
       <PageHead title="部署管理" desc="在本機隔離環境啟動或關閉這個情境。狀態每 5 秒自動更新。">
-        <button className="primary" disabled={busy || !approved} title={approved ? undefined : "需先在「拓樸」頁核准拓樸"} onClick={() => { if (window.confirm("確定要在本機隔離環境啟動這個情境的容器？")) void up.run(); }}>啟動（up）</button>
+        <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm("確定要在本機隔離環境啟動這個情境的容器？")) void up.run(); }}>啟動（up）</button>
         <button className="danger" disabled={busy} onClick={() => { if (window.confirm("確定要關閉並移除這個情境的部署？")) void down.run(); }}>關閉（down）</button>
       </PageHead>
 
@@ -64,6 +70,18 @@ function Body({ ir }: { ir: ScenarioIR }) {
         <Notice kind="warn" title={ir.environment_plan ? "拓樸尚未核准，不能部署" : "尚無拓樸規劃，不能部署"}
           action={<Link to="/topology"><button className="primary small">前往拓樸頁</button></Link>}>
           部署前必須先由人核准拓樸（開通哪些連線、哪些路徑必須阻擋）。核准後「啟動」按鈕才會啟用。
+        </Notice>
+      )}
+      {approved && iacMissing && (
+        <Notice kind="warn" title="尚未生成 IaC，不能部署"
+          action={<Link to="/iac"><button className="primary small">前往 IaC 預覽</button></Link>}>
+          拓樸已核准，但還沒有生成部署用的 Docker Compose 設定。請先到「IaC 預覽」頁按「生成 IaC」，生成後「啟動」按鈕才會啟用。
+        </Notice>
+      )}
+      {approved && iacBlocked && (
+        <Notice kind="err" title="IaC 檢查判定目前不可部署"
+          action={<Link to="/iac"><button className="small">查看 IaC 報告</button></Link>}>
+          已生成的設定沒有通過可部署檢查，因此「啟動」停用。請依「IaC 預覽」頁的報告修正後重新生成。
         </Notice>
       )}
       {up.busy && <div className="card"><Busy label="啟動中，正在建立網路與容器…" elapsed={up.elapsed} /></div>}

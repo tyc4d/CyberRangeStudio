@@ -388,6 +388,8 @@ const RESOLUTIONS: { v: Resolution; label: string; needText: boolean; placeholde
   { v: "substitute_chosen", label: "用替代方案", needText: true, placeholder: "說明要用什麼替代，以及與原本的差異" },
   { v: "accepted_unknown", label: "接受未知", needText: false, placeholder: "（選填）備註為何可以不補" },
 ];
+/** The API stores a non-empty resolution text for every answer. When the optional note is left blank we record that fact, not an invented reason. */
+const UNKNOWN_DEFAULT_NOTE = "接受未知（使用者未填寫備註）";
 
 /** Priority shown on a card. `rank` orders the list (lower first). */
 interface Tier { rank: number; label: string; cls: string; why?: string }
@@ -466,7 +468,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
     let last: unknown;
     try {
       // A merged card answers every item it stands for.
-      for (const it of group.items) last = await api.supplement(scenarioId, { text: text.trim(), targets_missing_item: it.id, status: mode });
+      for (const it of group.items) last = await api.supplement(scenarioId, { text: text.trim() || (mode === "accepted_unknown" ? UNKNOWN_DEFAULT_NOTE : ""), targets_missing_item: it.id, status: mode });
     } finally {
       if (last !== undefined) await onDone(last);
     }
@@ -602,7 +604,13 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
           <div className="seg" style={{ alignSelf: "flex-start" }}>
             {RESOLUTIONS.map((r) => <button key={r.v} className={mode === r.v ? "on" : ""} onClick={() => setMode(r.v)} disabled={submit.busy}>{r.label}</button>)}
           </div>
-          <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy} />
+          <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy}
+            aria-label={res.needText ? `${res.label}（必填）` : `${res.label}備註（選填）`} aria-required={res.needText} />
+          <div className="muted" style={{ fontSize: 12 }} data-testid="resolution-hint">
+            {res.needText
+              ? (text.trim() ? "送出後會標示為使用者來源，不會當成原文證據。" : "必填：請先填寫內容，「送出」才會啟用。")
+              : "備註選填。留白送出會記錄為「接受未知（使用者未填寫備註）」，此項目維持未知，不會被當成已知事實。"}
+          </div>
           {note && <div className="muted" style={{ fontSize: 12 }}>提醒：{note}</div>}
           {group.items.length > 1 && <div className="muted" style={{ fontSize: 12 }}>這張卡片合併了 {group.items.length} 個內容相同的問題，送出後會一併套用。</div>}
           <div className="row">
