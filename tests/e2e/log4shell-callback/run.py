@@ -14,7 +14,10 @@ script never claims otherwise.
 
 Usage:  python run.py            # up, test, report, down
         python run.py --keep     # leave the lab running for inspection
-Safe by construction: labnet is internal (no egress); nothing is pulled.
+labnet is internal (no internet egress, measured each run) and nothing is pulled.
+Note: an internal bridge still reaches host-gateway services (a known infra gap);
+this lab never uses that path. This run MODELS the callback with a harmless
+substitute victim -- it does not reproduce real Log4Shell (no Log4j participates).
 """
 from __future__ import annotations
 
@@ -132,16 +135,45 @@ def main() -> int:
         result["steps"].append({"step": "offlab_target", "injection": OFFLAB, "response": off_resp,
                                 "expected": "refused, no callback", "ok": off_refused and not off_caused})
 
+        # 4) Measure actual isolation honestly: internet egress AND host-gateway reach.
+        # Derive the bridge gateway from the container's own IPv4 (gateway = .1 of the
+        # /24-style subnet in practice), then probe host sshd:22 through it.
+        probe = ("import socket\n"
+                 "ip=socket.gethostbyname(socket.gethostname())\n"
+                 "gw='.'.join(ip.split('.')[:3])+'.1'\n"
+                 "def t(h,p):\n"
+                 " try:\n  socket.create_connection((h,p),timeout=3).close();return 'REACHED'\n"
+                 " except OSError as e:return type(e).__name__\n"
+                 "print(repr({'own_ip':ip,'gateway':gw,'inet_8888_53':t('8.8.8.8',53),"
+                 "'inet_1111_443':t('1.1.1.1',443),'host_gw_22':t(gw,22)}))")
+        eg = _run(COMPOSE + ["exec", "-T", "attacker", "python", "-c", probe], timeout=20).stdout.strip()
+        try:
+            egress = eval(eg, {"__builtins__": {}})  # trusted: our own probe output
+        except Exception:
+            egress = {"raw": eg}
+        uid = _run(COMPOSE + ["exec", "-T", "attacker", "id", "-u"], timeout=15).stdout.strip()
+
         callback_ok = (not benign_caused) and crafted_caused and ("lookup-performed" in crafted_resp)
-        result["levels"]["callback_behavior"] = "PASS" if callback_ok else "FAIL"
+        # This grades the HARNESS, not a Log4Shell reproduction. No Log4j participates,
+        # so the real callback is NOT reproduced here (reviewer Q1).
+        result["levels"]["harness_callback_observed"] = "PASS" if callback_ok else "FAIL"
         result["levels"]["offlab_guard"] = "PASS" if (off_refused and not off_caused) else "FAIL"
+        result["isolation_measured"] = {
+            "attacker_uid": uid,
+            "egress": egress,
+            "note": "internet egress blocked; host-gateway service (sshd:22) is CURRENTLY reachable "
+                    "via the bridge gateway -- a known infra isolation gap, not used by this lab.",
+        }
         result["fidelity"] = {
-            "reproduced": ["B2 (JNDI/LDAP callback observable)"] if callback_ok else [],
-            "substitute": "Victim is an ASSUMED*SUBSTITUTED harmless stand-in (not real Log4j/Horizon); "
-                          "the listener is detection-only and returns no payload. Real Log4Shell RCE "
-                          "(B1) and Windows-only steps (B3/B10/B13/B17) are NOT reproduced here.",
-            "safety": "labnet internal:true (no egress); attack emitted from attacker container only; "
-                      "target and callback confined to in-lab containers.",
+            "reproduced": [],
+            "modeled_only": "B2 callback OBSERVABLE, via a worker-written harmless SUBSTITUTE victim "
+                            "(ASSUMED*SUBSTITUTED). No Log4j participates, so this is a harness/framework "
+                            "self-test of the callback-observation path, NOT a reproduction of the real "
+                            "Log4Shell callback. Real B2/B1 and Windows-only steps are NOT reproduced.",
+            "real_reproduction_requires": "a real vulnerable image (e.g. vulhub solr 8.11.0 / Log4j 2.14.1); "
+                            "DEFERRED until the host-isolation gap is fixed and reviewed (see run_real_vuln.md, NOT_TESTED).",
+            "safety": "labnet internal:true (no internet egress, measured); attack emitted from attacker "
+                      "container only; target and callback confined to in-lab containers; non-root, read-only.",
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if callback_ok and result["levels"]["offlab_guard"] == "PASS" else 1

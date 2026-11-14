@@ -1,22 +1,30 @@
-# Isolated behavior-acceptance lab for the Log4Shell JNDI/LDAP callback (B2).
+# Isolated behavior-acceptance lab that MODELS the Log4Shell JNDI/LDAP callback.
 #
-# Honesty / safety properties, enforced here rather than assumed:
-#  - `labnet` is `internal: true`: NO route to the host or the internet. The
-#    attacker action and the callback can only ever reach in-lab containers.
+# What this is (honest scope):
+#  - The victim is a worker-written harmless SUBSTITUTE, not real Log4j. The run
+#    exercises the test harness and the callback-observation path; it does NOT
+#    reproduce the real Log4Shell callback (no Log4j participates). Real B2/B1
+#    reproduction needs a real vulnerable image (e.g. vulhub solr 8.11.0) and is
+#    deferred until the host-isolation gap below is fixed and reviewed.
+#
+# Safety properties actually enforced here:
+#  - `labnet` is `internal: true`: NO route to the public internet (verified by
+#    probing 8.8.8.8/1.1.1.1 from the attacker; both fail).
+#  - KNOWN GAP (infra, cross-branch): an `internal` bridge still has a gateway, so
+#    containers CAN currently reach host services bound on 0.0.0.0 (e.g. sshd:22).
+#    This lab never uses that path (victim only ever contacts the allow-listed
+#    in-lab listener), but the gap is why no real vulnerable image is run here yet.
 #  - The attacker action is emitted from the `attacker` container only.
-#  - The target is only the in-lab `victim` container.
-#  - The callback lands on the in-lab `listener` (a harmless recorder), never
-#    on any real/off-lab host.
-#  - Every service runs the already-pinned project base image; nothing new is
-#    pulled. Containers are non-root, read-only, no new privileges.
-#
-# This proves the *callback behavior* can be validated safely. It does NOT
-# reproduce real Log4j RCE (see expected.md: B1 is a teaching substitute).
+#  - The target is only the in-lab `victim`; the callback lands only on the in-lab
+#    `listener` (a harmless recorder that returns no payload).
+#  - Every service runs the already-pinned project base image (nothing pulled),
+#    NON-ROOT (uid 65532), read-only root fs, cap_drop ALL, no-new-privileges.
 
 services:
   listener:
     image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
     command: ["python", "/app/listener.py"]
+    user: "65532:65532"
     environment:
       LISTENER_PORT: "1389"
       CALLBACK_LOG: "/evidence/callbacks.jsonl"
@@ -32,6 +40,7 @@ services:
   victim:
     image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
     command: ["python", "/app/victim.py"]
+    user: "65532:65532"
     environment:
       VICTIM_PORT: "8080"
       ALLOWED_CALLBACK_HOST: "listener"
@@ -47,6 +56,7 @@ services:
   attacker:
     image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
     command: ["python", "-c", "import time; print('attacker-idle', flush=True); time.sleep(3600)"]
+    user: "65532:65532"
     read_only: true
     cap_drop: ["ALL"]
     security_opt: ["no-new-privileges:true"]

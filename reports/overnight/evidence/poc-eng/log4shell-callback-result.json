@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-11-14T18:27:49.595345+00:00",
+  "run_at": "2026-11-14T22:12:02.308901+00:00",
   "project": "cr-poc-log4shell",
   "steps": [
     {
@@ -16,10 +16,10 @@
       "new_callbacks": [
         {
           "event": "callback",
-          "peer_ip": "192.168.64.3",
-          "peer_port": 46226,
+          "peer_ip": "172.26.0.3",
+          "peer_port": 33230,
           "first_bytes_hex": "6a6e64692d7265736f6c76650a",
-          "ts": "2026-11-14T18:27:51.471011+00:00"
+          "ts": "2026-11-14T22:12:04.197730+00:00"
         }
       ],
       "expected": "one callback from victim",
@@ -34,14 +34,24 @@
     }
   ],
   "levels": {
-    "callback_behavior": "PASS",
+    "harness_callback_observed": "PASS",
     "offlab_guard": "PASS"
   },
   "fidelity": {
-    "reproduced": [
-      "B2 (JNDI/LDAP callback observable)"
-    ],
-    "substitute": "Victim is an ASSUMED*SUBSTITUTED harmless stand-in (not real Log4j/Horizon); the listener is detection-only and returns no payload. Real Log4Shell RCE (B1) and Windows-only steps (B3/B10/B13/B17) are NOT reproduced here.",
-    "safety": "labnet internal:true (no egress); attack emitted from attacker container only; target and callback confined to in-lab containers."
+    "reproduced": [],
+    "modeled_only": "B2 callback OBSERVABLE, via a worker-written harmless SUBSTITUTE victim (ASSUMED*SUBSTITUTED). No Log4j participates, so this is a harness/framework self-test of the callback-observation path, NOT a reproduction of the real Log4Shell callback. Real B2/B1 and Windows-only steps are NOT reproduced.",
+    "real_reproduction_requires": "a real vulnerable image (e.g. vulhub solr 8.11.0 / Log4j 2.14.1); DEFERRED until the host-isolation gap is fixed and reviewed (see run_real_vuln.md, NOT_TESTED).",
+    "safety": "labnet internal:true (no internet egress, measured); attack emitted from attacker container only; target and callback confined to in-lab containers; non-root, read-only."
+  },
+  "isolation_measured": {
+    "attacker_uid": "65532",
+    "egress": {
+      "own_ip": "172.26.0.4",
+      "gateway": "172.26.0.1",
+      "inet_8888_53": "OSError",
+      "inet_1111_443": "OSError",
+      "host_gw_22": "REACHED"
+    },
+    "note": "internet egress blocked; host-gateway service (sshd:22) is CURRENTLY reachable via the bridge gateway -- a known infra isolation gap, not used by this lab."
   }
 }

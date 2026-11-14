@@ -105,3 +105,15 @@ reviewer 追加 F1：多網路（multi-homed）目標只被探測單一 IP，若
 - 單元測試改 patch `container_ipv4_addresses`（配合新路徑）。
 
 測試：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **79 passed, 3 subtests passed**（新增 F1 真實測試）。
+
+## 里程碑 3 更正（回應 reviewer 第 4 節 Q1/Q2/Q3）
+
+reviewer 指出里程碑 3 的 Log4Shell 回呼實驗有三處不實宣稱，已更正並修正程式：
+
+- **Q1（分級標錯，已更正）**：victim 是我自寫的無害模擬程式（看到 `${jndi:ldap://…}` 就主動開 TCP），**沒有 Log4j 參與**。原宣稱「真實重現 B2」過頭。現更正為：此實驗僅是**對回呼觀測路徑的框架自測／教學替代（SUBSTITUTED）**，不是 Log4Shell 回呼的真實重現。結果檔 `fidelity.reproduced` 改為 `[]`，level 名稱改為 `harness_callback_observed`，並新增 `modeled_only` 與 `real_reproduction_requires` 欄位說明。真實重現需以 vulhub solr 8.11.0（真 Log4j 2.14.1）為目標。
+- **Q2（非 root，已改為真的非 root）**：compose 原本沒設 `user:`，三容器實測 uid=0。現三個 service 皆加 `user: "65532:65532"`，實測 `attacker_uid=65532`。
+- **Q3（宿主機可達，已更正並實測）**：原 compose 註解寫「NO route to the host」不實。現 run.py 每次實測並記錄：網際網路 egress 被擋（8.8.8.8:53、1.1.1.1:443 皆 OSError），但**宿主機閘道 sshd:22 目前可達（host_gw_22=REACHED）**——這是既有基礎設施隔離缺口（跨分支發現，infra-eng 擁有，待 Lead／產品負責人決定）。compose 註解與 run.py docstring 已改為誠實描述此缺口；本實驗從不使用該路徑（victim 只連實驗內白名單 listener）。
+
+**安全處置**：依 reviewer 指示，在 infra-eng 修好「internal 網路容器可連宿主機服務」並經審查前，**不對真實漏洞映像（vulhub 等）執行實際 exploit**。已準備好計畫與預期結果 `tests/e2e/log4shell-callback/run_real_vuln.md`，狀態標 **NOT_TESTED（待隔離修復）**；`run_real_vuln.py` 為惰性守門腳本（不部署、不攻擊，旗標預設關閉）。
+
+更正後證據：`reports/overnight/evidence/poc-eng/log4shell-callback-result.json`（含 `isolation_measured`：uid=65532、egress 實測、host_gw_22=REACHED）。
