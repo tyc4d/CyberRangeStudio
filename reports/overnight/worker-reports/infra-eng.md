@@ -42,17 +42,18 @@
 | 227a74c | 實驗網路連不到宿主機、對外埠改走轉發容器、漏洞映像部署前預檢、真實隔離測試 |
 | 3e3f0a9 | Windows VM 後端（libvirt/KVM）＋離線測試、報告 §4–§5 |
 | 713aa43 | `cr-gateway` 只監聽 edge 位址（修 reviewer G1）＋真實測試 |
-| 本次 | VM 真實驗證通過、ISO 完整性檢查、報告 §6–§7 |
+| e761d07 | VM 真實驗證通過、ISO 完整性檢查、報告 VM 與決策章節 |
+| 本次 | reviewer 第 13 節後續事項、報告最終整理、清理 |
 
 ## 測試
 
 ```
 PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q
-104 passed, 2 warnings, 3 subtests passed
+108 passed, 2 warnings, 3 subtests passed
 ```
 
 基準（我開始時）：54 passed, 1 failed（失敗的就是撞埠 42000）。
-其中 2 項是真實 Docker 整合測試；VM 後端的 26 項是離線測試（不需要 hypervisor），
+其中 2 項是真實 Docker 整合測試；VM 後端的 30 項是離線測試（不需要 hypervisor），
 真實開機驗證另由 `tools/infra-validation/vm_e2e.py` 執行並留證據。
 
 真實部署重測（每個計畫都跑 up → 驗證 → down → 再 up → down，並檢查殘留）：
@@ -79,10 +80,12 @@ PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api t
 
 - libvirt 儲存池 `cr-infra-eng`：Windows ISO、完整的 virtio-win ISO、範本磁碟（共約 12 GB），供重跑驗證用。
 - `.worktrees/infra-eng/.data/media/virtio-win-0.1.302.iso`（877 MB，未進版控）。
-- 我部署的容器、網路、VM、VM 網路皆已清除（最後一次檢查：`cr-demo-infra-eng*`／`infra-iso*` 為 0）。
+- 我部署的容器、網路、volume、VM、VM 網路、背景程序皆已清除；我的測試 build 出來的 12 個本機映像也已刪除。
+  清點結果：`reports/overnight/evidence/infra-eng/cleanup-inventory.txt`。
+- 沒有動：其他 Worker 的 `cr-demo-infra-test-*`／`cr-demo-poc-*` 容器與網路、其他專案的容器。
 
 ## 需產品負責人決定
 
-見 `INFRA-VALIDATION.md` §7.1（D1–D7）。最需要注意的：
+見 `INFRA-VALIDATION.md` §7（需 sudo／BLOCKED 的事項）與 §8.1（D2–D7）；放寬的安全設定清單在 §5。最需要注意的：
 - D5：只有「對外」網段的主機才會開埠，內部資料庫不再能從宿主機直接連。
 - D6／D7：Windows 評估版授權到期，以及 VM 尚未納入情境部署流程。

@@ -737,9 +737,30 @@ def failure_diagnostics(scenario_id: str, live: dict[str, Any] | None = None) ->
     return report
 
 
+def _remove_local_images(scenario_id: str) -> list[str]:
+    """Delete the demo images this scenario built locally (``cr-demo-<id>-<host>:local``).
+
+    Catalogue images are shared between scenarios and stay cached; only the per-scenario
+    build output is removed so repeated deployments do not pile images up on the host.
+    """
+    docker, error = _docker_context_preflight()
+    if error or not docker:
+        return []
+    prefix = project_name(scenario_id) + "-"
+    listed = _run([docker, "images", "--filter", f"reference={prefix}*:local",
+                   "--format", "{{.Repository}}:{{.Tag}}"], timeout=20)
+    removed = []
+    for reference in listed.get("stdout", "").split():
+        if reference.startswith(prefix) and reference.endswith(":local"):
+            if _run([docker, "image", "rm", reference], timeout=30)["returncode"] == 0:
+                removed.append(reference)
+    return removed
+
+
 def _cleanup_failed_up(scenario_id: str) -> dict[str, Any]:
     down = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
     remaining = live_containers(scenario_id)
+    _remove_local_images(scenario_id)
     return {"exit_code": down["returncode"], "stderr": down["stderr"][-1000:],
             "remaining_containers": [c.get("name") for c in remaining.get("containers", [])],
             "clean": down["returncode"] == 0 and not remaining.get("containers")}
@@ -772,7 +793,9 @@ def do_health(scenario_id: str) -> dict[str, Any]:
 def do_down(scenario_id: str) -> dict[str, Any]:
     result = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
     state = "stopped" if result["returncode"] == 0 else "failed"
-    details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"]}
+    removed_images = _remove_local_images(scenario_id) if result["returncode"] == 0 else []
+    details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
+               "removed_local_images": removed_images}
     audit = record(scenario_id, "down", state, details)
     return {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
             "state": state, "ok": result["returncode"] == 0, "command_result": result,

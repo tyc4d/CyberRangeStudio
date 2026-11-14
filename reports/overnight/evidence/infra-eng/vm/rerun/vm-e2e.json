@@ -1,0 +1,442 @@
+{
+  "pool": "cr-infra-eng",
+  "steps": [
+    {
+      "step": "preflight",
+      "at": "06:50:41",
+      "seconds": 0.0,
+      "ok": true,
+      "result": {
+        "ok": true,
+        "backend": "libvirt-qemu",
+        "uri": "qemu:///system",
+        "pool": "cr-infra-eng",
+        "tools": {
+          "virsh": "/usr/bin/virsh",
+          "qemu-img": "/usr/bin/qemu-img",
+          "qemu-system-x86_64": "/usr/bin/qemu-system-x86_64",
+          "xorriso": "/usr/bin/xorriso"
+        },
+        "missing_tools": [],
+        "kvm": true,
+        "pool_ready": true,
+        "category": "ready",
+        "message": "VM backend 可用"
+      }
+    },
+    {
+      "step": "leftover_before",
+      "at": "06:50:42",
+      "seconds": 0.0,
+      "ok": true,
+      "result": {
+        "domains": [],
+        "networks": [],
+        "volumes": [],
+        "clean": true
+      }
+    },
+    {
+      "step": "network_create",
+      "at": "06:50:42",
+      "seconds": 0.1,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-net-lab",
+        "bridge": "crbd880ae4de0",
+        "state": "active",
+        "forward": null,
+        "libvirt_ip_configured": false,
+        "host_addresses": [],
+        "isolated": true,
+        "owned": true
+      }
+    },
+    {
+      "step": "vm_create",
+      "at": "06:50:42",
+      "seconds": 0.1,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "defined",
+        "disk_volume": "cr-infra-eng-vm-win1.qcow2",
+        "template": "tpl-ws2022-eval-core.qcow2",
+        "networks": [
+          "cr-infra-eng-vm-net-lab"
+        ],
+        "vcpus": 2,
+        "memory_mib": 4096
+      }
+    },
+    {
+      "step": "vm_boot",
+      "at": "06:50:42",
+      "seconds": 0.6,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "running"
+      }
+    },
+    {
+      "step": "hypervisor_running_is_not_ready",
+      "at": "06:50:42",
+      "seconds": 0.0,
+      "ok": true,
+      "result": {
+        "hypervisor_state": "running",
+        "health_right_after_start": {
+          "name": "cr-infra-eng-vm-win1",
+          "hypervisor_state": "running",
+          "healthy": false,
+          "checks": [
+            {
+              "id": "guest_agent_ping",
+              "ok": false,
+              "observed": "no answer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "vm_wait_ready",
+      "at": "06:50:47",
+      "seconds": 5.0,
+      "ok": true,
+      "result": {
+        "ready": true,
+        "state": "running",
+        "guest_ready": true,
+        "probe": "qemu guest agent guest-ping",
+        "seconds": 5
+      }
+    },
+    {
+      "step": "vm_health",
+      "at": "06:50:52",
+      "seconds": 4.2,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "hypervisor_state": "running",
+        "healthy": true,
+        "checks": [
+          {
+            "id": "guest_agent_ping",
+            "ok": true,
+            "observed": "answered"
+          },
+          {
+            "id": "os_identity",
+            "ok": true,
+            "observed": {
+              "pretty-name": "Windows Server 2022 Standard Evaluation",
+              "version": "Microsoft Windows Server 2022",
+              "version-id": "2022",
+              "kernel-version": "10.0",
+              "machine": "x86_64"
+            }
+          },
+          {
+            "id": "hostname",
+            "ok": true,
+            "observed": "CR-WS2022"
+          },
+          {
+            "id": "network_interfaces",
+            "ok": true,
+            "observed": [
+              {
+                "name": "Ethernet",
+                "mac": "52:54:00:a9:74:ab",
+                "ips": [
+                  "fe80::4dea:fec2:cd2a:8463%6"
+                ]
+              },
+              {
+                "name": "Loopback Pseudo-Interface 1",
+                "mac": null,
+                "ips": [
+                  "::1",
+                  "127.0.0.1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "windows_core_services",
+            "ok": true,
+            "observed": {
+              "Caption": "Microsoft Windows Server 2022 Standard Evaluation",
+              "Version": "10.0.20348",
+              "BuildNumber": "20348",
+              "LastBoot": "2026-11-15T06:50:43.5000000+00:00",
+              "Services": [
+                "EventLog=Running",
+                "LanmanServer=Running",
+                "Winmgmt=Running"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": "guest_view_of_network",
+      "at": "06:50:57",
+      "seconds": 5.2,
+      "ok": true,
+      "result": {
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "Ethernet ip=169.254.132.99 gw=\r\nroute-count-default=0",
+        "stderr": ""
+      }
+    },
+    {
+      "step": "network_status",
+      "at": "06:50:57",
+      "seconds": 0.0,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-net-lab",
+        "bridge": "crbd880ae4de0",
+        "state": "active",
+        "forward": null,
+        "libvirt_ip_configured": false,
+        "host_addresses": [],
+        "isolated": true,
+        "owned": true
+      }
+    },
+    {
+      "step": "screenshot",
+      "at": "06:50:57",
+      "seconds": 0.1,
+      "ok": true,
+      "result": {
+        "saved": true
+      }
+    },
+    {
+      "step": "vm_stop",
+      "at": "06:51:00",
+      "seconds": 3.2,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "shut off",
+        "clean": true
+      }
+    },
+    {
+      "step": "vm_boot_again",
+      "at": "06:51:01",
+      "seconds": 0.6,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "running"
+      }
+    },
+    {
+      "step": "vm_wait_ready_again",
+      "at": "06:51:06",
+      "seconds": 5.0,
+      "ok": true,
+      "result": {
+        "ready": true,
+        "state": "running",
+        "guest_ready": true,
+        "probe": "qemu guest agent guest-ping",
+        "seconds": 5
+      }
+    },
+    {
+      "step": "marker_write",
+      "at": "06:51:06",
+      "seconds": 0.2,
+      "ok": true,
+      "result": {
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "dirty",
+        "stderr": ""
+      }
+    },
+    {
+      "step": "reset_destroy",
+      "at": "06:51:06",
+      "seconds": 0.3,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "destroyed",
+        "ok": true,
+        "removed_volume": true,
+        "error": null
+      }
+    },
+    {
+      "step": "reset_create",
+      "at": "06:51:06",
+      "seconds": 0.1,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "defined",
+        "disk_volume": "cr-infra-eng-vm-win1.qcow2",
+        "template": "tpl-ws2022-eval-core.qcow2",
+        "networks": [
+          "cr-infra-eng-vm-net-lab"
+        ],
+        "vcpus": 2,
+        "memory_mib": 4096
+      }
+    },
+    {
+      "step": "reset_boot",
+      "at": "06:51:07",
+      "seconds": 0.6,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "running"
+      }
+    },
+    {
+      "step": "reset_wait_ready",
+      "at": "06:51:12",
+      "seconds": 5.0,
+      "ok": true,
+      "result": {
+        "ready": true,
+        "state": "running",
+        "guest_ready": true,
+        "probe": "qemu guest agent guest-ping",
+        "seconds": 5
+      }
+    },
+    {
+      "step": "marker_gone_after_reset",
+      "at": "06:51:12",
+      "seconds": 0.2,
+      "ok": true,
+      "result": {
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "GONE",
+        "stderr": ""
+      }
+    },
+    {
+      "step": "vm_health_after_reset",
+      "at": "06:51:16",
+      "seconds": 4.2,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "hypervisor_state": "running",
+        "healthy": true,
+        "checks": [
+          {
+            "id": "guest_agent_ping",
+            "ok": true,
+            "observed": "answered"
+          },
+          {
+            "id": "os_identity",
+            "ok": true,
+            "observed": {
+              "pretty-name": "Windows Server 2022 Standard Evaluation",
+              "version": "Microsoft Windows Server 2022",
+              "version-id": "2022",
+              "kernel-version": "10.0",
+              "machine": "x86_64"
+            }
+          },
+          {
+            "id": "hostname",
+            "ok": true,
+            "observed": "CR-WS2022"
+          },
+          {
+            "id": "network_interfaces",
+            "ok": true,
+            "observed": [
+              {
+                "name": "Ethernet",
+                "mac": "52:54:00:68:34:98",
+                "ips": [
+                  "fe80::f00d:aece:3005:d3f%6"
+                ]
+              },
+              {
+                "name": "Loopback Pseudo-Interface 1",
+                "mac": null,
+                "ips": [
+                  "::1",
+                  "127.0.0.1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "windows_core_services",
+            "ok": true,
+            "observed": {
+              "Caption": "Microsoft Windows Server 2022 Standard Evaluation",
+              "Version": "10.0.20348",
+              "BuildNumber": "20348",
+              "LastBoot": "2026-11-15T06:51:08.5000000+00:00",
+              "Services": [
+                "EventLog=Running",
+                "LanmanServer=Running",
+                "Winmgmt=Running"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": "vm_destroy",
+      "at": "06:51:17",
+      "seconds": 0.3,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-win1",
+        "state": "destroyed",
+        "ok": true,
+        "removed_volume": true,
+        "error": null
+      }
+    },
+    {
+      "step": "network_destroy",
+      "at": "06:51:17",
+      "seconds": 0.3,
+      "ok": true,
+      "result": {
+        "name": "cr-infra-eng-vm-net-lab",
+        "state": "removed",
+        "ok": true,
+        "error": null
+      }
+    },
+    {
+      "step": "leftover_after",
+      "at": "06:51:17",
+      "seconds": 0.0,
+      "ok": true,
+      "result": {
+        "domains": [],
+        "networks": [],
+        "volumes": [],
+        "clean": true
+      }
+    }
+  ]
+}
