@@ -541,6 +541,71 @@ class UserChosenSubstitute(unittest.TestCase):
             self.assertTrue(planned["services"][0].get("no_component"), text)
 
 
+class TrafficDescriptionsAreNotSoftware(unittest.TestCase):
+    """QA round 2 (Equifax): 'encrypted communication channels' must not become a dependency."""
+
+    def test_classifier_separates_descriptions_from_named_services(self):
+        from app.cti.missing import is_communication_description as check
+        for name in ("existing encrypted communication channels", "standard encrypted web protocols",
+                     "encrypted channels", "normal network traffic", "Encrypted Communication Channel"):
+            self.assertTrue(check(name), name)
+        for name in ("RDP", "HTTPS", "SMB protocol service", "Apache Struts", "web service", "database service",
+                     "OpenVPN tunnel", "Remote Desktop Protocol", "File Transfer Protocol server", ""):
+            self.assertFalse(check(name), name)
+
+    def test_planner_raises_no_question_and_no_substitute_for_a_traffic_description(self):
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s2", "name": "existing encrypted communication channels", "host_ref": "h1",
+                       "epistemic_status": "supported", "source": "llm"}]))
+        self.assertFalse(any("communication channels" in item["field"] for item in planned["missing_items"]))
+        s2 = next(service for service in planned["services"] if service["id"] == "s2")
+        self.assertNotIn("catalogue_component", s2)
+        host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
+        self.assertEqual([entry["name"] for entry in host["services"]], ["Apache Struts"])
+
+
+class OneHostOneComponent(unittest.TestCase):
+    """QA round 2: Struts:8080 plus an nginx stand-in on the same host must not reach IaC as deployable."""
+
+    def planned(self):
+        return plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s2", "name": "front proxy", "host_ref": "h1", "catalogue_component": "oss-nginx",
+                       "is_substitute": True, "substitute_basis": "user_chosen", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
+
+    def test_dependencies_report_the_conflict_as_a_blocker(self):
+        planned = self.planned()
+        conflict = next(i for i in planned["missing_items"] if i["id"] == "planner_dep_host-component-conflict-h1")
+        self.assertEqual((conflict["severity"], conflict["status"]), ("blocker", "open"))
+        services = {service["id"]: service for service in planned["services"]}
+        self.assertEqual(services["s2"]["placement"], "conflict")   # the stand-in yields to the named software
+        self.assertNotIn("placement", services["s1"])
+
+    def test_plan_deploys_one_component_declares_only_its_ports_and_passes_iac(self):
+        from app.iac.generator import inspect_plan
+        plan = build_environment_plan(self.planned())
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual(host["image_hint"], "vuln-struts2-s2-045")
+        self.assertEqual([entry["name"] for entry in host["services"]], ["Apache Struts"])
+        self.assertEqual([entry["name"] for entry in host["unplaced_services"]], ["front proxy"])
+        self.assertNotIn("substitute_for", host)
+        self.assertTrue(any("not deployed there" in note for note in plan["notes"]))
+        self.assertEqual(inspect_plan(plan, "scn_t")[1].get("errors"), [])
+
+    def test_conflict_clears_when_the_extra_service_moves_to_another_host(self):
+        ir = self.planned()
+        ir["hosts"].append({"id": "h2", "role": "proxy host", "epistemic_status": "supported", "source": "user"})
+        next(service for service in ir["services"] if service["id"] == "s2")["host_ref"] = "h2"
+        again = plan_dependencies(ir)
+        self.assertFalse(any("conflict" in item["id"] for item in again["missing_items"]))
+        self.assertFalse(any(service.get("placement") for service in again["services"]))
+
+
 class UnsupportedComponents(unittest.TestCase):
     def test_undeployable_platform_is_not_presented_as_real_or_substitute(self):
         ir = base_ir(actions=[action("a1", "Exploit VMware Horizon", "h1", attack_technique="T1190")],

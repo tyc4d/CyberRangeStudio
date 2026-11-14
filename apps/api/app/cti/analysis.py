@@ -9,7 +9,7 @@ from typing import Any
 
 from app.cti.attack import lookup as lookup_attack_technique
 from app.cti.citations import evidence_record
-from app.cti.missing import calculate_missing_items
+from app.cti.missing import calculate_missing_items, is_communication_description
 from app.cti.parser import SourceUnit
 from app.llm.client import complete
 
@@ -396,7 +396,11 @@ _CONTEXT_RULES = (
     "never add a catch-all entry for unidentified hosts. Fields: id (h1, h2, ...; never 'unknown'), name (hostname or label if "
     "given), role (the report's words), and os, os_version, network_placement only when stated. "
     "services: each product, application, protocol service or security product on those machines that an action exploits, logs "
-    "in to, queries, disables or otherwise depends on. Fields: id (s1, ...), name (the report's words; a vulnerability nickname "
+    "in to, queries, disables or otherwise depends on. A service is software or a named protocol service (for example RDP, "
+    "SMB, SSH) present on a target machine; a description of how traffic flowed ('encrypted communication channels', "
+    "'standard web protocols', 'normal network traffic') is not a service and must not be listed. When the report says an "
+    "action queried or accessed databases, list the database as a service of the machine that hosts it, named in the "
+    "report's words. Fields: id (s1, ...), name (the report's words; a vulnerability nickname "
     "or CVE id is not a name: name the affected product), host_ref (a host id above), and version, port (integer), protocol "
     "(tcp/udp), cve (array of CVE ids) only when the report states them. "
     "artifacts: each tool, malware family, script, file, scheduled task or account the report names as used, created or "
@@ -554,7 +558,13 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             " Return JSON with arrays actions, relations, artifacts, and target_context {hosts, services}. "
             "Each item may contain evidence:[{quote,source_ref}]. Actions need id,name,target_host_ref; relations need id,from_action,to_action,kind; "
             "hosts need id,role; services need id,name. Include only information found in the report. "
-            "ACTIONS: an action is something the threat actor did. Give every action an actor field: 'attacker' for the threat "
+            "ACTIONS: an action is something the threat actor did. Give every action an occurrence field: 'performed' when the "
+            "report says it happened in this incident, 'capability' when the report only says what a tool, web shell or malware "
+            "can do or is designed to do ('can run commands that ...', 'is able to', 'designed to'). List each capability the "
+            "report enumerates as its own action; never present a capability as something that happened. Keep distinct "
+            "operations as distinct actions (for example authenticating to a web shell, and each command it then accepts). In "
+            "name and description keep each value attached to the attribute the report attaches it to: do not move a value "
+            "from one attribute to another or apply it to more attributes than the report does. Give every action an actor field: 'attacker' for the threat "
             "actor, 'defender' for the victim organisation, responders, vendors or investigators (detecting, patching, blocking, "
             "notifying, investigating), 'other' otherwise. Name it with the report's own wording for that behaviour, not "
             "with a tactic or category label. Do not create actions for what a defender or analyst observed, assessed or detected, "
@@ -715,7 +725,12 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         _refs = attach(item)
         action["evidence_refs"] = _refs
         action["epistemic_status"] = settle_status(item, _refs)
-        if action["epistemic_status"] == "supported":
+        if str(item.get("occurrence") or "").strip().casefold() == "capability":
+            # What a tool can do is not an event of this incident. Keep the step, say what it is.
+            action["occurrence"] = "capability"
+            action["source_certainty"] = "capability"
+            action["epistemic_reason"] = "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+        elif action["epistemic_status"] == "supported":
             cited = [rec for rec in evidence if rec["id"] in _refs]
             unit_texts = [unit.text for unit in units if any(unit.locator == rec["locator"] for rec in cited)]
             if _hedged_statement([rec["quote"] for rec in cited], unit_texts):
@@ -841,8 +856,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         # A reference to no host entry carries no information; keep the explicit marker.
         action["target_host_ref"] = ref if ref in known_host_ids else "unknown"
     _resolve_action_hosts(actions, hosts, evidence)
+    dropped_non_software: list[str] = []
     for index, raw in enumerate(services_raw, start=1):
         item = dict(raw)
+        if is_communication_description(item.get("name")):
+            # A description of the attacker's traffic, not software to install on a host.
+            dropped_non_software.append(str(item.get("name")).strip())
+            continue
         service: dict[str, Any] = {
             "id": _unique_id(item.get("id"), f"service-{index}", {x["id"] for x in services}),
             "name": _string(item.get("name")) or "Unspecified service (absent)",
@@ -937,6 +957,8 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "dropped_placeholder_hosts": dropped_placeholder_hosts,
             "excluded_non_attacker_actions": excluded_actions,
             "hedged_action_count": sum(1 for action in actions if action.get("source_certainty") == "hedged"),
+            "capability_action_count": sum(1 for action in actions if action.get("occurrence") == "capability"),
+            "dropped_non_software_services": dropped_non_software,
         },
     }
     ir["missing_items"] = calculate_missing_items(ir)

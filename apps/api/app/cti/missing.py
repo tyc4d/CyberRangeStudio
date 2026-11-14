@@ -9,6 +9,29 @@ _UNKNOWN = {"unknown", "unspecified", "absent", "n/a", "none", "null"}
 _SUPPORTED_STATUSES = {"supported", "user_supplied"}
 
 
+_COMMUNICATION_WORDS = frozenset({
+    "channel", "channels", "protocol", "protocols", "traffic", "communication", "communications", "connection",
+    "connections", "session", "sessions", "tunnel", "tunnels", "exchange", "exchanges",
+})
+_COMMUNICATION_MODIFIERS = frozenset({
+    "encrypted", "unencrypted", "standard", "existing", "normal", "legitimate", "secure", "web", "network",
+    "internet", "outbound", "inbound", "internal", "external", "remote", "data", "command", "control", "and", "of",
+    "the", "a", "an", "c2", "covert", "trusted", "regular", "common", "application", "layer",
+})
+
+
+def is_communication_description(name: Any) -> bool:
+    """True for a phrase that describes how traffic flowed rather than naming software.
+
+    "existing encrypted communication channels" or "standard encrypted web protocols" say
+    something about the attacker's traffic. They are not a product or a named protocol service
+    (RDP, SMB, HTTPS) that could be installed on a host, mapped to a component or substituted.
+    """
+    words = re.findall(r"[a-z0-9]+", str(name or "").casefold())
+    return (bool(words) and any(word in _COMMUNICATION_WORDS for word in words)
+            and all(word in _COMMUNICATION_WORDS or word in _COMMUNICATION_MODIFIERS for word in words))
+
+
 def _present(value: Any) -> bool:
     if isinstance(value, str):
         return bool(value.strip()) and value.strip().casefold() not in _UNKNOWN

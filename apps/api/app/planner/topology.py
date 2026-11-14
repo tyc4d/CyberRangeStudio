@@ -238,6 +238,13 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             continue
         _emitted.add(hid)
         entries = []
+        unplaced = [service for service in assigned.get(hid, []) if service.get("placement") == "conflict"]
+        if unplaced:
+            # Module 4 found that these cannot share this host's single image.
+            assigned[hid] = [service for service in assigned[hid] if service.get("placement") != "conflict"]
+            notes.append(f"Host {hid} deploys one component; not deployed there: "
+                         + ", ".join(f"{service.get('name')} ({service.get('catalogue_component')})" for service in unplaced)
+                         + ". Move them to another host or remove them.")
         if hid in assigned:
             for service in assigned[hid]:
                 port_proto = _port_for(service)
@@ -271,6 +278,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             "networks": network_refs,
             "services": entries,
         }
+        if unplaced:
+            env_host["unplaced_services"] = [
+                {"name": str(service.get("name", service["id"])), "component": service.get("catalogue_component"),
+                 "reason": "host already uses another component"} for service in unplaced]
         if host.get("_inferred_entry"):
             env_host["exposure_basis"] = "inferred_entry_point"
         elif not _is_attacker(host) and _stated_exposure(host) is not None:

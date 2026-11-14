@@ -210,3 +210,16 @@ cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-
 
 - 推論出的入口主機要不要自動放上對外網段（目前會放並標示需確認）。
 - 原文語氣不確定的行為，要不要擋住後續部署（目前只標記）。
+
+## 7. 第二輪 QA（qa-round2）追加修復 — 已提交，**尚未用真 LLM 重跑、未跑完整測試、未跑 e2e**
+
+| 修復 | 來源 | 作法 | 測試 |
+|---|---|---|---|
+| 流量描述不當成軟體 | qa-instructor-r2（Equifax） | 「encrypted communication channels／standard encrypted web protocols」這類只描述流量的詞不列為服務：分析階段丟棄並記在 `quality.dropped_non_software_services`，模組 4 對舊資料也不再為它產生題目或替代。RDP／HTTPS 等具名協定不受影響。提示詞同時要求把「被查詢的資料庫」列為所在主機的服務 | `TrafficDescriptionsAreNotSoftware`、`CapabilitiesAndTrafficDescriptions` |
+| 一台主機兩個元件 | qa-instructor-r2 | 模組 4 發現同一主機的服務對到不同元件時，產生 blocker 題目 `planner_dep_host-component-conflict-<主機>`，被擠掉的服務標 `placement=conflict`；拓樸只宣告被部署元件的埠，其餘列在主機的 `unplaced_services` 與 notes；IaC 不再因多餘的埠被擋 | `OneHostOneComponent`（3 個） |
+| 工具「能力」不當成已發生事件 | qa-ux-r2（Clop） | 行為新增 `occurrence=capability`，並標 `source_certainty=capability` 與原因；提示詞要求能力逐項列出、屬性與值不得錯置 | `test_capability_is_kept_but_never_presented_as_an_event` |
+
+未完成：
+- 「依賴頁顯示全部已對應」是前端自己用 `catalogue_component` 計數；後端現在有 blocker 題目與 `placement=conflict` 可用，**前端需接上才會顯示**。
+- Clop「username 與原文不符、核心行為缺漏」只改了提示詞，**沒有用真 LLM 重跑確認**是否改善。
+- 只跑了 `tests/unit apps/api/app/planner apps/api/app/iac apps/api/app/cti`（125 passed）；合併 main 後的完整套件與 full-flow e2e 沒跑。

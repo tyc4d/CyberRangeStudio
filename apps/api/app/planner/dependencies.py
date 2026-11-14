@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from app.cti.missing import refresh_missing_items
+from app.cti.missing import is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
 from app.planner.reproducibility import annotate_reproducibility
 
@@ -394,6 +394,8 @@ def _is_recorded_service(service: dict[str, Any]) -> bool:
     """A service stated by the analysis or the user (not a placeholder, not module-4 output)."""
     return (bool(str(service.get("name") or "").strip())
             and service.get("id") not in _PLACEHOLDER_SERVICE_IDS
+            # a description of traffic ("encrypted communication channels") is not software to plan
+            and not is_communication_description(service.get("name"))
             and service.get("source") != "program"
             # services derived from a supplement are rebuilt from that supplement on every run
             and not service.get("supplement_ref"))
@@ -881,6 +883,35 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    # One host is one image. When its services map to different catalogue components only one
+    # can be deployed there; say which, and raise it here rather than letting IaC fail later.
+    by_host: dict[str, list[dict[str, Any]]] = {}
+    for service in services:
+        service.pop("placement", None)
+        service.pop("placement_reason", None)
+        component = component_by_id(service.get("catalogue_component"))
+        if service.get("host_ref") and component and component.get("runtime") in (None, "container", "vm"):
+            by_host.setdefault(service["host_ref"], []).append(service)
+    for hid, hosted in by_host.items():
+        components = list(dict.fromkeys(service["catalogue_component"] for service in hosted))
+        if len(components) < 2:
+            continue
+        # Software the source names outranks a stand-in; otherwise the first one found.
+        primary = next((service for service in hosted if not service.get("is_substitute")), hosted[0])
+        kept = primary["catalogue_component"]
+        others = [service for service in hosted if service["catalogue_component"] != kept]
+        for service in others:
+            service["placement"] = "conflict"
+            service["placement_reason"] = (
+                f"主機 {hid} 已由 {primary.get('name')}（{kept}）決定映像；一台主機只能部署一個元件，"
+                f"{service.get('name')}（{service['catalogue_component']}）不會被部署在這台主機上。")
+        add_missing(
+            f"host-component-conflict-{hid}", f"主機 {hid} 的元件衝突", category="dependency", severity="blocker",
+            reason=(f"主機 {hid} 的服務對應到多個元件（{', '.join(components)}），但一台主機只能部署一個映像。"
+                    f"目前只會部署 {primary.get('name')}（{kept}）；"
+                    f"{', '.join(str(service.get('name')) for service in others)} 不會被部署。"
+                    "請把它們移到另一台主機、改成同一個元件，或確認不部署。"))
+
     if actions and not any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         # Nothing to build: say so as a blocker instead of letting an empty plan look deployable.
         add_missing("no-target-software", "目標軟體／服務",
