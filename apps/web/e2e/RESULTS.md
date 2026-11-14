@@ -10,12 +10,20 @@ Playwright 開真的 Chromium、只靠點 UI，把整條流程走完並通過：
 
 | 執行方式 | 結果 |
 |---|---|
-| 預設（沿用已在 8077 的後端） | 第一輪 2 passed；改版後含動態測試共 4 passed，約 38 秒 |
+| 預設（沿用已在 8077 的整合後主線後端） | 4 passed（全流程 2 + 動態 2），約 34 秒；層級 PASS／PARTIAL／PARTIAL |
 | 由本 worktree 自己啟動後端（`CR_E2E_API_PORT=8177`，真實 LLM 呼叫，未命中快取） | 2 passed，約 42 秒 |
 | 模擬 Docker 不可用（假的 `docker` 指令回傳失敗） | 前半 passed；部署段 **skipped**（不是 passed） |
 
-驗證層級（由後端回報、頁面顯示一致）：`env_build=PASS`、`behavior_repro=PARTIAL`、`full_chain=PASS`。
-`PARTIAL` 是後端的誠實結果（db 的行為檢查為「未測」），測試只要求 env_build 為 PASS 且沒有任何 FAIL。
+驗證層級（由後端回報、頁面顯示一致；2026-11-14 對整合後、跑在 `127.0.0.1:8077` 的主線後端重跑）：
+`env_build=PASS`、`behavior_repro=PARTIAL`、`full_chain=PARTIAL`。
+
+`full_chain` 是 PARTIAL 而不是 PASS：這條流程只把環境部署起來並做無害檢查，沒有重現任何攻擊步驟
+（真實的 nginx／postgres 沒有可測的良性 /demo 行為），所以完整攻擊鏈不能算成立。這是誠實的結果。
+
+更正：這份文件先前寫的 `full_chain=PASS` 是整合前（demo-api 替身、舊判定）的後端回報的結果，已過時，以上面為準。
+
+測試斷言：`env_build` 必須是 PASS、任何層級不得為 FAIL，且 `full_chain` **不得為 PASS**（只能是 PARTIAL 或 NOT_TESTED）。
+以後若後端回報假的 PASS，測試會失敗。
 清理後以 `docker ps -a` 確認沒有殘留的 `cr-demo-<scenario>` 容器。
 
 ## 重跑指令
@@ -45,7 +53,7 @@ npm run e2e:report                                 # 看 HTML 報告（含失敗
 - 失敗時的 trace／影片與 HTML 報告：`apps/web/e2e/artifacts/test-results/`、`html-report/`（不進 git，每次執行重新產生）
 - 測試腳本：`apps/web/e2e/full-flow.spec.ts`（全流程）、`apps/web/e2e/motion.spec.ts`（動態契約）；設定：`apps/web/playwright.config.ts`
 
-目前 commit 的截圖與 run-log 來自改版後最後一次執行（8077 上沒有後端，由測試從本 worktree 啟動）。
+目前 commit 的截圖、`run-log.json`、`results.json` 來自對 `127.0.0.1:8077` 上整合後主線後端（`~/cr-project/apps/api`）的最後一次執行，沒有另外從本 worktree 啟動後端。
 
 ## 失敗／異常紀錄
 

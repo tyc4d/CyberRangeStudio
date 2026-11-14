@@ -272,6 +272,9 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     await expect(page.locator(".stages a", { hasText: "驗證報告" }).locator(".state")).toHaveAttribute("title", /通過|未測|失敗/);
     expect(report.levels.env_build, "environment build level").toBe("PASS");
     expect(Object.values(report.levels), "no validation level may be FAIL").not.toContain("FAIL");
+    // Guard against a false PASS: this flow deploys the environment and runs only benign checks. No attack step is
+    // reproduced, so the full chain cannot honestly be PASS. If it ever reports PASS, the verdict logic is wrong.
+    expect(["PARTIAL", "NOT_TESTED"], `full_chain must not be PASS when no attack step is reproduced (got ${report.levels.full_chain})`).toContain(report.levels.full_chain);
     return `levels: ${JSON.stringify(report.levels)}`;
   });
 
