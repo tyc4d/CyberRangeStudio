@@ -1,0 +1,44 @@
+# poc-eng 報告（模組 8：PoC／攻擊鏈驗證）
+
+分支 `agent/poc-eng`。基準測試（開工前）：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → `55 passed`。
+
+## 里程碑 1：現況盤點＋假 PASS 風險清單
+
+依據：`apps/api/app/validator/runner.py`、`apps/api/app/routers/validate.py`、`apps/api/app/deploy/manager.py`（probe/exec）、既有證據 `docs/e2e-evidence/07-validation.json`、`docs/e2e-evidence-cisa/07-validation.json`。
+
+### 三層實際檢查的內容
+
+| 層級 | 實際做的事 | 性質 |
+|---|---|---|
+| env_build | 每個主機 `docker compose ps` 的 `state == running`（VM：hypervisor state） | 啟動檢查。不看 health，`unhealthy`／`starting` 也 PASS |
+| behavior_repro | 目標是 nginx/httpd：來源容器網路命名空間內 `GET /` 回 200；demo-api：`GET /demo` 回固定字串 `cr-demo-demo-ok`；postgres：**在目標容器內**對 127.0.0.1 跑 `pg_isready` | **全部是健康檢查／簡單 HTTP 回應**，沒有任何一項是攻擊行為 |
+| full_chain | 取 env_build、behavior_repro、每條宣告連線的 `chain-N`（＝TCP 連通＋上述健康檢查）、每個 IR 動作 的最低值 | 動作本身**從不執行**；動作最高只會是 PARTIAL |
+
+其他類別：`dependency_present` 只驗 demo 容器能 `import` Python 標準函式庫（與模組 4 的軟體依賴無關）；`version` 用 `nginx -v` 等比對字串；`segmentation` 從來源命名空間對目標 IP 做一次 TCP 連線。
+
+好的部分（保留）：探測確實從來源容器的網路命名空間發出（`--network container:<src>`）；名稱解析失敗不算「已封鎖」；動作無證據時不會標 PASS；有動作時 full_chain 不可能 PASS。
+
+### 假 PASS／誤導風險清單（依嚴重度）
+
+| # | 風險 | 位置 | 說明 | 狀態 |
+|---|---|---|---|---|
+| R1 | **無動作時 full_chain 可 PASS** | runner.py `required_steps = ... if actions else declared_chain_checks` | IR 沒有 actions（或 actions 缺 id）時，只要 TCP 連得上＋`GET /` 200，full_chain 就是 PASS——零攻擊步驟卻宣稱完整攻擊鏈通過 | 確認（讀碼） |
+| R2 | **behavior_repro 可因健康檢查而 PASS** | runner.py behavior 區塊 | 「行為重現」層全由 `GET /`=200、固定字串、`pg_isready` 組成；前端卻以「個別攻擊行為對應的條件，能在環境中觀察到嗎？」呈現。任何 HTTP 服務回 200 即通過，不驗 Server／版本 | 確認（`docs/e2e-evidence/07-validation.json`：behavior-1 PASS＝nginx 歡迎頁） |
+| R3 | **動作被浮報為 PARTIAL** | `_action_refs_for_connection` | 只要動作的 `target_host_ref` 等於某條連線的目標主機，就算有「前置條件證據」。既有證據中 a2、a3、a4 僅因目標同為 victim_web 就全標 PARTIAL，實際只驗了 attacker→web:80 | 確認（同上證據檔） |
+| R4 | **替代品行為被算成行為重現** | behavior 區塊 demo-api 分支 | 以 demo-api 替代真實軟體（如 Horizon）時，`/demo` 回固定字串即 behavior PASS；報告層級上看不出這是「教學替代」而非「真實重現」 | 確認（讀碼） |
+| R5 | **postgres 行為檢查不經過攻擊路徑** | behavior 區塊 postgres 分支 | `pg_isready` 在 DB 容器內對 loopback 執行，卻掛在 `source→db` 連線的 behavior／chain 上；不證明來源能對 DB 做任何事，也沒有認證／查詢 | 確認（讀碼） |
+| R6 | **segmentation 把「連線被拒」當成「網路隔離」** | `_probe_status` | 任何 `OSError` 都算 BLOCKED→PASS，包含 `ConnectionRefused`（主機可達、只是該埠沒服務）。目標服務沒起來或埠寫錯時，隔離檢查會假 PASS；沒有正向對照（確認該埠真的有在聽） | 確認（讀碼） |
+| R7 | env_build 忽略 health | service_up 區塊 | 只看 `state == running`，`health=unhealthy` 仍 PASS | 確認（讀碼） |
+| R8 | 證據是自我參照 | `evidence_path` | 每個 check 的 `evidence` 都指向報告本身的 JSON；沒有保存原始指令、exit code、stdout/stderr、時間、目標端痕跡。無法事後獨立稽核 | 確認（讀碼） |
+| R9 | version 用子字串比對 | `_version_matches` | `expected in observed`：例如期望 `1.2` 會吻合 `1.21.3`。只驗執行檔版本，不驗映像 digest | 確認（讀碼），低 |
+| R10 | 含 VM 的計畫會直接報錯／誤判 | run() | (a) VM 檢查用 category `os_identity`，不在 schema enum 內 → 報告 schema 驗證失敗丟 RuntimeError；(b) 只要有任一 VM 主機就跳過 `compose ps`，同計畫內的容器全部被判 FAIL。屬假 FAIL／當機，不是假 PASS | 讀碼推定，未實跑 |
+| R11 | 狀態列舉沒有 BLOCKED，也沒有動作層級的「教學替代」 | `validation-report.schema.json` | COMMON 要求 PARTIAL／NOT_TESTED／BLOCKED，且報告要能分「真實重現／教學替代／部分／未驗證／無法重現」；現行 schema 做不到 | 需小幅擴充共用契約（見後續） |
+| R12 | `_zh()` 會改寫 observed 內容 | `_zh` | 對原始輸出做字串取代與路徑遮蔽，證據文字不再是原始輸出 | 確認（讀碼），低 |
+
+### 結論
+目前模組 8 是誠實的「環境與連通性檢查」，**不是攻擊鏈驗證**：沒有任何攻擊端動作被執行。最危險的是 R1（可真的出現 full_chain=PASS）與 R2/R3/R4（健康檢查與替代品被歸到「行為重現」「部分重現」）。
+
+### 下一步（進行中）
+1. 修 R1–R7（判定邏輯收緊＋單元測試）。
+2. 建立隔離實驗的行為驗收測試（Log4Shell JNDI/LDAP 回呼、Web→DB），攻擊端從攻擊者容器發出、listener 在實驗網路內、網路 `internal: true` 不連外。
+3. 對候選鏈逐步標註可重現性。
