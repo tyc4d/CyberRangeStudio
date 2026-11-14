@@ -1,0 +1,30 @@
+# Phase 3 — real S2-045 (CVE-2017-5638) PoC lab. DO NOT run until the host-isolation
+# fix is in main and the guard confirms the host is unreachable (run_struts_s2045.py
+# enforces both). The target is a REAL vulnerable image.
+#
+# Safe observable: an OGNL arithmetic probe (233*233) echoed in a response header.
+# No file write, no reverse shell, no payload is used.
+services:
+  struts2:
+    image: vulhub/struts2:2.3.30          # real vulnerable Struts 2.3.30 (catalogue vuln-struts2-s2-045)
+    # vulhub images run as root with a writable rootfs by design (known F3 hardening
+    # trade-off); the compensating control is network isolation + no egress, verified
+    # by the guard before this service is ever deployed.
+    networks: [isollab]
+  attacker:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "-c", "import time; print('attacker-idle', flush=True); time.sleep(3600)"]
+    user: "65532:65532"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [isollab]
+    depends_on: [struts2]
+
+networks:
+  isollab:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
