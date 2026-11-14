@@ -152,7 +152,7 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 
 ## 4. 測試
 
-`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **124 passed**（開工時 54 passed, 1 failed）。
+`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **126 passed**（開工時 54 passed, 1 failed）。
 
 ### apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker）
 
