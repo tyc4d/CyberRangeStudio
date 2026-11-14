@@ -103,6 +103,17 @@ class ExposureAndDependencyTests(unittest.TestCase):
                 # no host-side bridge address: lab containers cannot reach host services
                 self.assertEqual(network["driver_opts"], {"com.docker.network.bridge.gateway_mode_ipv4": "isolated"})
 
+    def test_forwarder_listens_only_on_its_edge_address(self):
+        from app.iac.generator import _GATEWAY_FORWARDER
+        compile(_GATEWAY_FORWARDER, "forwarder", "exec")  # valid Python
+        self.assertNotIn("0.0.0.0", _GATEWAY_FORWARDER)
+        self.assertIn("start_server(handle,BIND,lp)", _GATEWAY_FORWARDER)
+        self.assertIn("refusing to listen", _GATEWAY_FORWARDER)   # no edge interface -> does not start
+        self.assertIn("if any(peer in n for n in LAB)", _GATEWAY_FORWARDER)  # lab-subnet peers are dropped
+        gateway = self.document["services"]["cr-gateway"]
+        self.assertEqual(gateway["command"][2], _GATEWAY_FORWARDER)
+        self.assertEqual(gateway["healthcheck"]["test"][-2:], ["--check", "20000"])
+
     def test_gateway_is_a_reserved_host_id(self):
         plan = {**EXPOSED_PLAN, "hosts": [*EXPOSED_PLAN["hosts"],
                                           {"id": "cr-gateway", "role": "x", "image_hint": "oss-attacker",

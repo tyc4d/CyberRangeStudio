@@ -1,0 +1,682 @@
+{
+  "scenario_id": "infra-eng-08e65241",
+  "steps": [
+    {
+      "step": "generate",
+      "at": "06:34:54",
+      "result": {
+        "status": 200,
+        "body": {
+          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-08e65241\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  attacker:\n    container_name: cr-demo-infra-eng-08e65241-attacker\n    networks:\n    - outer\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f\n    user: 65532:65532\n    command:\n    - sh\n    - -c\n    - sleep 2147483647\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n    depends_on:\n      web:\n        condition: service_healthy\n  web:\n    container_name: cr-demo-infra-eng-08e65241-web\n    networks:\n    - outer\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755\n    - /var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755\n    - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82\n    user: 101:101\n    cap_add:\n    - NET_BIND_SERVICE\n    healthcheck:\n      test:\n      - CMD\n      - curl\n      - -fsS\n      - -o\n      - /dev/null\n      - http://127.0.0.1:80/\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n  web2:\n    container_name: cr-demo-infra-eng-08e65241-web2\n    networks:\n    - inner\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9\n    user: '1:1'\n    cap_add:\n    - NET_BIND_SERVICE\n    healthcheck:\n      test:\n      - CMD\n      - httpd\n      - -t\n      interval: 5s\n      timeout: 4s\n      retries: 12\n      start_period: 5s\n    mem_limit: 256m\n    cpus: 1.0\n    pids_limit: 256\n  cr-gateway:\n    container_name: cr-demo-infra-eng-08e65241-cr-gateway\n    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704\n    command:\n    - python\n    - -c\n    - \"import asyncio,ipaddress,socket,struct,sys\\ndef routes():\\n edge=None; lab=[]\\n\\\n      \\ for line in open('/proc/net/route').read().splitlines()[1:]:\\n  f=line.split()\\n\\\n      \\  if f[1]=='00000000' and f[7]=='00000000': edge=f[0]\\n for line in open('/proc/net/route').read().splitlines()[1:]:\\n\\\n      \\  f=line.split()\\n  if f[0]!=edge and f[2]=='00000000':\\n   net=socket.inet_ntoa(struct.pack('<L',int(f[1],16)));\\\n      \\ mask=socket.inet_ntoa(struct.pack('<L',int(f[7],16)))\\n   lab.append(ipaddress.ip_network(net+'/'+mask))\\n\\\n      \\ return edge,lab\\nEDGE,LAB=routes()\\nif EDGE is None: sys.exit('no edge interface:\\\n      \\ refusing to listen')\\ns=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('192.0.2.1',9));\\\n      \\ BIND=s.getsockname()[0]; s.close()\\nif sys.argv[1]=='--check':\\n socket.create_connection((BIND,int(sys.argv[2])),2).close();\\\n      \\ sys.exit(0)\\nasync def pipe(r,w):\\n try:\\n  while True:\\n   d=await r.read(65536)\\n\\\n      \\   if not d: break\\n   w.write(d); await w.drain()\\n except Exception: pass\\n\\\n      \\ finally:\\n  try: w.close()\\n  except Exception: pass\\nasync def serve(lp,h,p):\\n\\\n      \\ async def handle(r,w):\\n  peer=ipaddress.ip_address(w.get_extra_info('peername')[0])\\n\\\n      \\  if any(peer in n for n in LAB):\\n   w.close(); return\\n  try: r2,w2=await\\\n      \\ asyncio.wait_for(asyncio.open_connection(h,p),5)\\n  except Exception:\\n  \\\n      \\ w.close(); return\\n  await asyncio.gather(pipe(r,w2),pipe(r2,w))\\n s=await\\\n      \\ asyncio.start_server(handle,BIND,lp)\\n await s.serve_forever()\\nasync def\\\n      \\ main():\\n rules=[a.split('=',1) for a in sys.argv[1:]]\\n await asyncio.gather(*[serve(int(lp),t.rsplit(':',1)[0],int(t.rsplit(':',1)[1]))\\\n      \\ for lp,t in rules])\\nasyncio.run(main())\\n\"\n    - 20000=web:80\n    - 20001=web2:80\n    networks:\n    - edge\n    - outer\n    - inner\n    ports:\n    - target: 20000\n      published: ${CR_HOSTPORT_0:-42000}\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    - target: 20001\n      published: ${CR_HOSTPORT_1:-42001}\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    user: 65532:65532\n    healthcheck:\n      test:\n      - CMD\n      - python\n      - -c\n      - \"import asyncio,ipaddress,socket,struct,sys\\ndef routes():\\n edge=None; lab=[]\\n\\\n        \\ for line in open('/proc/net/route').read().splitlines()[1:]:\\n  f=line.split()\\n\\\n        \\  if f[1]=='00000000' and f[7]=='00000000': edge=f[0]\\n for line in open('/proc/net/route').read().splitlines()[1:]:\\n\\\n        \\  f=line.split()\\n  if f[0]!=edge and f[2]=='00000000':\\n   net=socket.inet_ntoa(struct.pack('<L',int(f[1],16)));\\\n        \\ mask=socket.inet_ntoa(struct.pack('<L',int(f[7],16)))\\n   lab.append(ipaddress.ip_network(net+'/'+mask))\\n\\\n        \\ return edge,lab\\nEDGE,LAB=routes()\\nif EDGE is None: sys.exit('no edge interface:\\\n        \\ refusing to listen')\\ns=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);\\\n        \\ s.connect(('192.0.2.1',9)); BIND=s.getsockname()[0]; s.close()\\nif sys.argv[1]=='--check':\\n\\\n        \\ socket.create_connection((BIND,int(sys.argv[2])),2).close(); sys.exit(0)\\n\\\n        async def pipe(r,w):\\n try:\\n  while True:\\n   d=await r.read(65536)\\n   if\\\n        \\ not d: break\\n   w.write(d); await w.drain()\\n except Exception: pass\\n\\\n        \\ finally:\\n  try: w.close()\\n  except Exception: pass\\nasync def serve(lp,h,p):\\n\\\n        \\ async def handle(r,w):\\n  peer=ipaddress.ip_address(w.get_extra_info('peername')[0])\\n\\\n        \\  if any(peer in n for n in LAB):\\n   w.close(); return\\n  try: r2,w2=await\\\n        \\ asyncio.wait_for(asyncio.open_connection(h,p),5)\\n  except Exception:\\n\\\n        \\   w.close(); return\\n  await asyncio.gather(pipe(r,w2),pipe(r2,w))\\n s=await\\\n        \\ asyncio.start_server(handle,BIND,lp)\\n await s.serve_forever()\\nasync def\\\n        \\ main():\\n rules=[a.split('=',1) for a in sys.argv[1:]]\\n await asyncio.gather(*[serve(int(lp),t.rsplit(':',1)[0],int(t.rsplit(':',1)[1]))\\\n        \\ for lp,t in rules])\\nasyncio.run(main())\\n\"\n      - --check\n      - '20000'\n      interval: 5s\n      timeout: 3s\n      retries: 6\n    mem_limit: 128m\n    cpus: 0.5\n    pids_limit: 64\nnetworks:\n  inner:\n    name: cr-demo-infra-eng-08e65241-inner\n    internal: true\n    driver_opts:\n      com.docker.network.bridge.gateway_mode_ipv4: isolated\n  outer:\n    name: cr-demo-infra-eng-08e65241-outer\n    internal: true\n    driver_opts:\n      com.docker.network.bridge.gateway_mode_ipv4: isolated\n  edge:\n    name: cr-demo-infra-eng-08e65241-edge\n    internal: false\n    driver_opts:\n      com.docker.network.bridge.enable_icc: 'false'\n      com.docker.network.bridge.enable_ip_masquerade: 'false'\n",
+          "report": {
+            "scenario_id": "infra-eng-08e65241",
+            "deployable": true,
+            "components": [
+              {
+                "host_id": "attacker",
+                "image_hint": "oss-attacker",
+                "component": "oss-attacker",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "version": "3.22",
+                "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+                "substitute": false,
+                "catalogue_component": "oss-attacker",
+                "published": false,
+                "exposure": "publishable",
+                "healthcheck": false,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "web",
+                "image_hint": "oss-nginx",
+                "component": "oss-nginx",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "version": "1.31.8",
+                "digest": "sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "substitute": false,
+                "catalogue_component": "oss-nginx",
+                "published": true,
+                "exposure": "publishable",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "web2",
+                "image_hint": "oss-httpd",
+                "component": "oss-httpd",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
+                "version": "2.4.71",
+                "digest": "sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
+                "substitute": false,
+                "catalogue_component": "oss-httpd",
+                "published": true,
+                "exposure": "publishable",
+                "healthcheck": true,
+                "limits": {
+                  "mem_limit": "256m",
+                  "cpus": 1.0,
+                  "pids_limit": 256
+                },
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              }
+            ],
+            "vms": [],
+            "host_port_mappings": [
+              {
+                "host_id": "web",
+                "container_port": 80,
+                "host_port": 42000,
+                "env": "CR_HOSTPORT_0",
+                "via": "cr-gateway"
+              },
+              {
+                "host_id": "web2",
+                "container_port": 80,
+                "host_port": 42001,
+                "env": "CR_HOSTPORT_1",
+                "via": "cr-gateway"
+              }
+            ],
+            "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+            "publishing": "published ports terminate on the generated cr-gateway forwarder; lab services are attached to internal networks only",
+            "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+            "networks": [
+              {
+                "id": "outer",
+                "name": "cr-demo-infra-eng-08e65241-outer",
+                "internal": true,
+                "plan_internal": false
+              },
+              {
+                "id": "inner",
+                "name": "cr-demo-infra-eng-08e65241-inner",
+                "internal": true,
+                "plan_internal": false
+              }
+            ],
+            "errors": []
+          }
+        }
+      }
+    },
+    {
+      "step": "docker_compose_config",
+      "at": "06:34:54",
+      "result": {
+        "cmd": "env CR_PG_PASSWORD=x CR_DB_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-08e65241/docker-compose.yml config --quiet",
+        "rc": 0,
+        "out": "",
+        "err": ""
+      }
+    },
+    {
+      "step": "approve",
+      "at": "06:34:54",
+      "result": {
+        "status": 200
+      }
+    },
+    {
+      "step": "up_1",
+      "at": "06:35:12",
+      "result": {
+        "status": 200,
+        "seconds": 17.5,
+        "body": {
+          "scenario_id": "infra-eng-08e65241",
+          "project_name": "cr-demo-infra-eng-08e65241",
+          "state": "running",
+          "containers": [
+            {
+              "service": "attacker",
+              "name": "cr-demo-infra-eng-08e65241-attacker",
+              "id": "022d7f9e0235",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": "",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "cr-gateway",
+              "name": "cr-demo-infra-eng-08e65241-cr-gateway",
+              "id": "0c0aa7f88c2a",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": [
+                {
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42586,
+                  "container_port": 20000,
+                  "protocol": "tcp"
+                },
+                {
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42587,
+                  "container_port": 20001,
+                  "protocol": "tcp"
+                }
+              ]
+            },
+            {
+              "service": "web",
+              "name": "cr-demo-infra-eng-08e65241-web",
+              "id": "e756c215b70f",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            },
+            {
+              "service": "web2",
+              "name": "cr-demo-infra-eng-08e65241-web2",
+              "id": "1d4398d24ba6",
+              "state": "running",
+              "status": "Up 6 seconds (healthy)",
+              "health": "healthy",
+              "exit_code": 0,
+              "ports": []
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-08e65241-outer Creating \n Network cr-demo-infra-eng-08e65241-outer Created \n Network cr-demo-infra-eng-08e65241-inner Creating \n Network cr-demo-infra-eng-08e65241-inner Created \n Network cr-demo-infra-eng-08e65241-edge Creating \n Network cr-demo-infra-eng-08e65241-edge Created \n Container cr-demo-infra-eng-08e65241-cr-gateway Creating \n Container cr-demo-infra-eng-08e65241-web Creating \n Container cr-demo-infra-eng-08e65241-web2 Creating \n Container cr-demo-infra-eng-08e65241-web2 Created \n Container cr-demo-infra-eng-08e65241-web Created \n Container cr-demo-infra-eng-08e65241-attacker Creating \n Container cr-demo-infra-eng-08e65241-cr-gateway Created \n Container cr-demo-infra-eng-08e65241-attacker Created \n Container cr-demo-infra-eng-08e65241-cr-gateway Starting \n Container cr-demo-infra-eng-08e65241-web Starting \n Container cr-demo-infra-eng-08e65241-web2 Starting \n Container cr-demo-infra-eng-08e65241-web2 Started \n Container cr-demo-infra-eng-08e65241-web Started \n Container cr-demo-infra-eng-08e65241-web Waiting \n Container cr-demo-infra-eng-08e65241-cr-gateway Started \n Container cr-demo-infra-eng-08e65241-web Healthy \n Container cr-demo-infra-eng-08e65241-attacker Starting \n Container cr-demo-infra-eng-08e65241-attacker Started \n Container cr-demo-infra-eng-08e65241-attacker Waiting \n Container cr-demo-infra-eng-08e65241-web Waiting \n Container cr-demo-infra-eng-08e65241-web2 Waiting \n Container cr-demo-infra-eng-08e65241-cr-gateway Waiting \n Container cr-demo-infra-eng-08e65241-attacker Healthy \n Container cr-demo-infra-eng-08e65241-web2 Healthy \n Container cr-demo-infra-eng-08e65241-web Healthy \n Container cr-demo-infra-eng-08e65241-cr-gateway Healthy \n"
+          },
+          "deployment_record": {
+            "id": 32,
+            "scenario_id": "infra-eng-08e65241",
+            "project_name": "cr-demo-infra-eng-08e65241",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-08e65241-outer Creating \n Network cr-demo-infra-eng-08e65241-outer Created \n Network cr-demo-infra-eng-08e65241-inner Creating \n Network cr-demo-infra-eng-08e65241-inner Created \n Network cr-demo-infra-eng-08e65241-edge Creating \n Network cr-demo-infra-eng-08e65241-edge Created \n Container cr-demo-infra-eng-08e65241-cr-gateway Creating \n Container cr-demo-infra-eng-08e65241-web Creating \n Container cr-demo-infra-eng-08e65241-web2 Creating \n Container cr-demo-infra-eng-08e65241-web2 Created \n Container cr-demo-infra-eng-08e65241-web Created \n Container cr-demo-infra-eng-08e65241-attacker Creating \n Container cr-demo-infra-eng-08e65241-cr-gateway Created \n Container cr-demo-infra-eng-08e65241-attacker Created \n Container cr-demo-infra-eng-08e65241-cr-gateway Starting \n Container cr-demo-infra-eng-08e65241-web Starting \n Container cr-demo-infra-eng-08e65241-web2 Starting \n Container cr-demo-infra-eng-08e65241-web2 Started \n Container cr-demo-infra-eng-08e65241-web Started \n Container cr-demo-infra-eng-08e65241-web Waiting \n Container cr-demo-infra-eng-08e65241-cr-gateway Started \n Container cr-demo-infra-eng-08e65241-web Healthy \n Container cr-demo-infra-eng-08e65241-attacker Starting \n Container cr-demo-infra-eng-08e65241-attacker Started \n Container cr-demo-infra-eng-08e65241-attacker Waiting \n Container cr-demo-infra-eng-08e65241-web Waiting \n Container cr-demo-infra-eng-08e65241-web2 Waiting \n Container cr-demo-infra-eng-08e65241-cr-gateway Waiting \n Container cr-demo-infra-eng-08e65241-attacker Healthy \n Container cr-demo-infra-eng-08e65241-web2 Healthy \n Container cr-demo-infra-eng-08e65241-web Healthy \n Container cr-demo-infra-eng-08e65241-cr-gateway Healthy \n",
+              "expose": "internal",
+              "password_set": false,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "exit_code": 0,
+                  "host_ports": {
+                    "CR_HOSTPORT_0": 42586,
+                    "CR_HOSTPORT_1": 42587
+                  }
+                }
+              ],
+              "published_ports": [
+                {
+                  "host_id": "web",
+                  "container_port": 80,
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42586
+                },
+                {
+                  "host_id": "web2",
+                  "container_port": 80,
+                  "host_ip": "127.0.0.1",
+                  "host_port": 42587
+                }
+              ],
+              "host_isolation": {
+                "isolated": true,
+                "networks": [
+                  {
+                    "network": "edge",
+                    "bridge": "br-f3ac1ae829c6",
+                    "host_address": "192.168.48.1",
+                    "role": "publishing (gateway container only)",
+                    "host_reachable_from_containers": true
+                  },
+                  {
+                    "network": "inner",
+                    "bridge": "br-dfc3f9b935a4",
+                    "host_address": null,
+                    "role": "lab",
+                    "host_reachable_from_containers": false
+                  },
+                  {
+                    "network": "outer",
+                    "bridge": "br-c2a48974fa5e",
+                    "host_address": null,
+                    "role": "lab",
+                    "host_reachable_from_containers": false
+                  }
+                ]
+              },
+              "scenario_id": "infra-eng-08e65241",
+              "project_name": "cr-demo-infra-eng-08e65241",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "attacker",
+                  "name": "cr-demo-infra-eng-08e65241-attacker",
+                  "id": "022d7f9e0235",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": "",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "cr-gateway",
+                  "name": "cr-demo-infra-eng-08e65241-cr-gateway",
+                  "id": "0c0aa7f88c2a",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": [
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42586,
+                      "container_port": 20000,
+                      "protocol": "tcp"
+                    },
+                    {
+                      "host_ip": "127.0.0.1",
+                      "host_port": 42587,
+                      "container_port": 20001,
+                      "protocol": "tcp"
+                    }
+                  ]
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-08e65241-web",
+                  "id": "e756c215b70f",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                },
+                {
+                  "service": "web2",
+                  "name": "cr-demo-infra-eng-08e65241-web2",
+                  "id": "1d4398d24ba6",
+                  "state": "running",
+                  "status": "Up 6 seconds (healthy)",
+                  "health": "healthy",
+                  "exit_code": 0,
+                  "ports": []
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T22:35:12Z"
+          },
+          "expose": "internal",
+          "lan_host": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "exit_code": 0,
+              "host_ports": {
+                "CR_HOSTPORT_0": 42586,
+                "CR_HOSTPORT_1": 42587
+              }
+            }
+          ],
+          "published_ports": [
+            {
+              "host_id": "web",
+              "container_port": 80,
+              "host_ip": "127.0.0.1",
+              "host_port": 42586
+            },
+            {
+              "host_id": "web2",
+              "container_port": 80,
+              "host_ip": "127.0.0.1",
+              "host_port": 42587
+            }
+          ],
+          "isolation_preflight": {
+            "ok": true,
+            "vulnerable_hosts": [],
+            "docker_version": "29.5.2",
+            "host_isolation_supported": true
+          },
+          "host_isolation": {
+            "isolated": true,
+            "networks": [
+              {
+                "network": "edge",
+                "bridge": "br-f3ac1ae829c6",
+                "host_address": "192.168.48.1",
+                "role": "publishing (gateway container only)",
+                "host_reachable_from_containers": true
+              },
+              {
+                "network": "inner",
+                "bridge": "br-dfc3f9b935a4",
+                "host_address": null,
+                "role": "lab",
+                "host_reachable_from_containers": false
+              },
+              {
+                "network": "outer",
+                "bridge": "br-c2a48974fa5e",
+                "host_address": null,
+                "role": "lab",
+                "host_reachable_from_containers": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "step": "status_1",
+      "at": "06:35:12",
+      "result": {
+        "scenario_id": "infra-eng-08e65241",
+        "project_name": "cr-demo-infra-eng-08e65241",
+        "state": "running",
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-08e65241-attacker",
+            "id": "022d7f9e0235",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cr-gateway",
+            "name": "cr-demo-infra-eng-08e65241-cr-gateway",
+            "id": "0c0aa7f88c2a",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42586,
+                "container_port": 20000,
+                "protocol": "tcp"
+              },
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42587,
+                "container_port": 20001,
+                "protocol": "tcp"
+              }
+            ]
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-08e65241-web",
+            "id": "e756c215b70f",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web2",
+            "name": "cr-demo-infra-eng-08e65241-web2",
+            "id": "1d4398d24ba6",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_1",
+      "at": "06:35:12",
+      "result": {
+        "scenario_id": "infra-eng-08e65241",
+        "project_name": "cr-demo-infra-eng-08e65241",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "attacker",
+            "name": "cr-demo-infra-eng-08e65241-attacker",
+            "id": "022d7f9e0235",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": "",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "cr-gateway",
+            "name": "cr-demo-infra-eng-08e65241-cr-gateway",
+            "id": "0c0aa7f88c2a",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": [
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42586,
+                "container_port": 20000,
+                "protocol": "tcp"
+              },
+              {
+                "host_ip": "127.0.0.1",
+                "host_port": 42587,
+                "container_port": 20001,
+                "protocol": "tcp"
+              }
+            ]
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-08e65241-web",
+            "id": "e756c215b70f",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          },
+          {
+            "service": "web2",
+            "name": "cr-demo-infra-eng-08e65241-web2",
+            "id": "1d4398d24ba6",
+            "state": "running",
+            "status": "Up 6 seconds (healthy)",
+            "health": "healthy",
+            "exit_code": 0,
+            "ports": []
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_1",
+      "at": "06:35:12",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-08e65241 --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-08e65241-attacker|alpine:3.22|Up Less than a second|\ncr-demo-infra-eng-08e65241-web|nginx:1.31.8|Up 6 seconds (healthy)|80/tcp\ncr-demo-infra-eng-08e65241-web2|httpd:2.4.71|Up 6 seconds (healthy)|80/tcp\ncr-demo-infra-eng-08e65241-cr-gateway|a0f57064cbdc|Up 6 seconds (healthy)|127.0.0.1:42586->20000/tcp, 127.0.0.1:42587->20001/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_1",
+      "at": "06:35:13",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-08e65241",
+          "deployment_id": "cr-demo-infra-eng-08e65241",
+          "run_at": "2026-11-14T22:35:12.457693+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "PARTIAL",
+            "full_chain": "PARTIAL"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-attacker",
+              "name": "attacker 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "service-up-web",
+              "name": "web 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "service-up-web2",
+              "name": "web2 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=healthy",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "version-attacker",
+              "name": "attacker 執行指定版本 3.22",
+              "category": "version",
+              "status": "PASS",
+              "expected": "3.22",
+              "observed": "3.22.8",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "version-web",
+              "name": "web 執行指定版本 1.31.8",
+              "category": "version",
+              "status": "PASS",
+              "expected": "1.31.8",
+              "observed": "nginx version: nginx/1.31.8",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "version-web2",
+              "name": "web2 執行指定版本 2.4.71",
+              "category": "version",
+              "status": "PASS",
+              "expected": "2.4.71",
+              "observed": "Server version: Apache/2.4.71 (Unix)\nServer built:   Nov 11 2026 22:59:24",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "connectivity-1",
+              "name": "attacker 可連線至 web:80",
+              "category": "connectivity",
+              "status": "PASS",
+              "expected": "對宣告服務建立一條 TCP 連線 web:80",
+              "observed": "已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "behavior-1",
+              "name": "web 回傳無害服務回應",
+              "category": "behavior",
+              "status": "PASS",
+              "expected": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+              "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "chain-1",
+              "name": "attacker 完成至 web 的宣告路徑",
+              "category": "chain",
+              "status": "PASS",
+              "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+              "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, nginx is successfully installed and working.\nFurther configuration is required for the web server, reverse proxy, \nAPI gateway, load balancer, content cache, or other features.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"https://nginx.org/\">nginx.org</a>.<br/>\nTo engage with the community please visit\n<a href=\"https://community.nginx.org/\">community.nginx.org</a>.<br/>\nFor enterprise grade support, professional services, additional \nsecurity features and capabilities please refer to\n<a href=\"https://f5.com/nginx\">f5.com/nginx</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "behavior-web2",
+              "name": "web2 無害服務行為",
+              "category": "behavior",
+              "status": "NOT_TESTED",
+              "expected": "已宣告的來源至服務探測回傳預期結果",
+              "observed": "未宣告適用的主機至服務連線",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "web 無法連線至 web2:80",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 web to web2:80 遭封鎖",
+              "observed": "probed web2=172.29.0.2:80 from web; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            },
+            {
+              "id": "segmentation-2",
+              "name": "attacker 無法連線至 web:9999",
+              "category": "segmentation",
+              "status": "PASS",
+              "expected": "TCP 連線來源 attacker to web:9999 遭封鎖",
+              "observed": "probed web=172.26.0.1:9999 from attacker; 連線遭拒（BLOCKED:）：ConnectionRefusedError:[Errno 111] Connection refused",
+              "evidence": "validation-runs/infra-eng-08e65241/7fe4d4622dc342068d05b76c524501f6.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "kept",
+      "at": "06:35:13",
+      "result": "cr-demo-infra-eng-08e65241"
+    }
+  ]
+}

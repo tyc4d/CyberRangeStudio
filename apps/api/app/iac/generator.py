@@ -45,8 +45,30 @@ _INTERNAL_DRIVER_OPTS = {"com.docker.network.bridge.gateway_mode_ipv4": "isolate
 # a route to the host or the outside.
 GATEWAY_SERVICE = "cr-gateway"
 _GATEWAY_LISTEN_BASE = 20000
+# The forwarder is attached to lab networks (to reach its targets) and to the edge
+# network (where Docker delivers published ports). It must be reachable ONLY from the
+# edge side: otherwise a lab container could connect to it and hop to a service on
+# another segment. So it binds to the address of the interface that owns the default
+# route (only the edge bridge has one; lab networks are internal) and additionally
+# drops any peer whose address belongs to a lab subnet.
 _GATEWAY_FORWARDER = (
-    "import asyncio,sys\n"
+    "import asyncio,ipaddress,socket,struct,sys\n"
+    "def routes():\n"
+    " edge=None; lab=[]\n"
+    " for line in open('/proc/net/route').read().splitlines()[1:]:\n"
+    "  f=line.split()\n"
+    "  if f[1]=='00000000' and f[7]=='00000000': edge=f[0]\n"
+    " for line in open('/proc/net/route').read().splitlines()[1:]:\n"
+    "  f=line.split()\n"
+    "  if f[0]!=edge and f[2]=='00000000':\n"
+    "   net=socket.inet_ntoa(struct.pack('<L',int(f[1],16))); mask=socket.inet_ntoa(struct.pack('<L',int(f[7],16)))\n"
+    "   lab.append(ipaddress.ip_network(net+'/'+mask))\n"
+    " return edge,lab\n"
+    "EDGE,LAB=routes()\n"
+    "if EDGE is None: sys.exit('no edge interface: refusing to listen')\n"
+    "s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('192.0.2.1',9)); BIND=s.getsockname()[0]; s.close()\n"
+    "if sys.argv[1]=='--check':\n"
+    " socket.create_connection((BIND,int(sys.argv[2])),2).close(); sys.exit(0)\n"
     "async def pipe(r,w):\n"
     " try:\n"
     "  while True:\n"
@@ -59,11 +81,14 @@ _GATEWAY_FORWARDER = (
     "  except Exception: pass\n"
     "async def serve(lp,h,p):\n"
     " async def handle(r,w):\n"
+    "  peer=ipaddress.ip_address(w.get_extra_info('peername')[0])\n"
+    "  if any(peer in n for n in LAB):\n"
+    "   w.close(); return\n"
     "  try: r2,w2=await asyncio.wait_for(asyncio.open_connection(h,p),5)\n"
     "  except Exception:\n"
     "   w.close(); return\n"
     "  await asyncio.gather(pipe(r,w2),pipe(r2,w))\n"
-    " s=await asyncio.start_server(handle,'0.0.0.0',lp)\n"
+    " s=await asyncio.start_server(handle,BIND,lp)\n"
     " await s.serve_forever()\n"
     "async def main():\n"
     " rules=[a.split('=',1) for a in sys.argv[1:]]\n"
@@ -252,7 +277,10 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 "services": [{"protocol": s.get("protocol", "tcp"), "port": s.get("port")}
                              for s in host.get("services", [])],
                 "deployable": False,
-                "reason": "VM backend is not installed/configured; " + ("; ".join(vm_errors) if vm_errors else "guest definition is valid but cannot be deployed here."),
+                "reason": ("; ".join(vm_errors) + "; " if vm_errors else "") + (
+                    "VM hosts are not part of the generated Compose deployment. A single Windows Server VM can be "
+                    "started by the libvirt backend (app.deploy.vm), but deploying a VM from an environment plan, "
+                    "and connecting it to container networks, is not implemented."),
             })
         elif runtime and runtime != "container":
             resolved = {"runtime_component": None, "component": runtime, "component_mode": runtime,
@@ -564,8 +592,8 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             "security_opt": ["no-new-privileges:true"],
             "restart": "no",
             "user": "65532:65532",
-            "healthcheck": {"test": ["CMD", "python", "-c",
-                                     f"import socket; socket.create_connection(('127.0.0.1',{_GATEWAY_LISTEN_BASE}),2).close()"],
+            # Same program in --check mode: connects to the edge address it is supposed to listen on.
+            "healthcheck": {"test": ["CMD", "python", "-c", _GATEWAY_FORWARDER, "--check", str(_GATEWAY_LISTEN_BASE)],
                             "interval": "5s", "timeout": "3s", "retries": 6},
             **_DEMO_LIMITS,
         }
