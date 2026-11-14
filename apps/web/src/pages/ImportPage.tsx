@@ -4,6 +4,7 @@ import { api, ApiError, extractIr, extractScenarioId } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, Notice, PageHead } from "../components/ui";
+import { PdfViewer, usePdfSource } from "../components/PdfViewer";
 
 type Source = { input_kind: string; source_name: string | null; content: string; sha256: string; chars: number };
 
@@ -51,6 +52,8 @@ export function ImportPage() {
   }, [id]);
 
   const reviewing = !!id && !forceNew;
+  // Original PDF of the imported scenario, when one was uploaded (source/file answers 200).
+  const pdf = usePdfSource(id);
 
   const [name, setName] = useState("");
   const [kind, setKind] = useState<InputKind>("text");
@@ -61,9 +64,11 @@ export function ImportPage() {
   const [drag, setDrag] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Token for the uploaded PDF original; sent with analyze so the new scenario keeps the PDF.
+  const [uploadToken, setUploadToken] = useState<string | null>(null);
 
   const analyze = useAction(async () => {
-    const resp = await api.analyze({ input_kind: kind, content, method, name: name.trim() || undefined });
+    const resp = await api.analyze({ input_kind: kind, content, method, name: name.trim() || undefined, upload_token: uploadToken ?? undefined });
     const sid = extractScenarioId(resp);
     if (!sid) throw new ApiError(0, "後端有回應，但找不到情境 ID，無法開啟結果。", "POST", "/api/ingest/analyze", "error");
     select(sid, extractIr(resp));
@@ -72,6 +77,7 @@ export function ImportPage() {
 
   const loadFile = async (f: File) => {
     setFileErr(null);
+    setUploadToken(null);
     if (f.size > 25 * 1024 * 1024) { setFileErr(`檔案 ${f.name} 超過 25 MB，請改貼上需要的段落。`); return; }
     const isPdf = /\.pdf$/i.test(f.name) || f.type === "application/pdf";
     const isBinaryish = isPdf || /\.(xml)$/i.test(f.name);
@@ -81,6 +87,7 @@ export function ImportPage() {
         setExtracting(true);
         const r = await api.extract(f);
         setContent(r.content);
+        setUploadToken(r.upload_token ?? null);
         setKind(r.input_kind as InputKind);
         if (!name.trim()) setName(r.source_name);
         setFileNote(`已從 ${f.name} 擷取文字（${r.chars.toLocaleString()} 字元）${isPdf ? "，請確認內容後再分析" : ""}`);
@@ -119,8 +126,9 @@ export function ImportPage() {
 
   if (reviewing) {
     const title = source?.source_name || ir?.name || id || "目前情境";
+    const hasPdf = pdf.state === "ready" && !!pdf.data;
     return (
-      <div className="page" style={{ maxWidth: 900 }}>
+      <div className="page" style={{ maxWidth: hasPdf ? 1560 : 900 }}>
         <PageHead title="情資匯入" desc="此情境已匯入報告。以下為原始匯入內容，供檢視；要分析另一份報告請點「匯入新報告」。" />
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -144,16 +152,29 @@ export function ImportPage() {
           {sourceState === "error" && (
             <Notice kind="err">無法載入已匯入內容。後端可能未啟動或該情境不存在。</Notice>
           )}
-          {source && (
-            <label className="field">
-              <span>已匯入報告內容（唯讀）<span className="mono"> · sha256 {source.sha256.slice(0, 12)}…</span></span>
-              <textarea
-                className={source.input_kind === "stix2.1" ? "mono" : ""}
-                rows={20} value={source.content} readOnly
-                style={{ background: "var(--surface-2, transparent)" }}
-              />
-            </label>
-          )}
+          {(() => {
+            const text = source && (
+              <label className="field">
+                <span>已匯入報告內容（唯讀）<span className="mono"> · sha256 {source.sha256.slice(0, 12)}…</span></span>
+                <textarea
+                  className={source.input_kind === "stix2.1" ? "mono" : ""}
+                  rows={hasPdf ? 30 : 20} value={source.content} readOnly
+                  style={{ background: "var(--surface-2, transparent)" }}
+                />
+              </label>
+            );
+            if (!hasPdf) return text;
+            // Extracted text (what was analyzed) next to the PDF original (what was uploaded).
+            return (
+              <div className="pdf-split">
+                <div className="pdf-col">
+                  {text}
+                  <span className="pdf-hint">左側是送去分析的擷取文字，右側是上傳的 PDF 原檔，可對照版面與圖表。</span>
+                </div>
+                <div className="pdf-pane"><PdfViewer data={pdf.data!} filename="PDF 原檔" /></div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     );

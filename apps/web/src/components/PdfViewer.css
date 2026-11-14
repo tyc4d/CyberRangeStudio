@@ -1,0 +1,55 @@
+/* PDF viewer. Chrome uses the app's theme tokens; the page itself stays paper-white like the original. */
+.pdfv { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev); overflow: hidden; }
+.pdfv-bar { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
+.pdfv-bar .name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); font-weight: 600; }
+.pdfv-bar .spacer { flex: 1; }
+.pdfv-bar .pageno { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pdfv-bar button { min-height: 26px; padding: 2px 9px; font-size: 12px; }
+.pdfv-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; background: var(--bg); padding: 12px; position: relative; }
+.pdfv-status { padding: 24px 12px; text-align: center; color: var(--text-dim); font-size: 12px; }
+
+.pdfv-page { position: relative; margin: 0 auto 12px; background: #fff; border: 1px solid var(--border); --scale-round-x: 1px; --scale-round-y: 1px; }
+.pdfv-page:last-child { margin-bottom: 0; }
+.pdfv-page canvas { display: block; width: 100%; height: 100%; }
+
+/* Text layer: the subset of pdf.js's own viewer CSS that positions the transparent text runs. */
+.pdfv-page .textLayer {
+  color-scheme: only light; position: absolute; inset: 0; overflow: clip; line-height: 1; text-align: initial;
+  letter-spacing: normal; word-spacing: normal; text-size-adjust: none; forced-color-adjust: none; transform-origin: 0 0; z-index: 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.pdfv-page .textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; user-select: text; }
+.pdfv-page .textLayer > :not(.markedContent),
+.pdfv-page .textLayer .markedContent span:not(.markedContent) {
+  z-index: 1; --font-height: 0; font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1; --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.pdfv-page .textLayer .markedContent { display: contents; }
+.pdfv-page .textLayer ::selection { background: color-mix(in srgb, var(--accent) 45%, transparent); color: transparent; }
+
+/* Highlight of the located passage: a marker stroke over the paper page. */
+.pdfv-page .textLayer mark.pdfv-hit {
+  position: static; color: transparent; padding: 0; margin: 0; border-radius: 1px;
+  background: color-mix(in srgb, var(--warn) 62%, transparent); mix-blend-mode: multiply;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 62%, transparent);
+}
+.pdfv-page.pdfv-flash { animation: pdfv-flash 900ms var(--ease, ease-out) 1; }
+@keyframes pdfv-flash { 0% { box-shadow: 0 0 0 2px var(--warn); } 100% { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { .pdfv-page.pdfv-flash { animation: none; } }
+
+/* Two-pane layouts used by the Import and Missing pages. */
+.pdf-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pdf-split > .pdf-pane { position: sticky; top: 0; height: calc(100dvh - 64px - 44px - 56px - 16px); min-height: 360px; display: flex; flex-direction: column; gap: 8px; }
+.pdf-split > .pdf-pane > .pdfv { flex: 1; }
+.pdf-split > .pdf-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+@media (max-width: 1180px) {
+  .pdf-split { grid-template-columns: minmax(0, 1fr); }
+  .pdf-split > .pdf-pane { position: static; height: 70dvh; }
+}
+.pdf-hint { font-size: 12px; color: var(--text-dim); }
+.card.locatable { cursor: pointer; transition: border-color var(--quick); }
+.card.locatable:hover { border-color: var(--control); }
+.card.locatable.located { border-color: var(--accent); }

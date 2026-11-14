@@ -5,12 +5,21 @@ import copy
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from urllib.parse import quote
+
+from fastapi import APIRouter, HTTPException, Response
 
 from app import store
 from app.scenario.graph import mark_user_change, reconcile_graph_sources, validate_ir
 
 router = APIRouter(prefix="/api/scenario", tags=["scenario"])
+
+# Demo backfill: give the existing CISA AA22-320A scenario its bundled PDF so the
+# viewer works for scenarios imported before file capture. Idempotent, never fatal.
+try:
+    store.backfill_demo_source_file()
+except Exception:
+    pass
 
 
 def _get_or_404(scenario_id: str) -> dict[str, Any]:
@@ -79,6 +88,25 @@ def get_source(scenario_id: str):
     if src is None:
         raise HTTPException(status_code=404, detail="No stored source for this scenario.")
     return src
+
+
+@router.get("/{scenario_id}/source/file")
+def get_source_file(scenario_id: str):
+    """Return the original uploaded file (PDF) bytes for inline viewing; 404 when none."""
+    _get_or_404(scenario_id)
+    f = store.get_source_file(scenario_id)
+    if f is None:
+        raise HTTPException(status_code=404, detail="No stored source file for this scenario.")
+    filename = f["filename"] or "source.pdf"
+    return Response(
+        content=f["data"],
+        media_type=f["content_type"] or "application/octet-stream",
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{quote(filename)}",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, max-age=3600",
+        },
+    )
 
 
 @router.get("/{scenario_id}/attack")

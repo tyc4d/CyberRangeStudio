@@ -1,9 +1,54 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { MissingItem, ScenarioIR } from "@contracts";
 import { api } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Empty, NextStep, PageHead, ScenarioGate, SourceTag } from "../components/ui";
+import { PdfViewer, usePdfSource, type PdfAnchor, type PdfLocateResult } from "../components/PdfViewer";
+
+/* ---------- PDF anchors ---------- */
+
+type Reffed = { id?: string; name?: string; role?: string; evidence_refs?: string[] };
+interface AnchorGroup { label: string; queries: string[] }
+
+/**
+ * Candidate strings to look for in the PDF for one missing item, strongest first:
+ *  (a) evidence quotes of the steps / hosts / services the item's `affects` names,
+ *  (b) the `affects` strings themselves,
+ *  (c) the field name as keywords,
+ *  (d) evidence quotes of the hosts / services the item's category is about — where the
+ *      report talks about that entity, which need not contain the missing answer.
+ * A missing item is by definition something the report does not state, so every anchor is
+ * "the nearest related passage", and the UI says which kind was used.
+ */
+function anchorGroups(item: MissingItem, ir: ScenarioIR): AnchorGroup[] {
+  const quoteOf = new Map((ir.evidence ?? []).map((e) => [e.id, e.quote]));
+  const quotes = (ents: Reffed[]) =>
+    ents.flatMap((e) => e.evidence_refs ?? []).map((r) => quoteOf.get(r)).filter((q): q is string => !!q && !!q.trim());
+  const actions = ir.actions as Reffed[], hosts = (ir.hosts ?? []) as Reffed[], services = (ir.services ?? []) as Reffed[];
+  const affects = (item.affects ?? []).filter((a) => a && a.trim());
+  const named = [...actions, ...hosts, ...services].filter((e) => affects.some((a) => a === e.id || a === e.name || a === e.role));
+
+  const field = item.field?.trim() ?? "";
+  const keyword = field.replace(/^(target|attacker|victim)\s+/i, "");
+  const about =
+    item.category === "host" || item.category === "network" ? hosts
+    : item.category === "software" ? services
+    : item.category === "version" ? (/service|software/i.test(field) ? services : hosts)
+    : [];
+
+  return [
+    { label: "相關步驟的證據原文", queries: quotes(named) },
+    { label: "相關步驟名稱", queries: affects },
+    { label: "欄位關鍵字", queries: [field, keyword].filter(Boolean) },
+    { label: `報告提到相關${about === services ? "服務" : "主機"}的段落（未必含答案）`, queries: quotes(about) },
+  ].filter((g) => g.queries.length > 0);
+}
+
+type Located =
+  | { itemId: string; state: "searching" }
+  | { itemId: string; state: "found"; page: number; label: string; partial: boolean }
+  | { itemId: string; state: "notfound" };
 
 const CATEGORY: Record<MissingItem["category"], string> = {
   host: "主機", software: "軟體", version: "版本", network: "網路", account: "帳號",
@@ -21,7 +66,12 @@ const RESOLUTIONS: { v: Resolution; label: string; needText: boolean; placeholde
   { v: "accepted_unknown", label: "接受未知", needText: false, placeholder: "（選填）備註為何可以不補" },
 ];
 
-function ItemCard({ item, scenarioId, onDone }: { item: MissingItem; scenarioId: string; onDone: (resp: unknown) => Promise<void> }) {
+function ItemCard({ item, scenarioId, onDone, onLocate, located }: {
+  item: MissingItem; scenarioId: string; onDone: (resp: unknown) => Promise<void>;
+  /** Present only when the scenario has a PDF: locate this item's nearest passage in it. */
+  onLocate?: () => void;
+  located?: Located | null;
+}) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Resolution>("user_supplied");
   const [text, setText] = useState("");
@@ -42,7 +92,12 @@ function ItemCard({ item, scenarioId, onDone }: { item: MissingItem; scenarioId:
   const suggestions = item.suggestions?.length ? item.suggestions : item.suggestion ? [item.suggestion] : [];
 
   return (
-    <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div
+      className={`card${onLocate ? " locatable" : ""}${located ? " located" : ""}`}
+      style={{ display: "flex", flexDirection: "column", gap: 8 }}
+      // Clicking the card (not its controls) locates the item in the PDF.
+      onClick={onLocate ? (e) => { if (!(e.target as HTMLElement).closest("button, textarea, input, select, a")) onLocate(); } : undefined}
+    >
       <div className="row" style={{ gap: 8 }}>
         {/* Lead with a plain-language question so the user need not read the whole report. */}
         <span style={{ fontWeight: 600 }}>{item.question || item.field}</span>
@@ -81,8 +136,20 @@ function ItemCard({ item, scenarioId, onDone }: { item: MissingItem; scenarioId:
       )}
       <ApiNotice error={accept.error} what="採用建議" />
 
+      {located && (
+        <div className="pdf-hint" role="status">
+          {located.state === "searching" ? "在 PDF 中搜尋…"
+            : located.state === "found"
+              ? <>已跳到 PDF 第 {located.page} 頁並標示。依據：{located.label}{located.partial ? "（僅部分文字相符）" : ""}。</>
+              : "在 PDF 中找不到對應段落，未跳轉；可在右側自行翻閱。"}
+        </div>
+      )}
+
       {!open ? (
-        <div><button className="small" onClick={() => setOpen(true)}>{isOpen ? "補充" : "修改"}</button></div>
+        <div className="row" style={{ gap: 6 }}>
+          <button className="small" onClick={() => setOpen(true)}>{isOpen ? "補充" : "修改"}</button>
+          {onLocate && <button className="small" onClick={onLocate} title="在右側 PDF 中搜尋、標示並跳到最相關的段落">在 PDF 中定位</button>}
+        </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
           <div className="seg" style={{ alignSelf: "flex-start" }}>
@@ -122,15 +189,48 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const supplements = ir.supplements ?? [];
   const fieldOf = new Map(items.map((m) => [m.id, m.field]));
 
+  // PDF original beside the list; clicking an item searches, highlights and jumps to its anchor.
+  const pdf = usePdfSource(ir.id);
+  const hasPdf = pdf.state === "ready" && !!pdf.data;
+  const [anchor, setAnchor] = useState<(PdfAnchor & { itemId: string; labels: string[] }) | null>(null);
+  const [located, setLocated] = useState<Located | null>(null);
+  const locateItem = (item: MissingItem) => {
+    const groups = anchorGroups(item, ir);
+    setAnchor((prev) => ({ itemId: item.id, groups: groups.map((g) => g.queries), labels: groups.map((g) => g.label), seq: (prev?.seq ?? 0) + 1 }));
+    setLocated({ itemId: item.id, state: "searching" });
+  };
+  const onLocated = useCallback((r: PdfLocateResult) => {
+    setAnchor((a) => {
+      if (a && a.seq === r.seq) {
+        setLocated(r.found
+          ? { itemId: a.itemId, state: "found", page: r.page, label: a.labels[r.group] ?? "", partial: r.partial }
+          : { itemId: a.itemId, state: "notfound" });
+      }
+      return a;
+    });
+  }, []);
+
   const addFree = useAction(async () => {
     const resp = await api.supplement(ir.id, { text: free.trim() });
     await absorb(resp);
     setFree("");
   });
 
+  const pdfPane = hasPdf ? (
+    <div className="pdf-pane">
+      <span className="pdf-hint">點左側任一缺失項目，會在 PDF 中標示並跳到最相關的段落（缺失項目是報告沒寫的資訊，標示的是相關上下文，不是答案）。</span>
+      <PdfViewer data={pdf.data!} filename="PDF 原檔" anchor={anchor} onLocated={onLocated} />
+    </div>
+  ) : null;
+
   return (
-    <div className="page" style={{ maxWidth: 980 }}>
+    <div className="page" style={{ maxWidth: hasPdf ? 1640 : 980 }}>
       <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。每一項都附上白話問題、相關步驟與範例；你可以直接填答案、點範例帶入、採用建議替身，或明確接受未知。補充內容一律標示為使用者來源，不會與原文證據混淆。" />
+      {pdf.state === "none" && <div className="pdf-hint">此情境無 PDF 原檔</div>}
+      {pdf.state === "error" && <div className="pdf-hint">無法確認此情境是否有 PDF 原檔（後端未回應）。</div>}
+
+      <div className={hasPdf ? "pdf-split" : undefined} style={hasPdf ? undefined : { display: "contents" }}>
+      <div className={hasPdf ? "pdf-col" : undefined} style={hasPdf ? undefined : { display: "contents" }}>
 
       <div className="row">
         <div className="seg">
@@ -145,7 +245,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ) : shown.length === 0 ? (
         <div className="card"><Empty>所有缺失項目都已處理。</Empty></div>
       ) : (
-        shown.map((m) => <ItemCard key={m.id} item={m} scenarioId={ir.id} onDone={absorb} />)
+        shown.map((m) => (
+          <ItemCard key={m.id} item={m} scenarioId={ir.id} onDone={absorb}
+            onLocate={hasPdf ? () => locateItem(m) : undefined}
+            located={located?.itemId === m.id ? located : null} />
+        ))
       )}
 
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -175,6 +279,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </table>
         </div>
       )}
+
+      </div>
+      {pdfPane}
+      </div>
 
       <NextStep prev={{ to: "/analysis", label: "分析結果" }} next={{ to: "/flow", label: "攻擊流程" }} />
     </div>

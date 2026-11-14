@@ -30,6 +30,8 @@ class AnalyzeRequest(BaseModel):
     content: str
     method: Literal["single_pass", "staged", "staged_review"] = "single_pass"
     name: str | None = None
+    # Token from /extract for an uploaded PDF; binds the original file to the new scenario.
+    upload_token: str | None = None
 
 
 class SupplementRequest(BaseModel):
@@ -79,6 +81,15 @@ def analyze(request: AnalyzeRequest):
         raise HTTPException(status_code=500, detail={"message": "Stored Scenario IR failed contract validation.", "errors": saved_errors})
     # Keep the original report verbatim so the Import page can show it back for review.
     store.set_source(saved["id"], request.input_kind, request.content, request.name)
+    if request.upload_token:
+        # Best effort: the analysis already succeeded, so a missing/expired upload
+        # only means the scenario has no PDF to view.
+        try:
+            pending = store.pop_pending_file(request.upload_token)
+            if pending is not None:
+                store.set_source_file(saved["id"], pending["filename"], pending["content_type"], pending["data"])
+        except Exception:
+            pass
     return saved
 
 
@@ -106,8 +117,10 @@ def _extract_pdf_text(data: bytes) -> str:
 async def extract(file: UploadFile = File(...)):
     """Extract readable text from an uploaded file (PDF via pdftotext; text/XML as-is).
 
-    Returns the text for review on the Import page; it does NOT analyze or store anything.
+    Returns the text for review on the Import page; it does NOT analyze anything.
     The caller reviews/edits the text, then submits it through POST /analyze as usual.
+    For a PDF the original bytes are held as a pending upload and an `upload_token` is
+    returned; passing it to /analyze binds the PDF to the scenario for the viewer.
     """
     data = await file.read()
     if not data:
@@ -130,7 +143,7 @@ async def extract(file: UploadFile = File(...)):
 
     if not content.strip():
         raise HTTPException(status_code=422, detail="解析後沒有取得任何文字（PDF 可能是掃描影像，沒有文字層）。")
-    return {
+    result = {
         "input_kind": input_kind,
         "content": content,
         "source_name": name.rsplit(".", 1)[0],
@@ -138,6 +151,15 @@ async def extract(file: UploadFile = File(...)):
         "chars": len(content),
         "sha256": hashlib.sha256(data).hexdigest(),
     }
+    if is_pdf:
+        # Keeping the original is best effort; text extraction already succeeded.
+        try:
+            token = uuid.uuid4().hex
+            store.set_pending_file(token, name, "application/pdf", data)
+            result["upload_token"] = token
+        except Exception:
+            pass
+    return result
 
 
 @router.post("/{scenario_id}/supplement")

@@ -105,9 +105,22 @@ export const api = {
     req<{ input_kind: string; source_name: string | null; content: string; sha256: string; chars: number }>(
       `/api/scenario/${enc(id)}/source`,
     ),
+  /** Original uploaded file (PDF) bytes for the viewer. Resolves null when the scenario has none (404). */
+  getSourceFile: async (id: string): Promise<{ data: ArrayBuffer; contentType: string } | null> => {
+    const path = `/api/scenario/${enc(id)}/source/file`;
+    let r: Response;
+    try {
+      r = await fetch(path);
+    } catch (e) {
+      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "GET", path, "offline");
+    }
+    if (r.status === 404) return null;
+    if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
+    return { data: await r.arrayBuffer(), contentType: r.headers.get("content-type") ?? "" };
+  },
 
   // module 1-2 ingest / supplement
-  analyze: (body: { input_kind: string; content: string; method?: string; name?: string }) =>
+  analyze: (body: { input_kind: string; content: string; method?: string; name?: string; upload_token?: string }) =>
     post<any>("/api/ingest/analyze", body),
   /** Upload a file (PDF/text/STIX) and get its readable text back for review. Does not analyze or store. */
   extract: async (file: File) => {
@@ -126,7 +139,7 @@ export const api = {
       const detail = typeof body?.detail === "string" ? body.detail : text || r.statusText;
       throw new ApiError(r.status, detail, "POST", "/api/ingest/extract", r.status === 501 ? "unimplemented" : "error");
     }
-    return body as { input_kind: string; content: string; source_name: string; filename: string; chars: number; sha256: string };
+    return body as { input_kind: string; content: string; source_name: string; filename: string; chars: number; sha256: string; upload_token?: string };
   },
   supplement: (id: string, body: { text: string; targets_missing_item?: string; status?: string }) =>
     // `missing_item_id` duplicates `targets_missing_item` for backends that named the field that way.

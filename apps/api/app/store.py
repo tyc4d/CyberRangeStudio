@@ -37,6 +37,19 @@ def _conn() -> sqlite3.Connection:
             content TEXT, sha256 TEXT, ts REAL
         )"""
     )
+    # Original uploaded file (PDF) bytes. `pending` holds an upload between
+    # /extract and /analyze; `scenario_source_files` is the copy bound to a scenario
+    # so the PDF viewer can show the report exactly as it was uploaded.
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS pending_source_files (
+            token TEXT PRIMARY KEY, filename TEXT, content_type TEXT, data BLOB, ts REAL
+        )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS scenario_source_files (
+            scenario_id TEXT PRIMARY KEY, filename TEXT, content_type TEXT, data BLOB
+        )"""
+    )
     return c
 
 
@@ -127,6 +140,80 @@ def get_source(scenario_id: str) -> dict[str, Any] | None:
         "sha256": row["sha256"],
         "chars": len(row["content"]),
     }
+
+
+# Uploads that were extracted but never analyzed are dropped after this long.
+_PENDING_TTL_SECONDS = 24 * 3600
+
+
+def set_pending_file(token: str, filename: str, content_type: str, data: bytes) -> None:
+    """Hold an uploaded file until /analyze binds it to a scenario."""
+    now = time.time()
+    with _LOCK, _conn() as c:
+        c.execute("DELETE FROM pending_source_files WHERE ts < ?", (now - _PENDING_TTL_SECONDS,))
+        c.execute(
+            "INSERT OR REPLACE INTO pending_source_files(token,filename,content_type,data,ts) VALUES(?,?,?,?,?)",
+            (token, filename, content_type, sqlite3.Binary(data), now),
+        )
+
+
+def pop_pending_file(token: str) -> dict[str, Any] | None:
+    """Return and remove a pending upload; None when the token is unknown or expired."""
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT filename,content_type,data FROM pending_source_files WHERE token=?", (token,)
+        ).fetchone()
+        if row is None:
+            return None
+        c.execute("DELETE FROM pending_source_files WHERE token=?", (token,))
+    return {"filename": row["filename"], "content_type": row["content_type"], "data": bytes(row["data"])}
+
+
+def set_source_file(scenario_id: str, filename: str, content_type: str, data: bytes) -> None:
+    """Bind the original uploaded file to a scenario."""
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO scenario_source_files(scenario_id,filename,content_type,data) VALUES(?,?,?,?)",
+            (scenario_id, filename, content_type, sqlite3.Binary(data)),
+        )
+
+
+def get_source_file(scenario_id: str) -> dict[str, Any] | None:
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT filename,content_type,data FROM scenario_source_files WHERE scenario_id=?", (scenario_id,)
+        ).fetchone()
+    if row is None:
+        return None
+    return {"filename": row["filename"], "content_type": row["content_type"], "data": bytes(row["data"])}
+
+
+def has_source_file(scenario_id: str) -> bool:
+    with _LOCK, _conn() as c:
+        return c.execute(
+            "SELECT 1 FROM scenario_source_files WHERE scenario_id=?", (scenario_id,)
+        ).fetchone() is not None
+
+
+def backfill_demo_source_file() -> str | None:
+    """Bind the bundled CISA AA22-320A PDF to the newest scenario named after it.
+
+    Demo convenience for scenarios imported before file capture existed. Idempotent:
+    does nothing when the fixture is absent, no such scenario exists, or that scenario
+    already has a file. Returns the scenario id it bound, else None.
+    """
+    pdf = config.REPO_ROOT / "fixtures" / "sample-scenarios" / "sources" / "aa22-320a.pdf"
+    if not pdf.is_file():
+        return None
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT id FROM scenarios WHERE name LIKE ? ORDER BY updated_at DESC LIMIT 1",
+            ("%CISA AA22-320A%",),
+        ).fetchone()
+    if row is None or has_source_file(row["id"]):
+        return None
+    set_source_file(row["id"], pdf.name, "application/pdf", pdf.read_bytes())
+    return row["id"]
 
 
 def versions(scenario_id: str) -> list[dict[str, Any]]:
