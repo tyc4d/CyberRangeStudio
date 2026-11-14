@@ -370,6 +370,15 @@ class StatedPortsForGenericServices(unittest.TestCase):
         _, report = inspect_plan(plan, "scn_t")
         self.assertEqual(report.get("errors"), [], report.get("errors"))
 
+    def test_function_substitute_hosts_are_reported_as_substitutes(self):
+        from app.iac.generator import inspect_plan
+        plan = build_environment_plan(plan_dependencies(self.ir()))
+        self.assertEqual({h["id"]: h.get("substitute_for") for h in plan["hosts"]},
+                         {"h1": "web service", "h2": "database service", "attacker": None})
+        _, report = inspect_plan(plan, "scn_t")
+        self.assertEqual({c["host_id"]: c["substitute"] for c in report["components"]},
+                         {"h1": True, "h2": True, "attacker": False})
+
     def test_a_named_product_is_never_swapped_for_a_generic_stand_in(self):
         ir = self.ir()
         ir["services"][0]["name"] = "Confluence web application"
@@ -488,6 +497,42 @@ class UserChosenSubstitute(unittest.TestCase):
         self.assertEqual([(c["from_host"], c["to_host"]) for c in plan["connections"]], [("attacker", "h1")])
         # Planning again keeps the choice and adds nothing.
         self.assertEqual([s["id"] for s in plan_dependencies(planned)["services"]], ["s1"])
+
+    def test_substitute_is_labelled_at_host_level_and_through_iac(self):
+        """Reviewer M1(a): the host a stand-in runs on must be reported as a substitute."""
+        from app.iac.generator import inspect_plan
+        plan = build_environment_plan(self.answer(self.first(), "用 nginx 當替代"))
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual((host["substitute_for"], host["substitute_basis"]), ("Progress MOVEit Transfer", "user_chosen"))
+        _, report = inspect_plan(plan, "scn_t")
+        self.assertEqual(report.get("errors"), [], report.get("errors"))
+        component = next(c for c in report["components"] if c["host_id"] == "h1")
+        self.assertIs(component["substitute"], True)
+        self.assertEqual(component["substitute_for"], "Progress MOVEit Transfer")
+        self.assertIn("Progress MOVEit Transfer", component["fidelity_difference"])
+        attacker = next(c for c in report["components"] if c["host_id"] == "attacker")
+        self.assertIs(attacker["substitute"], False)
+
+    def test_port_the_substitute_cannot_serve_is_replaced_and_said_so(self):
+        """Reviewer M1(b): MOVEit on 443 replaced by nginx must not yield an undeployable plan."""
+        planned = self.answer(self.first(), "用 nginx 當替代")
+        self.assertEqual(planned["services"][0]["port"], 443)  # the IR keeps what the source stated
+        plan = build_environment_plan(planned)
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual(host["services"], [{"name": "Progress MOVEit Transfer", "port": 80, "protocol": "tcp",
+                                             "stated_port": 443, "port_basis": "substitute_default"}])
+        self.assertEqual([(c["from_host"], c["to_host"], c["port"]) for c in plan["connections"]], [("attacker", "h1", 80)])
+        self.assertTrue(any("443" in note and "substitution" in note for note in plan["notes"]))
+
+    def test_real_component_on_a_port_it_does_not_serve_is_explained_not_silently_moved(self):
+        plan = build_environment_plan(plan_dependencies(base_ir(
+            actions=[action("a1", "request the nginx site", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "web server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "nginx", "host_ref": "h1", "port": 8443, "epistemic_status": "supported", "source": "llm"}])))
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual(host["services"], [{"name": "nginx", "port": 8443, "protocol": "tcp"}])
+        self.assertNotIn("substitute_for", host)
+        self.assertTrue(any("8443" in note and "IaC generation will refuse" in note for note in plan["notes"]))
 
     def test_answer_naming_no_or_several_products_changes_nothing(self):
         for text in ("先不部署", "nginx 或 Apache HTTP Server 都可以"):
