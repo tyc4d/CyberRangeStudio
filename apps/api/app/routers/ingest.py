@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -171,6 +172,14 @@ _HOST_FIELDS = {"name", "role", "os", "os_version", "network_placement"}
 _SERVICE_FIELDS = {"name", "version", "port", "os", "os_version"}
 # A free-text answer longer than this is an explanation, not a field value.
 _MAX_FIELD_VALUE_CHARS = 120
+# Statements of not knowing, and hedged guesses. Neither is a value to build a lab from.
+_UNKNOWN_ANSWER_RE = re.compile(
+    r"不確定|不知道|不清楚|不曉得|未知|無法確認|無從得知|沒有資料|待確認|待查|"
+    r"\b(?:unknown|not\s+sure|unsure|no\s+idea|don'?t\s+know|do\s+not\s+know|not\s+known|n/?a|tbd|tbc|unclear|"
+    r"cannot\s+(?:confirm|tell)|can'?t\s+(?:confirm|tell))\b", re.IGNORECASE)
+_NON_ANSWER_RE = re.compile(
+    _UNKNOWN_ANSWER_RE.pattern + r"|可能|也許|或許|大概|應該是|好像|猜|[?？]|"
+    r"\b(?:maybe|perhaps|probably|possibly|might\s+be|i\s+(?:think|guess)|not\s+certain)\b", re.IGNORECASE)
 
 
 def _write_back(ir: dict, collection: str, entity_id: str, field: str, value, *, strict: bool) -> tuple[bool, str]:
@@ -197,6 +206,8 @@ def _write_back(ir: dict, collection: str, entity_id: str, field: str, value, *,
         value = value.strip()
         if not strict and (len(value) > _MAX_FIELD_VALUE_CHARS or "\n" in value):
             return False, "回答是一段說明而不是單一欄位值，已保留為補充文字，未寫入欄位。"
+        if not strict and _NON_ANSWER_RE.search(value):
+            return False, "回答表示不確定或未知，不是可用的欄位值，未寫入欄位。"
     if field == "port":
         try:
             value = int(value)
@@ -268,6 +279,12 @@ def supplement(scenario_id: str, request: SupplementRequest):
             target.pop("write_back", None)
         else:
             target["write_back"] = reason
+            if _UNKNOWN_ANSWER_RE.search(text):
+                # "I don't know" is a decision to leave it unknown, not a supplied value.
+                target["status"] = "accepted_unknown"
+            elif _NON_ANSWER_RE.search(text):
+                # A hedged guess settles nothing: keep the note, leave the question open.
+                target["status"] = "open"
 
     ir["missing_items"] = refresh_missing_items(ir)
     errors = iter_errors("scenario-ir", ir)

@@ -95,7 +95,7 @@ class WriteBack(Harness):
         self.assertEqual(self.item(ir, "missing-hosts-h1-os")["status"], "accepted_unknown")
 
     def test_an_explanation_is_kept_as_text_and_not_forced_into_a_field(self):
-        text = "We are not sure. " * 12
+        text = "The asset inventory lists several builds for this machine. " * 4
         ir = self.answer("missing-hosts-h1-os", text)
         self.assertNotIn("os", ir["hosts"][0])
         entry = self.item(ir, "missing-hosts-h1-os")
@@ -108,6 +108,28 @@ class WriteBack(Harness):
         ir = self.answer("missing-hosts-h1-os-version", "Ubuntu 22.04")
         self.assertNotIn("os_version", ir["hosts"][0])
         self.assertIn("inconsistent", self.item(ir, "missing-hosts-h1-os-version")["write_back"])
+
+
+class NonAnswers(Harness):
+    def test_statement_of_not_knowing_is_not_written_and_not_closed_as_supplied(self):
+        for text in ("不確定，可能要再查", "unknown", "Not sure."):
+            self.state["scn_t"] = make_ir()
+            ir = self.answer("missing-hosts-h1-os-version", text)
+            self.assertNotIn("os_version", ir["hosts"][0], text)
+            entry = self.item(ir, "missing-hosts-h1-os-version")
+            self.assertEqual(entry["status"], "accepted_unknown", text)
+            self.assertIn("write_back", entry)
+            self.assertEqual(ir["supplements"][-1]["text"], text)
+
+    def test_hedged_guess_is_kept_as_a_note_and_the_question_stays_open(self):
+        ir = self.answer("missing-hosts-h1-os", "可能是 Windows Server 2019？")
+        self.assertNotIn("os", ir["hosts"][0])
+        self.assertEqual(self.item(ir, "missing-hosts-h1-os")["status"], "open")
+        self.assertEqual(len(ir["supplements"]), 1)
+
+    def test_a_plain_value_is_still_written(self):
+        ir = self.answer("missing-hosts-h1-os-version", "Windows Server 2019 build 17763")
+        self.assertEqual(ir["hosts"][0]["os_version"], "Windows Server 2019 build 17763")
 
 
 class RefreshOnEdit(Harness):

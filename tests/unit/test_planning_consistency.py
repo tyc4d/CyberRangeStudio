@@ -251,6 +251,49 @@ class HostBindingFromText(unittest.TestCase):
         self.assertEqual({service["catalogue_component"] for service in second["services"]}, {"oss-nginx"})
 
 
+class DifferentProductsAreNotAliases(unittest.TestCase):
+    """Reviewer P1: 'Apache Struts' must never be planned as the Apache HTTP Server."""
+
+    def plan(self, service_name, action_name):
+        return plan_dependencies(base_ir(
+            actions=[action("a1", action_name, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": service_name, "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
+
+    def test_vendor_word_inside_another_product_name_does_not_match(self):
+        for name in ("Apache Struts Web Framework", "Apache Struts", "Apache Tomcat", "Apache ActiveMQ"):
+            planned = self.plan(name, f"exploited a vulnerability in {name} on the portal")
+            self.assertEqual([s["id"] for s in planned["services"]], ["s1"], name)
+            self.assertTrue(planned["services"][0].get("no_component"), name)
+            self.assertNotIn("oss-httpd", str(planned["services"]), name)
+            host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
+            self.assertNotEqual(host.get("image_hint"), "oss-httpd", name)
+            self.assertNotEqual(host.get("component_mode"), "real", name)
+
+    def test_the_product_itself_still_matches_with_generic_words_around_it(self):
+        for name in ("Apache HTTP Server", "Apache web server", "apache", "nginx server"):
+            planned = self.plan(name, "requested a page")
+            self.assertIn(planned["services"][0].get("catalogue_component"), {"oss-httpd", "oss-nginx"}, name)
+
+
+class SupplementAnswersBindToTheAskedHost(unittest.TestCase):
+    """Reviewer P3: software named in an answer about host X runs on host X."""
+
+    def test_service_from_an_answer_is_bound_to_the_host_the_question_was_about(self):
+        ir = base_ir(
+            actions=[action("a1", "Exploit the web application", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "role": "records store", "epistemic_status": "supported", "source": "llm"}],
+            missing_items=[{"id": "missing-hosts-h2-os", "field": "f", "category": "host", "reason": "r",
+                            "status": "user_supplied", "target": {"collection": "hosts", "id": "h2", "field": "os"}}],
+            supplements=[{"id": "supplement-1", "source": "user", "targets_missing_item": "missing-hosts-h2-os",
+                          "text": "Linux running PostgreSQL 16.16"}])
+        planned = plan_dependencies(ir)
+        postgres = next(s for s in planned["services"] if s.get("catalogue_component") == "oss-postgres")
+        self.assertEqual((postgres["host_ref"], postgres["version"], postgres["source"]), ("h2", "16.16", "user"))
+        self.assertIn(postgres["id"], next(h for h in planned["hosts"] if h["id"] == "h2")["service_refs"])
+
+
 class UnsupportedComponents(unittest.TestCase):
     def test_undeployable_platform_is_not_presented_as_real_or_substitute(self):
         ir = base_ir(actions=[action("a1", "Exploit VMware Horizon", "h1", attack_technique="T1190")],
