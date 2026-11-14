@@ -48,7 +48,7 @@ const writeLog = () => {
 };
 
 // The app scrolls inside its main pane; for evidence screenshots only, let the page grow so nothing is cut off.
-const SHOT_STYLE = "html, body, #root, .shell { height: auto !important; min-height: 100vh; } .main { overflow: visible !important; }";
+const SHOT_STYLE = "html, body, #root, .app-shell { height: auto !important; min-height: 100vh; overflow: visible !important; } .main:not(:has(> .workspace)) { overflow: visible !important; } .main:has(> .workspace) { height: calc(100vh - 106px); flex: none; }";
 
 let page: Page;
 let deployed = false;
@@ -60,7 +60,7 @@ async function step(name: string, body: () => Promise<string | void>) {
   await test.step(name, async () => {
     try {
       const note = await body();
-      await page.screenshot({ path: path.join(SHOTS, file), fullPage: true, style: SHOT_STYLE });
+      await page.screenshot({ path: path.join(SHOTS, file), fullPage: true, style: SHOT_STYLE, animations: "disabled" });
       log.steps.push({ step: name, status: "passed", ms: Date.now() - t0, screenshot: `screenshots/${file}`, ...(note ? { note } : {}) });
     } catch (e) {
       const failFile = file.replace(/\.png$/, "-FAILED.png");
@@ -149,7 +149,7 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
 
   await step("edit-flow-confirm-dependencies", async () => {
     await nextStep("攻擊流程").click();
-    await expect(heading("攻擊流程")).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "設計工作台" })).toBeVisible();
     await expect(page.locator(".react-flow__node").first()).toBeVisible();
     // Open one node in the inspector to prove the editor responds to clicks.
     await page.locator(".react-flow__node").first().click();
@@ -160,7 +160,7 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
     await bar.getByRole("button", { name: "確認全部依賴關係" }).click();
     await expect(bar).toContainText(`依賴關係已確認 ${total} / ${total}`);
     await page.getByPlaceholder("版本備註（選填）").fill("e2e：確認依賴關係");
-    await page.getByRole("button", { name: "儲存為新版本" }).click();
+    await page.getByRole("button", { name: "儲存為新版本", exact: true }).click();
     await expect(page.getByText("已儲存為新版本。")).toBeVisible();
     // The confirmation must survive the round trip through the backend.
     await expect(bar).toContainText(`依賴關係已確認 ${total} / ${total}`);
@@ -168,7 +168,7 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
   });
 
   await step("dependencies", async () => {
-    await nextStep("軟體依賴").click();
+    await page.getByRole("link", { name: /軟體依賴/ }).first().click();
     await expect(heading("軟體依賴")).toBeVisible();
     await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
     await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeEnabled({ timeout: 60_000 });
@@ -222,6 +222,7 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
     await page.getByRole("link", { name: "專案首頁" }).click();
     await expect(page.getByTestId("rangeline")).toBeVisible();
     await expect(page.getByTestId("rangeline").locator(".stop.gate-stop")).toHaveAttribute("title", "拓樸已核准");
+    await page.waitForTimeout(1600); // let the hero's one-time line draw finish before the evidence screenshot
   });
 });
 
@@ -268,7 +269,7 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     }
     await expect(page.getByRole("heading", { name: "擬真度（fidelity）" })).toBeVisible();
     // The sidebar's stage marker reflects the verdict too (it used to stay blank after a successful run).
-    await expect(page.locator(".side nav a", { hasText: "驗證報告" }).locator(".state")).toHaveAttribute("title", /通過|未測|失敗/);
+    await expect(page.locator(".stages a", { hasText: "驗證報告" }).locator(".state")).toHaveAttribute("title", /通過|未測|失敗/);
     expect(report.levels.env_build, "environment build level").toBe("PASS");
     expect(Object.values(report.levels), "no validation level may be FAIL").not.toContain("FAIL");
     return `levels: ${JSON.stringify(report.levels)}`;

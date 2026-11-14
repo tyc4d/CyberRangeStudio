@@ -1,7 +1,9 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Route, Routes } from "react-router-dom";
 import { useEffect, useState, type ReactNode } from "react";
 import { api, type Budget } from "./lib/api";
+import { isPlanApproved } from "./lib/plan";
 import { stageState } from "./lib/stages";
+import { TopbarProvider, TopbarSlot } from "./lib/topbar";
 import { ScenarioProvider, useScenario } from "./lib/scenario";
 import { HomePage } from "./pages/HomePage";
 import { ImportPage } from "./pages/ImportPage";
@@ -38,61 +40,78 @@ function BudgetChip() {
   }, []);
   if (!b || !b.hard_cap_usd) return null;
   const pct = Math.min(100, (b.est_total_usd / b.hard_cap_usd) * 100);
-  const color = pct > 90 ? "#ff7a66" : pct > 80 ? "#f0b03f" : "var(--rail-dim)";
+  const color = pct > 90 ? "var(--err)" : pct > 80 ? "var(--warn)" : "var(--text-dim)";
   return (
-    <div style={{ padding: "8px 14px", borderTop: "1px solid #2f4450", fontSize: 12, color }}>
-      API 估計花費 ${b.est_total_usd.toFixed(2)} / ${b.hard_cap_usd}
-      <div style={{ height: 4, background: "#2f4450", borderRadius: 2, marginTop: 4 }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
+    <div className="budget" style={{ color }}>
+      API 估計 ${b.est_total_usd.toFixed(2)} / ${b.hard_cap_usd}
+      <div className="bar">
+        <i style={{ transform: `scaleX(${pct / 100})` }} />
       </div>
     </div>
   );
 }
 
-function Sidebar() {
+function Topbar() {
   const { id, ir, runtime, loading } = useScenario();
+  const plan = ir?.environment_plan;
   return (
-    <aside className="side">
-      <div className="brand">CyberRange <span className="muted" style={{ fontWeight: 400 }}>Studio</span></div>
-      <div className="current">
-        <div className="muted">目前情境</div>
-        <div className="name" title={ir?.name ?? id ?? ""}>{ir ? ir.name || ir.id : id ? (loading ? "載入中…" : id) : "未選擇"}</div>
-        {ir && <div className="muted mono">v{ir.ir_version ?? 1} · {ir.provenance?.input_kind ?? "—"}</div>}
-      </div>
-      <nav>
-        {STAGES.map((s, i) => {
-          const st = stageState(s.key, ir, runtime);
-          return (
-            <NavLink key={s.key} to={s.path} end={s.path === "/"} className={({ isActive }) => (isActive ? "active" : "")}>
-              <span className="num">{i === 0 ? "" : i}</span>
-              {s.label}
-              {st && (
-                <span className="state muted" title={st.title}>
-                  {st.text && <span style={{ marginRight: 5 }}>{st.text}</span>}
-                  <span className={`dot ${st.dot}`} />
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
-      </nav>
+    <header className="topbar">
+      <Link className="studio-brand" to="/" aria-label="CyberRange Studio 首頁">
+        <span className="brand-mark">CRS</span>
+        <strong>CyberRange Studio</strong>
+      </Link>
+      <span className="header-separator" />
+      <span className="document-title" title={ir?.name ?? id ?? ""}>{ir ? ir.name || ir.id : id ? (loading ? "載入中…" : id) : "尚未選擇情境"}</span>
+      {ir && <span className="badge" title={`來源格式：${ir.provenance?.input_kind ?? "—"}`}>v{ir.ir_version ?? 1}</span>}
+      {/* Status badges state only what the backend reports. "已核准" is topology approval, not a deployment or attack result. */}
+      {plan && (isPlanApproved(plan)
+        ? <span className="badge approved">拓樸已核准</span>
+        : <span className="badge pending">拓樸待核准</span>)}
+      {runtime.deployState === "running" && <span className="badge validated">容器執行中</span>}
+      <TopbarSlot />
       <BudgetChip />
-    </aside>
+    </header>
+  );
+}
+
+function StageStrip() {
+  const { ir, runtime } = useScenario();
+  return (
+    <nav className="stages" aria-label="工作流程">
+      {STAGES.map((s, i) => {
+        const st = stageState(s.key, ir, runtime);
+        return (
+          <NavLink key={s.key} to={s.path} end={s.path === "/"} className={({ isActive }) => (isActive ? "active" : "")}>
+            {i > 0 && <span className="num">{i}</span>}
+            {s.label}
+            {st && (st.dot || st.text) && (
+              <span className="state" title={st.title}>
+                {st.text}
+                <span className={`dot ${st.dot}`} />
+              </span>
+            )}
+          </NavLink>
+        );
+      })}
+    </nav>
   );
 }
 
 export function App() {
   return (
     <ScenarioProvider>
-      <div className="shell">
-        <Sidebar />
-        <main className="main">
-          <Routes>
-            {STAGES.map((s) => <Route key={s.key} path={s.path} element={s.element} />)}
-            <Route path="*" element={<HomePage />} />
-          </Routes>
-        </main>
-      </div>
+      <TopbarProvider>
+        <div className="app-shell">
+          <Topbar />
+          <StageStrip />
+          <main className="main">
+            <Routes>
+              {STAGES.map((s) => <Route key={s.key} path={s.path} element={s.element} />)}
+              <Route path="*" element={<HomePage />} />
+            </Routes>
+          </main>
+        </div>
+      </TopbarProvider>
     </ScenarioProvider>
   );
 }

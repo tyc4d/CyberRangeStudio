@@ -10,7 +10,7 @@ Playwright 開真的 Chromium、只靠點 UI，把整條流程走完並通過：
 
 | 執行方式 | 結果 |
 |---|---|
-| 預設（沿用已在 8077 的後端） | 2 passed，約 31 秒 |
+| 預設（沿用已在 8077 的後端） | 第一輪 2 passed；改版後含動態測試共 4 passed，約 38 秒 |
 | 由本 worktree 自己啟動後端（`CR_E2E_API_PORT=8177`，真實 LLM 呼叫，未命中快取） | 2 passed，約 42 秒 |
 | 模擬 Docker 不可用（假的 `docker` 指令回傳失敗） | 前半 passed；部署段 **skipped**（不是 passed） |
 
@@ -39,13 +39,13 @@ npm run e2e:report                                 # 看 HTML 報告（含失敗
 
 ## 證據位置
 
-- 截圖（每一步一張，成功失敗都拍；失敗的檔名帶 `-FAILED`）：`apps/web/e2e/artifacts/screenshots/01…14-*.png`
+- 截圖（每一步一張，成功失敗都拍；失敗的檔名帶 `-FAILED`）：`apps/web/e2e/artifacts/screenshots/01…14-*.png`（已是改版後的畫面）
 - 逐步紀錄（每步耗時、scenario id、驗證層級、瀏覽器 console 錯誤、失敗的 API 呼叫）：`apps/web/e2e/artifacts/run-log.json`
 - Playwright 原始結果：`apps/web/e2e/artifacts/results.json`
 - 失敗時的 trace／影片與 HTML 報告：`apps/web/e2e/artifacts/test-results/`、`html-report/`（不進 git，每次執行重新產生）
-- 測試腳本：`apps/web/e2e/full-flow.spec.ts`；設定：`apps/web/playwright.config.ts`
+- 測試腳本：`apps/web/e2e/full-flow.spec.ts`（全流程）、`apps/web/e2e/motion.spec.ts`（動態契約）；設定：`apps/web/playwright.config.ts`
 
-目前 commit 的截圖與 run-log 來自最後一次「預設」執行（沿用 8077 的後端）。
+目前 commit 的截圖與 run-log 來自改版後最後一次執行（8077 上沒有後端，由測試從本 worktree 啟動）。
 
 ## 失敗／異常紀錄
 
@@ -73,17 +73,64 @@ npm run e2e:report                                 # 看 HTML 報告（含失敗
 4. **側欄進度不準**：部署、驗證兩站永遠空白（後端不把這些寫進 IR）。改用即時的部署狀態與最新驗證報告。
 5. `npm run typecheck`、`npm run build` 都通過。
 
-## 設計（依 Lead 指示套用 frontend-design）
+## 視覺與動態改版（第二輪：對齊 RTSS Red Team Studio）
 
-原本是常見的「近黑底＋藍色強調」儀表板。改成刻意的方向：**工程圖紙**——
-冷色淺底的圖面、墨色線條，左側是深色儀表列。顏色只用來表達意義：
-青＝開通的路徑、紅＝必須阻擋、琥珀＝等人決定。
+依 Lead 指示，直接對齊 `~/text2redteamscenario/apps/studio` 的設計系統（DESIGN.md、`tokens.css`、`style.css`），
+套在我們自己的頁面與 Scenario IR 上。後端、契約、核准規則都沒動。第一輪的淺色「工程圖紙」方向已整個換掉。
 
-- 色盤：圖面 `#e8edee`、面板 `#f7f9f8`、墨 `#14242e`、路徑 `#0f6e8c`、阻擋 `#c2331f`、等待 `#a8690a`。
-- 字體：Barlow／Barlow Semi Condensed（標題與數字）、IBM Plex Mono（只用在 ID 與程式碼）；中文走系統黑體。
-  字體由 npm 套件打包在本機，瀏覽器不會連外。
-- 首頁 hero：一條「靶場路線」，畫出目前情境走到九站中的哪一站；拓樸那一站畫成橫在線上的閘門。
-- 唯一的重點元素是核准閘門區塊；其餘維持安靜。移除了全大寫的表頭與小標。
+**設計系統**
+- 色彩、間距、動態 token 的數值照 RTSS：冷黑底 `#070b11`、表面 `#101923`、酸綠 `#beff3b`（選取與主要操作）、
+  冰青 `#3bf4ff`（technique、handles）、依賴線 `#4ea6b3`、1px 邊框、2px 微圓角、節點右上 12px 切角。
+- 字體：Manrope，檔案放在 `apps/web/public/fonts/`（連同 OFL 授權），瀏覽器不連外。移除了第一輪的 Barlow／Plex。
+- 圖示：lucide-react（RTSS 用的同一套），打包在本機。
+
+**版面**
+- 頂列 64px：品牌字標、情境名稱、版本、真實狀態 badge（拓樸待核准／已核准、容器執行中）、各頁自己的操作、API 花費。
+- 頂列下方是 1–9 的流程站點列（我們有九個階段，RTSS 沒有；用編號是因為它真的是順序）。
+- 流程編輯頁（模組 3）改成 RTSS 的三欄工作區：
+  左「元件」（資產＝IR 的主機與服務埠；步驟＝攻擊行為，可點選、可新增）、
+  中央 React Flow 畫布（32px 細網格、左上工具列、左下縮放、右下 minimap、空狀態「尚無攻擊步驟」）、
+  右側「設計工作台」（摘要、訓練資產、1 編排設計／2 設計檢查／3 人工核准、下一步按鈕；選取物件後同一位置變成屬性編輯）、
+  底部可收合的「設計檢查」console。儲存、版本備註、設計檢查開關在頂列。
+- 節點照 RTSS 的 step node：圖示、STEP 編號、technique、名稱、目標主機、前置數量；選取後上方出現複製／刪除／檢查工具列。
+
+**動態（都可被 reduced-motion 關掉）**
+- 依賴連線：只在「建立的當下」用 stroke-dashoffset 畫一次，之後靜止；載入既有情境時完全不動。畫布上沒有任何循環動畫。
+- 節點新增：只動內層 article（scale .98 + 6px），不碰 React Flow 的定位 wrapper。
+- 選取：邊框與圖示 120ms 變色；右側工作台／屬性 320ms 入場；選取、關閉屬性都不會重新取景。
+- 換頁：內容 320ms 淡入 + 6px；通知 220ms；按鈕按下 scale .98；console 用 grid-rows 展開（不動畫 height）。
+- 首頁「靶場路線」：GSAP 做一次性的線條延伸與站點依序出現，只反映後端已回報的進度。
+- 拓樸核准成功後，核准區塊閃一次確認底色。
+- 毛玻璃只用在畫布左上的浮動工具列一處，附 `@supports` 與 reduced-transparency 的不透明退路。
+- 只動 transform／opacity／顏色；沒有動畫 width／height／top／left。
+
+**reduced-motion 分級**（`theme.css` 最末段）
+- 拿掉：所有位移、縮放、連線描繪、GSAP 時間軸、按下縮放。
+- 保留但縮短到 80ms：顏色與透明度變化，避免狀態瞬間跳變。
+- 保留：spinner（放慢）與進度條（改靜態），因為它們代表真的有請求在跑。
+
+**誠實鐵則的落實**
+- 連線只代表設計依賴或規劃的網路規則；畫布狀態列寫明「設計圖，不是執行紀錄」。
+- 節點右下顯示的是「原文支持／推測」或設計問題數，不是執行結果。
+- spinner／進度條只綁在真實的 Promise 上；頂列 badge 只顯示後端回報的狀態。
+- 「設計檢查」是前端依畫布內容即時算的（未命名、懸空或重複關係、依賴循環、依賴未確認、孤立行為、推測項目），
+  console 標題旁寫明它不代表部署或驗證結果。
+
+**新增的自動測試**：`apps/web/e2e/motion.spec.ts`（2 項，皆通過）
+- 既有連線載入時沒有任何動畫；拉出一條新依賴後，動畫 iterations 恰為 1、結束後 dashoffset 為 0、畫布上沒有無限循環動畫。
+- 模擬 `prefers-reduced-motion: reduce`：沒有描繪動畫、節點與工作台入場改為純淡入、首頁時間軸不啟動。
+
+**最新執行結果**：`npm run e2e` → 4 passed（約 38 秒）；`npm run typecheck`、`npm run build` 通過。
+截圖已全部更新為新設計（`e2e/artifacts/screenshots/`，14 張）。
+
+**這一輪沒做到的**
+- 沒有引入 Radix 元件（Tabs／Popover／Dialog／Tooltip）：我們目前沒有需要它們的互動，提示用原生 title。
+- 沒有做 RTSS 的「拖線放到整個節點」命中（只把 handle 的吸附半徑加大到 48px）、節點／連線的退出動畫、登入頁。
+- 沒有錄互動影片；60fps 是依「只動 transform／opacity」的做法推定，沒有實際做效能量測。
+- 四個以上的步驟在 1440px 寬會自動縮到約 0.7 倍才放得下，節點字會偏小（可用縮放或拖曳）。
+- 最小寬度 1040px（同 RTSS）；手機版面沒有處理。
+- JS bundle 由約 392 kB 增加到 496 kB（gzip 168 kB），來自 GSAP 與 lucide 圖示。
+- 複製行為是照 RTSS 加的小功能（複製欄位、不複製連線）；若不在核准範圍，可以直接拿掉工具列上那一顆按鈕。
 
 ## 沒做／需要 Lead 知道的事
 

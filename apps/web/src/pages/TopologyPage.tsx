@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import ReactFlow, { Background, Controls, Handle, MarkerType, Position, type Edge, type Node, type NodeProps } from "reactflow";
+import ReactFlow, { Background, BackgroundVariant, Controls, EdgeLabelRenderer, getBezierPath, Handle, MarkerType, Position, type Edge, type EdgeProps, type Node, type NodeProps } from "reactflow";
 import "reactflow/dist/style.css";
 import type { EnvHost, EnvironmentPlan, EnvNetwork, ScenarioIR } from "@contracts";
 import { api } from "../lib/api";
 import { useAction } from "../lib/hooks";
-import { BARRIER, CANVAS, GRID, LABEL, MEMBER, ROUTE } from "../lib/palette";
+import { BARRIER, CANVAS, EDGE, GRID, MEMBER } from "../lib/palette";
 import type { PlanX } from "../lib/plan";
 import { layeredLayout } from "../lib/layout";
 import { useScenario } from "../lib/scenario";
@@ -24,22 +24,39 @@ function NetworkNode({ data }: NodeProps<{ net: EnvNetwork }>) {
 function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
   const h = data.host;
   return (
-    <div className="gnode">
+    <div style={{ position: "relative" }}>
       <Handle type="target" position={Position.Top} id="t" style={{ opacity: 0 }} isConnectable={false} />
       <Handle type="target" position={Position.Left} id="l" isConnectable={false} />
+      <article className="gnode host">
       <div className="t">{h.role}</div>
       <div className="mono muted" style={{ marginBottom: 4 }}>{h.id}</div>
       {h.image_hint && <div className="mono muted" style={{ marginBottom: 4, overflowWrap: "anywhere" }}>{h.image_hint}</div>}
       <div className="meta">
         {h.services?.map((s, i) => <span key={i} className="tag" title={s.protocol ?? "tcp"}>{s.name}:{s.port}</span>)}
       </div>
+      </article>
       <Handle type="source" position={Position.Right} id="r" isConnectable={false} />
     </div>
   );
 }
 const nodeTypes = { network: NetworkNode, host: HostNode };
 
-function buildGraph(plan: PlanX): { nodes: Node[]; edges: Edge[] } {
+function PlannedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, label, data }: EdgeProps<{ draw: boolean }>) {
+  const [d, lx, ly] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
+  return (
+    <>
+      <path id={id} d={d} fill="none" className="react-flow__edge-path" style={style} markerEnd={markerEnd} pathLength={data?.draw ? 1 : undefined} />
+      {label && (
+        <EdgeLabelRenderer>
+          <div className="edge-label" style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)` }}>{label}</div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
+const edgeTypes = { planned: PlannedEdge };
+
+function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edge[] } {
   const nets = plan.networks ?? [];
   const hosts = plan.hosts ?? [];
   // Hosts flow left to right along their paths (opened and blocked alike, so refused paths do not loop backwards); each network sits above the middle of its member hosts.
@@ -69,10 +86,11 @@ function buildGraph(plan: PlanX): { nodes: Node[]; edges: Edge[] } {
     edges.push({
       id: `c:${i}`, source: `host:${c.from_host}`, sourceHandle: "r", target: `host:${c.to_host}`, targetHandle: "l",
       label: c.port ? `${c.protocol ?? "tcp"}/${c.port}` : undefined,
-      style: { stroke: ROUTE, strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: ROUTE, width: 16, height: 16 },
-      labelStyle: { fill: LABEL, fontSize: 10 }, labelBgStyle: { fill: CANVAS },
-    });
+      // Drawn once, right after the plan is produced, then static. It shows a planned rule, never traffic.
+      type: "planned", data: { draw: drawOnce }, className: drawOnce ? "fresh" : undefined,
+      style: { stroke: EDGE, strokeWidth: 1.5 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: EDGE, width: 16, height: 16 },
+      });
   });
   // Paths that must stay shut are drawn too, so the picture shows what is refused as well as what is opened.
   (plan.verify_blocked ?? []).forEach((b, i) => {
@@ -97,12 +115,19 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const [note, setNote] = useState("");
   const approve = useAction(async () => {
     await api.approveTopology(ir.id, note.trim() || undefined);
+    sessionStorage.setItem("cr.justApproved", ir.id);
     await reload(); // the endpoint returns the plan, not the IR
     nav("/iac");
   });
+  // The approval answer is acknowledged once, the first time the approved gate is shown after the click.
+  const [justApproved] = useState(() => {
+    const hit = approved && sessionStorage.getItem("cr.justApproved") === ir.id;
+    if (hit) sessionStorage.removeItem("cr.justApproved");
+    return hit;
+  });
   const [ranOk, setRanOk] = useState(false);
   const run = useAction(async () => { setRanOk(false); await absorb(await api.planTopology(ir.id)); setRanOk(true); });
-  const graph = useMemo(() => (plan ? buildGraph(plan) : null), [plan]);
+  const graph = useMemo(() => (plan ? buildGraph(plan, ranOk) : null), [plan, ranOk]);
   const [stamp, setStamp] = useState(0);
   const hostRole = useMemo(() => new Map((plan?.hosts ?? []).map((h) => [h.id, h.role])), [plan]);
   const name = (id?: string) => (id ? hostRole.get(id) ?? id : "任意");
@@ -131,26 +156,26 @@ function Body({ ir }: { ir: ScenarioIR }) {
             <span>實線外框網路＝隔離（internal），虛線＝可對外</span>
             <button className="small" style={{ marginLeft: "auto" }} onClick={() => setStamp((s) => s + 1)}>重設版面</button>
           </div>
-          <div className="canvas" style={{ height: 520, flex: "none" }}>
+          <div className="canvas card-canvas" style={{ flex: "none" }}>
             {plan.hosts.length === 0 && plan.networks.length === 0 ? <Empty>環境規劃裡沒有主機或網路。</Empty> : (
               <ReactFlow
                 key={`${stamp}:${ir.updated_at ?? ""}:${ir.ir_version ?? ""}`}
-                defaultNodes={graph.nodes} defaultEdges={graph.edges} nodeTypes={nodeTypes}
+                defaultNodes={graph.nodes} defaultEdges={graph.edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
                 nodesConnectable={false} deleteKeyCode={null} elementsSelectable
                 fitView fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }} minZoom={0.2}
                 proOptions={{ hideAttribution: true }}
               >
-                <Background color={GRID} gap={20} />
+                <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
                 <Controls showInteractive={false} />
               </ReactFlow>
             )}
           </div>
           {danglingConn > 0 && <div className="status-PARTIAL" style={{ fontSize: 12 }}>有 {danglingConn} 條連線指向規劃中不存在的主機，圖上未畫出，詳見下表。</div>}
 
-          <section className={`gate ${approved ? "approved" : "pending"}`} data-testid="topology-approval" aria-label="拓樸人工核准">
+          <section className={`gate ${approved ? "approved" : "pending"} ${justApproved ? "just-approved" : ""}`} data-testid="topology-approval" aria-label="拓樸人工核准">
             <div className="gate-head">
               <h2>部署前，由你確認這份拓樸</h2>
-              <span className={`pill ${approved ? "status-PASS" : "status-PARTIAL"}`} data-testid="approval-state">{approved ? "已核准" : "尚未核准"}</span>
+              <span className={`badge ${approved ? "approved" : "pending"}`} data-testid="approval-state">{approved ? "已核准" : "尚未核准"}</span>
             </div>
             <div className="gate-cols">
               <div className="gate-col open" data-testid="open-paths">

@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef } from "react";
+import gsap from "gsap";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useLoad } from "../lib/hooks";
@@ -53,19 +55,45 @@ const STOPS: { key: string; to: string; label: string }[] = [
 
 function RangeLine() {
   const { ir, runtime } = useScenario();
+  const root = useRef<HTMLElement>(null);
+  const states = STOPS.map((s) => stageState(s.key, ir, runtime));
+  // How far this scenario has really got: the last stop the backend data marks as done.
+  const reached = states.reduce((last, st, i) => (st?.dot === "done" ? i : last), -1);
+  const share = reached < 0 ? 0 : reached / (STOPS.length - 1);
+
+  // The page's one orchestrated moment: the line runs out to where the scenario actually stands, and the stops
+  // it passed light in order. It plays once per load and only reports state the backend already returned.
+  useLayoutEffect(() => {
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const q = gsap.utils.selector(root);
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.from(q(".rail-line"), { scaleX: 0, duration: 0.5 })
+        .from(q(".rail-done"), { scaleX: 0, duration: 0.7 }, "-=0.2")
+        .from(q(".stop .node"), { scale: 0, duration: 0.28, stagger: 0.06, transformOrigin: "50% 50%" }, 0.15)
+        .from(q(".stop .txt"), { opacity: 0, y: 6, duration: 0.3, stagger: 0.06 }, 0.2);
+    });
+    return () => mm.revert();
+  }, [ir?.id, reached]);
+
   return (
-    <section className="rangeline" data-testid="rangeline">
+    <section className="rangeline" data-testid="rangeline" ref={root}>
       <h2>{ir ? ir.name || ir.id : "把一份情資報告，變成一座可以驗證的靶場"}</h2>
       <p>{ir
         ? "這個情境目前走到哪一站。拓樸那一站是人工閘門：沒有人核准，後面的部署不會放行。"
         : "報告進來後依序經過九站。拓樸那一站是人工閘門：沒有人核准，後面的部署不會放行。"}</p>
       <div className="track">
+        <span className="rail-line" aria-hidden />
+        <span className="rail-done" aria-hidden style={{ width: `${share * 100 * (8 / 9)}%` }} />
         {STOPS.map((s, i) => {
-          const st = stageState(s.key, ir, runtime);
+          const st = states[i];
           return (
             <Link key={s.key} to={s.to} className={`stop ${st?.dot ?? ""} ${s.key === "topology" ? "gate-stop" : ""}`} title={st?.title}>
-              <span className="n">{i + 1}</span>{s.label}
-              <span className="s">{ir ? st?.title ?? "隨時可看" : " "}</span>
+              <span className="node" aria-hidden>{i + 1}</span>
+              <span className="txt">
+                {s.label}
+                <span className="s">{ir ? st?.title ?? "隨時可看" : " "}</span>
+              </span>
             </Link>
           );
         })}
