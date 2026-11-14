@@ -48,7 +48,7 @@ class IngestEndpointTests(unittest.TestCase):
         "actions": [], "relations": [],
         "missing_items": [{"id": "missing-1", "field": "target host OS", "category": "host", "reason": "Not stated.", "status": "open"}],
     }
-    with patch.object(store, "get", lambda scenario_id: existing if scenario_id == "scn_test" else None), patch.object(store, "update", lambda scenario_id, ir, note: ir):
+    with patch.object(store, "get", lambda scenario_id: existing if scenario_id == "scn_test" else None), patch.object(store, "update", lambda scenario_id, ir, note=None, bump_version=False: ir):
       response = TestClient(app).post("/api/ingest/scn_test/supplement", json={"missing_item_id": "missing-1", "text": "User reports Ubuntu 22.04."})
 
     self.assertEqual(response.status_code, 200, response.text)

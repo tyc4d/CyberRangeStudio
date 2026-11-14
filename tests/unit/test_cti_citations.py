@@ -60,12 +60,13 @@ class CitationTests(unittest.TestCase):
       "hosts": [{"id": "h1", "role": "target", "source": "stix", "epistemic_status": "insufficient"}],
       "services": [{"id": "s1", "name": "MOVEit Transfer", "version": "unknown", "source": "stix", "epistemic_status": "insufficient"}],
     }
-    missing_fields = {item["field"] for item in calculate_missing_items(ir)}
-    self.assertIn("target host identity", missing_fields)
-    self.assertIn("target host operating system", missing_fields)
-    self.assertIn("target host OS version", missing_fields)
-    self.assertIn("target network placement", missing_fields)
-    self.assertIn("target service name", missing_fields)
-    self.assertIn("target service version", missing_fields)
-    self.assertIn("attacker access precondition", missing_fields)
+    # Gaps are now derived per IR entity (grounded), not a fixed English checklist.
+    missing = calculate_missing_items(ir)
+    self.assertTrue(missing)
+    self.assertTrue(all(item["status"] == "open" for item in missing))
+    cats = {item["category"] for item in missing}
+    self.assertIn("host", cats)
+    self.assertTrue({"version", "network"} & cats)
+    # every gap names the real host/service/action it concerns
+    self.assertTrue(all(item.get("affects") for item in missing))
 

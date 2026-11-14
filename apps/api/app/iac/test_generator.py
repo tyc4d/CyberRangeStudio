@@ -57,18 +57,20 @@ class ComposeGeneratorTests(unittest.TestCase):
 
 
     def test_arbitrary_image_hint_is_never_used_as_image(self):
-        # Safety: an arbitrary/untrusted image hint must NEVER become the deployed image.
-        # The host is mapped to a harmless local stand-in instead and flagged as a substitute.
+        # Safety + honesty: an arbitrary/untrusted image hint must NEVER become the deployed
+        # image, and must NOT be silently turned into a demo stand-in that would imply a real
+        # reproduction. Unknown software stays "unsupported" with no image.
         arbitrary = "arbitrary-registry/image:latest"
         plan = {**DEMO_PLAN, "hosts": [{**DEMO_PLAN["hosts"][0], "image_hint": arbitrary}, DEMO_PLAN["hosts"][1]]}
         _, report = inspect_plan(plan, "offline-demo")
         host0 = report["components"][0]
-        self.assertIn(host0["component"], {"demo-api", "demo-client"})
+        self.assertEqual(host0["component"], "unsupported")  # honest: not reproduced, not a demo substitute
+        self.assertFalse(host0["substitute"])
+        self.assertIsNone(host0.get("image"))
         self.assertNotIn(arbitrary, str(host0.get("image")))
-        self.assertTrue(host0["substitute"])  # benign stand-in, not the named software
-        doc = yaml.safe_load(compose_document(plan, "offline-demo"))
-        for service in doc["services"].values():
-            self.assertNotIn(arbitrary, service.get("image", ""))
+        # An unsupported host makes the whole plan non-deployable instead of silently deploying
+        # a benign stand-in that would imply the arbitrary software was reproduced.
+        self.assertFalse(report["deployable"])
 
     def test_catalogue_images_are_real_versioned_digest_pins_with_hardening(self):
         self.assertEqual(iter_errors("environment-plan", REAL_PLAN), [])

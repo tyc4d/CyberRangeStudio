@@ -137,7 +137,13 @@ def verify_quote(quote: str, locator: dict[str, str], units: list[SourceUnit], p
             index = int(ref)
         except (TypeError, ValueError):
             return False
-        return grade_evidence_against_units(needle, {"kind": "paragraph", "ref": str(index)}, units)[0]["level"] in {"exact", "strong"}
+        # Strict: the quote must be present AT the supplied paragraph. Whole-document
+        # relocation of a mis-numbered citation belongs to evidence_record (display), not
+        # to this primitive, which other modules rely on to be locator-exact.
+        for unit in units:
+            if unit.locator == {"kind": "paragraph", "ref": str(index)}:
+                return grade_quote(needle, unit.text)["level"] in {"exact", "strong"}
+        return False
     if kind != "stix_path" or parsed_source is None:
         return False
     match = _STIX_PATH.fullmatch(ref)
