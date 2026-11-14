@@ -30,7 +30,11 @@ def test_grade_quote_unrelated_text_is_none():
 def test_verify_quote_accepts_strong_but_rejects_partial():
     source = "The attacker exploited the public-facing application to gain access."
     units = [SourceUnit("p1", source, {"kind": "paragraph", "ref": "1"})]
-    assert verify_quote("The attacker exploited the public-facing application to gain entry.", units[0].locator, units, None)
+    # Strong: differs only by a trailing stopword -> still verified.
+    assert verify_quote("The attacker exploited the public-facing application to gain access and", units[0].locator, units, None)
+    # M8: a changed tail content word (access -> entry) must NOT verify any more.
+    assert not verify_quote("The attacker exploited the public-facing application to gain entry.", units[0].locator, units, None)
+    # A paraphrase must not verify.
     assert not verify_quote("The adversary gained access through a compromised application.", units[0].locator, units, None)
 
 

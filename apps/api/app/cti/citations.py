@@ -25,6 +25,7 @@ _STRONG_CONTIGUOUS_MIN_CHARS = 40
 _STRONG_SEQUENCE_RATIO = 0.85
 _PARTIAL_KEYWORD_COVERAGE = 0.60
 _MATCHED_TEXT_MAX_CHARS = 160
+GRADER_VERSION = "quote-grade-v2"
 _ENGLISH_STOP_WORDS = frozenset({
     "a", "an", "and", "are", "as", "at", "be", "been", "being", "but", "by",
     "can", "could", "did", "do", "does", "for", "from", "had", "has", "have",
@@ -56,7 +57,11 @@ def grade_quote(quote: str, source_text: str) -> dict[str, Any]:
     matcher = SequenceMatcher(None, needle, haystack, autojunk=False)
     longest = matcher.find_longest_match(0, len(needle), 0, len(haystack))
     ratio = matcher.ratio()
-    if longest.size >= max(_STRONG_CONTIGUOUS_MIN_CHARS, len(needle) * _STRONG_CONTIGUOUS_RATIO) or ratio >= _STRONG_SEQUENCE_RATIO:
+    unmatched_has_content = _unmatched_content_word(needle, longest.a, longest.size)
+    if not unmatched_has_content and (
+        longest.size >= max(_STRONG_CONTIGUOUS_MIN_CHARS, len(needle) * _STRONG_CONTIGUOUS_RATIO)
+        or ratio >= _STRONG_SEQUENCE_RATIO
+    ):
         start = longest.b
         matched = haystack[start:start + longest.size]
         return {"level": "strong", "score": round(max(ratio, longest.size / len(needle)), 4), "matched": matched[:_MATCHED_TEXT_MAX_CHARS]}
@@ -66,18 +71,41 @@ def grade_quote(quote: str, source_text: str) -> dict[str, Any]:
     if words:
         coverage = sum(word in source_words for word in words) / len(words)
         if coverage >= _PARTIAL_KEYWORD_COVERAGE:
-            matched_words = set(words) & source_words
-            source_tokens = re.finditer(r"[a-z0-9]+(?:['’][a-z0-9]+)?", haystack, re.IGNORECASE)
-            positions = [m.start() for m in source_tokens if m.group(0).lower() in matched_words]
-            if positions:
-                start = max(0, positions[0] - 55)
-                end = min(len(haystack), start + _MATCHED_TEXT_MAX_CHARS)
-                return {"level": "partial", "score": round(coverage, 4), "matched": haystack[start:end]}
+            matched = haystack[longest.b:longest.b + longest.size]
+            return {"level": "partial", "score": round(coverage, 4), "matched": matched[:_MATCHED_TEXT_MAX_CHARS]}
 
     if longest.size:
         start = longest.b
         result["matched"] = haystack[start:start + longest.size][:_MATCHED_TEXT_MAX_CHARS]
     return result
+
+
+def _unmatched_content_word(text: str, start: int, size: int) -> bool:
+    """Strong matching may leave punctuation/function words, never content words."""
+    remainder = text[:start] + " " + text[start + size:]
+    return bool(_content_words(remainder))
+
+
+def grade_evidence_against_units(quote: str, locator: dict[str, str], units: list[SourceUnit]) -> tuple[dict[str, Any], dict[str, str]]:
+    """Grade using the requested paragraph first, then search all paragraphs on miss."""
+    grade = {"level": "none", "score": 0.0, "matched": ""}
+    corrected_locator = dict(locator)
+    if locator.get("kind") == "paragraph":
+        ref = locator.get("ref", "")
+        target = next((unit for unit in units if unit.locator == {"kind": "paragraph", "ref": ref}), None)
+        if target is not None:
+            grade = grade_quote(quote, target.text)
+            if grade["level"] in {"exact", "strong"}:
+                return grade, corrected_locator
+        for unit in units:
+            candidate = grade_quote(quote, unit.text)
+            if candidate["level"] in {"exact", "strong"}:
+                return {**candidate, "level": "strong"}, dict(unit.locator)
+        return grade, corrected_locator
+    target = next((unit for unit in units if unit.locator == locator), None)
+    if target is not None:
+        grade = grade_quote(quote, target.text)
+    return grade, corrected_locator
 
 
 def strip_attack_tags(text: str) -> str:
@@ -109,7 +137,7 @@ def verify_quote(quote: str, locator: dict[str, str], units: list[SourceUnit], p
             index = int(ref)
         except (TypeError, ValueError):
             return False
-        return any(unit.locator == {"kind": "paragraph", "ref": str(index)} and grade_quote(needle, unit.text)["level"] in {"exact", "strong"} for unit in units)
+        return grade_evidence_against_units(needle, {"kind": "paragraph", "ref": str(index)}, units)[0]["level"] in {"exact", "strong"}
     if kind != "stix_path" or parsed_source is None:
         return False
     match = _STIX_PATH.fullmatch(ref)

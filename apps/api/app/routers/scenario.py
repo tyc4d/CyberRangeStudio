@@ -10,6 +10,8 @@ from urllib.parse import quote
 from fastapi import APIRouter, HTTPException, Response
 
 from app import store
+from app.cti.citations import GRADER_VERSION, grade_evidence_against_units
+from app.cti.parser import parse_source
 from app.scenario.graph import mark_user_change, reconcile_graph_sources, validate_ir
 
 router = APIRouter(prefix="/api/scenario", tags=["scenario"])
@@ -55,9 +57,50 @@ def list_scenarios():
 @router.get("/{scenario_id}")
 def get_scenario(scenario_id: str):
     ir = copy.deepcopy(_get_or_404(scenario_id))
+    source = store.get_source(scenario_id)
+    units = []
+    if source is not None and isinstance(source.get("content"), str):
+        try:
+            units, _ = parse_source(source.get("input_kind", "text"), source["content"])
+        except Exception:
+            units = []
+    for evidence in ir.get("evidence", []):
+        if not isinstance(evidence, dict) or "quote_match" in evidence:
+            continue
+        if units:
+            grade, locator = grade_evidence_against_units(
+                evidence.get("quote", "") if isinstance(evidence.get("quote"), str) else "",
+                evidence.get("locator", {}) if isinstance(evidence.get("locator"), dict) else {},
+                units,
+            )
+            evidence["quote_match"] = grade["level"]
+            evidence["match_score"] = grade["score"]
+            evidence["matched_text"] = grade["matched"]
+            evidence["quote_verified"] = grade["level"] in {"exact", "strong"}
+            evidence["locator"] = locator
+        else:
+            evidence["quote_match"] = "未分級"
+            evidence["match_score"] = 0.0
+            evidence["matched_text"] = ""
+            evidence["quote_verified"] = False
+    ir.setdefault("quality", {})["grader_version"] = GRADER_VERSION
     for relation in ir.get("relations", []):
         relation.setdefault("confirmed", False)
     return ir
+
+
+@router.delete("/{scenario_id}")
+def delete_scenario(scenario_id: str):
+    _get_or_404(scenario_id)
+    delete_fn = getattr(store, "delete_scenario", None)
+    if not callable(delete_fn):
+        raise HTTPException(
+            status_code=501,
+            detail="Store deletion is not implemented. Lead must add store.delete_scenario(scenario_id: str) -> bool, deleting the scenario, versions, stored source, and source file atomically.",
+        )
+    if not delete_fn(scenario_id):
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    return {"deleted": scenario_id}
 
 
 @router.put("/{scenario_id}")

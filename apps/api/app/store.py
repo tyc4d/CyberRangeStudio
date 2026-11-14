@@ -112,6 +112,18 @@ def update(scenario_id: str, ir: dict[str, Any], note: str = "update", bump_vers
     return ir
 
 
+def delete_scenario(scenario_id: str) -> bool:
+    """Atomically remove a scenario and every per-scenario row. Returns True if it existed."""
+    with _LOCK, _conn() as c:
+        if c.execute("SELECT id FROM scenarios WHERE id=?", (scenario_id,)).fetchone() is None:
+            return False
+        c.execute("DELETE FROM scenario_versions WHERE scenario_id=?", (scenario_id,))
+        c.execute("DELETE FROM scenario_sources WHERE scenario_id=?", (scenario_id,))
+        c.execute("DELETE FROM scenario_source_files WHERE scenario_id=?", (scenario_id,))
+        c.execute("DELETE FROM scenarios WHERE id=?", (scenario_id,))
+    return True
+
+
 def set_source(scenario_id: str, input_kind: str, content: str, source_name: str | None) -> None:
     """Keep the original imported report verbatim for later review."""
     import hashlib

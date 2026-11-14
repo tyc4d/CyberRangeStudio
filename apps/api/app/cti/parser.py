@@ -39,6 +39,80 @@ _DEPENDENCY_RELATIONSHIPS = {
     "prerequisite-for": ("dependency", False),
 }
 
+def _split_layout_table_rows(content: str) -> str:
+    """Add row-wise text for pdftotext -layout ATT&CK tables with interleaved columns.
+
+    Keep the original extraction intact, then append normalized rows assembled from
+    the stable column starts visible in the table header. This preserves source text
+    while making each Use cell independently searchable as a citation.
+    """
+    lines = content.splitlines()
+    starts: list[int] | None = None
+    rows: list[list[str]] = []
+    active: list[str] | None = None
+    active_use_start = 0
+    active_recommendation_start: int | None = None
+    id_pattern = re.compile(r"^\s*(.*?)\s{2,}(T\d{4}(?:\.\d{3})?)\s{2,}")
+
+    def flush() -> None:
+        nonlocal active
+        if active and active[2].strip():
+            rows.append(active)
+        active = None
+
+    for line in lines:
+        if "Technique Title" in line and "ID" in line and "Use" in line:
+            labels = ("Technique Title", "ID", "Use", "Recommendation")
+            positions = [line.find(label) for label in labels]
+            if all(position >= 0 for position in positions):
+                starts = positions
+            flush()
+            continue
+        match = id_pattern.match(line) if starts else None
+        if match:
+            flush()
+            active_use_start = match.end()
+            recommendation = re.search(r"(?:Mitigation(?:/Detection)?|Detection):", line[active_use_start:], re.IGNORECASE)
+            active_recommendation_start = active_use_start + recommendation.start() if recommendation else None
+            use_end = active_recommendation_start or len(line)
+            active = [match.group(1).strip(), match.group(2), line[active_use_start:use_end].strip(), ""]
+            if active_recommendation_start is not None:
+                active[3] = line[active_recommendation_start:].strip()
+            continue
+        if active is None:
+            continue
+        if not line.strip() or line.lstrip().startswith(("Page ", "TLP:")):
+            flush()
+            continue
+        # Fixed layout columns, rather than first-nonspace position, are important:
+        # title/use/recommendation text may share the same physical line.
+        title_cell = line[:active_use_start].strip()
+        recommendation = re.search(r"(?:Mitigation(?:/Detection)?|Detection):", line[active_use_start:], re.IGNORECASE)
+        if recommendation and active_recommendation_start is None:
+            active_recommendation_start = active_use_start + recommendation.start()
+        use_end = active_recommendation_start or len(line)
+        use_cell = line[active_use_start:use_end].strip()
+        recommendation_cell = line[active_recommendation_start:].strip() if active_recommendation_start is not None else ""
+        if title_cell:
+            active[0] = f"{active[0]} {title_cell}".strip()
+        if use_cell:
+            active[2] = f"{active[2]} {use_cell}".strip()
+        if recommendation_cell:
+            active[3] = f"{active[3]} {recommendation_cell}".strip()
+    flush()
+
+    # Use cells contain the advisory's behavioral evidence. Append title + Use as a
+    # contiguous, row-scoped sentence; this lets paragraph parsing index each row.
+    def clean_cell(value: str) -> str:
+        value = re.sub(r"(?<=\w)-\s+(?=\w)", "-", value)
+        return re.sub(r"\s+", " ", value).strip()
+
+    normalized = [
+        f"{clean_cell(title)} ({technique_id}): {clean_cell(use)}"
+        for title, technique_id, use, _ in rows
+    ]
+    return content + ("\n\n" + "\n\n".join(normalized) if normalized else "")
+
 
 def parse_source(input_kind: str, content: str) -> tuple[list[SourceUnit], dict[str, Any] | None]:
     """Return numbered paragraphs or STIX object text, plus parsed STIX JSON."""
@@ -46,7 +120,8 @@ def parse_source(input_kind: str, content: str) -> tuple[list[SourceUnit], dict[
         raise SourceParseError("Input content is empty.")
 
     if input_kind in {"text", "markdown"}:
-        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", content.strip()) if p.strip()]
+        normalized_content = _split_layout_table_rows(content)
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", normalized_content.strip()) if p.strip()]
         return [
             SourceUnit(f"p{index}", paragraph, {"kind": "paragraph", "ref": str(index)})
             for index, paragraph in enumerate(paragraphs, start=1)
