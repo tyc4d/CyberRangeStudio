@@ -17,11 +17,18 @@ const KINDS: { v: InputKind; label: string }[] = [
   { v: "markdown", label: "Markdown" },
   { v: "stix2.1", label: "STIX 2.1 (JSON)" },
 ];
-const METHODS: { v: Method; label: string; hint: string }[] = [
-  { v: "single_pass", label: "單次分析", hint: "一次呼叫完成，最快、最省預算，適合短報告。" },
-  { v: "staged", label: "分階段分析", hint: "拆成多個步驟逐步抽取，較慢但較完整。" },
-  { v: "staged_review", label: "分階段＋複核", hint: "分階段後再做一輪複核，最慢、花費最高。" },
+/**
+ * `calls` is how many model calls the backend makes for the method (each one reads the whole report),
+ * so time and cost scale with it. `time` is a rough figure for a report of about ten pages, not a measurement.
+ */
+const METHODS: { v: Method; label: string; hint: string; calls: number; time: string }[] = [
+  { v: "single_pass", label: "單次分析", hint: "一次呼叫完成，最快、最省預算，適合短報告。", calls: 1, time: "約 1 分鐘內" },
+  { v: "staged", label: "分階段分析", hint: "先抽取事實、再組成情境，較慢但較完整。", calls: 2, time: "約 1–2 分鐘" },
+  { v: "staged_review", label: "分階段＋複核", hint: "分階段後再做一輪複核，最慢、花費最高。", calls: 3, time: "約 2–3 分鐘" },
 ];
+/** Label for text that was extracted from an uploaded PDF (the backend stores it as input_kind "text"). */
+const PDF_KIND_LABEL = "PDF（已擷取文字）";
+const usd = (n: number) => `US$${n < 0.1 ? n.toFixed(3) : n.toFixed(2)}`;
 
 const kindFromName = (name: string): InputKind | null =>
   /\.(md|markdown)$/i.test(name) ? "markdown" : /\.json$/i.test(name) ? "stix2.1" : /\.(txt|text)$/i.test(name) ? "text" : null;
@@ -77,6 +84,18 @@ export function ImportPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   // Token for the uploaded PDF original; sent with analyze so the new scenario keeps the PDF.
   const [uploadToken, setUploadToken] = useState<string | null>(null);
+  /** True while the content shown came from an uploaded PDF, so the format is not mislabelled as plain text. */
+  const [fromPdf, setFromPdf] = useState(false);
+  // Average cost per model call so far, to turn "N calls" into a rough amount. Optional: absent when there is no usage yet.
+  const [perCall, setPerCall] = useState<number | null>(null);
+  useEffect(() => {
+    let live = true;
+    api.budget().then((b) => {
+      const calls = Number(b?.calls), total = Number(b?.est_total_usd);
+      if (live && Number.isFinite(calls) && Number.isFinite(total) && calls > 0 && total > 0) setPerCall(total / calls);
+    }).catch(() => { /* the estimate is optional */ });
+    return () => { live = false; };
+  }, []);
 
   const analyze = useAction(async () => {
     const resp = await api.analyze({ input_kind: kind, content, method, name: name.trim() || undefined, upload_token: uploadToken ?? undefined });
@@ -89,6 +108,7 @@ export function ImportPage() {
   const loadFile = async (f: File) => {
     setFileErr(null);
     setUploadToken(null);
+    setFromPdf(false);
     if (f.size > 25 * 1024 * 1024) { setFileErr(`檔案 ${f.name} 超過 25 MB，請改貼上需要的段落。`); return; }
     const isPdf = /\.pdf$/i.test(f.name) || f.type === "application/pdf";
     const isBinaryish = isPdf || /\.(xml)$/i.test(f.name);
@@ -99,7 +119,8 @@ export function ImportPage() {
         const r = await api.extract(f);
         setContent(r.content);
         setUploadToken(r.upload_token ?? null);
-        setKind(r.input_kind as InputKind);
+        setKind(KINDS.some((k) => k.v === r.input_kind) ? (r.input_kind as InputKind) : "text");
+        setFromPdf(isPdf);
         if (!name.trim()) setName(r.source_name);
         setFileNote(`已從 ${f.name} 擷取文字（${r.chars.toLocaleString()} 字元）${isPdf ? "，請確認內容後再分析" : ""}`);
       } else {
@@ -133,7 +154,6 @@ export function ImportPage() {
     }
   }
   const canSubmit = content.trim().length > 0 && !analyze.busy && !(kind === "stix2.1" && stixProblem?.startsWith("內容不是"));
-  const methodHint = METHODS.find((m) => m.v === method)?.hint;
 
   if (reviewing) {
     const title = source?.source_name || ir?.name || id || "目前情境";
@@ -147,7 +167,7 @@ export function ImportPage() {
               <strong>{title}</strong>
               <span className="muted mono" style={{ fontSize: 12 }}>
                 {id}
-                {source && <> · {kindLabel(source.input_kind)} · {source.chars.toLocaleString()} 字元</>}
+                {source && <> · {hasPdf && source.input_kind === "text" ? PDF_KIND_LABEL : kindLabel(source.input_kind)} · {Number(source.chars ?? 0).toLocaleString()} 字元</>}
               </span>
             </div>
             <div className="row" style={{ gap: 8 }}>
@@ -254,8 +274,9 @@ export function ImportPage() {
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：某勒索軟體入侵報告" disabled={analyze.busy} />
           </label>
           <label className="field"><span>輸入格式</span>
-            <select value={kind} onChange={(e) => setKind(e.target.value as InputKind)} disabled={analyze.busy}>
-              {KINDS.map((k) => <option key={k.v} value={k.v}>{k.label}</option>)}
+            <select value={kind} onChange={(e) => setKind(e.target.value as InputKind)} disabled={analyze.busy}
+              title={fromPdf ? "內容是從上傳的 PDF 擷取的文字；PDF 原檔會一併保存，供之後對照。" : undefined}>
+              {KINDS.map((k) => <option key={k.v} value={k.v}>{fromPdf && k.v === "text" ? PDF_KIND_LABEL : k.label}</option>)}
             </select>
           </label>
           <label className="field"><span>分析方式</span>
@@ -264,7 +285,15 @@ export function ImportPage() {
             </select>
           </label>
         </div>
-        {methodHint && <div className="muted" style={{ fontSize: 12, marginTop: -6 }}>{methodHint}</div>}
+        <div className="muted" style={{ fontSize: 12, marginTop: -6, display: "flex", flexDirection: "column", gap: 2 }} data-testid="method-estimates">
+          {METHODS.map((m) => (
+            <div key={m.v} style={m.v === method ? { color: "var(--text)" } : undefined}>
+              <strong style={{ fontWeight: 600 }}>{m.label}</strong>：{m.hint}
+              {m.time}、{m.calls} 次模型呼叫{perCall !== null ? `、約 ${usd(perCall * m.calls)}` : m.calls > 1 ? `、花費約為單次的 ${m.calls} 倍` : ""}。
+            </div>
+          ))}
+          <div>以上是粗估，實際依報告長度而定{perCall !== null ? "；金額以目前累計用量的每次呼叫平均值推算，不是帳單" : ""}。</div>
+        </div>
 
         <div
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
@@ -285,8 +314,8 @@ export function ImportPage() {
         <label className="field"><span>報告內容 {content && <span className="mono">· {content.length.toLocaleString()} 字元</span>}</span>
           <textarea
             className={kind === "stix2.1" ? "mono" : ""}
-            rows={16} value={content} disabled={analyze.busy}
-            onChange={(e) => { setContent(e.target.value); setFileNote(null); }}
+            rows={12} value={content} disabled={analyze.busy}
+            onChange={(e) => { setContent(e.target.value); setFileNote(null); if (!e.target.value.trim()) { setFromPdf(false); setUploadToken(null); } }}
             placeholder={kind === "stix2.1" ? "貼上 STIX 2.1 bundle JSON" : "貼上情資報告全文"}
           />
         </label>

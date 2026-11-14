@@ -32,9 +32,9 @@ export function EpistemicBadge({ status, source }: { status?: EpistemicStatus; s
 // ---- citation quality: how well the quotes behind a claim match the source. Independent of the claim's own status. ----
 export type QuoteLevel = "exact" | "strong" | "partial" | "none";
 export const QUOTE_LEVEL: Record<QuoteLevel, { cls: string; mark: string; word: string; desc: string }> = {
-  exact: { cls: "status-PASS", mark: "✓", word: "逐字", desc: "原文逐字核對" },
+  exact: { cls: "status-PASS", mark: "✓", word: "逐字", desc: "與原文逐字相符（比對時忽略空白、換行與破折號寫法，並忽略 ATT&CK 編號標記，例如 [T1190]）" },
   strong: { cls: "status-PASS", mark: "✓", word: "相符", desc: "與原文高度相符" },
-  partial: { cls: "status-PARTIAL", mark: "～", word: "片段", desc: "僅關鍵字／片段相符，非原文原句" },
+  partial: { cls: "status-PARTIAL", mark: "～", word: "片段", desc: "僅關鍵字／片段相符，非原文原句（常見於把兩句接成一句，或中間省略）" },
   none: { cls: "status-FAIL", mark: "✗", word: "沒對上", desc: "原文中找不到此引文" },
 };
 /** Reads the graded match level; falls back to the older boolean. undefined = the backend did not grade this quote. */
@@ -47,10 +47,18 @@ export function quoteLevel(e?: Evidence | null): QuoteLevel | undefined {
 }
 const holds = (l?: QuoteLevel) => l === "exact" || l === "strong";
 
-/** all = every quote holds · some = at least one holds, at least one does not · none = quotes exist, none holds ·
- *  empty = no quotes attached · ungraded = quotes exist but the backend gave no match result for any of them. */
+/** all = every quote holds · some = anything in between (a quote only matched as a fragment, or some hold and some do not) ·
+ *  none = every graded quote is truly missing from the source — the ONLY state that is red / ✗ ·
+ *  empty = no quotes attached · ungraded = quotes exist but the backend gave no match result for any of them.
+ *  A fragment match is not "not found": a step whose quotes are all fragments is `some`, never `none`. */
 export type CitationState = "all" | "some" | "none" | "empty" | "ungraded";
-export interface CitationSummary { state: CitationState; total: number; ok: number; bad: number; worst?: QuoteLevel }
+export interface CitationSummary {
+  state: CitationState; total: number; ok: number; bad: number; worst?: QuoteLevel;
+  /** Quotes that only matched as a fragment / keywords. */
+  partial?: number;
+  /** Quotes that could not be found in the source at all. */
+  missing?: number;
+}
 export function summarizeCitations(refs: string[] | undefined | null, byId: Map<string, Evidence>): CitationSummary {
   const ids = Array.isArray(refs) ? refs : [];
   if (ids.length === 0) return { state: "empty", total: 0, ok: 0, bad: 0 };
@@ -60,30 +68,76 @@ export function summarizeCitations(refs: string[] | undefined | null, byId: Map<
   if (graded.length === 0) return { state: "ungraded", total: ids.length, ok: 0, bad: 0 };
   const ok = graded.filter(holds).length;
   const bad = graded.length - ok;
+  const partial = graded.filter((l) => l === "partial").length;
+  const missing = graded.filter((l) => l === "none").length;
   const order: QuoteLevel[] = ["none", "partial", "strong", "exact"];
   const worst = order.find((l) => graded.includes(l));
-  return { state: bad === 0 ? "all" : ok === 0 ? "none" : "some", total: ids.length, ok, bad, worst };
+  return { state: bad === 0 ? "all" : missing === graded.length ? "none" : "some", total: ids.length, ok, bad, worst, partial, missing };
 }
 export const CITATION: Record<CitationState, { label: string; cls: string; hint: string }> = {
   all: { label: "引文全部成立", cls: "approved", hint: "附的每一句引文都能在原文找到" },
-  some: { label: "部分引文未對上", cls: "pending", hint: "有引文在原文找不到或只對上片段，請對照原文" },
+  some: { label: "引文未完全對上", cls: "pending", hint: "有引文只對上片段（關鍵字或片段在原文裡，但不是原文原句），或有引文在原文找不到；請對照原文" },
   none: { label: "引文都沒對上", cls: "insufficient", hint: "附的引文沒有一句能在原文找到，需要人工對照原文" },
   empty: { label: "沒有附引文", cls: "absent", hint: "這個項目沒有附任何原文引文" },
   ungraded: { label: "引文未核對", cls: "", hint: "後端沒有提供這些引文的核對結果" },
 };
-/** The worst-case quality of the quotes behind one claim. Shown NEXT TO the claim status, never merged into it. */
-export function CitationBadge({ summary, source }: { summary: CitationSummary; source?: Source }) {
+/** Says exactly what was found, e.g. "2 句都只對上片段" — a fragment match is never worded as "沒對上". */
+export function citationText(s: CitationSummary): string {
+  if (s.state !== "some" && s.state !== "none") return CITATION[s.state].label;
+  const partial = s.partial ?? 0;
+  const missing = s.missing ?? 0;
+  const ungraded = Math.max(0, s.total - s.ok - partial - missing);
+  if (s.ok === 0 && ungraded === 0) {
+    if (missing === 0) return s.total === 1 ? "這句引文只對上片段" : `${partial} 句都只對上片段`;
+    if (partial === 0) return s.total === 1 ? "這句引文沒對上" : `${missing} 句引文都沒對上`;
+  }
+  const bits = [
+    s.ok > 0 && `${s.ok} 句成立`,
+    partial > 0 && `${partial} 句只對上片段`,
+    missing > 0 && `${missing} 句沒對上`,
+    ungraded > 0 && `${ungraded} 句未核對`,
+  ].filter(Boolean);
+  return bits.length ? `${s.total} 句中 ${bits.join("、")}` : CITATION[s.state].label;
+}
+export const INFERRED_BASIS = {
+  label: "推論依據（非直接證據）",
+  hint: "這個項目是推論補全：原文沒有直接寫出。這裡列的句子是推論時參考的上下文，不是直接證據，所以不套用「成立／沒對上」的判定。",
+};
+/** The worst-case quality of the quotes behind one claim. Shown NEXT TO the claim status, never merged into it.
+ *  `basis` = the claim is inferred: its quotes are context for the inference, not proof, so no verdict is shown. */
+export function CitationBadge({ summary, source, basis }: { summary: CitationSummary; source?: Source; basis?: boolean }) {
+  if (basis)
+    return <span className="badge absent" title={INFERRED_BASIS.hint}>{summary.total > 0 ? INFERRED_BASIS.label : "推論補全，未附推論依據"}</span>;
   if (summary.state === "empty" && isImported(source)) return <span className="muted" style={{ fontSize: 11 }} title={IMPORTED.hint}>匯入檔無引文</span>;
   const c = CITATION[summary.state];
-  const n = summary.state === "some" ? `（${summary.bad}/${summary.total}）` : "";
-  return <span className={`badge ${c.cls}`} title={c.hint}>{c.label}{n}</span>;
+  const onlyFragments = summary.state === "some" && summary.ok === 0 && (summary.missing ?? 0) === 0;
+  const hint = onlyFragments ? "每一句引文的關鍵字或片段都在原文裡，但都不是原文原句（常見於把兩句接成一句，或中間省略）；沒有找不到的引文。建議對照原文確認。" : c.hint;
+  return <span className={`badge ${c.cls}`} title={hint}>{citationText(summary)}</span>;
+}
+/** Human-readable position of a quote: "第 7 段" instead of "paragraph 7". Null when the backend gave none. */
+export function locatorText(locator?: { kind?: string; ref?: unknown } | null): string | null {
+  const ref = locator?.ref === undefined || locator?.ref === null ? "" : String(locator.ref).trim();
+  if (!ref) return null;
+  const num = /^\d+$/.test(ref);
+  if (locator?.kind === "page") return num ? `第 ${ref} 頁` : `頁 ${ref}`;
+  if (locator?.kind === "paragraph") return num ? `第 ${ref} 段` : `段落 ${ref}`;
+  if (locator?.kind === "stix_path") return `匯入檔位置 ${ref}`;
+  return `位置 ${ref}`;
 }
 /** One quote, shown as its match mark plus its first words — never as a bare "evidence-1" code. */
-export function QuoteSnippet({ evidence, id, max = 26 }: { evidence?: Evidence | null; id: string; max?: number }) {
+export function QuoteSnippet({ evidence, id, max = 26, basis }: { evidence?: Evidence | null; id: string; max?: number; basis?: boolean }) {
   if (!evidence) return <span className="status-FAIL" title={`找不到這筆證據（${id}）`}>✗ 找不到引文</span>;
   const level = quoteLevel(evidence);
   const m = level ? QUOTE_LEVEL[level] : undefined;
   const text = (evidence.quote ?? "").replace(/\s+/g, " ").trim();
+  // Basis for an inference: context, not proof — no match mark, so it cannot read as a pass/fail verdict.
+  if (basis)
+    return (
+      <span title={`${INFERRED_BASIS.label}\n${text}\n（${id}）`}>
+        <span className="muted" aria-label="推論依據">·</span>{" "}
+        {text.length > max ? `${text.slice(0, max)}…` : text || id}
+      </span>
+    );
   return (
     <span title={`${m ? `${m.desc}\n` : ""}${text}\n（${id}）`}>
       <span className={m?.cls ?? "muted"} aria-label={m?.word ?? "未核對"}>{m?.mark ?? "·"}</span>{" "}

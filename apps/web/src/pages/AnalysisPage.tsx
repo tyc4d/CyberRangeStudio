@@ -1,12 +1,14 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Action, EpistemicStatus, Evidence, Relation, ScenarioIR } from "@contracts";
 import { api } from "../lib/api";
 import { useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import {
   CitationBadge, Empty, EPISTEMIC, EPISTEMIC_ORDER, EpistemicBadge, isImported, Metric, NextStep, Notice, PageHead, QUOTE_LEVEL, quoteLevel,
-  QuoteSnippet, ScenarioGate, SourceTag, summarizeCitations,
+  locatorText, QuoteSnippet, ScenarioGate, SourceTag, summarizeCitations,
 } from "../components/ui";
+import { PdfViewer, usePdfSource, type PdfAnchor, type PdfLocateResult } from "../components/PdfViewer";
 
 const attackId = (raw?: string) => raw?.match(/T\d{4}(?:\.\d{3})?/i)?.[0].toUpperCase();
 
@@ -69,15 +71,61 @@ function ReproBanner({ actions }: { actions: Action[] }) {
 }
 
 /** The quotes behind one row: each shown as its match mark plus its opening words, so nobody has to decode "evidence-1". */
-function EvidenceChips({ refs, active, onPick, byId }: { refs?: string[]; active: string | null; onPick: (id: string) => void; byId: Map<string, Evidence> }) {
+function EvidenceChips({ refs, active, onPick, byId, basis }: { refs?: string[]; active: string | null; onPick: (id: string) => void; byId: Map<string, Evidence>; basis?: boolean }) {
   if (!refs?.length) return null;
   return (
     <>
       {refs.map((r) => (
         <span key={r} className={`chip ${active === r ? "on" : ""}`} style={{ display: "block", fontFamily: "inherit", padding: "2px 6px", margin: "0 0 4px", lineHeight: 1.5 }}
-          onClick={(e) => { e.stopPropagation(); onPick(r); }}><QuoteSnippet evidence={byId.get(r)} id={r} /></span>
+          onClick={(e) => { e.stopPropagation(); onPick(r); }}><QuoteSnippet evidence={byId.get(r)} id={r} basis={basis} /></span>
       ))}
     </>
+  );
+}
+
+/** An inferred claim's quotes are the basis for the inference, not direct evidence — no pass/fail verdict applies. */
+const isInferred = (x: { epistemic_status?: unknown }) => x.epistemic_status === "inferred";
+/** The analysis sometimes names a host "unknown" (as id or role) when it could not tell which machine a step ran on. */
+const isPlaceholder = (s: unknown) => typeof s !== "string" || /^(unknown|unspecified|n\/a|none|null|未知|不明)?$/i.test(s.trim());
+
+/** Result of looking one quote up in the PDF original. */
+type PdfFind = { state: "searching" } | { state: "found"; page: number; partial: boolean } | { state: "notfound" };
+
+/** The PDF original in a side drawer, with one quote located and highlighted — so "對照原文" can be done on this page. */
+function PdfDrawer({ data, evidence, anchor, find, onLocated, onClose }: {
+  data: ArrayBuffer; evidence: Evidence; anchor: PdfAnchor; find?: PdfFind;
+  onLocated: (r: PdfLocateResult) => void; onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const quote = (evidence.quote ?? "").replace(/\s+/g, " ").trim();
+  // Portalled to <body>: the page container is animated (transformed), which would otherwise capture `position: fixed`
+  // and let the drawer scroll away under the top bar.
+  return createPortal(
+    <div role="dialog" aria-label="在 PDF 中查看引文" data-testid="analysis-pdf-drawer"
+      style={{
+        position: "fixed", top: 0, right: 0, bottom: 0, width: "min(760px, 94vw)", zIndex: 1000, display: "flex", flexDirection: "column", gap: 8,
+        padding: 12, background: "var(--bg-elev)", borderLeft: "1px solid var(--border)", boxShadow: "var(--elevation)",
+      }}>
+      <div className="row" style={{ gap: 8 }}>
+        <b>在 PDF 中查看</b>
+        <button className="small" style={{ marginLeft: "auto" }} onClick={onClose}>關閉</button>
+      </div>
+      <blockquote className="quote" style={{ margin: 0, maxHeight: 84, overflow: "auto" }}>{quote}</blockquote>
+      <div className="pdf-hint" role="status" data-testid="analysis-pdf-located">
+        {!find || find.state === "searching" ? "在 PDF 中尋找這段引文…"
+          : find.state === "found" ? `已在 PDF 第 ${find.page} 頁標示這段引文${find.partial ? "（僅部分文字相符）" : ""}。`
+          : "在這份 PDF 的文字裡找不到這段引文，所以沒有標示，也沒有跳頁。"}
+      </div>
+      {/* One grid row that takes the remaining height, so the viewer scrolls inside the drawer. */}
+      <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateRows: "minmax(0, 1fr)" }}>
+        <PdfViewer data={data} filename="PDF 原檔" anchor={anchor} onLocated={onLocated} />
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -92,9 +140,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const actionName = useMemo(() => new Map(ir.actions.map((a) => [a.id, a.name])), [ir.actions]);
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const x of [...ir.actions, ...ir.relations]) c[x.epistemic_status] = (c[x.epistemic_status] ?? 0) + 1;
+    // Only the tab on screen: the number on a filter button is the number of rows that button will show.
+    for (const x of tab === "actions" ? ir.actions : ir.relations) c[x.epistemic_status] = (c[x.epistemic_status] ?? 0) + 1;
     return c;
-  }, [ir]);
+  }, [ir, tab]);
   // Per-level breakdown of how well each evidence quote matches the source (graded, not a single rate).
   const evMatch = useMemo(() => {
     const c = { exact: 0, strong: 0, partial: 0, none: 0 };
@@ -104,8 +153,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const evTotal = evMatch.exact + evMatch.strong + evMatch.partial + evMatch.none;
   // The one set of headline numbers: every step falls in exactly one bucket, so the tiles always add up to the step count.
   const steps = useMemo(() => {
-    const c = { all: 0, some: 0, none: 0, empty: 0, ungraded: 0 };
-    for (const a of ir.actions) c[summarizeCitations(a.evidence_refs, evById).state] += 1;
+    // `fragment` = no quote fully holds, but at least one matched as a fragment (so it is not "not found").
+    // `inferred` steps are kept out: their quotes are the basis for an inference, not evidence to grade.
+    const c = { all: 0, some: 0, fragment: 0, none: 0, empty: 0, ungraded: 0, inferred: 0 };
+    for (const a of ir.actions) {
+      if (isInferred(a)) { c.inferred += 1; continue; }
+      const s = summarizeCitations(a.evidence_refs, evById);
+      c[s.state === "some" && s.ok === 0 ? "fragment" : s.state] += 1;
+    }
     return c;
   }, [ir.actions, evById]);
   // An imported STIX / Attack Flow file carries no report text to check quotes against.
@@ -125,6 +180,42 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const hasRepro = useMemo(() => ir.actions.some((a) => reproOf(a) !== null), [ir.actions]);
   const cite = (x: Action | Relation) => summarizeCitations(x.evidence_refs, evById);
 
+  // Which machine a step targets, in words: the host's role instead of its internal id ("h1"), and never a bare "unknown".
+  const hostById = useMemo(() => new Map((Array.isArray(ir.hosts) ? ir.hosts : []).map((h) => [h.id, h])), [ir.hosts]);
+  const stepNo = useMemo(() => new Map(ir.actions.map((a, i) => [a.id, i + 1])), [ir.actions]);
+  const target = (a: Action): { text: string; hint: string } | null => {
+    const ref = a.target_host_ref;
+    if (ref === undefined || ref === null || ref === "") return null;
+    const host = hostById.get(ref);
+    const role = typeof host?.role === "string" ? host.role.trim() : "";
+    if (isPlaceholder(ref) || (host && isPlaceholder(role)))
+      return { text: `未指明的主機（步驟 ${stepNo.get(a.id) ?? "?"}）`, hint: "分析沒有判斷出這一步發生在哪一台主機。可以到「缺失補充」補上。" };
+    return { text: role || String(ref), hint: `內部代號：${ref}` };
+  };
+
+  // "在 PDF 中查看": the same viewer and locating as the 缺失補充 page, opened in a drawer for one quote.
+  const pdf = usePdfSource(ir.id);
+  const seqRef = useRef(0);
+  const pendingPdf = useRef<{ id: string; seq: number } | null>(null);
+  const [pdfView, setPdfView] = useState<{ id: string; anchor: PdfAnchor } | null>(null);
+  const [pdfFound, setPdfFound] = useState<Record<string, PdfFind>>({});
+  const viewInPdf = (e: Evidence) => {
+    const seq = ++seqRef.current;
+    // One group = one passage: the source wording the backend matched (if any), then the quote itself.
+    const texts = [e.matched_text, e.quote].filter((t): t is string => typeof t === "string" && t.trim().length > 0);
+    pendingPdf.current = { id: e.id, seq };
+    setActiveEv(e.id);
+    setPdfFound((m) => ({ ...m, [e.id]: { state: "searching" } }));
+    setPdfView({ id: e.id, anchor: { groups: [texts], seq } });
+  };
+  const onPdfLocated = useCallback((r: PdfLocateResult) => {
+    const p = pendingPdf.current;
+    if (!p || p.seq !== r.seq) return;
+    setPdfFound((m) => ({ ...m, [p.id]: r.found ? { state: "found", page: r.page, partial: r.partial } : { state: "notfound" } }));
+  }, []);
+  const closePdf = useCallback(() => setPdfView(null), []);
+  const pdfEvidence = pdfView ? evById.get(pdfView.id) : undefined;
+
   const pickEv = (id: string) => {
     setActiveEv(id);
     setFocusRefs(null);
@@ -136,7 +227,15 @@ function Body({ ir }: { ir: ScenarioIR }) {
     <div className="page">
       <PageHead title="分析結果" />
 
-      {q?.provisional && <Notice kind="warn" title="暫定結果">後端標示這份分析為暫定（provisional），品質指標尚未完整。</Notice>}
+      {q?.provisional && (
+        <Notice kind="warn" title="暫定結果：自動分析，尚未經人工確認">
+          <div>這份分析是程式自動產生的，內容與下面的數字都還沒有人逐項確認過，可能有錯或有漏。</div>
+          <div>
+            你可以直接往下做，不必等待。建議的下一步：先看標示「證據不足」或引文沒有完全對上的項目，對照原文確認；
+            再到「缺失補充」補上報告沒寫的資訊；最後在流程圖頁確認步驟之間的關係。在那之前，請不要把這份結果當成定論。
+          </div>
+        </Notice>
+      )}
 
       {noQuotes && (
         <Notice title={imported ? "這個情境來自匯入檔，沒有原文引文可核對" : "這份分析沒有附原文引文"}>
@@ -145,13 +244,15 @@ function Body({ ir }: { ir: ScenarioIR }) {
             : "沒有引文就無法核對步驟是否有原文依據，下面的指標因此留空。"}
         </Notice>
       )}
-      <div className="grid c3" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+      <div className="grid c4" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
         <Metric k="全部引文成立的步驟" v={tile(steps.all)} placeholder="不適用" hint="這個步驟附的每一句引文，都能在原文找到（逐字或高度相符）" />
-        <Metric k="部分引文成立的步驟" v={tile(steps.some)} placeholder="不適用" hint="有的引文對得上原文，有的對不上或只對上片段" />
-        <Metric k="引文都沒對上的步驟" v={tile(steps.none)} placeholder="不適用" hint="附了引文，但沒有一句能在原文找到；需要人工對照原文" />
+        <Metric k="部分引文成立的步驟" v={tile(steps.some)} placeholder="不適用" hint="至少一句引文對得上原文，其餘只對上片段或找不到" />
+        <Metric k="引文只對上片段的步驟" v={tile(steps.fragment)} placeholder="不適用" hint="沒有一句引文是原文原句，但至少一句的關鍵字或片段在原文裡（常見於把兩句接成一句，或中間省略）；建議對照原文" />
+        <Metric k="引文都找不到的步驟" v={tile(steps.none)} placeholder="不適用" hint="附了引文，但每一句都無法在原文找到，連片段也沒有；需要人工對照原文" />
       </div>
       <div className="muted" style={{ fontSize: 12, marginTop: -6 }}>
         共 {ir.actions.length} 個步驟
+        {!noQuotes && steps.inferred > 0 && `，另有 ${steps.inferred} 個是推論補全（所附句子是推論依據，不列入引文核對）`}
         {!noQuotes && steps.empty > 0 && `，另有 ${steps.empty} 個沒有附引文`}
         {!noQuotes && steps.ungraded > 0 && `，另有 ${steps.ungraded} 個的引文後端沒有回報核對結果`}
         {noQuotes && ir.actions.length > 0 && "，都沒有附引文"}
@@ -191,14 +292,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
             actions.length === 0 ? <Empty>{ir.actions.length ? "沒有符合篩選條件的攻擊行為。" : "這份分析沒有抽取到攻擊行為。"}</Empty> : (
               <table className="tbl" style={{ tableLayout: "fixed", width: "100%", minWidth: hasRepro ? 760 : 640 }}>
                 <colgroup><col /><col style={{ width: 170 }} /><col style={{ width: 118 }} />{hasRepro && <col style={{ width: 120 }} />}<col style={{ width: 230 }} /></colgroup>
-                <thead><tr><th>攻擊行為</th><th>ATT&CK</th><th>主張狀態</th>{hasRepro && <th title="本部署環境能不能建置並檢查這一步；不代表攻擊已執行">可否重現</th>}<th>引文核對</th></tr></thead>
+                <thead><tr><th>攻擊行為</th><th>ATT&CK</th><th>主張狀態</th>{hasRepro && <th title="本部署環境能不能建置並檢查這一步；不代表攻擊已執行">可否重現</th>}<th title="所附引文能不能在原文找到。推論補全的項目不做這項判定，只列出推論依據。">引文核對</th></tr></thead>
                 <tbody>
                   {actions.map((a) => (
                     <tr key={a.id} className="clickable" onClick={() => { setFocusRefs(a.evidence_refs ?? []); setActiveEv(null); }}>
                       <td>
                         <div style={{ fontWeight: 600 }}>{a.name}</div>
                         {a.description && <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{a.description}</div>}
-                        {a.target_host_ref && <div className="mono muted" style={{ marginTop: 2 }}>目標：{a.target_host_ref}</div>}
+                        {(() => { const t = target(a); return t && <div className="muted" style={{ fontSize: 12, marginTop: 2 }} title={t.hint}>目標：{t.text}</div>; })()}
                       </td>
                       <td style={{ overflowWrap: "anywhere" }}>
                         {(() => {
@@ -221,8 +322,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
                       <td className="nowrap"><EpistemicBadge status={a.epistemic_status} source={a.source} /><div style={{ marginTop: 4 }}><SourceTag source={a.source} /></div></td>
                       {hasRepro && <td className="nowrap"><ReproBadge action={a} /></td>}
                       <td>
-                        <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(a)} source={a.source} /></div>
-                        <EvidenceChips refs={a.evidence_refs} active={activeEv} onPick={pickEv} byId={evById} />
+                        <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(a)} source={a.source} basis={isInferred(a)} /></div>
+                        <EvidenceChips refs={a.evidence_refs} active={activeEv} onPick={pickEv} byId={evById} basis={isInferred(a)} />
                       </td>
                     </tr>
                   ))}
@@ -242,8 +343,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <td className="muted" style={{ fontSize: 12 }}>{r.rationale ?? "—"}</td>
                     <td className="nowrap"><EpistemicBadge status={r.epistemic_status} source={r.source} /><div style={{ marginTop: 4 }}><SourceTag source={r.source} /></div></td>
                     <td>
-                      <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(r)} source={r.source} /></div>
-                      <EvidenceChips refs={r.evidence_refs} active={activeEv} onPick={pickEv} byId={evById} />
+                      <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(r)} source={r.source} basis={isInferred(r)} /></div>
+                      <EvidenceChips refs={r.evidence_refs} active={activeEv} onPick={pickEv} byId={evById} basis={isInferred(r)} />
                     </td>
                   </tr>
                 ))}
@@ -258,6 +359,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
             <span className="muted" style={{ fontSize: 12 }}>{shownEvidence.length} / {evidence.length}</span>
             {focusRefs && <div className="right"><button className="small" onClick={() => setFocusRefs(null)}>顯示全部</button></div>}
           </div>
+          {evidence.length > 0 && (pdf.state === "none" || pdf.state === "error") && (
+            <div className="muted" style={{ fontSize: 12, padding: "8px 12px 0" }}>
+              {pdf.state === "none" ? "這個情境沒有 PDF 原檔，無法在這一頁對照 PDF。" : "PDF 原檔讀取失敗，暫時無法在這一頁對照 PDF。"}
+            </div>
+          )}
           <div style={{ maxHeight: "62vh", overflow: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
             {evidence.length === 0 ? <Empty>{imported ? "匯入檔沒有附原文引文。" : "這份分析沒有附原文引文。"}</Empty>
               : shownEvidence.length === 0 ? <Empty>所選項目沒有附引文。</Empty>
@@ -272,15 +378,34 @@ function Body({ ir }: { ir: ScenarioIR }) {
                       const tip = e.matched_text ? `${M.desc}\n原文片段：${e.matched_text}` : M.desc;
                       return <span className={M.cls} style={{ fontSize: 12, fontWeight: 700 }} title={tip}>{M.mark} {M.word}</span>;
                     })()}
-                    {e.locator?.ref && <span className="muted mono">{e.locator.kind ?? "位置"} {e.locator.ref}</span>}
+                    {(() => {
+                      // Where the quote sits, in words. Once it has been located in the PDF, the real page number is known too.
+                      const where = locatorText(e.locator);
+                      const f = pdfFound[e.id];
+                      return (
+                        <>
+                          {where && <span className="muted" style={{ fontSize: 12 }} title="分析時記錄的原文位置（依原文文字的段落計數）">{where}</span>}
+                          {f?.state === "found" && <span className="muted" style={{ fontSize: 12 }}>PDF 第 {f.page} 頁</span>}
+                        </>
+                      );
+                    })()}
                     <span className="muted mono" style={{ marginLeft: "auto", fontSize: 11 }}>{e.id}</span>
                   </div>
                   <blockquote className="quote" style={activeEv === e.id ? { borderLeftColor: "var(--accent)" } : undefined}>{e.quote}</blockquote>
+                  {pdf.state === "ready" ? (
+                    <button className="link" style={{ fontSize: 12, marginTop: 4 }} data-testid="view-in-pdf" onClick={() => viewInPdf(e)}>在 PDF 中查看</button>
+                  ) : pdf.state === "loading" ? (
+                    <span className="muted" style={{ fontSize: 12 }}>PDF 原檔載入中…</span>
+                  ) : null}
                 </div>
               ))}
           </div>
         </div>
       </div>
+
+      {pdfView && pdfEvidence && pdf.data && (
+        <PdfDrawer data={pdf.data} evidence={pdfEvidence} anchor={pdfView.anchor} find={pdfFound[pdfView.id]} onLocated={onPdfLocated} onClose={closePdf} />
+      )}
 
       <NextStep prev={{ to: "/import", label: "情資匯入" }} next={{ to: "/missing", label: "缺失補充" }} />
     </div>
