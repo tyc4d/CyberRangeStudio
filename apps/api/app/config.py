@@ -1,6 +1,7 @@
 """Central config. Reads from environment; never hardcodes secrets."""
 from __future__ import annotations
 
+import ipaddress
 import os
 from pathlib import Path
 
@@ -8,6 +9,15 @@ API_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = API_DIR.parent.parent
 DATA_DIR = Path(os.getenv("CR_DATA_DIR", API_DIR / "data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# --- Network access ---
+# Source addresses allowed to call the API (comma-separated CIDRs). Only matters when uvicorn
+# is bound beyond loopback (--host 0.0.0.0); everything else gets 403. The API has no auth.
+ALLOWED_CIDRS = tuple(
+    ipaddress.ip_network(c.strip(), strict=False)
+    for c in os.getenv("CR_ALLOWED_CIDRS", "127.0.0.0/8,::1/128,192.168.0.0/16").split(",")
+    if c.strip()
+)
 
 # --- OpenAI / budget ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

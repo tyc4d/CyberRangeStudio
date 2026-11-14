@@ -1,9 +1,13 @@
 """CyberRange API. Single FastAPI process. Routers are owned per-module (see docs/decisions/0001)."""
 from __future__ import annotations
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import ipaddress
 
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app import config
 from app.llm import budget
 
 app = FastAPI(title="CyberRange API", version="0.1.0")
@@ -14,6 +18,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def restrict_source_ip(request: Request, call_next):
+    """Reject callers outside config.ALLOWED_CIDRS (loopback + LAN by default)."""
+    host = request.client.host if request.client else None
+    try:
+        ip = ipaddress.ip_address(host) if host else None
+    except ValueError:
+        ip = None  # non-TCP peer (unix socket, in-process test client)
+    if ip is not None:
+        ip = getattr(ip, "ipv4_mapped", None) or ip
+        if not any(ip in net for net in config.ALLOWED_CIDRS):
+            return JSONResponse({"detail": "source address not allowed"}, status_code=403)
+    return await call_next(request)
 
 
 @app.get("/api/health")

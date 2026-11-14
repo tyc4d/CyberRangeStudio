@@ -115,3 +115,46 @@ class LocalComposeIntegrationTests(unittest.TestCase):
                     client.post(f"/api/deploy/{scenario_id}/down")
                 if output_dir.exists() and not output_dir.is_symlink():
                     shutil.rmtree(output_dir)
+
+
+class PinnedImagePreparationTests(unittest.TestCase):
+    def test_compose_up_pulls_curated_digest_images_before_start(self):
+        calls = []
+        pinned = "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82"
+
+        def fake_run(args, timeout=60):
+            calls.append(args)
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_compose_prefix", return_value=(
+                    ["docker", "compose", "-p", "cr-demo-image-test"], None)), \
+                patch.object(manager, "_real_image_refs", return_value=([pinned], None)), \
+                patch.object(manager, "_run", side_effect=fake_run):
+            result = manager._compose_command("image-test", "up", ["-d", "--pull", "never"])
+
+        self.assertEqual(result["returncode"], 0)
+        pull_index = next(index for index, args in enumerate(calls) if args[:3] == ["docker", "pull", pinned])
+        up_index = next(index for index, args in enumerate(calls) if "up" in args)
+        self.assertLess(pull_index, up_index)
+
+    def test_real_image_pull_failure_stops_before_compose_up(self):
+        calls = []
+        pinned = "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2"
+
+        def fake_run(args, timeout=60):
+            calls.append(args)
+            if args[:3] == ["docker", "pull", pinned]:
+                return {"returncode": 1, "stdout": "", "stderr": "pull denied"}
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_compose_prefix", return_value=(
+                    ["docker", "compose", "-p", "cr-demo-image-test"], None)), \
+                patch.object(manager, "_real_image_refs", return_value=([pinned], None)), \
+                patch.object(manager, "_run", side_effect=fake_run):
+            result = manager._compose_command("image-test", "up", ["-d", "--pull", "never"])
+
+        self.assertEqual(result["returncode"], 1)
+        self.assertIn("could not pull pinned catalogue image", result["stderr"])
+        self.assertFalse(any("up" in args for args in calls))

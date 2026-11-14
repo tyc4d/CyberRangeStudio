@@ -23,7 +23,8 @@
 ```bash
 bash scripts/setup.sh                                   # 一次性：建 venv、裝依賴
 source .venv/bin/activate && set -a && . ./.env && set +a
-cd apps/api && CR_DATA_DIR=$PWD/data uvicorn app.main:app --port 8077   # 後端
+cd apps/api && CR_DATA_DIR=$PWD/data uvicorn app.main:app --port 8077   # 後端（僅本機）
+# 開放給區網：加 --host 0.0.0.0。來源限 CR_ALLOWED_CIDRS（預設本機 + 192.168.0.0/16），其餘回 403。
 # 另一個終端：
 cd apps/web && export PATH=$HOME/.nvm/versions/node/v22.23.3/bin:$PATH && npm install && npm run dev
 # 完整後端示範（需 Docker）：

@@ -12,6 +12,7 @@ import yaml
 from cr_contracts import iter_errors
 
 from app import config, store
+from app.planner.catalogue import component_by_id
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
 _PORT_MIN = 1
@@ -51,24 +52,58 @@ def generated_dir(scenario_id: str, create: bool = False) -> Path:
     return output
 
 
-def _resolved_component(host: dict[str, Any]) -> tuple[str | None, str | None, bool]:
-    """Resolve a plan host to a harmless local component.
+def _resolved_component(host: dict[str, Any], scenario_id: str, host_id: str) -> dict[str, Any]:
+    """Resolve only curated catalogue IDs to real images; everything else is a demo.
 
-    By design the range never deploys the real-world software (nginx, postgres, ...).
-    A host that exposes a listening service becomes a harmless HTTP stand-in (demo-api)
-    on that port; a host with no service becomes a sleeping client/toolbox (demo-client).
-    The catalogue component (what it STANDS FOR) travels on the service as is_substitute,
-    and module 8 records the difference in the fidelity report. `substitute=True` here
-    marks that this image is a benign stand-in, not the real software.
+    Explicit ``component_mode`` wins. For older plans, ``oss-*`` catalogue IDs mean
+    real and ``demo-*`` IDs mean a harmless stand-in. Arbitrary image strings are never
+    passed through to Compose.
     """
-    hint = (host.get("image_hint") or host.get("role") or "").strip().lower()
+    hint = (host.get("image_hint") or "").strip().lower()
+    catalogue_entry = component_by_id(hint)
+    requested_mode = host.get("component_mode")
+    if requested_mode is None:
+        requested_mode = "real" if hint.startswith("oss-") else "substitute"
+
+    if requested_mode == "real":
+        if not catalogue_entry or not catalogue_entry.get("image") or not catalogue_entry.get("pinned_image") or not catalogue_entry.get("digest"):
+            return {"runtime_component": None, "component": "unsupported", "component_mode": "real",
+                    "image": None, "version": None, "digest": None, "catalogue": catalogue_entry,
+                    "substitute": False}
+        return {"runtime_component": "real", "component": catalogue_entry["id"], "component_mode": "real",
+                "image": catalogue_entry["pinned_image"], "version": catalogue_entry.get("version"),
+                "digest": catalogue_entry.get("digest"), "catalogue": catalogue_entry,
+                "substitute": False}
+
+    if requested_mode != "substitute":
+        return {"runtime_component": None, "component": "unsupported", "component_mode": requested_mode,
+                "image": None, "version": None, "digest": None, "catalogue": catalogue_entry,
+                "substitute": False}
+
     if hint in {"demo-client", "cr-demo-client", "python", "python-worker"}:
-        return "demo-client", _DEMO_IMAGE, False
-    if hint in {"demo-api", "cr-demo-api", "harmless-http-demo"}:
-        return "demo-api", None, True
-    if host.get("services"):
-        return "demo-api", None, True
-    return "demo-client", _DEMO_IMAGE, True
+        runtime_component = "demo-client"
+        image = _DEMO_IMAGE
+        version = "pinned Python demo client base"
+        digest = _DEMO_IMAGE.partition("@")[-1] if "@" in _DEMO_IMAGE else None
+        base_image = None
+    elif hint in {"demo-api", "cr-demo-api", "harmless-http-demo"} or host.get("services"):
+        runtime_component = "demo-api"
+        image = f"cr-demo-{scenario_id}-{host_id}:local"
+        version = "local demo-app template"
+        digest = None
+        base_image = _DEMO_IMAGE
+    else:
+        runtime_component = "demo-client"
+        image = _DEMO_IMAGE
+        version = "pinned Python demo client base"
+        digest = _DEMO_IMAGE.partition("@")[-1] if "@" in _DEMO_IMAGE else None
+        base_image = None
+    is_explicit_demo_client = hint in {"demo-client", "cr-demo-client", "python", "python-worker"}
+    is_substitute = not (runtime_component == "demo-client" and is_explicit_demo_client)
+    return {"runtime_component": runtime_component, "component": runtime_component,
+            "component_mode": "substitute", "image": image, "version": version,
+            "digest": digest, "base_image": base_image, "catalogue": catalogue_entry,
+            "substitute": is_substitute}
 
 
 def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -96,7 +131,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         errors.append("at least one internal network is required")
 
     next_published_port = _PUBLISHED_PORT_MIN
-    supported_by_host: dict[str, str | None] = {}
+    resolved_by_host: dict[str, dict[str, Any]] = {}
     for host in hosts:
         host_id = host.get("id", "")
         if not _ID_RE.fullmatch(host_id):
@@ -104,20 +139,34 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         if host_id in host_ids:
             errors.append(f"duplicate host id: {host_id}")
         host_ids.add(host_id)
-        component, image, substitute = _resolved_component(host)
-        supported_by_host[host_id] = component
+        resolved = _resolved_component(host, scenario_id, host_id)
+        resolved_by_host[host_id] = resolved
+        component = resolved["runtime_component"]
         host_report: dict[str, Any] = {
             "host_id": host_id,
             "image_hint": host.get("image_hint"),
-            "component": component or "unsupported",
+            "component": resolved["component"],
+            "component_mode": resolved["component_mode"],
             "deployable": component is not None,
-            "image": image or (f"cr-demo-{scenario_id}-{host_id}:local" if component == "demo-api" else None),
-            "substitute": substitute,
+            "image": resolved["image"],
+            "version": resolved["version"],
+            "digest": resolved["digest"],
+            "substitute": resolved["substitute"],
         }
+        if resolved.get("base_image"):
+            host_report["base_image"] = resolved["base_image"]
+        if resolved.get("catalogue"):
+            host_report["catalogue_component"] = resolved["catalogue"]["id"]
+        if resolved["substitute"]:
+            host_report["fidelity_difference"] = (
+                "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
+            )
         if component is None:
             host_report["reason"] = "image_hint is not in the safe local component allowlist"
+        elif resolved["component_mode"] == "real":
+            host_report["reason"] = "resolved to a catalogue image pinned by version and sha256 digest"
         else:
-            host_report["reason"] = "mapped to a fixed-version local demo component"
+            host_report["reason"] = "mapped to a harmless local demo component"
         components.append(host_report)
 
         host_networks = host.get("networks", [])
@@ -136,8 +185,14 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 errors.append(f"host {host_id} has invalid service port {port!r}")
                 continue
             if service.get("protocol", "tcp") != "tcp":
-                errors.append(f"host {host_id} declares a UDP service, which the harmless demo component does not implement")
-            if component == "demo-api":
+                errors.append(f"host {host_id} declares a non-TCP service, which is not supported")
+            if component == "demo-api" or component == "real":
+                if component == "real":
+                    catalogue = resolved["catalogue"] or {}
+                    supported_ports = {p.get("port") for p in catalogue.get("default_ports", [])
+                                       if p.get("protocol", "tcp") == "tcp"}
+                    if port not in supported_ports:
+                        errors.append(f"host {host_id} declares port {port}, unsupported by {catalogue.get('id')}")
                 host_port = next_published_port
                 if host_port > _PUBLISHED_PORT_MAX:
                     errors.append("plan needs more than 1000 host ports in the allowed 42000-42999 range")
@@ -160,7 +215,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         if port is not None and (not isinstance(port, int) or isinstance(port, bool) or not _PORT_MIN <= port <= _PORT_MAX):
             errors.append(f"connection {source} -> {target} has invalid port {port!r}")
         if connection.get("protocol", "tcp") != "tcp":
-            errors.append(f"connection {source} -> {target} uses UDP, which is not supported by the harmless demo components")
+            errors.append(f"connection {source} -> {target} uses a non-TCP protocol, which is not supported")
         if port is not None and connection.get("protocol", "tcp") == "tcp":
             target_services = next(h for h in hosts if h["id"] == target).get("services", [])
             if not any(s.get("port") == port and s.get("protocol", "tcp") == "tcp" for s in target_services):
@@ -177,10 +232,14 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "deployable": not errors,
         "components": components,
         "host_port_mappings": mappings,
-        "networks": [{"id": n.get("id"), "internal": bool(n.get("internal", True))} for n in networks],
+        "networks": [
+            {"id": n.get("id"), "name": f"cr-demo-{scenario_id}-{n.get('id')}",
+             "internal": True, "plan_internal": bool(n.get("internal", True))}
+            for n in networks
+        ],
         "errors": errors,
     }
-    return {"hosts": hosts, "networks": networks, "components": supported_by_host, "mappings": mappings}, report
+    return {"hosts": hosts, "networks": networks, "components": resolved_by_host, "mappings": mappings}, report
 
 
 def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
@@ -196,7 +255,8 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
 
     for host in normalized["hosts"]:
         host_id = host["id"]
-        component = normalized["components"][host_id]
+        resolved = normalized["components"][host_id]
+        component = resolved["runtime_component"]
         service: dict[str, Any] = {
             "container_name": f"cr-demo-{scenario_id}-{host_id}",
             "networks": list(dict.fromkeys(host["networks"])),
@@ -206,7 +266,34 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             "security_opt": ["no-new-privileges:true"],
             "restart": "no",
         }
-        if component == "demo-api":
+        if component == "real":
+            catalogue = resolved["catalogue"]
+            service["image"] = resolved["image"]
+            service["tmpfs"] = list(service["tmpfs"])
+            component_id = catalogue["id"]
+            if component_id == "oss-nginx":
+                service["tmpfs"].extend([
+                    "/var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755",
+                    "/var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755",
+                    "/var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755",
+                ])
+                service["cap_add"] = ["NET_BIND_SERVICE"]
+                service["user"] = "101:101"
+            elif component_id == "oss-httpd":
+                service["tmpfs"].append("/usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755")
+                service["cap_add"] = ["NET_BIND_SERVICE"]
+                service["user"] = "1:1"
+            elif component_id == "oss-postgres":
+                service["tmpfs"].extend([
+                    "/var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700",
+                    "/var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700",
+                ])
+                service["environment"] = {"POSTGRES_HOST_AUTH_METHOD": "trust"}
+                service["user"] = "70:70"
+            elif component_id == "oss-attacker":
+                service["command"] = ["sh", "-c", "sleep 2147483647"]
+                service["user"] = "65532:65532"
+        elif component == "demo-api":
             service["image"] = f"cr-demo-{scenario_id}-{host_id}:local"
             service["build"] = {"context": "../../templates/demo-app", "dockerfile": "Dockerfile", "pull": False}
             port = host.get("services", [{}])[0].get("port", 8080)
@@ -216,6 +303,18 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
                 "test": ["CMD", "python", "-c", f"import urllib.request; urllib.request.urlopen('http://127.0.0.1:{port}/health', timeout=2).read()"],
                 "interval": "5s", "timeout": "3s", "retries": 5, "start_period": "2s",
             }
+        elif component == "demo-client":
+            service["image"] = _DEMO_IMAGE
+            service["command"] = ["python", "-c", "import time; time.sleep(2147483647)"]
+            service["user"] = "65532:65532"
+            service["healthcheck"] = {
+                "test": ["CMD", "python", "-c", "pass"],
+                "interval": "10s", "timeout": "3s", "retries": 3,
+            }
+        else:
+            raise PlanError([f"host {host_id} could not be resolved to a supported component"])
+
+        if component in {"demo-api", "real"}:
             service_ports = []
             for mapping in ports_by_host.get(host_id, []):
                 service_ports.append({
@@ -225,14 +324,6 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             if service_ports:
                 service["ports"] = service_ports
                 service["expose"] = [str(p["target"]) for p in service_ports]
-        else:
-            service["image"] = _DEMO_IMAGE
-            service["command"] = ["python", "-c", "import time; time.sleep(2147483647)"]
-            service["user"] = "65532:65532"
-            service["healthcheck"] = {
-                "test": ["CMD", "python", "-c", "pass"],
-                "interval": "10s", "timeout": "3s", "retries": 3,
-            }
         service_doc[host_id] = service
 
     document = {
@@ -266,6 +357,13 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
             raise PlanError([f"unsafe service name: {service_name}"])
         if service.get("privileged", False):
             raise PlanError([f"service {service_name} may not run privileged"])
+        if "ALL" not in service.get("cap_drop", []):
+            raise PlanError([f"service {service_name} must drop all Linux capabilities"])
+        if "no-new-privileges:true" not in service.get("security_opt", []):
+            raise PlanError([f"service {service_name} must set no-new-privileges"])
+        image = service.get("image", "")
+        if image.startswith(("nginx:", "httpd:", "postgres:", "alpine:")) and "@sha256:" not in image:
+            raise PlanError([f"service {service_name} must use a versioned image pinned by digest"])
         for port in service.get("ports", []):
             published = int(port["published"])
             if not _PUBLISHED_PORT_MIN <= published <= _PUBLISHED_PORT_MAX or port.get("host_ip") != "127.0.0.1":
@@ -273,6 +371,10 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
     for network in doc.get("networks", {}).values():
         if not network.get("internal") or not network.get("name", "").startswith(f"cr-demo-{scenario_id}-"):
             raise PlanError(["all generated networks must be internal and use the cr-demo- prefix"])
+    for service_name, service in doc["services"].items():
+        if service.get("image", "").startswith("postgres:"):
+            if service.get("environment", {}).get("POSTGRES_HOST_AUTH_METHOD") != "trust":
+                raise PlanError([f"service {service_name} must use isolated PostgreSQL trust authentication"])
 
 
 def generate(scenario_id: str) -> dict[str, Any]:

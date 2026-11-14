@@ -10,8 +10,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from app import config
 from app.iac.generator import PlanError, generated_dir, get_generated, validate_id
+from app.planner.catalogue import load_components
 
 _BASE_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
 
@@ -124,6 +127,27 @@ def _run(args: list[str], timeout: int = 60) -> dict[str, Any]:
         return {"returncode": 127, "stdout": "", "stderr": str(exc)}
 
 
+def _real_image_refs(scenario_id: str) -> tuple[list[str] | None, str | None]:
+    """Return only catalogue-pinned images from the validated generated Compose file."""
+    try:
+        generated = get_generated(scenario_id)
+        document = yaml.safe_load(generated["compose"])
+    except (FileNotFoundError, PlanError, yaml.YAMLError) as exc:
+        return None, str(exc)
+    allowed = {entry.get("pinned_image") for entry in load_components()
+               if entry.get("pinned_image") and entry.get("digest")}
+    images: list[str] = []
+    for service_name, service in document.get("services", {}).items():
+        image = service.get("image")
+        if not image or image == _BASE_IMAGE or image.startswith("cr-demo-") and service.get("build"):
+            continue
+        if image not in allowed or "@sha256:" not in image:
+            return None, f"refusing to pull non-catalogue or unpinned image for {service_name}: {image!r}"
+        if image not in images:
+            images.append(image)
+    return images, None
+
+
 def _compose_command(scenario_id: str, operation: str, extra: list[str] | None = None,
                      timeout: int = 60) -> dict[str, Any]:
     docker, error = _docker_context_preflight()
@@ -139,9 +163,18 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
         return {"returncode": config_check["returncode"], "stdout": config_check["stdout"],
                 "stderr": f"compose configuration rejected: {config_check['stderr']}"}
     if operation == "up":
-        image_check = _run([docker, "image", "inspect", _BASE_IMAGE], timeout=15)
-        if image_check["returncode"] != 0:
-            return {"returncode": 125, "stdout": "", "stderr": f"required base image is not cached locally: {_BASE_IMAGE}; network pulls are disabled"}
+        helper_pull = _run([docker, "pull", _BASE_IMAGE], timeout=180)
+        if helper_pull["returncode"] != 0:
+            return {"returncode": helper_pull["returncode"], "stdout": helper_pull["stdout"],
+                    "stderr": f"could not pull pinned local demo/probe base image {_BASE_IMAGE}: {helper_pull['stderr']}"}
+        real_images, image_error = _real_image_refs(scenario_id)
+        if image_error:
+            return {"returncode": 2, "stdout": "", "stderr": image_error}
+        for image in real_images or []:
+            pulled = _run([docker, "pull", image], timeout=180)
+            if pulled["returncode"] != 0:
+                return {"returncode": pulled["returncode"], "stdout": pulled["stdout"],
+                        "stderr": f"could not pull pinned catalogue image {image}: {pulled['stderr']}"}
     command = prefix + [operation] + (extra or [])
     return _run(command, timeout=timeout)
 
@@ -155,6 +188,33 @@ def exec_in_service(scenario_id: str, service_id: str, command: list[str], timeo
     if not command or any(not isinstance(arg, str) or "\x00" in arg for arg in command):
         return {"returncode": 2, "stdout": "", "stderr": "invalid internal check command"}
     return _compose_command(scenario_id, "exec", ["-T", service_id, *command], timeout=timeout)
+
+
+def probe_in_service(scenario_id: str, service_id: str, python_script: str, timeout: int = 10) -> dict[str, Any]:
+    """Run a network probe inside the source container's network namespace.
+
+    The source image may be nginx/httpd/PostgreSQL and need not contain Python or a
+    network utility. A short-lived, non-root pinned Python helper shares only that
+    service's network namespace and is removed immediately after the probe.
+    """
+    scenario_id = validate_id(scenario_id)
+    validate_id(service_id)
+    if not isinstance(python_script, str) or not python_script or "\x00" in python_script:
+        return {"returncode": 2, "stdout": "", "stderr": "invalid internal network probe"}
+    docker, error = _docker_context_preflight()
+    if error or not docker:
+        return {"returncode": 127, "stdout": "", "stderr": error or "docker executable is not installed"}
+    _, error = _compose_prefix(scenario_id, docker)
+    if error:
+        return {"returncode": 2, "stdout": "", "stderr": error}
+    source_container = f"{project_name(scenario_id)}-{service_id}"
+    command = [
+        docker, "run", "--rm", "--pull=never", "--network", f"container:{source_container}",
+        "--read-only", "--cap-drop=ALL", "--security-opt", "no-new-privileges:true",
+        "--user", "65532:65532", "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+        _BASE_IMAGE, "python", "-c", python_script,
+    ]
+    return _run(command, timeout=timeout)
 
 
 def _parse_compose_ps(output: str) -> list[dict[str, Any]]:
