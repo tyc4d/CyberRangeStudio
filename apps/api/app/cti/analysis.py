@@ -51,6 +51,46 @@ _IOC_CONTEXT_RE = re.compile(
     r"connection|connected|callback|download(?:ed)?|beacon|resolved?|observed|phishing|infra)\b",
     re.IGNORECASE,
 )
+# Placeholder words a model may use where the source names no machine. They are never host ids.
+_RESERVED_HOST_IDS = frozenset({"unknown", "unspecified", "none", "null", "n/a", "na", "any", "various", "multiple"})
+
+# Words by which a source sentence itself states order or enablement. A relation is only
+# "supported" when a verified quote contains such wording; a quote that merely describes one
+# endpoint proves the action, not the edge.
+_TEMPORAL_CUE_RE = re.compile(
+    r"\b(?:then|after(?:wards?)?|following|followed[\s-]by|subsequent(?:ly)?|next|once|upon|before|prior\s+to|"
+    r"preced\w+|later|finally|first|initially|earlier|thereafter|when|occurs[\s-](?:before|after)|"
+    r"as\s+part\s+of)\b|[之隨]後|然後|接著|之前|首先|最後",
+    re.IGNORECASE,
+)
+_DEPENDENCY_CUE_RE = re.compile(
+    r"\b(?:using|by\s+(?:exploiting|using|leveraging|abusing)|leverag\w+|with\s+(?:the|this|these|those|that)|"
+    r"via\s+(?:the|this|these|those|that)|through\s+(?:the|this|these|those|that)|enabl\w+|allow\w+|"
+    r"prerequisites?|requir\w+|depend\w+|in\s+order\s+to|so\s+that|newly\s+(?:created|obtained|acquired)|"
+    r"(?:stolen|harvested|obtained|compromised|downloaded|created)\s+\w+(?:\s+\w+)?\s+to\b|"
+    r"when\s+executed|which\s+(?:was|were)\s+(?:then\s+)?used)\b|利用|藉由|透過|憑藉|使用(?:該|此|這)",
+    re.IGNORECASE,
+)
+_PROVENANCE_LABEL_RE = re.compile(
+    r"\b(?:source|official advisory|reference|citation|licen[sc]e)\b[^:\n]{0,40}:", re.IGNORECASE)
+# "URL:"/"Link:" only describe the document itself inside a block that already has a Source line.
+_PROVENANCE_LINK_LABEL_RE = re.compile(r"\b(?:url|link)\b[^:\n]{0,20}:", re.IGNORECASE)
+_PROVENANCE_HASH_LABEL_RE = re.compile(
+    r"\b(?:source|document|advisory|report|pdf)\b[^:\n]{0,30}\b(?:sha-?\d*|md5|checksum|hash)\b", re.IGNORECASE)
+
+
+def _relation_cue(kind: str, quotes: list[str]) -> str | None:
+    """Return which stated-relation wording the verified quotes contain, if any."""
+    text = " ".join(quotes)
+    if kind == "dependency" and _DEPENDENCY_CUE_RE.search(text):
+        return "dependency"
+    if _TEMPORAL_CUE_RE.search(text):
+        return "temporal"
+    if _DEPENDENCY_CUE_RE.search(text):
+        return "dependency"
+    return None
+
+
 def _host_match_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", value.casefold())
 
@@ -106,6 +146,13 @@ def _validated_attack_technique(value: Any) -> tuple[str | None, dict[str, Any] 
 
 
 def _validated_attack_tactic(value: Any, technique: dict[str, Any] | None) -> str | None:
+    if isinstance(value, list):
+        # Models often return ["TA0001"]; keep the first entry that validates.
+        for entry in value:
+            tactic = _validated_attack_tactic(entry, technique)
+            if tactic:
+                return tactic
+        return None
     raw = _string(value)
     if not raw or _ATTACK_TECHNIQUE_RE.fullmatch(raw):
         return None
@@ -139,9 +186,18 @@ def _near_ioc_context(text: str, start: int, end: int) -> bool:
 
 
 def _is_source_reference_url(text: str, start: int) -> bool:
+    """True when the value on this line is labelled as the report's own provenance."""
     line_start = text.rfind("\n", 0, start) + 1
     prefix = text[line_start:start]
-    return bool(re.search(r"\b(?:source|official advisory|reference|citation)\b", prefix, re.IGNORECASE))
+    if _PROVENANCE_LABEL_RE.search(prefix):
+        return True
+    return bool(_PROVENANCE_LINK_LABEL_RE.search(prefix) and _PROVENANCE_LABEL_RE.search(text[:line_start]))
+
+
+def _is_source_checksum(text: str, start: int) -> bool:
+    """A checksum labelled as belonging to the source document is provenance, not an IOC."""
+    line_start = text.rfind("\n", 0, start) + 1
+    return bool(_PROVENANCE_HASH_LABEL_RE.search(text[line_start:start]))
 
 
 def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]:
@@ -190,6 +246,9 @@ def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]
 
         for match in _HASH_RE.finditer(text):
             value = match.group(0)
+            # A checksum of the report/source document itself is provenance, not an IOC.
+            if _is_source_checksum(text, match.start()):
+                continue
             add("hash", value, value, unit)
 
         for match in _CVE_RE.finditer(text):
@@ -320,8 +379,8 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
         "link the action that created/obtained that prerequisite to the action that used it. Do not create an unsupported relation edge; "
         "if the edge is a reasonable inference from the source but has no direct relation quote, mark that edge 'inferred'. "
         "Relations must form a directed acyclic graph (DAG): no self edges and no cycles such as a6->a8->a9->a6. "
-        "For every action, fill target_host_ref with the supported host reference when possible; use 'unknown' when the source "
-        "does not identify the host."
+        "For every action, fill target_host_ref with the id of the host entry it took effect on; use 'unknown' when the source "
+        "does not identify the machine."
     )
     if extraction:
         rules += " Return {\"observations\":[{\"claim\":string,\"quote\":string,\"source_ref\":string,\"epistemic_status\":string}]}"
@@ -330,9 +389,35 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             " Return JSON with arrays actions, relations, artifacts, and target_context {hosts, services}. "
             "Each item may contain evidence:[{quote,source_ref}]. Actions need id,name,target_host_ref; relations need id,from_action,to_action,kind; "
             "hosts need id,role; services need id,name. Include only information found in the report. "
+            "ACTIONS: an action is something the threat actor did. Name it with the report's own wording for that behaviour, not "
+            "with a tactic or category label. Do not create actions for what a defender or analyst observed, assessed or detected, "
+            "for a description of what a file or tool contains, or for a restatement of an earlier action's effect; cite such "
+            "sentences as additional evidence of the attacker action they describe. One behaviour is one action even if the report "
+            "mentions it more than once (for example 'exploited CVE-X' and 'SQL injection against the application' describing the "
+            "same exploitation). "
+            "HOSTS: create one host entry for each distinct machine or explicitly described group of machines that the report "
+            "says was targeted or used; never merge differently named or differently described machines into one entry, and never "
+            "create a catch-all entry for unidentified hosts. Give each host a short id such as h1, a name when the report gives a "
+            "hostname or label, a role in the report's words, os/os_version/network_placement only when stated, and evidence quoting "
+            "the words that mention that machine. The ids 'unknown', 'unspecified' and 'none' are reserved and must not be used as "
+            "host ids; an action whose machine the report does not identify gets target_host_ref 'unknown' and no host entry. "
+            "target_host_ref is the machine on which the action took effect (for lateral movement, the destination). "
+            "SERVICES: list each product, application, protocol service or security product on a target machine that an action "
+            "exploits, logs in to, disables or otherwise depends on, with name in the report's words, host_ref, and version, "
+            "port (integer), protocol, and cve (array) only when the report states them, plus evidence. A vulnerability nickname or "
+            "CVE id is not a service name: name the affected product and put the CVE id in cve. "
+            "ARTIFACTS: list each tool, malware family, script, file, scheduled task or account that the report names as used, "
+            "created or dropped, with name, type (tool, malware, file, script, account or other) and evidence. "
+            "RELATIONS: add an edge only between two actions of this analysis. When the report states the order or the dependency, "
+            "the relation's evidence quote must be the exact words that state it, including the ordering or enabling words themselves "
+            "(for example 'then', 'after', 'following', 'once', 'upon', 'using the newly created account', 'by exploiting'). A sentence "
+            "that merely describes one of the two actions is not evidence of their order. When you connect two actions only because "
+            "the report narrates them one after the other, give that edge epistemic_status 'inferred' and no evidence. Prefer "
+            "'dependency' when the later action uses something the earlier one produced (access, an account, credentials, a downloaded "
+            "tool or file), and say what in rationale. "
             "When the report states or lists a MITRE ATT&CK technique for an action (for example a TTP/MITRE ATT&CK table), set "
             "attack_technique to only the exact T#### or T####.### id. attack_tactic may contain only a stated tactic name/category "
-            "or TA#### tactic id; never put a technique name or T#### technique id in attack_tactic. Put ATT&CK ids only in these "
+            "or TA#### tactic id, as a single string; never put a technique name or T#### technique id in attack_tactic. Put ATT&CK ids only in these "
             "two fields. Never insert an id, a tactic name, or any bracketed annotation into an evidence quote: every evidence quote "
             "must stay an exact, unaltered, character-for-character substring of the source text. Do not guess or fill an ATT&CK id "
             "the report does not give. The program separately extracts IOC-like values into indicators[] and literal PowerShell/cmd "
@@ -502,6 +587,20 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         relation["epistemic_status"] = "inferred" if not _refs else settle_status(item, _refs)
         if coerced_kind:
             relation["epistemic_status"] = "inferred"
+        if relation["epistemic_status"] == "supported":
+            quotes = [rec["quote"] for rec in evidence if rec["id"] in _refs]
+            cue = _relation_cue(kind, quotes)
+            if cue is None:
+                # The quote exists in the source but does not state order or enablement.
+                relation["epistemic_status"] = "inferred"
+                relation["epistemic_reason"] = (
+                    "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+                )
+            elif kind == "dependency" and cue == "temporal":
+                relation["epistemic_status"] = "inferred"
+                relation["epistemic_reason"] = (
+                    "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+                )
         if invalid_endpoints:
             relation["epistemic_status"] = "insufficient"
         elif creates_cycle(relation["from_action"], relation["to_action"]):
@@ -518,8 +617,16 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
     services_raw = _array(target, "services")
     hosts: list[dict[str, Any]] = []
     services: list[dict[str, Any]] = []
+    host_id_map: dict[str, str] = {}
+    dropped_placeholder_hosts = 0
     for index, raw in enumerate(hosts_raw, start=1):
         item = dict(raw)
+        model_host_id = _string(item.get("id"))
+        if model_host_id and model_host_id.casefold() in _RESERVED_HOST_IDS:
+            # A catch-all "unknown" entry is not a machine the source identified.
+            dropped_placeholder_hosts += 1
+            unsupported += 1
+            continue
         host: dict[str, Any] = {
             "id": _unique_id(item.get("id"), f"host-{index}", {x["id"] for x in hosts}),
             "role": _string(item.get("role")) or "target",
@@ -534,6 +641,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         host["evidence_refs"] = _refs
         host["epistemic_status"] = settle_status(item, _refs)
         hosts.append(host)
+        if model_host_id:
+            host_id_map.setdefault(model_host_id, host["id"])
+    known_host_ids = {host["id"] for host in hosts}
+    for action in actions:
+        ref = host_id_map.get(action["target_host_ref"], action["target_host_ref"])
+        # A reference to no host entry carries no information; keep the explicit marker.
+        action["target_host_ref"] = ref if ref in known_host_ids else "unknown"
     _resolve_action_hosts(actions, hosts, evidence)
     for index, raw in enumerate(services_raw, start=1):
         item = dict(raw)
@@ -546,7 +660,20 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             if isinstance(item.get(key), str) and item[key].strip():
                 service[key] = item[key].strip()
         if isinstance(item.get("cve"), list):
-            service["cve"] = [v for v in item["cve"] if isinstance(v, str)]
+            service["cve"] = [v.upper() for v in item["cve"] if isinstance(v, str) and _CVE_RE.fullmatch(v.strip())]
+        elif isinstance(item.get("cve"), str) and _CVE_RE.fullmatch(item["cve"].strip()):
+            service["cve"] = [item["cve"].strip().upper()]
+        service_host = host_id_map.get(_string(item.get("host_ref")) or "", _string(item.get("host_ref")))
+        if service_host in known_host_ids:
+            service["host_ref"] = service_host
+        try:
+            port = int(item.get("port"))
+        except (TypeError, ValueError):
+            port = None
+        if port is not None and 1 <= port <= 65535:
+            service["port"] = port
+            if _string(item.get("protocol")) and item["protocol"].strip().casefold() in {"tcp", "udp"}:
+                service["protocol"] = item["protocol"].strip().casefold()
         _refs = attach(item)
         service["evidence_refs"] = _refs
         service["epistemic_status"] = settle_status(item, _refs)
@@ -615,6 +742,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "absent_count": statuses.count("absent"),
             "method": method,
             "provisional": True,
+            "dropped_placeholder_hosts": dropped_placeholder_hosts,
         },
     }
     ir["missing_items"] = calculate_missing_items(ir)
