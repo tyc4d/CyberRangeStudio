@@ -301,3 +301,79 @@ test("讀取類 API 連線被中斷一次時自動重試，不顯示「無法連
   await page.waitForTimeout(1200);
   expect(cut.down, "a POST is never re-sent automatically").toBe(1);
 });
+
+test("版本依據與平台閘道：替代版本在依賴／拓樸／IaC／報告都標示；部署頁把 cr-gateway 標成平台元件並列出實際對外埠", async ({ page }) => {
+  test.setTimeout(6 * 60_000);
+  let docker = true;
+  try { execFileSync("docker", ["info", "--format", "{{.ServerVersion}}"], { stdio: "pipe", timeout: 20_000 }); } catch { docker = false; }
+  const id = seed();
+  // Test data, written through the real API (the same edits the flow editor and a supplement make): the report's
+  // software becomes a named product the catalogue has in a different release, bound to the host.
+  const ir0 = await (await page.request.get(`/api/scenario/${id}`)).json();
+  for (const a of ir0.actions) a.target_host_ref = ir0.hosts[0].id;
+  Object.assign(ir0.services[0], { name: "NGINX", version: "1.18.0", host_ref: ir0.hosts[0].id, port: 80, protocol: "tcp" });
+  expect((await page.request.put(`/api/scenario/${id}`, { data: { ir: ir0, note: "e2e: named product with a stated version" } })).ok()).toBe(true);
+  page.on("dialog", (d) => void d.accept());
+
+  await open(page, id, "/deps");
+  await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
+  await expect(page.getByText("依賴分析完成")).toBeVisible({ timeout: 60_000 });
+  const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
+  const svc = ir.services.find((s: any) => s.version_basis);
+  expect(svc.version_basis, "backend classifies the deployed release").toBe("substituted");
+  const row = page.locator("tr", { has: page.getByTestId("version-basis-substituted") }).first();
+  await expect(row).toContainText("NGINX");
+  await expect(row.getByTestId("version-basis-substituted")).toBeVisible();
+  await expect(row).toContainText(svc.deployed_version);
+  await expect(row).toContainText("1.18.0");
+  await shot(page, { path: path.join(EVIDENCE, "15-deps-version-basis.png"), fullPage: true });
+
+  await page.goto("/topology");
+  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
+  await expect(page.locator(".gnode.host").getByTestId("version-basis-substituted")).toBeVisible({ timeout: 60_000 });
+  await shot(page, { path: path.join(EVIDENCE, "16-topology-version-basis.png"), fullPage: true });
+  await page.getByRole("button", { name: "核准並繼續" }).click();
+
+  await expect(heading(page, "IaC 預覽")).toBeVisible();
+  await page.getByRole("button", { name: "生成 IaC" }).click();
+  const card = page.getByTestId("version-basis-card");
+  await expect(card).toBeVisible({ timeout: 60_000 });
+  await expect(card).toContainText("1 項不是原文事實");
+  await expect(card).toContainText("1.18.0");
+  await expect(card).toContainText(svc.deployed_version);
+  await shot(page, { path: path.join(EVIDENCE, "17-iac-version-basis.png"), fullPage: true });
+
+  test.skip(!docker, "Docker 不可用：部署頁與報告頁的部分未執行（不是通過）");
+  try {
+    await page.goto("/deploy");
+    await page.getByRole("button", { name: "啟動（up）" }).click();
+    await expect(page.getByTestId("deploy-state")).toHaveText("running", { timeout: 4 * 60_000 });
+    const table = page.getByTestId("container-table");
+    await expect(table.locator('tr[data-kind="platform"]')).toHaveCount(1);
+    await expect(table.locator('tr[data-kind="platform"]')).toContainText("平台元件");
+    await expect(table.locator('tr[data-kind="platform"]')).toContainText("cr-gateway");
+    await expect(table.locator('tr[data-kind="lab"]')).toHaveCount(2);
+    // The port shown is the one Docker really bound, and it answers.
+    const status = await (await page.request.get(`/api/deploy/${id}/status`)).json();
+    const bound = status.containers.flatMap((c: any) => c.ports ?? []).map((p: any) => Number(p.host_port));
+    expect(bound.length).toBe(1);
+    const ports = page.getByTestId("published-ports");
+    await expect(ports).toContainText(`127.0.0.1:${bound[0]}`);
+    await expect(ports).toContainText("只有這台主機本身連得到");
+    const http = await page.request.get(`http://127.0.0.1:${bound[0]}/`);
+    expect(http.status(), "the published port reaches the lab web server through the gateway").toBe(200);
+    await shot(page, { path: path.join(EVIDENCE, "18-deploy-gateway-and-ports.png"), fullPage: true });
+
+    await page.goto("/report");
+    await page.getByRole("button", { name: /執行驗證|重新驗證/ }).click();
+    const rcard = page.getByTestId("version-basis-card");
+    await expect(rcard).toBeVisible({ timeout: 3 * 60_000 });
+    await expect(rcard).toContainText("不能據此說環境重現了原事件的版本");
+    await shot(page, { path: path.join(EVIDENCE, "19-report-version-basis.png"), fullPage: true });
+  } finally {
+    // Always remove what this test deployed.
+    await page.request.post(`/api/deploy/${id}/down`, { data: {} }).catch(() => null);
+  }
+  const left = execFileSync("docker", ["ps", "-a", "--filter", `label=com.docker.compose.project=cr-demo-${id}`, "--format", "{{.Names}}"], { encoding: "utf8" }).trim();
+  expect(left, "no containers left behind").toBe("");
+});
