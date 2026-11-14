@@ -81,7 +81,8 @@ class ValidationRunnerTests(unittest.TestCase):
                 patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
                 patch.object(runner.manager, "compose_ps_result", return_value=_compose_ps_result()), \
                 patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
-                patch.object(runner.manager, "container_ipv4", return_value=target_ip), \
+                patch.object(runner.manager, "container_ipv4_addresses",
+                             return_value=([{"network": "internal", "ip": target_ip}] if target_ip else [])), \
                 patch.object(runner.manager, "exec_in_service", side_effect=exec_result):
             return runner.run("runner-test")
 
@@ -155,7 +156,8 @@ class ValidationRunnerTests(unittest.TestCase):
                 patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
                 patch.object(runner.manager, "compose_ps_result", return_value=ps), \
                 patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
-                patch.object(runner.manager, "container_ipv4", return_value="172.20.0.9"), \
+                patch.object(runner.manager, "container_ipv4_addresses",
+                             return_value=[{"network": "internal", "ip": "172.20.0.9"}]), \
                 patch.object(runner.manager, "exec_in_service",
                              return_value={"returncode": 0, "stdout": "python-runtime-ok", "stderr": ""}):
             report = runner.run("no-actions")
@@ -187,7 +189,8 @@ class ValidationRunnerTests(unittest.TestCase):
                 patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
                 patch.object(runner.manager, "compose_ps_result", return_value=ps), \
                 patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
-                patch.object(runner.manager, "container_ipv4", return_value="172.20.0.5"), \
+                patch.object(runner.manager, "container_ipv4_addresses",
+                             return_value=[{"network": "internal", "ip": "172.20.0.5"}]), \
                 patch.object(runner.manager, "exec_in_service", side_effect=exec_result):
             report = runner.run("runner-test")
         web_up = next(c for c in report["checks"] if c["id"] == "service-up-web")

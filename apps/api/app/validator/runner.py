@@ -270,6 +270,36 @@ def _segmentation_status(result: dict[str, Any]) -> tuple[str, str]:
     return "NOT_TESTED", observed
 
 
+def _probe_blocked_all_addresses(scenario_id: str, source: str, target: str, port: int) -> tuple[str, str]:
+    """Prove a "must be blocked" path against ALL of the target's plan addresses.
+
+    Segmentation means the source can reach the target on NO network. A single-IP
+    probe is insufficient for a multi-homed target, so every non-edge plan-network
+    address is probed and the worst (least-segmented) outcome wins (reviewer F1).
+    """
+    addresses = manager.container_ipv4_addresses(scenario_id, target)
+    if not addresses:
+        return "NOT_TESTED", "could not determine target container IP; segmentation not proven at the TCP layer"
+    per_net: list[str] = []
+    statuses: list[str] = []
+    for item in addresses:
+        ip = item["ip"]
+        result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(ip, port), timeout=10)
+        st, obs = _segmentation_status(result)
+        statuses.append(st)
+        per_net.append(f"{item['network']}={ip}:{port} -> {st}: {obs}")
+    if "FAIL" in statuses:
+        status = "FAIL"
+    elif "NOT_TESTED" in statuses:
+        status = "NOT_TESTED"
+    elif statuses and all(st == "PASS" for st in statuses):
+        status = "PASS"
+    else:
+        status = "NOT_TESTED"
+    observed = (f"probed {target} on {len(addresses)} plan network(s) from {source}; " + " | ".join(per_net))
+    return status, observed
+
+
 def _vm_guest_readonly(scenario_id: str, host_id: str) -> dict[str, Any]:
     """Read Windows identity/version through the libvirt guest agent, never run actions."""
     state = manager.vm_status(scenario_id, host_id)
@@ -539,18 +569,15 @@ def run(scenario_id: str) -> dict[str, Any]:
             # Probe the target IP, not its name: a blocked path must be proven by a real
             # TCP refusal/unreachable to the address, not by the name failing to resolve
             # (which also happens whenever there is simply no shared network).
-            # Probe the target IP on a network the SOURCE shares, so a closed port on a
-            # reachable host surfaces as a refusal (-> NOT_TESTED), not as "unreachable"
-            # that would be mistaken for segmentation (R6 / reviewer P2). Falls back to a
-            # non-edge target IP when the two share no plan network (genuinely segmented).
-            target_ip = manager.container_ipv4(scenario_id, target, from_service=source)
-            if not target_ip:
-                status, observed = "NOT_TESTED", (
-                    "could not determine target container IP; segmentation not proven at the TCP layer")
-            else:
-                result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target_ip, int(port)), timeout=10)
-                status, observed = _segmentation_status(result)
-                observed = f"probed {target}={target_ip}:{port} from {source}; {observed}"
+            #
+            # A multi-homed target has one IP per plan network. Probing a single IP can
+            # false-PASS: the source may be unable to reach the probed address yet able to
+            # reach the target on another network (reviewer F1). So probe EVERY non-edge
+            # plan-network address of the target and aggregate conservatively:
+            #   reachable on any network  -> FAIL      (not segmented)
+            #   refused on any network    -> NOT_TESTED (host reachable, port closed; not proven)
+            #   unreachable on all        -> PASS       (genuinely segmented everywhere)
+            status, observed = _probe_blocked_all_addresses(scenario_id, source, target, int(port))
         check = _check(f"segmentation-{index}", f"{source} 無法連線至 {target}:{port}", "segmentation", status,
                        f"TCP connection from {source} to {target}:{port} is blocked", observed)
         check["evidence"] = evidence_path

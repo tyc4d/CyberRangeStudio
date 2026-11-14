@@ -95,3 +95,13 @@ reviewer 指出里程碑 2 對 R3、R6 的「已修」宣稱在**真實 Docker �
 - P3（無 actions 分支細節）、P4（顯示用 action_ref 寬鬆比對）、R2/R4（前端標示）仍為低優先，未在此輪處理。
 
 測試：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **78 passed, 3 subtests passed**（含 infra-eng 合併後測試與本輪新增）。
+
+## 里程碑 5：修 F1（多網路目標的區隔假 PASS）＋ merge main
+
+reviewer 追加 F1：多網路（multi-homed）目標只被探測單一 IP，若來源能從另一個網路連到該目標，區隔檢查會假 PASS。
+- 已 `git merge main`（含 infra-eng@5059c10 等）。
+- 根因修正：segmentation 改為探測目標在**所有非 edge 計畫網路上的位址**（用 `manager.container_ipv4_addresses`），保守彙總：任一網路可連→FAIL（未隔離）；任一網路被拒→NOT_TESTED（主機可達、埠關閉，未證明隔離）；全部 unreachable 才 PASS。新函式 `_probe_blocked_all_addresses`。
+- 真實部署回歸測試 `tests/e2e/test_segmentation_real.py::test_multihomed_target_is_not_falsely_segmented`：`pivot` 同時在 outer（與 attacker 共用）與 inner；attacker 可從 outer 連到 pivot → 區隔檢查為 **FAIL**（非假 PASS）。實跑通過。
+- 單元測試改 patch `container_ipv4_addresses`（配合新路徑）。
+
+測試：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **79 passed, 3 subtests passed**（新增 F1 真實測試）。

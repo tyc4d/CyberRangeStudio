@@ -98,3 +98,55 @@ def test_same_network_closed_port_is_not_scored_as_segmentation():
     # Same-network closed port: refused -> NOT a segmentation PASS.
     assert closed_port["status"] == "NOT_TESTED", closed_port["observed"]
     assert "refus" in closed_port["observed"].lower() or "Connection refused" in closed_port["observed"]
+
+
+@pytest.mark.skipif(not _docker_ready(), reason="Docker/compose not available")
+def test_multihomed_target_is_not_falsely_segmented():
+    """Reviewer F1: a target reachable on ONE of its networks must not PASS as blocked.
+
+    `pivot` is multi-homed on `outer` (shared with attacker) and `inner`. The attacker
+    can reach it on `outer`, so a verify_blocked attacker->pivot must be FAIL, even
+    though pivot also has an `inner` address the attacker cannot reach. Probing only
+    one of pivot's addresses could have mis-scored this as a segmentation PASS.
+    """
+    sid = f"poc-mh-{uuid.uuid4().hex[:6]}"
+    ir = {
+        "schema_version": "1.0", "id": sid, "name": "multihomed segmentation test",
+        "provenance": {"input_kind": "text", "input_sha256": "0" * 64},
+        "actions": [{"id": "a1", "name": "reach pivot", "target_host_ref": "pivot",
+                     "source": "user", "epistemic_status": "supported"}], "relations": [],
+        "environment_plan": {
+            "hosts": [
+                {"id": "attacker", "role": "attacker", "image_hint": "demo-client", "networks": ["outer"]},
+                {"id": "pivot", "role": "web", "image_hint": "demo-api",
+                 "services": [{"name": "http", "port": 8080, "protocol": "tcp"}],
+                 "networks": ["outer", "inner"]},
+            ],
+            "networks": [{"id": "outer", "internal": True}, {"id": "inner", "internal": True}],
+            "connections": [{"from_host": "attacker", "to_host": "pivot", "port": 8080, "protocol": "tcp",
+                             "reason": "Scenario action(s) a1 require access to pivot."}],
+            # Claim (falsely) that attacker cannot reach pivot. It can, on `outer`.
+            "verify_blocked": [{"from_host": "attacker", "to_host": "pivot", "port": 8080, "protocol": "tcp",
+                                "reason": "asserted blocked, but actually reachable on outer"}],
+        },
+    }
+    with tempfile.TemporaryDirectory(prefix="cr-poc-mh-") as tmp:
+        data = Path(tmp) / "data"
+        data.mkdir()
+        with patch.object(config, "DATA_DIR", data), patch.object(store, "_DB", data / "scenarios.db"):
+            store.create(ir)
+            with TestClient(app) as client:
+                assert client.post(f"/api/iac/{sid}/generate").status_code == 200
+                assert client.post(f"/api/planning/{sid}/topology/approve",
+                                   json={"approved": True, "approved_by": "poc-eng"}).status_code == 200
+                up = client.post(f"/api/deploy/{sid}/up", json={"test_approved": True})
+                if up.status_code != 200:
+                    pytest.skip(f"lab could not stand up (transient infra): {up.text[:200]}")
+                try:
+                    report = client.post(f"/api/validate/{sid}/run").json()
+                finally:
+                    client.post(f"/api/deploy/{sid}/down")
+
+    blocked = _find(report["checks"], "pivot:8080")
+    # Reachable on outer -> must be FAIL, never a false segmentation PASS.
+    assert blocked["status"] == "FAIL", blocked["observed"]
