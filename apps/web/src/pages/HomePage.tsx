@@ -113,7 +113,7 @@ export function HomePage() {
   return (
     <div className="page">
       <PageHead title="專案首頁" desc="從一份威脅情資報告出發，依序完成分析、補充、流程編輯、環境規劃、部署與驗證。每個階段完成後仍可回頭修改。">
-        <Link to="/import"><button className="primary">＋ 新建情境</button></Link>
+        <Link to="/import" state={{ fresh: true }}><button className="primary">＋ 新建情境</button></Link>
       </PageHead>
 
       <RangeLine />

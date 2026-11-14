@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import type { CheckStatus, ScenarioIR, ValidationCheck, ValidationReport } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
@@ -120,6 +121,10 @@ function FidelityList({ title, cls, items, actionName }: { title: string; cls: s
 
 function Body({ ir }: { ir: ScenarioIR }) {
   const { reload: reloadIr } = useScenario();
+  // Validation probes a running environment; without one the API refuses (「尚未部署」). Unknown status never blocks the button.
+  const deploy = useLoad(() => api.deployStatus(ir.id), [ir.id]);
+  const deployState = typeof deploy.data?.state === "string" ? (deploy.data.state as string) : undefined;
+  const notDeployed = deployState !== undefined && deployState !== "running";
   const remote = useLoad(() => api.getReport(ir.id), [ir.id]);
   const run = useAction(async () => {
     const resp = await api.runValidation(ir.id);
@@ -148,8 +153,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
   return (
     <div className="page">
       <PageHead title="驗證報告" desc="驗證分三層，各自獨立判定：環境建好不代表行為能重現，個別行為重現也不代表整條攻擊鏈成立。所有檢查都是無害的觀察，不執行真正的漏洞利用。">
-        <button className={report ? "" : "primary"} disabled={run.busy} onClick={() => run.run()}>{report ? "重新驗證" : "執行驗證"}</button>
+        <button className={report ? "" : "primary"} disabled={run.busy || notDeployed} title={notDeployed ? "需先在「部署管理」啟動環境" : undefined} onClick={() => run.run()}>{report ? "重新驗證" : "執行驗證"}</button>
       </PageHead>
+
+      {notDeployed && (
+        <Notice kind="warn" title="環境尚未部署，不能執行驗證"
+          action={<Link to="/deploy"><button className="primary small">前往部署管理</button></Link>}>
+          驗證是對執行中的環境逐項檢查。目前部署狀態為 <span className="mono">{deployState}</span>，請先啟動環境。
+          {report ? "下方是先前留下的報告，不代表目前的環境狀態。" : "在此之前沒有任何驗證結果，各層一律視為未測。"}
+        </Notice>
+      )}
 
       {run.busy && <div className="card"><Busy label="驗證中，正在對部署的環境逐項檢查…" elapsed={run.elapsed} /></div>}
       <ApiNotice error={run.error} what="執行驗證" />

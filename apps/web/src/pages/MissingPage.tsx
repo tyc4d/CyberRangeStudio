@@ -3,7 +3,7 @@ import type { MissingItem, ScenarioIR } from "@contracts";
 import { api, ApiError } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
-import { ApiNotice, Empty, NextStep, PageHead, ScenarioGate, SourceTag } from "../components/ui";
+import { ApiNotice, Empty, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 import { PdfViewer, usePdfSource, type PdfAnchor, type PdfLocateResult } from "../components/PdfViewer";
 
 /* ---------- defensive readers (backend fields may still be changing) ---------- */
@@ -228,7 +228,7 @@ function makeNamer(ir: ScenarioIR): Namer {
   };
 }
 
-interface KnownFact { field: string; value: string; /** Evidence quote behind this fact, when the backend cited one. */ anchor?: Anchor }
+interface KnownFact { field: string; value: string; /** False when the backend marks the fact as not backed by the source (a program placeholder, an inference). */ fromSource: boolean; /** Evidence quote behind this fact, when the backend cited one. */ anchor?: Anchor }
 const showValue = (v: unknown): string =>
   Array.isArray(v) ? v.map(showValue).filter(Boolean).join("、")
   : typeof v === "boolean" ? (v ? "是" : "否")
@@ -259,7 +259,10 @@ function readKnown(raw: unknown, ir: ScenarioIR): KnownFact[] {
     const anchors = (o ? knownRefs(o, ir) : []).map((r) => evidenceAnchor(r, ir)).filter((a): a is Anchor => !!a);
     // Among the quotes the backend cited, prefer one that literally contains the fact; otherwise the first.
     const needle = value.toLowerCase();
-    return { field, value, anchor: anchors.find((a) => a.quote!.toLowerCase().includes(needle)) ?? anchors[0] };
+    // "原文已知" is a source claim: only make it when the backend says supported, or (older data without a status) cites a quote.
+    const status = o ? str(o.epistemic_status) : "";
+    const fromSource = status ? status === "supported" : anchors.length > 0;
+    return { field, value, fromSource, anchor: anchors.find((a) => a.quote!.toLowerCase().includes(needle)) ?? anchors[0] };
   }).filter((x): x is KnownFact => !!x);
 }
 
@@ -365,13 +368,13 @@ const FIELD_ZH: Record<string, string> = {
   "target network placement": "主機的網路位置", "target service name": "被攻擊的服務", "target service version": "服務版本",
   "attacker access precondition": "攻擊者的初始存取條件",
 };
-/** Chinese title for an item. Raw English field names are never shown to the user. */
+/** Chinese title for an item. When the backend gave neither a question nor a known field, its original field name is shown, labelled as such, so the user can still tell what is being asked. */
 function itemTitle(item: MissingItem): string {
   const q = str(item.question);
   if (q) return q;
   const f = str(item.field);
   if (hasCJK(f)) return f;
-  return FIELD_ZH[f.toLowerCase()] ?? `${CATEGORY[item.category] ?? "其他"}相關資訊（後端未提供中文問題）`;
+  return FIELD_ZH[f.toLowerCase()] ?? `${CATEGORY[item.category] ?? "其他"}相關資訊${f ? `：${f}` : ""}（後端未提供中文問題${f ? "，冒號後為原始欄位名" : ""}）`;
 }
 
 const CATEGORY: Record<MissingItem["category"], string> = {
@@ -388,6 +391,8 @@ const RESOLUTIONS: { v: Resolution; label: string; needText: boolean; placeholde
   { v: "substitute_chosen", label: "用替代方案", needText: true, placeholder: "說明要用什麼替代，以及與原本的差異" },
   { v: "accepted_unknown", label: "接受未知", needText: false, placeholder: "（選填）備註為何可以不補" },
 ];
+/** The API stores a non-empty resolution text for every answer. When the optional note is left blank we record that fact, not an invented reason. */
+const UNKNOWN_DEFAULT_NOTE = "接受未知（使用者未填寫備註）";
 
 /** Priority shown on a card. `rank` orders the list (lower first). */
 interface Tier { rank: number; label: string; cls: string; why?: string }
@@ -404,6 +409,9 @@ function tierOf(items: MissingItem[], steps: number, backendDistinguishes: boole
     return sev ? { rank: sev === "major" ? 1 : sev === "minor" ? 3 : 2, label: SEVERITY[sev] ?? sev, cls: sev } : { rank: 3, label: "", cls: "" };
   }
   const why = `依影響的步驟數排序（${steps} 個步驟）；分析沒有為各項區分嚴重度。`;
+  // Every item carries the same backend severity: keep the backend's word on the label, use the step count only for ordering.
+  const same = sevs.find(Boolean);
+  if (same && SEVERITY[same]) return { rank: steps >= 5 ? 1 : steps >= 2 ? 2 : 3, label: SEVERITY[same], cls: same, why: `嚴重度來自分析（${same}）；所有項目嚴重度相同，排序改依影響的步驟數（${steps} 個步驟）。` };
   return steps >= 5 ? { rank: 1, label: "優先處理", cls: "major", why } : steps >= 2 ? { rank: 2, label: "重要", cls: "", why } : { rank: 3, label: "次要", cls: "", why };
 }
 
@@ -435,14 +443,19 @@ function buildGroups(ir: ScenarioIR, namer: Namer): Group[] {
     return {
       id: items[0].id, items, affects,
       title: namer.text(merged(items.map(itemTitle))),
-      // The rationale is shown only when it is in Chinese; raw English field names / reasons stay out of the UI.
-      reason: hasCJK(reason) ? namer.text(reason) : "",
+      // An English-only rationale is still shown, labelled as the backend's original, so the card never hides what is being asked.
+      reason: hasCJK(reason) ? namer.text(reason) : reason ? `後端說明（英文原文）：${reason}` : "",
       tier: tierOf(items, steps, distinct),
     };
   });
   const stepCount = (g: Group) => g.affects.filter((a) => a.kind === "步驟").length;
   // Stable: ties keep the backend's order.
   return groups.sort((a, b) => a.tier.rank - b.tier.rank || stepCount(b) - stepCount(a));
+}
+
+/** Open cards as the page shows them (identical questions are merged). The stage nav uses this so both numbers agree. */
+export function openCardCount(ir: ScenarioIR): number {
+  return buildGroups(ir, makeNamer(ir)).filter((g) => g.items[0].status === "open").length;
 }
 
 const clip = (q: string, n = 160) => (q.length > n ? `${q.slice(0, n)}…` : q);
@@ -466,7 +479,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
     let last: unknown;
     try {
       // A merged card answers every item it stands for.
-      for (const it of group.items) last = await api.supplement(scenarioId, { text: text.trim(), targets_missing_item: it.id, status: mode });
+      for (const it of group.items) last = await api.supplement(scenarioId, { text: text.trim() || (mode === "accepted_unknown" ? UNKNOWN_DEFAULT_NOTE : ""), targets_missing_item: it.id, status: mode });
     } finally {
       if (last !== undefined) await onDone(last);
     }
@@ -524,7 +537,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
             <div style={{ borderLeft: "2px solid var(--ok, var(--accent))", paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-start" }}>
               {known.map((k, i) => {
                 const a = usable(k.anchor);
-                const body = <><span className="muted">原文已知：</span>{hasCJK(k.field) ? `${k.field}　` : ""}{k.value}</>;
+                const body = <><span className="muted" title={k.fromSource ? undefined : "這一項是系統為了規劃先放的佔位或推定，後端沒有標示為原文支持"}>{k.fromSource ? "原文已知：" : "系統推定（原文未證實）："}</span>{hasCJK(k.field) ? `${k.field}　` : ""}{k.value}</>;
                 // The row itself is the locate control when the backend cited a quote for this fact.
                 return a ? (
                   <button key={i} className="link" data-testid="known-locate" onClick={() => locate!(a)}
@@ -602,7 +615,13 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
           <div className="seg" style={{ alignSelf: "flex-start" }}>
             {RESOLUTIONS.map((r) => <button key={r.v} className={mode === r.v ? "on" : ""} onClick={() => setMode(r.v)} disabled={submit.busy}>{r.label}</button>)}
           </div>
-          <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy} />
+          <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy}
+            aria-label={res.needText ? `${res.label}（必填）` : `${res.label}備註（選填）`} aria-required={res.needText} />
+          <div className="muted" style={{ fontSize: 12 }} data-testid="resolution-hint">
+            {res.needText
+              ? (text.trim() ? "送出後會標示為使用者來源，不會當成原文證據。" : "必填：請先填寫內容，「送出」才會啟用。")
+              : "備註選填。留白送出會記錄為「接受未知（使用者未填寫備註）」，此項目維持未知，不會被當成已知事實。"}
+          </div>
           {note && <div className="muted" style={{ fontSize: 12 }}>提醒：{note}</div>}
           {group.items.length > 1 && <div className="muted" style={{ fontSize: 12 }}>這張卡片合併了 {group.items.length} 個內容相同的問題，送出後會一併套用。</div>}
           <div className="row">
@@ -715,6 +734,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
       <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。每一項都標出原文已知的部分、需要你決定的部分與影響的步驟；你可以直接填答案、點選項帶入輸入框後送出，或明確接受未知。補充內容一律標示為使用者來源，不會與原文證據混淆。" />
       {!hasOriginal && src.state === "loading" && <div className="pdf-hint"><span className="spinner" /> 載入原文…</div>}
       {!hasOriginal && src.state === "none" && <div className="pdf-hint">此情境沒有保存原文（PDF 或文字），無法在旁對照。</div>}
+      {(ir as { fidelity?: unknown }).fidelity === undefined && (
+        <Notice kind="info" title="這份清單可能還不完整">
+          目前列出的是情資分析階段找到的缺失。到「軟體依賴」執行依賴分析後，可能會再新增軟體、版本相關的項目，屆時請回到這裡補充。
+        </Notice>
+      )}
       {!hasOriginal && src.state === "error" && <div className="pdf-hint">無法載入此情境的原文（後端未回應）。</div>}
 
       <div className={hasOriginal ? "pdf-split" : undefined} style={hasOriginal ? undefined : { display: "contents" }}>

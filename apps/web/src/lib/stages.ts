@@ -1,4 +1,5 @@
 import type { ScenarioIR } from "@contracts";
+import { openCardCount } from "../pages/MissingPage";
 import { isPlanApproved } from "./plan";
 import type { Runtime } from "./scenario";
 
@@ -13,7 +14,7 @@ export function stageState(key: string, ir: ScenarioIR | null, runtime: Runtime 
     case "analysis": return ir.actions.length ? { dot: "done", text: String(ir.actions.length), title: `${ir.actions.length} 個攻擊行為` } : todo;
     case "missing": {
       const items = ir.missing_items ?? [];
-      const open = items.filter((m) => m.status === "open").length;
+      const open = openCardCount(ir);
       if (!items.length) return todo;
       return open ? { dot: "warn", text: String(open), title: `${open} 項待補充` } : { dot: "done", title: "缺失皆已處理" };
     }

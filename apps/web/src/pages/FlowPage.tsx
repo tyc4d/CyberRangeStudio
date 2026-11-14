@@ -465,6 +465,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   // Objects created in this editing session: only these get an entrance, so loading a scenario never animates.
   const fresh = useRef(new Set<string>());
   const [consoleOpen, setConsoleOpen] = useState(false);
+  const consoleSeen = useRef(false);
   const hostRole = useMemo(() => new Map((ir.hosts ?? []).map((h) => [h.id, h.role])), [ir.hosts]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const evById = useMemo(() => new Map((ir.evidence ?? []).map((e): [string, Evidence] => [e.id, e])), [ir.evidence]);
@@ -745,6 +746,15 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     setNodes((ns) => ns.map((n) => ({ ...n, position: auto[n.id] ?? n.position })));
     requestAnimationFrame(() => { if (rf.current) fitAll(rf.current, paneRef.current); });
   };
+
+  // On a short window, opening or closing the design-check console changes the canvas height enough that the
+  // legend / zoom controls would sit on top of the nodes. Refit once the console has finished resizing.
+  useEffect(() => {
+    if (!consoleSeen.current) { consoleSeen.current = true; return; }
+    if (window.innerHeight > 800) return;
+    const t = setTimeout(() => { if (rf.current) fitAll(rf.current, paneRef.current); }, 320);
+    return () => clearTimeout(t);
+  }, [consoleOpen]);
 
   const versions = useLoad(() => api.listVersions(ir.id), [ir.id]);
   const unnamed = actions.filter((a) => !a.name.trim()).length;
