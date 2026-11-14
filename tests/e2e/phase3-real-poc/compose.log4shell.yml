@@ -1,0 +1,45 @@
+# Phase 3 — real Log4Shell (CVE-2021-44228) PoC lab. DO NOT run until the
+# host-isolation fix is in main and the guard confirms the host is unreachable
+# (run_log4shell_solr.py enforces both). The target is a REAL vulnerable image.
+#
+# Safe observable: the real Log4j JNDI lookup makes an outbound LDAP connection to
+# the in-lab, detection-only listener, which records it and returns NOTHING (no
+# referral, no class) — so the callback fires but no code is ever executed.
+services:
+  solr:
+    image: vulhub/solr:8.11.0             # real vulnerable Log4j 2.14.1 (catalogue vuln-log4shell-solr)
+    # Runs as root / writable rootfs by design; compensating control is network
+    # isolation + no egress, verified by the guard before this service is deployed.
+    networks: [isollab]
+  listener:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "/app/listener.py"]
+    user: "65532:65532"
+    environment:
+      LISTENER_PORT: "1389"
+      CALLBACK_LOG: "/evidence/callbacks.jsonl"
+    volumes:
+      - ./app:/app:ro
+      - ./.evidence:/evidence:rw
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [isollab]
+  attacker:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "-c", "import time; print('attacker-idle', flush=True); time.sleep(3600)"]
+    user: "65532:65532"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [isollab]
+    depends_on: [solr, listener]
+
+networks:
+  isollab:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated

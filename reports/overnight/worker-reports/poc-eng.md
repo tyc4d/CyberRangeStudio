@@ -117,3 +117,15 @@ reviewer 指出里程碑 3 的 Log4Shell 回呼實驗有三處不實宣稱，已
 **安全處置**：依 reviewer 指示，在 infra-eng 修好「internal 網路容器可連宿主機服務」並經審查前，**不對真實漏洞映像（vulhub 等）執行實際 exploit**。已準備好計畫與預期結果 `tests/e2e/log4shell-callback/run_real_vuln.md`，狀態標 **NOT_TESTED（待隔離修復）**；`run_real_vuln.py` 為惰性守門腳本（不部署、不攻擊，旗標預設關閉）。
 
 更正後證據：`reports/overnight/evidence/poc-eng/log4shell-callback-result.json`（含 `isolation_measured`：uid=65532、egress 實測、host_gw_22=REACHED）。
+
+## 里程碑 6：Phase 3 真實行為驗證（已執行，隔離網路內）
+
+Lead 於 infra 宿主機隔離修復（a7fd8c6）併入 main 後授權開跑。已 `git merge main`。
+
+- **隔離守門（guard.py）**：建立與產品相同的隔離網路（`internal` + `gateway_mode_ipv4=isolated`），由網內無害非 root 探針實測 host 閘道（22/4000/5173/5177/8000/8077/8080）與公網是否可達。修復前基準＝host 可達（isolated:false，會中止）；修復後＝`isolated:true`（host_ports_reached:[]、internet_reached:[]）。兩 runner 每次部署前都重跑此守門。證據：`evidence/poc-eng/phase3-guard-current-state.json`、`phase3-guard-after-fix.json`。
+- **鏈 A Struts S2-045（CVE-2017-5638）＝真實重現**：`vulhub/struts2:2.3.30`，OGNL 算術探針 → 回應標頭 `vulhub: 54289`；良性請求無標頭。證據 `evidence/poc-eng/phase3-struts-s2045-result.json`。
+- **鏈 B Log4Shell（CVE-2021-44228）＝真實重現 B2**：`vulhub/solr:8.11.0`（真 Log4j 2.14.1），JNDI 注入 → listener 記錄來自 Solr 容器的真實 LDAP BindRequest 回呼；listener 不回傳 payload（無 RCE）；良性無回呼。證據 `evidence/poc-eng/phase3-log4shell-solr-result.json`。
+- **安全**：只用 proof-of-capability 觀測（算術標頭、detection-only 回呼），無 payload／檔案／shell／類別載入；全程隔離守門；測完環境清除（無殘留容器／網路，已確認）。
+- **其餘 AA22-320A 步驟**：Horizon 真實 RCE（B1）與 Windows/AD 專屬步驟（B3/B8/B10–B17）如實標 BLOCKED（無映像／需 Windows VM，本輪未建）。
+- 結果草稿寫入 `reports/overnight/E2E-RESULTS.md`（PoC 章節）。
+- 新檔：`tests/e2e/phase3-real-poc/`（guard.py、compose.struts.yml、compose.log4shell.yml、run_struts_s2045.py、run_log4shell_solr.py、poc_common.py、expected.md、run_real_vuln.md 已不需要可留存、test_guard.py〔6 passed〕、app/listener.py）。
