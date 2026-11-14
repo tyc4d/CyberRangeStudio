@@ -65,10 +65,63 @@ def _aggregate(checks: list[dict[str, Any]]) -> str:
 def _check(check_id: str, name: str, category: str, status: str, expected: str, observed: str,
            action_ref: str | None = None) -> dict[str, Any]:
     item: dict[str, Any] = {"id": check_id, "name": name, "category": category, "status": status,
-                            "expected": expected, "observed": observed}
+                            "expected": _zh(expected), "observed": _zh(observed)}
     if action_ref is not None:
         item["action_ref"] = action_ref
     return item
+
+
+_REPORT_TRANSLATIONS = {
+    "container state is running": "容器狀態為執行中",
+    "container not present in docker compose ps output": "Docker Compose 狀態清單中沒有此容器",
+    "no health status": "沒有健康狀態資料",
+    "only declared TCP service ports are probed": "僅探測已宣告的 TCP 服務連接埠",
+    "source or target container is not running; this path was not probed": "來源或目標容器未執行，因此未探測此路徑",
+    "only blocked TCP paths with a declared port are probed": "僅探測已宣告連接埠的封鎖 TCP 路徑",
+    "could not determine target container IP; segmentation not proven at the TCP layer": "無法取得目標容器 IP，因此未能以 TCP 證明網路隔離",
+    "PostgreSQL container is not running": "PostgreSQL 容器未執行",
+    "HTTP behavior was not probed because its path was unavailable": "因路徑不可用，未探測 HTTP 行為",
+    "no benign behavior probe exists for the target service": "目標服務沒有適用的無害行為探測",
+    "no applicable host-to-service connection is declared": "未宣告適用的主機至服務連線",
+    "a mapped benign behavior": "已對應的無害行為",
+    "a declared source-to-service probe returns the expected response": "已宣告的來源至服務探測回傳預期結果",
+    "Python standard library imports successfully": "Python 標準函式庫可成功載入",
+    "pg_isready reports accepting connections": "pg_isready 回報可接受連線",
+    "HTTP service returns its expected benign response": "HTTP 服務回傳預期的無害回應",
+    "HTTP GET /demo returns cr-demo-demo-ok": "HTTP GET /demo 回傳 cr-demo-demo-ok",
+    "HTTP GET / returns status 200 from the pinned web server": "HTTP GET / 從指定版本的網頁伺服器回傳狀態 200",
+    "probe command exited with status": "探測指令結束狀態",
+    "target name did not resolve; inconclusive": "目標名稱無法解析，結果不具判定性",
+    "Scenario IR action": "情境 IR 動作",
+    "Only benign service or connectivity prerequisites were verified; the Scenario IR action itself was not executed.": "僅確認無害服務或連線前置條件；情境 IR 動作未執行（not executed）。",
+    "No action-specific safe behavior mapping was exercised; the Scenario IR action was not executed.": "未測試該動作專屬的安全行為對應；情境 IR 動作未執行（not executed）。",
+    "action-specific behavior is executed and verified": "已執行並驗證該動作專屬行為",
+    "unmapped behavior": "未對應的行為",
+    "declared TCP path and its benign service behavior pass": "宣告的 TCP 路徑及其無害服務行為皆通過",
+    "one TCP connection to declared service": "對宣告服務建立一條 TCP 連線",
+    "TCP connection from": "TCP 連線來源",
+    "is blocked": "遭封鎖",
+    "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities":
+        "無害的 Python 示範行為；不會重現指定元件或其弱點",
+    "harmless local demo behavior; it does not reproduce the original software or any vulnerability":
+        "無害的本機示範行為；不會重現原始軟體或任何弱點",
+}
+
+
+def _zh(value: str) -> str:
+    """Localize report prose and keep host filesystem paths out of evidence text."""
+    text = str(value)
+    for source in sorted(_REPORT_TRANSLATIONS, key=len, reverse=True):
+        translation = _REPORT_TRANSLATIONS[source]
+        text = text.replace(source, translation)
+    text = re.sub(r"(?<![A-Za-z0-9])/(?:home|tmp|var|opt|srv|mnt|root|Users|private|etc|workspace)(?:/[^\s'\"]*)?",
+                  "[伺服器端路徑]", text)
+    text = text.replace("CONNECTED", "已連線（CONNECTED）").replace("BLOCKED:", "連線遭拒（BLOCKED:）：")
+    text = text.replace("UNRESOLVED:", "名稱無法解析（UNRESOLVED）：").replace("NO_HTTP_RESPONSE:", "無 HTTP 回應（NO_HTTP_RESPONSE）：")
+    text = text.replace("HTTP_STATUS:", "HTTP 狀態（HTTP_STATUS）：").replace("BODY:", "回應內容（BODY）：")
+    text = text.replace("accepting connections", "正在接受連線")
+    text = text.replace("python-runtime-ok", "Python 執行環境正常")
+    return text
 
 
 def _tcp_probe_script(target: str, port: int) -> str:
@@ -170,7 +223,7 @@ def run(scenario_id: str) -> dict[str, Any]:
     artifact_dir = config.DATA_DIR / "validation-runs" / scenario_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
     artifact_path = artifact_dir / f"{run_id}.json"
-    evidence_path = str(artifact_path)
+    evidence_path = f"validation-runs/{scenario_id}/{run_id}.json"
 
     ps = manager.compose_ps_result(scenario_id)
     containers = manager._parse_compose_ps(ps["stdout"]) if ps["returncode"] == 0 else []
@@ -190,9 +243,9 @@ def run(scenario_id: str) -> dict[str, Any]:
         container = container_by_service.get(host_id)
         running = bool(container and container.get("state") == "running")
         status = "PASS" if running else ("NOT_TESTED" if docker_unavailable else "FAIL")
-        observed = (f"state={container.get('state')}, health={container.get('health') or 'no health status'}"
-                    if container else (ps["stderr"] or "container not present in docker compose ps output"))
-        check = _check(f"service-up-{host_id}", f"{host_id} is running", "service_up", status,
+        observed = (f"容器狀態={container.get('state')}，健康狀態={container.get('health') or '沒有健康狀態資料'}"
+                    if container else "Docker Compose 狀態清單中沒有此容器")
+        check = _check(f"service-up-{host_id}", f"{host_id} 服務執行狀態", "service_up", status,
                        "container state is running", observed)
         check["evidence"] = evidence_path
         service_checks.append(check)
@@ -211,7 +264,7 @@ def run(scenario_id: str) -> dict[str, Any]:
             )
             observed = _result_output(result)
             status = "PASS" if result["returncode"] == 0 and "python-runtime-ok" in observed else "FAIL"
-            check = _check(f"dependency-{host_id}", f"{host_id} has the Python runtime", "dependency_present",
+            check = _check(f"dependency-{host_id}", f"{host_id} 具備 Python 執行環境", "dependency_present",
                            status, "Python standard library imports successfully", observed)
             check["evidence"] = evidence_path
             checks.append(check)
@@ -223,7 +276,7 @@ def run(scenario_id: str) -> dict[str, Any]:
                 observed = _result_output(result)
                 status = ("PASS" if result["returncode"] == 0 and
                           _version_matches(expected_version, observed, component_id or "") else "FAIL")
-                check = _check(f"version-{host_id}", f"{host_id} runs the pinned {expected_version} version",
+                check = _check(f"version-{host_id}", f"{host_id} 執行指定版本 {expected_version}",
                                "version", status, expected_version, observed)
                 check["evidence"] = evidence_path
                 checks.append(check)
@@ -250,7 +303,7 @@ def run(scenario_id: str) -> dict[str, Any]:
             result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target, int(port)), timeout=10)
             connectivity_status, connectivity_observed = _probe_status(result, should_connect=True,
                                                                          docker_unavailable=docker_unavailable)
-        connectivity = _check(f"connectivity-{index}", f"{source} reaches {target}:{port}", "connectivity",
+        connectivity = _check(f"connectivity-{index}", f"{source} 可連線至 {target}:{port}", "connectivity",
                               connectivity_status, f"one TCP connection to declared service {target}:{port}",
                               connectivity_observed, action_ref)
         connectivity["evidence"] = evidence_path
@@ -292,7 +345,7 @@ def run(scenario_id: str) -> dict[str, Any]:
                 else:
                     behavior_status, behavior_observed = "NOT_TESTED", "HTTP behavior was not probed because its path was unavailable"
                     expected_behavior = "HTTP service returns its expected benign response"
-            behavior = _check(f"behavior-{index}", f"{target} returns a benign service response", "behavior",
+            behavior = _check(f"behavior-{index}", f"{target} 回傳無害服務回應", "behavior",
                               behavior_status, expected_behavior, behavior_observed, action_ref)
             behavior["evidence"] = evidence_path
             checks.append(behavior)
@@ -306,7 +359,7 @@ def run(scenario_id: str) -> dict[str, Any]:
             chain_inputs.append(_check(f"chain-unmapped-{index}", "unmapped behavior", "chain", "NOT_TESTED",
                                        "a mapped benign behavior", "no benign behavior probe exists for the target service"))
         chain_status = _aggregate(chain_inputs)
-        chain = _check(f"chain-{index}", f"{source} completes the declared path to {target}", "chain",
+        chain = _check(f"chain-{index}", f"{source} 完成至 {target} 的宣告路徑", "chain",
                        chain_status, "declared TCP path and its benign service behavior pass",
                        "; ".join(check["observed"] for check in chain_inputs), action_ref)
         chain["evidence"] = evidence_path
@@ -322,7 +375,7 @@ def run(scenario_id: str) -> dict[str, Any]:
         component_id = component_by_id[host_id].get("catalogue", {}).get("id") if component_by_id[host_id].get("catalogue") else None
         has_benign_behavior = runtime_component == "demo-api" or component_id in {"oss-nginx", "oss-httpd", "oss-postgres"}
         if has_benign_behavior and host_id not in connected_targets:
-            check = _check(f"behavior-{host_id}", f"{host_id} benign service behavior", "behavior", "NOT_TESTED",
+            check = _check(f"behavior-{host_id}", f"{host_id} 無害服務行為", "behavior", "NOT_TESTED",
                            "a declared source-to-service probe returns the expected response",
                            "no applicable host-to-service connection is declared")
             check["evidence"] = evidence_path
@@ -352,7 +405,7 @@ def run(scenario_id: str) -> dict[str, Any]:
                 result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target_ip, int(port)), timeout=10)
                 status, observed = _probe_status(result, should_connect=False, docker_unavailable=docker_unavailable)
                 observed = f"probed {target}={target_ip}:{port} from {source}; {observed}"
-        check = _check(f"segmentation-{index}", f"{source} cannot reach {target}:{port}", "segmentation", status,
+        check = _check(f"segmentation-{index}", f"{source} 無法連線至 {target}:{port}", "segmentation", status,
                        f"TCP connection from {source} to {target}:{port} is blocked", observed)
         check["evidence"] = evidence_path
         checks.append(check)
@@ -372,7 +425,7 @@ def run(scenario_id: str) -> dict[str, Any]:
         observed = ("Only benign service or connectivity prerequisites were verified; the Scenario IR action itself was not executed."
                     if proven_prerequisite else
                     "No action-specific safe behavior mapping was exercised; the Scenario IR action was not executed.")
-        action_check = _check(f"action-{action_id}", f"Scenario action {action_id}: {action.get('name', action_id)}",
+        action_check = _check(f"action-{action_id}", f"情境動作 {action_id}：{action.get('name', action_id)}",
                               "chain", status, "action-specific behavior is executed and verified", observed, action_id)
         action_check["evidence"] = evidence_path
         checks.append(action_check)
@@ -405,12 +458,12 @@ def run(scenario_id: str) -> dict[str, Any]:
         "run_at": run_at,
         "levels": {"env_build": env_build, "behavior_repro": behavior_repro, "full_chain": full_chain},
         "level_criteria": {
-            "env_build": "PASS only when every host has a service_up check with status PASS.",
-            "behavior_repro": "Aggregate of the independently executed benign service behavior checks.",
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
             "full_chain": (
-                "Weakest of env_build, behavior_repro, every declared path chain, and every Scenario IR action. "
-                "An action is only PARTIAL when safe connectivity or service evidence exists; this validator does not "
-                "execute attack actions. Any required NOT_TESTED or FAIL step prevents PASS."
+                "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。"
+                "只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。"
+                "任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
             ),
         },
         "checks": checks,
@@ -421,8 +474,8 @@ def run(scenario_id: str) -> dict[str, Any]:
             "not_tested": not_tested,
             "substitutes_used": substitutes,
             "summary": (
-                "Evidence covers container state, pinned component versions, allowed and blocked TCP paths, and "
-                "benign service responses. Scenario actions are never claimed as reproduced without action-specific evidence."
+                "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。"
+                "沒有動作專屬佐證時，不會宣稱已重現情境動作。"
             ),
         },
     }

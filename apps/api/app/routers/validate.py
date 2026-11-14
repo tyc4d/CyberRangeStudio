@@ -1,7 +1,9 @@
 """Module 8: harmless local service, network, dependency, and behavior checks."""
 from fastapi import APIRouter, HTTPException
 
+from app import store
 from app.iac.generator import PlanError, validate_id
+from app.deploy import manager
 from app.validator import runner
 
 router = APIRouter(prefix="/api/validate", tags=["validate"])
@@ -17,6 +19,13 @@ def _validate(scenario_id: str) -> str:
 @router.post("/{scenario_id}/run")
 def run_validation(scenario_id: str):
     scenario_id = _validate(scenario_id)
+    if store.get(scenario_id) is None:
+        raise HTTPException(status_code=404, detail="找不到情境")
+    # `compose ps` reports `not_created` when no successful deployment exists;
+    # check this before the validator can mislabel it as an environment failure.
+    live = manager.do_status(scenario_id)
+    if live.get("state") != "running":
+        raise HTTPException(status_code=400, detail="尚未部署，請先部署")
     try:
         return runner.run(scenario_id)
     except KeyError:

@@ -106,13 +106,15 @@ def summary() -> dict:
             " COALESCE(SUM(output_tokens),0) FROM ledger GROUP BY model ORDER BY 3 DESC"
         ).fetchall()
     return {
-        "est_total_usd": round(total, 4),
+        # Keep enough precision for small token increments to remain visible in
+        # the API response. The ledger stores unrounded per-call estimates.
+        "est_total_usd": round(total, 6),
         "calls": calls,
         "hard_cap_usd": config.BUDGET_HARD_CAP_USD,
         "stop_new_usd": config.BUDGET_STOP_NEW_USD,
         "note": "Conservative local estimate, not a provider invoice.",
         "by_model": [
-            {"model": m, "calls": n, "est_cost_usd": round(cost, 4),
+            {"model": m, "calls": n, "est_cost_usd": round(cost, 6),
              "input_tokens": it, "output_tokens": ot}
             for (m, n, cost, it, ot) in by_model
         ],
