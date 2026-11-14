@@ -42,3 +42,30 @@
 1. 修 R1–R7（判定邏輯收緊＋單元測試）。
 2. 建立隔離實驗的行為驗收測試（Log4Shell JNDI/LDAP 回呼、Web→DB），攻擊端從攻擊者容器發出、listener 在實驗網路內、網路 `internal: true` 不連外。
 3. 對候選鏈逐步標註可重現性。
+
+## 里程碑 2：收緊判定邏輯，消除假 PASS（已修 R1/R3/R6/R7）
+
+改的檔案：
+- `apps/api/app/validator/runner.py`
+- `apps/api/app/validator/test_runner.py`（我的所有權）
+- `apps/api/app/deploy/test_local_compose_integration.py`（**非我所有權，deploy/infra-eng**；僅改 1 行斷言＋註解，原本斷言把「無攻擊動作的環境」判為 full_chain=PASS，正是 R1。已請 Lead 知會 infra-eng。）
+
+修正內容：
+- **R1**：`full_chain` 現在結構上不可能為 PASS。有 actions 時取各動作（最高 PARTIAL）的最低值；**無 actions 時 = NOT_TESTED**（沒有攻擊鏈可宣稱重現），plumbing 只能下拉不能上拉。另加保險：若算出 PASS 一律降為 PARTIAL。
+- **R3**：動作要被標 PARTIAL，必須有連線在 `reason` 內**明確引用該動作 id**；僅「目標主機相同」不算（新 `_explicit_action_refs`）。既有證據中 a2/a3/a4 之類只因同目標就浮報 PARTIAL 的情況，現改為 NOT_TESTED。
+- **R6**：區隔檢查（segmentation）只有在**真正無路由**（Network unreachable／No route to host／timeout）時才 PASS。`ConnectionRefused` 代表主機可達、只是埠關著＝兩端在同一網路，**不能**當成隔離成功，改標 NOT_TESTED（新 `_segmentation_status`）。
+- **R7**：`running` 但 `unhealthy` 的容器 env_build 判 FAIL；`starting` 判 NOT_TESTED；healthy／無 healthcheck 才 PASS。
+
+新增測試（`test_runner.py`）：
+- `test_full_chain_is_never_pass_without_declared_attack_actions`（R1）
+- `test_refused_connection_is_not_a_segmentation_pass`（R6）
+- `test_unhealthy_container_fails_env_build`（R7）
+- `test_action_without_explicit_mapping_is_not_tested_not_partial`（R3）
+
+測試：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **59 passed**（原 55，+4）。
+
+### 仍待處理 / 需產品或他人決定
+- **R2/R4（跨模組，需 Lead 協調前端）**：「行為重現」層目前全由健康檢查／固定字串組成，前端 `apps/web/src/pages/ReportPage.tsx` 卻以「個別攻擊行為…能觀察到嗎？」呈現，且替代品（demo-api 代真實軟體）的 behavior PASS 看不出是「教學替代」。建議：前端在 behavior_repro 區塊標示「這是無害服務探測／教學替代，非攻擊行為重現」，或在 schema 加動作層級 fidelity 標記。
+- **R8（證據可稽核性）**：每個 check 的 evidence 指向報告自身。建議另存每次探測的原始指令／exit code／stdout／時間到 `validation-runs/<scenario>/<run>/`。屬較大改動，未動。
+- **R10（含 VM 計畫）**：`os_identity` 不在 schema enum → 會丟 RuntimeError；有 VM 主機時整個 compose ps 被跳過致容器假 FAIL。需與 infra-eng／contracts 協調（schema 屬共用契約），未自行改。
+- **R11**：schema 狀態列舉無 BLOCKED、無動作層級教學替代標記。需改 `packages/contracts`（共用），回報 Lead。

@@ -60,7 +60,7 @@ def _compose_ps_result():
 
 
 class ValidationRunnerTests(unittest.TestCase):
-    def _run_report(self, blocked_marker: str = "BLOCKED:ConnectionRefusedError:blocked",
+    def _run_report(self, blocked_marker: str = "BLOCKED:OSError:[Errno 101] Network is unreachable",
                     target_ip: str | None = "172.20.0.5"):
         temporary = tempfile.TemporaryDirectory(prefix="cr-validator-unit-")
         self.addCleanup(temporary.cleanup)
@@ -109,6 +109,99 @@ class ValidationRunnerTests(unittest.TestCase):
         reachable = next(check for check in reachable_report["checks"] if check["category"] == "segmentation")
         self.assertEqual(reachable["status"], "FAIL")
         self.assertIn("CONNECTED", reachable["observed"])
+
+    def test_refused_connection_is_not_a_segmentation_pass(self):
+        # ConnectionRefused means the host was reachable and only the port was closed:
+        # the two endpoints share a network, so segmentation is NOT proven (R6).
+        report = self._run_report("BLOCKED:ConnectionRefusedError:[Errno 111] Connection refused")
+        blocked = next(check for check in report["checks"] if check["category"] == "segmentation")
+        self.assertEqual(blocked["status"], "NOT_TESTED")
+        self.assertIn("refused", blocked["observed"].lower())
+
+    def test_full_chain_is_never_pass_without_declared_attack_actions(self):
+        # R1: an environment with zero attack actions must not inherit a full_chain
+        # PASS from plumbing (TCP reachable + HTTP 200). No chain -> NOT_TESTED.
+        ir = {
+            "schema_version": "1.0", "id": "no-actions", "name": "no actions",
+            "provenance": {"input_kind": "text", "input_sha256": "0" * 64},
+            "actions": [], "relations": [],
+            "environment_plan": {
+                "hosts": [
+                    {"id": "attacker", "role": "attacker", "image_hint": "demo-client",
+                     "component_mode": "substitute", "networks": ["external"]},
+                    {"id": "web", "role": "web", "image_hint": "demo-api", "component_mode": "substitute",
+                     "services": [{"name": "http", "port": 8080, "protocol": "tcp"}],
+                     "networks": ["external"]},
+                ],
+                "networks": [{"id": "external", "internal": True}],
+                "connections": [
+                    {"from_host": "attacker", "to_host": "web", "port": 8080, "protocol": "tcp",
+                     "reason": "reach web"},
+                ],
+                "verify_blocked": [],
+            },
+        }
+        ps = {"returncode": 0, "stdout": (
+            '[{"Service":"attacker","Name":"cr-demo-no-actions-attacker","State":"running"},'
+            '{"Service":"web","Name":"cr-demo-no-actions-web","State":"running"}]'), "stderr": ""}
+        probe_results = [
+            {"returncode": 0, "stdout": "CONNECTED", "stderr": ""},
+            {"returncode": 0, "stdout": "HTTP_STATUS:200\nBODY:cr-demo-demo-ok", "stderr": ""},
+        ]
+        temporary = tempfile.TemporaryDirectory(prefix="cr-validator-unit-")
+        self.addCleanup(temporary.cleanup)
+        with patch.object(config, "DATA_DIR", Path(temporary.name)), \
+                patch.object(runner.store, "get", return_value=ir), \
+                patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
+                patch.object(runner.manager, "compose_ps_result", return_value=ps), \
+                patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
+                patch.object(runner.manager, "container_ipv4", return_value="172.20.0.9"), \
+                patch.object(runner.manager, "exec_in_service",
+                             return_value={"returncode": 0, "stdout": "python-runtime-ok", "stderr": ""}):
+            report = runner.run("no-actions")
+        self.assertEqual(report["levels"]["env_build"], "PASS")
+        self.assertEqual(report["levels"]["full_chain"], "NOT_TESTED")
+        self.assertNotEqual(report["levels"]["full_chain"], "PASS")
+
+    def test_unhealthy_container_fails_env_build(self):
+        # R7: a running-but-unhealthy container is not a stood-up service.
+        temporary = tempfile.TemporaryDirectory(prefix="cr-validator-unit-")
+        self.addCleanup(temporary.cleanup)
+        ps = {"returncode": 0, "stdout": (
+            '[{"Service":"attacker","Name":"cr-demo-runner-test-attacker","State":"running"},'
+            '{"Service":"web","Name":"cr-demo-runner-test-web","State":"running","Health":"unhealthy"},'
+            '{"Service":"db","Name":"cr-demo-runner-test-db","State":"running"}]'), "stderr": ""}
+        probe_results = [
+            {"returncode": 0, "stdout": "CONNECTED", "stderr": ""},
+            {"returncode": 0, "stdout": "HTTP_STATUS:200\nBODY:cr-demo-demo-ok", "stderr": ""},
+            {"returncode": 0, "stdout": "BLOCKED:OSError:[Errno 101] Network is unreachable", "stderr": ""},
+        ]
+
+        def exec_result(_sid, service_id, command, timeout=10):
+            if service_id == "db":
+                return {"returncode": 0, "stdout": "postgres (PostgreSQL) 16.16", "stderr": ""}
+            return {"returncode": 0, "stdout": "python-runtime-ok", "stderr": ""}
+
+        with patch.object(config, "DATA_DIR", Path(temporary.name)), \
+                patch.object(runner.store, "get", return_value=IR), \
+                patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
+                patch.object(runner.manager, "compose_ps_result", return_value=ps), \
+                patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
+                patch.object(runner.manager, "container_ipv4", return_value="172.20.0.5"), \
+                patch.object(runner.manager, "exec_in_service", side_effect=exec_result):
+            report = runner.run("runner-test")
+        web_up = next(c for c in report["checks"] if c["id"] == "service-up-web")
+        self.assertEqual(web_up["status"], "FAIL")
+        self.assertEqual(report["levels"]["env_build"], "FAIL")
+
+    def test_action_without_explicit_mapping_is_not_tested_not_partial(self):
+        # R3: an action is PARTIAL only when a connection names its id. Sharing a
+        # target host is not enough. a2 targets db but no connection names a2.
+        report = self._run_report()
+        action_checks = {c["action_ref"]: c for c in report["checks"]
+                         if c["id"].startswith("action-")}
+        self.assertEqual(action_checks["a1"]["status"], "PARTIAL")
+        self.assertEqual(action_checks["a2"]["status"], "NOT_TESTED")
 
     def test_name_resolution_failure_is_not_counted_as_blocked(self):
         # A DNS/gaierror failure proves nothing about the network path: must be NOT_TESTED, never PASS.

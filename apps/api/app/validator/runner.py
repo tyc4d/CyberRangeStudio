@@ -169,15 +169,36 @@ def _version_matches(expected: str, observed: str, component_id: str) -> bool:
     return expected in observed
 
 
-def _action_refs_for_connection(connection: dict[str, Any], actions: list[dict[str, Any]]) -> list[str]:
+def _explicit_action_refs(connection: dict[str, Any], actions: list[dict[str, Any]]) -> list[str]:
+    """Actions whose id is explicitly named in a connection's reason.
+
+    Used to decide whether an action has a *proven prerequisite*. Sharing a target
+    host is NOT enough: several actions can target the same host while only one maps
+    to a given declared path, so host-only matching over-reports actions as PARTIAL
+    (R3). Only an explicit id reference counts here.
+    """
     reason = str(connection.get("reason", ""))
     refs: list[str] = []
     for action in actions:
         action_id = action.get("id")
         if not isinstance(action_id, str):
             continue
-        id_in_reason = re.search(rf"(?<![A-Za-z0-9_-]){re.escape(action_id)}(?![A-Za-z0-9_-])", reason)
-        if id_in_reason or action.get("target_host_ref") == connection.get("to_host"):
+        if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(action_id)}(?![A-Za-z0-9_-])", reason):
+            refs.append(action_id)
+    return refs
+
+
+def _action_refs_for_connection(connection: dict[str, Any], actions: list[dict[str, Any]]) -> list[str]:
+    """Broader labeling: explicit id reference, else a shared target host.
+
+    This only drives a display `action_ref` on connectivity/chain checks; it must
+    never be used to decide an action's reproduction status (use the explicit form).
+    """
+    refs = list(_explicit_action_refs(connection, actions))
+    for action in actions:
+        action_id = action.get("id")
+        if isinstance(action_id, str) and action_id not in refs \
+                and action.get("target_host_ref") == connection.get("to_host"):
             refs.append(action_id)
     return refs
 
@@ -198,6 +219,35 @@ def _probe_status(result: dict[str, Any], should_connect: bool, docker_unavailab
         return ("FAIL" if should_connect else "PASS"), observed
     if docker_unavailable or result.get("returncode") in {2, 125, 127}:
         return "NOT_TESTED", observed
+    return "NOT_TESTED", observed
+
+
+def _segmentation_status(result: dict[str, Any]) -> tuple[str, str]:
+    """Judge a "must be blocked" probe.
+
+    Segmentation is proven only by genuine network unreachability (no route between
+    the isolated networks): ENETUNREACH / EHOSTUNREACH / a timeout. A *refused*
+    connection (ConnectionRefusedError) means the host WAS reachable and only the
+    port was closed — that is evidence the two endpoints share a network, not that
+    they are segmented, so it must never pass a segmentation check (R6).
+    """
+    observed = _result_output(result)
+    if "CONNECTED" in observed:
+        return "FAIL", observed
+    if "UNRESOLVED:" in observed:
+        return "NOT_TESTED", observed + " (target name did not resolve; inconclusive)"
+    if "BLOCKED:" in observed:
+        unreachable = any(token in observed for token in (
+            "Network is unreachable", "No route to host", "ENETUNREACH", "EHOSTUNREACH",
+            "timed out", "TimeoutError"))
+        if unreachable:
+            return "PASS", observed
+        if "ConnectionRefusedError" in observed or "Connection refused" in observed:
+            return "NOT_TESTED", observed + (
+                " (connection was refused, not unreachable: the host is on a shared "
+                "network with only the port closed; segmentation is not proven)")
+        # Some other OSError: reachable-but-blocked is ambiguous, do not claim PASS.
+        return "NOT_TESTED", observed + " (blocked by a non-routing error; segmentation not proven)"
     return "NOT_TESTED", observed
 
 
@@ -274,7 +324,17 @@ def run(scenario_id: str) -> dict[str, Any]:
             continue
         container = container_by_service.get(host_id)
         running = bool(container and container.get("state") == "running")
-        status = "PASS" if running else ("NOT_TESTED" if docker_unavailable else "FAIL")
+        health = (container.get("health") or "").strip().lower() if container else ""
+        if not running:
+            status = "NOT_TESTED" if docker_unavailable else "FAIL"
+        elif health == "unhealthy":
+            # Running but failing its own healthcheck is not a stood-up service (R7).
+            status = "FAIL"
+        elif health == "starting":
+            # Not yet ready; do not claim the environment is built.
+            status = "NOT_TESTED"
+        else:
+            status = "PASS"
         observed = (f"容器狀態={container.get('state')}，健康狀態={container.get('health') or '沒有健康狀態資料'}"
                     if container else "Docker Compose 狀態清單中沒有此容器")
         check = _check(f"service-up-{host_id}", f"{host_id} 服務執行狀態", "service_up", status,
@@ -466,7 +526,7 @@ def run(scenario_id: str) -> dict[str, Any]:
                     "could not determine target container IP; segmentation not proven at the TCP layer")
             else:
                 result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target_ip, int(port)), timeout=10)
-                status, observed = _probe_status(result, should_connect=False, docker_unavailable=docker_unavailable)
+                status, observed = _segmentation_status(result)
                 observed = f"probed {target}={target_ip}:{port} from {source}; {observed}"
         check = _check(f"segmentation-{index}", f"{source} 無法連線至 {target}:{port}", "segmentation", status,
                        f"TCP connection from {source} to {target}:{port} is blocked", observed)
@@ -481,7 +541,7 @@ def run(scenario_id: str) -> dict[str, Any]:
     for action in actions:
         action_id = action["id"]
         related_indexes = [index for index, connection in enumerate(plan_connections, start=1)
-                           if action_id in _action_refs_for_connection(connection, actions)]
+                           if action_id in _explicit_action_refs(connection, actions)]
         related_connectivity = [connectivity_by_index[index] for index in related_indexes if index in connectivity_by_index]
         proven_prerequisite = any(check["status"] == "PASS" for check in related_connectivity)
         status = "PARTIAL" if proven_prerequisite else "NOT_TESTED"
@@ -497,8 +557,23 @@ def run(scenario_id: str) -> dict[str, Any]:
 
     env_build = _aggregate(service_checks)
     behavior_repro = _aggregate(behavior_checks)
-    required_steps = [*declared_chain_checks, *action_step_checks] if actions else declared_chain_checks
-    full_chain = _aggregate([{"status": env_build}, {"status": behavior_repro}, *required_steps])
+    # This benign validator never executes an attack action, so a "full chain"
+    # verdict is driven by attack-step evidence (action_step_checks), which can be
+    # at most PARTIAL. Declared TCP "chain" checks are plumbing (connectivity +
+    # health) and may only pull the verdict DOWN, never prop it up to PASS.
+    # When the scenario declares no attack actions, there is no chain to reproduce,
+    # so full_chain is NOT_TESTED rather than inheriting a PASS from plumbing (R1).
+    if actions:
+        full_chain = _aggregate([{"status": env_build}, {"status": behavior_repro},
+                                 *declared_chain_checks, *action_step_checks])
+    elif declared_chain_checks and any(c["status"] == "FAIL" for c in declared_chain_checks):
+        full_chain = "FAIL"
+    else:
+        full_chain = "NOT_TESTED"
+    # Structural guarantee: without executed attack steps a full chain can never be
+    # claimed reproduced. Keep this even if the aggregate logic changes later.
+    if full_chain == "PASS":
+        full_chain = "PARTIAL"
 
     substitutes = []
     for component in component_report["components"]:
