@@ -25,9 +25,11 @@ async def import_attackflow_endpoint(request: Request):
     errors = iter_errors("scenario-ir", ir)
     if errors:
         raise HTTPException(status_code=422, detail={"message": "Imported Scenario IR failed validation", "errors": errors})
+    warnings = ir.pop("_attackflow_warnings", [])
+    ir.pop("_attackflow_original_bundle", None)
     saved = store.create(ir)
     store.set_source(saved["id"], "stix2.1", json.dumps(bundle, ensure_ascii=False), saved["name"])
-    return saved
+    return {**saved, "attackflow_warnings": warnings}
 
 
 @router.get("/api/scenario/{scenario_id}/attackflow/export")
@@ -36,6 +38,8 @@ def export_attackflow_endpoint(scenario_id: str):
     if ir is None:
         raise HTTPException(status_code=404, detail="Scenario not found.")
     try:
-        return export_attackflow(ir)
+        source = store.get_source(scenario_id)
+        original = json.loads(source["content"]) if source and source.get("input_kind") == "stix2.1" else None
+        return export_attackflow(ir, original_bundle=original)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

@@ -1,4 +1,5 @@
 import json
+import uuid
 from pathlib import Path
 
 from cr_contracts import iter_errors
@@ -7,6 +8,7 @@ from app.cti.attackflow import export_attackflow, import_attackflow
 
 
 FIXTURE = Path(__file__).resolve().parents[4] / "fixtures/sample-scenarios/attackflow/official-attack-flow-example.json"
+_EXTENSION_ID = "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4"
 
 
 def test_official_attackflow_fixture_round_trip():
@@ -17,11 +19,20 @@ def test_official_attackflow_fixture_round_trip():
     assert len(ir["actions"]) == 5
     assert ir["conditions"] and ir["operators"] and ir["assets"]
     assert any(a.get("attack_technique") == "T1190" for a in ir["actions"])
+    source_graph = [o for o in bundle["objects"] if o.get("type", "").startswith("attack-")]
+    expected_edges = {
+        (o["id"], ref)
+        for o in source_graph
+        for key in ("effect_refs", "asset_refs", "on_true_refs", "on_false_refs")
+        for ref in o.get(key, [])
+    }
+    assert len(ir["relations"]) == len(expected_edges)
 
     exported = export_attackflow(ir)
     assert exported["type"] == "bundle"
     assert any(o.get("type") == "extension-definition" for o in exported["objects"])
     assert len([o for o in exported["objects"] if o.get("type") == "attack-action"]) == 5
+    assert exported["objects"] == bundle["objects"]
     round_tripped = import_attackflow(exported)
     assert iter_errors("scenario-ir", round_tripped) == []
     assert {a.get("attack_technique") for a in round_tripped["actions"]} == {
@@ -92,3 +103,93 @@ def test_conditions_operators_and_assets_round_trip():
     assert next(c for c in round_tripped["conditions"] if c.get("description") == "Branch on whether access is available.")["pattern_type"] == "stix"
     assert next(o for o in round_tripped["operators"] if o["operator"] == "OR")["operator"] == "OR"
     assert next(a for a in round_tripped["assets"] if a.get("name") == "Victim server")["name"] == "Victim server"
+
+
+def _action_ir(ident, name, **extra):
+    return {"id": ident, "name": name, "epistemic_status": "supported", "source": "stix", **extra}
+
+
+def test_temporal_action_relations_export_as_refs_and_round_trip_edge_count():
+    actions = [_action_ir(f"a{i}", f"Action {i}") for i in range(14)]
+    relations = [{"id": f"r{i}", "from_action": f"a{i}", "to_action": f"a{i+1}",
+                  "kind": "temporal", "epistemic_status": "supported", "source": "stix"}
+                 for i in range(13)]
+    ir = {"schema_version": "1.0", "id": "scenario-temporal", "name": "Temporal chain",
+          "provenance": {"input_kind": "text", "input_sha256": "0" * 64},
+          "actions": actions, "relations": relations}
+    exported = export_attackflow(ir)
+    flow = next(o for o in exported["objects"] if o["type"] == "attack-flow")
+    stix_actions = [o for o in exported["objects"] if o["type"] == "attack-action"]
+    assert len(flow["start_refs"]) == 1
+    assert sum(len(o.get("effect_refs", [])) for o in stix_actions) == 13
+    assert all(o["extensions"][_EXTENSION_ID]["edge_kinds"] for o in stix_actions if o.get("effect_refs"))
+    imported = import_attackflow(exported)
+    assert len(imported["relations"]) == len(relations)
+    assert {r["kind"] for r in imported["relations"]} == {"temporal"}
+
+
+def test_bad_bundle_ids_missing_flow_and_dangling_edges_are_rejected():
+    base = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    no_flow = {**base, "objects": [o for o in base["objects"] if o["type"] != "attack-flow"]}
+    try:
+        import_attackflow(no_flow)
+        assert False, "missing flow was accepted"
+    except ValueError as exc:
+        assert "exactly one attack-flow" in str(exc)
+    bad_id = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    bad_id["objects"][0]["id"] = "extension-definition--bad"
+    try:
+        import_attackflow(bad_id)
+        assert False, "invalid STIX id was accepted"
+    except ValueError as exc:
+        assert "Invalid STIX object id" in str(exc)
+    dangling = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    next(o for o in dangling["objects"] if o["type"] == "attack-action")["effect_refs"] = ["attack-action--00000000-0000-4000-8000-000000000000"]
+    try:
+        import_attackflow(dangling)
+        assert False, "dangling effect_ref was accepted"
+    except ValueError as exc:
+        assert "Dangling Attack Flow effect_refs" in str(exc)
+
+
+def test_export_uses_official_technique_name_and_tactic_id_and_skips_bad_ids():
+    ir = {"schema_version": "1.0", "id": "scenario-enrichment", "name": "Enrichment",
+          "provenance": {"input_kind": "text", "input_sha256": "0" * 64},
+          "actions": [
+              _action_ir("valid", "Report step label", attack_technique="T1190", attack_tactic="initial-access"),
+              _action_ir("invalid", "Bad technique", attack_technique="1598.003"),
+              _action_ir("absent", "Absent technique", attack_technique="T1190", epistemic_status="absent"),
+          ], "relations": []}
+    bundle = export_attackflow(ir)
+    patterns = [o for o in bundle["objects"] if o["type"] == "attack-pattern"]
+    assert len(patterns) == 1
+    assert patterns[0]["name"] == "Exploit Public-Facing Application"
+    action_id = "attack-action--" + str(uuid.uuid5(
+        uuid.UUID("d0eaa97b-8f6f-4cb0-b9ac-9c581407a2f2"), "attack-action:valid"))
+    action = next(o for o in bundle["objects"] if o.get("id") == action_id)
+    assert action["tactic_id"] == "TA0001"
+    assert all(o.get("technique_ref") is None for o in bundle["objects"]
+               if o.get("type") == "attack-action" and o.get("name") in {"Bad technique", "Absent technique"})
+
+
+def test_evidence_is_exported_as_readable_stix_note():
+    ir = {"schema_version": "1.0", "id": "scenario-evidence", "name": "Evidence",
+          "provenance": {"input_kind": "text", "input_sha256": "0" * 64},
+          "evidence": [{"id": "ev-1", "quote": "The actor used PowerShell.",
+                        "locator": {"kind": "paragraph", "ref": "4"}}],
+          "actions": [_action_ir("step", "PowerShell", evidence_refs=["ev-1"])], "relations": []}
+    bundle = export_attackflow(ir)
+    note = next(o for o in bundle["objects"] if o["type"] == "note")
+    assert note["content"] == "The actor used PowerShell."
+    assert "paragraph: 4" in note["abstract"]
+
+
+def test_dangling_asset_object_ref_is_reported_and_removed_on_export():
+    bundle = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    asset = next(o for o in bundle["objects"] if o.get("type") == "attack-asset")
+    asset["object_ref"] = "user-account--00000000-0000-4000-8000-000000000111"
+    ir = import_attackflow(bundle)
+    assert any("dangling object_ref" in warning for warning in ir["_attackflow_warnings"])
+    exported = export_attackflow(ir)
+    exported_asset = next(o for o in exported["objects"] if o.get("id") == asset["id"])
+    assert "object_ref" not in exported_asset

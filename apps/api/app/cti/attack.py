@@ -19,6 +19,15 @@ from typing import Any
 _CATALOGUE_PATH = Path(__file__).with_name("attack_catalogue.json")
 _ID_RE = re.compile(r"T\d{4}(?:\.\d{3})?", re.IGNORECASE)
 
+_TACTIC_IDS = {
+    "reconnaissance": "TA0043", "resource-development": "TA0042",
+    "initial-access": "TA0001", "execution": "TA0002", "persistence": "TA0003",
+    "privilege-escalation": "TA0004", "defense-evasion": "TA0005",
+    "credential-access": "TA0006", "discovery": "TA0007",
+    "lateral-movement": "TA0008", "collection": "TA0009",
+    "exfiltration": "TA0010", "command-and-control": "TA0011", "impact": "TA0040",
+}
+
 
 @lru_cache(maxsize=1)
 def _catalogue() -> dict[str, Any]:
@@ -48,6 +57,25 @@ def lookup(technique_id: str) -> dict[str, Any] | None:
     if info is None:
         return None
     return {"id": tid, **info}
+
+
+def lookup_exact(technique_id: str) -> dict[str, Any] | None:
+    """Look up only an exact catalogue entry (no parent-technique fallback)."""
+    tid = _normalise(technique_id)
+    if not tid:
+        return None
+    info = _catalogue().get("techniques", {}).get(tid)
+    return {"id": tid, **info} if info else None
+
+
+def tactic_identifier(value: str) -> str | None:
+    """Convert an ATT&CK tactic short name (or display name) into its TA id."""
+    if not isinstance(value, str):
+        return None
+    if re.fullmatch(r"TA\d{4}", value, re.IGNORECASE):
+        return value.upper()
+    slug = value.strip().lower().replace(" ", "-").replace("_", "-")
+    return _TACTIC_IDS.get(slug)
 
 
 def techniques_for_ir(ir: dict[str, Any]) -> dict[str, dict[str, Any]]:
