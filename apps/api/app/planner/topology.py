@@ -115,9 +115,14 @@ def _port_for(service: dict[str, Any]) -> tuple[int, str] | None:
     known_ports = {"http": (80, "tcp"), "https": (443, "tcp"), "ssh": (22, "tcp"),
                    "mysql": (3306, "tcp"), "postgres": (5432, "tcp"),
                    "postgresql": (5432, "tcp"), "redis": (6379, "tcp"), "dns": (53, "udp"),
-                   "smb": (445, "tcp")}
+                   "smb": (445, "tcp"),
+                   # IANA-registered defaults for protocol services a report names without a port.
+                   "rdp": (3389, "tcp"), "remote desktop": (3389, "tcp"), "ldap": (389, "tcp"),
+                   "winrm": (5985, "tcp"), "mssql": (1433, "tcp"), "ftp": (21, "tcp"),
+                   "smtp": (25, "tcp"), "telnet": (23, "tcp"), "vnc": (5900, "tcp"), "kerberos": (88, "tcp")}
     for label, result in known_ports.items():
-        if label in name:
+        # Whole words only: "rdp" must not match inside "wordpress".
+        if re.search(rf"(?<![a-z0-9]){re.escape(label)}(?![a-z0-9])", name):
             return result
     return None
 

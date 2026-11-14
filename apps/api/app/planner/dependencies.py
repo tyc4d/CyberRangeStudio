@@ -510,14 +510,14 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         return f"missing-product-{_slug56(name)}-version" in analysis_question_ids
 
     def add_missing(key: str, field: str, reason: str, *, category: str = "software", status: str = "open",
-                    resolution: str | None = None) -> None:
+                    resolution: str | None = None, severity: str = "major") -> None:
         ident = "planner_dep_" + _slug(key)
         if ident in seen_missing:
             return
         seen_missing.add(ident)
         entry: dict[str, Any] = {
             "id": ident, "field": field, "category": category, "reason": reason,
-            "severity": "major", "status": status,
+            "severity": severity, "status": status,
         }
         if resolution:
             entry["resolution"] = resolution
@@ -728,6 +728,11 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    if actions and not any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
+        # Nothing to build: say so as a blocker instead of letting an empty plan look deployable.
+        add_missing("no-target-software", "目標軟體／服務",
+                    "來源與補件都沒有指出任何目標軟體、服務或弱點，無法規劃可重現的環境。請補上受害系統的產品與版本，或確認此情境不部署。",
+                    severity="blocker")
     # The "no service known yet" placeholder has done its job once real services exist.
     if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]

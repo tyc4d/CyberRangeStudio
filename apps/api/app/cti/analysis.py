@@ -81,6 +81,35 @@ _PROVENANCE_HASH_LABEL_RE = re.compile(
     r"\b(?:source|document|advisory|report|pdf)\b[^:\n]{0,30}\b(?:sha-?\d*|md5|checksum|hash)\b", re.IGNORECASE)
 
 
+# Wording by which a source marks its own statement as uncertain or unconfirmed.
+_HEDGE_RE = re.compile(
+    r"\b(?:may|might|could)\s+have\b|\bappears?\s+to\b|\bseems?\s+to\b|\bwe\s+believe\b|\bis\s+believed\b|"
+    r"\b(?:possibly|reportedly|allegedly|presumably|purportedly|unconfirmed|suspected)\b|\breason\s+to\s+believe\b|"
+    r"\bnot\s+(?:able\s+to\s+)?confirm(?:ed)?\b|可能|疑似|據稱|尚未證實|未經證實",
+    re.IGNORECASE,
+)
+
+
+def _hedged_statement(quotes: list[str], unit_texts: list[str]) -> bool:
+    """True when a sentence the quote comes from is itself hedged ("may have", "appears to").
+
+    The quote can be clipped after the hedge, so the enclosing source sentence is checked.
+    """
+    normalise = lambda value: re.sub(r"\s+", " ", value).strip().casefold()
+    for quote in quotes:
+        needle = normalise(quote)
+        if not needle:
+            continue
+        if _HEDGE_RE.search(quote):
+            return True
+        for text in unit_texts:
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                plain = normalise(sentence)
+                if plain and (needle in plain or plain in needle) and _HEDGE_RE.search(sentence):
+                    return True
+    return False
+
+
 def _relation_cue(kind: str, quotes: list[str]) -> str | None:
     """Return which stated-relation wording the verified quotes contain, if any."""
     text = " ".join(quotes)
@@ -686,6 +715,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         _refs = attach(item)
         action["evidence_refs"] = _refs
         action["epistemic_status"] = settle_status(item, _refs)
+        if action["epistemic_status"] == "supported":
+            cited = [rec for rec in evidence if rec["id"] in _refs]
+            unit_texts = [unit.text for unit in units if any(unit.locator == rec["locator"] for rec in cited)]
+            if _hedged_statement([rec["quote"] for rec in cited], unit_texts):
+                # The report says this, but says it is not sure. Keep that visible.
+                action["source_certainty"] = "hedged"
+                action["epistemic_reason"] = "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
         actions.append(action)
 
     relations_raw = _array(result, "relations")
@@ -900,6 +936,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "provisional": True,
             "dropped_placeholder_hosts": dropped_placeholder_hosts,
             "excluded_non_attacker_actions": excluded_actions,
+            "hedged_action_count": sum(1 for action in actions if action.get("source_certainty") == "hedged"),
         },
     }
     ir["missing_items"] = calculate_missing_items(ir)

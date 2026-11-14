@@ -294,6 +294,27 @@ class SupplementAnswersBindToTheAskedHost(unittest.TestCase):
         self.assertIn(postgres["id"], next(h for h in planned["hosts"] if h["id"] == "h2")["service_refs"])
 
 
+class NothingToBuild(unittest.TestCase):
+    def test_no_identified_software_is_a_blocker_not_an_empty_plan(self):
+        ir = base_ir(actions=[action("a1", "gained access to part of the network", "h1")],
+                     hosts=[{"id": "h1", "role": "part of our network", "epistemic_status": "inferred", "source": "llm"}],
+                     services=[{"id": "service-unspecified", "name": "Unspecified service (absent)",
+                                "epistemic_status": "absent", "source": "program"}])
+        planned = plan_dependencies(ir)
+        blocker = next(item for item in planned["missing_items"] if item["id"] == "planner_dep_no-target-software")
+        self.assertEqual((blocker["severity"], blocker["status"]), ("blocker", "open"))
+        self.assertEqual(planned["fidelity"], "not_reproducible")
+
+
+class ProtocolPorts(unittest.TestCase):
+    def test_protocol_label_is_matched_as_a_word(self):
+        from app.planner.topology import _port_for
+        self.assertEqual(_port_for({"name": "RDP"}), (3389, "tcp"))
+        self.assertEqual(_port_for({"name": "Remote Desktop (RDP) service"}), (3389, "tcp"))
+        self.assertIsNone(_port_for({"name": "WordPress"}))
+        self.assertEqual(_port_for({"name": "HTTPS listener"}), (443, "tcp"))
+
+
 class UnsupportedComponents(unittest.TestCase):
     def test_undeployable_platform_is_not_presented_as_real_or_substitute(self):
         ir = base_ir(actions=[action("a1", "Exploit VMware Horizon", "h1", attack_technique="T1190")],
