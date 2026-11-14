@@ -69,6 +69,28 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 
 觀察到但沒有處理（列給 Lead 判斷）：流程頁的設計檢查對「4 個行為的目標主機都是 unknown」顯示「沒有發現問題／通過」。加一條檢查規則屬於新增檢查項目，我沒有自行加。
 
+## 批次 5（commit 12bdad5）
+
+| QA 編號 | 問題 | 修法 | 驗證 |
+|---|---|---|---|
+| UX-03 | 後端 severity=major，畫面一律顯示「次要」 | 所有項目嚴重度相同時，標籤沿用後端的字，只用影響步驟數排序 | e2e 通過；截圖 09 |
+| UX-04 | 程式放的佔位主機被寫成「原文已知」 | 後端標 supported 才寫「原文已知」，否則寫「系統推定（原文未證實）」 | e2e 通過；截圖 09 |
+| UX-02 | 英文的缺失原因被藏起來 | 英文原因照樣顯示，標明是後端英文原文 | 無 e2e |
+| UX-05 | 按下一步後停在前一頁的捲動位置 | 換頁時主內容捲回頂端 | e2e 通過 |
+| UX-06 | 矮視窗展開設計檢查後控制項蓋住節點 | 視窗高度 ≤ 800 時，設計檢查開合後自動重新置中 | 截圖 08 人工檢視：節點不再被圖例或工具列遮住。**只測了「1280×720 進頁後展開」，沒測 QA 的「先展開再縮小視窗」** |
+| ADM-06 | 部署歷史點列看不到細節 | 紀錄列可展開「完整輸出」（stderr／stdout 原文） | 無 e2e（測試用的失敗紀錄沒有輸出內容） |
+| ADM-07B | healthy 的意思不清楚 | 健康檢查下方說明：只代表容器在執行、未回報不健康，服務是否可用看驗證報告 | 無 e2e（需要已部署的環境） |
+
+## 批次 6（配合 scenario-eng 後端新欄位；本分支已合併 agent/scenario-eng 887ef7b，merge 080e381）
+
+- 缺失卡片：回答前說明「你填的內容會原樣寫入〈主機 X 的作業系統〉」，回答後顯示「已寫入情境資料：…」或「只保留為文字，沒有寫入」及後端給的原因（對應 EI-05）。e2e 通過並比對後端實際儲存值；截圖 11、12。
+- 依賴頁：目錄沒有的軟體標「目錄無此元件」並有整頁提示；服務的所在主機也讀後端新的 `host_ref`。e2e 通過；截圖 10。
+- 拓樸：新增 5 種規劃備註的中文（推定入口主機、無外部可達主機、目錄無法部署、VM 尚不可部署、行為路徑無目的埠）。無 e2e。
+- 分析頁關係表：顯示後端的 `epistemic_reason`（為何不標成原文支持）。無 e2e。
+- scenario-eng 列的前端待辦中**尚未做**：`source_certainty=hedged`、`exposure_basis`、`quality.excluded_non_attacker_actions` 的顯示。
+
+`qa-fixes`＋`motion`：13 passed；`tsc`、`npm run build` 通過。
+
 ## 完整 `npm run e2e` 結果（未通過）
 
 | 執行 | 後端 | 結果 |
@@ -81,6 +103,10 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 - 我沒有修改 `full-flow.spec.ts` 的斷言。
 - 第 2 次多出的失敗是我自己的測試：新後端在補件回應裡會新增一筆後續問題（`missing-service-svc1-version`），所以「待補充數 −1」不成立。已改成比對後端實際狀態（該項為 accepted_unknown、頁面數字等於後端 open 數），不是放寬成功條件。
 - 合併後後端單元測試：`93 passed`。
+- **第 3 次**（合併 scenario-eng 887ef7b 後）：12 passed／1 failed／1 未執行。full-flow 這次通過拓樸（2 條連線），改在 IaC 步驟失敗：後端拒絕生成，`h1`、`h2` 找不到可用映像，因為 demo 報告裡的「web service／database service」在目錄中沒有對應元件（`no_component`），新後端不再自動用 nginx／postgres 頂替。部署段仍未執行。
+- 我用 API 試了「選替代方案」這條路：對 `planner_dep_software-web-service`／`-database-service` 送出 substitute_chosen（nginx、PostgreSQL）後重新分析，會多出 `svc-oss-nginx`、`svc-oss-postgres` 兩個使用者服務，但它們沒有歸屬主機、`is_substitute=false`，原本的 s1／s2 仍是 `no_component`；重新規劃後備註寫「沒有主機歸屬的服務被排除」，IaC 照樣 422。**也就是目前 demo 情境沒有任何畫面操作能走到可部署**，full-flow e2e 在這個後端上無法通過，需要後端決定替代方案如何掛回原主機。我沒有改 full-flow 的斷言。
+- 合併後後端單元測試：122 passed／**1 failed**（`tests/unit/test_planning_consistency.py::DifferentProductsAreNotAliases::test_vendor_word_inside_another_product_name_does_not_match`，`no_component` 為 None）。這是合併後在我的分支上的結果，沒有在 scenario-eng 自己的分支上重跑確認。
+- 另外觀察到：full-flow 測試把第一張缺失卡（作業系統題）填了一句無關的說明文字，新後端照樣把整句寫進 `h1.os`。前端已加上「內容會原樣寫入該欄位」的提示，但後端不檢查內容是否像作業系統。
 - 證據：`reports/overnight/evidence/frontend-eng/full-e2e/`（兩次的輸出、run-log、失敗截圖）。
 - 注意：本分支現在含 scenario-eng 的提交（merge ec09258），整合時請留意。
 
@@ -89,8 +115,8 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 - 完整 `npm run e2e` 尚未通過（見上）；部署／驗證段在本輪從未被 e2e 執行到。
 - 422 白話訊息、部署 up／down 失敗的精簡顯示（CommandFailure）沒有 e2e 覆蓋，也沒有用真實失敗看過畫面。
 
-## 停止點（用量上限，工作在此中止）
+## 目前狀態
 
-- 自己起的 API(8131)／Vite(5181) 已關閉；本輪從未成功部署，沒有留下容器。
-- 尚未處理的 QA 項目（前端可做）：部署紀錄列不能展開看完整 stderr（admin「失敗紀錄診斷」）；流程儲存後舊拓樸仍顯示已核准（需後端在規劃記錄來源版本）；清除後舊驗證報告的標示只在「未部署」提示中說明。
-- 需後端／產品：ADM-01 主機埠固定 42000 無預檢、ADM-02／03 服務對應與殘留、full-flow 0 連線。
+- 自己的 API(8131)／Vite(5181)：寫這段時仍在跑，收工時會關。本輪從未成功部署，沒有容器。
+- 還沒做（前端可做）：hedged／exposure_basis／排除的非攻擊者行為的顯示；流程儲存後舊拓樸仍顯示已核准（需後端在規劃記錄來源版本）；設計檢查對 unknown 目標主機不提醒。
+- 需後端／產品：替代方案無法掛回原主機（full-flow 阻塞）、上述 1 項單元測試失敗、ADM-01 主機埠（main 已合 infra 的動態埠，未重測）、ADM-02／03。

@@ -25,7 +25,7 @@ export function findRefIssues(ir: ScenarioIR): RefIssues {
       ? ir.actions.filter((a) => a.target_host_ref && !isPlaceholder(a.target_host_ref) && !hostIds.has(a.target_host_ref)).map((a) => ({ ...named(a), ref: a.target_host_ref! }))
       : [],
     placeholderActions: ir.actions.filter((a) => isPlaceholder(a.target_host_ref)).map(named),
-    unplacedServices: (ir.services ?? []).filter((s) => !placed.has(s.id)).map((s) => ({ id: s.id, name: s.name })),
+    unplacedServices: (ir.services ?? []).filter((s) => !placed.has(s.id) && !(s as { host_ref?: string }).host_ref).map((s) => ({ id: s.id, name: s.name })),
   };
 }
 

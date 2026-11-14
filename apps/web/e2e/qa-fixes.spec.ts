@@ -207,3 +207,31 @@ test("缺失補充：嚴重度沿用後端的 major；沒有原文依據的佔�
   await expect(page.getByText("重要", { exact: true }).first()).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "09-missing-severity-and-source-labels.png") });
 });
+
+test("補件會說明答案寫到哪裡，送出後顯示已寫入的欄位；目錄沒有的軟體明確標示", async ({ page }) => {
+  const id = seed();
+  await open(page, id, "/deps");
+  await page.getByRole("button", { name: "執行依賴分析" }).click();
+  await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("no-component")).toContainText("Progress MOVEit Transfer");
+  await expect(page.getByText("目錄無此元件")).toBeVisible();
+  await shot(page, { path: path.join(EVIDENCE, "10-deps-no-component.png"), fullPage: true });
+
+  await page.goto("/missing");
+  await expect(heading(page, "缺失補充")).toBeVisible();
+  const card = page.locator(".card", { hasText: "實際使用哪個作業系統" }).first();
+  await card.getByRole("button", { name: "補充", exact: true }).click();
+  await expect(card.getByTestId("write-target")).toContainText("的作業系統");
+  await card.getByPlaceholder(/填入實際資訊/).fill("Windows Server 2019");
+  await shot(page, { path: path.join(EVIDENCE, "11-missing-write-target.png") });
+  await card.getByRole("button", { name: "送出", exact: true }).click();
+  await expect(page.locator(".notice.err")).toHaveCount(0);
+  await page.getByRole("button", { name: /^全部 \d+$/ }).click();
+  await expect(page.getByTestId("applied-to").first()).toContainText("的作業系統");
+  await shot(page, { path: path.join(EVIDENCE, "12-missing-applied-to.png") });
+  // The page's claim matches what the backend stored.
+  const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
+  const item = ir.missing_items.find((m: any) => m.applied_to?.field === "os");
+  expect(item, "an item records applied_to os").toBeTruthy();
+  expect(ir.hosts.find((h: any) => h.id === item.applied_to.id).os).toBe("Windows Server 2019");
+});

@@ -16,7 +16,10 @@ function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
       <td className="mono">{s.version ?? <span className="muted">未知</span>}</td>
       <td>{hosts?.length ? hosts.join("、") : <span className="muted">—</span>}</td>
       <td>
-        {s.catalogue_component ? <span className="mono">{s.catalogue_component}</span> : <span className="muted">未對應</span>}
+        {s.catalogue_component ? <span className="mono">{s.catalogue_component}</span>
+          : (s as { no_component?: boolean }).no_component
+            ? <span className="status-FAIL" title="元件目錄裡沒有這個軟體，也不會自動用別的軟體頂替。要部署需在「缺失補充」明確選擇替代方案。">目錄無此元件</span>
+            : <span className="muted">未對應</span>}
         {s.is_substitute && <span className="tag sub" style={{ marginLeft: 6 }} title="環境中使用的不是報告裡的原始軟體">替代品</span>}
       </td>
       <td>{s.cve?.length ? s.cve.map((c) => <div key={c} className="mono">{c}</div>) : <span className="muted">—</span>}</td>
@@ -42,6 +45,12 @@ function Body({ ir }: { ir: ScenarioIR }) {
     hosts.forEach((h) => h.service_refs?.forEach((r) => m.set(r, [...(m.get(r) ?? []), h.role || h.id])));
     return m;
   }, [hosts]);
+  const hostOfRef = (s: ServiceItem) => {
+    const ref = (s as { host_ref?: string }).host_ref;
+    const h = ref ? hosts.find((x) => x.id === ref) : undefined;
+    return ref ? [h?.role || ref] : undefined;
+  };
+  const noComponent = services.filter((s) => (s as { no_component?: boolean }).no_component);
   const substitutes = services.filter((s) => s.is_substitute);
   const has = hosts.length > 0 || services.length > 0;
   // The dependency analysis stamps a fidelity verdict on the IR; without it, what is listed below came straight from the report analysis.
@@ -65,6 +74,15 @@ function Body({ ir }: { ir: ScenarioIR }) {
         </Notice>
       )}
       {analysed && <RefIssuesNotice ir={ir} context="deps" />}
+      {analysed && noComponent.length > 0 && (
+        <Notice kind="warn" title={`${noComponent.length} 個軟體在元件目錄中沒有可部署的對應`}>
+          <div data-testid="no-component">
+            {noComponent.map((s) => s.name || s.id).join("、")}。系統不會自動拿別的軟體頂替，所以目前這個情境無法生成可部署的 IaC。
+            若接受用替代軟體教學，可到「缺失補充」對相關項目選「用替代方案」並寫明用什麼替代，再回來重新分析。
+            重新分析後請在下方確認：替代軟體有出現在該主機的「服務」欄，且「對應元件」有值。只出現在服務清單、「所在主機」是「—」的替代軟體不會被部署。
+          </div>
+        </Notice>
+      )}
 
       {!has ? (
         <div className="card"><Empty>這個情境還沒有主機與服務資料。按右上角「執行依賴分析」由後端產生。</Empty></div>
@@ -107,7 +125,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
             {services.length === 0 ? <Empty>沒有服務資料。</Empty> : (
               <table className="tbl">
                 <thead><tr><th>名稱</th><th>版本</th><th>所在主機</th><th>對應元件</th><th>CVE</th><th>依據</th><th>來源</th></tr></thead>
-                <tbody>{services.map((s) => <ServiceRow key={s.id} s={s} hosts={hostsOf.get(s.id)} />)}</tbody>
+                <tbody>{services.map((s) => <ServiceRow key={s.id} s={s} hosts={hostsOf.get(s.id) ?? hostOfRef(s)} />)}</tbody>
               </table>
             )}
           </div>
