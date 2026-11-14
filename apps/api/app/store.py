@@ -28,6 +28,15 @@ def _conn() -> sqlite3.Connection:
             ir TEXT, note TEXT, ts REAL
         )"""
     )
+    # Original imported report, kept verbatim so the Import page can show it back
+    # for review. Held apart from the IR so it is never re-sent to the LLM and
+    # never snapshotted into every edit version.
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS scenario_sources (
+            scenario_id TEXT PRIMARY KEY, input_kind TEXT, source_name TEXT,
+            content TEXT, sha256 TEXT, ts REAL
+        )"""
+    )
     return c
 
 
@@ -88,6 +97,36 @@ def update(scenario_id: str, ir: dict[str, Any], note: str = "update", bump_vers
             c.execute("INSERT INTO scenario_versions(scenario_id,ir_version,ir,note,ts) VALUES(?,?,?,?,?)",
                       (scenario_id, ir["ir_version"], json.dumps(ir, ensure_ascii=False), note, now))
     return ir
+
+
+def set_source(scenario_id: str, input_kind: str, content: str, source_name: str | None) -> None:
+    """Keep the original imported report verbatim for later review."""
+    import hashlib
+
+    sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    with _LOCK, _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO scenario_sources(scenario_id,input_kind,source_name,content,sha256,ts) "
+            "VALUES(?,?,?,?,?,?)",
+            (scenario_id, input_kind, source_name or "", content, sha, time.time()),
+        )
+
+
+def get_source(scenario_id: str) -> dict[str, Any] | None:
+    with _LOCK, _conn() as c:
+        row = c.execute(
+            "SELECT input_kind,source_name,content,sha256 FROM scenario_sources WHERE scenario_id=?",
+            (scenario_id,),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "input_kind": row["input_kind"],
+        "source_name": row["source_name"] or None,
+        "content": row["content"],
+        "sha256": row["sha256"],
+        "chars": len(row["content"]),
+    }
 
 
 def versions(scenario_id: str) -> list[dict[str, Any]]:

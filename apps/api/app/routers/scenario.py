@@ -68,6 +68,32 @@ def put_scenario(scenario_id: str, payload: dict[str, Any]):
     return _save_user_edit(scenario_id, ir, note or "scenario edit")
 
 
+@router.get("/{scenario_id}/source")
+def get_source(scenario_id: str):
+    """Return the original imported report verbatim, for review on the Import page.
+
+    404 when the scenario predates source capture or was created from a fixture.
+    """
+    _get_or_404(scenario_id)
+    src = store.get_source(scenario_id)
+    if src is None:
+        raise HTTPException(status_code=404, detail="No stored source for this scenario.")
+    return src
+
+
+@router.get("/{scenario_id}/attack")
+def get_attack(scenario_id: str):
+    """Official MITRE ATT&CK info for the technique ids this scenario's actions use.
+
+    Reference enrichment only (name/tactics/description/url); it does not change the
+    Scenario IR or claim the report stated these — the report's own source tags stand.
+    """
+    from app.cti import attack
+
+    ir = _get_or_404(scenario_id)
+    return {"meta": attack.catalogue_meta(), "techniques": attack.techniques_for_ir(ir)}
+
+
 @router.get("/{scenario_id}/versions")
 def get_versions(scenario_id: str):
     _get_or_404(scenario_id)

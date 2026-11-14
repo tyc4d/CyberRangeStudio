@@ -12,6 +12,7 @@ export interface Budget {
   by_model: { model: string; calls: number; est_cost_usd: number; input_tokens: number; output_tokens: number }[];
 }
 
+export interface AttackInfo { id: string; name: string; tactics: string[]; url: string; description?: string }
 export interface ScenarioSummary { id: string; name: string; created_at: string; updated_at: string }
 export interface VersionEntry { ir_version: number; note?: string; ts?: string }
 
@@ -94,10 +95,39 @@ export const api = {
   saveScenario: (id: string, ir: ScenarioIR, note: string) =>
     req<any>(`/api/scenario/${enc(id)}`, { method: "PUT", body: JSON.stringify({ ir, note }) }),
   listVersions: (id: string) => req<VersionEntry[]>(`/api/scenario/${enc(id)}/versions`),
+  /** Official MITRE ATT&CK info for the technique ids this scenario uses (reference enrichment). */
+  getAttack: (id: string) =>
+    req<{ meta: { source?: string; downloaded?: string; count?: number }; techniques: Record<string, AttackInfo> }>(
+      `/api/scenario/${enc(id)}/attack`,
+    ),
+  /** Original imported report, kept verbatim for review. 404 (unimplemented) when none was stored. */
+  getSource: (id: string) =>
+    req<{ input_kind: string; source_name: string | null; content: string; sha256: string; chars: number }>(
+      `/api/scenario/${enc(id)}/source`,
+    ),
 
   // module 1-2 ingest / supplement
   analyze: (body: { input_kind: string; content: string; method?: string; name?: string }) =>
     post<any>("/api/ingest/analyze", body),
+  /** Upload a file (PDF/text/STIX) and get its readable text back for review. Does not analyze or store. */
+  extract: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    let r: Response;
+    try {
+      // No Content-Type header: the browser sets the multipart boundary itself.
+      r = await fetch("/api/ingest/extract", { method: "POST", body: fd });
+    } catch (e) {
+      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "POST", "/api/ingest/extract", "offline");
+    }
+    const text = await r.text();
+    let body: any; try { body = text ? JSON.parse(text) : undefined; } catch { /* non-JSON */ }
+    if (!r.ok) {
+      const detail = typeof body?.detail === "string" ? body.detail : text || r.statusText;
+      throw new ApiError(r.status, detail, "POST", "/api/ingest/extract", r.status === 501 ? "unimplemented" : "error");
+    }
+    return body as { input_kind: string; content: string; source_name: string; filename: string; chars: number; sha256: string };
+  },
   supplement: (id: string, body: { text: string; targets_missing_item?: string; status?: string }) =>
     // `missing_item_id` duplicates `targets_missing_item` for backends that named the field that way.
     post<any>(`/api/ingest/${enc(id)}/supplement`, { ...body, ...(body.targets_missing_item ? { missing_item_id: body.targets_missing_item } : {}) }),

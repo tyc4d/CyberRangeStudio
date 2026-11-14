@@ -1,9 +1,11 @@
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError, extractIr, extractScenarioId } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, Notice, PageHead } from "../components/ui";
+
+type Source = { input_kind: string; source_name: string | null; content: string; sha256: string; chars: number };
 
 type InputKind = "text" | "markdown" | "stix2.1";
 type Method = "single_pass" | "staged" | "staged_review";
@@ -22,9 +24,34 @@ const METHODS: { v: Method; label: string; hint: string }[] = [
 const kindFromName = (name: string): InputKind | null =>
   /\.(md|markdown)$/i.test(name) ? "markdown" : /\.json$/i.test(name) ? "stix2.1" : /\.(txt|text)$/i.test(name) ? "text" : null;
 
+const kindLabel = (k: string) => KINDS.find((x) => x.v === k)?.label ?? k;
+
 export function ImportPage() {
   const nav = useNavigate();
-  const { select } = useScenario();
+  const { id, ir, select } = useScenario();
+
+  // When a scenario is already imported, show its original report for review
+  // instead of a blank form. "匯入新報告" switches back to the form.
+  const [forceNew, setForceNew] = useState(false);
+  const [source, setSource] = useState<Source | null>(null);
+  const [sourceState, setSourceState] = useState<"idle" | "loading" | "missing" | "error">("idle");
+  useEffect(() => {
+    setForceNew(false);
+    if (!id) { setSource(null); setSourceState("idle"); return; }
+    let live = true;
+    setSource(null);
+    setSourceState("loading");
+    api.getSource(id)
+      .then((s) => { if (live) { setSource(s); setSourceState("idle"); } })
+      .catch((e: unknown) => {
+        if (!live) return;
+        setSourceState(e instanceof ApiError && e.kind === "unimplemented" ? "missing" : "error");
+      });
+    return () => { live = false; };
+  }, [id]);
+
+  const reviewing = !!id && !forceNew;
+
   const [name, setName] = useState("");
   const [kind, setKind] = useState<InputKind>("text");
   const [method, setMethod] = useState<Method>("single_pass");
@@ -32,6 +59,7 @@ export function ImportPage() {
   const [fileNote, setFileNote] = useState<string | null>(null);
   const [fileErr, setFileErr] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const analyze = useAction(async () => {
@@ -44,16 +72,30 @@ export function ImportPage() {
 
   const loadFile = async (f: File) => {
     setFileErr(null);
-    if (f.size > 5 * 1024 * 1024) { setFileErr(`檔案 ${f.name} 超過 5 MB，請改貼上需要的段落。`); return; }
+    if (f.size > 25 * 1024 * 1024) { setFileErr(`檔案 ${f.name} 超過 25 MB，請改貼上需要的段落。`); return; }
+    const isPdf = /\.pdf$/i.test(f.name) || f.type === "application/pdf";
+    const isBinaryish = isPdf || /\.(xml)$/i.test(f.name);
     try {
-      const text = await f.text();
-      setContent(text);
-      const k = kindFromName(f.name);
-      if (k) setKind(k);
-      if (!name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
-      setFileNote(`已載入 ${f.name}（${text.length.toLocaleString()} 字元）`);
-    } catch {
-      setFileErr(`無法讀取 ${f.name}`);
+      if (isBinaryish) {
+        // PDF (and XML) go to the backend: pdftotext extracts the text, which we show for review.
+        setExtracting(true);
+        const r = await api.extract(f);
+        setContent(r.content);
+        setKind(r.input_kind as InputKind);
+        if (!name.trim()) setName(r.source_name);
+        setFileNote(`已從 ${f.name} 擷取文字（${r.chars.toLocaleString()} 字元）${isPdf ? "，請確認內容後再分析" : ""}`);
+      } else {
+        const text = await f.text();
+        setContent(text);
+        const k = kindFromName(f.name);
+        if (k) setKind(k);
+        if (!name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
+        setFileNote(`已載入 ${f.name}（${text.length.toLocaleString()} 字元）`);
+      }
+    } catch (e) {
+      setFileErr(e instanceof ApiError ? `無法解析 ${f.name}：${e.detail}` : `無法讀取 ${f.name}`);
+    } finally {
+      setExtracting(false);
     }
   };
   const onDrop = (e: DragEvent) => {
@@ -75,9 +117,58 @@ export function ImportPage() {
   const canSubmit = content.trim().length > 0 && !analyze.busy && !(kind === "stix2.1" && stixProblem?.startsWith("內容不是"));
   const methodHint = METHODS.find((m) => m.v === method)?.hint;
 
+  if (reviewing) {
+    const title = source?.source_name || ir?.name || id || "目前情境";
+    return (
+      <div className="page" style={{ maxWidth: 900 }}>
+        <PageHead title="情資匯入" desc="此情境已匯入報告。以下為原始匯入內容，供檢視；要分析另一份報告請點「匯入新報告」。" />
+        <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <strong>{title}</strong>
+              <span className="muted mono" style={{ fontSize: 12 }}>
+                {id}
+                {source && <> · {kindLabel(source.input_kind)} · {source.chars.toLocaleString()} 字元</>}
+              </span>
+            </div>
+            <div className="row" style={{ gap: 8 }}>
+              <button onClick={() => nav("/analysis")}>查看分析結果</button>
+              <button className="primary" onClick={() => setForceNew(true)}>匯入新報告</button>
+            </div>
+          </div>
+
+          {sourceState === "loading" && <Busy label="載入已匯入內容…" />}
+          {sourceState === "missing" && (
+            <Notice kind="warn">這個情境沒有保存原始報告（可能是較早匯入或由範例建立）。分析結果仍可在「分析結果」查看。</Notice>
+          )}
+          {sourceState === "error" && (
+            <Notice kind="err">無法載入已匯入內容。後端可能未啟動或該情境不存在。</Notice>
+          )}
+          {source && (
+            <label className="field">
+              <span>已匯入報告內容（唯讀）<span className="mono"> · sha256 {source.sha256.slice(0, 12)}…</span></span>
+              <textarea
+                className={source.input_kind === "stix2.1" ? "mono" : ""}
+                rows={20} value={source.content} readOnly
+                style={{ background: "var(--surface-2, transparent)" }}
+              />
+            </label>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page" style={{ maxWidth: 900 }}>
       <PageHead title="情資匯入" desc="上傳或貼上一份威脅情資報告。分析會從原文抽取攻擊行為、關係與證據，並標示哪些是原文支持、哪些是推測。" />
+
+      {id && (
+        <Notice kind="info">
+          目前已選定情境「{ir?.name || id}」。送出後會<strong>建立新情境</strong>，不會覆蓋現有的。
+          <button className="link" style={{ marginLeft: 8 }} onClick={() => setForceNew(false)}>返回檢視已匯入內容</button>
+        </Notice>
+      )}
 
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="grid c3">
@@ -104,9 +195,11 @@ export function ImportPage() {
           style={{ border: `1px dashed ${drag ? "var(--accent)" : "var(--control)"}`, background: drag ? "var(--accent-dim)" : undefined, transition: "border-color var(--quick), background-color var(--quick)", padding: "10px 12px" }}
           className="row"
         >
-          <button onClick={() => fileRef.current?.click()} disabled={analyze.busy}>選擇檔案</button>
-          <span className="muted" style={{ fontSize: 13 }}>{fileNote ?? "或把 .txt / .md / .json 檔拖到這裡"}</span>
-          <input ref={fileRef} type="file" accept=".txt,.text,.md,.markdown,.json" hidden
+          <button onClick={() => fileRef.current?.click()} disabled={analyze.busy || extracting}>選擇檔案</button>
+          <span className="muted" style={{ fontSize: 13 }}>
+            {extracting ? <><span className="spinner" /> 解析檔案中…</> : fileNote ?? "或把 .pdf / .txt / .md / .json / .xml 檔拖到這裡"}
+          </span>
+          <input ref={fileRef} type="file" accept=".pdf,.txt,.text,.md,.markdown,.json,.xml" hidden
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void loadFile(f); e.target.value = ""; }} />
         </div>
         {fileErr && <Notice kind="err">{fileErr}</Notice>}

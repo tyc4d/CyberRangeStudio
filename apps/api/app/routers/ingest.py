@@ -1,16 +1,25 @@
 """CTI analysis and user supplementation endpoints (modules 1 and 2)."""
 from __future__ import annotations
 
+import hashlib
+import shutil
+import subprocess
+import tempfile
 import uuid
+from pathlib import Path
 from typing import Literal
 
 from cr_contracts import iter_errors
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app import store
 from app.cti.analysis import AnalysisError, analyze_source
 from app.cti.parser import SourceParseError, parse_source
+
+# Upload cap for the extract endpoint. Big enough for a long advisory PDF, small
+# enough that a stray upload cannot exhaust memory.
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 router = APIRouter(prefix="/api/ingest", tags=["ingest"])
@@ -68,7 +77,67 @@ def analyze(request: AnalyzeRequest):
     saved_errors = iter_errors("scenario-ir", saved)
     if saved_errors:
         raise HTTPException(status_code=500, detail={"message": "Stored Scenario IR failed contract validation.", "errors": saved_errors})
+    # Keep the original report verbatim so the Import page can show it back for review.
+    store.set_source(saved["id"], request.input_kind, request.content, request.name)
     return saved
+
+
+def _extract_pdf_text(data: bytes) -> str:
+    """Extract text from a PDF with poppler's pdftotext. Never executes the file."""
+    if shutil.which("pdftotext") is None:
+        raise HTTPException(status_code=501, detail="伺服器未安裝 pdftotext（poppler-utils），無法解析 PDF。請改貼上文字或上傳 .txt/.md。")
+    with tempfile.TemporaryDirectory(prefix="cr-extract-") as tmp:
+        src = Path(tmp) / "in.pdf"
+        src.write_bytes(data)
+        try:
+            proc = subprocess.run(
+                ["pdftotext", "-layout", str(src), "-"],
+                capture_output=True, timeout=60, check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise HTTPException(status_code=502, detail="PDF 解析逾時。") from exc
+    if proc.returncode != 0:
+        detail = proc.stderr.decode("utf-8", "replace")[:300] or "pdftotext 解析失敗。"
+        raise HTTPException(status_code=422, detail=f"無法解析這個 PDF：{detail}")
+    return proc.stdout.decode("utf-8", "replace")
+
+
+@router.post("/extract")
+async def extract(file: UploadFile = File(...)):
+    """Extract readable text from an uploaded file (PDF via pdftotext; text/XML as-is).
+
+    Returns the text for review on the Import page; it does NOT analyze or store anything.
+    The caller reviews/edits the text, then submits it through POST /analyze as usual.
+    """
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=422, detail="檔案是空的。")
+    if len(data) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"檔案超過 {_MAX_UPLOAD_BYTES // (1024 * 1024)} MB 上限。")
+
+    name = (file.filename or "upload").rsplit("/", 1)[-1]
+    lower = name.lower()
+    is_pdf = lower.endswith(".pdf") or data[:5] == b"%PDF-"
+    if is_pdf:
+        content = _extract_pdf_text(data)
+        input_kind = "text"
+    else:
+        try:
+            content = data.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(status_code=422, detail="這個檔案不是 PDF，也不是 UTF-8 文字，無法解析。") from exc
+        input_kind = "stix2.1" if lower.endswith(".json") else "markdown" if lower.endswith((".md", ".markdown")) else "text"
+
+    if not content.strip():
+        raise HTTPException(status_code=422, detail="解析後沒有取得任何文字（PDF 可能是掃描影像，沒有文字層）。")
+    return {
+        "input_kind": input_kind,
+        "content": content,
+        "source_name": name.rsplit(".", 1)[0],
+        "filename": name,
+        "chars": len(content),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
 
 
 @router.post("/{scenario_id}/supplement")
