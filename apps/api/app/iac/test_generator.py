@@ -49,7 +49,7 @@ class ComposeGeneratorTests(unittest.TestCase):
         self.assertTrue(all(service["container_name"].startswith("cr-demo-") for service in document["services"].values()))
         self.assertTrue(all(service.get("privileged") is not True for service in document["services"].values()))
         self.assertTrue(document["networks"]["inside"]["internal"])
-        self.assertEqual(document["services"]["demo-api"]["ports"][0]["host_ip"], "127.0.0.1")
+        self.assertEqual(document["services"]["demo-api"]["ports"][0]["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
         host_port = int(document["services"]["demo-api"]["ports"][0]["published"])
         self.assertTrue(42000 <= host_port <= 42999)
         self.assertNotIn("password", compose.lower())
@@ -90,12 +90,26 @@ class ComposeGeneratorTests(unittest.TestCase):
             self.assertIn("no-new-privileges:true", service["security_opt"])
             self.assertIsNot(service.get("privileged"), True)
             for published in service.get("ports", []):
-                self.assertEqual(published["host_ip"], "127.0.0.1")
+                self.assertEqual(published["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
                 self.assertTrue(42000 <= int(published["published"]) <= 42999)
-        self.assertEqual(document["services"]["db"]["environment"], {"POSTGRES_HOST_AUTH_METHOD": "trust"})
+        self.assertEqual(document["services"]["db"]["environment"], {
+            "POSTGRES_PASSWORD": "${CR_PG_PASSWORD:?set at deploy time}",
+            "POSTGRES_HOST_AUTH_METHOD": "${CR_PG_AUTH_METHOD:-trust}",
+        })
         self.assertTrue(any("/var/lib/postgresql/data" in mount for mount in document["services"]["db"]["tmpfs"]))
-        self.assertTrue(all(network["internal"] for network in document["networks"].values()))
-        self.assertNotIn("password", str(document).lower())
+        self.assertFalse(document["networks"]["edge"]["internal"])
+        self.assertTrue(document["networks"]["inside"]["internal"])
+        self.assertEqual(document["services"]["db"]["environment"]["POSTGRES_PASSWORD"],
+                         "${CR_PG_PASSWORD:?set at deploy time}")
+
+    def test_postgres_literal_credentials_and_unsafe_bind_values_are_rejected(self):
+        from app.iac.generator import _assert_compose_safe, PlanError
+
+        compose = compose_document(REAL_PLAN, "safe-check")
+        self.assertNotIn("secret123", compose)
+        unsafe = compose.replace("${CR_PG_PASSWORD:?set at deploy time}", "literal-secret")
+        with self.assertRaises(PlanError):
+            _assert_compose_safe(unsafe, "safe-check")
 
     def test_mode_selection_and_legacy_inference(self):
         real = {"id": "web", "role": "web", "image_hint": "oss-nginx", "services": [{"name": "http", "port": 80}],

@@ -12,6 +12,8 @@ router = APIRouter(prefix="/api/deploy", tags=["deploy"])
 
 class UpRequest(BaseModel):
     test_approved: bool = False
+    expose: str = "internal"
+    lan_host: str | None = None
 
 
 def _validate(scenario_id: str) -> str:
@@ -40,8 +42,15 @@ def deploy_up(scenario_id: str, request: UpRequest):
     if request.test_approved is not True:
         manager.record(scenario_id, "up", "rejected", {"reason": "explicit local PoC approval required"})
         raise HTTPException(status_code=400, detail="explicit local PoC approval required: send test_approved=true")
+    if request.expose not in {"internal", "lan"}:
+        raise HTTPException(status_code=400, detail="expose must be 'internal' or 'lan'")
+    if request.lan_host is not None and request.expose != "lan":
+        raise HTTPException(status_code=400, detail="lan_host is only valid when expose='lan'")
     _require_topology_approval(scenario_id)
-    result = manager.do_up(scenario_id)
+    try:
+        result = manager.do_up(scenario_id, request.expose, request.lan_host)
+    except PlanError as exc:
+        raise HTTPException(status_code=400, detail=exc.errors) from exc
     if not result["ok"]:
         raise HTTPException(status_code=503, detail=result)
     return result

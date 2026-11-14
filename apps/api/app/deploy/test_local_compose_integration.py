@@ -122,7 +122,7 @@ class PinnedImagePreparationTests(unittest.TestCase):
         calls = []
         pinned = "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82"
 
-        def fake_run(args, timeout=60):
+        def fake_run(args, timeout=60, **kwargs):
             calls.append(args)
             return {"returncode": 0, "stdout": "", "stderr": ""}
 
@@ -142,7 +142,7 @@ class PinnedImagePreparationTests(unittest.TestCase):
         calls = []
         pinned = "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2"
 
-        def fake_run(args, timeout=60):
+        def fake_run(args, timeout=60, **kwargs):
             calls.append(args)
             if args[:3] == ["docker", "pull", pinned]:
                 return {"returncode": 1, "stdout": "", "stderr": "pull denied"}
@@ -158,3 +158,38 @@ class PinnedImagePreparationTests(unittest.TestCase):
         self.assertEqual(result["returncode"], 1)
         self.assertIn("could not pull pinned catalogue image", result["stderr"])
         self.assertFalse(any("up" in args for args in calls))
+
+    def test_lan_up_injects_password_and_bind_ip_only_at_runtime(self):
+        calls = []
+        password = "generated-test-password"
+
+        def fake_run(args, timeout=60, env_overrides=None):
+            calls.append((args, env_overrides or {}))
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_compose_prefix", return_value=(
+                    ["docker", "compose", "-p", "cr-demo-lan-test"], None)), \
+                patch.object(manager, "_real_image_refs", return_value=([], None)), \
+                patch.object(manager, "_run", side_effect=fake_run), \
+                patch("app.deploy.manager.secrets.token_urlsafe", return_value=password), \
+                patch.object(manager, "record", side_effect=lambda scenario, action, state, details: {
+                    "details": details, "action": action, "state": state,
+                }), \
+                patch.object(manager, "live_containers", return_value={"state": "running", "containers": []}):
+            result = manager.do_up("lan-test", "lan", "192.168.1.23")
+
+        self.assertEqual(result["db_password"], password)
+        self.assertEqual(result["lan_host"], "192.168.1.23")
+        self.assertTrue(result["deployment_record"]["details"]["password_set"])
+        self.assertNotIn(password, str(result["deployment_record"]))
+        envs = [env for _, env in calls]
+        compose_envs = [env for env in envs if "CR_BIND_IP" in env]
+        self.assertEqual(len(compose_envs), 2)  # compose config and compose up
+        self.assertTrue(all(env.get("CR_BIND_IP") == "192.168.1.23" for env in compose_envs))
+        self.assertTrue(all(env.get("CR_PG_PASSWORD") == password for env in compose_envs))
+
+    def test_lan_requires_specific_detected_ipv4(self):
+        with patch.object(manager, "detect_lan_ipv4", side_effect=manager.PlanError(["no address"])):
+            with self.assertRaises(manager.PlanError):
+                manager.do_up("lan-test", "lan")

@@ -288,7 +288,10 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
                     "/var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700",
                     "/var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700",
                 ])
-                service["environment"] = {"POSTGRES_HOST_AUTH_METHOD": "trust"}
+                service["environment"] = {
+                    "POSTGRES_PASSWORD": "${CR_PG_PASSWORD:?set at deploy time}",
+                    "POSTGRES_HOST_AUTH_METHOD": "${CR_PG_AUTH_METHOD:-trust}",
+                }
                 service["user"] = "70:70"
             elif component_id == "oss-attacker":
                 service["command"] = ["sh", "-c", "sleep 2147483647"]
@@ -319,13 +322,17 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             for mapping in ports_by_host.get(host_id, []):
                 service_ports.append({
                     "target": mapping["container_port"], "published": str(mapping["host_port"]),
-                    "host_ip": "127.0.0.1", "protocol": "tcp",
+                    "host_ip": "${CR_BIND_IP:-127.0.0.1}", "protocol": "tcp",
                 })
             if service_ports:
                 service["ports"] = service_ports
                 service["expose"] = [str(p["target"]) for p in service_ports]
         service_doc[host_id] = service
 
+    edge_network = "edge"
+    for host_id in ports_by_host:
+        if edge_network not in service_doc[host_id]["networks"]:
+            service_doc[host_id]["networks"].append(edge_network)
     document = {
         "name": f"cr-demo-{scenario_id}",
         "x-cr-test-approval-required": "POST /api/deploy/{id}/up with {\"test_approved\": true}",
@@ -335,6 +342,10 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             for network_id in sorted(network_names)
         },
     }
+    if ports_by_host:
+        document["networks"][edge_network] = {
+            "name": f"cr-demo-{scenario_id}-edge", "internal": False,
+        }
     content = "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\n"
     content += yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
     _assert_compose_safe(content, scenario_id)
@@ -349,6 +360,8 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
     if not isinstance(doc, dict) or not isinstance(doc.get("services"), dict) or not doc["services"]:
         raise PlanError(["generated compose must contain at least one service"])
     serialized = json.dumps(doc, sort_keys=True).lower()
+    serialized = serialized.replace('"postgres_password": "${cr_pg_password:?set at deploy time}"', '"runtime_pg_credential_reference": ""')
+    serialized = serialized.replace('"postgres_host_auth_method": "${cr_pg_auth_method:-trust}"', '"postgres_host_auth_method": ""')
     forbidden = ("privileged", "password", "passwd", "api_key", "apikey", "secret", "private_key", "token")
     if any(term in serialized for term in forbidden):
         raise PlanError(["generated compose contains a forbidden credential or privilege setting"])
@@ -366,15 +379,16 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
             raise PlanError([f"service {service_name} must use a versioned image pinned by digest"])
         for port in service.get("ports", []):
             published = int(port["published"])
-            if not _PUBLISHED_PORT_MIN <= published <= _PUBLISHED_PORT_MAX or port.get("host_ip") != "127.0.0.1":
+            if not _PUBLISHED_PORT_MIN <= published <= _PUBLISHED_PORT_MAX or port.get("host_ip") != "${CR_BIND_IP:-127.0.0.1}":
                 raise PlanError([f"service {service_name} has an unsafe published port"])
     for network in doc.get("networks", {}).values():
-        if not network.get("internal") or not network.get("name", "").startswith(f"cr-demo-{scenario_id}-"):
-            raise PlanError(["all generated networks must be internal and use the cr-demo- prefix"])
+        if network.get("internal") is not (network.get("name") != f"cr-demo-{scenario_id}-edge") or not network.get("name", "").startswith(f"cr-demo-{scenario_id}-"):
+            raise PlanError(["generated networks must use the cr-demo- prefix and only the edge network may be external"])
     for service_name, service in doc["services"].items():
         if service.get("image", "").startswith("postgres:"):
-            if service.get("environment", {}).get("POSTGRES_HOST_AUTH_METHOD") != "trust":
-                raise PlanError([f"service {service_name} must use isolated PostgreSQL trust authentication"])
+            environment = service.get("environment", {})
+            if environment.get("POSTGRES_HOST_AUTH_METHOD") != "${CR_PG_AUTH_METHOD:-trust}" or environment.get("POSTGRES_PASSWORD") != "${CR_PG_PASSWORD:?set at deploy time}":
+                raise PlanError([f"service {service_name} must use runtime PostgreSQL authentication settings"])
 
 
 def generate(scenario_id: str) -> dict[str, Any]:

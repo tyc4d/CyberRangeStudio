@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import json
+import ipaddress
 import os
+import secrets
+import socket
 import shutil
 import sqlite3
 import subprocess
@@ -111,13 +114,15 @@ def _compose_prefix(scenario_id: str, docker: str) -> tuple[list[str] | None, st
     return prefix, None
 
 
-def _run(args: list[str], timeout: int = 60) -> dict[str, Any]:
+def _run(args: list[str], timeout: int = 60, env_overrides: dict[str, str] | None = None) -> dict[str, Any]:
     try:
         env = os.environ.copy()
         # Buildx records builder activity under its config directory. The worker
         # sandbox keeps the home directory read-only, so keep that runtime state
         # under the permitted temporary directory instead.
         env["BUILDX_CONFIG"] = "/tmp/cr-demo-buildx"
+        if env_overrides:
+            env.update(env_overrides)
         result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, env=env)
         return {"returncode": result.returncode, "stdout": result.stdout[-12000:], "stderr": result.stderr[-4000:]}
     except subprocess.TimeoutExpired as exc:
@@ -149,7 +154,8 @@ def _real_image_refs(scenario_id: str) -> tuple[list[str] | None, str | None]:
 
 
 def _compose_command(scenario_id: str, operation: str, extra: list[str] | None = None,
-                     timeout: int = 60) -> dict[str, Any]:
+                     timeout: int = 60, *, expose: str = "internal", lan_host: str | None = None,
+                     pg_password: str | None = None) -> dict[str, Any]:
     docker, error = _docker_context_preflight()
     if error:
         return {"returncode": 127, "stdout": "", "stderr": error}
@@ -158,7 +164,16 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
     if error:
         return {"returncode": 2, "stdout": "", "stderr": error}
     assert prefix
-    config_check = _run(prefix + ["config", "--quiet"], timeout=15)
+    bind_ip = "127.0.0.1"
+    # Compose requires a non-empty value for interpolation even in internal mode.
+    # Internal PostgreSQL still uses trust auth and this throwaway value is never persisted.
+    env_overrides = {"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "trust",
+                     "CR_PG_PASSWORD": pg_password or secrets.token_urlsafe(24)}
+    if expose == "lan":
+        bind_ip = lan_host or detect_lan_ipv4()
+        env_overrides.update({"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "scram-sha-256",
+                              "CR_PG_PASSWORD": pg_password or secrets.token_urlsafe(24)})
+    config_check = _run(prefix + ["config", "--quiet"], timeout=15, env_overrides=env_overrides)
     if config_check["returncode"] != 0:
         return {"returncode": config_check["returncode"], "stdout": config_check["stdout"],
                 "stderr": f"compose configuration rejected: {config_check['stderr']}"}
@@ -176,7 +191,7 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
                 return {"returncode": pulled["returncode"], "stdout": pulled["stdout"],
                         "stderr": f"could not pull pinned catalogue image {image}: {pulled['stderr']}"}
     command = prefix + [operation] + (extra or [])
-    return _run(command, timeout=timeout)
+    return _run(command, timeout=timeout, env_overrides=env_overrides)
 
 
 def compose_ps_result(scenario_id: str) -> dict[str, Any]:
@@ -263,16 +278,57 @@ def live_containers(scenario_id: str) -> dict[str, Any]:
             "state": state, "containers": containers, "error": result["stderr"] or None}
 
 
-def do_up(scenario_id: str) -> dict[str, Any]:
-    result = _compose_command(scenario_id, "up", ["-d", "--pull", "never"], timeout=180)
+def detect_lan_ipv4() -> str:
+    """Ask the host routing table which IPv4 address it uses for outbound traffic."""
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            probe.connect(("192.0.2.1", 80))
+            address = probe.getsockname()[0]
+        finally:
+            probe.close()
+        parsed = ipaddress.IPv4Address(address)
+        if parsed.is_loopback or parsed.is_unspecified or parsed.is_link_local:
+            raise ValueError("no usable LAN IPv4 address")
+        return str(parsed)
+    except (OSError, ValueError) as exc:
+        raise PlanError(["could not detect a primary LAN IPv4 address; provide lan_host explicitly"]) from exc
+
+
+def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = None) -> dict[str, Any]:
+    if expose not in {"internal", "lan"}:
+        raise PlanError(["expose must be 'internal' or 'lan'"])
+    resolved_host = None
+    password = None
+    if expose == "lan":
+        try:
+            resolved_host = str(ipaddress.IPv4Address(lan_host)) if lan_host else detect_lan_ipv4()
+            parsed = ipaddress.IPv4Address(resolved_host)
+            if parsed.is_loopback or parsed.is_unspecified or parsed.is_link_local or parsed.is_multicast:
+                raise ValueError("not a usable LAN IPv4 address")
+        except ValueError as exc:
+            raise PlanError(["lan_host must be a usable LAN IPv4 address"] if lan_host else
+                            ["could not detect a primary LAN IPv4 address; provide lan_host explicitly"]) from exc
+        password = secrets.token_urlsafe(24)
+    result = _compose_command(scenario_id, "up", ["-d", "--pull", "never"], timeout=180,
+                              expose=expose, lan_host=resolved_host, pg_password=password)
+    if password:
+        result = {**result,
+                  "stdout": result.get("stdout", "").replace(password, "[REDACTED]"),
+                  "stderr": result.get("stderr", "").replace(password, "[REDACTED]")}
     live = live_containers(scenario_id) if result["returncode"] == 0 else {
         "scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
         "state": "error", "containers": [], "error": result["stderr"],
     }
     success = result["returncode"] == 0 and live["state"] == "running"
-    details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"], **live}
+    details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
+               "expose": expose, "password_set": password is not None, **live}
     audit = record(scenario_id, "up", "running" if success else "failed", details)
-    return {**live, "ok": success, "command_result": result, "deployment_record": audit}
+    response = {**live, "ok": success, "command_result": result, "deployment_record": audit,
+                "expose": expose, "lan_host": resolved_host}
+    if password is not None:
+        response["db_password"] = password
+    return response
 
 
 def do_status(scenario_id: str) -> dict[str, Any]:
