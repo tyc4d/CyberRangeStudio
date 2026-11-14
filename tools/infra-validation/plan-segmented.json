@@ -1,0 +1,13 @@
+{
+  "hosts": [
+    {"id": "web", "role": "exposed web server", "image_hint": "oss-nginx", "component_mode": "real",
+     "services": [{"name": "http", "port": 80, "protocol": "tcp"}], "networks": ["dmz"]},
+    {"id": "db", "role": "internal database", "image_hint": "oss-postgres", "component_mode": "real",
+     "services": [{"name": "postgres", "port": 5432, "protocol": "tcp"}], "networks": ["internal"]}
+  ],
+  "networks": [{"id": "dmz", "segment": "dmz", "internal": true},
+               {"id": "internal", "segment": "internal", "internal": true}],
+  "connections": [],
+  "verify_blocked": [{"from_host": "web", "to_host": "db", "port": 5432, "protocol": "tcp", "reason": "dmz web must not reach internal db"}],
+  "approval": {"approved": false}
+}
