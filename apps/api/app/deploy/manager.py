@@ -232,6 +232,32 @@ def probe_in_service(scenario_id: str, service_id: str, python_script: str, time
     return _run(command, timeout=timeout)
 
 
+def container_ipv4(scenario_id: str, service_id: str) -> str | None:
+    """Return a running container's first non-loopback IPv4, for IP-based probing.
+
+    Used by segmentation checks so a blocked path is proven by an actual TCP outcome
+    to the target IP, never by a hostname that merely failed to resolve.
+    """
+    scenario_id = validate_id(scenario_id)
+    validate_id(service_id)
+    docker, error = _docker_context_preflight()
+    if error or not docker:
+        return None
+    name = f"{project_name(scenario_id)}-{service_id}"
+    result = _run([docker, "inspect", "-f",
+                   "{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}", name], timeout=15)
+    if result["returncode"] != 0:
+        return None
+    for token in result["stdout"].split():
+        try:
+            ip = ipaddress.IPv4Address(token)
+        except ValueError:
+            continue
+        if not ip.is_loopback and not ip.is_unspecified:
+            return str(ip)
+    return None
+
+
 def _parse_compose_ps(output: str) -> list[dict[str, Any]]:
     if not output.strip():
         return []

@@ -264,6 +264,13 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 continue
             if "external" in dest.get("networks", []):
                 continue  # dest is itself exposed; segmentation is about internal-only hosts
+            # Only assert a block where network isolation actually enforces it: hosts that
+            # share a network are mutually reachable on every port (Docker does not filter
+            # per-port between containers on the same network), so claiming such a pair is
+            # "blocked" would be false. The connection/access rules are declarative intent;
+            # real same-network micro-segmentation is a documented limitation, not verified here.
+            if set(source.get("networks", [])) & set(dest.get("networks", [])):
+                continue
             for svc in dest.get("services", []):
                 port = svc.get("port")
                 if (source["id"], dest["id"], port) in allowed:
@@ -271,7 +278,7 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 verify_blocked.append({
                     "from_host": source["id"], "to_host": dest["id"], "port": port,
                     "protocol": svc.get("protocol", "tcp"),
-                    "reason": f"{source['id']} is exposed/attacker-side and must not reach internal service {dest['id']}:{port} directly.",
+                    "reason": f"{source['id']} shares no network with internal service {dest['id']}:{port} and must not reach it.",
                 })
 
     plan: dict[str, Any] = {

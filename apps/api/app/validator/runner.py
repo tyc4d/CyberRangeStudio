@@ -77,6 +77,10 @@ def _tcp_probe_script(target: str, port: int) -> str:
         f"target={target!r}\nport={port}\n"
         "try:\n"
         " s=socket.create_connection((target,port),timeout=3); s.close(); print('CONNECTED')\n"
+        "except socket.gaierror as exc:\n"
+        # Name did not resolve: inconclusive. This is NOT proof that a path is blocked —
+        # a wrong/unresolvable name must never count as a passing segmentation check.
+        " print('UNRESOLVED:'+str(exc))\n"
         "except OSError as exc:\n"
         " print('BLOCKED:'+type(exc).__name__+':'+str(exc))"
     )
@@ -134,6 +138,9 @@ def _probe_status(result: dict[str, Any], should_connect: bool, docker_unavailab
     observed = _result_output(result)
     if "CONNECTED" in observed:
         return ("PASS" if should_connect else "FAIL"), observed
+    if "UNRESOLVED:" in observed:
+        # A name-resolution failure proves nothing about the network path; never a PASS.
+        return "NOT_TESTED", observed + " (target name did not resolve; inconclusive)"
     if "BLOCKED:" in observed:
         return ("FAIL" if should_connect else "PASS"), observed
     if docker_unavailable or result.get("returncode") in {2, 125, 127}:
@@ -334,8 +341,17 @@ def run(scenario_id: str) -> dict[str, Any]:
         elif not source_running or not target_running:
             status, observed = "NOT_TESTED", "source or target container is not running; this path was not probed"
         else:
-            result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target, int(port)), timeout=10)
-            status, observed = _probe_status(result, should_connect=False, docker_unavailable=docker_unavailable)
+            # Probe the target IP, not its name: a blocked path must be proven by a real
+            # TCP refusal/unreachable to the address, not by the name failing to resolve
+            # (which also happens whenever there is simply no shared network).
+            target_ip = manager.container_ipv4(scenario_id, target)
+            if not target_ip:
+                status, observed = "NOT_TESTED", (
+                    "could not determine target container IP; segmentation not proven at the TCP layer")
+            else:
+                result = manager.probe_in_service(scenario_id, source, _tcp_probe_script(target_ip, int(port)), timeout=10)
+                status, observed = _probe_status(result, should_connect=False, docker_unavailable=docker_unavailable)
+                observed = f"probed {target}={target_ip}:{port} from {source}; {observed}"
         check = _check(f"segmentation-{index}", f"{source} cannot reach {target}:{port}", "segmentation", status,
                        f"TCP connection from {source} to {target}:{port} is blocked", observed)
         check["evidence"] = evidence_path

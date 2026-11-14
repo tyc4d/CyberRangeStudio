@@ -4,7 +4,7 @@
 
 ## 現在能做什麼
 
-一份情資 → 分析 → 規劃 → 生成 IaC → 本機部署 3 容器 → 無害驗證 → 三層報告，全程跑通。詳見 `docs/overnight-report.md`。
+一份情資(含真實 CISA 報告)→ 分析 → 規劃 →（人工核准）→ 生成 IaC → 本機/區網部署**真實 nginx+postgres** → 無害驗證 → 三層報告,全程跑通。本輪驗收見 `docs/round2-report.md`;最初建置見 `docs/overnight-report.md`。
 
 ## 架構（已定）
 
@@ -21,13 +21,13 @@
 |---|---|---|---|---|
 | 1 | 情資報告分析 | ✅ 實作+實際驗證 | Codex be-cti | 真實 LLM 驗過 |
 | 2 | 缺失項目補齊 | ✅ 實作+實際驗證 | Codex be-cti | |
-| 3 | 攻擊流程編輯 | 🟡 後端驗證，GUI 未逐頁測 | sc-plan+前端 | |
+| 3 | 攻擊流程編輯 | ✅ 後端+GUI（Playwright 走過） | sc-plan+前端 | 確認依賴關係 |
 | 4 | 軟體依賴分析 | ✅ 實作+實際驗證 | Codex sc-plan | |
 | 5 | 拓樸分析 | ✅ 實作+實際驗證 | Codex sc-plan | |
 | 6 | IaC 生成 | ✅ 實作+實際驗證 | Codex infra | |
 | 7 | 部署 | ✅ 實作+實際驗證 | Codex infra | 真實 docker |
 | 8 | PoC 驗證 | ✅ 實作+實際驗證 | Codex infra | 三層+忠實度 |
-| — | GUI | 🟡 實作、未完整驗證 | Claude 前端 | build/proxy 過 |
+| — | GUI | ✅ Playwright 全流程走過 | Claude 前端 | RTSS studio 風 |
 
 ## 已通過的測試
 

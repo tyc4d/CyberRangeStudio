@@ -60,7 +60,8 @@ def _compose_ps_result():
 
 
 class ValidationRunnerTests(unittest.TestCase):
-    def _run_report(self, blocked_marker: str = "BLOCKED:ConnectionRefusedError:blocked"):
+    def _run_report(self, blocked_marker: str = "BLOCKED:ConnectionRefusedError:blocked",
+                    target_ip: str | None = "172.20.0.5"):
         temporary = tempfile.TemporaryDirectory(prefix="cr-validator-unit-")
         self.addCleanup(temporary.cleanup)
         data_dir = Path(temporary.name)
@@ -80,6 +81,7 @@ class ValidationRunnerTests(unittest.TestCase):
                 patch.object(runner, "get_generated", return_value={"compose": "stub"}), \
                 patch.object(runner.manager, "compose_ps_result", return_value=_compose_ps_result()), \
                 patch.object(runner.manager, "probe_in_service", side_effect=probe_results), \
+                patch.object(runner.manager, "container_ipv4", return_value=target_ip), \
                 patch.object(runner.manager, "exec_in_service", side_effect=exec_result):
             return runner.run("runner-test")
 
@@ -107,6 +109,18 @@ class ValidationRunnerTests(unittest.TestCase):
         reachable = next(check for check in reachable_report["checks"] if check["category"] == "segmentation")
         self.assertEqual(reachable["status"], "FAIL")
         self.assertIn("CONNECTED", reachable["observed"])
+
+    def test_name_resolution_failure_is_not_counted_as_blocked(self):
+        # A DNS/gaierror failure proves nothing about the network path: must be NOT_TESTED, never PASS.
+        report = self._run_report("UNRESOLVED:[Errno -3] Temporary failure in name resolution")
+        blocked = next(check for check in report["checks"] if check["category"] == "segmentation")
+        self.assertEqual(blocked["status"], "NOT_TESTED")
+
+    def test_segmentation_is_not_tested_without_a_target_ip(self):
+        # If the target container IP cannot be determined, segmentation is not proven at the TCP layer.
+        report = self._run_report(target_ip=None)
+        blocked = next(check for check in report["checks"] if check["category"] == "segmentation")
+        self.assertEqual(blocked["status"], "NOT_TESTED")
 
 
 if __name__ == "__main__":
