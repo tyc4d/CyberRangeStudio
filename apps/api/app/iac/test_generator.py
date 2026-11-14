@@ -65,10 +65,19 @@ class ExposureAndDependencyTests(unittest.TestCase):
     def test_only_hosts_on_a_non_internal_plan_network_are_published(self):
         services = self.document["services"]
         self.assertEqual(self.report["host_port_mappings"],
-                         [{"host_id": "web", "container_port": 80, "host_port": 42000, "env": "CR_HOSTPORT_0"}])
-        self.assertEqual(services["web"]["ports"][0]["published"], "${CR_HOSTPORT_0:-42000}")
-        self.assertEqual(services["web"]["ports"][0]["host_ip"], "${CR_BIND_IP:-127.0.0.1}")
-        self.assertIn("edge", services["web"]["networks"])
+                         [{"host_id": "web", "container_port": 80, "host_port": 42000, "env": "CR_HOSTPORT_0",
+                           "via": "cr-gateway"}])
+        # The published port terminates on the forwarder; the lab service itself is never
+        # attached to a bridge with a route to the host or the outside.
+        gateway = services["cr-gateway"]
+        self.assertEqual(gateway["ports"], [{"target": 20000, "published": "${CR_HOSTPORT_0:-42000}",
+                                             "host_ip": "${CR_BIND_IP:-127.0.0.1}", "protocol": "tcp"}])
+        self.assertEqual(gateway["command"][-1], "20000=web:80")
+        self.assertEqual(gateway["networks"], ["edge", "external"])
+        self.assertNotIn("ports", services["web"])
+        self.assertNotIn("edge", services["web"]["networks"])
+        self.assertEqual([name for name, service in services.items() if "edge" in service["networks"]],
+                         ["cr-gateway"])
         # internal database: no host port, no edge network, so no route out of the lab
         self.assertNotIn("ports", services["db"])
         self.assertEqual(services["db"]["networks"], ["inside"])
@@ -91,6 +100,15 @@ class ExposureAndDependencyTests(unittest.TestCase):
         for network_id, network in self.document["networks"].items():
             if network_id != "edge":
                 self.assertTrue(network["internal"])
+                # no host-side bridge address: lab containers cannot reach host services
+                self.assertEqual(network["driver_opts"], {"com.docker.network.bridge.gateway_mode_ipv4": "isolated"})
+
+    def test_gateway_is_a_reserved_host_id(self):
+        plan = {**EXPOSED_PLAN, "hosts": [*EXPOSED_PLAN["hosts"],
+                                          {"id": "cr-gateway", "role": "x", "image_hint": "oss-attacker",
+                                           "component_mode": "real", "networks": ["inside"]}]}
+        _, report = inspect_plan(plan, "exposure")
+        self.assertFalse(report["deployable"])
 
     def test_edge_is_a_reserved_network_id(self):
         plan = {**EXPOSED_PLAN, "networks": [*EXPOSED_PLAN["networks"], {"id": "edge", "internal": True}]}
@@ -140,8 +158,13 @@ class ExposureAndDependencyTests(unittest.TestCase):
             lambda d: d["services"]["db"].pop("mem_limit"),
             lambda d: d["networks"]["edge"].pop("driver_opts"),
             lambda d: d["networks"]["inside"].__setitem__("internal", False),
-            lambda d: d["services"]["web"]["ports"][0].__setitem__("published", "8080"),
-            lambda d: d["services"]["web"]["ports"][0].__setitem__("host_ip", "0.0.0.0"),
+            lambda d: d["services"]["cr-gateway"]["ports"][0].__setitem__("published", "8080"),
+            lambda d: d["services"]["cr-gateway"]["ports"][0].__setitem__("host_ip", "0.0.0.0"),
+            lambda d: d["services"]["cr-gateway"].__setitem__("image", "python:3"),
+            lambda d: d["services"]["web"]["networks"].append("edge"),
+            lambda d: d["services"]["portal"].__setitem__("ports", [{"target": 8080, "published": "${CR_HOSTPORT_1:-42001}",
+                                                                     "host_ip": "${CR_BIND_IP:-127.0.0.1}"}]),
+            lambda d: d["networks"]["inside"].pop("driver_opts"),
             lambda d: d["services"]["db"]["environment"].__setitem__("MYSQL_ROOT_PASSWORD", "hunter2"),
         ):
             document = yaml.safe_load(good)

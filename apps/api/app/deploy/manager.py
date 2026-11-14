@@ -699,6 +699,14 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
                             ["could not detect a primary LAN IPv4 address; provide lan_host explicitly"]) from exc
         password = secrets.token_urlsafe(24)
     bind_ip = resolved_host or "127.0.0.1"
+    preflight = isolation_preflight(scenario_id)
+    if not preflight["ok"] and preflight.get("vulnerable_hosts"):
+        audit = record(scenario_id, "up", "rejected", {"reason": preflight.get("reason"), "preflight": preflight})
+        return {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
+                "state": "error", "containers": [], "error": preflight.get("reason"), "ok": False,
+                "command_result": {"returncode": 2, "stdout": "", "stderr": preflight.get("reason", "")},
+                "deployment_record": audit, "expose": expose, "lan_host": resolved_host,
+                "isolation_preflight": preflight}
     attempts: list[dict[str, Any]] = []
     cleanup = None
     diagnostics = None
@@ -733,17 +741,41 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
         if not port_clash:
             break
         avoid.update(int(value) for value in host_ports.values())
+    isolation = host_isolation_report(scenario_id) if success else None
+    if success and not isolation["isolated"] and preflight.get("vulnerable_hosts"):
+        # Never leave a deliberately vulnerable image running on a network from which
+        # it can reach the host.
+        diagnostics = {"isolation": isolation}
+        cleanup = _cleanup_failed_up(scenario_id)
+        success = False
+        result = {**result, "returncode": 3,
+                  "stderr": "deployment removed: lab networks are not isolated from the host, and the plan contains "
+                            "deliberately vulnerable images (" + ", ".join(preflight["vulnerable_hosts"]) + ")"}
+        live = live_containers(scenario_id)
+    published = []
+    if success and attempts:
+        try:
+            for mapping in get_generated(scenario_id)["report"].get("host_port_mappings", []):
+                assigned = attempts[-1]["host_ports"].get(mapping["env"])
+                published.append({"host_id": mapping["host_id"], "container_port": mapping["container_port"],
+                                  "host_ip": bind_ip, "host_port": assigned})
+        except (FileNotFoundError, PlanError):
+            published = []
     if not success:
         live = {**live, "state": "error", "error": result["stderr"] or live.get("error")}
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
-               "expose": expose, "password_set": password is not None, "attempts": attempts, **live}
+               "expose": expose, "password_set": password is not None, "attempts": attempts,
+               "published_ports": published, "host_isolation": isolation, **live}
     if diagnostics is not None:
         details["diagnostics"] = diagnostics
     if cleanup is not None:
         details["cleanup"] = cleanup
     audit = record(scenario_id, "up", "running" if success else "failed", details)
     response = {**live, "ok": success, "command_result": result, "deployment_record": audit,
-                "expose": expose, "lan_host": resolved_host, "attempts": attempts}
+                "expose": expose, "lan_host": resolved_host, "attempts": attempts,
+                "published_ports": published, "isolation_preflight": preflight}
+    if isolation is not None:
+        response["host_isolation"] = isolation
     if diagnostics is not None:
         response["diagnostics"] = diagnostics
     if cleanup is not None:
@@ -751,6 +783,87 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
     if password is not None:
         response["db_password"] = password
     return response
+
+
+def _bridge_ipv4(interface: str) -> str | None:
+    """IPv4 address of a host network interface, or None when it has none / does not exist."""
+    import fcntl
+    import struct
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        packed = fcntl.ioctl(probe.fileno(), 0x8915, struct.pack("256s", interface[:15].encode()))  # SIOCGIFADDR
+        return socket.inet_ntoa(packed[20:24])
+    except OSError:
+        return None
+    finally:
+        probe.close()
+
+
+def vulnerable_hosts(scenario_id: str) -> list[str]:
+    """Host ids that the generated report marks as deliberately vulnerable images."""
+    try:
+        components = get_generated(scenario_id)["report"].get("components", [])
+    except (FileNotFoundError, PlanError):
+        return []
+    return [component["host_id"] for component in components if component.get("vulnerable")]
+
+
+def isolation_preflight(scenario_id: str) -> dict[str, Any]:
+    """Before deploying: can this Docker engine isolate lab networks from the host?
+
+    Gateway mode ``isolated`` (no host-side bridge address) exists from Docker Engine 28.
+    Older engines would silently create ordinary internal networks whose containers can
+    reach every service the host binds on all interfaces, so vulnerable images are refused.
+    """
+    docker, error = _docker_context_preflight()
+    vulnerable = vulnerable_hosts(scenario_id)
+    result: dict[str, Any] = {"ok": True, "vulnerable_hosts": vulnerable, "docker_version": None}
+    if error or not docker:
+        return {**result, "ok": False, "reason": error or "docker executable is not installed"}
+    version = _run([docker, "version", "--format", "{{.Server.Version}}"], timeout=10)
+    text = version.get("stdout", "").strip()
+    result["docker_version"] = text or None
+    try:
+        major = int(text.split(".")[0])
+    except ValueError:
+        major = 0
+    result["host_isolation_supported"] = major >= 28
+    if major < 28:
+        result["risk"] = ("this Docker engine cannot create address-less internal bridges; lab containers could "
+                          "reach host services bound on all interfaces")
+        if vulnerable:
+            result.update(ok=False, reason="refusing to deploy deliberately vulnerable images "
+                          f"({', '.join(vulnerable)}): {result['risk']}. Upgrade Docker Engine to 28 or later.")
+    return result
+
+
+def host_isolation_report(scenario_id: str) -> dict[str, Any]:
+    """After deploying: verify on the real host that no plan network bridge has a host address."""
+    docker, error = _docker_context_preflight()
+    project = project_name(scenario_id)
+    report: dict[str, Any] = {"isolated": False, "networks": []}
+    if error or not docker:
+        return {**report, "error": error}
+    listed = _run([docker, "network", "ls", "--filter", f"label=com.docker.compose.project={project}",
+                   "--format", "{{.ID}} {{.Name}}"], timeout=15)
+    if listed["returncode"] != 0:
+        return {**report, "error": listed["stderr"][:500]}
+    all_isolated = True
+    for line in listed["stdout"].splitlines():
+        short_id, _, name = line.partition(" ")
+        if not name.startswith(project + "-"):
+            continue
+        is_edge = name == f"{project}-edge"
+        bridge = f"br-{short_id[:12]}"
+        address = _bridge_ipv4(bridge)
+        entry = {"network": name[len(project) + 1:], "bridge": bridge, "host_address": address,
+                 "role": "publishing (gateway container only)" if is_edge else "lab",
+                 "host_reachable_from_containers": address is not None}
+        if not is_edge and address is not None:
+            all_isolated = False
+        report["networks"].append(entry)
+    report["isolated"] = all_isolated and bool(report["networks"])
+    return report
 
 
 def failure_diagnostics(scenario_id: str, live: dict[str, Any] | None = None) -> dict[str, Any]:
