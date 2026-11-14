@@ -99,7 +99,31 @@ def _entry_host_ids(ir: dict[str, Any], candidates: set[str]) -> tuple[list[str]
     return [], ""
 
 
+def _substitute_port(service: dict[str, Any]) -> tuple[int, str] | None:
+    """Where a substitute actually listens when it cannot serve the original service's port.
+
+    A stand-in image only listens on its own ports. Declaring the original port (say 443 for
+    a product replaced by nginx) would describe a deployment that cannot exist.
+    """
+    component = component_by_id(service.get("catalogue_component"))
+    if not service.get("is_substitute") or not component or not component.get("default_ports"):
+        return None
+    try:
+        stated = int(service.get("port"))
+    except (TypeError, ValueError):
+        return None
+    protocol = str(service.get("protocol", "tcp")).casefold()
+    if any(int(entry["port"]) == stated and str(entry.get("protocol", "tcp")) == protocol
+           for entry in component["default_ports"]):
+        return None
+    entry = component["default_ports"][0]
+    return int(entry["port"]), str(entry.get("protocol", "tcp"))
+
+
 def _port_for(service: dict[str, Any]) -> tuple[int, str] | None:
+    replaced = _substitute_port(service)
+    if replaced:
+        return replaced
     try:
         port = int(service.get("port"))
         if 1 <= port <= 65535:
@@ -221,7 +245,23 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                     notes.append(f"No port is known for service {service.get('name')} ({service.get('id')}); it remains unreachable by default.")
                     continue
                 port, protocol = port_proto
-                entries.append({"name": str(service.get("name", service["id"])), "port": port, "protocol": protocol})
+                entry: dict[str, Any] = {"name": str(service.get("name", service["id"])), "port": port, "protocol": protocol}
+                if _substitute_port(service):
+                    component = component_by_id(service.get("catalogue_component")) or {}
+                    entry.update({"stated_port": int(service["port"]), "port_basis": "substitute_default"})
+                    notes.append(
+                        f"Service {service.get('name')} on host {hid} is stated on port {service['port']}, but its substitute "
+                        f"{component.get('name', service.get('catalogue_component'))} only listens on {port}. The lab uses "
+                        f"{port}; this port is a substitution, not a fact from the source.")
+                else:
+                    component = component_by_id(service.get("catalogue_component"))
+                    supported = {int(p["port"]) for p in (component or {}).get("default_ports", [])}
+                    if component and component.get("image") and supported and port not in supported:
+                        notes.append(
+                            f"Service {service.get('name')} on host {hid} uses port {port}, which "
+                            f"{component.get('name', component['id'])} does not listen on ({sorted(supported)}). "
+                            "IaC generation will refuse this until the port or the component is changed.")
+                entries.append(entry)
         network_refs = [] if _is_attacker(host) else ["scenario-internal"]
         if _is_exposed(host):
             network_refs.append("external")
@@ -246,6 +286,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             for service in assigned.get(hid, []):
                 if service.get("catalogue_component"):
                     env_host["image_hint"] = service["catalogue_component"]
+                    if service.get("is_substitute"):
+                        # The image is real software, but it stands in for what the source names.
+                        env_host["substitute_for"] = str(service.get("name") or service.get("id"))
+                        env_host["substitute_basis"] = str(service.get("substitute_basis") or "catalogue_substitute")
                     if service.get("version_basis") in {"assumed", "substituted"}:
                         # Real software, but not a release the source establishes.
                         env_host["version_basis"] = service["version_basis"]

@@ -51,3 +51,5 @@ Schema JSON 本身未改；下列欄位已加進 `src/types.ts`，由模組 1/2/
 | service | `substitute_basis`、`substitute_supplement_ref` | `user_chosen`：使用者為無對應元件的服務選的替代品，直接套在原服務上 |
 | missing_item（`planner_dep_software-*`） | `service_ref` | 這題問的是哪個服務；使用者選的替代品會套回這個服務 |
 | environment_plan.hosts[] | `version_basis`、`deployed_version` | 同上，僅在 `assumed`／`substituted` 時出現 |
+| environment_plan.hosts[] | `substitute_for`、`substitute_basis` | 這台主機的映像是替代品：被頂替的原服務名稱；`user_chosen` 或 `catalogue_substitute` |
+| environment_plan.hosts[].services[] | `stated_port`、`port_basis` | 替代品不支援原埠時：原文的埠；`substitute_default` 表示 `port` 是替代元件的埠 |
