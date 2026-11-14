@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any
 
+from app.cti.missing import refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
 from app.planner.reproducibility import annotate_reproducibility
 
@@ -23,6 +24,20 @@ _ROLE_STOPWORDS = {"attacker", "exposed", "external", "internet", "public", "int
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
     return slug[:36] or "item"
+
+
+# Markers used where the source names no machine; they never denote a host.
+_NO_HOST = frozenset({"", "unknown", "unspecified", "none", "null", "n/a"})
+_PLACEHOLDER_SERVICE_IDS = frozenset({"service-unspecified"})
+
+
+def _is_host_ref(raw: Any) -> bool:
+    return isinstance(raw, str) and raw.strip().casefold() not in _NO_HOST
+
+
+def _slug56(value: str) -> str:
+    """Same slug module 2 uses in its question ids."""
+    return re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").lower()[:56].strip("-") or "item"
 
 
 def _host_id(raw: Any) -> str:
@@ -52,7 +67,7 @@ def _role_terms(role: str) -> set[str]:
 
 def _infer_action_host_refs(actions: list[dict[str, Any]], hosts: dict[str, dict[str, Any]]) -> None:
     for action in actions:
-        if action.get("target_host_ref"):
+        if _is_host_ref(action.get("target_host_ref")):
             continue
         text = " ".join(str(action.get(key, "")) for key in ("name", "description")).casefold()
         if not text.strip():
@@ -98,7 +113,7 @@ def _candidate(name: str, text: str = "", *, version: Any = None, cves: Any = No
         "name": str(name).strip(),
         "version": str(version).strip() if version else None,
         "cve": _cves(cves if cves is not None else text),
-        "host_ref": _host_id(host_ref) if host_ref else None,
+        "host_ref": _host_id(host_ref) if _is_host_ref(host_ref) else None,
         "port": port if port and 1 <= port <= 65535 else None,
     }
 
@@ -159,6 +174,27 @@ def _context_text_candidates(node: Any, host_ref: str | None = None, key: str | 
         yield from _candidate_from_mentions(node, host_ref)
 
 
+# Words that may follow a product name without making it a different product.
+_GENERIC_AFTER_PRODUCT = frozenset({
+    "server", "servers", "service", "services", "web", "http", "https", "httpd", "database", "databases", "db",
+    "version", "container", "image", "host", "hosts", "instance", "instances", "application", "applications", "app",
+    "software", "daemon", "process", "port", "tcp", "udp", "on", "in", "at", "to", "and", "or", "the", "a",
+})
+
+
+def _is_part_of_other_product(text: str, end: int) -> bool:
+    """True when the matched alias is only the first word of a longer product name.
+
+    "Apache Struts", "Apache Tomcat" or "Apache Log4j" are not the Apache HTTP Server: a
+    capitalised word right after the alias that is not a generic noun names another product.
+    """
+    following = re.match(r"[ \t]+([A-Za-z][\w-]*)", text[end:])
+    if not following:
+        return False
+    word = following.group(1)
+    return word[0].isupper() and word.casefold() not in _GENERIC_AFTER_PRODUCT
+
+
 def _candidate_from_mentions(text: str, host_ref: str | None = None):
     aliases: list[str] = []
     for item in load_components():
@@ -172,7 +208,7 @@ def _candidate_from_mentions(text: str, host_ref: str | None = None):
         for match in re.finditer(rf"(?<![\w]){re.escape(alias)}(?![\w])", text, flags=re.IGNORECASE):
             if any(match.start() < end and start < match.end() for start, end in occupied):
                 continue
-            if alias.casefold() == "apache" and re.match(r"\s+tomcat\b", text[match.end():], re.IGNORECASE):
+            if _is_part_of_other_product(text, match.end()):
                 continue
             occupied.append((match.start(), match.end()))
             name = text[match.start():match.end()]
@@ -210,10 +246,176 @@ def _collect_hosts(target_context: Any, actions: list[dict[str, Any]]) -> dict[s
     visit(target_context)
     for action in actions:
         ref = action.get("target_host_ref")
-        if ref:
+        if _is_host_ref(ref):
             hid = _host_id(ref)
             hosts.setdefault(hid, {"id": hid, "role": "target", "epistemic_status": "inferred", "source": "program"})
     return hosts
+
+
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[.;!?])\s+|\n+")
+_PORT_RE = re.compile(r"\b(?:tcp|udp|port)\s*[/ ]?\s*(\d{1,5})\b", re.IGNORECASE)
+
+
+def _host_name_spans(clause: str, hosts: dict[str, dict[str, Any]]) -> list[tuple[int, str]]:
+    """Positions at which the clause names a known host (by id, name or hostname)."""
+    spans: list[tuple[int, str]] = []
+    for hid, host in hosts.items():
+        if _is_attacker_role(str(host.get("role", ""))):
+            continue
+        names = {hid, hid.replace("_", "-"), str(host.get("name", "")), str(host.get("hostname", ""))}
+        for name in names:
+            if len(name) < 2:
+                continue
+            for match in re.finditer(rf"(?<![A-Za-z0-9_-]){re.escape(name)}(?![A-Za-z0-9_-])", clause, re.IGNORECASE):
+                spans.append((match.start(), hid))
+    return sorted(set(spans))
+
+
+def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallback_host: Any = None):
+    """Software mentions in free text, each bound to the host its own clause names.
+
+    "from web, connect to PostgreSQL on db" puts PostgreSQL on db even though the step runs
+    from web. Binding order: the host named next after the mention in the same clause; the
+    only host the clause names; otherwise the single host whose role fits the component;
+    and only then the host the whole text is about (``fallback_host``).
+    """
+    for clause in _CLAUSE_SPLIT_RE.split(text):
+        if not clause.strip():
+            continue
+        spans = _host_name_spans(clause, hosts)
+        named = list(dict.fromkeys(hid for _, hid in spans))
+        for candidate in _candidate_from_mentions(clause):
+            position = clause.casefold().find(candidate["name"].casefold())
+            following = next((hid for start, hid in spans if start > position), None)
+            host = following or (named[0] if len(named) == 1 else None)
+            explicit = host is not None
+            if host is None:
+                component, _ = match_software(candidate["name"])
+                keywords = (component or {}).get("role_keywords", [])
+                fitting = [hid for hid, entry in hosts.items()
+                           if not _is_attacker_role(str(entry.get("role", "")))
+                           and any(_mentions(str(entry.get("role", "")), keyword) for keyword in keywords)]
+                host = fitting[0] if len(fitting) == 1 else None
+            if host is None and _is_host_ref(fallback_host):
+                host = _host_id(fallback_host)
+            candidate["host_ref"] = host
+            candidate["host_explicit"] = explicit
+            candidate["from_mention"] = True
+            port = _PORT_RE.search(clause, max(position, 0))
+            if port and 1 <= int(port.group(1)) <= 65535:
+                candidate["port"] = int(port.group(1))
+            yield candidate
+
+
+def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Ports the verified source text states next to a host name, one unambiguous port per host.
+
+    Reads the verified quotes cited by actions, hosts and services. A port is attributed to the
+    host named closest before it in the same clause; a host with two different stated ports is
+    left out, because the text does not say which one a given service uses.
+    """
+    verified = {str(item.get("id")): str(item.get("quote") or "") for item in ir.get("evidence", []) or []
+                if isinstance(item, dict) and item.get("quote_verified") is True}
+    texts: list[str] = []
+    for collection in ("actions", "hosts", "services"):
+        for entity in ir.get(collection, []) or []:
+            if isinstance(entity, dict):
+                texts.extend(verified[str(ref)] for ref in entity.get("evidence_refs", []) or [] if str(ref) in verified)
+    found: dict[str, set[int]] = {}
+    for text in dict.fromkeys(texts):
+        for clause in _CLAUSE_SPLIT_RE.split(text):
+            spans = _host_name_spans(clause, hosts)
+            for match in _PORT_RE.finditer(clause):
+                port = int(match.group(1))
+                before = [hid for start, hid in spans if start < match.start()]
+                if before and 1 <= port <= 65535:
+                    found.setdefault(before[-1], set()).add(port)
+    return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
+
+
+def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None:
+    """The host a supplement is about when it answers a question scoped to a host or its service."""
+    item = next((entry for entry in ir.get("missing_items", []) or []
+                 if isinstance(entry, dict) and entry.get("id") == supplement.get("targets_missing_item")), None)
+    where = (item or {}).get("applied_to") or (item or {}).get("target")
+    if not isinstance(where, dict):
+        return None
+    if where.get("collection") == "hosts":
+        return str(where.get("id"))
+    if where.get("collection") == "services":
+        service = next((entry for entry in ir.get("services", []) or [] if entry.get("id") == where.get("id")), None)
+        return service.get("host_ref") if service else None
+    return None
+
+
+def _is_recorded_service(service: dict[str, Any]) -> bool:
+    """A service stated by the analysis or the user (not a placeholder, not module-4 output)."""
+    return (bool(str(service.get("name") or "").strip())
+            and service.get("id") not in _PLACEHOLDER_SERVICE_IDS
+            and service.get("source") != "program"
+            # services derived from a supplement are rebuilt from that supplement on every run
+            and not service.get("supplement_ref"))
+
+
+def _match_component(name: str) -> tuple[dict[str, Any] | None, bool]:
+    """Catalogue match for a recorded name, also when the product is only part of it.
+
+    "VMware Horizon server" is VMware Horizon; a name that mentions two different catalogue
+    products is ambiguous and stays unmatched.
+    """
+    component, is_substitute = match_software(name)
+    if component is not None:
+        return component, is_substitute
+    found = {}
+    remainder = name
+    for mention in _candidate_from_mentions(name):
+        matched, substitute = match_software(mention["name"])
+        if matched is not None:
+            found[matched["id"]] = (matched, substitute)
+            remainder = re.sub(re.escape(mention["name"]), " ", remainder, flags=re.IGNORECASE)
+    # Whatever the name says beyond the product must be generic ("server", "service"); any
+    # other word means it names something else that merely contains a known product word.
+    extra = [word for word in re.findall(r"[A-Za-z][\w-]*", remainder)
+             if word.casefold() not in _GENERIC_AFTER_PRODUCT and word.casefold() not in {"unpatched", "vulnerable", "exposed"}]
+    return next(iter(found.values())) if len(found) == 1 and not extra else (None, False)
+
+
+def _generic_function_component(name: str) -> dict[str, Any] | None:
+    """Catalogue stand-in for a service the source names only by its function.
+
+    "web service" or "database server" names no product, so a clearly labelled substitute
+    for that function can stand in. Any other word in the name ("Confluence web application")
+    means a specific product was named, and it must not be swapped for a generic stand-in.
+    """
+    lowered = name.casefold()
+    for component in load_components():
+        if component.get("id") == "oss-attacker" or component.get("runtime") != "container" or not component.get("default_ports"):
+            continue
+        keywords = sorted((k.casefold() for k in component.get("role_keywords", [])), key=len, reverse=True)
+        if not any(_mentions(lowered, keyword) for keyword in keywords):
+            continue
+        rest = lowered
+        for keyword in keywords:
+            rest = re.sub(rf"(?<![a-z0-9]){re.escape(keyword)}(?![a-z0-9])", " ", rest)
+        if all(word in _GENERIC_AFTER_PRODUCT for word in re.findall(r"[a-z][\w-]*", rest)):
+            return component
+    return None
+
+
+def _display_name(candidate: dict[str, Any], component: dict[str, Any]) -> str:
+    """Name a service found by a text mention after the product, not after the matched words.
+
+    An alias can be a vulnerability nickname or a host role ("Log4Shell", "domain controller");
+    those are clues to a product, not names of software.
+    """
+    name = candidate["name"]
+    if not candidate.get("from_mention"):
+        return name
+    product = re.sub(r"\s*\([^)]*\)\s*$", "", str(component.get("name") or "")).strip()
+    known_names = {str(component.get("software", "")).casefold(), product.casefold()}
+    if not product or name.casefold() in known_names or product.casefold() in name.casefold() or name.casefold() in product.casefold():
+        return name
+    return product
 
 
 def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -222,14 +424,36 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     actions = ir.get("actions", [])
     for action in actions:
         text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
-        candidates.extend(_candidate_from_mentions(text, action.get("target_host_ref")))
+        candidates.extend(_mentions_bound_to_hosts(text, hosts, action.get("target_host_ref")))
+    # Verified source quotes cited for a host or service often carry the version and port the
+    # structured record lacks ("runs nginx version 1.31.8 on TCP/80"); read them, bound to that host.
+    verified = {str(item.get("id")): str(item.get("quote") or "") for item in ir.get("evidence", []) or []
+                if isinstance(item, dict) and item.get("quote_verified") is True}
+    for collection, host_key in (("hosts", "id"), ("services", "host_ref")):
+        for entity in ir.get(collection, []) or []:
+            if not isinstance(entity, dict) or entity.get("source") == "program":
+                continue
+            for ref in entity.get("evidence_refs", []) or []:
+                if verified.get(str(ref)):
+                    candidates.extend(_mentions_bound_to_hosts(verified[str(ref)], hosts, entity.get(host_key)))
+    # A free-text supplement is the user's statement about the lab; software and host
+    # associations it names are planned like any other, and marked as the user's.
+    for supplement in ir.get("supplements", []) or []:
+        if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
+            continue
+        for mention in _mentions_bound_to_hosts(supplement["text"], hosts, _answered_host(ir, supplement)):
+            mention["from_supplement"] = str(supplement.get("id") or "supplement")
+            candidates.append(mention)
 
     candidates.extend(_context_text_candidates(context))
-    for service in ir.get("services", []):
-        if service.get("source") == "user":
-            candidates.append(_candidate(service.get("name", ""), service.get("name", ""),
-                                         version=service.get("version"), cves=service.get("cve", []),
-                                         host_ref=service.get("host_ref"), explicit_port=service.get("port")))
+    # Every service the analysis or the user recorded is a dependency to plan for, whether
+    # or not the catalogue knows it; ignoring them would hide unsupported software.
+    recorded = [_candidate(service.get("name", ""), service.get("name", ""),
+                           version=service.get("version"), cves=service.get("cve", []),
+                           host_ref=service.get("host_ref"), explicit_port=service.get("port"))
+                for service in ir.get("services", []) if _is_recorded_service(service)]
+    # Recorded services go first so a text mention of the same product merges into them.
+    candidates = recorded + candidates
 
     # Bind an unscoped service to the only known target when the IR has one.
     target_hosts = [hid for hid, host in hosts.items() if "attacker" not in host.get("role", "").casefold()]
@@ -248,11 +472,21 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         name = candidate["name"].strip()
         if not name:
             continue
-        component, _ = match_software(name)
+        component, _ = _match_component(name)
         normalized_name = component["id"] if component else name.casefold()
-        matches = [item for item in unique
-                   if (match_software(item["name"])[0] or {}).get("id", item["name"].casefold()) == normalized_name
-                   and item.get("host_ref") == candidate.get("host_ref")]
+        same_product = [item for item in unique
+                        if (_match_component(item["name"])[0] or {}).get("id", item["name"].casefold()) == normalized_name]
+        matches = [item for item in same_product if item.get("host_ref") == candidate.get("host_ref")]
+        if not matches and candidate.get("from_mention") and not candidate.get("host_explicit") and len(same_product) == 1:
+            # The text does not say where this product runs; it is the one already known.
+            matches = same_product
+        elif not matches and candidate.get("host_explicit"):
+            # The text pins the product to a host: correct an earlier guess for the same product.
+            guesses = [item for item in same_product if item.get("from_mention") and not item.get("host_explicit")]
+            if len(guesses) == 1:
+                guesses[0]["host_ref"] = candidate["host_ref"]
+                guesses[0]["host_explicit"] = True
+                matches = guesses
         same_version = next((item for item in matches
                              if (item.get("version") or None) == (candidate.get("version") or None)
                              and (item.get("port") is None or candidate.get("port") is None
@@ -270,6 +504,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         else:
             target["cve"] = list(dict.fromkeys([*target.get("cve", []), *candidate.get("cve", [])]))
             target["port"] = target.get("port") or candidate.get("port")
+            if candidate.get("from_supplement"):
+                target.setdefault("from_supplement", candidate["from_supplement"])
+                if candidate.get("version"):
+                    target["version"] = candidate["version"]  # the user's statement wins
     return unique
 
 
@@ -292,32 +530,58 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
 
+    # Internally hosts are keyed by a normalised id; the IR's own host ids are the ones
+    # every other reference uses, so map back before anything is written to the result.
+    canonical = {_host_id(host["id"]): host["id"] for host in result.get("hosts", []) if host.get("id")}
+    hosts = {canonical.get(hid, hid): {**host, "id": canonical.get(hid, hid)} for hid, host in hosts.items()}
+    for candidate in candidates:
+        if candidate.get("host_ref"):
+            candidate["host_ref"] = canonical.get(candidate["host_ref"], candidate["host_ref"])
+    for action in actions:
+        if action.get("target_host_ref_source") == "program":
+            action["target_host_ref"] = canonical.get(action["target_host_ref"], action["target_host_ref"])
+
     original_services = copy.deepcopy(result.get("services", []))
-    existing_user_services = [item for item in original_services if item.get("source") == "user"]
+    existing_user_services = [item for item in original_services if _is_recorded_service(item)]
     services: list[dict[str, Any]] = []
     generated_host_refs: dict[str, list[str]] = {}
+    previous_planner_items = {str(item.get("id")): item for item in result.get("missing_items", [])
+                              if str(item.get("id", "")).startswith("planner_dep_")}
     missing = [item for item in result.get("missing_items", []) if not str(item.get("id", "")).startswith("planner_dep_")]
     seen_missing: set[str] = set()
+    analysis_question_ids = " ".join(str(item.get("id")) for item in missing)
+
+    def version_already_asked(name: str, service_id: str | None = None) -> bool:
+        """Module 2 may already ask this product's version; one question is enough."""
+        if service_id and f"missing-service-{_slug56(service_id)}-version" in analysis_question_ids:
+            return True
+        return f"missing-product-{_slug56(name)}-version" in analysis_question_ids
 
     def add_missing(key: str, field: str, reason: str, *, category: str = "software", status: str = "open",
-                    resolution: str | None = None) -> None:
+                    resolution: str | None = None, severity: str = "major") -> None:
         ident = "planner_dep_" + _slug(key)
         if ident in seen_missing:
             return
         seen_missing.add(ident)
         entry: dict[str, Any] = {
             "id": ident, "field": field, "category": category, "reason": reason,
-            "severity": "major", "status": status,
+            "severity": severity, "status": status,
         }
         if resolution:
             entry["resolution"] = resolution
+        earlier = previous_planner_items.get(ident)
+        if earlier and earlier.get("resolution_source") == "user":
+            # Re-planning must not discard a decision the user already made on this question.
+            for key in ("status", "resolution", "resolution_source", "applied_to", "write_back"):
+                if key in earlier:
+                    entry[key] = earlier[key]
         missing.append(entry)
 
     used_ids: set[str] = set()
     used_user_ids: set[str] = set()
     for candidate in candidates:
         name = candidate["name"]
-        component, is_substitute = match_software(name)
+        component, is_substitute = _match_component(name)
         existing_user = next((item for item in existing_user_services
                               if item.get("name", "").casefold() == name.casefold()
                               and (not item.get("version") or not candidate.get("version")
@@ -325,6 +589,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if component is None and existing_user:
             component = component_by_id(existing_user.get("catalogue_component"))
             is_substitute = bool(existing_user.get("is_substitute", False))
+        function_substitute = False
+        if component is None and existing_user and not candidate.get("from_mention"):
+            component = _generic_function_component(name)
+            is_substitute = function_substitute = component is not None
         if component is None:
             # Preserve analysis-stage facts even when they have no catalogue mapping.
             original = next((item for item in original_services
@@ -335,7 +603,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained["is_substitute"] = False
                 if retained not in services:
                     services.append(retained)
-            add_missing(f"software-{name}-{candidate.get('version', '')}",
+                    if retained.get("host_ref"):
+                        # Still this host's service, even without a catalogue component.
+                        generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
+            add_missing(f"software-{name}-{candidate.get('version') or ''}",
                         f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
                         "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.")
             continue
@@ -349,10 +620,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 service.setdefault("epistemic_status", "inferred")
                 service.setdefault("source", "user")
                 service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
-                if candidate.get("version"):
-                    service["version"] = candidate["version"]
-                if candidate.get("port"):
-                    service["port"] = candidate["port"]
+                for key in ("version", "port"):
+                    if candidate.get(key) and service.get(key) != candidate[key]:
+                        # Filled from a supplement or a verified source quote, not by the analysis record.
+                        service[key] = candidate[key]
+                        service.setdefault("field_sources", {})[key] = (
+                            "user" if candidate.get("from_supplement") else "source_quote")
                 services.append(service)
                 used_user_ids.add(service_id)
                 used_ids.add(service_id)
@@ -360,13 +633,22 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 for service in services:
                     if service.get("id") == service_id:
                         service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
-            if is_substitute:
+            if function_substitute:
+                add_missing(
+                    f"role-substitute-{candidate.get('host_ref') or 'unassigned'}-{component['id']}",
+                    f"Exact software and version for {name}" + (f" on host {candidate['host_ref']}" if candidate.get("host_ref") else ""),
+                    f"The source names only the function ({name}), not the product or version that provided it.",
+                    status="substitute_chosen",
+                    resolution=f"Used {component['name']} ({component['id']}) as a function-based substitute. This is not asserted to be the original software or a full recreation.",
+                )
+            elif is_substitute:
                 substitute_info = next((entry for entry in component.get("substitutes_for", [])
                                         if name.casefold() in {n.casefold() for n in entry.get("names", [])}), {})
                 explanation = substitute_info.get("reason") or "This component is a functional substitute and does not fully reproduce the original software."
                 add_missing(f"substitute-{name}", f"exact software fidelity: {name}", explanation,
                             status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-            if not candidate.get("version") and not existing_user.get("version"):
+            if (not function_substitute and not candidate.get("version") and not existing_user.get("version")
+                    and not version_already_asked(name, service_id)):
                 add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
                             f"version for {name}",
                             "A software dependency was identified, but its version was not stated in the actions or target context.",
@@ -385,15 +667,21 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             service_id = f"{base_id}-{serial}"
             serial += 1
         used_ids.add(service_id)
+        display_name = _display_name(candidate, component)
         service: dict[str, Any] = {
             "id": service_id,
-            "name": name,
+            "name": display_name,
+            **({"matched_text": name} if display_name != name else {}),
             "cve": candidate.get("cve", []),
             "catalogue_component": component["id"],
             "is_substitute": bool(is_substitute),
             "epistemic_status": "inferred",
             "source": "program",
         }
+        if candidate.get("from_supplement"):
+            # Stated by the user in a supplement, not derived by the planner.
+            service.update({"source": "user", "epistemic_status": "supported",
+                            "supplement_ref": candidate["from_supplement"]})
         if candidate.get("version"):
             service["version"] = candidate["version"]
         if candidate.get("port"):
@@ -407,8 +695,8 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             add_missing(f"substitute-{name}",
                         f"exact software fidelity: {name}", explanation,
                         status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-        if not candidate.get("version"):
-            add_missing(f"version-{name}-{host_ref or 'unassigned'}", f"version for {name}",
+        if not candidate.get("version") and not version_already_asked(display_name):
+            add_missing(f"version-{name}-{host_ref or 'unassigned'}", f"version for {display_name}",
                         "A software dependency was identified, but its version was not stated in the actions or target context.",
                         category="version")
         services.append(service)
@@ -476,6 +764,16 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 add_missing(f"cve-{cve}", f"affected software for {cve}",
                             "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.")
 
+    # A port the source states for a host ("to victim-web over TCP/80") belongs to that host's
+    # service when the host has exactly one service still lacking a port.
+    for hid, port in _stated_host_ports(result, hosts).items():
+        portless = [service for service in services if service.get("host_ref") == hid and not service.get("port")
+                    and service.get("id") not in _PLACEHOLDER_SERVICE_IDS]
+        taken = {service.get("port") for service in services if service.get("host_ref") == hid}
+        if len(portless) == 1 and port not in taken:
+            portless[0]["port"] = port
+            portless[0].setdefault("field_sources", {})["port"] = "source_quote"
+
     # Keep user-defined hosts intact; remove only links to module-4 generated services from the prior run.
     old_hosts = result.get("hosts", [])
     by_id: dict[str, dict[str, Any]] = {host.get("id"): copy.deepcopy(host) for host in old_hosts if host.get("id")}
@@ -497,9 +795,24 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     # Planning may add catalogue services, but may never erase analysis entities.
     present = {item.get("id") for item in services}
     for original in original_services:
+        if original.get("source") == "program" and str(original.get("id", "")).startswith("svc-"):
+            continue  # module-4 output of an earlier run; it is rebuilt above, not carried over
+        if original.get("supplement_ref") and str(original.get("id", "")).startswith("svc-"):
+            continue
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    if actions and not any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
+        # Nothing to build: say so as a blocker instead of letting an empty plan look deployable.
+        add_missing("no-target-software", "目標軟體／服務",
+                    "來源與補件都沒有指出任何目標軟體、服務或弱點，無法規劃可重現的環境。請補上受害系統的產品與版本，或確認此情境不部署。",
+                    severity="blocker")
+    # The "no service known yet" placeholder has done its job once real services exist.
+    if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
+        services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]
     result["services"] = services
     result["missing_items"] = missing
+    # Planning may have filled in what an analysis-stage question asked (a version read from
+    # a quote or a supplement); recompute those questions so they do not stay open.
+    result["missing_items"] = refresh_missing_items(result, add_new=False)
     return annotate_reproducibility(result)

@@ -3,6 +3,7 @@ import type { ScenarioIR, ServiceItem } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { RefIssuesNotice } from "../components/RefIssues";
 import { ApiNotice, Busy, DataView, Empty, EpistemicBadge, Metric, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 
 function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
@@ -43,11 +44,13 @@ function Body({ ir }: { ir: ScenarioIR }) {
   }, [hosts]);
   const substitutes = services.filter((s) => s.is_substitute);
   const has = hosts.length > 0 || services.length > 0;
+  // The dependency analysis stamps a fidelity verdict on the IR; without it, what is listed below came straight from the report analysis.
+  const analysed = (ir as { fidelity?: unknown }).fidelity !== undefined;
 
   return (
     <div className="page">
       <PageHead title="軟體依賴" desc="重建這條攻擊流程需要的主機與軟體，以及它們對應到哪個可部署的元件。標為「替代品」的項目與報告中的原始軟體不同，會影響重現的擬真度。">
-        <button className={has ? "" : "primary"} disabled={run.busy} onClick={() => run.run()}>{has ? "重新分析依賴" : "執行依賴分析"}</button>
+        <button className={analysed ? "" : "primary"} disabled={run.busy} onClick={() => run.run()}>{analysed ? "重新分析依賴" : "執行依賴分析"}</button>
       </PageHead>
 
       {run.busy && <div className="card"><Busy label="分析軟體依賴中…" elapsed={run.elapsed} /></div>}
@@ -55,6 +58,13 @@ function Body({ ir }: { ir: ScenarioIR }) {
       {ranOk && !run.busy && (has
         ? <Notice kind="info">依賴分析完成，結果已更新。</Notice>
         : <Notice kind="warn" title="分析完成，但沒有結果">後端沒有從目前的攻擊流程與補充資訊推導出任何主機或服務。可以回到「缺失補充」補上軟體與版本資訊後再試。</Notice>)}
+
+      {has && !analysed && !run.busy && (
+        <Notice kind="warn" title="尚未執行依賴分析">
+          下方只是情資分析階段擷取到的主機與服務，還沒有對應到可部署的元件，也可能缺少項目。請按右上角「執行依賴分析」；補充缺失或修改攻擊流程之後也要重新分析一次。
+        </Notice>
+      )}
+      {analysed && <RefIssuesNotice ir={ir} context="deps" />}
 
       {!has ? (
         <div className="card"><Empty>這個情境還沒有主機與服務資料。按右上角「執行依賴分析」由後端產生。</Empty></div>

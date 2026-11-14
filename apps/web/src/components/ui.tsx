@@ -182,6 +182,22 @@ export function Notice({ kind = "info", title, children, action }: { kind?: "inf
   );
 }
 
+/** FastAPI request-validation errors ([{type, loc, msg}]) in plain language; null when the payload is something else. */
+const FIELD_ZH: Record<string, string> = { text: "內容", name: "名稱", content: "情資內容", input_kind: "輸入格式", note: "備註" };
+const TYPE_ZH: Record<string, string> = { string_too_short: "不能留白", missing: "必填，但沒有送出", string_too_long: "太長", int_parsing: "必須是整數", literal_error: "不是可接受的選項" };
+export function validationMessages(data: unknown): string[] | null {
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const out: string[] = [];
+  for (const e of data) {
+    if (!e || typeof e !== "object" || typeof (e as any).type !== "string" || !Array.isArray((e as any).loc)) return null;
+    const loc = ((e as any).loc as unknown[]).filter((x) => x !== "body").map(String);
+    const field = loc[loc.length - 1] ?? "";
+    const why = TYPE_ZH[(e as any).type] ?? (typeof (e as any).msg === "string" ? (e as any).msg : (e as any).type);
+    out.push(`「${FIELD_ZH[field] ?? field ?? "欄位"}」${why}`);
+  }
+  return out;
+}
+
 /** Turns an API failure into a plain-language notice. `what` names the feature, e.g. "依賴分析". */
 export function ApiNotice({ error, what, onRetry }: { error: ApiError | null; what: string; onRetry?: () => void }) {
   if (!error) return null;
@@ -191,6 +207,14 @@ export function ApiNotice({ error, what, onRetry }: { error: ApiError | null; wh
     return <Notice kind="info" title={`${what}：後端尚未提供`} action={retry}>這個功能的後端端點還沒上線，完成後這裡會顯示真實資料。{where}</Notice>;
   if (error.kind === "offline")
     return <Notice kind="warn" title={`${what}：無法連線到後端`} action={retry}>請確認 API 服務已啟動（預設 127.0.0.1:8077）。{where}</Notice>;
+  const invalid = error.status === 422 ? validationMessages(error.data) : null;
+  if (invalid)
+    return (
+      <Notice kind="err" title={`${what}沒有送出：欄位不符合要求`} action={retry}>
+        <ul style={{ margin: "4px 0", paddingLeft: 18 }}>{invalid.map((m, i) => <li key={i}>{m}</li>)}</ul>
+        資料沒有被儲存，請修正後再送出。{where}
+      </Notice>
+    );
   return (
     <Notice kind="err" title={`${what}失敗`} action={retry}>
       {error.data !== undefined ? <div style={{ margin: "4px 0" }}><DataView data={error.data} /></div> : error.detail}

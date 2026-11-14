@@ -1,0 +1,399 @@
+{
+ "schema_version": "1.0",
+ "name": "clop-moveit-advisory",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "feb1305b49ea549c93b81a5a5f4e94876e3ecb3e1a7b0400d753615150ddf8b1",
+  "source_name": "clop-moveit-advisory"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploited CVE-2023-34362 in Progress MOVEit Transfer",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "performed SQL injection against internet-facing MOVEit Transfer web applications",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "installed the LEMURLOOT web shell",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "used the LEMURLOOT web shell to retrieve information from the system and its underlying database",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The advisory describes SQL injection against internet-facing MOVEit Transfer web applications, followed by installation of the LEMURLOOT web shell.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The shell was used to retrieve information from the system and its underlying database, using the installed LEMURLOOT web shell.",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "managed file-transfer application",
+   "source": "llm",
+   "name": "MOVEit Transfer system",
+   "network_placement": "internet-facing",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Progress MOVEit Transfer",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "LEMURLOOT web shell",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-34362",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-6"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The advisory reports that the CL0P group exploited CVE-2023-34362 in Progress MOVEit Transfer during May 2023.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The advisory reports that the CL0P group exploited CVE 2023 34362 in Progress MOVEit Transfer during May 2023."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The advisory describes SQL injection against internet-facing MOVEit Transfer web applications",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The advisory describes SQL injection against internet facing MOVEit Transfer web applications"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "followed by installation of the LEMURLOOT web shell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "followed by installation of the LEMURLOOT web shell"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "It says the shell was used to retrieve information from the system and its underlying database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "It says the shell was used to retrieve information from the system and its underlying database."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The advisory describes SQL injection against internet-facing MOVEit Transfer web applications, followed by installation of the LEMURLOOT web shell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The advisory describes SQL injection against internet facing MOVEit Transfer web applications, followed by installation of the LEMURLOOT web shell."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "MOVEit Transfer system — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer system 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer system",
+    "action:a1 — exploited CVE-2023-34362 in Progress MOVEit Transfer",
+    "action:a2 — performed SQL injection against internet-facing MOVEit Transfer web applications",
+    "action:a3 — installed the LEMURLOOT web shell",
+    "action:a4 — used the LEMURLOOT web shell to retrieve information from the system and its underlying database"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "MOVEit Transfer system — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer system 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer system",
+    "action:a1 — exploited CVE-2023-34362 in Progress MOVEit Transfer",
+    "action:a2 — performed SQL injection against internet-facing MOVEit Transfer web applications",
+    "action:a3 — installed the LEMURLOOT web shell",
+    "action:a4 — used the LEMURLOOT web shell to retrieve information from the system and its underlying database"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "MOVEit Transfer system — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer system 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer system",
+    "action:a1 — exploited CVE-2023-34362 in Progress MOVEit Transfer",
+    "action:a2 — performed SQL injection against internet-facing MOVEit Transfer web applications",
+    "action:a3 — installed the LEMURLOOT web shell",
+    "action:a4 — used the LEMURLOOT web shell to retrieve information from the system and its underlying database"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-facing",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Progress MOVEit Transfer — 版本",
+   "category": "version",
+   "reason": "IR 指出 Progress MOVEit Transfer，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Progress MOVEit Transfer 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Progress MOVEit Transfer",
+    "action:a1 — exploited CVE-2023-34362 in Progress MOVEit Transfer"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Progress MOVEit Transfer",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 4,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": []
+ },
+ "id": "scn_evidence"
+}

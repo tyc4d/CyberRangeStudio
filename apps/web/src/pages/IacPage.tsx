@@ -1,8 +1,9 @@
 import { useState } from "react";
 import type { ScenarioIR } from "@contracts";
-import { api } from "../lib/api";
+import { api, type ApiError } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { RefIssuesNotice } from "../components/RefIssues";
 import { ApiNotice, Busy, DataView, Empty, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
 
 interface IacFile { name: string; content: string }
@@ -34,6 +35,54 @@ function Verdict({ report }: { report: any }) {
     : <Notice kind="err" title="目前不可部署">後端檢查發現阻擋部署的問題，請依下方報告修正後重新生成。</Notice>;
 }
 
+/** The generator's refusal payload ({errors, report}); null for any other failure. */
+function planFailure(e: ApiError | null): { errors: string[]; report: any } | null {
+  const d = e?.data as any;
+  if (!e || (e.status !== 422 && e.status !== 409) || !d || !Array.isArray(d.errors)) return null;
+  return { errors: d.errors.map(String), report: d.report };
+}
+const ERR_RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^host (.+) cannot be resolved to a safe local image$/, (m) => `主機 ${m[1]} 找不到可用的安全本機映像（它的服務沒有對應到元件目錄中的元件）。`],
+  [/^host (.+) could not be resolved to a supported component$/, (m) => `主機 ${m[1]} 無法對應到支援的元件。`],
+  [/^host (.+) runtime=vm is not supported by the configured deployment backend: (.*)$/, (m) => `主機 ${m[1]} 需要虛擬機，但這台伺服器的虛擬機後端尚未安裝或設定。`],
+  [/^connection (.+) -> (.+):(\d+) does not match a declared target service$/, (m) => `連線 ${m[1]} → ${m[2]}:${m[3]} 對不上目標主機宣告的任何服務。`],
+  [/^at least one host is required$/, () => "規劃中至少要有一台主機。"],
+];
+const errZh = (t: string): string | null => { for (const [re, f] of ERR_RULES) { const m = t.match(re); if (m) return f(m); } return null; };
+
+function IacFailure({ detail }: { detail: { errors: string[]; report: any } }) {
+  const comps: any[] = Array.isArray(detail.report?.components) ? detail.report.components : [];
+  return (
+    <Notice kind="err" title="IaC 沒有生成：這份規劃目前不可部署">
+      <div data-testid="iac-failure">
+        <div>沒有產生任何 compose 檔，也沒有啟動任何東西。阻擋原因（{detail.errors.length}）：</div>
+        <ul style={{ margin: "4px 0", paddingLeft: 18 }}>
+          {detail.errors.map((e, i) => { const z = errZh(e); return <li key={i}>{z ?? e}{z && <div className="muted" lang="en" style={{ fontSize: 11, overflowWrap: "anywhere" }}>{e}</div>}</li>; })}
+        </ul>
+        {comps.length > 0 && (
+          <div style={{ overflowX: "auto", margin: "8px 0" }}>
+            <table className="tbl">
+              <thead><tr><th>主機</th><th>對應元件</th><th>映像</th><th>可部署</th></tr></thead>
+              <tbody>
+                {comps.map((c, i) => (
+                  <tr key={i}>
+                    <td className="mono">{String(c.host_id ?? "—")}</td>
+                    <td>{c.component ? String(c.component) : <span className="muted">未對應</span>}</td>
+                    <td className="mono">{c.image ? `${c.image}${c.version ? `:${c.version}` : ""}` : <span className="muted">無</span>}</td>
+                    <td className={c.deployable ? "status-PASS" : "status-FAIL"}>{c.deployable ? "是" : "否"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div>下一步：回「軟體依賴」確認每台主機的服務都有「對應元件」，必要時在「缺失補充」選擇替代方案後重新分析，再重新規劃拓樸、重新生成。</div>
+        {detail.report && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>後端原始檢查報告</summary><div style={{ marginTop: 6 }}><DataView data={detail.report} /></div></details>}
+      </div>
+    </Notice>
+  );
+}
+
 function Body({ ir }: { ir: ScenarioIR }) {
   const iac = useLoad(() => api.getIac(ir.id), [ir.id]);
   const gen = useAction(async () => {
@@ -63,7 +112,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       {!ir.environment_plan && <Notice kind="warn" title="尚無環境規劃">IaC 由拓樸規劃生成，建議先完成「拓樸」步驟。</Notice>}
       {gen.busy && <div className="card"><Busy label="生成 IaC 中…" elapsed={gen.elapsed} /></div>}
-      <ApiNotice error={gen.error} what="IaC 生成" />
+      {planFailure(gen.error) ? <IacFailure detail={planFailure(gen.error)!} /> : <ApiNotice error={gen.error} what="IaC 生成" />}
+      {ir.environment_plan && <RefIssuesNotice ir={ir} context="iac" />}
 
       {iac.loading && !iac.data ? (
         <div className="card"><Busy label="讀取已生成的 IaC…" /></div>

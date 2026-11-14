@@ -1,0 +1,120 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access point exploited via Log4Shell vulnerability",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "unsupported-vmware-horizon",
+   "runtime": "external_platform",
+   "deployable": false
+  },
+  {
+   "id": "h2",
+   "role": "lateral movement target and tool staging host",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h3",
+   "role": "lateral movement target and credential compromise",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false
+  },
+  {
+   "id": "h4",
+   "role": "hosts where lateral movement, persistence, and defense evasion occurred",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h3:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service VMware Horizon server (s1); it remains unreachable by default.",
+  "No port is known for service Windows Defender (s4); it remains unreachable by default.",
+  "No port is known for service Log4j application (svc-unsupported-log4j-unspecified-h1); it remains unreachable by default.",
+  "Host h1 has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.",
+  "Host h1 needs VMware Horizon (external platform required), which the catalogue cannot deploy (not reproducible without supported external VMware Horizon backend). It is not replaced by a stand-in.",
+  "No port is known for service RDP (s2); it remains unreachable by default.",
+  "Host h3 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology).",
+  "No port is known for service RDP (s3); it remains unreachable by default.",
+  "No port is known for service Windows Defender (s5); it remains unreachable by default.",
+  "Action a7 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a10 is stated to run from h2 against h4, but no destination service port is identified; the path stays denied."
+ ]
+}

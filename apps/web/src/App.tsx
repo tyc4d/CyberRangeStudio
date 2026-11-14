@@ -1,5 +1,5 @@
-import { Link, NavLink, Route, Routes } from "react-router-dom";
-import { useEffect, useState, type ReactNode } from "react";
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { api, type Budget } from "./lib/api";
 import { isPlanApproved } from "./lib/plan";
 import { stageState } from "./lib/stages";
@@ -97,14 +97,23 @@ function StageStrip() {
   );
 }
 
+/** Entering another stage starts at the top of that page, not at the previous page's scroll offset. */
+function useScrollTopOnNavigate() {
+  const ref = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  useLayoutEffect(() => { ref.current?.scrollTo({ top: 0 }); }, [pathname]);
+  return ref;
+}
+
 export function App() {
+  const mainRef = useScrollTopOnNavigate();
   return (
     <ScenarioProvider>
       <TopbarProvider>
         <div className="app-shell">
           <Topbar />
           <StageStrip />
-          <main className="main">
+          <main className="main" ref={mainRef}>
             <Routes>
               {STAGES.map((s) => <Route key={s.key} path={s.path} element={s.element} />)}
               <Route path="*" element={<HomePage />} />

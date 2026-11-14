@@ -30,6 +30,8 @@ export interface Action {
   execution_start?: string;
   execution_end?: string;
   command_ref?: string;
+  /** Host the action is launched from, only when the source states it (target_host_ref is where it takes effect). */
+  source_host_ref?: string;
   target_host_ref?: string;
   evidence_refs?: string[];
   epistemic_status: EpistemicStatus;
@@ -51,6 +53,8 @@ export interface Relation {
   source: Source;
   /** User ticked "I checked the source, this ordering holds" for an edge with no matching quote. */
   confirmed?: boolean;
+  /** Why the program lowered the status (e.g. the quote exists but does not state order or dependency). */
+  epistemic_reason?: string;
 }
 
 export interface Host {
@@ -58,9 +62,14 @@ export interface Host {
   role: string;
   os?: string;
   os_version?: string;
+  /** Hostname or label the source gives this machine. */
+  name?: string;
+  network_placement?: string;
   service_refs?: string[];
   epistemic_status?: EpistemicStatus;
   source?: Source;
+  /** Per-field provenance for values not from the record's own source: "user" (supplement) or "source_quote". */
+  field_sources?: Record<string, "user" | "source_quote">;
 }
 
 export interface ServiceItem {
@@ -73,6 +82,16 @@ export interface ServiceItem {
   is_substitute?: boolean;
   epistemic_status?: EpistemicStatus;
   source?: Source;
+  host_ref?: string;
+  port?: number;
+  protocol?: "tcp" | "udp";
+  /** The catalogue has no component for this software (module 4). */
+  no_component?: boolean;
+  /** Source words that led module 4 to this product when they are not its name (e.g. "Log4Shell"). */
+  matched_text?: string;
+  /** Supplement this service was derived from; such services have source "user". */
+  supplement_ref?: string;
+  field_sources?: Record<string, "user" | "source_quote">;
 }
 
 export interface MissingItem {
@@ -84,6 +103,12 @@ export interface MissingItem {
   status: "open" | "user_supplied" | "llm_suggested" | "substitute_chosen" | "accepted_unknown";
   resolution?: string;
   resolution_source?: Source;
+  /** Where an answer to this question is written in the IR. */
+  target?: { collection: "hosts" | "services"; id: string; field: string };
+  /** Set when the answer was written to that field. */
+  applied_to?: { collection: "hosts" | "services"; id: string; field: string };
+  /** Reason the answer was kept as text only and not written to a field. */
+  write_back?: string;
   /** Plain-language question for the user, so they need not read the whole report to know what is asked. */
   question?: string;
   /** Which scenario steps / hosts this gap concerns, for grounding (derived from current IR facts, never invented). */

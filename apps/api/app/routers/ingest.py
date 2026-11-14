@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -15,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from app import store
 from app.cti.analysis import AnalysisError, analyze_source
+from app.cti.missing import refresh_missing_items
 from app.cti.parser import SourceParseError, parse_source
 
 # Upload cap for the extract endpoint. Big enough for a long advisory PDF, small
@@ -166,6 +168,65 @@ async def extract(file: UploadFile = File(...)):
     return result
 
 
+_HOST_FIELDS = {"name", "role", "os", "os_version", "network_placement"}
+_SERVICE_FIELDS = {"name", "version", "port", "os", "os_version"}
+# A free-text answer longer than this is an explanation, not a field value.
+_MAX_FIELD_VALUE_CHARS = 120
+# Statements of not knowing, and hedged guesses. Neither is a value to build a lab from.
+_UNKNOWN_ANSWER_RE = re.compile(
+    r"不確定|不知道|不清楚|不曉得|未知|無法確認|無從得知|沒有資料|待確認|待查|"
+    r"\b(?:unknown|not\s+sure|unsure|no\s+idea|don'?t\s+know|do\s+not\s+know|not\s+known|n/?a|tbd|tbc|unclear|"
+    r"cannot\s+(?:confirm|tell)|can'?t\s+(?:confirm|tell))\b", re.IGNORECASE)
+_NON_ANSWER_RE = re.compile(
+    _UNKNOWN_ANSWER_RE.pattern + r"|可能|也許|或許|大概|應該是|好像|猜|[?？]|"
+    r"\b(?:maybe|perhaps|probably|possibly|might\s+be|i\s+(?:think|guess)|not\s+certain)\b", re.IGNORECASE)
+
+
+def _write_back(ir: dict, collection: str, entity_id: str, field: str, value, *, strict: bool) -> tuple[bool, str]:
+    """Write one user-supplied value into a host/service field, with per-field provenance.
+
+    Only the supplied field becomes user-sourced: the record's own source and
+    epistemic_status describe what the report said and are left as they were.
+    ``strict`` raises HTTP errors (explicit structured request); otherwise a value that
+    cannot be applied is reported back as a reason and the IR is left unchanged.
+    """
+    def fail(status: int, detail: str) -> tuple[bool, str]:
+        if strict:
+            raise HTTPException(status_code=status, detail=detail)
+        return False, detail
+
+    if collection not in {"hosts", "services"}:
+        return fail(422, "Unsupported supplement target.")
+    entity = next((item for item in ir.get(collection, []) if item.get("id") == entity_id), None)
+    if entity is None:
+        return fail(404, "Service not found." if collection == "services" else "Host not found.")
+    if field not in (_SERVICE_FIELDS if collection == "services" else _HOST_FIELDS):
+        return fail(422, "Unsupported service field." if collection == "services" else "Unsupported host field.")
+    if isinstance(value, str):
+        value = value.strip()
+        if not strict and (len(value) > _MAX_FIELD_VALUE_CHARS or "\n" in value):
+            return False, "回答是一段說明而不是單一欄位值，已保留為補充文字，未寫入欄位。"
+        if not strict and _NON_ANSWER_RE.search(value):
+            return False, "回答表示不確定或未知，不是可用的欄位值，未寫入欄位。"
+    if field == "port":
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return fail(422, "port must be an integer.")
+        if not 1 <= value <= 65535:
+            return fail(422, "port must be between 1 and 65535.")
+    if field in {"os", "os_version"}:
+        os_name = str(value if field == "os" else entity.get("os", "")).casefold()
+        version = str(value if field == "os_version" else entity.get("os_version", "")).casefold()
+        if ("windows" in os_name and any(token in version for token in ("alpine", "ubuntu", "debian", "linux"))) or (
+            any(token in os_name for token in ("linux", "alpine", "ubuntu", "debian")) and "windows" in version
+        ):
+            return fail(422, "OS and OS version are inconsistent.")
+    entity[field] = value
+    entity.setdefault("field_sources", {})[field] = "user"
+    return True, ""
+
+
 @router.post("/{scenario_id}/supplement")
 def supplement(scenario_id: str, request: SupplementRequest):
     ir = store.get(scenario_id)
@@ -200,38 +261,32 @@ def supplement(scenario_id: str, request: SupplementRequest):
         if not request.field or request.value is None:
             raise HTTPException(status_code=422, detail="field and value must be provided together.")
         if request.service_id:
-            entity = next((item for item in ir.get("services", []) if item.get("id") == request.service_id), None)
-            if entity is None:
-                raise HTTPException(status_code=404, detail="Service not found.")
-            if request.field not in {"name", "version", "port", "os", "os_version"}:
-                raise HTTPException(status_code=422, detail="Unsupported service field.")
+            collection, entity_id = "services", request.service_id
         elif host_id:
-            entity = next((item for item in ir.get("hosts", []) if item.get("id") == host_id), None)
-            if entity is None:
-                raise HTTPException(status_code=404, detail="Host not found.")
-            if request.field not in {"name", "role", "os", "os_version"}:
-                raise HTTPException(status_code=422, detail="Unsupported host field.")
+            collection, entity_id = "hosts", host_id
         else:
             raise HTTPException(status_code=422, detail="host_id or service_id is required for a structured supplement.")
-        value = request.value
-        if request.field == "port":
-            try:
-                value = int(value)
-            except (TypeError, ValueError) as exc:
-                raise HTTPException(status_code=422, detail="port must be an integer.") from exc
-            if not 1 <= value <= 65535:
-                raise HTTPException(status_code=422, detail="port must be between 1 and 65535.")
-        if request.field in {"os", "os_version"}:
-            os_name = str(value if request.field == "os" else entity.get("os", "")).casefold()
-            version = str(value if request.field == "os_version" else entity.get("os_version", "")).casefold()
-            if ("windows" in os_name and any(token in version for token in ("alpine", "ubuntu", "debian", "linux"))) or (
-                any(token in os_name for token in ("linux", "alpine", "ubuntu", "debian")) and "windows" in version
-            ):
-                raise HTTPException(status_code=422, detail="OS and OS version are inconsistent.")
-        entity[request.field] = value
-        entity["source"] = "user"
-        entity["epistemic_status"] = "supported"
+        _write_back(ir, collection, entity_id, request.field, request.value, strict=True)
+        if target is not None:
+            target["applied_to"] = {"collection": collection, "id": entity_id, "field": request.field}
+    elif target is not None and isinstance(target.get("target"), dict) and target["status"] != "accepted_unknown":
+        # The question itself says where its answer belongs; without this the answer would
+        # only live in the resolution text and the planning modules would never see it.
+        where = target["target"]
+        applied, reason = _write_back(ir, str(where.get("collection")), str(where.get("id")), str(where.get("field")), text, strict=False)
+        if applied:
+            target["applied_to"] = dict(where)
+            target.pop("write_back", None)
+        else:
+            target["write_back"] = reason
+            if _UNKNOWN_ANSWER_RE.search(text):
+                # "I don't know" is a decision to leave it unknown, not a supplied value.
+                target["status"] = "accepted_unknown"
+            elif _NON_ANSWER_RE.search(text):
+                # A hedged guess settles nothing: keep the note, leave the question open.
+                target["status"] = "open"
 
+    ir["missing_items"] = refresh_missing_items(ir)
     errors = iter_errors("scenario-ir", ir)
     if errors:
         raise HTTPException(status_code=500, detail={"message": "Supplemented Scenario IR failed contract validation.", "errors": errors})

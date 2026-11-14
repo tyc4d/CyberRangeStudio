@@ -22,7 +22,10 @@ def _supported(item: dict[str, Any]) -> bool:
 
 
 def _supported_value(item: dict[str, Any], fields: Iterable[str]) -> bool:
-    return _supported(item) and any(_present(item.get(field)) for field in fields)
+    """A value counts as known when its record is supported or the user supplied that field."""
+    field_sources = item.get("field_sources") if isinstance(item.get("field_sources"), dict) else {}
+    return any(_present(item.get(field)) and (_supported(item) or field_sources.get(field) in {"user", "source_quote"})
+               for field in fields)
 
 
 def _known_fact(field: str, value: Any, source_ref: str, item: dict[str, Any] | None = None,
@@ -232,7 +235,8 @@ def _anchor(ir: dict[str, Any], evidence_refs: Iterable[str], terms: Iterable[st
 def _add_item(items: list[dict[str, Any]], ir: dict[str, Any], *, item_id: str, field: str,
               category: str, reason: str, question: str, affects: list[str], known: list[dict[str, Any]] | None = None,
               suggestions: list[str] | None = None, examples: list[str] | None = None,
-              evidence_refs: Iterable[str] = (), anchor_terms: Iterable[str] = (), severity: str = "major") -> None:
+              evidence_refs: Iterable[str] = (), anchor_terms: Iterable[str] = (), severity: str = "major",
+              target: dict[str, str] | None = None) -> None:
     if any(item.get("id") == item_id for item in items):
         return
     item: dict[str, Any] = {
@@ -250,6 +254,9 @@ def _add_item(items: list[dict[str, Any]], ir: dict[str, Any], *, item_id: str, 
     }
     if examples:
         item["examples"] = list(examples)
+    if target:
+        # Where a user's answer is written back in the IR (collection, entity id, field).
+        item["target"] = dict(target)
     anchor = _anchor(ir, evidence_refs, anchor_terms)
     if anchor:
         item["anchor"] = anchor
@@ -270,6 +277,8 @@ def _host_questions(ir: dict[str, Any], subjects: list[tuple[dict[str, Any], str
                     all_text: str, items: list[dict[str, Any]]) -> None:
     actions_by_id = {str(action.get("id")): action for action in actions if action.get("id")}
     for host, source_kind in subjects:
+        if re.search(r"\b(?:attacker|red[\s-]team|operator)\b", str(host.get("role") or ""), re.IGNORECASE):
+            continue  # the lab's own attacker machine is scaffolding, not a target to reconstruct
         host_id = str(host.get("id") or "target")
         label = _name(host, host_id)
         refs = _host_evidence_refs(host, actions) if source_kind == "hosts" else list(host.get("evidence_refs") or [])
@@ -338,6 +347,8 @@ def _host_questions(ir: dict[str, Any], subjects: list[tuple[dict[str, Any], str
                 evidence_refs=refs,
                 anchor_terms=[label, str(value or "")],
                 severity=severity,
+                target=({"collection": "hosts", "id": host_id, "field": keys[0]}
+                        if source_kind == "hosts" and not host.get("_placeholder") else None),
             )
 
 
@@ -445,6 +456,73 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
             suggestions=_suggestions_for(code, product + " " + " ".join(_text(x) for x in related_subjects + linked_actions), all_text),
             evidence_refs=refs,
             anchor_terms=anchor_terms,
+        )
+
+
+_PLACEHOLDER_SERVICE_IDS = {"service-unspecified"}
+# Exploitation techniques: of a public-facing app, for client execution, of remote services,
+# for privilege escalation, credential access and defense evasion.
+_EXPLOIT_TECHNIQUES = ("T1190", "T1203", "T1210", "T1068", "T1212", "T1211")
+_VERSION_IN_TEXT = re.compile(r"(?i)(?:\b\d{1,4}\.){1,3}\d{1,4}(?:[-+][a-z0-9.]+)?")
+
+
+def _generic_service_version_questions(ir: dict[str, Any], services: list[dict[str, Any]], actions: list[dict[str, Any]],
+                                       items: list[dict[str, Any]]) -> None:
+    """Ask the version of every named target service the IR holds, whatever the product is.
+
+    A reproduction needs a concrete release for any software an action exploits or uses.
+    Services already covered by a product-specific question above are not asked twice.
+    """
+    covered = " ".join(str(item.get("id")) + " " + " ".join(item.get("affects") or []) for item in items)
+    for service in services:
+        service_id = str(service.get("id") or "")
+        name = str(service.get("name") or "").strip()
+        if not service_id or not name or service_id in _PLACEHOLDER_SERVICE_IDS or "(substitute)" in name:
+            continue
+        if service.get("source") == "program":
+            continue  # module 4 raises its own questions for the services it derives
+        if f"service:{service_id} " in covered or _supported_value(service, ("version", "software_version")):
+            continue
+        if _VERSION_IN_TEXT.search(name):
+            continue
+        linked_ids = _related_action_ids(service, actions, collection="services")
+        name_key = name.casefold()
+        linked_ids += [str(action.get("id")) for action in actions
+                       if action.get("id") and name_key in _text(action).casefold() and str(action.get("id")) not in linked_ids]
+        linked = [action for action in actions if str(action.get("id")) in linked_ids]
+        cves = [str(cve) for cve in (service.get("cve") or [])]
+        # The release matters when the service is what gets exploited. A service that is merely
+        # logged in to or switched off (RDP, an antivirus) is covered by its configuration question.
+        exploited = any(
+            str(action.get("attack_technique") or "").upper().startswith(_EXPLOIT_TECHNIQUES)
+            or re.search(r"\b(?:exploit\w*|vulnerab\w*|injection|CVE-\d{4}-\d+)\b", _text(action), re.IGNORECASE)
+            for action in linked)
+        if not cves and not exploited:
+            continue
+        known = [fact for fact in [
+            _known_fact("受害軟體/服務", name, f"services:{service_id}.name", service),
+            _known_fact("相關漏洞", ", ".join(cves), f"services:{service_id}.cve", service) if cves else None,
+        ] if fact]
+        refs = list(service.get("evidence_refs") or [])
+        affects = [f"service:{service_id} — {name}"]
+        for action in linked:
+            refs.extend(action.get("evidence_refs") or [])
+            affects.append(f"action:{action.get('id')} — {_name(action)}")
+        because = f"（{', '.join(cves)}）" if cves else ""
+        _add_item(
+            items, ir,
+            item_id=f"missing-service-{_slug(service_id)}-version",
+            field=f"{name} — 版本",
+            category="version",
+            reason=f"IR 指出 {name}{because}，但沒有可重現所需的確切版本。",
+            question=f"靶場要重建 {name} 的哪個版本？{'請選受 ' + ', '.join(cves) + ' 影響的版本；' if cves else ''}"
+                     "原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+            affects=affects,
+            known=known,
+            suggestions=["填入來源或資產清單記載的確切版本", "選用隔離靶場可取得的替代版本並標記為替代", "無法確認；保留為未知"],
+            evidence_refs=refs,
+            anchor_terms=[name],
+            target={"collection": "services", "id": service_id, "field": "version"},
         )
 
 
@@ -614,6 +692,11 @@ def _account_questions(ir: dict[str, Any], actions: list[dict[str, Any]], assets
         if _supported_value(action, ("account_scope", "account_ref", "account_name", "lab_account_ref")):
             continue
         label, reason, question, anchor_terms = account_profile
+        earlier = next((item for item in items if item.get("field") == label), None)
+        if earlier is not None:
+            # The same account in a later step is one question, not one per step.
+            earlier["affects"] = list(dict.fromkeys([*earlier["affects"], f"action:{action_id} — {_name(action)}"]))
+            continue
         account_name = "DefaultAccount" if "defaultaccount" in value else "rogue domain administrator account" if "domain administrator" in value else "local administrator account"
         known = [_known_fact("帳號線索", account_name, f"actions:{action_id}.name", action)]
         known = [fact for fact in known if fact]
@@ -877,7 +960,8 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
         if _present(ref) and str(ref) not in represented_hosts
     ))
     for target_ref in referenced_hosts:
-        placeholder = {"id": target_ref, "role": target_ref, "epistemic_status": "insufficient", "source": "program"}
+        placeholder = {"id": target_ref, "role": target_ref, "epistemic_status": "insufficient", "source": "program",
+                       "_placeholder": True}
         _host_questions(ir, [(placeholder, "hosts")], actions, all_text, items)
 
     # Attack Flow imports may express affected machines as assets and leave hosts empty.
@@ -917,6 +1001,7 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
             )
 
     _software_version_questions(ir, hosts, assets, services, actions, items, all_text)
+    _generic_service_version_questions(ir, services, actions, items)
     _defender_questions(ir, services, actions, items)
     _service_dependency_questions(ir, services, actions, items)
     _ad_domain_question(ir, hosts, actions, items)
@@ -926,3 +1011,39 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
     _phishing_domain_questions(ir, actions, items, all_text)
     _generic_entry_questions(ir, actions, items)
     return items
+
+
+_RESOLUTION_KEYS = ("status", "resolution", "resolution_source", "applied_to", "write_back")
+
+
+def refresh_missing_items(ir: dict[str, Any], *, add_new: bool = True) -> list[dict[str, Any]]:
+    """Recompute the analysis-stage questions for the current IR, keeping the user's decisions.
+
+    - A question that still applies keeps its status and resolution.
+    - A question the user already resolved stays in the list as history even when the IR no
+      longer raises it (for example because the answer was written into the host record).
+    - An open question the IR no longer raises is dropped.
+    - Items owned by other modules (ids not starting with ``missing-``) are left untouched.
+    - ``add_new=False`` only re-evaluates questions already in the IR (used by planning,
+      which must settle what it answered without starting a new questionnaire).
+    """
+    previous = [item for item in (ir.get("missing_items") or []) if isinstance(item, dict)]
+    by_id = {str(item.get("id")): item for item in previous}
+    fresh = calculate_missing_items(ir)
+    if not add_new:
+        fresh = [item for item in fresh if item["id"] in by_id]
+    fresh_ids = {item["id"] for item in fresh}
+    for item in fresh:
+        old = by_id.get(item["id"])
+        if old and old.get("status") not in (None, "open"):
+            for key in _RESOLUTION_KEYS:
+                if key in old:
+                    item[key] = old[key]
+    kept: list[dict[str, Any]] = []
+    for item in previous:
+        item_id = str(item.get("id"))
+        if item_id in fresh_ids:
+            continue
+        if not item_id.startswith("missing-") or item.get("status") not in (None, "open"):
+            kept.append(item)
+    return fresh + kept

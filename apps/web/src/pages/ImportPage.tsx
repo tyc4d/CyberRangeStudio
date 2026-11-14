@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api, ApiError, extractIr, extractScenarioId } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
@@ -41,11 +41,13 @@ export function ImportPage() {
 
   // When a scenario is already imported, show its original report for review
   // instead of a blank form. "匯入新報告" switches back to the form.
-  const [forceNew, setForceNew] = useState(false);
+  // The home page's "＋ 新建情境" asks for a blank form explicitly (router state), even while a scenario is selected.
+  const fresh = (useLocation().state as { fresh?: boolean } | null)?.fresh === true;
+  const [forceNew, setForceNew] = useState(fresh);
   const [source, setSource] = useState<Source | null>(null);
   const [sourceState, setSourceState] = useState<"idle" | "loading" | "missing" | "error">("idle");
   useEffect(() => {
-    setForceNew(false);
+    setForceNew(fresh);
     if (!id) { setSource(null); setSourceState("idle"); return; }
     let live = true;
     setSource(null);
@@ -57,7 +59,7 @@ export function ImportPage() {
         setSourceState(e instanceof ApiError && e.kind === "unimplemented" ? "missing" : "error");
       });
     return () => { live = false; };
-  }, [id]);
+  }, [id, fresh]);
 
   const reviewing = !!id && !forceNew;
   // Original PDF of the imported scenario, when one was uploaded (source/file answers 200).
