@@ -50,14 +50,19 @@ test("缺失補充：「接受未知」備註留白也能送出，且不會出�
   await expect(send).toBeEnabled();
   await shot(page, { path: path.join(EVIDENCE, "01-accept-unknown-blank-note.png") });
   await send.click();
-  await expect(openTab).toHaveText(`待補充 ${before - 1}`);
+  // The form closes only after the API accepted the answer. The open count is not asserted to drop by one:
+  // the backend may add a follow-up question in the same response (it does after the supplement write-back change).
+  await expect(send).toHaveCount(0);
   await expect(page.locator(".notice.err")).toHaveCount(0);
   expect(failed.filter((f) => f.includes("/supplement"))).toEqual([]);
+  expect(before).toBeGreaterThan(0);
 
   // The stored record says honestly that no note was given, and the item is marked accepted-unknown, not answered.
   const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
   const resolved = ir.missing_items.filter((m: any) => m.status === "accepted_unknown");
   expect(resolved.length).toBeGreaterThan(0);
+  // The page agrees with the stored state: every still-open item is counted, the accepted one is not.
+  await expect(openTab).toHaveText(`待補充 ${ir.missing_items.filter((m: any) => m.status === "open").length}`);
   for (const m of resolved) expect(m.resolution).toBe("接受未知（使用者未填寫備註）");
 });
 

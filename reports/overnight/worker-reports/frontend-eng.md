@@ -54,7 +54,29 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 - 流程儲存新版本後，舊拓樸仍顯示「已核准」、啟動可用（admin 里程碑 5）。前端無法判斷規劃是否過期：`environment_plan` 沒有記錄它是由哪個 `ir_version` 產生的。若後端在規劃上加這個欄位，前端可顯示「規劃已過期，請重新規劃」。**此項未修。**
 - EI-05（補件沒有套用到主機規格）、EI-02（主機角色被合併）、EI-07／EI-08（關係無依據、引句逐字標示）屬分析／後端資料問題，前端未遮掩、未處理。
 
+## 批次 3（commit 1935a6d）
+
+- 缺失卡片沒有中文問題時，標題改為「類別相關資訊：<原始欄位名>（後端未提供中文問題…）」，不再只顯示看不出在問什麼的佔位字（qa-ux 里程碑二）。未 e2e 驗證（測試情境沒有這種項目）。
+- 缺失頁在尚未執行依賴分析時提示「清單可能還不完整」（qa-ux Medium）。
+- 部署 up／down 失敗時只顯示一次原因＋結束代碼，完整輸出收合（qa-admin 里程碑 9：同一段 stderr 重複多次把目前狀態擠到下面）。**未以真實失敗驗證**。
+
+## 完整 `npm run e2e` 結果（未通過）
+
+| 執行 | 後端 | 結果 |
+|---|---|---|
+| 第 1 次 | 本分支原本的後端（= main d4a5482） | 8 passed／1 failed／1 未執行 |
+| 第 2 次 | 依 Lead 指示合併 `agent/scenario-eng`（8aa5246）後，merge commit ec09258 | 7 passed／2 failed／1 未執行 |
+| 修正自己的測試後只跑 `qa-fixes motion` | 同上 | 8 passed |
+
+- 兩次都失敗的是 `full-flow` 的 `topology-plan`：斷言「開通連線 > 0」，實際 0。合併後原因變了：不再是「服務沒有主機歸屬」，而是規劃備註寫「服務 web service (s1)、database service (s2) 埠號未知，預設不通」「已確認依賴 r4、r5 無法唯一對應目的服務埠」。IR 中 `h1`、`h2` 的 `service_refs` 仍是空的，兩個服務沒有 port。情境 `scn_9da8286ecc8f`（在我的 `.data`）。因此「部署、驗證、報告、清理」那一段**沒有執行**。
+- 我沒有修改 `full-flow.spec.ts` 的斷言。
+- 第 2 次多出的失敗是我自己的測試：新後端在補件回應裡會新增一筆後續問題（`missing-service-svc1-version`），所以「待補充數 −1」不成立。已改成比對後端實際狀態（該項為 accepted_unknown、頁面數字等於後端 open 數），不是放寬成功條件。
+- 合併後後端單元測試：`93 passed`。
+- 證據：`reports/overnight/evidence/frontend-eng/full-e2e/`（兩次的輸出、run-log、失敗截圖）。
+- 注意：本分支現在含 scenario-eng 的提交（merge ec09258），整合時請留意。
+
 ## 尚未完成
 
-- 完整 `npm run e2e`（full-flow，真實 LLM＋Docker）執行中／待補結果。
+- 完整 `npm run e2e` 尚未通過（見上）；部署／驗證段在本輪從未被 e2e 執行到。
+- 流程頁 1280×720 展開設計檢查時圖例／縮放列／minimap 重疊（qa-ux）：未處理。
 - 422 白話訊息、部署紀錄原因兩項沒有 e2e 覆蓋。
