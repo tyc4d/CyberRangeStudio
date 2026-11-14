@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type SelectHTMLAttributes, type SyntheticEvent } from "react";
 import ReactFlow, {
   Background, BackgroundVariant, Controls, EdgeLabelRenderer, getBezierPath, Handle, MarkerType, MiniMap, NodeToolbar, Position, useEdgesState, useNodesState,
-  type Connection, type Edge, type EdgeProps, type Node, type NodeChange, type NodeProps,
+  type Connection, type Edge, type EdgeProps, type Node, type NodeChange, type NodeProps, type ReactFlowInstance,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import type { Action, AttackFlowAsset, AttackFlowCondition, AttackFlowOperator, EpistemicStatus, Relation, RelationKind, ScenarioIR } from "@contracts";
+import type { Action, AttackFlowAsset, AttackFlowCondition, AttackFlowOperator, EpistemicStatus, Evidence, Relation, RelationKind, ScenarioIR } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { layeredLayout, loadPositions, savePositions } from "../lib/layout";
-import { flowEdgeId, flowEdgesOf, lintFlow, type Finding, type FlowEdge, type FlowEdgeKind, type FlowNodeType } from "../lib/flowlint";
-import { EDGE, GRID, LABEL, ROUTE, TEMPORAL } from "../lib/palette";
+import { countsInChain, findLoops, flowEdgeId, flowEdgesOf, lintFlow, relationBacked, type Finding, type FlowEdge, type FlowEdgeKind, type FlowNodeType } from "../lib/flowlint";
+import { BARRIER, EDGE, GRID, LABEL, ROUTE, TEMPORAL } from "../lib/palette";
 import type { RelationX } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
 import {
-  ApiNotice, EPISTEMIC, EPISTEMIC_ORDER, fmtTime, ScenarioGate, SourceTag,
+  ApiNotice, CITATION, CitationBadge, claimLabel, EPISTEMIC, EPISTEMIC_ORDER, fmtTime, QuoteSnippet, ScenarioGate, SourceTag, summarizeCitations,
+  type CitationSummary,
 } from "../components/ui";
 import { isPlanApproved } from "../lib/plan";
 import { TopbarActions } from "../lib/topbar";
@@ -32,9 +33,10 @@ const NODE_LABEL: Record<FlowNodeType, string> = { action: "攻擊行為", condi
 type ConnectKind = RelationKind | "flow";
 
 /** Shared by every node type: start marker and the per-node commands. */
-interface NodeCommon { fresh: boolean; start: boolean; issues: number; onDelete: () => void; onCheck: () => void; onToggleStart: () => void }
+/** looped: the node sits on a cycle of lines, so no step in that cycle can come first. */
+interface NodeCommon { fresh: boolean; start: boolean; looped: boolean; issues: number; onDelete: () => void; onCheck: () => void; onToggleStart: () => void }
 interface ActionNodeData extends NodeCommon {
-  action: Action; index: number; host?: string; requires: number;
+  action: Action; index: number; host?: string; requires: number; cite: CitationSummary;
   hosts: { id: string; role: string }[]; onPatch: (p: Partial<Action>) => void;
   onDuplicate: () => void;
 }
@@ -92,6 +94,7 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
           <span className="step-icon"><Icon size={17} /></span>
           <span className="node-number">STEP {String(data.index + 1).padStart(2, "0")}</span>
           {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
+          {data.looped && <span className="badge insufficient" title="這個步驟在一圈互相指向的連線裡，沒有哪一步能排在最前面">循環</span>}
           {a.attack_technique && <span className="badge technique">{a.attack_technique}</span>}
         </div>
         {selected ? (
@@ -131,10 +134,17 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
             <div className="node-target"><ArrowRight size={13} /><span>{data.host ?? "未指定目標主機"}</span></div>
           </>
         )}
+        {/* Quote quality is its own line, separate from the claim status below: a step can be "原文" and still have a quote that did not match. */}
+        {(data.cite.state === "some" || data.cite.state === "none") && (
+          <div className="node-target" title={CITATION[data.cite.state].hint} style={{ color: data.cite.state === "none" ? "var(--err)" : "var(--warn)", paddingTop: 0 }}>
+            <span aria-hidden>{data.cite.state === "none" ? "✗" : "～"}</span>
+            <span>{CITATION[data.cite.state].label}（{data.cite.bad}/{data.cite.total}）</span>
+          </div>
+        )}
         <div className="node-bottom">
           <span><GitBranch size={12} />{data.requires ? `${data.requires} 項前置` : "無前置依賴"}</span>
           {/* What the report supports, or a design problem — never a run result. */}
-          <span className={data.issues ? "issue-text" : ""}>{data.issues ? `${data.issues} 個問題` : EPISTEMIC[a.epistemic_status]?.label ?? a.epistemic_status}{a.source === "user" ? "・已編輯" : ""}</span>
+          <span className={data.issues ? "issue-text" : ""}>{data.issues ? `${data.issues} 個問題` : claimLabel(a.epistemic_status, a.source)}{a.source === "user" ? "・已編輯" : ""}</span>
         </div>
       </article>
       <Handle type="source" position={Position.Right} />
@@ -169,7 +179,7 @@ function ConditionNode({ data, selected }: NodeProps<ConditionNodeData>) {
         <svg className="shape" viewBox="0 0 220 132" aria-hidden><polygon points="110,1 219,66 110,131 1,66" /></svg>
         {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
         <div className="body">
-          <span className="kind">條件</span>
+          <span className="kind">條件{data.looped && <span style={{ color: "var(--err)" }}>・循環</span>}</span>
           <span className="text" title={c.description}>{c.description?.trim() || "（未描述）"}</span>
         </div>
         <span className="branch yes">成立</span>
@@ -192,7 +202,7 @@ function OperatorNode({ data, selected }: NodeProps<OperatorNodeData>) {
       <div className={fnodeClass("op", data)} title={data.op.operator === "AND" ? "AND：所有輸入路徑都要成立" : "OR：任一輸入路徑成立即可"}>
         {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
         <strong>{data.op.operator}</strong>
-        <small>{data.inputs} 入</small>
+        <small>{data.inputs} 入{data.looped && <span style={{ color: "var(--err)" }}>・循環</span>}</small>
       </div>
       <Handle type="source" position={Position.Right} />
     </>
@@ -221,7 +231,7 @@ function AssetNode({ data, selected }: NodeProps<AssetNodeData>) {
 }
 const nodeTypes = { action: ActionNode, condition: ConditionNode, operator: OperatorNode, asset: AssetNode };
 
-interface RelEdgeData { label: string; tone: "route" | "hold" | "temporal" | "flow" | "flow-true" | "flow-false" | "flow-asset"; draw: boolean }
+interface RelEdgeData { label: string; tone: "route" | "hold" | "temporal" | "barrier" | "flow" | "flow-true" | "flow-false" | "flow-asset"; draw: boolean }
 
 /** A relation line. A new dependency is drawn once (pathLength=1 + dashoffset) and is static from then on;
  *  nothing here ever loops, so a line can never read as traffic or as an attack in progress. */
@@ -241,46 +251,87 @@ function RelEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targe
 }
 const edgeTypes = { rel: RelEdge };
 
-function toEdge(r: Relation, selected: boolean, fresh: boolean): Edge<RelEdgeData> {
+/** counted: the relation is part of the chain (see countsInChain). An uncounted one — asserted without a quote that
+ *  matches the source — is drawn dotted and faint. looped: it lies on a cycle, drawn in the barrier colour. */
+function toEdge(r: Relation, selected: boolean, fresh: boolean, counted: boolean, looped: boolean): Edge<RelEdgeData> {
   const dep = r.kind === "dependency";
   const confirmed = dep && (r as RelationX).confirmed === true;
-  const color = dep ? EDGE : TEMPORAL;
+  const color = looped ? BARRIER : dep ? EDGE : TEMPORAL;
+  // Temporal lines normally carry no label: the dashed stroke already says "order only" (see legend).
+  const label = [dep ? "依賴" : null, looped ? "循環" : null, !counted ? "無引文" : dep && !confirmed ? "未確認" : null].filter(Boolean).join(" · ");
   return {
     id: r.id, type: "rel", source: r.from_action, target: r.to_action, selected,
     // Dashed temporal lines cannot use the dash-offset draw, so a new one simply fades in.
     className: fresh ? (dep ? "fresh" : "fresh-fade") : undefined,
-    data: {
-      // Temporal lines carry no label: the dashed stroke already says "order only" (see legend).
-      label: dep ? (confirmed ? "依賴" : "依賴 · 未確認") : "",
-      tone: dep ? (confirmed ? "route" : "hold") : "temporal",
-      draw: fresh && dep,
+    data: { label, tone: looped ? "barrier" : dep && confirmed ? "route" : dep || !counted ? "hold" : "temporal", draw: fresh && dep },
+    style: {
+      stroke: color, strokeWidth: 1.5,
+      strokeDasharray: !counted ? (dep ? "7 6" : "2 7") : dep ? undefined : "5 5",
+      opacity: !counted ? 0.5 : dep && !confirmed ? 0.55 : 1,
     },
-    style: { stroke: color, strokeWidth: 1.5, strokeDasharray: dep ? undefined : "5 5", opacity: dep && !confirmed ? 0.55 : 1 },
     markerEnd: { type: dep ? MarkerType.ArrowClosed : MarkerType.Arrow, color, width: 18, height: 18 },
   };
 }
 
 /** An Attack Flow edge. Brighter and heavier than a dependency, always labelled, so the two kinds of line never read alike. */
-function toFlowEdge(e: FlowEdge, selected: boolean, fresh: boolean): Edge<RelEdgeData> {
-  const color = FLOW_COLOR[e.kind];
+function toFlowEdge(e: FlowEdge, selected: boolean, fresh: boolean, looped: boolean): Edge<RelEdgeData> {
+  const color = looped ? BARRIER : FLOW_COLOR[e.kind];
   const asset = e.kind === "asset";
   return {
     id: e.id, type: "rel", source: e.from, target: e.to, selected,
     sourceHandle: e.kind === "true" || e.kind === "false" ? e.kind : undefined,
     className: fresh ? (asset ? "fresh-fade" : "fresh") : undefined,
-    data: { label: FLOW_LABEL[e.kind], tone: e.kind === "effect" ? "flow" : (`flow-${e.kind}` as RelEdgeData["tone"]), draw: fresh && !asset },
+    data: { label: looped ? `${FLOW_LABEL[e.kind]} · 循環` : FLOW_LABEL[e.kind], tone: looped ? "barrier" : e.kind === "effect" ? "flow" : (`flow-${e.kind}` as RelEdgeData["tone"]), draw: fresh && !asset },
     style: { stroke: color, strokeWidth: asset ? 1.5 : 2, strokeDasharray: asset ? "2 5" : undefined },
     markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
   };
 }
 
+const FIT = { padding: 0.1, maxZoom: 1 };
+/** Fit every node into the part of the canvas that is actually free: below the floating toolbar, above the status
+ *  line. React Flow's own fitView centres on the whole pane, which hides the top row behind the toolbar. */
+function fitAll(inst: ReactFlowInstance, pane: HTMLElement | null) {
+  const ns = inst.getNodes().filter((n) => n.width && n.height);
+  if (!pane || ns.length === 0) { inst.fitView(FIT); return; }
+  const minX = Math.min(...ns.map((n) => n.position.x)), minY = Math.min(...ns.map((n) => n.position.y));
+  const w = Math.max(...ns.map((n) => n.position.x + n.width!)) - minX, h = Math.max(...ns.map((n) => n.position.y + n.height!)) - minY;
+  const inset = { top: 84, right: 32, bottom: 64, left: 32 };
+  const freeW = pane.clientWidth - inset.left - inset.right, freeH = pane.clientHeight - inset.top - inset.bottom;
+  if (freeW <= 0 || freeH <= 0) { inst.fitView(FIT); return; }
+  const zoom = Math.max(0.15, Math.min(1, freeW / w, freeH / h));
+  inst.setViewport({ x: inset.left + (freeW - w * zoom) / 2 - minX * zoom, y: inset.top + (freeH - h * zoom) / 2 - minY * zoom, zoom });
+}
 const COL_W = 310;
+const WRAP = 5;
 /** Left-to-right by dependency/order depth, with alternate columns dropped half a row: neighbours never sit on the
  *  same line, which leaves room for the relation label between them and keeps long chains legible without zooming out. */
 function flowLayout(ids: string[], relations: Relation[], flowEdges: FlowEdge[]) {
-  const links = [...relations.map((r) => ({ from: r.from_action, to: r.to_action })), ...flowEdges.map((e) => ({ from: e.from, to: e.to }))];
-  const pos = layeredLayout(ids, links, COL_W, 208);
+  const all = [...relations.map((r) => ({ from: r.from_action, to: r.to_action })), ...flowEdges.map((e) => ({ from: e.from, to: e.to }))];
+  // Drop the lines that close a cycle before layering; otherwise every node of the cycle is parked in one far column
+  // and the chain cannot be read left to right.
+  const next = new Map<string, number[]>();
+  all.forEach((l, i) => next.set(l.from, [...(next.get(l.from) ?? []), i]));
+  const state = new Map<string, 1 | 2>();
+  const back = new Set<number>();
+  const visit = (n: string) => {
+    state.set(n, 1);
+    for (const i of next.get(n) ?? []) {
+      const m = all[i].to;
+      if (state.get(m) === 1) back.add(i);
+      else if (!state.has(m)) visit(m);
+    }
+    state.set(n, 2);
+  };
+  ids.forEach((n) => { if (!state.has(n)) visit(n); });
+  const pos = layeredLayout(ids, all.filter((_, i) => !back.has(i)), COL_W, 208);
   for (const p of Object.values(pos)) if (Math.round(p.x / COL_W) % 2 === 1) p.y += 66;
+  // A long chain is folded into rows of WRAP columns, so fitting it into the window does not shrink the cards to dots.
+  const tall = Math.max(0, ...Object.values(pos).map((p) => p.y)) + 208 + 90;
+  for (const p of Object.values(pos)) {
+    const col = Math.round(p.x / COL_W);
+    p.x = (col % WRAP) * COL_W;
+    p.y += Math.floor(col / WRAP) * tall;
+  }
   return pos;
 }
 
@@ -325,7 +376,8 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const [consoleOpen, setConsoleOpen] = useState(false);
   const hostRole = useMemo(() => new Map((ir.hosts ?? []).map((h) => [h.id, h.role])), [ir.hosts]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const extras = useMemo(() => ({ conditions, operators, assets, startRefs }), [conditions, operators, assets, startRefs]);
+  const evById = useMemo(() => new Map((ir.evidence ?? []).map((e): [string, Evidence] => [e.id, e])), [ir.evidence]);
+  const extras = useMemo(() => ({ conditions, operators, assets, startRefs, evidence: ir.evidence ?? [] }), [conditions, operators, assets, startRefs, ir.evidence]);
   const flowEdges = useMemo(() => flowEdgesOf(actions, extras), [actions, extras]);
   const findings = useMemo(() => lintFlow(actions, relations, extras), [actions, relations, extras]);
   const typeOf = useMemo(() => {
@@ -334,6 +386,14 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     operators.forEach((o) => m.set(o.id, "operator")); assets.forEach((x) => m.set(x.id, "asset"));
     return m;
   }, [actions, conditions, operators, assets]);
+
+  // Lines that lie on a cycle, and the nodes they pass through — marked on the canvas, reported by the design check.
+  const loops = useMemo(() => {
+    const drawable = flowEdges.filter((e) => typeOf.has(e.from) && typeOf.has(e.to));
+    const found = findLoops([...typeOf.keys()], relations, drawable);
+    return { nodes: new Set(found.flatMap((l) => l.nodes)), edges: new Set(found.flatMap((l) => [...l.relationIds, ...l.flowEdgeIds])) };
+  }, [typeOf, relations, flowEdges]);
+  const inChain = (r: Relation) => countsInChain(r, evById);
 
   // Adopt a new IR from the server (after save / reload) only when there are no local edits to lose.
   const irStamp = `${ir.id}:${ir.ir_version}:${ir.updated_at}`;
@@ -349,7 +409,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
       const prevPos = new Map(prev.map((n) => [n.id, n.position]));
       const auto = flowLayout([...typeOf.keys()], relations, flowEdges);
       const common = (type: FlowNodeType, id: string): NodeCommon => ({
-        fresh: fresh.current.has(id), start: startRefs.includes(id),
+        fresh: fresh.current.has(id), start: startRefs.includes(id), looped: loops.nodes.has(id),
         issues: findings.filter((f) => f.level === "error" && f.target?.type === type && f.target.id === id).length,
         onDelete: () => removeNodes([id]), onCheck: () => setConsoleOpen(true), onToggleStart: () => toggleStart(id),
       });
@@ -362,7 +422,8 @@ function Editor({ ir }: { ir: ScenarioIR }) {
         ...actions.map((a, index) => node("action", a.id, {
           ...common("action", a.id), action: a, index,
           host: a.target_host_ref ? hostRole.get(a.target_host_ref) ?? a.target_host_ref : undefined,
-          requires: relations.filter((r) => r.kind === "dependency" && r.to_action === a.id).length,
+          requires: relations.filter((r) => r.kind === "dependency" && r.to_action === a.id && inChain(r)).length,
+          cite: summarizeCitations(a.evidence_refs, evById),
           hosts: ir.hosts ?? [], onPatch: (p: Partial<Action>) => patchAction(a.id, p),
           onDuplicate: () => duplicateAction(a.id),
         })),
@@ -380,15 +441,17 @@ function Editor({ ir }: { ir: ScenarioIR }) {
         ...built.filter((n) => fresh.current.has(n.id)).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)),
       ];
     });
-  }, [actions, relations, conditions, operators, assets, startRefs, flowEdges, typeOf, sel, hostRole, findings]); // eslint-disable-line
+  }, [actions, relations, conditions, operators, assets, startRefs, flowEdges, typeOf, sel, hostRole, findings, loops, evById]); // eslint-disable-line
   useEffect(() => {
     setEdges([
-      ...relations.map((r) => toEdge(r, sel?.type === "relation" && sel.id === r.id, fresh.current.has(r.id))),
+      // An imported Attack Flow repeats each flow edge as a relation between the same two nodes; the flow edge is the one drawn.
+      ...relations.filter((r) => !flowEdges.some((e) => e.from === r.from_action && e.to === r.to_action))
+        .map((r) => toEdge(r, sel?.type === "relation" && sel.id === r.id, fresh.current.has(r.id), inChain(r), loops.edges.has(r.id))),
       // A ref to a node that no longer exists cannot be drawn; the design check reports it instead.
       ...flowEdges.filter((e) => typeOf.has(e.from) && typeOf.has(e.to))
-        .map((e) => toFlowEdge(e, sel?.type === "flow" && sel.id === e.id, fresh.current.has(e.id))),
+        .map((e) => toFlowEdge(e, sel?.type === "flow" && sel.id === e.id, fresh.current.has(e.id), loops.edges.has(e.id))),
     ]);
-  }, [relations, flowEdges, typeOf, sel]); // eslint-disable-line
+  }, [relations, flowEdges, typeOf, sel, loops, evById]); // eslint-disable-line
 
   const touch = () => { setDirty(true); setSavedMsg(null); };
   const patchAction = (id: string, p: Partial<Action>) => {
@@ -557,6 +620,18 @@ function Editor({ ir }: { ir: ScenarioIR }) {
       if (c.type === "select" && c.selected) { setSel({ type: typeOf.get(c.id) ?? "action", id: c.id }); break; }
     }
   };
+  // Fit the whole graph once, after React Flow has measured the cards: fitting earlier uses guessed sizes and can leave
+  // a long chain half outside the window. Later edits never move the viewport on their own.
+  const rf = useRef<ReactFlowInstance | null>(null);
+  const paneRef = useRef<HTMLDivElement>(null);
+  const fitted = useRef(false);
+  const measured = nodes.length > 0 && nodes.every((n) => n.width && n.height);
+  useEffect(() => {
+    if (!measured || fitted.current || !rf.current) return;
+    fitted.current = true;
+    const inst = rf.current;
+    requestAnimationFrame(() => fitAll(inst, paneRef.current));
+  }, [measured]);
   const persistPositions = () => {
     const pos = Object.fromEntries(nodes.map((n) => [n.id, n.position]));
     stored.current = pos;
@@ -567,6 +642,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     stored.current = auto;
     savePositions(posKey, auto);
     setNodes((ns) => ns.map((n) => ({ ...n, position: auto[n.id] ?? n.position })));
+    requestAnimationFrame(() => { if (rf.current) fitAll(rf.current, paneRef.current); });
   };
 
   const versions = useLoad(() => api.listVersions(ir.id), [ir.id]);
@@ -591,10 +667,13 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const unconfirmed = deps.filter((r) => (r as RelationX).confirmed !== true);
   // Confirming is the analyst's judgement on the link, not a rewrite of it, so the relation keeps its original source.
   const setConfirmed = (which: (r: Relation) => boolean, confirmed: boolean) => {
-    setRelations((xs) => xs.map((r) => (r.kind === "dependency" && which(r) ? ({ ...r, confirmed } as Relation) : r)));
+    setRelations((xs) => xs.map((r) => (which(r) ? ({ ...r, confirmed } as Relation) : r)));
     touch();
   };
-  const confirmAllDeps = () => setConfirmed(() => true, true);
+  const confirmAllDeps = () => setConfirmed((r) => r.kind === "dependency", true);
+  // Order-only relations the model asserted without a quote that matches the source: drawn dotted, left out of the chain.
+  const temporal = relations.filter((r) => r.kind !== "dependency");
+  const uncountedTemporal = temporal.filter((r) => !inChain(r));
 
   const errors = findings.filter((f) => f.level === "error").length;
   const warns = findings.filter((f) => f.level === "warn").length;
@@ -624,7 +703,8 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const versionRows = Array.isArray(versions.data) ? versions.data : [];
 
   const approved = isPlanApproved(ir.environment_plan);
-  const designOk = errors === 0 && unconfirmed.length === 0;
+  // "通過" means nothing is left to deal with: no problems AND nothing pending.
+  const designOk = errors === 0 && warns === 0;
   const hosts = ir.hosts ?? [];
   const svcOf = (hid: string) => (ir.services ?? []).filter((x: any) => x.host_ref === hid);
 
@@ -688,7 +768,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
       </aside>
 
       <div className="canvas-col">
-        <div className="canvas">
+        <div className="canvas" ref={paneRef}>
           <div className="canvas-tools" role="toolbar" aria-label="畫布工具">
             <span className="canvas-label">攻擊鏈</span>
             <span className="badge">{actions.length} 步驟</span>
@@ -727,7 +807,8 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               if (flow.length) removeFlowEdges(flow);
             }}
             deleteKeyCode={["Delete", "Backspace"]}
-            fitView fitViewOptions={{ padding: 0.04, maxZoom: 1, minZoom: 0.72 }} minZoom={0.2}
+            onInit={(inst) => { rf.current = inst; }}
+            fitView fitViewOptions={FIT} minZoom={0.15}
             proOptions={{ hideAttribution: true }}
           >
             <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
@@ -803,7 +884,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <input value={selAction.attack_tactic ?? ""} placeholder="initial-access" onChange={(e) => patchAction(selAction.id, { attack_tactic: e.target.value || undefined })} />
             </label>
             {startToggle(selAction.id)}
-            <div className="muted" style={{ fontSize: 12 }}>證據：{selAction.evidence_refs?.length ? selAction.evidence_refs.join("、") : "無"}</div>
+            <QuoteList refs={selAction.evidence_refs} byId={evById} source={selAction.source} />
             <div><button className="danger quiet" onClick={() => removeNodes([selAction.id])}><Trash2 size={15} />刪除行為（連同相關連線）</button></div>
           </div>
         ) : selRelation ? (
@@ -830,11 +911,21 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <textarea rows={3} value={selRelation.rationale ?? ""} onChange={(e) => patchRelation(selRelation.id, { rationale: e.target.value || undefined })} />
             </label>
             <EpistemicSelect value={selRelation.epistemic_status} onChange={(v) => patchRelation(selRelation.id, { epistemic_status: v })} />
-            {selRelation.kind === "dependency" && (
+            <QuoteList refs={selRelation.evidence_refs} byId={evById} source={selRelation.source} />
+            {!inChain(selRelation) && (
+              <p className="dock-hint">這條關係沒有對得上原文的引文，所以畫成虛線、不計入攻擊鏈。對照原文後，確認它成立就會計入；不成立請刪除。</p>
+            )}
+            {selRelation.kind === "dependency" ? (
               <label className="row" style={{ gap: 8, fontSize: 12 }}>
                 <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
                   onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
                 我確認這個依賴關係成立
+              </label>
+            ) : (selRelation.source !== "user" && selRelation.source !== "stix" && !relationBacked(selRelation, evById)) && (
+              <label className="row" style={{ gap: 8, fontSize: 12 }}>
+                <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
+                  onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
+                我對照過原文，確認這個先後關係成立
               </label>
             )}
             <div><button className="danger quiet" onClick={() => removeRelations([selRelation.id])}><Trash2 size={15} />刪除關係</button></div>
@@ -854,7 +945,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             <RefList title="不成立時接到" kind="false" refs={selCondition.on_false_refs} from={selCondition.id} nameOf={nameOf} onRemove={removeFlowEdges} />
             <EpistemicSelect value={selCondition.epistemic_status} onChange={(v) => patchCondition(selCondition.id, { epistemic_status: v })} />
             {startToggle(selCondition.id)}
-            <div className="muted" style={{ fontSize: 12 }}>證據：{selCondition.evidence_refs?.length ? selCondition.evidence_refs.join("、") : "無"}</div>
+            <QuoteList refs={selCondition.evidence_refs} byId={evById} source={selCondition.source} />
             <div><button className="danger quiet" onClick={() => removeNodes([selCondition.id])}><Trash2 size={15} />刪除條件（連同相關連線）</button></div>
           </div>
         ) : selOperator ? (
@@ -928,8 +1019,13 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <GitBranch size={16} />
               <span>{actions.length} 步驟</span>
               <span>{deps.length} 依賴{deps.length > 0 && `（已確認 ${deps.length - unconfirmed.length}）`}</span>
-              <span>{relations.length - deps.length} 時序</span>
+              <span>{temporal.length - uncountedTemporal.length} 時序</span>
             </div>
+            {uncountedTemporal.length > 0 && (
+              <div className="muted" style={{ fontSize: 12 }} data-testid="uncounted-relations">
+                另有 {uncountedTemporal.length} 條先後關係沒有對得上原文的引文，以虛線顯示、未計入上面的數字。
+              </div>
+            )}
             {(flowNodes > 0 || flowEdges.length > 0 || startRefs.length > 0) && (
               <div className="overview-flow" data-testid="attack-flow-summary">
                 <span><Flag size={12} />{startRefs.length} 起點</span>
@@ -956,7 +1052,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               </li>
               <li className={designOk ? "complete" : ""}>
                 <span>{designOk ? <Check size={12} /> : "2"}</span>設計檢查
-                <small>{errors > 0 ? `${errors} 個問題` : unconfirmed.length > 0 ? `${unconfirmed.length} 條依賴未確認` : "通過"}</small>
+                <small>{errors > 0 ? `${errors} 個問題` : unconfirmed.length > 0 ? `${unconfirmed.length} 條依賴未確認` : warns > 0 ? `${warns} 個待處理` : "通過"}</small>
               </li>
               <li className={approved ? "complete" : designOk && !dirty ? "current" : ""}>
                 <span>{approved ? <Check size={12} /> : "3"}</span>人工核准
@@ -1002,6 +1098,17 @@ function Editor({ ir }: { ir: ScenarioIR }) {
           </div>
         )}
       </aside>
+    </div>
+  );
+}
+
+/** The quotes behind one item: overall verdict, then each quote as its match mark plus opening words (not a bare id). */
+function QuoteList({ refs, byId, source }: { refs?: string[]; byId: Map<string, Evidence>; source?: Action["source"] }) {
+  const ids = Array.isArray(refs) ? refs : [];
+  return (
+    <div className="ref-list">
+      <span className="row" style={{ gap: 8 }}><span className="muted" style={{ fontSize: 12 }}>引文</span><CitationBadge summary={summarizeCitations(ids, byId)} source={source} /></span>
+      {ids.map((id) => <div key={id} className="ref-row"><span className="name"><QuoteSnippet evidence={byId.get(id)} id={id} max={60} /></span></div>)}
     </div>
   );
 }

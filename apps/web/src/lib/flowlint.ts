@@ -1,6 +1,7 @@
 // Design checks for the attack-flow graph. Computed in the browser from what is on the canvas right now.
 // These say whether the DESIGN is coherent; they say nothing about deployment, validation or any attack outcome.
-import type { Action, AttackFlowAsset, AttackFlowCondition, AttackFlowOperator, Relation } from "@contracts";
+import type { Action, AttackFlowAsset, AttackFlowCondition, AttackFlowOperator, Evidence, Relation } from "@contracts";
+import { summarizeCitations } from "../components/ui";
 import type { RelationX } from "./plan";
 
 export type FindingLevel = "error" | "warn" | "info";
@@ -13,6 +14,71 @@ export interface FlowExtras {
   operators?: AttackFlowOperator[];
   assets?: AttackFlowAsset[];
   startRefs?: string[];
+  /** The scenario's quotes, used to tell relations a quote backs from ones the model merely asserted. */
+  evidence?: Evidence[];
+}
+
+/** A relation is backed when at least one of its quotes is found in the source (exact / strong match). */
+export function relationBacked(r: Relation, evById: Map<string, Evidence>): boolean {
+  return summarizeCitations(r.evidence_refs, evById).ok > 0;
+}
+/** Whether a relation counts as part of the attack chain. Relations a model asserted without a matching quote are
+ *  shown but left out by default; the analyst's own lines, lines from an imported file, and confirmed lines count. */
+export function countsInChain(r: Relation, evById: Map<string, Evidence>): boolean {
+  return r.source === "user" || r.source === "stix" || (r as RelationX).confirmed === true || relationBacked(r, evById);
+}
+
+export interface Loop { nodes: string[]; relationIds: string[]; flowEdgeIds: string[] }
+/** Directed cycles over every line on the canvas (relations of both kinds and flow edges), as strongly connected
+ *  components with more than one node. A cycle such as a6 → a8 → a9 → a6 has no possible first step. */
+export function findLoops(nodeIds: string[], relations: Relation[], flowEdges: FlowEdge[]): Loop[] {
+  const ids = new Set(nodeIds);
+  const adj = new Map<string, string[]>(nodeIds.map((n) => [n, []]));
+  const link = (a: string, b: string) => { if (a !== b && ids.has(a) && ids.has(b)) adj.get(a)!.push(b); };
+  relations.forEach((r) => link(r.from_action, r.to_action));
+  flowEdges.forEach((e) => { if (e.kind !== "asset") link(e.from, e.to); });
+  // Tarjan, iterative so a long chain cannot overflow the stack.
+  const index = new Map<string, number>(), low = new Map<string, number>(), comp = new Map<string, number>();
+  const stack: string[] = [], onStack = new Set<string>();
+  let counter = 0, compN = 0;
+  for (const root of nodeIds) {
+    if (index.has(root)) continue;
+    const work: [string, number][] = [[root, 0]];
+    while (work.length) {
+      const frame = work[work.length - 1];
+      const [n, i] = frame;
+      if (i === 0) { index.set(n, counter); low.set(n, counter); counter++; stack.push(n); onStack.add(n); }
+      const next = adj.get(n)!;
+      if (i < next.length) {
+        frame[1] = i + 1;
+        const m = next[i];
+        if (!index.has(m)) work.push([m, 0]);
+        else if (onStack.has(m)) low.set(n, Math.min(low.get(n)!, index.get(m)!));
+      } else {
+        if (low.get(n) === index.get(n)) {
+          let m: string;
+          do { m = stack.pop()!; onStack.delete(m); comp.set(m, compN); } while (m !== n);
+          compN++;
+        }
+        work.pop();
+        const parent = work[work.length - 1]?.[0];
+        if (parent) low.set(parent, Math.min(low.get(parent)!, low.get(n)!));
+      }
+    }
+  }
+  const members = new Map<number, string[]>();
+  nodeIds.forEach((n) => members.set(comp.get(n)!, [...(members.get(comp.get(n)!) ?? []), n]));
+  const loops: Loop[] = [];
+  for (const [c, nodes] of members) {
+    if (nodes.length < 2) continue;
+    const inside = (a: string, b: string) => comp.get(a) === c && comp.get(b) === c;
+    loops.push({
+      nodes,
+      relationIds: relations.filter((r) => inside(r.from_action, r.to_action)).map((r) => r.id),
+      flowEdgeIds: flowEdges.filter((e) => e.kind !== "asset" && inside(e.from, e.to)).map((e) => e.id),
+    });
+  }
+  return loops;
 }
 
 /** effect: action/operator → next node · true/false: a condition's two branches · asset: an action → the asset it touches. */
@@ -36,6 +102,11 @@ export function flowEdgesOf(actions: Action[], x: FlowExtras = {}): FlowEdge[] {
   return out;
 }
 
+// inferred = the report does not say it, it was filled in. insufficient = quotes were given but did not match the
+// source — that is a "go and read the original" case, not "the report is silent".
+const weakText = (name: string, status: string) => (status === "inferred"
+  ? `「${name}」是推論補全的項目，原文沒有明講。`
+  : `「${name}」附的引文沒有對上原文，需要人工對照原文確認。`);
 const short = (s: string, n = 18) => (s.length > n ? `${s.slice(0, n)}…` : s);
 
 export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras = {}): Finding[] {
@@ -61,8 +132,9 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   }
   const seen = new Set<string>();
   for (const r of relations) {
-    if (!byId.has(r.from_action) || !byId.has(r.to_action)) {
-      out.push({ id: `dangling:${r.id}`, level: "error", text: "這條關係連到一個已不存在的行為。", target: { type: "relation", id: r.id } });
+    // An imported Attack Flow may relate an action to a condition or operator, so any node on the canvas is a valid end.
+    if (!typeOf.has(r.from_action) || !typeOf.has(r.to_action)) {
+      out.push({ id: `dangling:${r.id}`, level: "error", text: "這條關係連到一個已不存在的節點。", target: { type: "relation", id: r.id } });
       continue;
     }
     const key = `${r.from_action}>${r.to_action}>${r.kind}`;
@@ -119,9 +191,28 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
     else if (typeOf.get(id) === "asset") out.push({ id: `startasset:${id}`, level: "error", text: `「${label(id)}」是資產節點，不能當流程起點。`, target: target(id) });
   }
 
-  for (const r of deps) {
-    if ((r as RelationX).confirmed !== true) {
-      out.push({ id: `unconfirmed:${r.id}`, level: "warn", text: `依賴「${label(r.from_action)} → ${label(r.to_action)}」尚未確認，拓樸規劃不會為它開通連線。`, target: { type: "relation", id: r.id } });
+  // Loops through any kind of line. Pure dependency cycles are already reported above as errors, edge by edge.
+  for (const loop of findLoops([...typeOf.keys()], relations, live)) {
+    if (loop.relationIds.length > 0 && loop.flowEdgeIds.length === 0 && loop.relationIds.every((id) => inCycle.has(id))) continue;
+    const names = loop.nodes.slice(0, 4).map((n) => `「${short(label(n), 14)}」`).join("、");
+    out.push({
+      id: `loop:${loop.nodes.join(",")}`, level: "warn",
+      text: `${names}${loop.nodes.length > 4 ? ` 等 ${loop.nodes.length} 個節點` : ""}的連線繞成一圈：沒有哪一步能排在最前面。請檢查其中是否有方向畫反或不該有的連線。`,
+      target: loop.relationIds[0] ? { type: "relation", id: loop.relationIds[0] } : target(loop.nodes[0]),
+    });
+  }
+
+  const evById = new Map((x.evidence ?? []).map((e) => [e.id, e]));
+  for (const r of relations) {
+    if (!typeOf.has(r.from_action) || !typeOf.has(r.to_action)) continue;
+    const name = `「${label(r.from_action)} → ${label(r.to_action)}」`;
+    if (r.kind === "dependency" && (r as RelationX).confirmed !== true) {
+      out.push({
+        id: `unconfirmed:${r.id}`, level: "warn", target: { type: "relation", id: r.id },
+        text: `依賴${name}尚未確認，拓樸規劃不會為它開通連線。${countsInChain(r, evById) ? "" : "它也沒有對得上原文的引文。"}`,
+      });
+    } else if (!countsInChain(r, evById)) {
+      out.push({ id: `unbacked:${r.id}`, level: "warn", text: `${name}的先後關係沒有對得上原文的引文，目前以虛線顯示、不計入攻擊鏈。對照原文後可在屬性面板確認或刪除。`, target: { type: "relation", id: r.id } });
     }
   }
   for (const c of conditions) {
@@ -155,12 +246,12 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
 
   for (const a of actions) {
     if (a.epistemic_status === "inferred" || a.epistemic_status === "insufficient") {
-      out.push({ id: `weak:${a.id}`, level: "info", text: `「${label(a.id)}」是${a.epistemic_status === "inferred" ? "推測" : "證據不足"}的項目，原文沒有明講。`, target: { type: "action", id: a.id } });
+      out.push({ id: `weak:${a.id}`, level: "info", text: weakText(label(a.id), a.epistemic_status), target: { type: "action", id: a.id } });
     }
   }
   for (const n of [...conditions, ...operators, ...assets]) {
     if (n.epistemic_status === "inferred" || n.epistemic_status === "insufficient") {
-      out.push({ id: `weak:${n.id}`, level: "info", text: `「${label(n.id)}」是${n.epistemic_status === "inferred" ? "推測" : "證據不足"}的項目，原文沒有明講。`, target: target(n.id) });
+      out.push({ id: `weak:${n.id}`, level: "info", text: weakText(label(n.id), n.epistemic_status), target: target(n.id) });
     }
   }
   const rank = { error: 0, warn: 1, info: 2 };
