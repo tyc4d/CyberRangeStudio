@@ -380,6 +380,28 @@ def _match_component(name: str) -> tuple[dict[str, Any] | None, bool]:
     return next(iter(found.values())) if len(found) == 1 and not extra else (None, False)
 
 
+def _generic_function_component(name: str) -> dict[str, Any] | None:
+    """Catalogue stand-in for a service the source names only by its function.
+
+    "web service" or "database server" names no product, so a clearly labelled substitute
+    for that function can stand in. Any other word in the name ("Confluence web application")
+    means a specific product was named, and it must not be swapped for a generic stand-in.
+    """
+    lowered = name.casefold()
+    for component in load_components():
+        if component.get("id") == "oss-attacker" or component.get("runtime") != "container" or not component.get("default_ports"):
+            continue
+        keywords = sorted((k.casefold() for k in component.get("role_keywords", [])), key=len, reverse=True)
+        if not any(_mentions(lowered, keyword) for keyword in keywords):
+            continue
+        rest = lowered
+        for keyword in keywords:
+            rest = re.sub(rf"(?<![a-z0-9]){re.escape(keyword)}(?![a-z0-9])", " ", rest)
+        if all(word in _GENERIC_AFTER_PRODUCT for word in re.findall(r"[a-z][\w-]*", rest)):
+            return component
+    return None
+
+
 def _display_name(candidate: dict[str, Any], component: dict[str, Any]) -> str:
     """Name a service found by a text mention after the product, not after the matched words.
 
@@ -567,6 +589,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if component is None and existing_user:
             component = component_by_id(existing_user.get("catalogue_component"))
             is_substitute = bool(existing_user.get("is_substitute", False))
+        function_substitute = False
+        if component is None and existing_user and not candidate.get("from_mention"):
+            component = _generic_function_component(name)
+            is_substitute = function_substitute = component is not None
         if component is None:
             # Preserve analysis-stage facts even when they have no catalogue mapping.
             original = next((item for item in original_services
@@ -607,13 +633,22 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 for service in services:
                     if service.get("id") == service_id:
                         service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
-            if is_substitute:
+            if function_substitute:
+                add_missing(
+                    f"role-substitute-{candidate.get('host_ref') or 'unassigned'}-{component['id']}",
+                    f"Exact software and version for {name}" + (f" on host {candidate['host_ref']}" if candidate.get("host_ref") else ""),
+                    f"The source names only the function ({name}), not the product or version that provided it.",
+                    status="substitute_chosen",
+                    resolution=f"Used {component['name']} ({component['id']}) as a function-based substitute. This is not asserted to be the original software or a full recreation.",
+                )
+            elif is_substitute:
                 substitute_info = next((entry for entry in component.get("substitutes_for", [])
                                         if name.casefold() in {n.casefold() for n in entry.get("names", [])}), {})
                 explanation = substitute_info.get("reason") or "This component is a functional substitute and does not fully reproduce the original software."
                 add_missing(f"substitute-{name}", f"exact software fidelity: {name}", explanation,
                             status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-            if not candidate.get("version") and not existing_user.get("version") and not version_already_asked(name, service_id):
+            if (not function_substitute and not candidate.get("version") and not existing_user.get("version")
+                    and not version_already_asked(name, service_id)):
                 add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
                             f"version for {name}",
                             "A software dependency was identified, but its version was not stated in the actions or target context.",

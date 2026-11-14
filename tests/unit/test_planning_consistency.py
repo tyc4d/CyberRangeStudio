@@ -356,6 +356,28 @@ class StatedPortsForGenericServices(unittest.TestCase):
                          {("attacker", "h1", 80), ("h1", "h2", 5432)})
         self.assertEqual([(b["from_host"], b["to_host"], b["port"]) for b in plan["verify_blocked"]], [("attacker", "h2", 5432)])
 
+    def test_function_only_services_get_labelled_substitutes_and_a_deployable_plan(self):
+        from app.iac.generator import inspect_plan
+        planned = plan_dependencies(self.ir())
+        services = {service["id"]: service for service in planned["services"]}
+        self.assertEqual({sid: (s["catalogue_component"], s["is_substitute"], s["source"]) for sid, s in services.items()},
+                         {"s1": ("oss-nginx", True, "llm"), "s2": ("oss-postgres", True, "llm")})
+        notices = [item for item in planned["missing_items"] if item["id"].startswith("planner_dep_role-substitute")]
+        self.assertEqual([item["status"] for item in notices], ["substitute_chosen", "substitute_chosen"])
+        plan = build_environment_plan(planned)
+        self.assertEqual({h["id"]: h.get("image_hint") for h in plan["hosts"]},
+                         {"h1": "oss-nginx", "h2": "oss-postgres", "attacker": "oss-attacker"})
+        _, report = inspect_plan(plan, "scn_t")
+        self.assertEqual(report.get("errors"), [], report.get("errors"))
+
+    def test_a_named_product_is_never_swapped_for_a_generic_stand_in(self):
+        ir = self.ir()
+        ir["services"][0]["name"] = "Confluence web application"
+        planned = plan_dependencies(ir)
+        service = next(s for s in planned["services"] if s["id"] == "s1")
+        self.assertTrue(service.get("no_component"))
+        self.assertNotIn("catalogue_component", service)
+
     def test_unverified_quote_or_two_ports_for_one_host_assign_nothing(self):
         ir = self.ir()
         ir["evidence"][0]["quote_verified"] = False
