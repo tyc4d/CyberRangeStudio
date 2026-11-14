@@ -1,0 +1,28 @@
+## independent libvirt view BEFORE
+   {"domains": [], "networks": ["default"], "volumes": ["tpl-ws2022-eval-core.qcow2", "virtio-win.iso", "windows-server-2022-eval.iso"]}
+## vm_create WITHOUT licence acknowledgement (must refuse)
+   {"ok": false, "state": "preflight_failed", "category": "authorization_or_configuration", "message": "需明確確認已接受 Windows 評估版授權條款"}
+## vm_create with a missing template (must refuse)
+   {"state": "preflight_failed", "category": "image_missing"}
+## vm_create with acknowledgement
+   {"ok": true, "state": "defined", "name": "cr-infra-eng-vm2-win1", "networks": ["cr-infra-eng-vm2-net-lab"], "disk_volume": "cr-infra-eng-vm2-win1.qcow2"}
+## vm_status after create
+   {"scenario_id": "infra-eng-vm2", "vm_id": "win1", "state": "stopped", "name": "cr-infra-eng-vm2-win1", "libvirt_state": "shut off"}
+## vm_boot
+   {"ok": true, "state": "running"}
+## vm_readiness
+   {"ready": true, "state": "running", "guest_ready": true, "probe": "qemu guest agent guest-ping", "seconds": 5}
+## vm_health
+   {"name": "cr-infra-eng-vm2-win1", "hypervisor_state": "running", "healthy": true, "checks": [{"id": "guest_agent_ping", "ok": true, "observed": "answered"}, {"id": "os_identity", "ok": true, "observed": {"pretty-name": "Windows Server 2022 Standard Evaluation", "version": "Microsoft Windows Server 2022", "version-id": "2022", "kernel-version": "10.0", "machine": "x86_64"}}, {"id": "hostname", "ok": true, "observed": "CR-WS2022"}, {"id": "network_interfaces", "ok": true, "observed": [{"name": "Ethernet", "mac": "52:54:00:1f:6e:44", "ips": ["fe80::d142:81a6:7e70:ea24%6"]}, {"name": "Loopback Pseudo-Interface 1", "mac": null, "ips": ["::1", "127.0.0.1"]}]}, {"id": "windows_core_services", "ok": true, "observed": {"Caption": "Microsoft Windows Server 2022 Standard Evaluation", "Version": "10.0.20348", "BuildNumber": "20348", "LastBoot": "2026-11-15T06:43:21.5000000+00:00", "Services": ["Even
+## from inside Windows: TCP to the host's LAN address, the libvirt default bridge and a public address (port 22)
+   {"ok": true, "exit_code": 0, "stdout": "192.168.16.213:22=unreachable; 192.168.122.1:22=unreachable; 8.8.8.8:22=unreachable", "stderr": ""}
+## validator-facing helpers
+   {"vm_status": "running", "_vm_identity": "cr-infra-eng-vm2-win1"}
+## vm_stop
+   {"ok": true, "state": "shut off", "clean": true}
+## vm_destroy (with its network)
+   {"ok": true, "state": "destroyed", "removed_volume": true, "networks": [{"name": "cr-infra-eng-vm2-net-lab", "state": "removed", "ok": true, "error": null}], "remaining": {"domains": [], "networks": [], "volumes": [], "clean": true}}
+## independent libvirt view AFTER
+   {"domains": [], "networks": ["default"], "volumes": ["tpl-ws2022-eval-core.qcow2", "virtio-win.iso", "windows-server-2022-eval.iso"]}
+## audit records
+   [["vm_destroy", "destroyed"], ["vm_stop", "shut off"], ["vm_boot", "running"], ["vm_create", "defined"], ["vm_create", "preflight_failed"], ["vm_create", "preflight_failed"]]

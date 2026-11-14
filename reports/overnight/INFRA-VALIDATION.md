@@ -54,16 +54,16 @@
 
 | # | 嚴重度 | 問題 | 根因 | 處置 |
 |---|---|---|---|---|
-| P1 | 高 | 兩個情境同時部署會撞主機埠（`Bind for 127.0.0.1:42000 failed`）。多個 Worker 同時跑整合測試時基準測試就會失敗（本次基準：54 passed, 1 failed）。 | `inspect_plan` 每個情境都從 42000 起算，寫死在 Compose 檔。 | 待修（§4） |
-| P2 | 高 | **隔離破口**：所有有服務埠的主機共用一個非隔離 `edge` 網路。結果：(a) 計畫上不同網段、應該互不相通的主機，實際可經 edge 互連——實測 `dmz` 的 web 連得到 `internal` 的 db:5432，`segmentation-1 FAIL`；(b)「內部資料庫」拿到一條對外的 default route。 | 為了能 publish 埠，把每個有埠的主機都掛上同一個 `internal: false` 網路。 | 待修（§4） |
-| P3 | 高 | up 失敗後留下容器與網路（主機上已累積多個 `cr-demo-infra-test-*` 的殘留）。 | `do_up` 失敗時沒有清理；整合測試的 `finally` 也只在成功後才 down。 | 待修（§4） |
-| P4 | 中 | 真實元件沒有 healthcheck，`health` 會過早回報 healthy。 | generator 沒用 catalogue 的 `health_check`。 | 待修（§4） |
-| P5 | 中 | 沒有服務相依／啟動順序，也沒有任何「web 真的用 DB」的元件。 | Compiler 不處理 `connections`；catalogue 沒有應用層元件。 | 待修（§4，catalogue 補真實應用） |
-| P6 | 中 | 沒有資源上限。 | 未實作。 | 待修（§4） |
-| P7 | 中 | Catalogue 只有 4 個真實映像；常見的 MySQL／MariaDB／Redis／Tomcat 會被直接判為「無對應元件」。候選事件需要的 Struts2、Log4Shell 練習標的也沒有。 | 未建置。 | 待修（§5） |
+| P1 | 高 | 兩個情境同時部署會撞主機埠（`Bind for 127.0.0.1:42000 failed`）。多個 Worker 同時跑整合測試時基準測試就會失敗（本次基準：54 passed, 1 failed）。 | `inspect_plan` 每個情境都從 42000 起算，寫死在 Compose 檔。 | 已修（§4） |
+| P2 | 高 | **隔離破口**：所有有服務埠的主機共用一個非隔離 `edge` 網路。結果：(a) 計畫上不同網段、應該互不相通的主機，實際可經 edge 互連——實測 `dmz` 的 web 連得到 `internal` 的 db:5432，`segmentation-1 FAIL`；(b)「內部資料庫」拿到一條對外的 default route。 | 為了能 publish 埠，把每個有埠的主機都掛上同一個 `internal: false` 網路。 | 已修（§4） |
+| P3 | 高 | up 失敗後留下容器與網路（主機上已累積多個 `cr-demo-infra-test-*` 的殘留）。 | `do_up` 失敗時沒有清理；整合測試的 `finally` 也只在成功後才 down。 | 已修（§4） |
+| P4 | 中 | 真實元件沒有 healthcheck，`health` 會過早回報 healthy。 | generator 沒用 catalogue 的 `health_check`。 | 已修（§4） |
+| P5 | 中 | 沒有服務相依／啟動順序，也沒有任何「web 真的用 DB」的元件。 | Compiler 不處理 `connections`；catalogue 沒有應用層元件。 | 已修（§4.2、§5） |
+| P6 | 中 | 沒有資源上限。 | 未實作。 | 已修（§4） |
+| P7 | 中 | Catalogue 只有 4 個真實映像；常見的 MySQL／MariaDB／Redis／Tomcat 會被直接判為「無對應元件」。候選事件需要的 Struts2、Log4Shell 練習標的也沒有。 | 未建置。 | 已修（§5） |
 | P8 | 中 | 沒有 stop／reset 操作。 | 未實作。 | 需產品決定是否要（見 §7） |
-| P9 | 高 | VM 後端無法使用（細節見 §3）。 | 多項缺陷。 | §6 |
-| P10 | 低 | generator 的元件設定寫死在程式分支（每加一個映像就要改程式）。 | 設計。 | 隨 P7 改成由 catalogue 資料驅動 |
+| P9 | 高 | VM 後端無法使用（細節見 §3）。 | 多項缺陷。 | 已修並真實驗證（§6） |
+| P10 | 低 | generator 的元件設定寫死在程式分支（每加一個映像就要改程式）。 | 設計。 | 已修：generator 改由 catalogue 資料驅動 |
 
 ## 3. Windows VM 後端現況（修復前，程式閱讀＋主機檢查）
 
@@ -85,7 +85,7 @@
 
 ---
 
-## 4. 修復後的能力矩陣（commit 227a74c 之後）
+## 4. 修復後的能力矩陣（commit 713aa43 之後）
 
 所有項目都以真實 Docker 部署重測。指令：
 `CR_DATA_DIR=$PWD/.data PYTHONPATH=apps/api python tools/infra-validation/lifecycle_probe.py <plan> <out.json>`
@@ -199,3 +199,124 @@
 給模組 8 的資料（只加資料，沒改驗證器）：每個元件有 `version_probe`（指令＋預期字串，皆已實測），
 WordPress 有 `behavior_probe`。目前驗證器的版本／行為檢查寫死只認原本 4 個元件，新元件會顯示
 「沒有適用的無害行為探測」（PARTIAL，不是假 PASS）。
+
+## 6. Windows VM（B4 Phase 1）真實驗證
+
+目標：本機 libvirt/KVM 開一台 Windows Server 2022 Evaluation VM、隔離網路、可靠清理、原生健康檢查。
+全程**沒有使用 sudo**。實作在 `apps/api/app/deploy/vm.py`，實測腳本 `tools/infra-validation/vm_e2e.py`，
+證據在 `evidence/infra-eng/vm/`。
+
+### 6.1 原本的疑點與處理
+
+| 疑點 | 根因 | 處理 |
+|---|---|---|
+| `qemu:///system` 下 QEMU 進不了家目錄 | QEMU 以 `libvirt-qemu` 身分執行，家目錄是 0750 | 改用 libvirt **儲存池**：ISO 與磁碟都透過 libvirtd 上傳／建立（`vol-upload`），不再引用家目錄路徑。池目錄由 libvirtd 建在 `/var/lib/libvirt/images/<pool>`。 |
+| 現有 shell 沒有 libvirt 群組 | 群組在登入後才生效 | 後端偵測到「使用者在群組名單內但行程尚未生效」時，自動改用 `sg libvirt -c` 執行 virsh。 |
+| `vm_preflight` 永遠回 `ok: False` | 程式沒有成功路徑 | 重寫：分別回報工具缺失／無 KVM／連不到 libvirt／範本不存在／未確認授權／ready。 |
+| domain XML 缺 acpi/apic、guest-agent channel | 未實作 | 新 XML：q35、acpi/apic、Hyper-V 加速選項、guest-agent virtio-serial channel。 |
+| 磁碟／網卡用 virtio，Windows 安裝程式沒有驅動 | 設計錯誤 | 改用 Windows 內建就支援的 SATA 磁碟與 e1000e 網卡；只有 guest agent 用的 virtio-serial 需要另裝驅動。 |
+| 接 `default` NAT 網路（不隔離） | 設計錯誤 | 每個情境自建網路：沒有 `<forward>`、沒有 `<ip>`（宿主機側無位址、無 DHCP、無 DNS）。建立後實際檢查 bridge 沒有位址，否則拒絕建立 VM。 |
+| 沒有可開機的 qcow2 | 只有安裝 ISO | 無人值守安裝：自動產生 `autounattend.xml` 媒體（磁碟分割、選版本、接受授權、設定電腦名稱、自動登入一次並安裝 guest agent）。建置期間 VM **沒有網卡**。 |
+| 清理可能刪到別人的 VM | 只用名稱比對字串 | 以 XML 解析 ownership metadata（owner＋scenario＋vmid）；不符就拒絕動作。只刪自己建立的 overlay，不刪範本。 |
+| hypervisor running 被當成 ready | 判定錯誤 | ready／healthy 一律以 guest agent 回應為準。 |
+
+### 6.2 實測過程（含失敗，照實記錄）
+
+| 嘗試 | 結果 | 原因與處置 |
+|---|---|---|
+| 第 1 次 | 安裝第一階段 135 秒完成後 VM 斷電，程式誤以為「安裝完成」 | Windows Setup 階段間的重啟在這裡表現為斷電。**把「斷電」當完成訊號是錯的**。改為：斷電就再開機，直到 guest agent 回應且 guest 內的首次開機紀錄寫出 done 才算完成。證據：`vm-e2e-attempt1-premature-poweroff.log` |
+| 第 2 次 | Windows Server 2022 Standard Evaluation 安裝完成並自動登入（畫面可見 SConfig），但 guest agent 沒裝起來 | 主機上的 `/home/tyc4d/cr-images/virtio-win.iso` 是**下載中斷的殘檔**（89 MB／應為 877 MB）：目錄看得到、檔案內容讀不到（`pnputil: cannot read from the specified device`、`msiexec 1620`）。處置：從 Fedora 官方來源重新下載完整 ISO；並新增檢查——ISO 宣告大小大於實際檔案大小就拒絕匯入。證據：`attempt2-truncated-virtio-media.png`、`vm-e2e-attempt2-truncated-virtio-media.log` |
+| 第 3 次 | **全部通過** | 用完整的 virtio-win 0.1.302 ISO（877,373,440 bytes，sha256 `303f7ae4…949d`，Fedora 官方來源）。 |
+
+### 6.3 最終結果（第 3 次，全部為真實執行）
+
+指令：`CR_VM_POOL=cr-infra-eng PYTHONPATH=apps/api python tools/infra-validation/vm_e2e.py reports/overnight/evidence/infra-eng/vm`
+證據：`vm/vm-e2e.json`（每一步的完整回傳）、`vm/vm-e2e.log`、`vm/*.png`（畫面）、`vm/vm-manager-wrappers.txt`。
+
+| 步驟 | 狀態 | 實際觀察 |
+|---|---|---|
+| 預檢 | PASS | 工具齊全、KVM 可用、libvirt 可連（經 `sg libvirt`）、儲存池就緒 |
+| 無人值守建置範本 | PASS | 從官方評估版 ISO 安裝「Windows Server 2022 Standard Evaluation」（Server Core，build 20348）。完成判定＝guest agent 回應＋guest 內紀錄寫出 done。紀錄顯示：Red Hat 憑證加入、`vioser.inf` 安裝成功、`qemu-ga msi exit: 0`、`service: Running`。主機時鐘量到約 134 秒。 |
+| 隔離網路 | PASS | 網路沒有 forward、沒有 ip；bridge 在宿主機上**沒有任何位址** |
+| 建立 VM（範本的 overlay） | PASS | 2 vCPU／4 GB；只接上述隔離網路 |
+| 開機後立刻問健康 | PASS（預期為不健康） | hypervisor 顯示 running，但健康檢查回 `healthy: false`（guest agent 尚未回應）——**running 不等於 ready** |
+| 等待就緒 | PASS | guest agent 回應後才算 ready |
+| 原生健康檢查 | PASS | 由 Windows 自己回報：`Windows Server 2022 Standard Evaluation`、版本 10.0.20348、主機名稱 `CR-WS2022`、網卡資訊、`EventLog／LanmanServer／Winmgmt = Running` |
+| guest 眼中的網路 | PASS | 網卡只有自動配置位址（169.254.x.x），沒有閘道、default route 數量 0 |
+| guest 連宿主機／外部 | PASS（皆連不到） | 從 Windows 內對宿主機區網位址、libvirt 預設 bridge 位址、一個公網位址的 :22 做 TCP 連線，全部 unreachable（`vm-manager-wrappers.txt`） |
+| 正常關機（停止） | PASS | 經 guest agent 要求關機，等到 `shut off` |
+| 再次開機 | PASS | 同一顆磁碟再開機並就緒 |
+| 重置 | PASS | 先在 VM 內寫入標記檔 → 銷毀 → 由範本重建 → 開機 → 標記檔**已不存在**；健康檢查再次通過 |
+| 銷毀 | PASS | domain 移除、overlay 磁碟刪除、網路移除 |
+| 無殘留 | PASS | 後端清點為空；另用 virsh 獨立核對：domain 0 個、網路只剩系統原有的 `default`、磁碟池只剩範本與兩個 ISO；主機上沒有殘留的 bridge 介面 |
+| 授權確認閘門 | PASS | 未明確確認評估版授權 → 拒絕建立；範本不存在 → 回報 `image_missing` |
+| 稽核紀錄 | PASS | create／boot／stop／destroy 與被拒絕的嘗試都有紀錄 |
+
+另有 26 項離線測試（`apps/api/app/deploy/test_vm.py`）釘住安全性質：網路 XML 不含位址／DHCP／轉送；
+不是本產品建立的 domain 或網路即使同名也不會被刪；只刪 overlay 不刪範本；截斷的 ISO 會被拒絕；
+running 但 agent 沒回應不算健康；沒有對外的 console 連接埠。
+
+### 6.4 BLOCKED／未做到（如實）
+
+| 項目 | 狀態 | 原因 |
+|---|---|---|
+| 從「環境計畫」自動部署 VM（模組 5→6→7 流程） | **未實作** | 目前只能呼叫後端函式開 VM；`inspect_plan` 仍會把含 VM 的計畫判為不可部署（理由文字已更正）。屬 Phase 2，需另行核准。 |
+| VM 與容器互通（混合拓樸） | **BLOCKED** | Docker bridge 與 libvirt bridge 是兩套網路；要接在一起需要主機層級的橋接設定（需 sudo）。 |
+| 驗證器（模組 8）對 VM 的檢查 | **未驗證** | 驗證器裡既有的 VM 分支呼叫的函式名稱我保留相容，但沒有實際跑過（計畫層級無法部署 VM）。 |
+| 評估版啟用 | **BLOCKED（設計使然）** | 微軟要求評估版在 10 天內上網啟用，否則會定時關機；隔離網路不會上網。目前做法＝VM 用完即丟、範本可在 2–3 分鐘內重建。長期需產品決定（§7 D6）。 |
+| 多台 VM 各自的電腦名稱／SID | **未做** | 範本沒有 sysprep，複製出來的 VM 名稱都是 `CR-WS2022`。Phase 1 只要求單台。 |
+| IIS、AD 等角色 | **未做** | 不在 Phase 1 範圍。 |
+| 桌面版（Desktop Experience） | NOT_TESTED | 只測了 Server Core（映像索引 1）。 |
+| `default` NAT 網路 | 未使用 | 系統原有、未啟用；本產品不使用也不修改它。 |
+
+主機層級狀態變更（都不需 sudo，都可還原）：
+- 新增 libvirt 儲存池 `cr-infra-eng`（`/var/lib/libvirt/images/cr-infra-eng`），內含 Windows ISO（5.0 GB）、
+  virtio-win ISO（0.9 GB）、範本磁碟 `tpl-ws2022-eval-core.qcow2`（約 6 GB）。**我刻意保留**，讓 Lead／reviewer
+  可以直接重跑 `vm_e2e.py --skip-build`。不需要時：`virsh vol-delete` 各檔後 `virsh pool-destroy`／`pool-undefine`。
+- 正式環境的預設池名是 `cyberrange`（環境變數 `CR_VM_POOL` 可改）。
+
+安全注意：建置範本用的 Administrator 密碼是每次隨機產生、只存在暫時的安裝媒體中（建完即刪），
+程式不回傳也不記錄；之後一律經 guest agent 存取。Windows 會把應答檔複本留在 guest 內，
+因此**範本不應被當成有保密性的系統**——它只該存在於隔離網路。
+
+## 7. 未解問題與需產品負責人決定
+
+### 7.1 需產品負責人決定
+
+| # | 事項 | 背景 | 我的建議 |
+|---|---|---|---|
+| D1 | **宿主機防火牆規則（需 sudo）** | 不用 sudo 已能讓所有實驗容器連不到宿主機。剩下唯一連得到宿主機的是轉發容器 `cr-gateway`（我們自己的程式）。要連它也擋，需要一條主機規則：`sudo iptables -I INPUT -i br-+ -m conntrack --ctstate NEW -j DROP`（擋所有 Docker bridge 進到宿主機的新連線；不影響 published port，因為那走 FORWARD）。副作用：主機上**其他專案**的容器也會連不到宿主機服務。 | 目前不必做；若日後 `cr-gateway` 要承載不受信任的內容再做。 |
+| D2 | **是否要「停止（保留狀態）」與「重置」操作** | 現在只有 up／down。資料都在 tmpfs，down＋up 等同重置，但沒有單一按鈕與紀錄。VM 端已有 stop／destroy＋重建。 | 建議加「重置」（一個動作：down＋up，並記錄）；「停止保留資料」對教學價值低，可不做。 |
+| D3 | **Log4Shell 是否自動建議 Solr 替代** | catalogue 已有可用的 Solr 8.11.0 標的，但分析階段遇到 Log4j／CVE-2021-44228 仍標「無對應元件」。改成自動建議替代會改變模組 4 的輸出。 | 建議做，但必須標為「教學替代，非事件軟體」。由 Lead 指派給模組 4 負責人。 |
+| D4 | **漏洞映像以 root、可寫根檔案系統執行** | 兩個 vulhub 映像不改就只能這樣跑。已用隔離網路＋不開埠＋drop 全部 capabilities＋資源上限圍住。 | 可接受；若要更嚴，需自行重建映像（成本高）。 |
+| D5 | **已對外開埠的範圍變了** | 修復後只有「接在非 internal 計畫網路」的主機才開埠（以前是所有有埠的主機）；內部資料庫不再能從宿主機／區網直接連。 | 這是把行為改成符合計畫語意（internal＝不對外）；若講師需要直接連內部 DB，請明確決定要不要開例外。 |
+| D6 | **Windows 評估版授權與到期** | 見 §6：評估版 180 天，且微軟要求 10 天內上網啟用；隔離網路的 VM 不會上網。 | 需決定：接受定期重建範本，或提供可啟用的授權。 |
+| D7 | **VM 納入情境部署** | 見 §6：目前只能用後端函式開單台 VM，尚未接到「環境計畫 → 部署」流程，也無法與容器網路互通。 | 屬 B4 Phase 2 範圍，需另行核准。 |
+
+### 7.2 已知限制（不需決定，如實列出）
+
+- 同一網段內沒有逐埠管制；`access_rules` 只是宣告，沒有被強制執行。
+- UDP 服務／連線不支援（計畫檢查會直接拒絕）。
+- `expose=lan` 沒有實測（NOT_TESTED）。
+- 一個主機只能對應一個 catalogue 元件（計畫 schema 只有一個 `image_hint`）。
+- 驗證器（模組 8）對新元件還沒有版本／行為檢查，會顯示 PARTIAL；資料已放進 catalogue 供其使用。
+- 大型映像第一次部署要下載（Solr 342 MB、Struts 246 MB、MySQL 234 MB），之後走本機快取。
+- Docker 預設位址池有限：每個情境的每個計畫網路各占一個 bridge 網段，同時部署很多情境可能耗盡
+  （本次最多同時 3 個情境、約 10 個網路，未遇到）。
+- 主機上有其他 Worker 測試留下的 `cr-demo-infra-test-*` 容器與網路（舊版程式失敗時留下的，不是我這個分支產生的）。
+  我沒有動它們；合併本分支後不會再產生新的殘留。
+- 我想刪除三個多餘的證據檔（`evidence/infra-eng/lifecycle-*.stderr`，內容為空或只有警告），
+  被權限檢查擋下，未刪除，留給 Lead／負責人處理。
+
+### 7.3 共用檔案的修改
+
+**沒有修改任何共用檔**（`packages/contracts/**`、`store.py`、`main.py`、驗證器）。
+`apps/api/app/deploy/test_local_compose_integration.py` 我只在檔尾新增測試，沒有動 poc-eng 改過的那行斷言。
+
+對外介面變更（其他模組需知道）：
+- `manager.container_ipv4(sid, target, from_service=None)`：不再回傳 edge 位址；新增 `container_ipv4_addresses()`。
+- `POST /api/deploy/{id}/up` 回應新增 `published_ports`、`attempts`、`isolation_preflight`、`host_isolation`、
+  失敗時的 `diagnostics`／`cleanup`；`containers[]` 新增 `ports`、`exit_code`。
+- 有開埠的情境會多一個容器 `cr-gateway`（出現在 status／health 的 containers 清單中）。
+- `report.json`／`POST /api/iac/{id}/generate`：`host_port_mappings[].host_port` 只是預設值；
+  每個 component 新增 `exposure`、`published`、`healthcheck`、`limits`、`vulnerable`、`cves`、`wired_to`。
