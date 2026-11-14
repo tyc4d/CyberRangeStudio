@@ -24,7 +24,7 @@ def _supported(item: dict[str, Any]) -> bool:
 def _supported_value(item: dict[str, Any], fields: Iterable[str]) -> bool:
     """A value counts as known when its record is supported or the user supplied that field."""
     field_sources = item.get("field_sources") if isinstance(item.get("field_sources"), dict) else {}
-    return any(_present(item.get(field)) and (_supported(item) or field_sources.get(field) == "user")
+    return any(_present(item.get(field)) and (_supported(item) or field_sources.get(field) in {"user", "source_quote"})
                for field in fields)
 
 
@@ -277,6 +277,8 @@ def _host_questions(ir: dict[str, Any], subjects: list[tuple[dict[str, Any], str
                     all_text: str, items: list[dict[str, Any]]) -> None:
     actions_by_id = {str(action.get("id")): action for action in actions if action.get("id")}
     for host, source_kind in subjects:
+        if re.search(r"\b(?:attacker|red[\s-]team|operator)\b", str(host.get("role") or ""), re.IGNORECASE):
+            continue  # the lab's own attacker machine is scaffolding, not a target to reconstruct
         host_id = str(host.get("id") or "target")
         label = _name(host, host_id)
         refs = _host_evidence_refs(host, actions) if source_kind == "hosts" else list(host.get("evidence_refs") or [])
@@ -1003,7 +1005,7 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
 _RESOLUTION_KEYS = ("status", "resolution", "resolution_source", "applied_to", "write_back")
 
 
-def refresh_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
+def refresh_missing_items(ir: dict[str, Any], *, add_new: bool = True) -> list[dict[str, Any]]:
     """Recompute the analysis-stage questions for the current IR, keeping the user's decisions.
 
     - A question that still applies keeps its status and resolution.
@@ -1011,10 +1013,14 @@ def refresh_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
       longer raises it (for example because the answer was written into the host record).
     - An open question the IR no longer raises is dropped.
     - Items owned by other modules (ids not starting with ``missing-``) are left untouched.
+    - ``add_new=False`` only re-evaluates questions already in the IR (used by planning,
+      which must settle what it answered without starting a new questionnaire).
     """
     previous = [item for item in (ir.get("missing_items") or []) if isinstance(item, dict)]
     by_id = {str(item.get("id")): item for item in previous}
     fresh = calculate_missing_items(ir)
+    if not add_new:
+        fresh = [item for item in fresh if item["id"] in by_id]
     fresh_ids = {item["id"] for item in fresh}
     for item in fresh:
         old = by_id.get(item["id"])

@@ -1,0 +1,112 @@
+{
+ "hosts": [
+  {
+   "id": "web",
+   "role": "NGINX web server",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "nginx",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "stated",
+   "image_hint": "oss-nginx",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "db",
+   "role": "PostgreSQL database server",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "PostgreSQL",
+     "port": 5432,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "oss-postgres",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "web",
+   "reason": "Scenario action(s) a1 require access to nginx.",
+   "port": 80,
+   "protocol": "tcp"
+  },
+  {
+   "from_host": "web",
+   "to_host": "db",
+   "reason": "Action a3 is stated to run from web against db.",
+   "port": 5432,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "web",
+   "action": "allow",
+   "port": 80
+  },
+  {
+   "from": "web",
+   "to": "db",
+   "action": "allow",
+   "port": 5432
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "db",
+   "port": 5432,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service db:5432 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one."
+ ]
+}

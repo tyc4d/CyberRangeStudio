@@ -316,6 +316,26 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                     add_connection(attacker_id, hid, port_proto,
                                    f"Scenario action(s) {action_label} require access to {service.get('name')}.")
 
+    # An action the source (or the user) states is launched from one host against another
+    # needs that path. This is a stated fact about one step, not an inference from ordering.
+    for action in ir.get("actions", []):
+        origin, destination = action.get("source_host_ref"), action.get("target_host_ref")
+        if not origin or not destination:
+            continue
+        if action.get("epistemic_status") != "supported" and action.get("source") != "user":
+            continue
+        source_id, dest_id = _host_id(origin), _host_id(destination)
+        if source_id == dest_id or source_id not in hosts_by_id or dest_id not in hosts_by_id:
+            continue
+        stated_services = _required_services(assigned.get(dest_id, []), [action])
+        ports = [entry for entry in (_port_for(service) for service in stated_services) if entry]
+        if not ports:
+            notes.append(f"Action {action.get('id')} is stated to run from {source_id} against {dest_id}, but no "
+                         "destination service port is identified; the path stays denied.")
+        for port_proto in ports:
+            add_connection(source_id, dest_id, port_proto,
+                           f"Action {action.get('id')} is stated to run from {source_id} against {dest_id}.")
+
     # Only explicit, confirmed dependency edges may add host-to-host paths. Temporal order alone never opens a connection.
     for relation in ir.get("relations", []):
         if relation.get("kind") != "dependency" or relation.get("confirmed", False) is not True:

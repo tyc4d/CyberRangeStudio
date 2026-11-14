@@ -402,6 +402,8 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             "the words that mention that machine. The ids 'unknown', 'unspecified' and 'none' are reserved and must not be used as "
             "host ids; an action whose machine the report does not identify gets target_host_ref 'unknown' and no host entry. "
             "target_host_ref is the machine on which the action took effect (for lateral movement, the destination). "
+            "When the report states which machine an action was launched from (for example 'from the web server, connected to "
+            "the database'), also set source_host_ref to that host's id; omit it otherwise. "
             "SERVICES: list each product, application, protocol service or security product on a target machine that an action "
             "exploits, logs in to, disables or otherwise depends on, with name in the report's words, host_ref, and version, "
             "port (integer), protocol, and cve (array) only when the report states them, plus evidence. A vulnerability nickname or "
@@ -644,6 +646,10 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         if model_host_id:
             host_id_map.setdefault(model_host_id, host["id"])
     known_host_ids = {host["id"] for host in hosts}
+    for action, raw in zip(actions, actions_raw):
+        origin = host_id_map.get(_string(raw.get("source_host_ref")) or "", _string(raw.get("source_host_ref")))
+        if origin in known_host_ids:
+            action["source_host_ref"] = origin
     for action in actions:
         ref = host_id_map.get(action["target_host_ref"], action["target_host_ref"])
         # A reference to no host entry carries no information; keep the explicit marker.
