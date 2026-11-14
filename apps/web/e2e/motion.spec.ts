@@ -2,17 +2,31 @@
 //  - a dependency line is drawn ONCE when it is created and is static afterwards (no looping "traffic" on any line);
 //  - loading an existing scenario animates no lines at all;
 //  - with prefers-reduced-motion the draw and the entrances are gone, while loading indicators still exist.
-// Runs after full-flow.spec.ts (alphabetical order) and reuses the newest scenario; it never saves, so it changes nothing.
+// Seeds its own small scenario (no LLM), so it does not depend on what other specs or runs left behind; it never saves.
 import { expect, test, type Page } from "@playwright/test";
+import { relayGets } from "./net-relay";
+import { seedScenario } from "./seed";
 
-async function openFlow(page: Page): Promise<boolean> {
-  const list = await (await page.request.get("/api/scenario/list")).json();
-  if (!Array.isArray(list) || list.length === 0) return false;
-  const newest = [...list].sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))[0];
-  await page.addInitScript((id) => localStorage.setItem("cr.scenario", id), newest.id);
+test.beforeEach(async ({ context, baseURL }) => { await relayGets(context, baseURL); });
+
+/** Open the flow editor on a scenario this test seeds itself (4 actions, 3 relations), and wait until the graph has
+ *  finished rendering: every relation has its line, and the fit-to-view that follows the first layout has settled.
+ *  Counting or dragging before that point raced the render (the old helper picked whichever scenario was newest). */
+async function openFlow(page: Page): Promise<void> {
+  const id = seedScenario();
+  const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
+  await page.addInitScript((sid) => localStorage.setItem("cr.scenario", sid), id);
   await page.goto("/flow");
-  await expect(page.locator(".react-flow__node").first()).toBeVisible();
-  return true;
+  await expect(page.locator(".react-flow__node")).toHaveCount(ir.actions.length);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(ir.relations.length);
+  await settled(page);
+}
+
+/** The canvas is still: the first node's box is the same on two consecutive reads 150 ms apart. */
+async function settled(page: Page) {
+  const box = async () => JSON.stringify(await page.locator(".react-flow__node").first().boundingBox());
+  let last = "";
+  await expect.poll(async () => { const prev = last; last = await box(); await page.waitForTimeout(150); return prev !== "" && prev === (await box()); }, { timeout: 10_000 }).toBe(true);
 }
 
 /** Infinite animations currently running on graph lines or nodes. Spinners / progress bars are not graph elements. */
@@ -25,8 +39,12 @@ const loopingGraphAnimations = (page: Page) => page.evaluate(() =>
 /** Add a new action from the toolbar and pull a dependency line from an existing node onto it. */
 async function connectNewDependency(page: Page) {
   await page.getByRole("toolbar", { name: "畫布工具" }).getByRole("button", { name: "依賴", exact: true }).click();
-  await page.getByRole("button", { name: "＋ 新增行為" }).click();
+  const nodesBefore = await page.locator(".react-flow__node").count();
   const before = await page.locator(".react-flow__edge").count();
+  await page.getByRole("button", { name: "＋ 新增行為" }).click();
+  // The new node exists and the canvas has stopped moving before the handles are measured for the drag.
+  await expect(page.locator(".react-flow__node")).toHaveCount(nodesBefore + 1);
+  await settled(page);
   const source = page.locator(".react-flow__node").first().locator(".react-flow__handle.source");
   const target = page.locator(".react-flow__node").last().locator(".react-flow__handle.target");
   const s = (await source.boundingBox())!;
@@ -40,7 +58,7 @@ async function connectNewDependency(page: Page) {
 }
 
 test("依賴連線只在建立時畫一次，之後靜止；既有連線載入時不動", async ({ page }) => {
-  test.skip(!(await openFlow(page)), "後端沒有任何情境可用（先跑 full-flow）");
+  await openFlow(page);
 
   // Existing lines: nothing marked fresh, nothing looping.
   await expect(page.locator(".react-flow__edge.fresh, .react-flow__edge.fresh-fade")).toHaveCount(0);
@@ -66,7 +84,7 @@ test.describe("prefers-reduced-motion", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("關閉位移與描繪動畫，但狀態仍可辨識", async ({ page }) => {
-    test.skip(!(await openFlow(page)), "後端沒有任何情境可用（先跑 full-flow）");
+    await openFlow(page);
     // Page entrance is a short fade, not a slide.
     // The workspace entrance is opacity-only by design; the context dock is the part that would otherwise slide.
     expect(await page.locator(".context-dock .swap").evaluate((el) => getComputedStyle(el).animationName)).toBe("fade-only");

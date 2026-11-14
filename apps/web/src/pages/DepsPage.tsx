@@ -3,6 +3,7 @@ import type { ScenarioIR, ServiceItem } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { BasisTag, basisOf, type Versioned } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { ApiNotice, Busy, DataView, Empty, EpistemicBadge, Metric, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 
@@ -13,14 +14,22 @@ function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
         <div style={{ fontWeight: 600 }}>{s.name}</div>
         <div className="mono muted">{s.id}</div>
       </td>
-      <td className="mono">{s.version ?? <span className="muted">未知</span>}</td>
+      <td>
+        <span className="mono">{s.version ?? <span className="muted">原文未寫</span>}</span>
+        {basisOf(s as Versioned) && (
+          <div style={{ marginTop: 4, fontSize: 12 }}>
+            <BasisTag of={s as Versioned} />
+            {(s as Versioned).deployed_version && <span className="muted">　部署 <span className="mono">{(s as Versioned).deployed_version}</span></span>}
+          </div>
+        )}
+      </td>
       <td>{hosts?.length ? hosts.join("、") : <span className="muted">—</span>}</td>
       <td>
         {s.catalogue_component ? <span className="mono">{s.catalogue_component}</span>
           : (s as { no_component?: boolean }).no_component
             ? <span className="status-FAIL" title="元件目錄裡沒有這個軟體，也不會自動用別的軟體頂替。要部署需在「缺失補充」明確選擇替代方案。">目錄無此元件</span>
             : <span className="muted">未對應</span>}
-        {s.is_substitute && <span className="tag sub" style={{ marginLeft: 6 }} title="環境中使用的不是報告裡的原始軟體">替代品</span>}
+        {s.is_substitute && <span className="tag sub" style={{ marginLeft: 6 }} title="環境中使用的不是報告裡的原始軟體">{(s as { substitute_basis?: string }).substitute_basis === "user_chosen" ? "替代品・你選的" : "替代品"}</span>}
       </td>
       <td>{s.cve?.length ? s.cve.map((c) => <div key={c} className="mono">{c}</div>) : <span className="muted">—</span>}</td>
       <td><EpistemicBadge status={s.epistemic_status} /></td>

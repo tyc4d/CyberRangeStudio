@@ -17,6 +17,38 @@ function stateClass(s: string): string {
   return "status-PARTIAL";
 }
 
+/** The forwarder the platform adds to every deployment that publishes a port. It is not one of the scenario's hosts. */
+const GATEWAY = "cr-gateway";
+
+function ContainerTable({ containers, roleOf }: { containers: any[]; roleOf: (svc: string) => string | undefined }) {
+  const lab = containers.filter((c) => c?.service !== GATEWAY);
+  const gw = containers.filter((c) => c?.service === GATEWAY);
+  return (
+    <div data-testid="container-table">
+      <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>情境主機 {lab.length} 個{gw.length > 0 && <>、平台元件 {gw.length} 個</>}</div>
+      <table className="tbl">
+        <thead><tr><th>類別</th><th>名稱</th><th>容器</th><th>狀態</th><th>健康檢查</th></tr></thead>
+        <tbody>
+          {[...lab, ...gw].map((c, i) => {
+            const isGw = c?.service === GATEWAY;
+            return (
+              <tr key={c?.id ?? i} data-kind={isGw ? "platform" : "lab"}>
+                <td>{isGw
+                  ? <span className="tag" title="平台為了把指定的埠轉送進隔離網路而加上的轉發容器。它不是情境中的主機，不在拓樸裡，也不是攻擊目標。">平台元件</span>
+                  : <span className="tag">情境主機</span>}</td>
+                <td>{isGw ? "轉發閘道（不屬於情境）" : roleOf(String(c?.service)) ?? String(c?.service ?? "—")}<div className="mono muted" style={{ fontSize: 11 }}>{String(c?.service ?? "")}</div></td>
+                <td className="mono muted" style={{ fontSize: 12, overflowWrap: "anywhere" }}>{String(c?.name ?? "—")}{c?.id && <div>{String(c.id).slice(0, 12)}</div>}</td>
+                <td><span className={stateClass(String(c?.state ?? ""))}>{String(c?.state ?? "—")}</span>{c?.status && <div className="muted" style={{ fontSize: 11 }}>{String(c.status)}</div>}</td>
+                <td className="muted">{c?.health ? String(c.health) : "未設定"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** A failed up/down returns the whole command result (stdout, stderr, audit record, live state), with the same stderr several times over.
  *  Show the cause once, keep the rest folded, so the current status below stays in view. Other errors use the generic notice. */
 function CommandFailure({ error, what }: { error: ApiError | null; what: string }) {
@@ -102,6 +134,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const ACTION: Record<string, string> = { up: "啟動", down: "關閉" };
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
   const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details), output: recordOutput(r.details) }));
+  // Host name for a compose service id, from the approved plan. The gateway is not in the plan: it is platform plumbing.
+  const planHosts: any[] = (ir.environment_plan as any)?.hosts ?? [];
+  const roleOf = (svc: string): string | undefined => planHosts.find((h) => h.id === svc)?.role;
+  // Ports of the running deployment: the newest successful "up" in the audit trail (the up response carries the same list).
+  const lastUp = rawRecords.find((r) => r.action === "up");
+  const published: any[] | null = lastUp && lastUp.state === "running" && Array.isArray(lastUp.details?.published_ports) ? lastUp.details.published_ports : null;
+  const boundPorts: string[] = (Array.isArray(containers) ? containers : []).flatMap((c: any) =>
+    (Array.isArray(c?.ports) ? c.ports : []).map((p: any) => `${p.host_ip ?? ""}:${p.host_port}`));
   const liveContainers = Array.isArray(containers) ? containers.length : 0;
   // Nothing was ever generated and nothing is running: a down would only fail and add a failed record.
   const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? "沒有已生成的部署設定，也沒有容器在執行，無需關閉" : undefined;
@@ -160,7 +200,42 @@ function Body({ ir }: { ir: ScenarioIR }) {
               {containers !== undefined && (
                 <div>
                   <h3 style={{ marginBottom: 8 }}>容器</h3>
-                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>目前沒有容器在執行。</span> : <DataView data={containers} />}
+                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>目前沒有容器在執行。</span>
+                    : Array.isArray(containers) ? <ContainerTable containers={containers} roleOf={roleOf} />
+                    : <DataView data={containers} />}
+                </div>
+              )}
+              {state === "running" && (
+                <div data-testid="published-ports">
+                  <h3 style={{ marginBottom: 8 }}>對外開放的埠</h3>
+                  {published === null ? (
+                    <span className="muted" style={{ fontSize: 13 }}>
+                      找不到這次啟動的埠紀錄（可能不是從這個頁面啟動的）。
+                      {boundPorts.length > 0
+                        ? <>容器目前實際綁定的主機埠：<span className="mono">{boundPorts.join("、")}</span>（由平台元件 <span className="mono">{GATEWAY}</span> 接收後轉送，轉送目標請看 IaC）。</>
+                        : "目前沒有容器綁定主機埠。"}
+                    </span>
+                  )
+                    : published.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>這次部署沒有在主機上開放任何埠；情境主機只在隔離的實驗網路內互通。</span> : (
+                    <>
+                      <table className="tbl">
+                        <thead><tr><th>在這台主機上連線到</th><th>轉送到</th><th>經由</th></tr></thead>
+                        <tbody>
+                          {published.map((p, i) => (
+                            <tr key={i}>
+                              <td className="mono">{p.host_ip ?? "127.0.0.1"}:{p.host_port ?? "?"}</td>
+                              <td>情境主機 {roleOf(String(p.host_id)) ?? p.host_id} 的 <span className="mono">{p.container_port}</span> 埠</td>
+                              <td><span className="tag">平台元件</span> <span className="mono">{GATEWAY}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+                        埠號是這次啟動時由平台指派的，每次啟動可能不同。{published.some((p) => p.host_ip && p.host_ip !== "127.0.0.1") ? "綁定位址不是 127.0.0.1，區網內其他機器也連得到。" : "只綁定 127.0.0.1，只有這台主機本身連得到。"}
+                        情境主機不直接綁定主機埠，也連不到這台主機。
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               {rest && Object.keys(rest).length > 0 && <DataView data={rest} />}

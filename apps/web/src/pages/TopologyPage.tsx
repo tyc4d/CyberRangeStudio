@@ -1,3 +1,4 @@
+import { BasisTag, SUBSTITUTE_BASIS, type Versioned } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -23,7 +24,7 @@ function NetworkNode({ data }: NodeProps<{ net: EnvNetwork }>) {
   );
 }
 /** Plan-host fields the backend writes that the shared TS type may not list yet. */
-type HostX = EnvHost & { exposure_basis?: string; deployable?: boolean };
+type HostX = EnvHost & { exposure_basis?: string; deployable?: boolean; substitute_for?: string; substitute_basis?: string };
 
 function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
   const h = data.host;
@@ -36,7 +37,17 @@ function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
       <div className="mono muted" style={{ marginBottom: 4 }}>{h.id}</div>
       {h.image_hint && <div className="mono muted" style={{ marginBottom: 4, overflowWrap: "anywhere" }}>{h.image_hint}</div>}
       <div className="meta">
-        {h.services?.map((s, i) => <span key={i} className="tag" title={s.protocol ?? "tcp"}>{s.name}:{s.port}</span>)}
+        {h.services?.map((s, i) => {
+          const sx = s as { stated_port?: number; port_basis?: string };
+          const moved = sx.port_basis === "substitute_default" && typeof sx.stated_port === "number";
+          return <span key={i} className={`tag ${moved ? "sub" : ""}`} title={moved ? `替代品不支援原文的 ${sx.stated_port} 埠，改用它自己的 ${s.port}` : s.protocol ?? "tcp"}>{s.name}:{s.port}{moved && `（原文 ${sx.stated_port}）`}</span>;
+        })}
+        {(h as HostX).substitute_for && (
+          <span className="tag sub" data-testid="host-substitute" title={`${SUBSTITUTE_BASIS[(h as HostX).substitute_basis ?? ""]?.explain ?? ""} 被代替的是：${(h as HostX).substitute_for}`}>
+            替代品・代替 {(h as HostX).substitute_for}
+          </span>
+        )}
+        {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
         {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title="原文沒有寫這台主機的網路位置；規劃把它推定為對外的入侵入口，核准前請確認">推定入口・待確認</span>}
         {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title="元件目錄無法部署這台主機需要的軟體，也沒有用其他軟體頂替">不可部署</span>}
       </div>

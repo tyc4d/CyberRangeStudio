@@ -38,13 +38,25 @@ export function toApiError(e: unknown): ApiError {
   return new ApiError(0, e instanceof Error ? e.message : String(e), "", "", "error");
 }
 
+const RETRY_DELAY_MS = 400;
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const method = init?.method ?? "GET";
   let r: Response;
+  const send = () => fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
   try {
-    r = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
+    r = await send();
   } catch (e) {
-    throw new ApiError(0, e instanceof Error ? e.message : "無法連線", method, path, "offline");
+    // The connection failed before any answer arrived. Browsers cancel in-flight requests when the machine's
+    // network interfaces change, which a deploy or teardown on the same host causes (Docker networks come and go).
+    // A read is safe to send again once; anything that changes state (POST/PUT/DELETE) is never re-sent.
+    if (method !== "GET") throw new ApiError(0, e instanceof Error ? e.message : "無法連線", method, path, "offline");
+    await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+    try {
+      r = await send();
+    } catch (e2) {
+      throw new ApiError(0, e2 instanceof Error ? e2.message : "無法連線", method, path, "offline");
+    }
   }
   const text = await r.text();
   let body: any = undefined;
