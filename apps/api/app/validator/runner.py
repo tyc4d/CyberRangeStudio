@@ -169,21 +169,40 @@ def _version_matches(expected: str, observed: str, component_id: str) -> bool:
     return expected in observed
 
 
-def _explicit_action_refs(connection: dict[str, Any], actions: list[dict[str, Any]]) -> list[str]:
-    """Actions whose id is explicitly named in a connection's reason.
+def _host_ref_eq(target_ref: Any, host_id: Any) -> bool:
+    """Loose equality between an action's target_host_ref and a connection host id."""
+    if not isinstance(target_ref, str) or not isinstance(host_id, str):
+        return False
+    a, b = target_ref.strip(), host_id.strip()
+    if not a or not b:
+        return False
+    # Tolerate a "host:"/prefix form while still requiring the id to match.
+    return a == b or a.split(":")[-1] == b or b.split(":")[-1] == a
 
-    Used to decide whether an action has a *proven prerequisite*. Sharing a target
-    host is NOT enough: several actions can target the same host while only one maps
-    to a given declared path, so host-only matching over-reports actions as PARTIAL
-    (R3). Only an explicit id reference counts here.
+
+def _explicit_action_refs(connection: dict[str, Any], actions: list[dict[str, Any]]) -> list[str]:
+    """Actions for which this connection is a *proven connectivity prerequisite*.
+
+    Two conditions, BOTH required (R3 / reviewer P1):
+      1. the action id is explicitly named in the connection's reason, AND
+      2. the action's target_host_ref resolves to the connection's to_host.
+
+    Condition 1 alone is not enough: the real planner writes one reason that lists
+    EVERY action needing a given host (e.g. "Scenario action(s) a1, a2, a3, a4
+    require access to ..."), so id-in-reason matches all of them. Condition 2 ties
+    a path to the action that actually targets that host. An action with no
+    target_host_ref cannot be attributed to any single path, so it matches no
+    connection here and is reported NOT_TESTED rather than an over-claimed PARTIAL.
     """
     reason = str(connection.get("reason", ""))
+    to_host = connection.get("to_host")
     refs: list[str] = []
     for action in actions:
         action_id = action.get("id")
         if not isinstance(action_id, str):
             continue
-        if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(action_id)}(?![A-Za-z0-9_-])", reason):
+        id_named = re.search(rf"(?<![A-Za-z0-9_-]){re.escape(action_id)}(?![A-Za-z0-9_-])", reason)
+        if id_named and _host_ref_eq(action.get("target_host_ref"), to_host):
             refs.append(action_id)
     return refs
 

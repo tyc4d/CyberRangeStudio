@@ -195,13 +195,31 @@ class ValidationRunnerTests(unittest.TestCase):
         self.assertEqual(report["levels"]["env_build"], "FAIL")
 
     def test_action_without_explicit_mapping_is_not_tested_not_partial(self):
-        # R3: an action is PARTIAL only when a connection names its id. Sharing a
-        # target host is not enough. a2 targets db but no connection names a2.
+        # R3: an action is PARTIAL only when a connection names its id AND the action
+        # targets that connection's host. a1 targets web and is named -> PARTIAL.
+        # a2 targets db, not named on the attacker->web path -> NOT_TESTED.
         report = self._run_report()
         action_checks = {c["action_ref"]: c for c in report["checks"]
                          if c["id"].startswith("action-")}
         self.assertEqual(action_checks["a1"]["status"], "PARTIAL")
         self.assertEqual(action_checks["a2"]["status"], "NOT_TESTED")
+
+    def test_real_planner_reason_with_targetless_actions_is_not_tested(self):
+        # Reviewer P1: the real planner writes ONE reason listing every action id for
+        # a host, and these scenario actions have no target_host_ref. id-in-reason
+        # alone would mark all four PARTIAL; requiring a target match makes them all
+        # NOT_TESTED, which is honest -- only the attacker->web TCP path was proven.
+        connection = {"from_host": "attacker", "to_host": "web", "port": 8080, "protocol": "tcp",
+                      "reason": "Scenario action(s) a1, a2, a3, a4 require access to web server (substitute)."}
+        actions = [{"id": f"a{i}", "name": f"step {i}", "target_host_ref": None} for i in range(1, 5)]
+        self.assertEqual(runner._explicit_action_refs(connection, actions), [])
+
+    def test_explicit_mapping_requires_matching_target_host(self):
+        # When an action both is named and targets the connection's host, it maps.
+        connection = {"from_host": "attacker", "to_host": "web", "port": 80, "protocol": "tcp",
+                      "reason": "Scenario action(s) a1, a2 require access to web."}
+        actions = [{"id": "a1", "target_host_ref": "web"}, {"id": "a2", "target_host_ref": "db"}]
+        self.assertEqual(runner._explicit_action_refs(connection, actions), ["a1"])
 
     def test_name_resolution_failure_is_not_counted_as_blocked(self):
         # A DNS/gaierror failure proves nothing about the network path: must be NOT_TESTED, never PASS.

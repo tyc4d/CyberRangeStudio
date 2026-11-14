@@ -1,0 +1,60 @@
+# Isolated behavior-acceptance lab for the Log4Shell JNDI/LDAP callback (B2).
+#
+# Honesty / safety properties, enforced here rather than assumed:
+#  - `labnet` is `internal: true`: NO route to the host or the internet. The
+#    attacker action and the callback can only ever reach in-lab containers.
+#  - The attacker action is emitted from the `attacker` container only.
+#  - The target is only the in-lab `victim` container.
+#  - The callback lands on the in-lab `listener` (a harmless recorder), never
+#    on any real/off-lab host.
+#  - Every service runs the already-pinned project base image; nothing new is
+#    pulled. Containers are non-root, read-only, no new privileges.
+#
+# This proves the *callback behavior* can be validated safely. It does NOT
+# reproduce real Log4j RCE (see expected.md: B1 is a teaching substitute).
+
+services:
+  listener:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "/app/listener.py"]
+    environment:
+      LISTENER_PORT: "1389"
+      CALLBACK_LOG: "/evidence/callbacks.jsonl"
+    volumes:
+      - ./app:/app:ro
+      - ./.evidence:/evidence:rw
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [labnet]
+
+  victim:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "/app/victim.py"]
+    environment:
+      VICTIM_PORT: "8080"
+      ALLOWED_CALLBACK_HOST: "listener"
+    volumes:
+      - ./app:/app:ro
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [labnet]
+    depends_on: [listener]
+
+  attacker:
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command: ["python", "-c", "import time; print('attacker-idle', flush=True); time.sleep(3600)"]
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=8m"]
+    networks: [labnet]
+    depends_on: [victim]
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true
