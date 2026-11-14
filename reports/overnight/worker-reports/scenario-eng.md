@@ -82,7 +82,7 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 全部是規則層級的根因修正，沒有針對任何案例的字串或 id 做特判。每項都有單元／整合測試；測試中的 LLM 一律是
 `tests/fixtures/recorded/` 的錄製回應或手寫輸入，不呼叫真 API。
 
-### 批次 1 — 模組 1 分析（commit `4f…` 起，見 `git log agent/scenario-eng`）
+### 批次 1 — 模組 1 分析（各批 commit 見 `git log agent/scenario-eng`）
 
 | 修復 | 對應 | 作法 | 檔案 | 測試 |
 |---|---|---|---|---|
@@ -146,18 +146,36 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 |---|---|
 | AA22-320A（cti-research） | 主機拆成 4 台（Horizon、VDI-KMS、DC、多台主機群）；15 條關係中 10 條附有陳述連結的原句、5 條如實標推論／不足；原文的 technique／tactic 保留 |
 | Equifax（cti-research） | 8 個攻擊者行為對應 B1–B8；防守方行為 8 項被排除；3 月→5 月標為先後而非相依（符合「separate incident」陷阱）；沒有憑空產生 CVE／ATT&CK；Struts 不再被當成 httpd。**未達成**：三組資料庫仍併成一筆主機群 |
-| 負向（資訊不足） | 沒有 CVE／產品／工具名稱；應變措施 7 項被排除。此批跑完後才加上「不確定語氣」標記與「無目標軟體」blocker，**尚未用真 LLM 重跑確認** |
+| 負向（資訊不足） | 沒有 CVE／產品／工具名稱／ATT&CK；應變措施 7 項被排除；5 個行為全部標 `source_certainty=hedged`；模組 4 產生 blocker「沒有任何目標軟體」，`fidelity=not_reproducible`（已用真 LLM 重跑確認） |
 | qa-admin lifecycle | attacker→web:80、web→db:5432、attacker→db 必須阻擋；版本 1.31.8／16.16 帶到 |
-| demo-intrusion.md（最後一次重跑） | web→db:5432 開通、attacker→db 阻擋。**未修好**：`web service` 沒有連接埠，attacker→victim-web:80 仍沒開通 |
+| demo-intrusion.md（內建示範） | attacker→victim-web:80、victim-web→db:5432 開通，attacker→db:5432 必須阻擋；`h1.service_refs=[s1]`、`h2.service_refs=[s2]`。根因修正：原文寫在主機名稱旁的連接埠（已驗證引句）會補進該主機唯一缺埠的服務；沒有 catalogue 元件的服務仍掛回主機 |
 
 ## 4. 測試
 
-`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **105 passed**（開工時 54 passed, 1 failed）。
+`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **126 passed**（開工時 54 passed, 1 failed）。
+
+### apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker）
+
+合併 main 與 agent/frontend-eng 後，在自己的埠（API 8101、Web 8102）與資料目錄 `.data/e2e` 執行：
+
+```sh
+cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-project/.venv \
+  CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_DATA_DIR=<worktree>/.data/e2e \
+  CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_NEW_USD=4 npx playwright test e2e/full-flow.spec.ts
+```
+
+實際結果：**1 passed, 1 failed**。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log.json`。
+
+- 第一個測試（上傳→分析→補件→流程→依賴→拓樸→IaC→核准）：**通過**。拓樸顯示 2 條開通、1 條必須阻擋。
+- 第二個測試（部署→驗證→報告→清理）：部署 3 個容器成功、驗證完成（`env_build=PASS, behavior_repro=PASS, full_chain=PARTIAL`），
+  **在「report」步驟失敗**：測試找標題「擬真度（fidelity）」，但目前 `ReportPage.tsx` 的標題是「擬真度」。這是前端頁面與 e2e 斷言不一致，
+  不在我的檔案範圍，沒有改。因為這一步失敗，介面上的清理沒跑完，測試以 API 安全網清理（HTTP 200），事後確認沒有殘留容器或程序。
+- 第一次跑時 IaC 預覽失敗：示範情資的服務只有功能名稱（web service／database service），沒有可部署的替身。已修：
+  只以功能命名的服務對應到明確標示的替代元件（`is_substitute=true`＋`substitute_chosen` 說明）；有產品名的服務不會被換成通用替身。
 
 ## 5. 未完成／未解
 
-- **demo-intrusion.md 回歸（Lead 最後交辦）沒修完**：行為文字寫了 `victim-web over TCP/80`，但服務名稱是通用的「web service」，沒有 catalogue 別名可命中，連接埠沒被讀進服務 → 攻擊機到 web 的路徑沒開。apps/web 的 full-flow e2e **沒有跑**。
-- Reviewer P1–P3 已修並有測試；修完後 **尚未送回 reviewer 複審**。
+- 與 main（含 infra-eng@5059c10）合併後，catalogue 已有 Struts／Tomcat 真元件；別名測試改為驗證不變量「絕不比對成 Apache httpd、只能經由該元件自己的別名命中、catalogue 沒有的產品維持未對應」，沒有放寬。
 - `missing.py` 舊的固定產品清單（Horizon／Log4j／WordPress…）仍在，只是多了通用路徑，沒有移除。
 - STIX 的 `extract_stix_candidates` 仍未接進流程（M12）；一個行為多個 technique（L1）未處理。
 - Schema JSON 未改，新欄位只寫在 `types.ts` 與 contracts README。
