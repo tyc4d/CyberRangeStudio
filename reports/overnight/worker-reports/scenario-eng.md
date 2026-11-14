@@ -154,6 +154,25 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 
 `PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **124 passed**（開工時 54 passed, 1 failed）。
 
+### apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker）
+
+合併 main 與 agent/frontend-eng 後，在自己的埠（API 8101、Web 8102）與資料目錄 `.data/e2e` 執行：
+
+```sh
+cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-project/.venv \
+  CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_DATA_DIR=<worktree>/.data/e2e \
+  CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_NEW_USD=4 npx playwright test e2e/full-flow.spec.ts
+```
+
+實際結果：**1 passed, 1 failed**。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log.json`。
+
+- 第一個測試（上傳→分析→補件→流程→依賴→拓樸→IaC→核准）：**通過**。拓樸顯示 2 條開通、1 條必須阻擋。
+- 第二個測試（部署→驗證→報告→清理）：部署 3 個容器成功、驗證完成（`env_build=PASS, behavior_repro=PASS, full_chain=PARTIAL`），
+  **在「report」步驟失敗**：測試找標題「擬真度（fidelity）」，但目前 `ReportPage.tsx` 的標題是「擬真度」。這是前端頁面與 e2e 斷言不一致，
+  不在我的檔案範圍，沒有改。因為這一步失敗，介面上的清理沒跑完，測試以 API 安全網清理（HTTP 200），事後確認沒有殘留容器或程序。
+- 第一次跑時 IaC 預覽失敗：示範情資的服務只有功能名稱（web service／database service），沒有可部署的替身。已修：
+  只以功能命名的服務對應到明確標示的替代元件（`is_substitute=true`＋`substitute_chosen` 說明）；有產品名的服務不會被換成通用替身。
+
 ## 5. 未完成／未解
 
 - 與 main（含 infra-eng@5059c10）合併後，catalogue 已有 Struts／Tomcat 真元件；別名測試改為驗證不變量「絕不比對成 Apache httpd、只能經由該元件自己的別名命中、catalogue 沒有的產品維持未對應」，沒有放寬。
