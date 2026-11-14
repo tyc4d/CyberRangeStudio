@@ -33,8 +33,15 @@
 4. **A/B/C 正式方法比較**:仍未做(本輪刻意延後)。
 5. LAN 模式的對外連線尚未在「真的從另一台電腦」驗證過(需你的實機);指令範例在 README。
 
+## QA 獨立審查與修正
+
+Codex QA 獨立審查(只讀)抓到問題,已修的重點:
+- **分段驗證誤判(High)**:DNS 解析失敗被當成「已封鎖」而給 PASS。改成**用目的容器 IP 直接探測**,`gaierror` 標為 UNRESOLVED/NOT_TESTED(絕不 PASS);連不到(Network unreachable)才算封鎖。並修正 `verify_blocked` 只斷言**不同網段**的路徑(同網段容器 Docker 不做 port 級隔離,本就互通)。證據:`attacker→db:5432` 分段 PASS 是真的打不到。
+- **前端報告過時宣稱 full_chain=PASS(High)**:那是整合前(demo-api 替身)的舊結果。已對整合後後端重跑,更正為 PARTIAL,並在 Playwright 加上「full_chain 不得為 PASS」斷言(以後假 PASS 會讓測試紅)。
+- 仍待補強(Medium,已知):驗證報告可再附上執行中容器的實際 image digest/原始 probe artifact,讓第三方能完全獨立核對(目前靠摘要 observed 字串 + 容器內版本輸出)。
+
 ## 測試
 
-- 後端:`PYTHONPATH=apps/api python -m pytest apps/api tests -q` → **39 passed**。
+- 後端:`PYTHONPATH=apps/api python -m pytest apps/api tests -q` → **41 passed**(含分段 DNS/無 IP 兩個回歸測試)。
 - 前端:Playwright 全流程 + 動態契約測試通過。
 - OpenAI 用量:gpt-4.1-mini,十餘次呼叫,估計遠低於 $1(即時查 `GET /api/budget`)。
