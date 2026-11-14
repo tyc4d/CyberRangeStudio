@@ -74,6 +74,12 @@ async function step(name: string, body: () => Promise<string | void>) {
   });
 }
 
+/** Plan hosts the backend deploys with a stand-in for the software the report names. */
+async function substituteHosts(): Promise<any[]> {
+  const ir = await (await page.request.get(`/api/scenario/${log.scenario_id}`)).json();
+  return (ir.environment_plan?.hosts ?? []).filter((h: any) => h.substitute_for);
+}
+
 const nextStep = (label: string) => page.getByRole("button", { name: `下一步：${label}` });
 const heading = (title: string) => page.getByRole("heading", { level: 1, name: title, exact: true });
 const errorNotices = () => page.locator(".notice.err");
@@ -190,7 +196,10 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
     await expect(page.getByTestId("blocked-paths")).toBeVisible();
     const blocked = await page.getByTestId("blocked-paths").locator(".path").count();
     await expect(errorNotices()).toHaveCount(0);
-    return `${opened} connections to open, ${blocked} must-stay-blocked paths shown`;
+    // Whatever the backend marked as a stand-in is labelled as one on the canvas (count taken from the stored plan).
+    const subs = await substituteHosts();
+    await expect(page.getByTestId("host-substitute")).toHaveCount(subs.length);
+    return `${opened} connections to open, ${blocked} must-stay-blocked paths shown, ${subs.length} substitute hosts labelled`;
   });
 
   await step("iac-preview", async () => {
@@ -200,6 +209,9 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
     await expect(page.locator("pre.code")).toContainText("services:", { timeout: 60_000 });
     await expect(page.getByRole("heading", { name: "可部署報告" })).toBeVisible();
     await expect(errorNotices()).toHaveCount(0);
+    const subs = await substituteHosts();
+    await expect(page.getByTestId("substitute-card")).toHaveCount(subs.length ? 1 : 0);
+    for (const h of subs) await expect(page.getByTestId("substitute-card")).toContainText(String(h.substitute_for));
   });
 
   await step("deploy-blocked-before-approval", async () => {
@@ -247,6 +259,12 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     // Health is polled by the page; wait until every container reports healthy.
     await expect(page.getByTestId("health-state")).toHaveText("healthy", { timeout: 120_000 });
     await expect(page.getByTestId("deploy-records").locator("tbody tr").first()).toContainText("啟動");
+    // The forwarder is shown as a platform component, never as a scenario host; ports shown are the ones Docker bound.
+    const live = await (await page.request.get(`/api/deploy/${log.scenario_id}/status`)).json();
+    const gateways = live.containers.filter((c: any) => c.service === "cr-gateway").length;
+    await expect(page.getByTestId("container-table").locator('tr[data-kind="platform"]')).toHaveCount(gateways);
+    await expect(page.getByTestId("container-table").locator('tr[data-kind="lab"]')).toHaveCount(live.containers.length - gateways);
+    for (const p of live.containers.flatMap((c: any) => c.ports ?? [])) await expect(page.getByTestId("published-ports")).toContainText(`:${p.host_port}`);
     const names = execFileSync("docker", ["ps", "--filter", `name=cr-demo-${log.scenario_id}`, "--format", "{{.Names}}"]).toString().trim().split("\n").filter(Boolean);
     expect(names.length, "containers really exist in Docker").toBeGreaterThan(0);
     return `containers: ${names.join(", ")}`;
@@ -264,6 +282,8 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     const resp = await page.request.get(`/api/validate/${log.scenario_id}/report`);
     const report = await resp.json();
     log.validation_levels = report.levels;
+    const subs = await substituteHosts();
+    await expect(page.getByTestId("substitute-card")).toHaveCount(subs.length ? 1 : 0);
     // What the page shows must be what the backend reported, level by level.
     const label: Record<string, string> = { PASS: "通過", FAIL: "失敗", PARTIAL: "部分", NOT_TESTED: "未測" };
     const pills = page.locator(".pill");

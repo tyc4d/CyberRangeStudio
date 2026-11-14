@@ -43,7 +43,7 @@ export default defineConfig({
       url: WEB_URL,
       // Own dependency cache: node_modules may be a symlink shared with other checkouts' dev servers, and a server
       // started from a different root re-bundles into the shared cache.
-      env: { CR_API_URL: API_URL, CR_VITE_CACHE_DIR: process.env.CR_VITE_CACHE_DIR ?? ".vite-cache" },
+      env: { CR_API_URL: API_URL, CR_VITE_CACHE_DIR: process.env.CR_VITE_CACHE_DIR ?? ".vite-cache", CR_VITE_NO_HMR: "1" },
       reuseExistingServer: true,
       timeout: 60_000,
     },

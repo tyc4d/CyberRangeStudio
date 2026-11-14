@@ -28,6 +28,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
+    ...(process.env.CR_VITE_NO_HMR ? { hmr: false } : {}),
     proxy: { "/api": { target: process.env.CR_API_URL ?? "http://0.0.0.0:8077", changeOrigin: true } },
   },
   preview: { host: "0.0.0.0" },

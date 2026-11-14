@@ -1,16 +1,15 @@
 // Regression tests for QA round 1 findings, in a real browser against the real API.
 // No LLM: the scenario is seeded from a stored analysis result (see seed-scenario.py); nothing is mocked.
 import { execFileSync } from "node:child_process";
-import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { relayGets } from "./net-relay";
+import { seedScenario } from "./seed";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../../..");
 const EVIDENCE = path.join(ROOT, "reports/overnight/evidence/frontend-eng");
-const PYTHON = path.join(process.env.CR_VENV ?? path.join(ROOT, ".venv"), "bin", "python");
 
 // Diagnostics for every test: what the browser itself reported. Attached to the report when a test fails, so an
 // intermittent failure (e.g. a page that never mounts) can be explained from evidence instead of a rerun.
@@ -34,11 +33,7 @@ test.afterEach(async ({ page }, info) => {
   await info.attach("browser-diagnostics", { body: [`app-shell mounted: ${mounted}`, `body html length: ${body}`, ...lines].join("\n"), contentType: "text/plain" });
 });
 
-function seed(): string {
-  const id = `scn_e2e${crypto.randomBytes(4).toString("hex")}`;
-  execFileSync(PYTHON, [path.join(HERE, "seed-scenario.py"), id], { stdio: "pipe", timeout: 30_000 });
-  return id;
-}
+const seed = seedScenario;
 
 /** Evidence screenshot after the page's entry animation has settled. */
 async function shot(page: Page, opts: { path: string; fullPage?: boolean }) {

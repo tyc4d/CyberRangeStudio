@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { CheckStatus, ScenarioIR, ValidationCheck, ValidationReport } from "@contracts";
-import { VersionBasisCard } from "../components/VersionBasis";
+import { SubstituteCard, VersionBasisCard } from "../components/VersionBasis";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
@@ -202,6 +202,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
           )}
 
           <VersionBasisCard ir={ir} context="report" />
+          <SubstituteCard ir={ir} context="report" />
 
           {LEVELS.map((l, i) => (
             <div key={l.key} className="card flush">
