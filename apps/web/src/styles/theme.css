@@ -92,6 +92,23 @@ input, textarea, select {
 input[type="checkbox"] { min-height: 0; width: auto; accent-color: var(--accent); }
 input::placeholder, textarea::placeholder { color: #5d6e7d; }
 textarea { resize: vertical; line-height: 1.6; }
+/* One dropdown look everywhere: drop the OS arrow and draw our own chevron, so no native widget clashes with the
+   studio controls. A bare <select> gets the chevron as a background (neutral grey, legible on light or dark);
+   the .select wrapper below replaces it with a lucide icon that can tint on focus. */
+select {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238394a4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
+}
+select::-ms-expand { display: none; }
+.select { position: relative; display: block; width: 100%; }
+.select > select { background-image: none; padding-right: 30px; }
+.select > .select-chevron { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; color: var(--text-dim); transition: color var(--quick); }
+.select:hover > select:not(:disabled) { border-color: var(--control); }
+.select:hover > select:not(:disabled) + .select-chevron { color: var(--text); }
+.select > select:focus-visible + .select-chevron { color: var(--accent); }
+.select > select:disabled + .select-chevron { opacity: .45; }
 :is(button, input, textarea, select, summary, a, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 label.field { display: block; font-size: 12px; color: var(--text-dim); }
 label.field > span { display: block; margin-bottom: 5px; }
@@ -198,11 +215,12 @@ table.tbl tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 .metric .v { font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.3; margin-top: 2px; }
 .metric .k { font-size: 11px; font-weight: 600; color: var(--text-dim); }
 .metric .v.na { color: var(--text-dim); font-weight: 400; }
-/* segmented choice, styled as their tabs: accent text + accent underline */
-.seg { display: inline-flex; border-bottom: 1px solid var(--border); gap: 4px; }
-.seg button { min-height: 32px; border: 0; border-radius: 0; background: transparent; color: var(--text-dim); padding: 6px 10px; }
-.seg button:hover:not(:disabled) { background: transparent; color: var(--text); }
-.seg button.on { color: var(--accent); box-shadow: inset 0 -1px var(--accent); }
+/* segmented choice: a bordered box in the same family as the dropdowns — square, 1px control border, accent-soft when on */
+.seg { display: inline-flex; border: 1px solid var(--control); border-radius: var(--radius); overflow: hidden; }
+.seg button { min-height: 36px; border: 0; border-radius: 0; background: var(--bg); color: var(--text-dim); padding: 7px 14px; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover:not(:disabled) { background: var(--bg-hover); color: var(--text); }
+.seg button.on { color: var(--accent); background: var(--accent-dim); }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 12px; margin: 0; }
 .kv dt { color: var(--text-dim); } .kv dd { margin: 0; overflow-wrap: anywhere; }
 blockquote.quote { margin: 0; padding: 6px 10px; border-left: 1px solid var(--control); color: var(--text); font-size: 12px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; transition: border-color var(--quick); }
@@ -229,7 +247,7 @@ blockquote.quote { margin: 0; padding: 6px 10px; border-left: 1px solid var(--co
 .canvas-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .canvas { flex: 1; min-width: 0; min-height: 0; background: var(--canvas); overflow: hidden; position: relative; }
 .card-canvas { height: 520px; border: 1px solid var(--border); border-radius: var(--radius); }
-.canvas-tools { position: absolute; z-index: 5; top: 18px; left: 18px; display: flex; align-items: center; gap: 3px; padding: 5px; background: var(--bg-elev); border-radius: var(--radius); border: 1px solid var(--border); }
+.canvas-tools { position: absolute; z-index: 5; top: 18px; left: 18px; max-width: calc(100% - 36px); display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 5px; background: var(--bg-elev); border-radius: var(--radius); border: 1px solid var(--border); }
 /* The one frosted surface: this bar floats over a canvas that pans under it, and must stay legible without hiding it. */
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .canvas-tools { background: #101923b8; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
@@ -279,6 +297,46 @@ blockquote.quote { margin: 0; padding: 6px 10px; border-left: 1px solid var(--co
 .gnode .node-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--border); background: var(--bg-elev2); padding: 9px 16px; color: var(--text-dim); font-size: 11px; }
 .gnode .node-bottom > span { display: flex; align-items: center; gap: 5px; }
 .gnode .issue-text { color: var(--err); }
+/* Selected card: the title and target line give way to inline fields. Width is unchanged; the card simply grows down. */
+.gnode.editing .node-edit { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 14px; }
+.gnode .node-name-input { font-size: 16px; font-weight: 700; letter-spacing: -.02em; min-height: 36px; padding: 6px 9px; background: var(--bg); }
+.gnode .node-field { display: block; font-size: 11px; color: var(--text-dim); font-weight: 600; min-width: 0; }
+.gnode .node-field > span { display: block; margin-bottom: 4px; }
+.gnode .node-field > input { min-height: 32px; padding: 6px 9px; font-size: 12px; font-weight: 500; color: var(--text); }
+.gnode .node-field .select > select { min-height: 32px; padding: 6px 28px 6px 9px; font-size: 12px; font-weight: 500; color: var(--text); }
+.gnode .node-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* Flow start marker: an explicit Attack Flow start_ref, set by the author — not "this step has no prerequisites". */
+.start-flag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700; letter-spacing: .04em; background: var(--accent-dim); color: var(--accent); border-radius: var(--radius); white-space: nowrap; }
+.gnode.start { box-shadow: inset 3px 0 0 var(--accent); }
+/* Attack Flow nodes: condition (diamond), operator (AND/OR chip), asset (cylinder). Shapes are inline SVG so the
+   outline follows --node-border like the step card does; only the inner element ever animates. */
+.fnode { --node-border: var(--control); --node-fill: var(--bg-elev); position: relative; color: var(--text); transition: color var(--quick); }
+.fnode .shape { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.fnode .shape :is(polygon, path, ellipse) { fill: var(--node-fill); stroke: var(--node-border); stroke-width: 1; vector-effect: non-scaling-stroke; transition: stroke var(--quick), fill var(--quick); }
+.react-flow__node.selected .fnode { --node-border: var(--accent); --node-fill: var(--bg-elev2); }
+.fnode.has-issues { --node-border: var(--err); }
+.fnode.fresh { animation: node-in var(--standard) var(--ease) both; }
+.fnode .body { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 100%; text-align: center; }
+.fnode .kind { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text-dim); }
+.fnode .text { font-size: 12px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fnode > .start-flag { position: absolute; z-index: 1; top: -9px; left: 50%; transform: translateX(-50%); }
+.fnode.cond { width: 220px; height: 132px; }
+.fnode.cond .body { padding: 0 52px; }
+.fnode.cond .branch { position: absolute; font-size: 10px; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.fnode.cond .branch.yes { right: -4px; top: calc(50% - 22px); transform: translateX(100%); color: var(--ok); }
+.fnode.cond .branch.no { left: calc(50% + 10px); bottom: -16px; color: var(--warn); }
+.react-flow__handle.branch-true { border-color: var(--ok); }
+.react-flow__handle.branch-false { border-color: var(--warn); }
+.fnode.op { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 78px; height: 56px; border: 1px solid var(--node-border); border-radius: 28px; background: var(--node-fill); transition: border-color var(--quick), background-color var(--quick); }
+.fnode.op strong { font-family: var(--mono); font-size: 14px; letter-spacing: .04em; line-height: 1.2; color: var(--route); }
+.fnode.op small { font-size: 10px; color: var(--text-dim); line-height: 1.2; }
+.fnode.op.start { border-color: var(--accent); }
+.fnode.asset { width: 180px; height: 92px; }
+.fnode.asset .body { padding: 26px 16px 8px; }
+.node-toolbar .op-swap { width: auto; padding: 0 8px; font-family: var(--mono); font-size: 11px; }
+.node-toolbar button[aria-pressed="true"] { color: var(--accent); background: var(--accent-dim); }
+.react-flow.connecting .react-flow__node .fnode { --node-border: var(--route); }
+.react-flow.connecting .react-flow__node:hover .fnode { --node-border: var(--accent); --node-fill: var(--bg-elev2); }
 /* topology hosts / networks reuse the frame with a simpler body */
 .gnode.host { width: 230px; padding: 12px 14px; font-size: 12px; }
 .gnode .t { font-size: 14px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 2px; overflow-wrap: anywhere; }
@@ -304,11 +362,25 @@ blockquote.quote { margin: 0; padding: 6px 10px; border-left: 1px solid var(--co
 .react-flow__edge.fresh-fade .react-flow__edge-path { animation: fade-in var(--standard) var(--ease) both; }
 .edge-label { position: absolute; pointer-events: none; background: var(--canvas); color: var(--text-dim); padding: 3px 6px; border-radius: var(--radius); font-size: 11px; white-space: nowrap; }
 .edge-label.hold { color: var(--warn); } .edge-label.barrier { color: var(--err); font-weight: 700; }
+/* Attack Flow lines: brighter than a dependency and always labelled; the two branches of a condition are told apart by colour AND text. */
+.edge-label.flow, .edge-chip.flow { color: var(--route); }
+.edge-label.flow-true, .edge-chip.flow-true { color: var(--ok); font-weight: 700; }
+.edge-label.flow-false, .edge-chip.flow-false { color: var(--warn); font-weight: 700; }
+.edge-label.flow-asset, .edge-chip.flow-asset { color: var(--text-dim); }
+.edge-chip { display: inline-flex; align-items: center; padding: 3px 7px; font-size: 11px; font-weight: 700; background: var(--bg-elev2); border-radius: var(--radius); }
+.ref-list { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+.ref-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+.ref-row .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ref-row button.icon { width: 28px; height: 28px; min-height: 28px; }
+.overview-flow { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
+.overview-flow span { display: inline-flex; align-items: center; gap: 4px; }
 .react-flow__edge-text { fill: var(--text-dim); font-size: 10px; }
 .react-flow__edge-textbg { fill: var(--canvas); }
 .legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-dim); align-items: center; flex-wrap: wrap; }
 .legend .line { display: inline-block; width: 26px; height: 0; border-top: 2px solid var(--edge); vertical-align: middle; margin-right: 6px; }
 .legend .line.temporal { border-top: 1.5px dashed var(--temporal); }
+.legend .line.flow { border-top-color: var(--route); } .legend .line.flow-true { border-top-color: var(--ok); } .legend .line.flow-false { border-top-color: var(--warn); }
+.legend .line.flow-asset { border-top: 1.5px dotted var(--text-dim); }
 
 /* context dock: design workbench when nothing is selected, inspector when something is — same place either way */
 .context-dock { background: var(--bg-elev); border-left: 1px solid var(--border); overflow: auto; min-height: 0; }
@@ -318,6 +390,7 @@ blockquote.quote { margin: 0; padding: 6px 10px; border-left: 1px solid var(--co
 .overview-title svg { color: var(--accent); flex: none; }
 .overview-title h2 { font-size: 18px; }
 .overview-title .close { margin-left: auto; }
+.dock-hint { margin: 0; padding: 9px 12px; font-size: 11px; line-height: 1.7; color: var(--text-dim); background: var(--route-dim); box-shadow: inset 2px 0 0 var(--route); }
 .overview-name { line-height: 1.7; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; margin: 0; }
 .overview-chain { display: flex; align-items: center; gap: 10px; padding: 14px 0 20px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .overview-chain span:last-child { margin-left: auto; }
@@ -422,7 +495,7 @@ a.next-action-link { display: block; } a.next-action-link:hover { text-decoratio
    Tier 3 (kept): the spinner and progress bar, because they report a real request in flight — slowed / made static. */
 @media (prefers-reduced-motion: reduce) {
   :root { --quick: 80ms; --standard: 80ms; --focus: 80ms; --exit: 80ms; --enter-shift: 0px; }
-  .page, .notice, .context-dock .swap, .gnode.fresh, .node-toolbar, .feedback { animation-name: fade-only; }
+  .page, .notice, .context-dock .swap, .gnode.fresh, .fnode.fresh, .node-toolbar, .feedback { animation-name: fade-only; }
   @keyframes fade-only { from { opacity: 0; } }
   .react-flow__edge.fresh .react-flow__edge-path { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
   button:active:not(:disabled) { transform: none; }

@@ -11,6 +11,10 @@ export interface Evidence {
   quote: string;
   locator?: { kind?: "paragraph" | "page" | "stix_path"; ref?: string };
   quote_verified?: boolean;
+  /** Graded support of the quote against the source: verbatim, strong, keyword/fragment, or none. */
+  quote_match?: "exact" | "strong" | "partial" | "none";
+  match_score?: number;
+  matched_text?: string;
 }
 
 export interface Action {
@@ -19,6 +23,13 @@ export interface Action {
   description?: string;
   attack_technique?: string;
   attack_tactic?: string;
+  effect_refs?: string[];
+  asset_refs?: string[];
+  technique_id?: string;
+  tactic_id?: string;
+  execution_start?: string;
+  execution_end?: string;
+  command_ref?: string;
   target_host_ref?: string;
   evidence_refs?: string[];
   epistemic_status: EpistemicStatus;
@@ -67,6 +78,16 @@ export interface MissingItem {
   status: "open" | "user_supplied" | "llm_suggested" | "substitute_chosen" | "accepted_unknown";
   resolution?: string;
   resolution_source?: Source;
+  /** Plain-language question for the user, so they need not read the whole report to know what is asked. */
+  question?: string;
+  /** Which scenario steps / hosts this gap concerns, for grounding (derived from current IR facts, never invented). */
+  affects?: string[];
+  /** Example answers, to make an abstract field concrete. Examples only — not claims about the report. */
+  examples?: string[];
+  /** @deprecated single substitute; prefer `suggestions`. */
+  suggestion?: string;
+  /** Benign substitutes the user can accept in one click. Substitutes, not report facts. */
+  suggestions?: string[];
 }
 
 export interface Supplement {
@@ -126,6 +147,12 @@ export interface ValidationReport {
   };
 }
 
+export type FlowScope = "incident" | "campaign" | "threat-actor" | "malware" | "emulation-plan" | "attack-tree" | "other";
+export interface AttackFlowMetadata { name?: string; scope?: FlowScope; start_refs: string[]; description?: string; }
+export interface AttackFlowCondition { id: string; description?: string; on_true_refs?: string[]; on_false_refs?: string[]; pattern?: string; pattern_type?: string; epistemic_status: EpistemicStatus; source: Source; evidence_refs?: string[]; }
+export interface AttackFlowOperator { id: string; operator: "AND" | "OR"; effect_refs?: string[]; epistemic_status: EpistemicStatus; source: Source; evidence_refs?: string[]; }
+export interface AttackFlowAsset { id: string; name?: string; description?: string; object_ref?: string; epistemic_status: EpistemicStatus; source: Source; evidence_refs?: string[]; }
+
 export interface ScenarioIR {
   schema_version: "1.0";
   id: string;
@@ -137,6 +164,10 @@ export interface ScenarioIR {
   evidence?: Evidence[];
   actions: Action[];
   relations: Relation[];
+  flow?: AttackFlowMetadata;
+  conditions?: AttackFlowCondition[];
+  operators?: AttackFlowOperator[];
+  assets?: AttackFlowAsset[];
   hosts?: Host[];
   services?: ServiceItem[];
   missing_items?: MissingItem[];

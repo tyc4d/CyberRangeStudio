@@ -4,22 +4,60 @@
   "title": "ScenarioIR",
   "description": "Central scenario structure shared across modules 1-8. Modules augment their own fields only.",
   "type": "object",
-  "required": ["schema_version", "id", "name", "provenance", "actions", "relations"],
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "provenance",
+    "actions",
+    "relations"
+  ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0" },
-    "id": { "type": "string" },
-    "name": { "type": "string" },
-    "created_at": { "type": "string" },
-    "updated_at": { "type": "string" },
-    "ir_version": { "type": "integer", "minimum": 1, "description": "Bumped on each saved user edit (module 3)." },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "ir_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumped on each saved user edit (module 3)."
+    },
     "provenance": {
       "type": "object",
-      "required": ["input_kind", "input_sha256"],
+      "required": [
+        "input_kind",
+        "input_sha256"
+      ],
       "properties": {
-        "input_kind": { "type": "string", "enum": ["text", "markdown", "stix2.1"] },
-        "input_sha256": { "type": "string" },
-        "source_name": { "type": "string" },
-        "source_url": { "type": "string" }
+        "input_kind": {
+          "type": "string",
+          "enum": [
+            "text",
+            "markdown",
+            "stix2.1"
+          ]
+        },
+        "input_sha256": {
+          "type": "string"
+        },
+        "source_name": {
+          "type": "string"
+        },
+        "source_url": {
+          "type": "string"
+        }
       }
     },
     "evidence": {
@@ -27,19 +65,48 @@
       "description": "Evidence pool; actions/relations reference these by id.",
       "items": {
         "type": "object",
-        "required": ["id", "quote", "locator"],
+        "required": [
+          "id",
+          "quote",
+          "locator"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "quote": { "type": "string", "description": "Verbatim source text." },
+          "id": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string",
+            "description": "Verbatim source text."
+          },
           "locator": {
             "type": "object",
             "description": "How to find the quote in the source.",
             "properties": {
-              "kind": { "type": "string", "enum": ["paragraph", "page", "stix_path"] },
-              "ref": { "type": "string", "description": "paragraph index, page number, or STIX object path" }
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "paragraph",
+                  "page",
+                  "stix_path"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "description": "paragraph index, page number, or STIX object path"
+              }
             }
           },
-          "quote_verified": { "type": "boolean", "description": "Set by program: quote found verbatim at locator." }
+          "quote_verified": {
+            "type": "boolean",
+            "description": "Set by program: quote found verbatim (exact or strong) at locator."
+          },
+          "quote_match": {
+            "type": "string",
+            "enum": ["exact", "strong", "partial", "none"],
+            "description": "Set by program: graded support of the quote against the source."
+          },
+          "match_score": { "type": "number" },
+          "matched_text": { "type": "string", "description": "Best matching source fragment." }
         }
       }
     },
@@ -47,17 +114,71 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "epistemic_status", "source"],
+        "required": [
+          "id",
+          "name",
+          "epistemic_status",
+          "source"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "attack_technique": { "type": "string", "description": "ATT&CK id e.g. T1190; a label only, not an executed step." },
-          "attack_tactic": { "type": "string" },
-          "target_host_ref": { "type": "string" },
-          "evidence_refs": { "type": "array", "items": { "type": "string" } },
-          "epistemic_status": { "$ref": "#/definitions/epistemic_status" },
-          "source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "attack_technique": {
+            "type": "string",
+            "description": "ATT&CK id e.g. T1190; a label only, not an executed step."
+          },
+          "attack_tactic": {
+            "type": "string"
+          },
+          "target_host_ref": {
+            "type": "string"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          },
+          "effect_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "asset_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "technique_id": {
+            "type": "string"
+          },
+          "tactic_id": {
+            "type": "string"
+          },
+          "execution_start": {
+            "type": "string"
+          },
+          "execution_end": {
+            "type": "string"
+          },
+          "command_ref": {
+            "type": "string"
+          }
         }
       }
     },
@@ -65,16 +186,47 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "from_action", "to_action", "kind", "epistemic_status", "source"],
+        "required": [
+          "id",
+          "from_action",
+          "to_action",
+          "kind",
+          "epistemic_status",
+          "source"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "from_action": { "type": "string" },
-          "to_action": { "type": "string" },
-          "kind": { "type": "string", "enum": ["temporal", "dependency"], "description": "temporal=order observed; dependency=later needs the result of earlier. Never auto-convert temporal to dependency." },
-          "rationale": { "type": "string" },
-          "evidence_refs": { "type": "array", "items": { "type": "string" } },
-          "epistemic_status": { "$ref": "#/definitions/epistemic_status" },
-          "source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "from_action": {
+            "type": "string"
+          },
+          "to_action": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "temporal",
+              "dependency"
+            ],
+            "description": "temporal=order observed; dependency=later needs the result of earlier. Never auto-convert temporal to dependency."
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          }
         }
       }
     },
@@ -83,15 +235,36 @@
       "description": "Filled by module 4/5.",
       "items": {
         "type": "object",
-        "required": ["id", "role"],
+        "required": [
+          "id",
+          "role"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "role": { "type": "string", "description": "e.g. victim-web, attacker, dc, workstation" },
-          "os": { "type": "string" },
-          "os_version": { "type": "string" },
-          "service_refs": { "type": "array", "items": { "type": "string" } },
-          "epistemic_status": { "$ref": "#/definitions/epistemic_status" },
-          "source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "e.g. victim-web, attacker, dc, workstation"
+          },
+          "os": {
+            "type": "string"
+          },
+          "os_version": {
+            "type": "string"
+          },
+          "service_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          }
         }
       }
     },
@@ -100,17 +273,43 @@
       "description": "Filled by module 4. A service maps to a catalogue component for deployment.",
       "items": {
         "type": "object",
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "version": { "type": "string" },
-          "cpe": { "type": "string" },
-          "cve": { "type": "array", "items": { "type": "string" } },
-          "catalogue_component": { "type": "string", "description": "id into component catalogue; may be a verifiable OSS substitute." },
-          "is_substitute": { "type": "boolean", "description": "true if not the exact real-world software; must be flagged for fidelity." },
-          "epistemic_status": { "$ref": "#/definitions/epistemic_status" },
-          "source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "cpe": {
+            "type": "string"
+          },
+          "cve": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogue_component": {
+            "type": "string",
+            "description": "id into component catalogue; may be a verifiable OSS substitute."
+          },
+          "is_substitute": {
+            "type": "boolean",
+            "description": "true if not the exact real-world software; must be flagged for fidelity."
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          }
         }
       }
     },
@@ -119,16 +318,92 @@
       "description": "Module 1 finds, module 2 resolves. Things needed to build the range but not in the report.",
       "items": {
         "type": "object",
-        "required": ["id", "field", "category", "reason", "status"],
+        "required": [
+          "id",
+          "field",
+          "category",
+          "reason",
+          "status"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "field": { "type": "string", "description": "what is missing, e.g. victim OS version" },
-          "category": { "type": "string", "enum": ["host", "software", "version", "network", "account", "dependency", "precondition", "proprietary", "other"] },
-          "reason": { "type": "string", "description": "why this blocks or weakens scenario build" },
-          "severity": { "type": "string", "enum": ["blocker", "major", "minor"] },
-          "status": { "type": "string", "enum": ["open", "user_supplied", "llm_suggested", "substitute_chosen", "accepted_unknown"] },
-          "resolution": { "type": "string" },
-          "resolution_source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string",
+            "description": "what is missing, e.g. victim OS version"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "host",
+              "software",
+              "version",
+              "network",
+              "account",
+              "dependency",
+              "precondition",
+              "proprietary",
+              "other"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "why this blocks or weakens scenario build"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocker",
+              "major",
+              "minor"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "user_supplied",
+              "llm_suggested",
+              "substitute_chosen",
+              "accepted_unknown"
+            ]
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "resolution_source": {
+            "$ref": "#/definitions/source"
+          },
+          "question": {
+            "type": "string",
+            "description": "plain-language question for the user"
+          },
+          "affects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "scenario steps/hosts this gap concerns (grounding)"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "example answers; examples only, not report claims"
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "deprecated: single benign substitute; prefer suggestions[]"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "benign substitutes the user may accept in one click; substitutes, not report facts"
+          }
         }
       }
     },
@@ -137,40 +412,249 @@
       "description": "Module 2 user/LLM additions beyond the report. Kept separate from original evidence.",
       "items": {
         "type": "object",
-        "required": ["id", "text", "source"],
+        "required": [
+          "id",
+          "text",
+          "source"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "text": { "type": "string" },
-          "targets_missing_item": { "type": "string" },
-          "source": { "$ref": "#/definitions/source" }
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "targets_missing_item": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          }
         }
       }
     },
-    "environment_plan": { "$ref": "environment-plan.schema.json" },
+    "environment_plan": {
+      "$ref": "environment-plan.schema.json"
+    },
     "quality": {
       "type": "object",
       "description": "Module 1 computed metrics. No single overall score.",
       "properties": {
-        "quote_verified_rate": { "type": "number" },
-        "unsupported_claim_count": { "type": "integer" },
-        "inferred_count": { "type": "integer" },
-        "absent_count": { "type": "integer" },
-        "method": { "type": "string", "enum": ["single_pass", "staged", "staged_review"] },
-        "provisional": { "type": "boolean", "description": "true until a trusted reference exists." }
+        "quote_verified_rate": {
+          "type": "number"
+        },
+        "unsupported_claim_count": {
+          "type": "integer"
+        },
+        "inferred_count": {
+          "type": "integer"
+        },
+        "absent_count": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "single_pass",
+            "staged",
+            "staged_review"
+          ]
+        },
+        "provisional": {
+          "type": "boolean",
+          "description": "true until a trusted reference exists."
+        }
       }
     },
-    "deployments": { "type": "array", "items": { "type": "object" } },
-    "validation": { "$ref": "validation-report.schema.json" }
+    "deployments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "validation": {
+      "$ref": "validation-report.schema.json"
+    },
+    "flow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "incident",
+            "campaign",
+            "threat-actor",
+            "malware",
+            "emulation-plan",
+            "attack-tree",
+            "other"
+          ]
+        },
+        "start_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_refs"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "epistemic_status",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "on_true_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "on_false_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "pattern_type": {
+            "type": "string"
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "operators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "epistemic_status",
+          "source",
+          "operator"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "AND",
+              "OR"
+            ]
+          },
+          "effect_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "epistemic_status",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "object_ref": {
+            "type": "string"
+          },
+          "epistemic_status": {
+            "$ref": "#/definitions/epistemic_status"
+          },
+          "source": {
+            "$ref": "#/definitions/source"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
   },
   "definitions": {
     "epistemic_status": {
       "type": "string",
-      "enum": ["supported", "inferred", "absent", "insufficient"],
+      "enum": [
+        "supported",
+        "inferred",
+        "absent",
+        "insufficient"
+      ],
       "description": "supported=explicit in source; inferred=reasoned from source; absent=source does not provide; insufficient=not enough evidence to judge."
     },
     "source": {
       "type": "string",
-      "enum": ["llm", "user", "stix", "program"],
+      "enum": [
+        "llm",
+        "user",
+        "stix",
+        "program"
+      ],
       "description": "Who produced this item."
     }
   }
