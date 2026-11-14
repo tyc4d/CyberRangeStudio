@@ -152,7 +152,38 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 
 ## 4. 測試
 
-`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **124 passed**（開工時 54 passed, 1 failed）。
+`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → 合併 main 與 agent/frontend-eng 後 **132 passed**（開工時 54 passed, 1 failed）。
+
+### apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker）
+
+合併 main 與 agent/frontend-eng 後，在自己的埠（API 8101、Web 8102）與資料目錄 `.data/e2e` 執行：
+
+```sh
+cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-project/.venv \
+  CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_DATA_DIR=<worktree>/.data/e2e \
+  CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_NEW_USD=4 npx playwright test e2e/full-flow.spec.ts
+```
+
+實際結果：**1 passed, 1 failed**。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log.json`。
+
+- 第一個測試（上傳→分析→補件→流程→依賴→拓樸→IaC→核准）：**通過**。拓樸顯示 2 條開通、1 條必須阻擋。
+- 第二個測試（部署→驗證→報告→清理）：部署 3 個容器成功、驗證完成（`env_build=PASS, behavior_repro=PASS, full_chain=PARTIAL`），
+  **在「report」步驟失敗**：測試找標題「擬真度（fidelity）」，但目前 `ReportPage.tsx` 的標題是「擬真度」。這是前端頁面與 e2e 斷言不一致，
+  不在我的檔案範圍，沒有改。因為這一步失敗，介面上的清理沒跑完，測試以 API 安全網清理（HTTP 200），事後確認沒有殘留容器或程序。
+- 第一次跑時 IaC 預覽失敗：示範情資的服務只有功能名稱（web service／database service），沒有可部署的替身。已修：
+  只以功能命名的服務對應到明確標示的替代元件（`is_substitute=true`＋`substitute_chosen` 說明）；有產品名的服務不會被換成通用替身。
+
+### 批次 6 — Reviewer 複審後追加（N1、N2）與 frontend-eng 回報
+
+| 修復 | 對應 | 作法 | 檔案 | 測試 |
+|---|---|---|---|---|
+| 回答主機 OS 不再多出假服務 | N1 | 回答 OS／OS 版本題目的補件，其中的作業系統映像字眼（如 Windows Server）只寫進主機的 `os`，不再變成該主機上的「Windows Server:445」服務；同一句裡的應用程式（如 Redis）仍會被規劃 | `planner/dependencies.py` | `OsAnswerIsNotAService`（2 個）：回答前後連線、映像、IaC 檢查結果相同 |
+| catalogue 版本不是來源事實時要看得出來 | N2 | 服務新增 `version_basis`：`stated`／`assumed`（原文沒寫版本）／`substituted`（原文寫別的版本），並記 `deployed_version`；同時產生一筆 `substitute_chosen` 的說明項；拓樸主機帶同樣兩個欄位。`version` 仍只放來源／使用者給的值 | `planner/dependencies.py`、`planner/topology.py` | `DeployedVersionBasis`（2 個）；Equifax 已存 IR 重新規劃：Struts 標 `assumed`、`deployed_version=2.3.30`（`after/equifax-2017-struts-db/*.merged-catalogue.json`） |
+| 使用者選的替代品套回原服務 | frontend-eng | 「無對應元件」題目帶 `service_ref`；使用者回答中只點名一個可部署元件時，原服務保留 id／主機／連接埠／引句，改以該元件部署並標 `is_substitute=true`、`substitute_basis=user_chosen`；不再產生沒有主機的新服務。回答沒點名產品或點名多個時不動 | `planner/dependencies.py` | `UserChosenSubstitute`（2 個）：套用後主機有映像、攻擊機有入口連線、重新規劃不重複 |
+
+內建 demo 在最新 commit 不需要使用者選替代品（只有功能名稱的服務會自動得到標示清楚的替身）；上面第三項處理的是有產品名但 catalogue 沒有的一般情況（例如 MOVEit）。
+
+注意：`component_mode` 對 Struts 仍是 `real`（部署的確實是 Struts），「版本是假設」由 `version_basis` 表示。前端目前不會顯示 `version_basis`，需要 frontend-eng 接上。
 
 ## 5. 未完成／未解
 

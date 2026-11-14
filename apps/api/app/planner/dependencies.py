@@ -333,10 +333,52 @@ def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> 
     return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
 
 
+def _is_os_image(component: dict[str, Any] | None) -> bool:
+    """A catalogue entry that is an operating-system image rather than an application."""
+    return bool(component) and component.get("runtime") == "vm" and "os_release" in component
+
+
+def _answered_item(ir: dict[str, Any], supplement: dict[str, Any]) -> dict[str, Any] | None:
+    return next((entry for entry in ir.get("missing_items", []) or []
+                 if isinstance(entry, dict) and entry.get("id") == supplement.get("targets_missing_item")), None)
+
+
+def _apply_chosen_substitutes(ir: dict[str, Any]) -> None:
+    """Put a substitute the user chose for an unsupported service onto that service itself.
+
+    The question "no catalogue component for X" carries ``service_ref``. When the user's answer
+    names exactly one catalogue product, service X keeps its id, host, port and evidence and is
+    deployed as that product, marked as a user-chosen substitute. Without this the choice
+    became a second, host-less service and nothing was deployable.
+    """
+    services = {service.get("id"): service for service in ir.get("services", []) or [] if isinstance(service, dict)}
+    for supplement in ir.get("supplements", []) or []:
+        if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
+            continue
+        item = _answered_item(ir, supplement)
+        service = services.get((item or {}).get("service_ref"))
+        if service is None or item.get("status") not in {"substitute_chosen", "user_supplied"}:
+            continue
+        chosen = {}
+        for mention in _candidate_from_mentions(supplement["text"]):
+            component, _ = match_software(mention["name"])
+            if component is not None and component.get("runtime") == "container":
+                chosen[component["id"]] = component
+        if len(chosen) != 1:
+            continue  # no product named, or several: nothing unambiguous to apply
+        component = next(iter(chosen.values()))
+        service.pop("no_component", None)
+        service.update({"catalogue_component": component["id"], "is_substitute": True,
+                        "substitute_basis": "user_chosen", "substitute_supplement_ref": str(supplement.get("id") or "")})
+        service.setdefault("field_sources", {})["catalogue_component"] = "user"
+
+
 def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None:
     """The host a supplement is about when it answers a question scoped to a host or its service."""
-    item = next((entry for entry in ir.get("missing_items", []) or []
-                 if isinstance(entry, dict) and entry.get("id") == supplement.get("targets_missing_item")), None)
+    item = _answered_item(ir, supplement)
+    if item and item.get("service_ref"):
+        service = next((entry for entry in ir.get("services", []) or [] if entry.get("id") == item["service_ref"]), None)
+        return service.get("host_ref") if service else None
     where = (item or {}).get("applied_to") or (item or {}).get("target")
     if not isinstance(where, dict):
         return None
@@ -441,7 +483,18 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     for supplement in ir.get("supplements", []) or []:
         if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
             continue
+        item = _answered_item(ir, supplement)
+        applied_as_substitute = any(service.get("substitute_supplement_ref") == supplement.get("id")
+                                    for service in ir.get("services", []) or [] if isinstance(service, dict))
+        if (item and item.get("service_ref")) or applied_as_substitute:
+            continue  # a substitute chosen for one service is applied to that service, not added as another
+        where = (item or {}).get("applied_to") or (item or {}).get("target") or {}
+        answers_os = isinstance(where, dict) and where.get("field") in {"os", "os_version"}
         for mention in _mentions_bound_to_hosts(supplement["text"], hosts, _answered_host(ir, supplement)):
+            if answers_os and _is_os_image(match_software(mention["name"])[0]):
+                # "Windows Server 2019" answering an OS question is the host's OS (already written
+                # to the host record), not a file-sharing service to expose on that host.
+                continue
             mention["from_supplement"] = str(supplement.get("id") or "supplement")
             candidates.append(mention)
 
@@ -514,6 +567,7 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
 def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     """Return a copy with program-derived hosts/services and explicit unresolved dependencies."""
     result = copy.deepcopy(ir)
+    _apply_chosen_substitutes(result)
     actions = result.get("actions", [])
     hosts = _collect_hosts(result.get("target_context", {}), actions)
     for existing_host in result.get("hosts", []):
@@ -558,7 +612,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         return f"missing-product-{_slug56(name)}-version" in analysis_question_ids
 
     def add_missing(key: str, field: str, reason: str, *, category: str = "software", status: str = "open",
-                    resolution: str | None = None, severity: str = "major") -> None:
+                    resolution: str | None = None, severity: str = "major", service_ref: str | None = None) -> None:
         ident = "planner_dep_" + _slug(key)
         if ident in seen_missing:
             return
@@ -569,6 +623,8 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         }
         if resolution:
             entry["resolution"] = resolution
+        if service_ref:
+            entry["service_ref"] = service_ref  # the service a chosen substitute is applied to
         earlier = previous_planner_items.get(ident)
         if earlier and earlier.get("resolution_source") == "user":
             # Re-planning must not discard a decision the user already made on this question.
@@ -608,7 +664,8 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                         generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
             add_missing(f"software-{name}-{candidate.get('version') or ''}",
                         f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
-                        "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.")
+                        "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+                        service_ref=original.get("id") if original else None)
             continue
 
         if existing_user:
@@ -763,6 +820,28 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             for cve in cves:
                 add_missing(f"cve-{cve}", f"affected software for {cve}",
                             "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.")
+
+    # The catalogue pins one release per component. Say whether that release is what the source
+    # (or the user) stated, or only what the lab happens to have.
+    for service in services:
+        component = component_by_id(service.get("catalogue_component"))
+        pinned = str((component or {}).get("version") or "").strip()
+        if not pinned or service.get("is_substitute") or not component.get("image"):
+            continue
+        stated = str(service.get("version") or "").strip()
+        if stated and (stated == pinned or pinned.startswith(stated + ".") or stated.startswith(pinned + ".")):
+            service["version_basis"] = "stated"
+            continue
+        service["version_basis"] = "substituted" if stated else "assumed"
+        service["deployed_version"] = pinned
+        add_missing(
+            f"deployed-version-{service.get('id')}", f"deployed version of {service.get('name')}",
+            (f"The source states version {stated}; the catalogue only provides {pinned}." if stated else
+             f"The source does not state a version; the catalogue provides {pinned}."),
+            category="version", status="substitute_chosen",
+            resolution=(f"Deploying {component['name']} {pinned}. This release is "
+                        + ("a substitute for the stated one" if stated else "an assumption, not a fact from the source")
+                        + "; results do not show that the original system ran it."))
 
     # A port the source states for a host ("to victim-web over TCP/80") belongs to that host's
     # service when the host has exactly one service still lacking a port.

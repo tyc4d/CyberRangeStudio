@@ -89,6 +89,13 @@ export interface ServiceItem {
   no_component?: boolean;
   /** Source words that led module 4 to this product when they are not its name (e.g. "Log4Shell"). */
   matched_text?: string;
+  /** How the deployed catalogue release relates to the source: stated, assumed (source gives none) or substituted. */
+  version_basis?: "stated" | "assumed" | "substituted";
+  /** The catalogue release actually deployed when it is assumed or substituted; `version` holds only stated values. */
+  deployed_version?: string;
+  /** "user_chosen": a substitute the user picked for a service with no catalogue component. */
+  substitute_basis?: "user_chosen";
+  substitute_supplement_ref?: string;
   /** Supplement this service was derived from; such services have source "user". */
   supplement_ref?: string;
   field_sources?: Record<string, "user" | "source_quote">;
