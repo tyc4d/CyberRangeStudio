@@ -2,8 +2,10 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
+from app import store
 from app.deploy import manager
 from app.iac.generator import PlanError, validate_id
+from app.planner.topology import connections_digest
 
 router = APIRouter(prefix="/api/deploy", tags=["deploy"])
 
@@ -19,12 +21,26 @@ def _validate(scenario_id: str) -> str:
         raise HTTPException(status_code=422, detail=exc.errors)
 
 
+def _require_topology_approval(scenario_id: str) -> None:
+    """Refuse deployment unless the current topology was human-approved (module 2/5 gate)."""
+    ir = store.get(scenario_id)
+    plan = ir.get("environment_plan") if isinstance(ir, dict) else None
+    approval = plan.get("approval") if isinstance(plan, dict) else None
+    if not isinstance(approval, dict) or approval.get("approved") is not True:
+        manager.record(scenario_id, "up", "rejected", {"reason": "topology not approved"})
+        raise HTTPException(status_code=409, detail="topology approval required: POST /api/planning/{id}/topology/approve before deploying")
+    if approval.get("connections_digest") != connections_digest(plan):
+        manager.record(scenario_id, "up", "rejected", {"reason": "approval stale; topology changed since approval"})
+        raise HTTPException(status_code=409, detail="topology changed since approval; re-approve before deploying")
+
+
 @router.post("/{scenario_id}/up")
 def deploy_up(scenario_id: str, request: UpRequest):
     scenario_id = _validate(scenario_id)
     if request.test_approved is not True:
         manager.record(scenario_id, "up", "rejected", {"reason": "explicit local PoC approval required"})
         raise HTTPException(status_code=400, detail="explicit local PoC approval required: send test_approved=true")
+    _require_topology_approval(scenario_id)
     result = manager.do_up(scenario_id)
     if not result["ok"]:
         raise HTTPException(status_code=503, detail=result)

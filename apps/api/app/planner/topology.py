@@ -2,12 +2,28 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import re
 from typing import Any
 
 from cr_contracts import iter_errors
 
 from app.planner.catalogue import component_by_id
+
+
+def connections_digest(plan: dict[str, Any]) -> str:
+    """Stable sha256 over a plan's connections, used to bind human approval to an exact ruleset."""
+    connections = plan.get("connections", []) if isinstance(plan, dict) else []
+    canonical = sorted(
+        json.dumps(
+            {"from_host": c.get("from_host"), "to_host": c.get("to_host"),
+             "port": c.get("port"), "protocol": c.get("protocol", "tcp")},
+            sort_keys=True,
+        )
+        for c in connections
+    )
+    return hashlib.sha256("\n".join(canonical).encode("utf-8")).hexdigest()
 
 
 def _host_id(value: Any) -> str:
@@ -152,11 +168,16 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             notes.append(f"Host {hid} has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.")
         if _is_attacker(host):
             env_host["image_hint"] = "oss-attacker"
+            env_host["component_mode"] = "real"
         else:
             for service in assigned.get(hid, []):
                 if service.get("catalogue_component"):
                     env_host["image_hint"] = service["catalogue_component"]
                     break
+            # A host whose service maps to a real catalogue component is deployed as the
+            # real open-source software; otherwise it falls back to a benign substitute.
+            component = component_by_id(env_host.get("image_hint"))
+            env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
         environment_hosts.append(env_host)
 
     if unassigned:
@@ -228,12 +249,40 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
     network_plan = [{"id": "scenario-internal", "segment": "scenario", "internal": True}]
     if any("external" in host["networks"] for host in environment_hosts):
         network_plan.append({"id": "external", "segment": "external", "internal": False})
+
+    # Segmentation expectations: an attacker-origin host must NOT reach an internal-only
+    # host's service port unless a connection was explicitly opened above. Module 8 probes
+    # each of these and fails the report if any connects.
+    verify_blocked: list[dict[str, Any]] = []
+    allowed = {(c["from_host"], c["to_host"], c.get("port")) for c in connections}
+    hosts_by_eid = {h["id"]: h for h in environment_hosts}
+    for source in environment_hosts:
+        if "external" not in source.get("networks", []) and not _is_attacker({"role": source.get("role", "")}):
+            continue
+        for dest in environment_hosts:
+            if dest["id"] == source["id"]:
+                continue
+            if "external" in dest.get("networks", []):
+                continue  # dest is itself exposed; segmentation is about internal-only hosts
+            for svc in dest.get("services", []):
+                port = svc.get("port")
+                if (source["id"], dest["id"], port) in allowed:
+                    continue
+                verify_blocked.append({
+                    "from_host": source["id"], "to_host": dest["id"], "port": port,
+                    "protocol": svc.get("protocol", "tcp"),
+                    "reason": f"{source['id']} is exposed/attacker-side and must not reach internal service {dest['id']}:{port} directly.",
+                })
+
     plan: dict[str, Any] = {
         "hosts": environment_hosts,
         "networks": network_plan,
         "connections": connections,
         "access_rules": rules,
+        "approval": {"approved": False},
     }
+    if verify_blocked:
+        plan["verify_blocked"] = verify_blocked
     if notes:
         plan["notes"] = list(dict.fromkeys(notes))
 

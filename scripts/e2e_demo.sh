@@ -44,6 +44,11 @@ say "4. topology"
 curl -s -X POST "$API/api/planning/$ID/topology" | tee "$OUT/04-topology.json" \
   | jqp "'nets=%s conns=%s'%([(n['id'],n.get('internal')) for n in d.get('scenario',d.get('ir',d)).get('environment_plan',{}).get('networks',[])],[(c['from_host'],c['to_host'],c.get('port')) for c in d.get('scenario',d.get('ir',d)).get('environment_plan',{}).get('connections',[])])"
 
+say "4b. approve topology (human gate; deployment is refused without it)"
+curl -s -X POST "$API/api/planning/$ID/topology/approve" -H 'Content-Type: application/json' \
+  -d '{"approved":true,"approved_by":"e2e-demo","note":"approved for local isolated PoC"}' \
+  | jqp "'approved=%s digest=%s'%(d.get('approval',{}).get('approved'),d.get('approval',{}).get('connections_digest','')[:12])"
+
 say "5. IaC generate"
 curl -s -X POST "$API/api/iac/$ID/generate" | tee "$OUT/05-iac.json" >/dev/null
 curl -s "$API/api/iac/$ID" | python3 -c "import sys,json,re;d=json.load(sys.stdin);c=d.get('compose','') or d.get('compose_yaml','');open('docs/e2e-evidence/05-docker-compose.yml','w').write(c);print('images:',sorted(set(re.findall(r'image:\s*(\S+)',c))))"

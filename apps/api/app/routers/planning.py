@@ -1,17 +1,25 @@
 """Dependency and topology planning endpoints (modules 4 and 5)."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from cr_contracts import iter_errors
 
 from app import store
 from app.planner.catalogue import public_catalogue
 from app.planner.dependencies import plan_dependencies
-from app.planner.topology import attach_environment_plan
+from app.planner.topology import attach_environment_plan, connections_digest
 
 router = APIRouter(prefix="/api/planning", tags=["planning"])
+
+
+class ApprovalRequest(BaseModel):
+    approved: bool = True
+    approved_by: str | None = None
+    note: str | None = None
 
 
 def _get_or_404(scenario_id: str) -> dict[str, Any]:
@@ -54,6 +62,31 @@ def generate_topology(scenario_id: str):
     except (TypeError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=422, detail=f"Could not generate a valid topology: {exc}")
     return _validated_update(scenario_id, updated, "topology")
+
+
+@router.post("/{scenario_id}/topology/approve")
+def approve_topology(scenario_id: str, request: ApprovalRequest):
+    """Record human approval of the planned topology and its connection rules.
+
+    Approval is bound to the current connections via a digest; any later topology
+    regeneration or edit resets approval and deployment is refused again.
+    """
+    ir = _get_or_404(scenario_id)
+    plan = ir.get("environment_plan")
+    if not isinstance(plan, dict):
+        raise HTTPException(status_code=409, detail="Topology has not been generated")
+    approval: dict[str, Any] = {
+        "approved": bool(request.approved),
+        "approved_by": request.approved_by or "user",
+        "approved_at": datetime.now(timezone.utc).isoformat(),
+        "connections_digest": connections_digest(plan),
+    }
+    if request.note:
+        approval["note"] = request.note
+    plan["approval"] = approval
+    ir["environment_plan"] = plan
+    _validated_update(scenario_id, ir, "topology-approval")
+    return plan
 
 
 @router.get("/{scenario_id}/topology")

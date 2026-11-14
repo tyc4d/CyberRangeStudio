@@ -64,6 +64,13 @@ class LocalComposeIntegrationTests(unittest.TestCase):
                 self.assertEqual(client.get(f"/api/iac/{scenario_id}").json(), generated.json())
                 self.assertEqual(client.post(f"/api/deploy/{scenario_id}/up", json={}).status_code, 400)
 
+                # Deployment is refused until the topology is human-approved.
+                self.assertEqual(
+                    client.post(f"/api/deploy/{scenario_id}/up", json={"test_approved": True}).status_code, 409)
+                approve = client.post(f"/api/planning/{scenario_id}/topology/approve",
+                                      json={"approved": True, "approved_by": "integration-test"})
+                self.assertEqual(approve.status_code, 200, approve.text)
+
                 up = client.post(f"/api/deploy/{scenario_id}/up", json={"test_approved": True})
                 self.assertEqual(up.status_code, 200, up.text)
                 deployed = True

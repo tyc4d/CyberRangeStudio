@@ -14,9 +14,18 @@
       "description": "The three reproduction levels, judged separately.",
       "required": ["env_build", "behavior_repro", "full_chain"],
       "properties": {
-        "env_build": { "$ref": "#/definitions/status", "description": "Did the isolated environment stand up (services running)?" },
-        "behavior_repro": { "$ref": "#/definitions/status", "description": "Did individual benign demo behaviors occur as expected?" },
-        "full_chain": { "$ref": "#/definitions/status", "description": "Did the full ordered scenario complete end to end?" }
+        "env_build": { "$ref": "#/definitions/status", "description": "Did the isolated environment stand up (all target services running)? PASS only if every service_up check PASSes." },
+        "behavior_repro": { "$ref": "#/definitions/status", "description": "Did the individual benign demo behaviors occur as expected? Independent of whether the whole chain ran." },
+        "full_chain": { "$ref": "#/definitions/status", "description": "Did the full ordered scenario complete end to end? NEVER PASS if any required attack step is NOT_TESTED or FAIL, or if env_build/behavior_repro are not PASS. Downgraded to the weakest required step." }
+      }
+    },
+    "level_criteria": {
+      "type": "object",
+      "description": "Plain statement of the rule used to judge each level, so a reader can audit the verdict.",
+      "properties": {
+        "env_build": { "type": "string" },
+        "behavior_repro": { "type": "string" },
+        "full_chain": { "type": "string" }
       }
     },
     "checks": {
@@ -27,7 +36,7 @@
         "properties": {
           "id": { "type": "string" },
           "name": { "type": "string" },
-          "category": { "type": "string", "enum": ["service_up", "connectivity", "dependency_present", "behavior", "chain"] },
+          "category": { "type": "string", "enum": ["service_up", "connectivity", "dependency_present", "behavior", "chain", "segmentation", "version"] },
           "status": { "$ref": "#/definitions/status" },
           "expected": { "type": "string" },
           "observed": { "type": "string" },

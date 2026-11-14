@@ -15,6 +15,7 @@
           "id": { "type": "string" },
           "role": { "type": "string" },
           "image_hint": { "type": "string", "description": "catalogue component or base image id; not a literal docker image string (module 6 resolves)." },
+          "component_mode": { "type": "string", "enum": ["real", "substitute"], "description": "real = deploy the actual catalogue open-source image (e.g. nginx, postgres); substitute = deploy a benign demo stand-in. Absent: module 6 infers from image_hint (oss-* real, demo-* substitute)." },
           "services": {
             "type": "array",
             "items": {
@@ -69,6 +70,33 @@
           "port": { "type": "integer" },
           "action": { "type": "string", "enum": ["allow", "deny"] }
         }
+      }
+    },
+    "verify_blocked": {
+      "type": "array",
+      "description": "Paths that MUST remain unreachable after deployment. Module 8 probes each and fails if any connects (segmentation check).",
+      "items": {
+        "type": "object",
+        "required": ["from_host", "to_host"],
+        "properties": {
+          "from_host": { "type": "string" },
+          "to_host": { "type": "string" },
+          "port": { "type": "integer" },
+          "protocol": { "type": "string", "enum": ["tcp", "udp"] },
+          "reason": { "type": "string", "description": "why this path must stay blocked (e.g. attacker must not reach the internal database directly)" }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "description": "Human approval of this topology and its connection rules. Deployment is refused unless approved=true and connections_digest matches the current plan.",
+      "required": ["approved"],
+      "properties": {
+        "approved": { "type": "boolean" },
+        "approved_by": { "type": "string" },
+        "approved_at": { "type": "string" },
+        "connections_digest": { "type": "string", "description": "sha256 over the plan connections at approval time; a later edit invalidates approval." },
+        "note": { "type": "string" }
       }
     },
     "notes": { "type": "array", "items": { "type": "string" } }
