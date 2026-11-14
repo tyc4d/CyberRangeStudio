@@ -30,3 +30,20 @@ validate("scenario-ir", my_dict)   # raises on invalid
 ```
 
 TS：`src/types.ts` 有對應 interface（手寫，與 schema 對齊）。
+
+## 2026-11-15 新增的選用欄位（皆為 additive，schema 允許額外欄位，舊資料不受影響）
+
+Schema JSON 本身未改；下列欄位已加進 `src/types.ts`，由模組 1/2/4/5 後端寫入。
+
+| 位置 | 欄位 | 意義 |
+|---|---|---|
+| action | `source_host_ref` | 原文明寫此步驟從哪台主機發動（`target_host_ref` 是作用的主機） |
+| relation | `epistemic_reason` | 程式把狀態降級的原因（例如引句存在但沒有陳述先後／相依） |
+| host | `name`、`network_placement` | 原文給的主機名稱；網路位置（可由補件寫入） |
+| host／service | `field_sources` | 逐欄位來源：`user`（補件）或 `source_quote`（由已驗證引句讀出）；整筆的 `source`／`epistemic_status` 不因補件改變 |
+| service | `host_ref`、`port`、`protocol` | 原文明寫的所在主機與連接埠 |
+| service | `no_component`、`matched_text`、`supplement_ref` | catalogue 無對應；觸發比對的原文字眼；由哪則補件產生 |
+| missing_item | `target`、`applied_to`、`write_back` | 答案應寫回的欄位；實際已寫回的欄位；未寫回的原因 |
+| quality | `dropped_placeholder_hosts`、`excluded_non_attacker_actions` | 被丟棄的「unknown」假主機數；被排除在攻擊流程外的防守方行為 |
+| environment_plan.hosts[] | `exposure_basis` | `stated`（原文或使用者指定）／`inferred_entry_point`（推論的入口，需人工確認） |
+| environment_plan.hosts[] | `deployable: false`、`runtime` | catalogue 無法部署的元件，不標成 real／substitute |
