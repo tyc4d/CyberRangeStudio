@@ -252,7 +252,10 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 "services": [{"protocol": s.get("protocol", "tcp"), "port": s.get("port")}
                              for s in host.get("services", [])],
                 "deployable": False,
-                "reason": "VM backend is not installed/configured; " + ("; ".join(vm_errors) if vm_errors else "guest definition is valid but cannot be deployed here."),
+                "reason": ("; ".join(vm_errors) + "; " if vm_errors else "") + (
+                    "VM hosts are not part of the generated Compose deployment. A single Windows Server VM can be "
+                    "started by the libvirt backend (app.deploy.vm), but deploying a VM from an environment plan, "
+                    "and connecting it to container networks, is not implemented."),
             })
         elif runtime and runtime != "container":
             resolved = {"runtime_component": None, "component": runtime, "component_mode": runtime,
