@@ -12,8 +12,69 @@ const LEVELS: { key: Level; title: string; question: string; categories: Validat
   { key: "full_chain", title: "完整攻擊鏈", question: "整條流程能從頭到尾串起來嗎？", categories: ["chain"] },
 ];
 const CATEGORY: Record<string, string> = {
-  service_up: "服務啟動", connectivity: "連線", dependency_present: "依賴存在", behavior: "行為", chain: "攻擊鏈",
+  service_up: "服務啟動", version: "版本", connectivity: "連線", dependency_present: "依賴存在", behavior: "行為", chain: "攻擊鏈",
 };
+
+/* ---------- Chinese rendering of the validator's English strings ----------
+ * The validator writes check names / expectations / observations in English. Known sentence
+ * shapes are rendered in Chinese with the original kept underneath; raw tool output and
+ * anything unrecognised is shown as-is, never guessed at. */
+const hasCJK = (t: string) => /[\u3400-\u9fff]/.test(t);
+type Rule = [RegExp, (m: RegExpMatchArray) => string];
+const NAME_RULES: Rule[] = [
+  [/^(.+) is running$/, (m) => `${m[1]} 正在執行`],
+  [/^(.+) has the Python runtime$/, (m) => `${m[1]} 具備 Python 執行環境`],
+  [/^(.+) runs the pinned (.+) version$/, (m) => `${m[1]} 執行的是釘選版本 ${m[2]}`],
+  [/^(.+) reaches (.+)$/, (m) => `${m[1]} 可連到 ${m[2]}`],
+  [/^(.+) returns a benign service response$/, (m) => `${m[1]} 回應無害的服務請求`],
+  [/^(.+) completes the declared path to (.+)$/, (m) => `${m[1]} 走完到 ${m[2]} 的宣告路徑`],
+  [/^unmapped behavior$/, () => "沒有對應探測的行為"],
+];
+const EXPECT_RULES: Rule[] = [
+  [/^container state is running$/, () => "容器狀態為執行中"],
+  [/^Python standard library imports successfully$/, () => "Python 標準函式庫可成功匯入"],
+  [/^one TCP connection to declared service (.+)$/, (m) => `能對宣告的服務 ${m[1]} 建立一次 TCP 連線`],
+  [/^pg_isready reports accepting connections$/, () => "pg_isready 回報可接受連線"],
+  [/^HTTP GET (\S+) returns status 200 from the pinned web server$/, (m) => `對釘選的網頁伺服器 HTTP GET ${m[1]} 回傳 200`],
+  [/^HTTP GET (\S+) returns (\S+)$/, (m) => `HTTP GET ${m[1]} 回傳 ${m[2]}`],
+  [/^HTTP service returns its expected benign response$/, () => "HTTP 服務回傳預期的無害回應"],
+  [/^a mapped benign behavior$/, () => "有對應的無害行為探測"],
+  [/^declared TCP path and its benign service behavior pass$/, () => "宣告的 TCP 路徑與其無害服務行為都通過"],
+];
+const OBSERVED_RULES: Rule[] = [
+  [/^state=(\S+), health=(.+)$/, (m) => `容器狀態 ${m[1]}，健康檢查 ${m[2] === "no health status" ? "未設定" : m[2]}`],
+  [/^container not present in docker compose ps output$/, () => "docker compose ps 的輸出中沒有這個容器"],
+  [/^only declared TCP service ports are probed$/, () => "只探測有宣告的 TCP 服務埠，這條路徑未探測"],
+  [/^source or target container is not running; this path was not probed$/, () => "來源或目標容器未執行，這條路徑未探測"],
+  [/^PostgreSQL container is not running$/, () => "PostgreSQL 容器未執行"],
+  [/^HTTP behavior was not probed because its path was unavailable$/, () => "路徑不通，未探測 HTTP 行為"],
+  [/^no benign behavior probe exists for the target service$/, () => "目標服務沒有可用的無害行為探測"],
+  [/^(.*) \(target name did not resolve; inconclusive\)$/, (m) => `${m[1]}（目標名稱無法解析，結果不確定）`],
+];
+/** Chinese rendering of a validator sentence, or null when it is not a known shape. */
+function zh(text: string, rules: Rule[]): string | null {
+  const t = text.trim();
+  if (!t || hasCJK(t)) return null;
+  for (const [re, f] of rules) { const m = t.match(re); if (m) return f(m); }
+  return null;
+}
+/** Chinese first, the original English underneath; unknown text is shown unchanged. */
+function Bi({ text, rules, raw }: { text?: string | null; rules: Rule[]; raw?: boolean }) {
+  if (text === undefined || text === null || text === "") return <span className="muted">—</span>;
+  const s = String(text);
+  // Observations joined with "; " (chain checks) are translated part by part.
+  const parts = s.split("; ");
+  const tr = parts.map((x) => zh(x, rules));
+  if (tr.every((x) => x === null)) {
+    return hasCJK(s) || !raw ? <>{s}</> : <span className="mono" style={{ overflowWrap: "anywhere" }} title="驗證工具的原始輸出">{s}</span>;
+  }
+  return (
+    <>
+      <div>{tr.map((x, i) => x ?? parts[i]).join("；")}</div>
+      <div className="muted" lang="en" style={{ fontSize: 11, overflowWrap: "anywhere" }} title="驗證工具的原始輸出">{s}</div>
+    </>
+  );
+}
 
 const isReport = (x: any): x is ValidationReport => !!x && typeof x === "object" && !!x.levels && Array.isArray(x.checks);
 
@@ -29,13 +90,13 @@ function CheckTable({ checks, actionName }: { checks: ValidationCheck[]; actionN
             <tr key={c.id}>
               <td className="nowrap"><StatusPill status={c.status} /></td>
               <td>
-                <div>{c.name}</div>
+                <div><Bi text={c.name} rules={NAME_RULES} /></div>
                 {c.action_ref && <div className="muted" style={{ fontSize: 12 }}>對應行為：{actionName.get(c.action_ref) ?? c.action_ref}</div>}
               </td>
               <td className="nowrap muted">{CATEGORY[c.category] ?? c.category}</td>
-              <td style={{ fontSize: 12 }}>{c.expected ?? <span className="muted">—</span>}</td>
+              <td style={{ fontSize: 12 }}><Bi text={c.expected} rules={EXPECT_RULES} /></td>
               <td style={{ fontSize: 12 }}>
-                {c.observed ?? <span className="muted">—</span>}
+                <Bi text={c.observed} rules={OBSERVED_RULES} raw />
                 {c.evidence && <details style={{ marginTop: 4 }}><summary className="muted" style={{ cursor: "pointer" }}>佐證輸出</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 200, whiteSpace: "pre-wrap" }}>{c.evidence}</pre></details>}
               </td>
             </tr>
@@ -130,8 +191,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
             <div key={l.key} className="card flush">
               <div className="card-head">
                 <span className="muted mono">{i + 1}</span><h2>{l.title}</h2>
-                <span className="muted mono" style={{ fontSize: 12 }}>{l.key}</span>
-                <div className="right"><StatusPill status={report.levels[l.key]} /></div>
+                                <div className="right"><StatusPill status={report.levels[l.key]} /></div>
               </div>
               <CheckTable checks={byLevel.m[l.key]} actionName={actionName} />
             </div>
@@ -144,10 +204,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
           )}
 
           <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <h2 style={{ margin: 0 }}>擬真度（fidelity）</h2>
+            <h2 style={{ margin: 0 }}>擬真度</h2>
             {!f ? <span className="muted" style={{ fontSize: 13 }}>這份報告沒有提供擬真度評估。</span> : (
               <>
-                {f.summary && <div style={{ fontSize: 13, lineHeight: 1.6 }}>{f.summary}</div>}
+                {f.summary && <div style={{ fontSize: 13, lineHeight: 1.6 }} lang={hasCJK(f.summary) ? undefined : "en"} className={hasCJK(f.summary) ? undefined : "muted"}>{!hasCJK(f.summary) && <span>後端摘要（英文原文）：</span>}{f.summary}</div>}
                 <div className="grid c4">
                   <FidelityList title="已重現" cls="status-PASS" items={f.reproduced} actionName={actionName} />
                   <FidelityList title="部分重現" cls="status-PARTIAL" items={f.partial} actionName={actionName} />

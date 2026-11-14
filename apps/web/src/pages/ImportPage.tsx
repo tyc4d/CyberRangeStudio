@@ -5,6 +5,7 @@ import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, Notice, PageHead } from "../components/ui";
 import { PdfViewer, usePdfSource } from "../components/PdfViewer";
+import { SourceTextViewer, type TextLocateResult, type TextTarget } from "./MissingPage";
 
 type Source = { input_kind: string; source_name: string | null; content: string; sha256: string; chars: number };
 
@@ -54,6 +55,16 @@ export function ImportPage() {
   const reviewing = !!id && !forceNew;
   // Original PDF of the imported scenario, when one was uploaded (source/file answers 200).
   const pdf = usePdfSource(id);
+  // Text-only scenarios: locate a passage the analysis cited inside the imported text.
+  const [textTarget, setTextTarget] = useState<(TextTarget & { evidenceId: string }) | null>(null);
+  const [textHit, setTextHit] = useState<{ evidenceId: string; found: boolean; line?: number } | null>(null);
+  const targetRef = useRef(textTarget);
+  targetRef.current = textTarget;
+  useEffect(() => { setTextTarget(null); setTextHit(null); }, [id]);
+  const onTextLocated = (r: TextLocateResult) => {
+    const t = targetRef.current;
+    if (t && t.seq === r.seq) setTextHit({ evidenceId: t.evidenceId, found: r.found, line: r.line });
+  };
 
   const [name, setName] = useState("");
   const [kind, setKind] = useState<InputKind>("text");
@@ -128,7 +139,7 @@ export function ImportPage() {
     const title = source?.source_name || ir?.name || id || "目前情境";
     const hasPdf = pdf.state === "ready" && !!pdf.data;
     return (
-      <div className="page" style={{ maxWidth: hasPdf ? 1560 : 900 }}>
+      <div className="page" style={{ maxWidth: hasPdf || (source && (ir?.evidence?.length ?? 0) > 0) ? 1560 : 900 }}>
         <PageHead title="情資匯入" desc="此情境已匯入報告。以下為原始匯入內容，供檢視；要分析另一份報告請點「匯入新報告」。" />
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -153,25 +164,71 @@ export function ImportPage() {
             <Notice kind="err">無法載入已匯入內容。後端可能未啟動或該情境不存在。</Notice>
           )}
           {(() => {
-            const text = source && (
-              <label className="field">
-                <span>已匯入報告內容（唯讀）<span className="mono"> · sha256 {source.sha256.slice(0, 12)}…</span></span>
-                <textarea
-                  className={source.input_kind === "stix2.1" ? "mono" : ""}
-                  rows={hasPdf ? 30 : 20} value={source.content} readOnly
-                  style={{ background: "var(--surface-2, transparent)" }}
-                />
-              </label>
+            if (!source) return null;
+            const label = <span className="pdf-hint">已匯入報告內容（唯讀）<span className="mono"> · sha256 {String(source.sha256 ?? "").slice(0, 12)}…</span></span>;
+            if (hasPdf) {
+              // Extracted text (what was analyzed) next to the PDF original (what was uploaded).
+              return (
+                <div className="pdf-split">
+                  <div className="pdf-col">
+                    <label className="field">
+                      {label}
+                      <textarea rows={30} value={source.content} readOnly style={{ background: "var(--surface-2, transparent)" }} />
+                    </label>
+                    <span className="pdf-hint">左側是送去分析的擷取文字，右側是上傳的 PDF 原檔，可對照版面與圖表。</span>
+                  </div>
+                  <div className="pdf-pane"><PdfViewer data={pdf.data!} filename="PDF 原檔" /></div>
+                </div>
+              );
+            }
+            // No PDF: the imported text is the original. Passages the analysis cited can be located in it.
+            const evidence = (ir?.id === id ? ir?.evidence ?? [] : []).filter((e) => typeof e?.quote === "string" && e.quote.trim());
+            const viewer = (
+              <SourceTextViewer text={source.content} title={source.source_name || "匯入的原文"} mono={source.input_kind === "stix2.1"}
+                target={textTarget} onLocated={onTextLocated} />
             );
-            if (!hasPdf) return text;
-            // Extracted text (what was analyzed) next to the PDF original (what was uploaded).
+            const noPdfNote = pdf.state === "loading" ? null : (
+              <span className="pdf-hint">
+                {pdf.state === "error" ? "無法確認此情境是否有 PDF 原檔（後端未回應）；以下是匯入的文字原文。" : "此情境以文字匯入，沒有 PDF 原檔；以下就是送去分析的原文。"}
+              </span>
+            );
+            if (evidence.length === 0) {
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {noPdfNote}{label}
+                  <div style={{ height: "60dvh", minHeight: 320, display: "flex", flexDirection: "column" }}>{viewer}</div>
+                  <span className="pdf-hint">分析沒有為這份內容留下原文引文，所以沒有可定位的段落。</span>
+                </div>
+              );
+            }
             return (
               <div className="pdf-split">
-                <div className="pdf-col">
-                  {text}
-                  <span className="pdf-hint">左側是送去分析的擷取文字，右側是上傳的 PDF 原檔，可對照版面與圖表。</span>
+                <div className="pdf-col" style={{ gap: 8 }}>
+                  {noPdfNote}
+                  <span className="pdf-hint">分析引用的原文段落（{evidence.length}）。點一段會在右側原文中標示；只做整段比對，找不到就如實顯示。</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: "62dvh", overflow: "auto" }}>
+                    {evidence.map((e) => {
+                      const on = textTarget?.evidenceId === e.id;
+                      const hit = textHit?.evidenceId === e.id ? textHit : null;
+                      return (
+                        <button key={e.id} data-testid="import-evidence" aria-pressed={on}
+                          onClick={() => {
+                            const matched = (e as unknown as { matched_text?: unknown }).matched_text;
+                            setTextTarget((prev) => ({ evidenceId: e.id, quote: e.quote, alts: typeof matched === "string" && matched.trim() ? [matched] : undefined, seq: (prev?.seq ?? 0) + 1 }));
+                          }}
+                          style={{ display: "block", width: "100%", flex: "none", textAlign: "left", whiteSpace: "normal", height: "auto", minHeight: 0, padding: "8px 10px", fontSize: 13, lineHeight: 1.5, borderColor: on ? "var(--accent)" : undefined }}>
+                          「{e.quote.length > 220 ? `${e.quote.slice(0, 220)}…` : e.quote}」
+                          {hit && (
+                            <span className="muted" role="status" style={{ display: "block", fontSize: 12, marginTop: 4 }}>
+                              {hit.found ? `已在原文${hit.line ? `第 ${hit.line} 行` : ""}標示。` : "在匯入的原文中找不到完全相符的文字，未標示。"}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="pdf-pane"><PdfViewer data={pdf.data!} filename="PDF 原檔" /></div>
+                <div className="pdf-pane">{label}{viewer}</div>
               </div>
             );
           })()}
