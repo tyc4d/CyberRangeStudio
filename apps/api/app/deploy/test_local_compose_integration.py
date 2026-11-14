@@ -422,6 +422,27 @@ class HostIsolationIntegrationTests(unittest.TestCase):
                             _BASE_IMAGE, "python", "-c", self.PROBE, str(port), ",".join(host_ips)], timeout=180)
                         self.assertEqual(probe["returncode"], 0, probe["stderr"])
                         self.assertEqual(probe["stdout"].strip(), "HOST_UNREACHABLE", f"{service}: {probe['stdout']}")
+                    # 2b. the forwarder must not be usable from inside the lab: a lab container
+                    #     connecting to cr-gateway's forwarding port (by name and on every
+                    #     address the gateway owns) must fail, or it could hop segments.
+                    project = manager.project_name(scenario_id)
+                    inspected = manager._run(["docker", "inspect", "-f",
+                                              "{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}",
+                                              f"{project}-cr-gateway"], timeout=15)
+                    gateway_targets = ["cr-gateway", *inspected["stdout"].split()]
+                    self.assertGreaterEqual(len(gateway_targets), 3)  # name + edge address + lab address
+                    hop = manager._run([
+                        "docker", "run", "--rm", "--pull=never", "--network", f"container:{project}-demo-client",
+                        "--cap-drop=ALL", _BASE_IMAGE, "python", "-c",
+                        "import socket,sys\n"
+                        "hit=[]\n"
+                        "for t in sys.argv[1].split(','):\n"
+                        " try:\n"
+                        "  socket.create_connection((t,20000),3).close(); hit.append(t)\n"
+                        " except OSError: pass\n"
+                        "print('REACHED:'+','.join(hit) if hit else 'FORWARDER_UNREACHABLE')\n",
+                        ",".join(gateway_targets)], timeout=120)
+                    self.assertEqual(hop["stdout"].strip(), "FORWARDER_UNREACHABLE", hop["stdout"] + hop["stderr"])
                     # 3. publishing still works, through the forwarder only
                     published = up["published_ports"][0]
                     import urllib.request

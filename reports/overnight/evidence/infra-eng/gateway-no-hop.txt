@@ -1,0 +1,34 @@
+# reviewer G1 scenario: web on 'outer', web2 on 'inner', both published through cr-gateway; plan says web -> web2 is blocked
+up_1 200 17.5s attempts= [{'attempt': 1, 'exit_code': 0, 'host_ports': {'CR_HOSTPORT_0': 42586, 'CR_HOSTPORT_1': 42587}}] [('attacker', 'running', '', []), ('cr-gateway', 'running', 'healthy', [42586, 42587]), ('web', 'running', 'healthy', []), ('web2', 'running', 'healthy', [])]
+    segmentation-1 PASS | probed web2=172.29.0.2:80 from web; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable
+    segmentation-2 PASS | probed web=172.26.0.1:9999 from attacker; 連線遭拒（BLOCKED:）：ConnectionRefusedError:[Errno 111] Connection refused
+cr-gateway addresses: cr-demo-infra-eng-08e65241-edge=192.168.48.2 cr-demo-infra-eng-08e65241-inner=172.29.0.1 cr-demo-infra-eng-08e65241-outer=172.26.0.2 
+cr-gateway listening sockets: 127.0.0.11:35825 192.168.48.2:20000 192.168.48.2:20001 
+## from lab containers: try both forwarding ports on the gateway by name and on each of its addresses
+  web -> cr-gateway:20000 blocked ConnectionRefusedError
+  web -> cr-gateway:20001 blocked ConnectionRefusedError
+  web -> 192.168.48.2:20000 blocked OSError
+  web -> 192.168.48.2:20001 blocked OSError
+  web -> 172.29.0.1:20000 blocked OSError
+  web -> 172.29.0.1:20001 blocked OSError
+  web -> 172.26.0.2:20000 blocked ConnectionRefusedError
+  web -> 172.26.0.2:20001 blocked ConnectionRefusedError
+  web2 -> cr-gateway:20000 blocked ConnectionRefusedError
+  web2 -> cr-gateway:20001 blocked ConnectionRefusedError
+  web2 -> 192.168.48.2:20000 blocked OSError
+  web2 -> 192.168.48.2:20001 blocked OSError
+  web2 -> 172.29.0.1:20000 blocked ConnectionRefusedError
+  web2 -> 172.29.0.1:20001 blocked ConnectionRefusedError
+  web2 -> 172.26.0.2:20000 blocked OSError
+  web2 -> 172.26.0.2:20001 blocked OSError
+  attacker -> cr-gateway:20000 blocked ConnectionRefusedError
+  attacker -> cr-gateway:20001 blocked ConnectionRefusedError
+  attacker -> 192.168.48.2:20000 blocked OSError
+  attacker -> 192.168.48.2:20001 blocked OSError
+  attacker -> 172.29.0.1:20000 blocked OSError
+  attacker -> 172.29.0.1:20001 blocked OSError
+  attacker -> 172.26.0.2:20000 blocked ConnectionRefusedError
+  attacker -> 172.26.0.2:20001 blocked ConnectionRefusedError
+## host published ports still answer
+  127.0.0.1:42586 http=200
+  127.0.0.1:42587 http=200
