@@ -91,7 +91,7 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 
 `qa-fixes`＋`motion`：13 passed；`tsc`、`npm run build` 通過。
 
-## 完整 `npm run e2e` 結果（未通過）
+## 完整 `npm run e2e` 歷程（第 1～3 次未通過；最新結果見「批次 7」）
 
 | 執行 | 後端 | 結果 |
 |---|---|---|
@@ -110,13 +110,37 @@ CR_ENV_FILE=/home/tyc4d/cr-project/.env CR_BUDGET_HARD_CAP_USD=5 CR_BUDGET_STOP_
 - 證據：`reports/overnight/evidence/frontend-eng/full-e2e/`（兩次的輸出、run-log、失敗截圖）。
 - 注意：本分支現在含 scenario-eng 的提交（merge ec09258），整合時請留意。
 
+## 批次 7（commit 47dc5d2）＋最新完整 e2e
+
+- 分析頁：行為若被後端標為 `hedged` 顯示「原文語氣不確定」；列出「未納入攻擊流程的行為」（防守方動作）與被丟棄的 unknown 佔位主機數。**這三項沒有用真實資料看過畫面**：我在自己的站台對 CISA 樣本做了一次真實分析（約 $0.06），結果 hedged、excluded 都是空的。
+- 分析頁關係的「判定依據」：同一次真實分析有 7 條，畫面顯示 7 條（截圖 14，一次性檢查，沒有留成常駐測試）。
+- 拓樸：推定入口主機顯示「推定入口・待確認」、不可部署主機顯示「不可部署」。前者 e2e 通過（截圖 13）；後者無 e2e。
+- `full-flow.spec.ts` 的報告步驟原本找標題「擬真度（fidelity）」，頁面是「擬真度」；已把測試改成找「擬真度」（Lead 指示，字樣對齊，其餘斷言未動）。
+
+### 合併 agent/scenario-eng e0484e8（含 df080a2）後，merge 4322fd6
+
+| 執行 | 結果 |
+|---|---|
+| 後端 pytest | 126 passed |
+| `npm run e2e` 第 4 次 | 15 passed／1 failed。full-flow 兩段都通過（真實部署、驗證、清理）。失敗的是我的「導覽列缺失數一致」：整頁空白、標題沒出現 |
+| 該項單獨重跑 5 次 | 5 passed |
+| `npm run e2e` 第 5 次 | **16 passed，exit 0** |
+
+- 那一次空白頁**原因沒有查明**，只知道無法穩定重現（6 次中 1 次）。更早 `motion` 也出現過一次單次失敗、重跑通過。請當作已知的偶發問題，不是已解決。
+- 第 5 次的驗證層級（後端回報）：`env_build=PASS`、`behavior_repro=PASS`、`full_chain=PARTIAL`。完整攻擊鏈不是 PASS。清理後沒有 `cr-demo-scn*` 容器。
+- `motion.spec.ts` 取「最新的情境」來測；最新的若是大型情境（我那次 17 步的真實分析）它會失敗。這是測試對資料的依賴，我沒有改它。
+- 第 1～3 次記錄的阻塞（替代方案無法掛回主機、1 項單元測試失敗）：demo 流程在這版後端已能部署、單元測試已全過；但「手動選替代方案」那條路我沒有在新版重測。
+- 證據：`reports/overnight/evidence/frontend-eng/full-e2e/`（run4、run5 的輸出與 run-log）。
+
 ## 尚未完成
 
-- 完整 `npm run e2e` 尚未通過（見上）；部署／驗證段在本輪從未被 e2e 執行到。
-- 422 白話訊息、部署 up／down 失敗的精簡顯示（CommandFailure）沒有 e2e 覆蓋，也沒有用真實失敗看過畫面。
+- 沒有 e2e、也沒用真實情況看過畫面的：422 白話訊息、部署 up／down 失敗的精簡顯示、部署紀錄「完整輸出」展開、健康檢查說明、hedged／被排除行為／丟棄佔位主機、主機「不可部署」標記、英文缺失原因、缺失卡片無中文問題時的標題。
+- 流程儲存新版本後，舊拓樸仍顯示「已核准」：需後端在規劃上記錄來源版本，前端未修。
+- 設計檢查對「目標主機是 unknown」不提醒：屬新增檢查項目，未自行加。
+- UX-06 只測了「1280×720 進頁後展開設計檢查」，沒測「先展開再縮小視窗」。
+- 需後端／產品：手動選替代方案後的服務歸屬（未在新版重測）、ADM-01 主機埠（main 已合 infra 動態埠，未重測）、ADM-02／03、ADM-08。
 
 ## 目前狀態
 
-- 自己的 API(8131)／Vite(5181)：寫這段時仍在跑，收工時會關。本輪從未成功部署，沒有容器。
-- 還沒做（前端可做）：hedged／exposure_basis／排除的非攻擊者行為的顯示；流程儲存後舊拓樸仍顯示已核准（需後端在規劃記錄來源版本）；設計檢查對 unknown 目標主機不提醒。
-- 需後端／產品：替代方案無法掛回原主機（full-flow 阻塞）、上述 1 項單元測試失敗、ADM-01 主機埠（main 已合 infra 的動態埠，未重測）、ADM-02／03。
+- 分支 `agent/frontend-eng` 含 scenario-eng 的提交（merge ec09258、080e381、4322fd6），整合時請留意。
+- 自己的 API(8131)／Vite(5181) 收工時關閉；e2e 部署的容器已由測試清理。OpenAI 花費（自己站台的本地估計）約 $0.1，上限設 $5。

@@ -1,0 +1,29 @@
+# FINAL DESIGN — real deployments. Host sshd listens on 0.0.0.0:22 and [::]:22.
+scenario infra-eng-70aa930f
+up_1 200 27.5s attempts= [{'attempt': 1, 'exit_code': 0, 'host_ports': {}}] [('attacker', 'running', '', []), ('db-dispute', 'running', 'healthy', []), ('db-other-1', 'running', 'healthy', []), ('db-other-2', 'running', 'healthy', []), ('portal', 'running', 'healthy', [])]
+validate_1 200 {'env_build': 'PASS', 'behavior_repro': 'PASS', 'full_chain': 'PARTIAL'}
+  isolation_preflight: {'ok': True, 'docker_version': '29.5.2', 'host_isolation_supported': True, 'vulnerable_hosts': ['portal']}
+  host_isolation.isolated = True
+     {'network': 'data', 'bridge': 'br-35e64ac46e31', 'host_address': None, 'role': 'lab', 'host_reachable_from_containers': False}
+     {'network': 'dmz', 'bridge': 'br-cccf64c17b25', 'host_address': None, 'role': 'lab', 'host_reachable_from_containers': False}
+  published_ports: []
+scenario infra-eng-b164bab5
+up_1 200 23.2s attempts= [{'attempt': 1, 'exit_code': 0, 'host_ports': {'CR_HOSTPORT_0': 42379}}] [('attacker', 'running', '', []), ('cr-gateway', 'running', 'healthy', [42379]), ('db', 'running', 'healthy', []), ('web', 'running', 'healthy', [])]
+validate_1 200 {'env_build': 'PASS', 'behavior_repro': 'NOT_TESTED', 'full_chain': 'PARTIAL'}
+  isolation_preflight: {'ok': True, 'docker_version': '29.5.2', 'host_isolation_supported': True, 'vulnerable_hosts': []}
+  host_isolation.isolated = True
+     {'network': 'edge', 'bridge': 'br-6c58366fbb4f', 'host_address': '172.29.0.1', 'role': 'publishing (gateway container only)', 'host_reachable_from_containers': True}
+     {'network': 'external', 'bridge': 'br-fbda498bf180', 'host_address': None, 'role': 'lab', 'host_reachable_from_containers': False}
+     {'network': 'scenario-internal', 'bridge': 'br-ce4ee57e27e6', 'host_address': None, 'role': 'lab', 'host_reachable_from_containers': False}
+  published_ports: [{'host_id': 'web', 'container_port': 80, 'host_ip': '127.0.0.1', 'host_port': 42379}]
+## from inside every lab container (netns of the real container, root, all host IPv4 addresses, port 22)
+  cr-demo-infra-eng-70aa930f-portal: RESULT HOST_UNREACHABLE 
+  cr-demo-infra-eng-70aa930f-attacker: RESULT HOST_UNREACHABLE 
+  cr-demo-infra-eng-70aa930f-db-dispute: RESULT HOST_UNREACHABLE 
+  cr-demo-infra-eng-b164bab5-web: RESULT HOST_UNREACHABLE 
+  cr-demo-infra-eng-b164bab5-db: RESULT HOST_UNREACHABLE 
+  cr-demo-infra-eng-b164bab5-attacker: RESULT HOST_UNREACHABLE 
+## the only container with a path to the host is the trusted forwarder (expected, documented residual)
+  cr-demo-infra-eng-b164bab5-cr-gateway: 20 host addresses reachable; image=python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+## published WordPress through the forwarder
+  host -> 127.0.0.1:42379/wp-login.php http=302

@@ -305,3 +305,135 @@ class HostPortAllocationTests(unittest.TestCase):
         values = [int(v) for v in assigned.values()]
         self.assertEqual(len(set(values)), 2)
         self.assertTrue(all(42000 <= v <= 42999 for v in values))
+
+
+class IsolationPreflightTests(unittest.TestCase):
+    def _preflight(self, version, vulnerable):
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "vulnerable_hosts", return_value=vulnerable), \
+                patch.object(manager, "_run", return_value={"returncode": 0, "stdout": version + "\n", "stderr": ""}):
+            return manager.isolation_preflight("pre")
+
+    def test_old_engine_refuses_vulnerable_images_and_warns_otherwise(self):
+        refused = self._preflight("27.5.1", ["portal"])
+        self.assertFalse(refused["ok"])
+        self.assertIn("portal", refused["reason"])
+        warned = self._preflight("27.5.1", [])
+        self.assertTrue(warned["ok"])
+        self.assertFalse(warned["host_isolation_supported"])
+        self.assertIn("risk", warned)
+
+    def test_current_engine_allows_vulnerable_images(self):
+        allowed = self._preflight("29.5.2", ["portal"])
+        self.assertTrue(allowed["ok"])
+        self.assertTrue(allowed["host_isolation_supported"])
+
+    def test_up_is_rejected_before_any_container_is_created(self):
+        calls = []
+        with patch.object(manager, "isolation_preflight", return_value={
+                    "ok": False, "vulnerable_hosts": ["portal"], "reason": "refusing"}), \
+                patch.object(manager, "_compose_command", side_effect=lambda *a, **k: calls.append(a)), \
+                patch.object(manager, "record", side_effect=lambda s, a, st, d: {"state": st}):
+            result = manager.do_up("pre")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["deployment_record"]["state"], "rejected")
+        self.assertEqual(calls, [])
+
+    def test_vulnerable_deployment_is_removed_when_networks_turn_out_not_isolated(self):
+        ops = []
+
+        def fake_compose(scenario_id, operation, extra=None, timeout=60, **kwargs):
+            ops.append(operation)
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        running = {"scenario_id": "pre", "project_name": "cr-demo-pre", "state": "running", "error": None,
+                   "containers": [{"service": "portal", "name": "cr-demo-pre-portal", "state": "running", "health": "healthy"}]}
+        gone = {**running, "state": "not_created", "containers": []}
+        with patch.object(manager, "isolation_preflight", return_value={"ok": True, "vulnerable_hosts": ["portal"]}), \
+                patch.object(manager, "allocate_host_ports", return_value={}), \
+                patch.object(manager, "_compose_command", side_effect=fake_compose), \
+                patch.object(manager, "live_containers", side_effect=lambda sid: gone if "down" in ops else running), \
+                patch.object(manager, "host_isolation_report", return_value={
+                    "isolated": False, "networks": [{"network": "data", "host_address": "172.26.0.1"}]}), \
+                patch.object(manager, "record", side_effect=lambda s, a, st, d: {"state": st}):
+            result = manager.do_up("pre")
+        self.assertFalse(result["ok"])
+        self.assertEqual(ops, ["up", "down"])
+        self.assertIn("not isolated from the host", result["command_result"]["stderr"])
+
+
+class HostIsolationIntegrationTests(unittest.TestCase):
+    """Real Docker: a lab container must not reach a service the host binds on all interfaces."""
+
+    PROBE = (
+        "import socket,sys\n"
+        "own={i[4][0] for i in socket.getaddrinfo(socket.gethostname(),None,socket.AF_INET)}\n"
+        "hit=[]\n"
+        "for ip in sys.argv[2].split(','):\n"
+        " if ip in own: continue\n"
+        " s=socket.socket(); s.settimeout(2)\n"
+        " try:\n"
+        "  s.connect((ip,int(sys.argv[1]))); hit.append(ip)\n"
+        " except OSError: pass\n"
+        " finally: s.close()\n"
+        "print('REACHED:'+','.join(hit) if hit else 'HOST_UNREACHABLE')\n"
+    )
+
+    def test_container_on_generated_lab_network_cannot_reach_a_host_service(self):
+        import socket
+        import subprocess
+        _docker_ready_or_skip()
+        scenario_id = f"infra-iso-{uuid.uuid4().hex[:8]}"
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.bind(("0.0.0.0", 0))  # stands in for sshd on :22 — bound on every interface
+        listener.listen(8)
+        port = listener.getsockname()[1]
+        with tempfile.TemporaryDirectory(prefix="cr-demo-test-") as temporary:
+            data_dir = Path(temporary) / "data"
+            data_dir.mkdir()
+            with patch.object(config, "DATA_DIR", data_dir), patch.object(store, "_DB", data_dir / "scenarios.db"):
+                store.create({
+                    "schema_version": "1.0", "id": scenario_id, "name": "host isolation check",
+                    "provenance": {"input_kind": "text", "input_sha256": "0" * 64}, "actions": [], "relations": [],
+                    "environment_plan": {
+                        "hosts": [
+                            {"id": "demo-api", "role": "exposed demo-api", "image_hint": "demo-api",
+                             "services": [{"name": "http", "port": 8080, "protocol": "tcp"}], "networks": ["outside"]},
+                            {"id": "demo-client", "role": "demo-client", "image_hint": "demo-client", "networks": ["outside"]},
+                        ],
+                        "networks": [{"id": "outside", "internal": False}],
+                        "connections": [{"from_host": "demo-client", "to_host": "demo-api", "port": 8080, "protocol": "tcp"}],
+                        "approval": {"approved": True},
+                    },
+                })
+                from app.iac import generator
+                output_dir = generated_dir(scenario_id, create=False)
+                try:
+                    generator.generate(scenario_id)
+                    up = manager.do_up(scenario_id)
+                    self.assertTrue(up["ok"], up.get("error"))
+                    # 1. the engine-level fact: no lab bridge has a host address
+                    self.assertTrue(up["host_isolation"]["isolated"], up["host_isolation"])
+                    # 2. the behaviour: from inside each lab container, try the listener on
+                    #    every IPv4 address the host owns
+                    addresses = subprocess.run(["ip", "-4", "-o", "addr", "show"], capture_output=True, text=True).stdout
+                    host_ips = sorted({line.split()[3].split("/")[0] for line in addresses.splitlines()} - {"127.0.0.1"})
+                    self.assertTrue(host_ips)
+                    for service in ("demo-api", "demo-client"):
+                        probe = manager._run([
+                            "docker", "run", "--rm", "--pull=never", "--network",
+                            f"container:{manager.project_name(scenario_id)}-{service}", "--cap-drop=ALL",
+                            _BASE_IMAGE, "python", "-c", self.PROBE, str(port), ",".join(host_ips)], timeout=180)
+                        self.assertEqual(probe["returncode"], 0, probe["stderr"])
+                        self.assertEqual(probe["stdout"].strip(), "HOST_UNREACHABLE", f"{service}: {probe['stdout']}")
+                    # 3. publishing still works, through the forwarder only
+                    published = up["published_ports"][0]
+                    import urllib.request
+                    body = urllib.request.urlopen(
+                        f"http://127.0.0.1:{published['host_port']}/demo", timeout=10).read().decode()
+                    self.assertEqual(body, "cr-demo-demo-ok")
+                finally:
+                    listener.close()
+                    manager.do_down(scenario_id)
+                    if output_dir.exists() and not output_dir.is_symlink():
+                        shutil.rmtree(output_dir)

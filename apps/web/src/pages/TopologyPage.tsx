@@ -22,6 +22,9 @@ function NetworkNode({ data }: NodeProps<{ net: EnvNetwork }>) {
     </div>
   );
 }
+/** Plan-host fields the backend writes that the shared TS type may not list yet. */
+type HostX = EnvHost & { exposure_basis?: string; deployable?: boolean };
+
 function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
   const h = data.host;
   return (
@@ -34,6 +37,8 @@ function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
       {h.image_hint && <div className="mono muted" style={{ marginBottom: 4, overflowWrap: "anywhere" }}>{h.image_hint}</div>}
       <div className="meta">
         {h.services?.map((s, i) => <span key={i} className="tag" title={s.protocol ?? "tcp"}>{s.name}:{s.port}</span>)}
+        {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title="原文沒有寫這台主機的網路位置；規劃把它推定為對外的入侵入口，核准前請確認">推定入口・待確認</span>}
+        {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title="元件目錄無法部署這台主機需要的軟體，也沒有用其他軟體頂替">不可部署</span>}
       </div>
       </article>
       <Handle type="source" position={Position.Right} id="r" isConnectable={false} />

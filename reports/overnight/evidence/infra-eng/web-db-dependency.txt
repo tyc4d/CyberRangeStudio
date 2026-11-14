@@ -1,0 +1,12 @@
+## 1. baseline (DB up): web answers through a real DB handshake
+  attacker -> http://web/wp-login.php : 302 
+## 2. the web container holds the generated DB settings (password value not printed)
+  WORDPRESS_DB_HOST=db:3306 WORDPRESS_DB_USER=app password_set=yes
+## 3. the DB sees the web tier's credentials work (query run inside db with the same generated secret)
+  connected as app@% to schema app
+## 4. stop the DB container
+  db stopped
+  attacker -> http://web/wp-login.php : 500 
+## 5. start the DB again and wait until it is healthy
+  db health: healthy
+  attacker -> http://web/wp-login.php : 302 

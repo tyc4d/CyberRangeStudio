@@ -36,6 +36,42 @@ _EDGE_DRIVER_OPTS = {"com.docker.network.bridge.enable_icc": "false",
                      "com.docker.network.bridge.enable_ip_masquerade": "false"}
 
 
+# Plan networks carry lab traffic only. With gateway mode "isolated" Docker gives the
+# host-side bridge no address, so a lab container cannot reach services the host binds
+# on all interfaces (sshd, other projects) through the bridge. Requires Docker >= 28.
+_INTERNAL_DRIVER_OPTS = {"com.docker.network.bridge.gateway_mode_ipv4": "isolated"}
+# The only container allowed on the edge network. It forwards each published host port
+# to one fixed lab service, so lab services themselves never sit on a bridge that has
+# a route to the host or the outside.
+GATEWAY_SERVICE = "cr-gateway"
+_GATEWAY_LISTEN_BASE = 20000
+_GATEWAY_FORWARDER = (
+    "import asyncio,sys\n"
+    "async def pipe(r,w):\n"
+    " try:\n"
+    "  while True:\n"
+    "   d=await r.read(65536)\n"
+    "   if not d: break\n"
+    "   w.write(d); await w.drain()\n"
+    " except Exception: pass\n"
+    " finally:\n"
+    "  try: w.close()\n"
+    "  except Exception: pass\n"
+    "async def serve(lp,h,p):\n"
+    " async def handle(r,w):\n"
+    "  try: r2,w2=await asyncio.wait_for(asyncio.open_connection(h,p),5)\n"
+    "  except Exception:\n"
+    "   w.close(); return\n"
+    "  await asyncio.gather(pipe(r,w2),pipe(r2,w))\n"
+    " s=await asyncio.start_server(handle,'0.0.0.0',lp)\n"
+    " await s.serve_forever()\n"
+    "async def main():\n"
+    " rules=[a.split('=',1) for a in sys.argv[1:]]\n"
+    " await asyncio.gather(*[serve(int(lp),t.rsplit(':',1)[0],int(t.rsplit(':',1)[1])) for lp,t in rules])\n"
+    "asyncio.run(main())\n"
+)
+
+
 def hostport_env(index: int) -> str:
     return f"CR_HOSTPORT_{index}"
 
@@ -178,6 +214,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             errors.append(f"invalid host id: {host_id!r}")
         if host_id in host_ids:
             errors.append(f"duplicate host id: {host_id}")
+        if host_id == GATEWAY_SERVICE:
+            errors.append(f"host id {GATEWAY_SERVICE!r} is reserved for the generated publishing gateway")
         host_ids.add(host_id)
         runtime = host.get("runtime")
         catalogue_hint = (host.get("image_hint") or "").strip().lower()
@@ -305,7 +343,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                     # host_port is only the default; the deploy runtime picks a free port in
                     # the same range and passes it through the named environment variable.
                     mappings.append({"host_id": host_id, "container_port": port, "host_port": host_port,
-                                     "env": hostport_env(len(mappings))})
+                                     "env": hostport_env(len(mappings)), "via": GATEWAY_SERVICE})
                     next_published_port += 1
                     host_report["published"] = True
             elif component == "demo-client":
@@ -378,6 +416,9 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "vms": vm_definitions,
         "host_port_mappings": mappings,
         "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+        "publishing": (f"published ports terminate on the generated {GATEWAY_SERVICE} forwarder; lab services "
+                       "are attached to internal networks only" if mappings else "nothing is published on the host"),
+        "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
         "networks": [
             {"id": n.get("id"), "name": f"cr-demo-{scenario_id}-{n.get('id')}",
              "internal": True, "plan_internal": bool(n.get("internal", True))}
@@ -457,17 +498,6 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
         else:
             raise PlanError([f"host {host_id} could not be resolved to a supported component"])
 
-        if component in {"demo-api", "real"}:
-            service_ports = []
-            for mapping in ports_by_host.get(host_id, []):
-                service_ports.append({
-                    "target": mapping["container_port"],
-                    "published": "${%s:-%d}" % (mapping["env"], mapping["host_port"]),
-                    "host_ip": "${CR_BIND_IP:-127.0.0.1}", "protocol": "tcp",
-                })
-            if service_ports:
-                service["ports"] = service_ports
-                service["expose"] = [str(p["target"]) for p in service_ports]
         service.update(limits)
         service_doc[host_id] = service
 
@@ -500,21 +530,46 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
         if wanted:
             service_doc[host_id]["depends_on"] = wanted
 
-    edge_network = _EDGE_NETWORK
-    for host_id in ports_by_host:
-        if edge_network not in service_doc[host_id]["networks"]:
-            service_doc[host_id]["networks"].append(edge_network)
     document = {
         "name": f"cr-demo-{scenario_id}",
         "x-cr-test-approval-required": "POST /api/deploy/{id}/up with {\"test_approved\": true}",
         "services": service_doc,
         "networks": {
-            network_id: {"name": network_names[network_id], "internal": True}
+            network_id: {"name": network_names[network_id], "internal": True,
+                         "driver_opts": dict(_INTERNAL_DRIVER_OPTS)}
             for network_id in sorted(network_names)
         },
     }
-    if ports_by_host:
-        document["networks"][edge_network] = {
+    if normalized["mappings"]:
+        hosts_by_id = {host["id"]: host for host in normalized["hosts"]}
+        gateway_networks = [_EDGE_NETWORK]
+        rules, gateway_ports = [], []
+        for index, mapping in enumerate(normalized["mappings"]):
+            listen = _GATEWAY_LISTEN_BASE + index
+            rules.append(f"{listen}={mapping['host_id']}:{mapping['container_port']}")
+            gateway_ports.append({"target": listen, "published": "${%s:-%d}" % (mapping["env"], mapping["host_port"]),
+                                  "host_ip": "${CR_BIND_IP:-127.0.0.1}", "protocol": "tcp"})
+            target_network = hosts_by_id[mapping["host_id"]]["networks"][0]
+            if target_network not in gateway_networks:
+                gateway_networks.append(target_network)
+        service_doc[GATEWAY_SERVICE] = {
+            "container_name": f"cr-demo-{scenario_id}-{GATEWAY_SERVICE}",
+            "image": _DEMO_IMAGE,
+            "command": ["python", "-c", _GATEWAY_FORWARDER, *rules],
+            "networks": gateway_networks,
+            "ports": gateway_ports,
+            "read_only": True,
+            "tmpfs": ["/tmp:rw,noexec,nosuid,size=16m"],
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "restart": "no",
+            "user": "65532:65532",
+            "healthcheck": {"test": ["CMD", "python", "-c",
+                                     f"import socket; socket.create_connection(('127.0.0.1',{_GATEWAY_LISTEN_BASE}),2).close()"],
+                            "interval": "5s", "timeout": "3s", "retries": 6},
+            **_DEMO_LIMITS,
+        }
+        document["networks"][_EDGE_NETWORK] = {
             "name": f"cr-demo-{scenario_id}-edge", "internal": False,
             "driver_opts": dict(_EDGE_DRIVER_OPTS),
         }
@@ -569,10 +624,13 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
             if (not published or not _PUBLISHED_PORT_MIN <= int(published.group(2)) <= _PUBLISHED_PORT_MAX
                     or port.get("host_ip") != "${CR_BIND_IP:-127.0.0.1}"):
                 raise PlanError([f"service {service_name} has an unsafe published port"])
-        if service.get("ports") and _EDGE_NETWORK not in service.get("networks", []):
-            raise PlanError([f"service {service_name} publishes a port without the edge network"])
-        if _EDGE_NETWORK in service.get("networks", []) and not service.get("ports"):
-            raise PlanError([f"service {service_name} joins the edge network without publishing a port"])
+        on_edge = _EDGE_NETWORK in service.get("networks", [])
+        if (service.get("ports") or on_edge) and service_name != GATEWAY_SERVICE:
+            raise PlanError([f"service {service_name} may not publish ports or join the edge network; "
+                             f"only {GATEWAY_SERVICE} may"])
+        if service_name == GATEWAY_SERVICE and (not on_edge or not service.get("ports")
+                                                or service.get("image") != _DEMO_IMAGE):
+            raise PlanError([f"{GATEWAY_SERVICE} must be the pinned forwarder on the edge network"])
     for network_id, network in doc.get("networks", {}).items():
         name = network.get("name", "")
         if not name.startswith(f"cr-demo-{scenario_id}-"):
@@ -580,8 +638,8 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
         if network_id == _EDGE_NETWORK:
             if network.get("internal") is not False or network.get("driver_opts") != _EDGE_DRIVER_OPTS:
                 raise PlanError(["the edge network must disable inter-container traffic and outbound NAT"])
-        elif network.get("internal") is not True:
-            raise PlanError(["only the edge network may be non-internal"])
+        elif network.get("internal") is not True or network.get("driver_opts") != _INTERNAL_DRIVER_OPTS:
+            raise PlanError(["plan networks must be internal with an isolated (address-less) host gateway"])
 
 
 def generate(scenario_id: str) -> dict[str, Any]:
