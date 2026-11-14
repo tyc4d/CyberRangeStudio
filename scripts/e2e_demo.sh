@@ -5,7 +5,7 @@
 set -u
 API="${API:-http://localhost:8077}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REPORT="$ROOT/fixtures/sample-scenarios/demo-intrusion.md"
+REPORT="${REPORT:-$ROOT/fixtures/sample-scenarios/demo-intrusion.md}"
 OUT="${OUT:-$ROOT/docs/e2e-evidence}"
 mkdir -p "$OUT"
 jqp() { python3 -c "import sys,json;d=json.load(sys.stdin);print($1)"; }

@@ -1,86 +1,64 @@
 # CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
-name: cr-demo-scn_850a566c7a91
+name: cr-demo-scn_6191bb05b5aa
 x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
 services:
   victim_web:
-    container_name: cr-demo-scn_850a566c7a91-victim_web
+    container_name: cr-demo-scn_6191bb05b5aa-victim_web
     networks:
     - scenario-internal
     - external
+    - edge
     read_only: true
     tmpfs:
     - /tmp:rw,noexec,nosuid,size=16m
+    - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755
+    - /var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755
+    - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755
     cap_drop:
     - ALL
     security_opt:
     - no-new-privileges:true
     restart: 'no'
-    image: cr-demo-scn_850a566c7a91-victim_web:local
-    build:
-      context: ../../templates/demo-app
-      dockerfile: Dockerfile
-      pull: false
-    environment:
-      PORT: '80'
-    user: 10001:10001
-    healthcheck:
-      test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health',
-        timeout=2).read()
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 2s
+    image: nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82
+    cap_add:
+    - NET_BIND_SERVICE
+    user: 101:101
     ports:
     - target: 80
       published: '42000'
-      host_ip: 127.0.0.1
+      host_ip: ${CR_BIND_IP:-127.0.0.1}
       protocol: tcp
     expose:
     - '80'
   db:
-    container_name: cr-demo-scn_850a566c7a91-db
+    container_name: cr-demo-scn_6191bb05b5aa-db
     networks:
     - scenario-internal
+    - edge
     read_only: true
     tmpfs:
     - /tmp:rw,noexec,nosuid,size=16m
+    - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700
+    - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700
     cap_drop:
     - ALL
     security_opt:
     - no-new-privileges:true
     restart: 'no'
-    image: cr-demo-scn_850a566c7a91-db:local
-    build:
-      context: ../../templates/demo-app
-      dockerfile: Dockerfile
-      pull: false
+    image: postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2
     environment:
-      PORT: '5432'
-    user: 10001:10001
-    healthcheck:
-      test:
-      - CMD
-      - python
-      - -c
-      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5432/health',
-        timeout=2).read()
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 2s
+      POSTGRES_PASSWORD: ${CR_PG_PASSWORD:?set at deploy time}
+      POSTGRES_HOST_AUTH_METHOD: ${CR_PG_AUTH_METHOD:-trust}
+    user: 70:70
     ports:
     - target: 5432
       published: '42001'
-      host_ip: 127.0.0.1
+      host_ip: ${CR_BIND_IP:-127.0.0.1}
       protocol: tcp
     expose:
     - '5432'
   attacker:
-    container_name: cr-demo-scn_850a566c7a91-attacker
+    container_name: cr-demo-scn_6191bb05b5aa-attacker
     networks:
     - external
     read_only: true
@@ -91,25 +69,19 @@ services:
     security_opt:
     - no-new-privileges:true
     restart: 'no'
-    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
     command:
-    - python
+    - sh
     - -c
-    - import time; time.sleep(2147483647)
+    - sleep 2147483647
     user: 65532:65532
-    healthcheck:
-      test:
-      - CMD
-      - python
-      - -c
-      - pass
-      interval: 10s
-      timeout: 3s
-      retries: 3
 networks:
   external:
-    name: cr-demo-scn_850a566c7a91-external
+    name: cr-demo-scn_6191bb05b5aa-external
     internal: true
   scenario-internal:
-    name: cr-demo-scn_850a566c7a91-scenario-internal
+    name: cr-demo-scn_6191bb05b5aa-scenario-internal
     internal: true
+  edge:
+    name: cr-demo-scn_6191bb05b5aa-edge
+    internal: false

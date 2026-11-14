@@ -58,11 +58,17 @@ def analyze_source(
 
 
 def _call_json(messages: list[dict[str, str]], *, purpose: str) -> dict[str, Any]:
+    # The structured IR echoes verbatim quotes back, so a long report needs a larger
+    # output budget or the JSON is truncated and unparseable. Scale with the input size
+    # (rough 4 chars/token), with a floor and a conservative ceiling kept cheap on the
+    # mini model and well under the budget caps.
+    input_chars = sum(len(message.get("content", "")) for message in messages)
+    max_out = max(3000, min(12000, (input_chars // 4) * 4))
     response = complete(
         messages,
         purpose=purpose,
         response_format=_PROMPT_FORMAT,
-        max_output_tokens=3000,
+        max_output_tokens=max_out,
         temperature=0,
         agent="cti",
     )
