@@ -34,6 +34,10 @@ export interface Action {
   evidence_refs?: string[];
   epistemic_status: EpistemicStatus;
   source: Source;
+  /** B4: can this step be built/validated in the current environment? Honest degradation, never faked. */
+  reproducibility?: "reproducible" | "substitute_only" | "needs_vm" | "not_reproducible";
+  /** Short reason for the reproducibility verdict (which component/runtime is missing). */
+  reproducibility_reason?: string;
 }
 
 export interface Relation {
@@ -129,7 +133,8 @@ export interface Supplement {
 }
 
 export interface EnvHostService { name: string; port: number; protocol?: "tcp" | "udp"; }
-export interface EnvHost { id: string; role: string; image_hint?: string; services?: EnvHostService[]; networks: string[]; }
+export interface VmGuest { os_family?: string; os_release?: string; image_ref?: string; image_digest?: string; cpu?: number; memory_mib?: number; disk_gib?: number; }
+export interface EnvHost { id: string; role: string; image_hint?: string; services?: EnvHostService[]; networks: string[]; runtime?: "container" | "vm"; component_mode?: "real" | "substitute" | "unsupported" | "vm"; guest?: VmGuest; }
 export interface EnvNetwork { id: string; segment?: string; internal?: boolean; }
 export interface EnvConnection { from_host: string; to_host: string; port?: number; protocol?: "tcp" | "udp"; reason?: string; }
 export interface EnvAccessRule { from?: string; to?: string; port?: number; action?: "allow" | "deny"; }

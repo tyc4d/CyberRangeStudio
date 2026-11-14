@@ -7,6 +7,7 @@ import re
 from typing import Any
 
 from app.planner.catalogue import component_by_id, load_components, match_software
+from app.planner.reproducibility import annotate_reproducibility
 
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
 _VERSION_RE = re.compile(r"^\s*(?:[:/@= ]\s*)?(?:version\s*)?[vV]?(\d+(?:\.\d+){1,3}(?:[-+][A-Za-z0-9.]+)?)\b", re.IGNORECASE)
@@ -501,4 +502,4 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             present.add(original.get("id"))
     result["services"] = services
     result["missing_items"] = missing
-    return result
+    return annotate_reproducibility(result)

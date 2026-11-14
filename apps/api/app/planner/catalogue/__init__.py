@@ -36,3 +36,9 @@ def match_software(name: str) -> tuple[dict[str, Any] | None, bool]:
             if normalized in {name.casefold() for name in substitute.get("names", [])}:
                 return component, True
     return None, False
+
+
+def runtime_for(component_id: str | None) -> str | None:
+    """Return the declared execution runtime for a catalogue entry."""
+    component = component_by_id(component_id)
+    return component.get("runtime") if component else None

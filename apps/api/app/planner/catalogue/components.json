@@ -21,6 +21,8 @@
     "official_image": true,
     "image_source": "https://hub.docker.com/_/nginx",
     "project_source": "https://nginx.org/"
+    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
+    "health_check": {"type": "tcp", "port": 80}, "management_ports": [], "fidelity": "exact pinned web server image", "substitute_explanation": null
   },
   {
     "id": "oss-httpd",
@@ -39,6 +41,8 @@
     "official_image": true,
     "image_source": "https://hub.docker.com/_/httpd",
     "project_source": "https://httpd.apache.org/"
+    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
+    "health_check": {"type": "tcp", "port": 80}, "management_ports": [], "fidelity": "exact pinned web server image", "substitute_explanation": null
   },
   {
     "id": "oss-postgres",
@@ -57,6 +61,8 @@
     "official_image": true,
     "image_source": "https://hub.docker.com/_/postgres",
     "project_source": "https://www.postgresql.org/"
+    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
+    "health_check": {"type": "tcp", "port": 5432}, "management_ports": [], "fidelity": "exact pinned database image", "substitute_explanation": null
   },
   {
     "id": "oss-attacker",
@@ -75,5 +81,67 @@
     "official_image": true,
     "image_source": "https://hub.docker.com/_/alpine",
     "project_source": "https://alpinelinux.org/"
+    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
+    "health_check": {"type": "process", "command": ["sh", "-c", "true"]}, "management_ports": [], "fidelity": "toolbox base only", "substitute_explanation": null
+  },
+  {
+    "id": "windows-server-eval-vm",
+    "name": "Windows Server Evaluation VM (user supplied media)",
+    "software": "windows-server",
+    "version": null,
+    "runtime": "vm",
+    "os_family": "windows",
+    "os_release": null,
+    "image_sources": [{"type": "user_supplied_evaluation_media", "ref": "https://www.microsoft.com/evalcenter/", "license": "Microsoft Evaluation Center terms; user must obtain and accept applicable terms", "distribution": "not bundled or redistributed"}],
+    "image_ref": null,
+    "image_digest": null,
+    "vm_spec": {"cpu": 2, "memory_mib": 4096, "disk_gib": 50},
+    "aliases": ["windows server", "microsoft windows server", "windows server evaluation"],
+    "role_keywords": ["windows server", "windows host"],
+    "services": [{"port": 445, "protocol": "tcp", "name": "SMB"}, {"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
+    "default_ports": [{"port": 445, "protocol": "tcp"}],
+    "management_ports": [{"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
+    "health_check": {"type": "guest_agent", "requires": "Windows guest agent and native OS readiness probe"},
+    "services": [{"port": 80, "protocol": "tcp", "name": "HTTP/IIS (only when explicitly provisioned)"}, {"port": 443, "protocol": "tcp", "name": "HTTPS/IIS (only when explicitly provisioned)"}, {"port": 445, "protocol": "tcp", "name": "SMB"}, {"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
+    "supported_platforms": ["linux/amd64+kvm (backend not installed)", "user supplied compatible hypervisor"],
+    "license": "Microsoft evaluation terms apply; verify before use",
+    "image_source": "https://www.microsoft.com/evalcenter/",
+    "substitutes_for": [{"names": ["iis", "microsoft iis", "internet information services", "active directory", "active directory domain services", "ad ds", "domain controller", "windows client", "windows workstation", "windows authentication", "group policy", "gpo"], "reason": "Windows Server VM capability does not by itself provide IIS provisioning, AD topology, client membership, policy, or authentication semantics; requires explicit VM fixture and versions."}],
+    "fidelity": "OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied",
+    "substitute_explanation": "Linux services or ordinary VMs are not Windows substitutes.",
+    "capabilities": ["windows_os"],
+    "deployable": false
+  },
+  {
+    "id": "unsupported-ad-ds",
+    "name": "Active Directory Domain Services (unsupported pending fixture)",
+    "software": "active-directory-domain-services",
+    "runtime": "vm",
+    "os_family": "windows",
+    "aliases": ["active directory", "active directory domain services", "ad ds", "domain controller", "domain controller (dc)"],
+    "role_keywords": ["domain controller", "active directory"],
+    "services": [{"port": 53, "protocol": "udp", "name": "DNS"}, {"port": 88, "protocol": "tcp", "name": "Kerberos"}, {"port": 389, "protocol": "tcp", "name": "LDAP"}, {"port": 445, "protocol": "tcp", "name": "SMB"}],
+    "default_ports": [{"port": 389, "protocol": "tcp"}], "management_ports": [],
+    "supported_platforms": [], "health_check": {"type": "unsupported"},
+    "license": "Windows Server licensing and domain fixture required", "image_sources": [], "substitutes_for": [],
+    "fidelity": "not currently reproducible; requires versioned isolated DC/member topology", "capabilities": ["active_directory"], "deployable": false
+  },
+  {
+    "id": "unsupported-vmware-horizon",
+    "name": "VMware Horizon (external platform required)", "software": "vmware-horizon",
+    "runtime": "external_platform", "os_family": "windows",
+    "aliases": ["vmware horizon", "horizon connection server", "horizon agent", "horizon desktop", "vmware horizon view"],
+    "role_keywords": ["horizon connection server", "horizon desktop"], "services": [], "default_ports": [], "management_ports": [],
+    "supported_platforms": [], "health_check": {"type": "external_connector_required"}, "image_sources": [], "substitutes_for": [],
+    "license": "VMware vSphere/Horizon licenses and compatible external platform required",
+    "fidelity": "not reproducible without supported external VMware Horizon backend", "capabilities": ["horizon"], "deployable": false
+  },
+  {
+    "id": "unsupported-log4j-unspecified",
+    "name": "Log4j application (version/fixture unspecified)", "software": "log4j",
+    "runtime": "unsupported", "os_family": "unknown", "aliases": ["log4j", "log4shell", "cve-2021-44228"],
+    "role_keywords": [], "services": [], "default_ports": [], "management_ports": [], "supported_platforms": [],
+    "health_check": {"type": "unsupported"}, "image_sources": [], "substitutes_for": [],
+    "license": "Target application and version must be identified", "fidelity": "not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture", "deployable": false
   }
 ]

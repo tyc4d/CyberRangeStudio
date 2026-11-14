@@ -80,13 +80,25 @@ def _resolved_component(host: dict[str, Any], scenario_id: str, host_id: str) ->
                 "image": None, "version": None, "digest": None, "catalogue": catalogue_entry,
                 "substitute": False}
 
+    # Only explicitly named demo scaffolds may use the benign Python templates.
+    # Unknown software/runtime must stay unsupported; silently turning it into
+    # demo-api/demo-client would falsely imply a deployable reproduction.
+    explicit_demo_hints = {"demo-client", "cr-demo-client", "python", "python-worker",
+                           "demo-api", "cr-demo-api", "harmless-http-demo"}
+    if hint not in explicit_demo_hints:
+        mapped_substitute = bool(catalogue_entry and catalogue_entry.get("runtime") == "container")
+        if not mapped_substitute:
+            return {"runtime_component": None, "component": "unsupported", "component_mode": "unsupported",
+                    "image": None, "version": None, "digest": None, "catalogue": catalogue_entry,
+                    "substitute": False}
+
     if hint in {"demo-client", "cr-demo-client", "python", "python-worker"}:
         runtime_component = "demo-client"
         image = _DEMO_IMAGE
         version = "pinned Python demo client base"
         digest = _DEMO_IMAGE.partition("@")[-1] if "@" in _DEMO_IMAGE else None
         base_image = None
-    elif hint in {"demo-api", "cr-demo-api", "harmless-http-demo"} or host.get("services"):
+    elif hint in {"demo-api", "cr-demo-api", "harmless-http-demo"} or (catalogue_entry and host.get("services")):
         runtime_component = "demo-api"
         image = f"cr-demo-{scenario_id}-{host_id}:local"
         version = "local demo-app template"
@@ -111,6 +123,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
     scenario_id = validate_id(scenario_id)
     errors = list(iter_errors("environment-plan", plan)) if isinstance(plan, dict) else ["environment_plan must be an object"]
     components: list[dict[str, Any]] = []
+    vm_definitions: list[dict[str, Any]] = []
     mappings: list[dict[str, Any]] = []
     if errors:
         report = {"scenario_id": scenario_id, "deployable": False, "components": components, "errors": errors}
@@ -118,6 +131,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
 
     hosts = plan.get("hosts", [])
     networks = plan.get("networks", [])
+    network_by_id = {n.get("id"): n for n in networks if isinstance(n, dict)}
     host_ids: set[str] = set()
     network_ids: set[str] = set()
     for network in networks:
@@ -139,7 +153,48 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         if host_id in host_ids:
             errors.append(f"duplicate host id: {host_id}")
         host_ids.add(host_id)
-        resolved = _resolved_component(host, scenario_id, host_id)
+        runtime = host.get("runtime")
+        catalogue_hint = (host.get("image_hint") or "").strip().lower()
+        catalogue_entry = component_by_id(catalogue_hint)
+        if runtime == "vm" or (catalogue_entry and catalogue_entry.get("runtime") == "vm"):
+            guest = host.get("guest") or {}
+            vm_errors = []
+            if guest.get("os_family") not in {"windows", "linux", "bsd", "other"}:
+                vm_errors.append("guest.os_family must be an explicit supported family")
+            for key in ("os_release", "image_ref", "image_digest"):
+                if not isinstance(guest.get(key), str) or not guest.get(key).strip():
+                    vm_errors.append(f"guest.{key} is required and must be validated")
+            for key in ("cpu", "memory_mib", "disk_gib"):
+                value = guest.get(key)
+                if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                    vm_errors.append(f"guest.{key} must be a positive integer")
+            vm_networks = host.get("networks", [])
+            if not vm_networks or any(n not in network_ids for n in vm_networks):
+                vm_errors.append("VM host must reference declared isolated networks")
+            if any(not network_by_id.get(n, {}).get("internal", True) for n in vm_networks):
+                vm_errors.append("VM networks must be isolated/internal")
+            for svc in host.get("services", []):
+                if not isinstance(svc.get("port"), int) or not 1 <= svc["port"] <= 65535 or svc.get("protocol", "tcp") not in {"tcp", "udp"}:
+                    vm_errors.append(f"invalid VM service port/protocol: {svc!r}")
+            resolved = {"runtime_component": None, "component": catalogue_hint or "vm-guest",
+                        "component_mode": "vm", "image": None, "version": guest.get("os_release"),
+                        "digest": guest.get("image_digest"), "catalogue": catalogue_entry, "substitute": False}
+            vm_definitions.append({
+                "host_id": host_id, "runtime": "vm",
+                "guest": {"os_family": guest.get("os_family"), "os_release": guest.get("os_release"),
+                          "image_ref": guest.get("image_ref"), "image_digest": guest.get("image_digest"),
+                          "cpu": guest.get("cpu"), "memory_mib": guest.get("memory_mib"), "disk_gib": guest.get("disk_gib")},
+                "networks": [{"id": n, "mode": "isolated"} for n in host.get("networks", [])],
+                "services": [{"protocol": s.get("protocol", "tcp"), "port": s.get("port")}
+                             for s in host.get("services", [])],
+                "deployable": False,
+                "reason": "VM backend is not installed/configured; " + ("; ".join(vm_errors) if vm_errors else "guest definition is valid but cannot be deployed here."),
+            })
+        elif runtime and runtime != "container":
+            resolved = {"runtime_component": None, "component": runtime, "component_mode": runtime,
+                        "image": None, "version": None, "digest": None, "catalogue": catalogue_entry, "substitute": False}
+        else:
+            resolved = _resolved_component(host, scenario_id, host_id)
         resolved_by_host[host_id] = resolved
         component = resolved["runtime_component"]
         host_report: dict[str, Any] = {
@@ -147,6 +202,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             "image_hint": host.get("image_hint"),
             "component": resolved["component"],
             "component_mode": resolved["component_mode"],
+            "runtime": runtime or ("vm" if resolved.get("component_mode") == "vm" else "container"),
             "deployable": component is not None,
             "image": resolved["image"],
             "version": resolved["version"],
@@ -162,7 +218,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
             )
         if component is None:
-            host_report["reason"] = "image_hint is not in the safe local component allowlist"
+            host_report["reason"] = next((item["reason"] for item in vm_definitions if item["host_id"] == host_id),
+                                          f"unsupported runtime/component for host {host_id}; no container fallback is permitted")
         elif resolved["component_mode"] == "real":
             host_report["reason"] = "resolved to a catalogue image pinned by version and sha256 digest"
         else:
@@ -177,6 +234,9 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 errors.append(f"host {host_id} references unknown network {network_id}")
 
         services = host.get("services", [])
+        if resolved.get("component_mode") == "vm" or (runtime and runtime != "container"):
+            # VM/external runtimes are described in the VM manifest and never fed to Compose.
+            continue
         if component == "demo-api" and len(services) > 1:
             errors.append(f"demo-api host {host_id} can expose only one service port")
         for service in services:
@@ -227,10 +287,13 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
     if not hosts:
         errors.append("at least one host is required")
 
+    for vm in vm_definitions:
+        errors.append(f"host {vm['host_id']} runtime=vm is not supported by the configured deployment backend: {vm['reason']}")
     report = {
         "scenario_id": scenario_id,
         "deployable": not errors,
         "components": components,
+        "vms": vm_definitions,
         "host_port_mappings": mappings,
         "networks": [
             {"id": n.get("id"), "name": f"cr-demo-{scenario_id}-{n.get('id')}",

@@ -177,7 +177,18 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             # A host whose service maps to a real catalogue component is deployed as the
             # real open-source software; otherwise it falls back to a benign substitute.
             component = component_by_id(env_host.get("image_hint"))
-            env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
+            if component and component.get("runtime") == "vm":
+                env_host["runtime"] = "vm"
+                spec = component.get("vm_spec", {})
+                env_host["guest"] = {
+                    "os_family": component.get("os_family"), "os_release": component.get("os_release"),
+                    "image_ref": component.get("image_ref"), "image_digest": component.get("image_digest"),
+                    "cpu": spec.get("cpu"), "memory_mib": spec.get("memory_mib"), "disk_gib": spec.get("disk_gib"),
+                }
+                env_host["component_mode"] = "real"
+            else:
+                env_host["runtime"] = "container"
+                env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
         environment_hosts.append(env_host)
 
     if unassigned:
