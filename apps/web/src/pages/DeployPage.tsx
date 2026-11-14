@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ScenarioIR } from "@contracts";
-import { api } from "../lib/api";
+import { api, type ApiError } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { isPlanApproved } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
@@ -15,6 +15,25 @@ function stateClass(s: string): string {
   if (/(running|^up$|healthy|deployed|ready)/.test(v)) return "status-PASS";
   if (/(down|stopped|exited|not_deployed|none|absent)/.test(v)) return "status-NOT_TESTED";
   return "status-PARTIAL";
+}
+
+/** A failed up/down returns the whole command result (stdout, stderr, audit record, live state), with the same stderr several times over.
+ *  Show the cause once, keep the rest folded, so the current status below stays in view. Other errors use the generic notice. */
+function CommandFailure({ error, what }: { error: ApiError | null; what: string }) {
+  const d = error?.data as any;
+  const cmd = d && typeof d === "object" && !Array.isArray(d) ? d.command_result ?? (typeof d.returncode === "number" ? d : null) : null;
+  if (!error || !cmd) return <ApiNotice error={error} what={what} />;
+  const stderr = String(cmd.stderr ?? d.error ?? "").trim();
+  const cause = recordReason({ stderr, exit_code: cmd.returncode });
+  return (
+    <Notice kind="err" title={`${what}失敗`}>
+      <div data-testid="command-failure">
+        <div>{cause ?? "指令失敗，沒有回報原因。"}{typeof cmd.returncode === "number" && <span className="muted mono">（結束代碼 {cmd.returncode}）</span>}</div>
+        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>這次嘗試已記入下方「部署紀錄」。實際的容器狀態以「目前狀態」為準，失敗不代表沒有殘留的容器。</div>
+        {stderr && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>完整錯誤輸出</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{stderr}</pre></details>}
+      </div>
+    </Notice>
+  );
 }
 
 /** Why an attempt ended the way it did, from whatever the audit record kept. Tool output is shown as-is, never reworded. */
@@ -106,8 +125,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
       )}
       {up.busy && <div className="card"><Busy label="啟動中，正在建立網路與容器…" elapsed={up.elapsed} /></div>}
       {down.busy && <div className="card"><Busy label="關閉中，正在移除容器…" elapsed={down.elapsed} /></div>}
-      <ApiNotice error={up.error} what="啟動部署" />
-      <ApiNotice error={down.error} what="關閉部署" />
+      <CommandFailure error={up.error} what="啟動部署" />
+      <CommandFailure error={down.error} what="關閉部署" />
 
       <div className="card flush">
         <div className="card-head">

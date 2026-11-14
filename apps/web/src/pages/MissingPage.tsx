@@ -3,7 +3,7 @@ import type { MissingItem, ScenarioIR } from "@contracts";
 import { api, ApiError } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
-import { ApiNotice, Empty, NextStep, PageHead, ScenarioGate, SourceTag } from "../components/ui";
+import { ApiNotice, Empty, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 import { PdfViewer, usePdfSource, type PdfAnchor, type PdfLocateResult } from "../components/PdfViewer";
 
 /* ---------- defensive readers (backend fields may still be changing) ---------- */
@@ -365,13 +365,13 @@ const FIELD_ZH: Record<string, string> = {
   "target network placement": "主機的網路位置", "target service name": "被攻擊的服務", "target service version": "服務版本",
   "attacker access precondition": "攻擊者的初始存取條件",
 };
-/** Chinese title for an item. Raw English field names are never shown to the user. */
+/** Chinese title for an item. When the backend gave neither a question nor a known field, its original field name is shown, labelled as such, so the user can still tell what is being asked. */
 function itemTitle(item: MissingItem): string {
   const q = str(item.question);
   if (q) return q;
   const f = str(item.field);
   if (hasCJK(f)) return f;
-  return FIELD_ZH[f.toLowerCase()] ?? `${CATEGORY[item.category] ?? "其他"}相關資訊（後端未提供中文問題）`;
+  return FIELD_ZH[f.toLowerCase()] ?? `${CATEGORY[item.category] ?? "其他"}相關資訊${f ? `：${f}` : ""}（後端未提供中文問題${f ? "，冒號後為原始欄位名" : ""}）`;
 }
 
 const CATEGORY: Record<MissingItem["category"], string> = {
@@ -728,6 +728,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
       <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。每一項都標出原文已知的部分、需要你決定的部分與影響的步驟；你可以直接填答案、點選項帶入輸入框後送出，或明確接受未知。補充內容一律標示為使用者來源，不會與原文證據混淆。" />
       {!hasOriginal && src.state === "loading" && <div className="pdf-hint"><span className="spinner" /> 載入原文…</div>}
       {!hasOriginal && src.state === "none" && <div className="pdf-hint">此情境沒有保存原文（PDF 或文字），無法在旁對照。</div>}
+      {(ir as { fidelity?: unknown }).fidelity === undefined && (
+        <Notice kind="info" title="這份清單可能還不完整">
+          目前列出的是情資分析階段找到的缺失。到「軟體依賴」執行依賴分析後，可能會再新增軟體、版本相關的項目，屆時請回到這裡補充。
+        </Notice>
+      )}
       {!hasOriginal && src.state === "error" && <div className="pdf-hint">無法載入此情境的原文（後端未回應）。</div>}
 
       <div className={hasOriginal ? "pdf-split" : undefined} style={hasOriginal ? undefined : { display: "contents" }}>
