@@ -262,3 +262,34 @@ class ManagerWrapperTests(unittest.TestCase):
         with patch.object(vm, "virsh", return_value=_ok("x")) as virsh:
             manager._vm_run(["/usr/bin/virsh", "-c", manager.VM_URI, "domstate", "cr-scn-win1"], timeout=5)
         virsh.assert_called_once_with(["domstate", "cr-scn-win1"], timeout=5)
+
+
+class MediaIntegrityTests(unittest.TestCase):
+    def _iso(self, directory: Path, blocks: int, written_blocks: int) -> Path:
+        descriptor = bytearray(2048)
+        descriptor[0] = 1
+        descriptor[1:6] = b"CD001"
+        descriptor[80:84] = blocks.to_bytes(4, "little")
+        descriptor[128:130] = (2048).to_bytes(2, "little")
+        path = directory / "media.iso"
+        path.write_bytes(bytes(16 * 2048) + bytes(descriptor) + bytes((written_blocks - 17) * 2048))
+        return path
+
+    def test_truncated_iso_is_rejected_before_upload(self):
+        with TemporaryDirectory() as temporary:
+            truncated = self._iso(Path(temporary), blocks=400, written_blocks=40)
+            self.assertEqual(vm.iso_declared_bytes(truncated), 400 * 2048)
+            with patch.object(vm, "virsh") as virsh:
+                with self.assertRaises(vm.VmError) as caught:
+                    vm.import_media(truncated, "media.iso")
+            self.assertIn("truncated", str(caught.exception))
+            virsh.assert_not_called()
+
+    def test_complete_iso_passes_and_non_iso_is_not_judged(self):
+        with TemporaryDirectory() as temporary:
+            complete = self._iso(Path(temporary), blocks=40, written_blocks=40)
+            vm.check_media_complete(complete)
+            other = Path(temporary) / "disk.raw"
+            other.write_bytes(b"x" * 4096)
+            self.assertIsNone(vm.iso_declared_bytes(other))
+            vm.check_media_complete(other)

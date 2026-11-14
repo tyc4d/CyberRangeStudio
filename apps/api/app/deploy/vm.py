@@ -154,11 +154,35 @@ def volume_path(name: str) -> str:
     return _must(virsh(["vol-path", "--pool", POOL, _check_volume(name)], timeout=10), "vol-path")["stdout"].strip()
 
 
+def iso_declared_bytes(source: str | Path) -> int | None:
+    """Size an ISO 9660 image says it has (primary volume descriptor), or None if not an ISO."""
+    try:
+        with open(source, "rb") as handle:
+            handle.seek(16 * 2048)
+            descriptor = handle.read(2048)
+    except OSError:
+        return None
+    if len(descriptor) < 132 or descriptor[1:6] != b"CD001" or descriptor[0] != 1:
+        return None
+    blocks = int.from_bytes(descriptor[80:84], "little")
+    block_size = int.from_bytes(descriptor[128:130], "little")
+    return blocks * block_size
+
+
+def check_media_complete(source: str | Path) -> None:
+    """Reject a truncated ISO (an interrupted download still lists its files but cannot be read)."""
+    declared = iso_declared_bytes(source)
+    actual = Path(source).stat().st_size
+    if declared is not None and actual < declared:
+        raise VmError(f"media file is truncated: {source} has {actual} bytes but the image declares {declared}")
+
+
 def import_media(source: str | Path, name: str, *, replace: bool = False) -> dict[str, Any]:
     """Upload a local file (ISO) into the pool as a raw volume. Idempotent on size."""
     source = Path(source)
     if not source.is_file():
         raise VmError(f"media file not found: {source}")
+    check_media_complete(source)
     _check_volume(name)
     ensure_pool()
     size = source.stat().st_size
