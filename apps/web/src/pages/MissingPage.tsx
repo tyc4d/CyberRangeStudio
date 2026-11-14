@@ -447,6 +447,11 @@ function buildGroups(ir: ScenarioIR, namer: Namer): Group[] {
   return groups.sort((a, b) => a.tier.rank - b.tier.rank || stepCount(b) - stepCount(a));
 }
 
+/** Open cards as the page shows them (identical questions are merged). The stage nav uses this so both numbers agree. */
+export function openCardCount(ir: ScenarioIR): number {
+  return buildGroups(ir, makeNamer(ir)).filter((g) => g.items[0].status === "open").length;
+}
+
 const clip = (q: string, n = 160) => (q.length > n ? `${q.slice(0, n)}…` : q);
 
 function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {

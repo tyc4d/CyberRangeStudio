@@ -1,3 +1,4 @@
+import { RefIssuesNotice } from "../components/RefIssues";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ReactFlow, { Background, BackgroundVariant, Controls, EdgeLabelRenderer, getBezierPath, Handle, MarkerType, Position, type Edge, type EdgeProps, type Node, type NodeProps } from "reactflow";
@@ -105,6 +106,18 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
   return { nodes, edges };
 }
 
+/** Chinese rendering of the planner's known note shapes; the original stays underneath. Unknown notes are shown unchanged. */
+const NOTE_RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^An attacker host was added as a lab scaffold because the IR did not define one\.$/, () => "情境沒有定義攻擊者主機，規劃自動加入一台作為實驗用的攻擊者（不是原文內容）。"],
+  [/^No port is known for service (.+) \((.+)\); it remains unreachable by default\.$/, (m) => `服務 ${m[1]}（${m[2]}）的埠號未知，預設保持不通。可在「缺失補充」補上埠號後重新分析、重新規劃。`],
+  [/^Host (.+) has services from multiple catalogue components; .*$/, (m) => `主機 ${m[1]} 的服務對應到多個不同元件，但一台主機只能選一個映像，請檢查它的映像選擇。`],
+  [/^Services without a resolved host association were left out of host service lists: (.+)\.$/, (m) => `這些服務沒有歸屬主機，未放進任何主機：${m[1]}。詳見上方「主機參照不一致」的說明。`],
+  [/^Connection (.+) to (.+) has no known destination port and was not allowed\.$/, (m) => `${m[1]} 到 ${m[2]} 的連線不知道目的埠號，未開通。`],
+  [/^Actions for host (.+) do not identify one of its multiple services; no inbound service port was opened\.$/, (m) => `針對主機 ${m[1]} 的行為沒有指明是它的哪一個服務，未開通任何連入埠。`],
+  [/^Confirmed dependency (.+) has no uniquely identified destination service port; default deny remains in effect\.$/, (m) => `已確認的依賴 ${m[1]} 無法唯一對應到目的服務埠，維持預設拒絕。`],
+];
+const noteZh = (n: string): string | null => { for (const [re, f] of NOTE_RULES) { const m = n.match(re); if (m) return f(m); } return null; };
+
 function Body({ ir }: { ir: ScenarioIR }) {
   const { absorb, reload } = useScenario();
   const nav = useNavigate();
@@ -144,6 +157,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
       {ranOk && !run.busy && (plan
         ? <Notice kind="info">拓樸規劃完成，結果已更新。重新規劃後需要重新核准。</Notice>
         : <Notice kind="warn" title="規劃完成，但沒有結果">後端沒有回傳環境規劃。請確認「軟體依賴」已有主機與服務。</Notice>)}
+
+      {plan && <RefIssuesNotice ir={ir} context="topology" />}
+      {plan && !(plan.connections?.length) && (
+        <Notice kind="warn" title="這份規劃沒有任何會開通的連線">
+          依這份規劃部署後，主機之間彼此都連不上，攻擊流程無法在環境中進行。常見原因：服務沒有歸屬主機、服務的埠號未知，或流程中的前置依賴尚未確認。
+          請查看頁面下方的「規劃備註」逐條原因；補正後回到本頁重新規劃。核准這份規劃只代表同意「全部不通」，不代表環境可用。
+        </Notice>
+      )}
 
       {!plan || !graph ? (
         <div className="card"><Empty>這個情境還沒有環境規劃。{!(ir.hosts?.length) && "建議先完成「軟體依賴」，再"}按右上角「產生拓樸規劃」。</Empty></div>
@@ -247,7 +268,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
             </div>
 
           {plan.notes?.length ? (
-            <div className="card"><h2>規劃備註</h2><ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>{plan.notes.map((n, i) => <li key={i}>{n}</li>)}</ul></div>
+            <div className="card"><h2>規劃備註</h2><ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>{plan.notes.map((n, i) => { const z = noteZh(n); return <li key={i}>{z ? <>{z}<div className="muted" lang="en" style={{ fontSize: 11 }}>{n}</div></> : n}</li>; })}</ul></div>
           ) : null}
         </>
       )}

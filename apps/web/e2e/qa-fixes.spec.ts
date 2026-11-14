@@ -17,6 +17,12 @@ function seed(): string {
   return id;
 }
 
+/** Evidence screenshot after the page's entry animation has settled. */
+async function shot(page: Page, opts: { path: string; fullPage?: boolean }) {
+  await page.waitForTimeout(900);
+  await page.screenshot(opts);
+}
+
 async function open(page: Page, id: string, route: string) {
   await page.addInitScript((sid) => localStorage.setItem("cr.scenario", sid), id);
   await page.goto(route);
@@ -42,7 +48,7 @@ test("缺失補充：「接受未知」備註留白也能送出，且不會出�
   await page.getByRole("button", { name: "接受未知", exact: true }).click();
   await expect(page.getByTestId("resolution-hint")).toContainText("備註選填");
   await expect(send).toBeEnabled();
-  await page.screenshot({ path: path.join(EVIDENCE, "01-accept-unknown-blank-note.png") });
+  await shot(page, { path: path.join(EVIDENCE, "01-accept-unknown-blank-note.png") });
   await send.click();
   await expect(openTab).toHaveText(`待補充 ${before - 1}`);
   await expect(page.locator(".notice.err")).toHaveCount(0);
@@ -81,10 +87,68 @@ test("部署管理：拓樸已核准但尚未生成 IaC 時，「啟動」停用
   const up = page.getByRole("button", { name: "啟動（up）" });
   await expect(up).toBeDisabled();
   await expect(up).toHaveAttribute("title", /IaC/);
-  await page.screenshot({ path: path.join(EVIDENCE, "02-deploy-blocked-no-iac.png") });
+  await shot(page, { path: path.join(EVIDENCE, "02-deploy-blocked-no-iac.png") });
   await page.getByRole("button", { name: "前往 IaC 預覽" }).click();
   await expect(heading(page, "IaC 預覽")).toBeVisible();
   // No up attempt was made, so nothing may be in the audit trail.
+  const rec = await (await page.request.get(`/api/deploy/${id}/records`)).json();
+  expect(rec.records ?? []).toEqual([]);
+});
+
+test("導覽列的缺失數與缺失頁「待補充」數一致", async ({ page }) => {
+  const id = seed();
+  await open(page, id, "/missing");
+  await expect(heading(page, "缺失補充")).toBeVisible();
+  const tab = Number((await page.getByRole("button", { name: /^待補充 \d+$/ }).innerText()).replace(/\D/g, ""));
+  const nav = page.locator("nav a, .stages a, a").filter({ hasText: "缺失補充" }).first();
+  expect(Number((await nav.innerText()).replace(/\D/g, "").slice(1) || NaN), "nav count (after the step number)").toBe(tab);
+});
+
+test("首頁「＋ 新建情境」在已選情境時也開啟空白匯入表單", async ({ page }) => {
+  const id = seed();
+  await open(page, id, "/");
+  await page.getByRole("button", { name: "＋ 新建情境" }).click();
+  await expect(heading(page, "情資匯入")).toBeVisible();
+  await expect(page.getByRole("button", { name: "開始分析" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "匯入新報告" })).toHaveCount(0);
+});
+
+test("參照不一致的情境：依賴→拓樸→IaC→部署→驗證 每一站都說明狀態與下一步，且不顯示成可部署", async ({ page }) => {
+  const id = seed();
+  await open(page, id, "/deps");
+  await expect(heading(page, "軟體依賴")).toBeVisible();
+  await expect(page.getByText("尚未執行依賴分析")).toBeVisible();
+  await page.getByRole("button", { name: "執行依賴分析" }).click();
+  await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeVisible({ timeout: 60_000 });
+  const issues = page.getByTestId("ref-issues");
+  await expect(issues).toContainText("沒有歸屬任何主機");
+  await expect(issues).toContainText("目前的限制");
+  await shot(page, { path: path.join(EVIDENCE, "03-deps-ref-issues.png"), fullPage: true });
+
+  await page.goto("/topology");
+  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
+  await expect(page.getByText("這份規劃沒有任何會開通的連線")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("ref-issues")).toBeVisible();
+  await shot(page, { path: path.join(EVIDENCE, "04-topology-no-connections.png"), fullPage: true });
+  await page.getByRole("button", { name: "核准並繼續" }).click();
+
+  await expect(heading(page, "IaC 預覽")).toBeVisible();
+  await page.getByRole("button", { name: "生成 IaC" }).click();
+  const failure = page.getByTestId("iac-failure");
+  await expect(failure).toBeVisible({ timeout: 60_000 });
+  await expect(failure).toContainText("沒有產生任何 compose 檔");
+  await expect(page.getByText("可部署", { exact: true })).toHaveCount(1); // only the table header, no "可部署" verdict
+  await shot(page, { path: path.join(EVIDENCE, "05-iac-failure-readable.png"), fullPage: true });
+
+  await page.goto("/deploy");
+  await expect(page.getByText("尚未生成 IaC，不能部署")).toBeVisible();
+  await expect(page.getByRole("button", { name: "啟動（up）" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "關閉（down）" })).toBeDisabled();
+
+  await page.goto("/report");
+  await expect(page.getByText("環境尚未部署，不能執行驗證")).toBeVisible();
+  await expect(page.getByRole("button", { name: "執行驗證" })).toBeDisabled();
+  await shot(page, { path: path.join(EVIDENCE, "06-report-not-deployed.png"), fullPage: true });
   const rec = await (await page.request.get(`/api/deploy/${id}/records`)).json();
   expect(rec.records ?? []).toEqual([]);
 });

@@ -17,6 +17,23 @@ function stateClass(s: string): string {
   return "status-PARTIAL";
 }
 
+/** Why an attempt ended the way it did, from whatever the audit record kept. Tool output is shown as-is, never reworded. */
+function recordReason(d: any): string | undefined {
+  if (!d || typeof d !== "object") return undefined;
+  if (typeof d.reason === "string" && d.reason) return REASON_ZH[d.reason] ?? d.reason;
+  for (const k of ["error", "stderr"]) {
+    const v = typeof d[k] === "string" ? d[k].trim() : "";
+    if (v) { const line = v.split("\n").filter(Boolean).pop()!; return REASON_ZH[line] ?? line; }
+  }
+  return typeof d.exit_code === "number" && d.exit_code !== 0 ? `結束代碼 ${d.exit_code}` : undefined;
+}
+const REASON_ZH: Record<string, string> = {
+  "topology not approved": "拓樸尚未核准",
+  "approval stale; topology changed since approval": "核准後拓樸已變更，需重新核准",
+  "explicit local PoC approval required": "未取得本機執行的明確同意",
+  "compose file has not been generated": "尚未生成 IaC（沒有 compose 檔）",
+};
+
 function Body({ ir }: { ir: ScenarioIR }) {
   const { reload: reloadIr } = useScenario();
   const status = useLoad(() => api.deployStatus(ir.id), [ir.id]);
@@ -57,13 +74,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
     : null;
   const ACTION: Record<string, string> = { up: "啟動", down: "關閉" };
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
-  const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: r.details?.reason }));
+  const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details) }));
+  const liveContainers = Array.isArray(containers) ? containers.length : 0;
+  // Nothing was ever generated and nothing is running: a down would only fail and add a failed record.
+  const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? "沒有已生成的部署設定，也沒有容器在執行，無需關閉" : undefined;
 
   return (
     <div className="page">
       <PageHead title="部署管理" desc="在本機隔離環境啟動或關閉這個情境。狀態每 5 秒自動更新。">
         <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm("確定要在本機隔離環境啟動這個情境的容器？")) void up.run(); }}>啟動（up）</button>
-        <button className="danger" disabled={busy} onClick={() => { if (window.confirm("確定要關閉並移除這個情境的部署？")) void down.run(); }}>關閉（down）</button>
+        <button className="danger" disabled={busy || !!downBlock} title={downBlock} onClick={() => { if (window.confirm("確定要關閉並移除這個情境的部署？")) void down.run(); }}>關閉（down）</button>
       </PageHead>
 
       {!approved && (
@@ -149,7 +169,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                   <td className="nowrap muted">{fmtTime(r.at)}</td>
                   <td>{ACTION[r.action] ?? r.action}</td>
                   <td><span className={stateClass(String(r.state))}>{String(r.state)}</span></td>
-                  <td className="muted">{r.reason ?? "—"}</td>
+                  <td className="muted" style={{ overflowWrap: "anywhere" }}>{r.reason ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
