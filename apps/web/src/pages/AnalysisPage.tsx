@@ -340,7 +340,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <td>{actionName.get(r.from_action) ?? <span className="mono muted">{r.from_action}</span>}</td>
                     <td><span className={`tag ${r.kind === "dependency" ? "dep" : "temporal"}`}>{r.kind === "dependency" ? "依賴" : "時間先後"}</span></td>
                     <td>{actionName.get(r.to_action) ?? <span className="mono muted">{r.to_action}</span>}</td>
-                    <td className="muted" style={{ fontSize: 12 }}>{r.rationale ?? "—"}</td>
+                    <td className="muted" style={{ fontSize: 12 }}>
+                      {r.rationale ?? "—"}
+                      {(r as { epistemic_reason?: string }).epistemic_reason && <div title="後端說明為何不把這條關係標成原文支持（英文原文）">判定依據：{(r as { epistemic_reason?: string }).epistemic_reason}</div>}
+                    </td>
                     <td className="nowrap"><EpistemicBadge status={r.epistemic_status} source={r.source} /><div style={{ marginTop: 4 }}><SourceTag source={r.source} /></div></td>
                     <td>
                       <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(r)} source={r.source} basis={isInferred(r)} /></div>

@@ -116,6 +116,13 @@ const NOTE_RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Actions for host (.+) do not identify one of its multiple services; no inbound service port was opened\.$/, (m) => `針對主機 ${m[1]} 的行為沒有指明是它的哪一個服務，未開通任何連入埠。`],
   [/^Confirmed dependency (.+) has no uniquely identified destination service port; default deny remains in effect\.$/, (m) => `已確認的依賴 ${m[1]} 無法唯一對應到目的服務埠，維持預設拒絕。`],
 ];
+NOTE_RULES.push(
+  [/^Host (.+) was placed on the external network as the inferred entry point \(basis: (.+)\); the source does not state its network placement\. Confirm or correct it\.$/, (m) => `主機 ${m[1]} 被放在對外網路，當作推定的入侵入口（依據：${m[2]}）。原文沒有寫它的網路位置，請確認或在「缺失補充」更正。`],
+  [/^No target host is stated or inferable as reachable from outside; .*$/, () => "沒有任何目標主機被寫明或可推定為外部可達；在補上某台主機的網路位置之前，攻擊者到不了任何目標。"],
+  [/^Host (.+) needs (.+), which the catalogue cannot deploy \((.+)\)\. It is not replaced by a stand-in\.$/, (m) => `主機 ${m[1]} 需要 ${m[2]}，元件目錄無法部署它（${m[3]}）；系統沒有用其他軟體頂替。`],
+  [/^Host (.+) needs (.+) as a VM, which is not deployable yet \((.+)\)\.$/, (m) => `主機 ${m[1]} 需要以虛擬機執行 ${m[2]}，目前還不能部署（${m[3]}）。`],
+  [/^Action (.+) is stated to run from (.+) against (.+), but no destination service port is identified; the path stays denied\.$/, (m) => `行為 ${m[1]} 寫明由 ${m[2]} 對 ${m[3]} 發動，但找不到目的服務埠，這條路徑維持不通。`],
+);
 const noteZh = (n: string): string | null => { for (const [re, f] of NOTE_RULES) { const m = n.match(re); if (m) return f(m); } return null; };
 
 function Body({ ir }: { ir: ScenarioIR }) {

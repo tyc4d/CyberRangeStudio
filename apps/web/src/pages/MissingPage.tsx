@@ -458,6 +458,19 @@ export function openCardCount(ir: ScenarioIR): number {
   return buildGroups(ir, makeNamer(ir)).filter((g) => g.items[0].status === "open").length;
 }
 
+/** Fields the backend added to missing items that the shared TS type may not list yet. */
+type Where = { collection?: string; id?: string; field?: string };
+const itemX = (m: MissingItem) => m as MissingItem & { target?: Where; applied_to?: Where; write_back?: string };
+const WHERE_FIELD: Record<string, string> = { os: "作業系統", os_version: "作業系統版本", network_placement: "網路位置", version: "版本", port: "埠號", name: "名稱", role: "角色" };
+/** "主機 victim-web 的作業系統" for a write-back location; empty when there is none. */
+function whereText(w: Where | undefined, ir: ScenarioIR): string {
+  if (!w || !w.id) return "";
+  const isHost = w.collection === "hosts";
+  const rec: any = (isHost ? ir.hosts : ir.services)?.find((x) => x.id === w.id);
+  const label = rec ? (isHost ? rec.name || rec.role : rec.name) || w.id : w.id;
+  return `${isHost ? "主機" : "服務"} ${label} 的${WHERE_FIELD[w.field ?? ""] ?? w.field ?? "欄位"}`;
+}
+
 const clip = (q: string, n = 160) => (q.length > n ? `${q.slice(0, n)}…` : q);
 
 function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
@@ -564,6 +577,9 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
         <div style={{ fontSize: 13 }}>
           <span className="muted">處理內容：</span>{item.resolution} <SourceTag source={item.resolution_source} />
           {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 12 }}>（LLM 的建議，尚未經你確認）</span>}
+          {whereText(itemX(item).applied_to, ir) && <div className="muted" style={{ fontSize: 12 }} data-testid="applied-to">已寫入情境資料：{whereText(itemX(item).applied_to, ir)}（標示為使用者來源）。</div>}
+          {!itemX(item).applied_to && itemX(item).write_back && <div className="muted" style={{ fontSize: 12 }} data-testid="write-back">只保留為文字，沒有寫入主機／服務欄位：{itemX(item).write_back}</div>}
+          {!itemX(item).applied_to && !itemX(item).write_back && item.status !== "open" && item.status !== "accepted_unknown" && <div className="muted" style={{ fontSize: 12 }}>這個回答只保留為文字紀錄；後續的依賴分析與拓樸規劃不一定會採用。</div>}
         </div>
       )}
 
@@ -617,6 +633,11 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
           </div>
           <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy}
             aria-label={res.needText ? `${res.label}（必填）` : `${res.label}備註（選填）`} aria-required={res.needText} />
+          {mode !== "accepted_unknown" && whereText(itemX(item).target, ir) && (
+            <div className="muted" style={{ fontSize: 12 }} data-testid="write-target">
+              送出後，你填的內容會原樣寫入「{whereText(itemX(item).target, ir)}」。請只填這個欄位的值（例如作業系統就填作業系統名稱），其他說明請用頁面下方的自由補充。
+            </div>
+          )}
           <div className="muted" style={{ fontSize: 12 }} data-testid="resolution-hint">
             {res.needText
               ? (text.trim() ? "送出後會標示為使用者來源，不會當成原文證據。" : "必填：請先填寫內容，「送出」才會啟用。")

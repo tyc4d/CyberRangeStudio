@@ -76,7 +76,7 @@ function IacFailure({ detail }: { detail: { errors: string[]; report: any } }) {
             </table>
           </div>
         )}
-        <div>下一步：回「軟體依賴」確認每台主機的服務都有「對應元件」，必要時在「缺失補充」選擇替代方案後重新分析，再重新規劃拓樸、重新生成。</div>
+        <div>下一步：回「軟體依賴」查看哪些主機的服務沒有「對應元件」。要讓一台主機可部署，它的服務必須對應到元件目錄中的元件，且該服務的「所在主機」是這台主機；條件滿足後重新規劃拓樸、重新核准，再回來生成。在此之前這個情境維持不可部署。</div>
         {detail.report && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>後端原始檢查報告</summary><div style={{ marginTop: 6 }}><DataView data={detail.report} /></div></details>}
       </div>
     </Notice>
