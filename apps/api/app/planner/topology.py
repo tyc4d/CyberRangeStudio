@@ -246,6 +246,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             for service in assigned.get(hid, []):
                 if service.get("catalogue_component"):
                     env_host["image_hint"] = service["catalogue_component"]
+                    if service.get("version_basis") in {"assumed", "substituted"}:
+                        # Real software, but not a release the source establishes.
+                        env_host["version_basis"] = service["version_basis"]
+                        env_host["deployed_version"] = service.get("deployed_version")
                     break
             # A host whose service maps to a real catalogue component is deployed as the
             # real open-source software; otherwise it falls back to a benign substitute.

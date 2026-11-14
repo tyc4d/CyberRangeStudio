@@ -47,3 +47,7 @@ Schema JSON 本身未改；下列欄位已加進 `src/types.ts`，由模組 1/2/
 | quality | `dropped_placeholder_hosts`、`excluded_non_attacker_actions` | 被丟棄的「unknown」假主機數；被排除在攻擊流程外的防守方行為 |
 | environment_plan.hosts[] | `exposure_basis` | `stated`（原文或使用者指定）／`inferred_entry_point`（推論的入口，需人工確認） |
 | environment_plan.hosts[] | `deployable: false`、`runtime` | catalogue 無法部署的元件，不標成 real／substitute |
+| service | `version_basis`、`deployed_version` | 實際部署的 catalogue 版本與來源版本的關係：`stated`（原文／使用者有寫且相符）、`assumed`（原文沒寫版本，屬假設）、`substituted`（原文寫的是別的版本）。`version` 欄位仍只放來源／使用者給的值 |
+| service | `substitute_basis`、`substitute_supplement_ref` | `user_chosen`：使用者為無對應元件的服務選的替代品，直接套在原服務上 |
+| missing_item（`planner_dep_software-*`） | `service_ref` | 這題問的是哪個服務；使用者選的替代品會套回這個服務 |
+| environment_plan.hosts[] | `version_basis`、`deployed_version` | 同上，僅在 `assumed`／`substituted` 時出現 |

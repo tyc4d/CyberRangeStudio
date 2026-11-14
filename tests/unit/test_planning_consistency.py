@@ -386,6 +386,116 @@ class StatedPortsForGenericServices(unittest.TestCase):
         self.assertFalse(any("port" in service for service in planned["services"]))
 
 
+class OsAnswerIsNotAService(unittest.TestCase):
+    """Reviewer N1: answering a host's OS must not add a 'Windows Server:445' service to it."""
+
+    def ir(self, text="Windows Server 2019", field="os"):
+        base = StatedPortsForGenericServices().ir()
+        base["hosts"][0]["os"] = text
+        base["missing_items"] = [{"id": "missing-hosts-h1-os", "field": "f", "category": "host", "reason": "r",
+                                  "status": "user_supplied", "resolution_source": "user",
+                                  "target": {"collection": "hosts", "id": "h1", "field": field},
+                                  "applied_to": {"collection": "hosts", "id": "h1", "field": field}}]
+        base["supplements"] = [{"id": "supplement-1", "source": "user", "text": text,
+                                "targets_missing_item": "missing-hosts-h1-os"}]
+        return base
+
+    def test_plan_is_unchanged_by_an_os_answer(self):
+        from app.iac.generator import inspect_plan
+        before = build_environment_plan(plan_dependencies(StatedPortsForGenericServices().ir()))
+        planned = plan_dependencies(self.ir())
+        self.assertEqual(sorted(service["id"] for service in planned["services"]), ["s1", "s2"])
+        self.assertFalse(any("windows" in str(service.get("catalogue_component")) for service in planned["services"]))
+        after = build_environment_plan(planned)
+        self.assertEqual(after["connections"], before["connections"])
+        self.assertEqual([h.get("image_hint") for h in after["hosts"]], [h.get("image_hint") for h in before["hosts"]])
+        self.assertEqual(inspect_plan(after, "scn_t")[1].get("errors"), [])
+        self.assertEqual(next(h for h in planned["hosts"] if h["id"] == "h1")["os"], "Windows Server 2019")
+
+    def test_application_named_in_an_os_answer_is_still_planned(self):
+        planned = plan_dependencies(self.ir("Windows Server 2019 running Redis"))
+        components = {service.get("catalogue_component") for service in planned["services"]}
+        self.assertIn("oss-redis", components)
+        self.assertFalse(any("windows" in str(component) for component in components))
+
+
+class DeployedVersionBasis(unittest.TestCase):
+    """Reviewer N2: a catalogue release the source never stated must be visibly an assumption."""
+
+    def plan(self, version=None):
+        from app.planner.catalogue import component_by_id
+        self.component = component_by_id("vuln-struts2-s2-045")
+        service = {"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}
+        if version:
+            service["version"] = version
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[service]))
+        return planned, next(s for s in planned["services"] if s["id"] == "s1")
+
+    def test_unstated_version_is_marked_assumed_everywhere(self):
+        planned, service = self.plan()
+        self.assertEqual(service["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertEqual((service["version_basis"], service["deployed_version"]), ("assumed", self.component["version"]))
+        self.assertNotIn("version", service)  # the IR still does not claim a version the source lacks
+        notice = next(i for i in planned["missing_items"] if i["id"].startswith("planner_dep_deployed-version"))
+        self.assertEqual((notice["status"], notice["category"]), ("substitute_chosen", "version"))
+        host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
+        self.assertEqual((host["version_basis"], host["deployed_version"]), ("assumed", self.component["version"]))
+
+    def test_different_stated_version_is_marked_substituted_and_same_version_is_stated(self):
+        _, other = self.plan("2.5.10")
+        self.assertEqual((other["version_basis"], other["version"]), ("substituted", "2.5.10"))
+        planned, same = self.plan(self.plan()[1]["deployed_version"])
+        self.assertEqual(same["version_basis"], "stated")
+        self.assertFalse(any(i["id"].startswith("planner_dep_deployed-version") for i in planned["missing_items"]))
+        self.assertNotIn("version_basis", next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1"))
+
+
+class UserChosenSubstitute(unittest.TestCase):
+    """frontend-eng: choosing a substitute for an unsupported service must leave a deployable plan."""
+
+    def first(self):
+        return plan_dependencies(base_ir(
+            actions=[action("a1", "SQL injection against Progress MOVEit Transfer", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "internet-facing file transfer server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Progress MOVEit Transfer", "host_ref": "h1", "port": 443,
+                       "epistemic_status": "supported", "source": "llm"}]))
+
+    def answer(self, planned, text, status="substitute_chosen"):
+        question = next(i for i in planned["missing_items"] if i["id"].startswith("planner_dep_software"))
+        self.assertEqual(question["service_ref"], "s1")
+        question.update({"status": status, "resolution": text, "resolution_source": "user"})
+        planned.setdefault("supplements", []).append(
+            {"id": "supplement-9", "source": "user", "text": text, "targets_missing_item": question["id"]})
+        return plan_dependencies(planned)
+
+    def test_choice_is_applied_to_the_original_service_on_its_host(self):
+        from app.iac.generator import inspect_plan
+        planned = self.answer(self.first(), "用 nginx 當替代")
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])
+        service = planned["services"][0]
+        self.assertEqual((service["catalogue_component"], service["is_substitute"], service["substitute_basis"], service["host_ref"]),
+                         ("oss-nginx", True, "user_chosen", "h1"))
+        self.assertEqual((service["name"], service["source"]), ("Progress MOVEit Transfer", "llm"))
+        self.assertNotIn("no_component", service)
+        self.assertEqual(next(h for h in planned["hosts"] if h["id"] == "h1")["service_refs"], ["s1"])
+        self.assertTrue(any(i["status"] == "substitute_chosen" and "MOVEit" in i["field"] for i in planned["missing_items"]))
+        plan = build_environment_plan(planned)
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual(host["image_hint"], "oss-nginx")
+        self.assertEqual([(c["from_host"], c["to_host"]) for c in plan["connections"]], [("attacker", "h1")])
+        # Planning again keeps the choice and adds nothing.
+        self.assertEqual([s["id"] for s in plan_dependencies(planned)["services"]], ["s1"])
+
+    def test_answer_naming_no_or_several_products_changes_nothing(self):
+        for text in ("先不部署", "nginx 或 Apache HTTP Server 都可以"):
+            planned = self.answer(self.first(), text)
+            self.assertEqual([service["id"] for service in planned["services"]], ["s1"], text)
+            self.assertTrue(planned["services"][0].get("no_component"), text)
+
+
 class UnsupportedComponents(unittest.TestCase):
     def test_undeployable_platform_is_not_presented_as_real_or_substitute(self):
         ir = base_ir(actions=[action("a1", "Exploit VMware Horizon", "h1", attack_technique="T1190")],
