@@ -56,7 +56,12 @@ def _infer_action_host_refs(actions: list[dict[str, Any]], hosts: dict[str, dict
         text = " ".join(str(action.get(key, "")) for key in ("name", "description")).casefold()
         if not text.strip():
             continue
-        explicit = [hid for hid in hosts if _mentions(text, hid.replace("_", "-")) or _mentions(text, hid)]
+        # Named hosts in the source text are stronger evidence than a role match.
+        explicit = []
+        for hid, host in hosts.items():
+            names = {hid, hid.replace("_", "-"), str(host.get("name", "")), str(host.get("hostname", ""))}
+            if any(_mentions(text, name) for name in names if name):
+                explicit.append(hid)
         if len(explicit) == 1:
             selected = explicit[0]
         else:
@@ -190,6 +195,10 @@ def _collect_hosts(target_context: Any, actions: list[dict[str, Any]]) -> dict[s
                         hid = _host_id(raw_id)
                         host = {"id": hid, "role": str(entry.get("role") or entry.get("type") or "target"),
                                 "epistemic_status": "inferred", "source": "program"}
+                        if entry.get("name"):
+                            host["name"] = str(entry["name"])
+                        if entry.get("hostname"):
+                            host["hostname"] = str(entry["hostname"])
                         if entry.get("os"):
                             host["os"] = str(entry["os"])
                         if entry.get("os_version") or entry.get("version"):
@@ -282,7 +291,8 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
 
-    existing_user_services = [item for item in result.get("services", []) if item.get("source") == "user"]
+    original_services = copy.deepcopy(result.get("services", []))
+    existing_user_services = [item for item in original_services if item.get("source") == "user"]
     services: list[dict[str, Any]] = []
     generated_host_refs: dict[str, list[str]] = {}
     missing = [item for item in result.get("missing_items", []) if not str(item.get("id", "")).startswith("planner_dep_")]
@@ -315,6 +325,15 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             component = component_by_id(existing_user.get("catalogue_component"))
             is_substitute = bool(existing_user.get("is_substitute", False))
         if component is None:
+            # Preserve analysis-stage facts even when they have no catalogue mapping.
+            original = next((item for item in original_services
+                             if item.get("name", "").casefold() == name.casefold()), None)
+            if original:
+                retained = copy.deepcopy(original)
+                retained["no_component"] = True
+                retained["is_substitute"] = False
+                if retained not in services:
+                    services.append(retained)
             add_missing(f"software-{name}-{candidate.get('version', '')}",
                         f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
                         "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.")
@@ -474,6 +493,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         current_refs = [ref for ref in current_refs if ref not in old_generated_ids]
         host["service_refs"] = list(dict.fromkeys([*current_refs, *generated_host_refs.get(hid, [])]))
     result["hosts"] = list(by_id.values())
+    # Planning may add catalogue services, but may never erase analysis entities.
+    present = {item.get("id") for item in services}
+    for original in original_services:
+        if original.get("id") not in present:
+            services.append(copy.deepcopy(original))
+            present.add(original.get("id"))
     result["services"] = services
     result["missing_items"] = missing
     return result

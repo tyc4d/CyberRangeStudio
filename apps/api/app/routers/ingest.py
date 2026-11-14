@@ -42,6 +42,10 @@ class SupplementRequest(BaseModel):
     targets_missing_item: str | None = None
     # Allowed resolution statuses when a target is given.
     status: str | None = None
+    host_id: str | None = None
+    service_id: str | None = None
+    field: str | None = None
+    value: str | int | None = None
 
     def target_id(self) -> str | None:
         return self.missing_item_id or self.targets_missing_item
@@ -189,10 +193,46 @@ def supplement(scenario_id: str, request: SupplementRequest):
         target["resolution"] = text
         target["resolution_source"] = "user"
 
-    # Keep the generated checklist and record this response as a separate user
-    # supplement instead of rewriting original report evidence or inventing a
-    # structured host/service fact from free text.
+    # Structured answers can be written directly to one selected entity. When
+    # resolving a host-scoped missing item, its host_ref also selects the host.
+    host_id = request.host_id or (target.get("host_ref") if target else None)
+    if request.field or request.value is not None:
+        if not request.field or request.value is None:
+            raise HTTPException(status_code=422, detail="field and value must be provided together.")
+        if request.service_id:
+            entity = next((item for item in ir.get("services", []) if item.get("id") == request.service_id), None)
+            if entity is None:
+                raise HTTPException(status_code=404, detail="Service not found.")
+            if request.field not in {"name", "version", "port", "os", "os_version"}:
+                raise HTTPException(status_code=422, detail="Unsupported service field.")
+        elif host_id:
+            entity = next((item for item in ir.get("hosts", []) if item.get("id") == host_id), None)
+            if entity is None:
+                raise HTTPException(status_code=404, detail="Host not found.")
+            if request.field not in {"name", "role", "os", "os_version"}:
+                raise HTTPException(status_code=422, detail="Unsupported host field.")
+        else:
+            raise HTTPException(status_code=422, detail="host_id or service_id is required for a structured supplement.")
+        value = request.value
+        if request.field == "port":
+            try:
+                value = int(value)
+            except (TypeError, ValueError) as exc:
+                raise HTTPException(status_code=422, detail="port must be an integer.") from exc
+            if not 1 <= value <= 65535:
+                raise HTTPException(status_code=422, detail="port must be between 1 and 65535.")
+        if request.field in {"os", "os_version"}:
+            os_name = str(value if request.field == "os" else entity.get("os", "")).casefold()
+            version = str(value if request.field == "os_version" else entity.get("os_version", "")).casefold()
+            if ("windows" in os_name and any(token in version for token in ("alpine", "ubuntu", "debian", "linux"))) or (
+                any(token in os_name for token in ("linux", "alpine", "ubuntu", "debian")) and "windows" in version
+            ):
+                raise HTTPException(status_code=422, detail="OS and OS version are inconsistent.")
+        entity[request.field] = value
+        entity["source"] = "user"
+        entity["epistemic_status"] = "supported"
+
     errors = iter_errors("scenario-ir", ir)
     if errors:
         raise HTTPException(status_code=500, detail={"message": "Supplemented Scenario IR failed contract validation.", "errors": errors})
-    return store.update(scenario_id, ir, note="user supplement")
+    return store.update(scenario_id, ir, note="user supplement", bump_version=True)
