@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import type { Action, EpistemicStatus, Evidence, Relation, ScenarioIR } from "@contracts";
+import { api } from "../lib/api";
+import { useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import {
   Empty, EPISTEMIC, EPISTEMIC_ORDER, EpistemicBadge, Metric, NextStep, Notice, PageHead, pct, ScenarioGate, SourceTag,
 } from "../components/ui";
+
+const attackId = (raw?: string) => raw?.match(/T\d{4}(?:\.\d{3})?/i)?.[0].toUpperCase();
 
 const METHOD_LABEL: Record<string, string> = { single_pass: "單次分析", staged: "分階段", staged_review: "分階段＋複核" };
 
@@ -34,6 +38,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
     for (const x of [...ir.actions, ...ir.relations]) c[x.epistemic_status] = (c[x.epistemic_status] ?? 0) + 1;
     return c;
   }, [ir]);
+
+  // Official MITRE ATT&CK info for the technique ids used here (reference enrichment, not report facts).
+  const attack = useLoad(() => api.getAttack(ir.id), [ir.id]);
+  const attackMap = attack.data?.techniques ?? {};
 
   const match = (x: Action | Relation) => filter === "all" || x.epistemic_status === filter;
   const actions = ir.actions.filter(match);
@@ -93,8 +101,22 @@ function Body({ ir }: { ir: ScenarioIR }) {
                         {a.target_host_ref && <div className="mono muted" style={{ marginTop: 2 }}>目標：{a.target_host_ref}</div>}
                       </td>
                       <td className="nowrap">
-                        {a.attack_technique ? <span className="mono">{a.attack_technique}</span> : <span className="muted">—</span>}
-                        {a.attack_tactic && <div className="muted" style={{ fontSize: 12 }}>{a.attack_tactic}</div>}
+                        {(() => {
+                          if (!a.attack_technique) return <span className="muted">—</span>;
+                          const info = attackMap[attackId(a.attack_technique) ?? ""];
+                          const tactics = info?.tactics?.length ? info.tactics.join(" / ") : a.attack_tactic;
+                          return (
+                            <>
+                              {info ? (
+                                <a className="mono" href={info.url} target="_blank" rel="noreferrer"
+                                  title={info.description} onClick={(e) => e.stopPropagation()}>{info.id}</a>
+                              ) : <span className="mono">{a.attack_technique}</span>}
+                              {info && <div style={{ fontSize: 12 }}>{info.name}</div>}
+                              {tactics && <div className="muted" style={{ fontSize: 12 }}>{tactics}</div>}
+                              {info && <div className="muted" style={{ fontSize: 11 }}>官方 ATT&amp;CK</div>}
+                            </>
+                          );
+                        })()}
                       </td>
                       <td><EpistemicBadge status={a.epistemic_status} /></td>
                       <td><SourceTag source={a.source} /></td>

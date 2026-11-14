@@ -100,7 +100,12 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
         rules += (
             " Return JSON with arrays actions, relations, artifacts, and target_context {hosts, services}. "
             "Each item may contain evidence:[{quote,source_ref}]. Actions need id,name; relations need id,from_action,to_action,kind; "
-            "hosts need id,role; services need id,name. Include only information found in the report."
+            "hosts need id,role; services need id,name. Include only information found in the report. "
+            "When the report states or lists a MITRE ATT&CK technique for an action (for example a TTP/MITRE ATT&CK table with "
+            "ids such as T1190 or sub-techniques like T1059.001), set that action's attack_technique to the exact id and "
+            "attack_tactic to the stated tactic. Put ATT&CK ids ONLY in these two fields. Never insert an id, a tactic id like "
+            "TA0001, a tactic name, or any bracketed annotation into an evidence quote: every evidence quote must stay an exact, "
+            "unaltered, character-for-character substring of the source text. Do not guess or fill an ATT&CK id the report does not give."
         )
     if review:
         rules += " Keep valid draft claims, remove unsupported factual detail only by marking it insufficient and retaining its evidence. Return the corrected full analysis object."
