@@ -197,3 +197,111 @@ class PinnedImagePreparationTests(unittest.TestCase):
         with patch.object(manager, "detect_lan_ipv4", side_effect=manager.PlanError(["no address"])):
             with self.assertRaises(manager.PlanError):
                 manager.do_up("lan-test", "lan")
+
+
+class NetworkAddressSelectionTests(unittest.TestCase):
+    """container_ipv4 must describe plan networks, never the publishing-only edge bridge."""
+
+    NETWORKS = {
+        "cr-demo-seg-edge": {"IPAddress": "192.168.48.2"},
+        "cr-demo-seg-outer": {"IPAddress": "172.26.0.2"},
+        "cr-demo-seg-inner": {"IPAddress": "172.27.0.2"},
+    }
+
+    def _inspect(self, by_container):
+        def fake_run(args, timeout=60, **kwargs):
+            import json as _json
+            return {"returncode": 0, "stdout": _json.dumps(by_container[args[-1]]), "stderr": ""}
+        return fake_run
+
+    def test_edge_address_is_never_returned(self):
+        only_edge_first = {"cr-demo-seg-web": self.NETWORKS}
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_run", side_effect=self._inspect(only_edge_first)):
+            addresses = manager.container_ipv4_addresses("seg", "web")
+            self.assertEqual(addresses, [{"network": "inner", "ip": "172.27.0.2"},
+                                         {"network": "outer", "ip": "172.26.0.2"}])
+            self.assertNotEqual(manager.container_ipv4("seg", "web"), "192.168.48.2")
+
+    def test_address_on_the_network_shared_with_the_source_is_preferred(self):
+        containers = {"cr-demo-seg-web": self.NETWORKS,
+                      "cr-demo-seg-attacker": {"cr-demo-seg-outer": {"IPAddress": "172.26.0.9"}}}
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_run", side_effect=self._inspect(containers)):
+            self.assertEqual(manager.container_ipv4("seg", "web", from_service="attacker"), "172.26.0.2")
+
+    def test_host_with_only_an_edge_address_has_no_plan_address(self):
+        containers = {"cr-demo-seg-web": {"cr-demo-seg-edge": {"IPAddress": "192.168.48.2"}}}
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_run", side_effect=self._inspect(containers)):
+            self.assertIsNone(manager.container_ipv4("seg", "web"))
+
+
+class FailedDeploymentTests(unittest.TestCase):
+    def _run_up(self, up_results):
+        calls = []
+        results = iter(up_results)
+
+        def fake_compose(scenario_id, operation, extra=None, timeout=60, **kwargs):
+            calls.append((operation, kwargs.get("host_ports")))
+            if operation == "up":
+                return next(results)
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        states = {"n": 0}
+
+        def fake_live(scenario_id):
+            # running only after an `up` that succeeded; empty after cleanup
+            last_up_ok = calls and calls[-1][0] == "up" and up_results[sum(1 for c in calls if c[0] == "up") - 1]["returncode"] == 0
+            containers = [{"service": "web", "name": "cr-demo-fail-web", "state": "running", "health": "healthy"}] if last_up_ok else (
+                [] if calls and calls[-1][0] == "down" else
+                [{"service": "web", "name": "cr-demo-fail-web", "state": "created", "health": "", "status": "Created"}])
+            return {"scenario_id": scenario_id, "project_name": "cr-demo-fail",
+                    "state": "running" if last_up_ok else "not_created" if not containers else "stopped",
+                    "containers": containers, "error": None}
+
+        ports = iter([{"CR_HOSTPORT_0": "42000"}, {"CR_HOSTPORT_0": "42001"}, {"CR_HOSTPORT_0": "42002"}])
+        with patch.object(manager, "_compose_command", side_effect=fake_compose), \
+                patch.object(manager, "live_containers", side_effect=fake_live), \
+                patch.object(manager, "allocate_host_ports", side_effect=lambda *a, **k: next(ports)), \
+                patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_run", return_value={"returncode": 0, "stdout": "boom", "stderr": ""}), \
+                patch.object(manager, "record", side_effect=lambda s, a, st, d: {"state": st, "details": d}):
+            return manager.do_up("fail"), calls
+
+    def test_failed_up_collects_diagnostics_and_removes_what_it_created(self):
+        failure = {"returncode": 1, "stdout": "", "stderr": "Container cr-demo-fail-web Created\ndependency failed to start"}
+        result, calls = self._run_up([failure])
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["state"], "error")
+        self.assertEqual([c[0] for c in calls], ["up", "down"])
+        self.assertTrue(result["cleanup"]["clean"])
+        self.assertEqual(result["diagnostics"]["containers"][0]["log_tail"], "boom")
+        self.assertEqual(result["deployment_record"]["state"], "failed")
+
+    def test_host_port_clash_is_retried_on_a_different_port(self):
+        clash = {"returncode": 1, "stdout": "", "stderr": "Container x Created\nBind for 127.0.0.1:42000 failed: port is already allocated"}
+        ok = {"returncode": 0, "stdout": "", "stderr": ""}
+        result, calls = self._run_up([clash, ok])
+        self.assertTrue(result["ok"])
+        self.assertEqual([c for c in calls if c[0] == "up"],
+                         [("up", {"CR_HOSTPORT_0": "42000"}), ("up", {"CR_HOSTPORT_0": "42001"})])
+        self.assertEqual(len(result["attempts"]), 2)
+
+
+class HostPortAllocationTests(unittest.TestCase):
+    def test_busy_port_is_skipped_and_ports_stay_in_range(self):
+        import socket
+        busy = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        busy.bind(("127.0.0.1", 0))
+        try:
+            self.assertFalse(manager._port_is_free("127.0.0.1", busy.getsockname()[1]))
+        finally:
+            busy.close()
+        report = {"report": {"host_port_mappings": [{"env": "CR_HOSTPORT_0"}, {"env": "CR_HOSTPORT_1"}]}}
+        with patch.object(manager, "get_generated", return_value=report):
+            assigned = manager.allocate_host_ports("ports", "127.0.0.1")
+        self.assertEqual(set(assigned), {"CR_HOSTPORT_0", "CR_HOSTPORT_1"})
+        values = [int(v) for v in assigned.values()]
+        self.assertEqual(len(set(values)), 2)
+        self.assertTrue(all(42000 <= v <= 42999 for v in values))

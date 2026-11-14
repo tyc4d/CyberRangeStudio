@@ -7,22 +7,79 @@
     "pinned_image": "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
     "version": "1.31.8",
     "digest": "sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
-    "role_keywords": ["web", "http", "web application", "web server"],
-    "aliases": ["nginx", "nginx http server"],
+    "role_keywords": [
+      "web",
+      "http",
+      "web application",
+      "web server"
+    ],
+    "aliases": [
+      "nginx",
+      "nginx http server"
+    ],
     "substitutes_for": [
       {
-        "names": ["iis", "microsoft iis", "internet information services", "microsoft internet information services"],
+        "names": [
+          "iis",
+          "microsoft iis",
+          "internet information services",
+          "microsoft internet information services"
+        ],
         "reason": "NGINX can provide a web-server role for a lab, but does not reproduce IIS-specific modules, configuration, or Windows behavior."
       }
     ],
-    "default_ports": [{"port": 80, "protocol": "tcp"}],
+    "default_ports": [
+      {
+        "port": 80,
+        "protocol": "tcp"
+      }
+    ],
     "license": "BSD-2-Clause",
     "open_source": true,
     "official_image": true,
     "image_source": "https://hub.docker.com/_/nginx",
-    "project_source": "https://nginx.org/"
-    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
-    "health_check": {"type": "tcp", "port": 80}, "management_ports": [], "fidelity": "exact pinned web server image", "substitute_explanation": null
+    "project_source": "https://nginx.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "health_check": {
+      "type": "tcp",
+      "port": 80
+    },
+    "management_ports": [],
+    "fidelity": "exact pinned web server image",
+    "substitute_explanation": null,
+    "container": {
+      "user": "101:101",
+      "cap_add": [
+        "NET_BIND_SERVICE"
+      ],
+      "tmpfs": [
+        "/var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755",
+        "/var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755",
+        "/var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "http://127.0.0.1:80/"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "5s"
+      },
+      "limits": {
+        "mem_limit": "256m"
+      }
+    }
   },
   {
     "id": "oss-httpd",
@@ -32,17 +89,66 @@
     "pinned_image": "httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
     "version": "2.4.71",
     "digest": "sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9",
-    "role_keywords": ["web", "http", "web application", "web server"],
-    "aliases": ["httpd", "apache", "apache httpd", "apache http server"],
+    "role_keywords": [
+      "web",
+      "http",
+      "web application",
+      "web server"
+    ],
+    "aliases": [
+      "httpd",
+      "apache",
+      "apache httpd",
+      "apache http server"
+    ],
     "substitutes_for": [],
-    "default_ports": [{"port": 80, "protocol": "tcp"}],
+    "default_ports": [
+      {
+        "port": 80,
+        "protocol": "tcp"
+      }
+    ],
     "license": "Apache-2.0",
     "open_source": true,
     "official_image": true,
     "image_source": "https://hub.docker.com/_/httpd",
-    "project_source": "https://httpd.apache.org/"
-    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
-    "health_check": {"type": "tcp", "port": 80}, "management_ports": [], "fidelity": "exact pinned web server image", "substitute_explanation": null
+    "project_source": "https://httpd.apache.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "health_check": {
+      "type": "tcp",
+      "port": 80
+    },
+    "management_ports": [],
+    "fidelity": "exact pinned web server image",
+    "substitute_explanation": null,
+    "container": {
+      "user": "1:1",
+      "cap_add": [
+        "NET_BIND_SERVICE"
+      ],
+      "tmpfs": [
+        "/usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "httpd",
+          "-t"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "5s"
+      },
+      "limits": {
+        "mem_limit": "256m"
+      }
+    }
   },
   {
     "id": "oss-postgres",
@@ -52,17 +158,67 @@
     "pinned_image": "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
     "version": "16.16",
     "digest": "sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
-    "role_keywords": ["database", "db", "sql"],
-    "aliases": ["postgres", "postgresql"],
+    "role_keywords": [
+      "database",
+      "db",
+      "sql"
+    ],
+    "aliases": [
+      "postgres",
+      "postgresql"
+    ],
     "substitutes_for": [],
-    "default_ports": [{"port": 5432, "protocol": "tcp"}],
+    "default_ports": [
+      {
+        "port": 5432,
+        "protocol": "tcp"
+      }
+    ],
     "license": "PostgreSQL",
     "open_source": true,
     "official_image": true,
     "image_source": "https://hub.docker.com/_/postgres",
-    "project_source": "https://www.postgresql.org/"
-    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
-    "health_check": {"type": "tcp", "port": 5432}, "management_ports": [], "fidelity": "exact pinned database image", "substitute_explanation": null
+    "project_source": "https://www.postgresql.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "health_check": {
+      "type": "tcp",
+      "port": 5432
+    },
+    "management_ports": [],
+    "fidelity": "exact pinned database image",
+    "substitute_explanation": null,
+    "container": {
+      "user": "70:70",
+      "tmpfs": [
+        "/var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700",
+        "/var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700"
+      ],
+      "environment": {
+        "POSTGRES_PASSWORD": "${CR_PG_PASSWORD:?set at deploy time}",
+        "POSTGRES_HOST_AUTH_METHOD": "${CR_PG_AUTH_METHOD:-trust}"
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "pg_isready",
+          "-h",
+          "127.0.0.1",
+          "-p",
+          "5432",
+          "-U",
+          "postgres"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "5s"
+      }
+    }
   },
   {
     "id": "oss-attacker",
@@ -73,16 +229,532 @@
     "version": "3.22",
     "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
     "aliases": [],
-    "role_keywords": ["attacker", "toolbox"],
+    "role_keywords": [
+      "attacker",
+      "toolbox"
+    ],
     "substitutes_for": [],
     "default_ports": [],
     "license": "MIT",
     "open_source": true,
     "official_image": true,
     "image_source": "https://hub.docker.com/_/alpine",
-    "project_source": "https://alpinelinux.org/"
-    ,"runtime": "container", "os_family": "linux", "supported_platforms": ["linux/amd64", "linux/arm64"],
-    "health_check": {"type": "process", "command": ["sh", "-c", "true"]}, "management_ports": [], "fidelity": "toolbox base only", "substitute_explanation": null
+    "project_source": "https://alpinelinux.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "health_check": {
+      "type": "process",
+      "command": [
+        "sh",
+        "-c",
+        "true"
+      ]
+    },
+    "management_ports": [],
+    "fidelity": "toolbox base only",
+    "substitute_explanation": null,
+    "container": {
+      "user": "65532:65532",
+      "command": [
+        "sh",
+        "-c",
+        "sleep 2147483647"
+      ],
+      "limits": {
+        "mem_limit": "256m"
+      }
+    }
+  },
+  {
+    "id": "oss-mysql",
+    "name": "MySQL",
+    "software": "mysql",
+    "image": "mysql:8.0.46",
+    "pinned_image": "mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "version": "8.0.46",
+    "digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+    "role_keywords": [],
+    "aliases": [
+      "mysql",
+      "mysql server",
+      "mysql database"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 3306,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "GPL-2.0",
+    "open_source": true,
+    "official_image": true,
+    "image_source": "https://hub.docker.com/_/mysql",
+    "project_source": "https://www.mysql.com/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "user": "999:999",
+      "tmpfs": [
+        "/var/lib/mysql:rw,noexec,nosuid,size=768m,uid=999,gid=999,mode=0700",
+        "/var/run/mysqld:rw,noexec,nosuid,size=8m,uid=999,gid=999,mode=0755"
+      ],
+      "environment": {
+        "MYSQL_ROOT_PASSWORD": "${CR_DB_PASSWORD:?set at deploy time}",
+        "MYSQL_PASSWORD": "${CR_DB_PASSWORD:?set at deploy time}",
+        "MYSQL_DATABASE": "app",
+        "MYSQL_USER": "app"
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "--protocol=tcp",
+          "--silent"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "20s"
+      },
+      "limits": {
+        "mem_limit": "1g"
+      }
+    },
+    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment"
+  },
+  {
+    "id": "oss-mariadb",
+    "name": "MariaDB",
+    "software": "mariadb",
+    "image": "mariadb:11.4.13",
+    "pinned_image": "mariadb:11.4.13@sha256:5e73baf8179b29f115101bb102763a47a017361f3e9792daccba6646c3ab1532",
+    "version": "11.4.13",
+    "digest": "sha256:5e73baf8179b29f115101bb102763a47a017361f3e9792daccba6646c3ab1532",
+    "role_keywords": [],
+    "aliases": [
+      "mariadb",
+      "mariadb server"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 3306,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "GPL-2.0",
+    "open_source": true,
+    "official_image": true,
+    "image_source": "https://hub.docker.com/_/mariadb",
+    "project_source": "https://mariadb.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "user": "999:999",
+      "tmpfs": [
+        "/var/lib/mysql:rw,noexec,nosuid,size=512m,uid=999,gid=999,mode=0700",
+        "/run/mysqld:rw,noexec,nosuid,size=8m,uid=999,gid=999,mode=0755"
+      ],
+      "environment": {
+        "MARIADB_ROOT_PASSWORD": "${CR_DB_PASSWORD:?set at deploy time}",
+        "MARIADB_PASSWORD": "${CR_DB_PASSWORD:?set at deploy time}",
+        "MARIADB_DATABASE": "app",
+        "MARIADB_USER": "app"
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "mariadb-admin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "--protocol=tcp",
+          "--silent"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "15s"
+      },
+      "limits": {
+        "mem_limit": "768m"
+      }
+    },
+    "fidelity": "exact pinned database image; database 'app' and user 'app' are lab scaffolding, credentials generated per deployment"
+  },
+  {
+    "id": "oss-redis",
+    "name": "Redis",
+    "software": "redis",
+    "image": "redis:7.4.12-alpine3.22",
+    "pinned_image": "redis:7.4.12-alpine3.22@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe",
+    "version": "7.4.12",
+    "digest": "sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe",
+    "role_keywords": [],
+    "aliases": [
+      "redis",
+      "redis server"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 6379,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "RSALv2/SSPLv1",
+    "open_source": false,
+    "official_image": true,
+    "image_source": "https://hub.docker.com/_/redis",
+    "project_source": "https://redis.io/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "user": "999:1000",
+      "tmpfs": [
+        "/data:rw,noexec,nosuid,size=64m,uid=999,gid=1000,mode=0700"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "redis-cli",
+          "-h",
+          "127.0.0.1",
+          "ping"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "5s"
+      },
+      "limits": {
+        "mem_limit": "256m"
+      }
+    },
+    "fidelity": "exact pinned Redis image, default configuration without authentication (lab network only)"
+  },
+  {
+    "id": "oss-tomcat",
+    "name": "Apache Tomcat",
+    "software": "tomcat",
+    "image": "tomcat:9.0.124-jre25-temurin-noble",
+    "pinned_image": "tomcat:9.0.124-jre25-temurin-noble@sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+    "version": "9.0.124",
+    "digest": "sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+    "role_keywords": [],
+    "aliases": [
+      "tomcat",
+      "apache tomcat"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 8080,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "Apache-2.0",
+    "open_source": true,
+    "official_image": true,
+    "image_source": "https://hub.docker.com/_/tomcat",
+    "project_source": "https://tomcat.apache.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "user": "65532:65532",
+      "tmpfs": [
+        "/usr/local/tomcat/logs:rw,noexec,nosuid,size=32m,uid=65532,gid=65532,mode=0755",
+        "/usr/local/tomcat/work:rw,nosuid,size=64m,uid=65532,gid=65532,mode=0755",
+        "/usr/local/tomcat/temp:rw,nosuid,size=64m,uid=65532,gid=65532,mode=0755"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "bash",
+          "-c",
+          "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET / HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q 'HTTP/1.1' <&3"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "15s"
+      },
+      "limits": {
+        "mem_limit": "768m",
+        "pids_limit": 512
+      }
+    },
+    "fidelity": "exact pinned servlet container with no web application deployed (GET / answers 404 from Tomcat itself)"
+  },
+  {
+    "id": "oss-wordpress",
+    "name": "WordPress",
+    "software": "wordpress",
+    "image": "wordpress:7.1.4-php8.3-apache",
+    "pinned_image": "wordpress:7.1.4-php8.3-apache@sha256:8b64037bb2a3bdc41bebccb165f20ad5e4c786b684ae4a2bd5981f98aa1eb107",
+    "version": "7.1.4",
+    "digest": "sha256:8b64037bb2a3bdc41bebccb165f20ad5e4c786b684ae4a2bd5981f98aa1eb107",
+    "role_keywords": [],
+    "aliases": [
+      "wordpress"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 80,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "GPL-2.0",
+    "open_source": true,
+    "official_image": true,
+    "image_source": "https://hub.docker.com/_/wordpress",
+    "project_source": "https://wordpress.org/",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "user": "33:33",
+      "cap_add": [
+        "NET_BIND_SERVICE"
+      ],
+      "tmpfs": [
+        "/var/www/html:rw,nosuid,size=384m,uid=33,gid=33,mode=0755",
+        "/var/run/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755",
+        "/var/lock/apache2:rw,noexec,nosuid,size=8m,uid=33,gid=33,mode=0755",
+        "/var/log/apache2:rw,noexec,nosuid,size=16m,uid=33,gid=33,mode=0755"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "http://127.0.0.1:80/wp-admin/install.php"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "20s"
+      },
+      "limits": {
+        "mem_limit": "768m"
+      }
+    },
+    "wiring": [
+      {
+        "software": [
+          "mysql",
+          "mariadb"
+        ],
+        "required": true,
+        "environment": {
+          "WORDPRESS_DB_HOST": "{host}:{port}",
+          "WORDPRESS_DB_NAME": "app",
+          "WORDPRESS_DB_USER": "app",
+          "WORDPRESS_DB_PASSWORD": "${CR_DB_PASSWORD:?set at deploy time}"
+        }
+      }
+    ],
+    "fidelity": "exact pinned application image; it only answers when its MySQL/MariaDB dependency is reachable and accepts the generated credentials",
+    "behavior_probe": {
+      "type": "http",
+      "path": "/wp-admin/install.php",
+      "expect_status": 200,
+      "proves": "web tier completed a real database handshake (WordPress returns HTTP 500 'Error establishing a database connection' otherwise)"
+    }
+  },
+  {
+    "id": "vuln-struts2-s2-045",
+    "name": "Apache Struts 2.3.30 showcase (CVE-2017-5638 / S2-045 exercise target)",
+    "software": "struts2",
+    "image": "vulhub/struts2:2.3.30",
+    "pinned_image": "vulhub/struts2:2.3.30@sha256:b992e080d8e5ad332bf526ae26124d28f56ca4fc9e0eaa91510dbee9870eb2c8",
+    "version": "2.3.30",
+    "digest": "sha256:b992e080d8e5ad332bf526ae26124d28f56ca4fc9e0eaa91510dbee9870eb2c8",
+    "role_keywords": [],
+    "aliases": [
+      "apache struts",
+      "apache struts 2",
+      "struts",
+      "struts2",
+      "struts 2",
+      "apache struts web framework"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 8080,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "Apache-2.0 (Struts); image built by the vulhub project",
+    "open_source": true,
+    "official_image": false,
+    "image_source": "https://hub.docker.com/r/vulhub/struts2",
+    "project_source": "https://github.com/vulhub/vulhub/tree/master/struts2/s2-045",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "read_only": false,
+      "tmpfs": [],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "http://127.0.0.1:8080/"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "60s"
+      },
+      "limits": {
+        "mem_limit": "1g",
+        "cpus": 2.0,
+        "pids_limit": 512
+      }
+    },
+    "vulnerable": true,
+    "exposure": "isolated_only",
+    "cves": [
+      "CVE-2017-5638"
+    ],
+    "fidelity": "real vulnerable Struts 2.3.30 (affected range 2.3.5-2.3.31) on Linux/Jetty; the version is an exercise choice, not a fact about any incident"
+  },
+  {
+    "id": "vuln-log4shell-solr",
+    "name": "Apache Solr 8.11.0 with Log4j 2.14.1 (CVE-2021-44228 exercise target)",
+    "software": "solr",
+    "image": "vulhub/solr:8.11.0",
+    "pinned_image": "vulhub/solr:8.11.0@sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+    "version": "8.11.0",
+    "digest": "sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+    "role_keywords": [],
+    "aliases": [
+      "apache solr",
+      "solr",
+      "apache solr 8.11.0"
+    ],
+    "substitutes_for": [],
+    "default_ports": [
+      {
+        "port": 8983,
+        "protocol": "tcp"
+      }
+    ],
+    "license": "Apache-2.0 (Solr); image built by the vulhub project",
+    "open_source": true,
+    "official_image": false,
+    "image_source": "https://hub.docker.com/r/vulhub/solr",
+    "project_source": "https://github.com/vulhub/vulhub/tree/master/log4j/CVE-2021-44228",
+    "runtime": "container",
+    "os_family": "linux",
+    "supported_platforms": [
+      "linux/amd64"
+    ],
+    "health_check": {
+      "type": "container_healthcheck"
+    },
+    "management_ports": [],
+    "substitute_explanation": null,
+    "container": {
+      "read_only": false,
+      "tmpfs": [],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "-o",
+          "/dev/null",
+          "http://127.0.0.1:8983/solr/admin/info/system?wt=json"
+        ],
+        "interval": "5s",
+        "timeout": "4s",
+        "retries": 12,
+        "start_period": "40s"
+      },
+      "limits": {
+        "mem_limit": "1536m",
+        "cpus": 2.0,
+        "pids_limit": 512
+      }
+    },
+    "vulnerable": true,
+    "exposure": "isolated_only",
+    "cves": [
+      "CVE-2021-44228"
+    ],
+    "exercise_for": [
+      {
+        "cve": "CVE-2021-44228",
+        "original_products": [
+          "vmware horizon"
+        ],
+        "difference": "Same Log4j 2.14.1 JNDI lookup flaw, but a different product (Solr, Linux container) than VMware Horizon on Windows; a teaching substitute, never the incident's software."
+      }
+    ],
+    "fidelity": "real vulnerable Log4j 2.14.1 inside Solr 8.11.0; substitute for any other Log4Shell-affected product"
   },
   {
     "id": "windows-server-eval-vm",
@@ -92,24 +764,119 @@
     "runtime": "vm",
     "os_family": "windows",
     "os_release": null,
-    "image_sources": [{"type": "user_supplied_evaluation_media", "ref": "https://www.microsoft.com/evalcenter/", "license": "Microsoft Evaluation Center terms; user must obtain and accept applicable terms", "distribution": "not bundled or redistributed"}],
+    "image_sources": [
+      {
+        "type": "user_supplied_evaluation_media",
+        "ref": "https://www.microsoft.com/evalcenter/",
+        "license": "Microsoft Evaluation Center terms; user must obtain and accept applicable terms",
+        "distribution": "not bundled or redistributed"
+      }
+    ],
     "image_ref": null,
     "image_digest": null,
-    "vm_spec": {"cpu": 2, "memory_mib": 4096, "disk_gib": 50},
-    "aliases": ["windows server", "microsoft windows server", "windows server evaluation"],
-    "role_keywords": ["windows server", "windows host"],
-    "services": [{"port": 445, "protocol": "tcp", "name": "SMB"}, {"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
-    "default_ports": [{"port": 445, "protocol": "tcp"}],
-    "management_ports": [{"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
-    "health_check": {"type": "guest_agent", "requires": "Windows guest agent and native OS readiness probe"},
-    "services": [{"port": 80, "protocol": "tcp", "name": "HTTP/IIS (only when explicitly provisioned)"}, {"port": 443, "protocol": "tcp", "name": "HTTPS/IIS (only when explicitly provisioned)"}, {"port": 445, "protocol": "tcp", "name": "SMB"}, {"port": 3389, "protocol": "tcp", "name": "RDP"}, {"port": 5985, "protocol": "tcp", "name": "WinRM HTTP"}, {"port": 5986, "protocol": "tcp", "name": "WinRM HTTPS"}],
-    "supported_platforms": ["linux/amd64+kvm (backend not installed)", "user supplied compatible hypervisor"],
+    "vm_spec": {
+      "cpu": 2,
+      "memory_mib": 4096,
+      "disk_gib": 50
+    },
+    "aliases": [
+      "windows server",
+      "microsoft windows server",
+      "windows server evaluation"
+    ],
+    "role_keywords": [
+      "windows server",
+      "windows host"
+    ],
+    "services": [
+      {
+        "port": 80,
+        "protocol": "tcp",
+        "name": "HTTP/IIS (only when explicitly provisioned)"
+      },
+      {
+        "port": 443,
+        "protocol": "tcp",
+        "name": "HTTPS/IIS (only when explicitly provisioned)"
+      },
+      {
+        "port": 445,
+        "protocol": "tcp",
+        "name": "SMB"
+      },
+      {
+        "port": 3389,
+        "protocol": "tcp",
+        "name": "RDP"
+      },
+      {
+        "port": 5985,
+        "protocol": "tcp",
+        "name": "WinRM HTTP"
+      },
+      {
+        "port": 5986,
+        "protocol": "tcp",
+        "name": "WinRM HTTPS"
+      }
+    ],
+    "default_ports": [
+      {
+        "port": 445,
+        "protocol": "tcp"
+      }
+    ],
+    "management_ports": [
+      {
+        "port": 3389,
+        "protocol": "tcp",
+        "name": "RDP"
+      },
+      {
+        "port": 5985,
+        "protocol": "tcp",
+        "name": "WinRM HTTP"
+      },
+      {
+        "port": 5986,
+        "protocol": "tcp",
+        "name": "WinRM HTTPS"
+      }
+    ],
+    "health_check": {
+      "type": "guest_agent",
+      "requires": "Windows guest agent and native OS readiness probe"
+    },
+    "supported_platforms": [
+      "linux/amd64+kvm (backend not installed)",
+      "user supplied compatible hypervisor"
+    ],
     "license": "Microsoft evaluation terms apply; verify before use",
     "image_source": "https://www.microsoft.com/evalcenter/",
-    "substitutes_for": [{"names": ["iis", "microsoft iis", "internet information services", "active directory", "active directory domain services", "ad ds", "domain controller", "windows client", "windows workstation", "windows authentication", "group policy", "gpo"], "reason": "Windows Server VM capability does not by itself provide IIS provisioning, AD topology, client membership, policy, or authentication semantics; requires explicit VM fixture and versions."}],
+    "substitutes_for": [
+      {
+        "names": [
+          "iis",
+          "microsoft iis",
+          "internet information services",
+          "active directory",
+          "active directory domain services",
+          "ad ds",
+          "domain controller",
+          "windows client",
+          "windows workstation",
+          "windows authentication",
+          "group policy",
+          "gpo"
+        ],
+        "reason": "Windows Server VM capability does not by itself provide IIS provisioning, AD topology, client membership, policy, or authentication semantics; requires explicit VM fixture and versions."
+      }
+    ],
     "fidelity": "OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied",
     "substitute_explanation": "Linux services or ordinary VMs are not Windows substitutes.",
-    "capabilities": ["windows_os"],
+    "capabilities": [
+      "windows_os"
+    ],
     "deployable": false
   },
   {
@@ -118,30 +885,115 @@
     "software": "active-directory-domain-services",
     "runtime": "vm",
     "os_family": "windows",
-    "aliases": ["active directory", "active directory domain services", "ad ds", "domain controller", "domain controller (dc)"],
-    "role_keywords": ["domain controller", "active directory"],
-    "services": [{"port": 53, "protocol": "udp", "name": "DNS"}, {"port": 88, "protocol": "tcp", "name": "Kerberos"}, {"port": 389, "protocol": "tcp", "name": "LDAP"}, {"port": 445, "protocol": "tcp", "name": "SMB"}],
-    "default_ports": [{"port": 389, "protocol": "tcp"}], "management_ports": [],
-    "supported_platforms": [], "health_check": {"type": "unsupported"},
-    "license": "Windows Server licensing and domain fixture required", "image_sources": [], "substitutes_for": [],
-    "fidelity": "not currently reproducible; requires versioned isolated DC/member topology", "capabilities": ["active_directory"], "deployable": false
+    "aliases": [
+      "active directory",
+      "active directory domain services",
+      "ad ds",
+      "domain controller",
+      "domain controller (dc)"
+    ],
+    "role_keywords": [
+      "domain controller",
+      "active directory"
+    ],
+    "services": [
+      {
+        "port": 53,
+        "protocol": "udp",
+        "name": "DNS"
+      },
+      {
+        "port": 88,
+        "protocol": "tcp",
+        "name": "Kerberos"
+      },
+      {
+        "port": 389,
+        "protocol": "tcp",
+        "name": "LDAP"
+      },
+      {
+        "port": 445,
+        "protocol": "tcp",
+        "name": "SMB"
+      }
+    ],
+    "default_ports": [
+      {
+        "port": 389,
+        "protocol": "tcp"
+      }
+    ],
+    "management_ports": [],
+    "supported_platforms": [],
+    "health_check": {
+      "type": "unsupported"
+    },
+    "license": "Windows Server licensing and domain fixture required",
+    "image_sources": [],
+    "substitutes_for": [],
+    "fidelity": "not currently reproducible; requires versioned isolated DC/member topology",
+    "capabilities": [
+      "active_directory"
+    ],
+    "deployable": false
   },
   {
     "id": "unsupported-vmware-horizon",
-    "name": "VMware Horizon (external platform required)", "software": "vmware-horizon",
-    "runtime": "external_platform", "os_family": "windows",
-    "aliases": ["vmware horizon", "horizon connection server", "horizon agent", "horizon desktop", "vmware horizon view"],
-    "role_keywords": ["horizon connection server", "horizon desktop"], "services": [], "default_ports": [], "management_ports": [],
-    "supported_platforms": [], "health_check": {"type": "external_connector_required"}, "image_sources": [], "substitutes_for": [],
+    "name": "VMware Horizon (external platform required)",
+    "software": "vmware-horizon",
+    "runtime": "external_platform",
+    "os_family": "windows",
+    "aliases": [
+      "vmware horizon",
+      "horizon connection server",
+      "horizon agent",
+      "horizon desktop",
+      "vmware horizon view"
+    ],
+    "role_keywords": [
+      "horizon connection server",
+      "horizon desktop"
+    ],
+    "services": [],
+    "default_ports": [],
+    "management_ports": [],
+    "supported_platforms": [],
+    "health_check": {
+      "type": "external_connector_required"
+    },
+    "image_sources": [],
+    "substitutes_for": [],
     "license": "VMware vSphere/Horizon licenses and compatible external platform required",
-    "fidelity": "not reproducible without supported external VMware Horizon backend", "capabilities": ["horizon"], "deployable": false
+    "fidelity": "not reproducible without supported external VMware Horizon backend",
+    "capabilities": [
+      "horizon"
+    ],
+    "deployable": false
   },
   {
     "id": "unsupported-log4j-unspecified",
-    "name": "Log4j application (version/fixture unspecified)", "software": "log4j",
-    "runtime": "unsupported", "os_family": "unknown", "aliases": ["log4j", "log4shell", "cve-2021-44228"],
-    "role_keywords": [], "services": [], "default_ports": [], "management_ports": [], "supported_platforms": [],
-    "health_check": {"type": "unsupported"}, "image_sources": [], "substitutes_for": [],
-    "license": "Target application and version must be identified", "fidelity": "not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture", "deployable": false
+    "name": "Log4j application (version/fixture unspecified)",
+    "software": "log4j",
+    "runtime": "unsupported",
+    "os_family": "unknown",
+    "aliases": [
+      "log4j",
+      "log4shell",
+      "cve-2021-44228"
+    ],
+    "role_keywords": [],
+    "services": [],
+    "default_ports": [],
+    "management_ports": [],
+    "supported_platforms": [],
+    "health_check": {
+      "type": "unsupported"
+    },
+    "image_sources": [],
+    "substitutes_for": [],
+    "license": "Target application and version must be identified",
+    "fidelity": "not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture",
+    "deployable": false
   }
 ]

@@ -1,0 +1,25 @@
+{
+  "hosts": [
+    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["dmz"]},
+    {"id": "portal", "role": "exposed web application (online dispute portal)", "image_hint": "vuln-struts2-s2-045", "component_mode": "real",
+     "services": [{"name": "Apache Struts", "port": 8080, "protocol": "tcp"}], "networks": ["dmz", "data"]},
+    {"id": "db-dispute", "role": "internal database", "image_hint": "oss-mysql", "component_mode": "real",
+     "services": [{"name": "mysql", "port": 3306, "protocol": "tcp"}], "networks": ["data"]},
+    {"id": "db-other-1", "role": "internal database", "image_hint": "oss-postgres", "component_mode": "real",
+     "services": [{"name": "postgres", "port": 5432, "protocol": "tcp"}], "networks": ["data"]},
+    {"id": "db-other-2", "role": "internal database", "image_hint": "oss-mariadb", "component_mode": "real",
+     "services": [{"name": "mariadb", "port": 3306, "protocol": "tcp"}], "networks": ["data"]}
+  ],
+  "networks": [{"id": "dmz", "segment": "dmz", "internal": false}, {"id": "data", "segment": "data", "internal": true}],
+  "connections": [
+    {"from_host": "attacker", "to_host": "portal", "port": 8080, "protocol": "tcp", "reason": "attacker reaches the portal"},
+    {"from_host": "portal", "to_host": "db-dispute", "port": 3306, "protocol": "tcp", "reason": "portal uses its dispute database"},
+    {"from_host": "portal", "to_host": "db-other-1", "port": 5432, "protocol": "tcp", "reason": "databases are not segmented from the portal"},
+    {"from_host": "portal", "to_host": "db-other-2", "port": 3306, "protocol": "tcp", "reason": "databases are not segmented from the portal"}
+  ],
+  "verify_blocked": [
+    {"from_host": "attacker", "to_host": "db-dispute", "port": 3306, "protocol": "tcp", "reason": "attacker has no direct path to the data segment"},
+    {"from_host": "attacker", "to_host": "db-other-1", "port": 5432, "protocol": "tcp", "reason": "attacker has no direct path to the data segment"}
+  ],
+  "approval": {"approved": false}
+}
