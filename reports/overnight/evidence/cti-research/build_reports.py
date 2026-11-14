@@ -86,21 +86,97 @@ SPECS = {
             (820, 825, 0, "p"),
         ],
     },
+    "aa24-046a-former-employee-account": {
+        "title": "CISA AA24-046A — Threat Actor Leverages Compromised Account of Former Employee to Access State Government Organization",
+        "meta": [
+            "Publisher: CISA and MS-ISAC, Joint Cybersecurity Advisory, Product ID AA24-046A, February 15, 2024 (TLP:CLEAR)",
+            "Web page: https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-046a",
+            "PDF: https://www.cisa.gov/sites/default/files/2024-02/aa24-046a-threat-actor-leverages-compromised%20account-of%20former-employee.pdf",
+            "PDF SHA-256: 55534abb402001e831734b065f78d5c8ba6dcaec599fd458c5b3745304261649 (`source.pdf`, 10 pages)",
+            "License: U.S. Government work, TLP:CLEAR",
+            "Scope of this file: SUMMARY and TECHNICAL DETAILS (advisory pages 1–4), verbatim. The \"Actions to take today\" sidebar, ATT&CK tables and mitigations are in `source.pdf.txt`. Table 1 is re-laid-out as a markdown table with the same cell text.",
+        ],
+        "parts": [
+            "## SUMMARY",
+            (12, 32, 0, "pjoin", {"rcut": 66, "noblank": True}),
+            (33, 37, 0, "p"),
+            (38, 39, 0, "pjoin"),
+            (55, 55, 0, "p"),
+            "## TECHNICAL DETAILS",
+            (58, 62, 0, "p"),
+            "### Overview",
+            (65, 76, 0, "p"),
+            "### Untitled Goose Tool",
+            (79, 85, 0, "p"),
+            "### Threat Actor Activity",
+            (88, 91, 0, "p"),
+            "#### Initial Access: Compromised Domain Accounts",
+            (94, 96, 0, "pjoin"),
+            (105, 106, 0, "p"),
+            (107, 112, 0, "p"),
+            (113, 115, 0, "p"),
+            (116, 121, 0, "p"),
+            (122, 125, 0, "p"),
+            "#### LDAP Queries",
+            (127, 134, 0, "p"),
+            "Table 1: LDAP Queries Conducted by the Threat Actor",
+            "| Query | Description |\n|---|---|\n"
+            "| LDAP Search Scope: WholeSubtree, Base Object: dc=[REDACTED],dc=local, Search Filter: (objectCategory=CN=Person,CN=Schema,CN=Configuration,DC=[REDACTED],DC=local) | Collects names and metadata of users in the domain. |\n"
+            "| LDAP Search Scope: WholeSubtree, Base Object: dc=[REDACTED],dc=local, Search Filter: (objectCategory=CN=Computer,CN=Schema,CN=Configuration,DC=[REDACTED],DC=local) | Collects names and metadata of hosts in the domain. |\n"
+            "| LDAP Search Scope: WholeSubtree, Base Object: dc=[REDACTED],dc=local, Search Filter: (objectCategory=CN=Trusted-Domain,CN=Schema,CN=Configuration,DC=[REDACTED],DC=local) | Collects trust information in the domain. |\n"
+            "| LDAP Search Scope: WholeSubtree, Base Object: DC=[REDACTED],DC=local, Search Filter: ( & ( & (sAMAccountType=805306368) (servicePrincipalName=*) ( ! (sAMAccountName=krbtgt) ) ( ! (userAccountControl&2) ) ) (adminCount=1) ) | Collects Domain Administrators and Service Principals in the domain. |",
+            "#### Service Authentication",
+            (172, 177, 0, "p"),
+            (178, 181, 0, "p"),
+        ],
+    },
+    "aa23-158a-clop-moveit": {
+        "title": "CISA AA23-158A — #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability",
+        "meta": [
+            "Publisher: FBI and CISA, Joint Cybersecurity Advisory, Product ID AA23_158A, June 7, 2023 (TLP:CLEAR)",
+            "Web page: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-158a",
+            "PDF: https://www.cisa.gov/sites/default/files/2023-06/aa23-158a-stopransomware-cl0p-ransomware-gang-exploits-moveit-vulnerability.pdf",
+            "PDF SHA-256: f9b23261a8c29328879fd37dcb8241aedfc2af13bc06042a0f90e927aeb7518e (`source.pdf`, 22 pages, as retrieved on the date below; CISA has revised this advisory since first publication)",
+            "License: U.S. Government work, TLP:CLEAR",
+            "Scope of this file: SUMMARY and TECHNICAL DETAILS (advisory pages 1–4), verbatim. The \"Actions to take today\" sidebar, YARA rules, IOC tables, ATT&CK tables and mitigations are in `source.pdf.txt`.",
+        ],
+        "parts": [
+            "## SUMMARY",
+            (13, 31, 0, "p", {"rcut": 70, "noblank": True}),
+            (33, 37, 0, "p", {"rcut": 70, "noblank": True}),
+            (39, 43, 0, "pjoin", {"rcut": 70, "noblank": True}),
+            (44, 48, 0, "p"),
+            "## TECHNICAL DETAILS",
+            (75, 76, 0, "p"),
+            (77, 111, 0, "p"),
+            "Figure 1: CL0P Ransom Note",
+            (128, 146, 0, "pre"),
+            (149, 167, 0, "p"),
+            (180, 184, 0, "p"),
+            "### CVE-2023-34362 MOVEIT TRANSFER VULNERABILITY",
+            (187, 203, 0, "p"),
+            (206, 217, 0, "p"),
+            (218, 220, 0, "p"),
+        ],
+    },
 }
 
 FURNITURE = re.compile(r"^\s*(Page \d+( of \d+)?\b.*|TLP: ?CLEAR.*|``)\s*$")
 BULLET = re.compile(r"^\s*([•●]|o\s)")
 
 
-def paragraphs(lines: list[str], cut: int) -> list[str]:
+def paragraphs(lines: list[str], cut: int, rcut: int = 0, noblank: bool = False) -> list[str]:
     out: list[str] = []
     cur: list[str] = []
     for raw in lines:
-        line = raw[cut:] if cut else raw
+        line = raw[:rcut] if rcut else raw  # rcut drops a right-hand sidebar column
+        line = line[cut:] if cut else line
         if FURNITURE.match(line):
             continue
         text = line.strip()
         if not text:
+            if noblank:
+                continue
             if cur:
                 out.append(" ".join(cur))
                 cur = []
@@ -124,13 +200,14 @@ def build(slug: str, spec: dict, root: Path) -> None:
         if isinstance(part, str):
             body.append(part)
             continue
-        start, end, cut, mode = part
+        start, end, cut, mode = part[:4]
+        opt = part[4] if len(part) > 4 else {}
         lines = src[start - 1 : end]
         if mode == "pre":
             block = [l.strip() for l in lines if l.strip()]
             body.append("```\n" + "\n".join(block) + "\n```")
             continue
-        paras = paragraphs(lines, cut)
+        paras = paragraphs(lines, cut, opt.get("rcut", 0), opt.get("noblank", False))
         if carry:
             paras[0] = carry + " " + paras[0]
             carry = ""
