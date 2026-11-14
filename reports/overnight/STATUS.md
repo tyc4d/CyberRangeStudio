@@ -9,22 +9,17 @@
 - KVM/libvirt：可用（需 `sg kvm`／`sg libvirt`）。Windows Server 2022 Eval ISO 已完整下載並核對大小（5,044,094,976 bytes）。
 - Codex Ultra：預設模型 gpt-6-luna 不支援 ultra，測試者改用 gpt-6.1-sol＋effort=ultra＋停用 fast/ultrafast＋daybreak=false（範本 `cr-codex-ultra`）。已在三個測試者畫面上確認 "GPT-6.1-Sol ultra"。
 
-## 整合進度（main）
-| 分支@commit | 審查 | 併入 main |
-|---|---|---|
-| agent/cti-research | 研究資料（無程式碼） | ✔ bee0b0c |
-| agent/infra-eng@5059c10（edge 隔離、動態配埠、失敗清理、catalogue） | APPROVE | ✔ |
-| agent/scenario-eng@c9a63dd（模組1–5 修復） | APPROVE | ✔ 0d31c04 |
-| agent/frontend-eng@4625120（QA Round1 GUI 修復） | APPROVE | ✔ 990d40b |
-| agent/poc-eng@b51a7f5（驗證器假 PASS 修復） | APPROVE（兩次退回後） | ✔ 22d1740 |
-| agent/infra-eng@227a74c（宿主機隔離） | REQUEST_CHANGES：G1 cr-gateway 可被當跨網段跳板 | ✗ 修正中 |
-| agent/scenario-eng@8a55f73（N1/N2 version_basis） | 審查中 | ✗ |
-| agent/frontend-eng 4625120 之後 | 待審 | ✗ |
-| agent/infra-eng@3e3f0a9（Windows VM 後端；已真實安裝並開到登入畫面，guest agent 待 virtio-win 完整檔） | 待審 | ✗ |
+## 整合進度（main）——全部經獨立 reviewer APPROVE 後由 Lead 併入
+- cti-research（研究資料）、infra-eng@5059c10／713aa43／e761d07（edge 隔離、動態配埠、失敗清理、catalogue、宿主機隔離、cr-gateway、Windows VM 後端與真實驗證）、scenario-eng@c9a63dd／8a55f73／592e1c7（模組1–5、version_basis、替代標示）、frontend-eng@4625120／0aa4bfa／d434fb8（GUI 修復、e2e 穩定）、poc-eng@b51a7f5／df0f802（驗證器假 PASS 修復、Phase 3 真實 PoC）。
+- 退回紀錄：poc-eng 2 次、scenario-eng 1 次、infra-eng 1 次（G1 跨網段跳板）——皆修正後複審通過。reviewer 報告共 17 節：`.worktrees/reviewer/reports/overnight/worker-reports/reviewer.md`。
+- 待審／待併：infra-eng@67ffe92（VM 擁有權真實測試、最終整理）、poc-eng 驗證報告 substitute_for 顯示。
+- main 回歸：後端 177 passed（43ba325 實跑）；前端 e2e 18 passed（reviewer 實跑，含真實部署／驗證／清理）。
+- Phase 3 真實 PoC（reviewer 獨立重跑確認）：Struts S2-045 真實重現、Log4Shell(Solr) 真實 JNDI→LDAP 回呼；Horizon／Windows／AD 專屬步驟 BLOCKED。見 `E2E-RESULTS.md`。
+- Windows VM：Server 2022 Eval 真實無人值守安裝、隔離網路、guest agent 原生健康檢查、銷毀無殘留；尚未接入環境計畫部署流程（BLOCKED，見 INFRA-VALIDATION §7）。
 
-main 回歸：後端 134 passed（2026-11-15，併入 poc-eng 後實跑）。前端 e2e：frontend-eng 分支上 16 passed（含真實部署／驗證／清理），曾有 1 次偶發整頁空白，原因追查中。
-
-QA Round 1 基準：講師 43／管理者 54／UX 53（見 QA-SCORES.md）。Round 2 待上述分支整合後啟動。
+## QA
+- Round 1（修復前）：講師 43／管理者 54／UX 53。
+- Round 2：進行中。凍結版本 tag `qa-round2`（43ba325），站台由 `.worktrees/qa-site` 提供（:5177／:8077）。測試者 qa-instructor-r2(t3m)、qa-admin-r2(t3n)、qa-ux-r2(t3p)，皆 Codex gpt-6.1-sol ultra。
 
 ## Agent 名冊
 | 名稱 | 角色 | 工具 | Herdr | Worktree / 分支 | 狀態 |
