@@ -101,7 +101,7 @@ export function ImportPage() {
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
           onDragLeave={() => setDrag(false)}
           onDrop={onDrop}
-          style={{ border: `1px dashed ${drag ? "var(--accent)" : "var(--border)"}`, borderRadius: 6, padding: "10px 12px" }}
+          style={{ border: `1px dashed ${drag ? "var(--accent)" : "var(--control)"}`, background: drag ? "var(--accent-dim)" : undefined, transition: "border-color var(--quick), background-color var(--quick)", padding: "10px 12px" }}
           className="row"
         >
           <button onClick={() => fileRef.current?.click()} disabled={analyze.busy}>選擇檔案</button>

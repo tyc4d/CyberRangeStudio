@@ -1,7 +1,7 @@
 # apps/web — CyberRange Studio GUI
 
 React + TypeScript + Vite。`npm install && npm run dev`（5173，`/api` 代理到 127.0.0.1:8077）。
-`npm run typecheck` 檢查型別。
+`npm run typecheck` 檢查型別。`npm run e2e` 用 Playwright 開瀏覽器跑完整流程（需後端與 Docker；說明與最近一次結果見 `e2e/RESULTS.md`）。
 
 ## 前端假設的後端端點
 

@@ -106,6 +106,9 @@ export const api = {
   analyzeDependencies: (id: string) => post<any>(`/api/planning/${enc(id)}/dependencies`),
   catalogue: () => req<any>("/api/planning/catalogue"),
   planTopology: (id: string) => post<any>(`/api/planning/${enc(id)}/topology`),
+  /** Human approval gate: deploy/up answers 409 until the current topology is approved. Returns the updated environment_plan. */
+  approveTopology: (id: string, note?: string) =>
+    post<any>(`/api/planning/${enc(id)}/topology/approve`, { approved: true, approved_by: "user", ...(note ? { note } : {}) }),
 
   // module 6 IaC
   getIac: (id: string) => req<any>(`/api/iac/${enc(id)}`),
@@ -117,6 +120,8 @@ export const api = {
   deployDown: (id: string) => post<any>(`/api/deploy/${enc(id)}/down`),
   deployStatus: (id: string) => req<any>(`/api/deploy/${enc(id)}/status`),
   deployHealth: (id: string) => req<any>(`/api/deploy/${enc(id)}/health`),
+  /** Audit trail of up/down attempts (including refused ones), newest first. */
+  deployRecords: (id: string) => req<any>(`/api/deploy/${enc(id)}/records`),
 
   // module 8 validation
   getReport: (id: string) => req<ValidationReport | any>(`/api/validate/${enc(id)}/report`),
