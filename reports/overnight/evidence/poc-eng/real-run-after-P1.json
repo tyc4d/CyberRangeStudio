@@ -1,0 +1,191 @@
+{
+ "scenario_id": "review-poc-7afb83",
+ "deployment_id": "cr-demo-review-poc-7afb83",
+ "run_at": "2026-11-14T18:31:30.070116+00:00",
+ "levels": {
+  "env_build": "PASS",
+  "behavior_repro": "PARTIAL",
+  "full_chain": "PARTIAL"
+ },
+ "level_criteria": {
+  "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+  "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+  "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+ },
+ "checks": [
+  {
+   "id": "service-up-attacker",
+   "name": "attacker 服務執行狀態",
+   "category": "service_up",
+   "status": "PASS",
+   "expected": "容器狀態為執行中",
+   "observed": "容器狀態=running，健康狀態=healthy",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "service-up-web",
+   "name": "web 服務執行狀態",
+   "category": "service_up",
+   "status": "PASS",
+   "expected": "容器狀態為執行中",
+   "observed": "容器狀態=running，健康狀態=healthy",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "service-up-web2",
+   "name": "web2 服務執行狀態",
+   "category": "service_up",
+   "status": "PASS",
+   "expected": "容器狀態為執行中",
+   "observed": "容器狀態=running，健康狀態=healthy",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "dependency-attacker",
+   "name": "attacker 具備 Python 執行環境",
+   "category": "dependency_present",
+   "status": "PASS",
+   "expected": "Python 標準函式庫可成功載入",
+   "observed": "Python 執行環境正常",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "dependency-web",
+   "name": "web 具備 Python 執行環境",
+   "category": "dependency_present",
+   "status": "PASS",
+   "expected": "Python 標準函式庫可成功載入",
+   "observed": "Python 執行環境正常",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "dependency-web2",
+   "name": "web2 具備 Python 執行環境",
+   "category": "dependency_present",
+   "status": "PASS",
+   "expected": "Python 標準函式庫可成功載入",
+   "observed": "Python 執行環境正常",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "connectivity-1",
+   "name": "attacker 可連線至 web:8080",
+   "category": "connectivity",
+   "status": "PASS",
+   "expected": "對宣告服務建立一條 TCP 連線 web:8080",
+   "observed": "已連線（CONNECTED）",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "behavior-1",
+   "name": "web 回傳無害服務回應",
+   "category": "behavior",
+   "status": "PASS",
+   "expected": "HTTP GET /demo 回傳 cr-demo-demo-ok",
+   "observed": "HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：cr-demo-demo-ok",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "chain-1",
+   "name": "attacker 完成至 web 的宣告路徑",
+   "category": "chain",
+   "status": "PASS",
+   "expected": "宣告的 TCP 路徑及其無害服務行為皆通過",
+   "observed": "已連線（已連線（CONNECTED））; HTTP 狀態（HTTP_STATUS）：200\n回應內容（BODY）：cr-demo-demo-ok",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "behavior-web2",
+   "name": "web2 無害服務行為",
+   "category": "behavior",
+   "status": "NOT_TESTED",
+   "expected": "已宣告的來源至服務探測回傳預期結果",
+   "observed": "未宣告適用的主機至服務連線",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "segmentation-1",
+   "name": "attacker 無法連線至 web2:8080",
+   "category": "segmentation",
+   "status": "PASS",
+   "expected": "TCP 連線來源 attacker to web2:8080 遭封鎖",
+   "observed": "probed web2=192.168.64.3:8080 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "segmentation-2",
+   "name": "attacker 無法連線至 web:9999",
+   "category": "segmentation",
+   "status": "PASS",
+   "expected": "TCP 連線來源 attacker to web:9999 遭封鎖",
+   "observed": "probed web=192.168.64.2:9999 from attacker; 連線遭拒（BLOCKED:）：OSError:[Errno 101] Network is unreachable",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "action-a1",
+   "name": "情境動作 a1：step 1",
+   "category": "chain",
+   "status": "NOT_TESTED",
+   "expected": "已執行並驗證該動作專屬行為",
+   "observed": "未測試該動作專屬的安全行為對應；情境 IR 動作未執行（not executed）。",
+   "action_ref": "a1",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "action-a2",
+   "name": "情境動作 a2：step 2",
+   "category": "chain",
+   "status": "NOT_TESTED",
+   "expected": "已執行並驗證該動作專屬行為",
+   "observed": "未測試該動作專屬的安全行為對應；情境 IR 動作未執行（not executed）。",
+   "action_ref": "a2",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "action-a3",
+   "name": "情境動作 a3：step 3",
+   "category": "chain",
+   "status": "NOT_TESTED",
+   "expected": "已執行並驗證該動作專屬行為",
+   "observed": "未測試該動作專屬的安全行為對應；情境 IR 動作未執行（not executed）。",
+   "action_ref": "a3",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  },
+  {
+   "id": "action-a4",
+   "name": "情境動作 a4：step 4",
+   "category": "chain",
+   "status": "NOT_TESTED",
+   "expected": "已執行並驗證該動作專屬行為",
+   "observed": "未測試該動作專屬的安全行為對應；情境 IR 動作未執行（not executed）。",
+   "action_ref": "a4",
+   "evidence": "validation-runs/review-poc-7afb83/14b083e78f6e409083a3de0ae1755059.json"
+  }
+ ],
+ "fidelity": {
+  "reproduced": [],
+  "partial": [],
+  "not_reproduced": [],
+  "not_tested": [
+   "a1",
+   "a2",
+   "a3",
+   "a4"
+  ],
+  "substitutes_used": [
+   {
+    "service_ref": "web",
+    "real": "demo-api",
+    "substitute": "demo-api",
+    "difference": "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
+   },
+   {
+    "service_ref": "web2",
+    "real": "demo-api",
+    "substitute": "demo-api",
+    "difference": "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
+   }
+  ],
+  "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+ }
+}
