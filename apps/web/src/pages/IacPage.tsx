@@ -3,6 +3,7 @@ import type { ScenarioIR } from "@contracts";
 import { api, type ApiError } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { VersionBasisCard } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { ApiNotice, Busy, DataView, Empty, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
 
@@ -124,6 +125,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ) : (
         <>
           <Verdict report={report} />
+          <VersionBasisCard ir={ir} context="iac" />
           <div className="card flush">
             <div className="card-head">
               {files.length > 1 ? (

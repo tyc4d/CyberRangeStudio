@@ -1,3 +1,4 @@
+import { BasisTag, type Versioned } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -37,6 +38,7 @@ function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
       {h.image_hint && <div className="mono muted" style={{ marginBottom: 4, overflowWrap: "anywhere" }}>{h.image_hint}</div>}
       <div className="meta">
         {h.services?.map((s, i) => <span key={i} className="tag" title={s.protocol ?? "tcp"}>{s.name}:{s.port}</span>)}
+        {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
         {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title="原文沒有寫這台主機的網路位置；規劃把它推定為對外的入侵入口，核准前請確認">推定入口・待確認</span>}
         {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title="元件目錄無法部署這台主機需要的軟體，也沒有用其他軟體頂替">不可部署</span>}
       </div>

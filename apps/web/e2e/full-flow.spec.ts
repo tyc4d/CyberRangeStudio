@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
+import { relayGets } from "./net-relay";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ARTIFACTS = path.join(HERE, "artifacts");
@@ -84,7 +85,9 @@ test.beforeAll(async ({ browser, baseURL }) => {
   fs.mkdirSync(SHOTS, { recursive: true });
   log.base_url = baseURL ?? "";
   if (!/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(baseURL ?? "")) throw new Error(`e2e only targets localhost, got ${baseURL}`);
-  page = await (await browser.newContext()).newPage();
+  const context = await browser.newContext();
+  await relayGets(context, baseURL); // see net-relay.ts: deploy/teardown changes host networks mid-run
+  page = await context.newPage();
   page.on("console", (m) => { if (m.type() === "error") log.console_errors.push(m.text()); });
   page.on("pageerror", (e) => log.console_errors.push(`pageerror: ${e.message}`));
   page.on("response", (r) => {

@@ -3,6 +3,7 @@ import type { ScenarioIR, ServiceItem } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
+import { BasisTag, basisOf, type Versioned } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { ApiNotice, Busy, DataView, Empty, EpistemicBadge, Metric, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 
@@ -13,7 +14,15 @@ function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
         <div style={{ fontWeight: 600 }}>{s.name}</div>
         <div className="mono muted">{s.id}</div>
       </td>
-      <td className="mono">{s.version ?? <span className="muted">未知</span>}</td>
+      <td>
+        <span className="mono">{s.version ?? <span className="muted">原文未寫</span>}</span>
+        {basisOf(s as Versioned) && (
+          <div style={{ marginTop: 4, fontSize: 12 }}>
+            <BasisTag of={s as Versioned} />
+            {(s as Versioned).deployed_version && <span className="muted">　部署 <span className="mono">{(s as Versioned).deployed_version}</span></span>}
+          </div>
+        )}
+      </td>
       <td>{hosts?.length ? hosts.join("、") : <span className="muted">—</span>}</td>
       <td>
         {s.catalogue_component ? <span className="mono">{s.catalogue_component}</span>

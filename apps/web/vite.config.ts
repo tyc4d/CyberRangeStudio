@@ -22,6 +22,9 @@ const lanOnly = (): Plugin => ({
 
 export default defineConfig({
   plugins: [react(), lanOnly()],
+  // Dependency pre-bundle cache. Default is node_modules/.vite; set CR_VITE_CACHE_DIR when node_modules is shared
+  // (symlinked) between checkouts, otherwise two dev servers overwrite each other's bundles and pages load blank.
+  ...(process.env.CR_VITE_CACHE_DIR ? { cacheDir: process.env.CR_VITE_CACHE_DIR } : {}),
   server: {
     host: "0.0.0.0",
     port: 5173,

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { CheckStatus, ScenarioIR, ValidationCheck, ValidationReport } from "@contracts";
+import { VersionBasisCard } from "../components/VersionBasis";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
@@ -199,6 +200,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
           {report.levels.env_build === "PASS" && report.levels.full_chain !== "PASS" && (
             <Notice kind="warn">環境建置通過，但完整攻擊鏈為「{report.levels.full_chain === "NOT_TESTED" ? "未測" : report.levels.full_chain === "PARTIAL" ? "部分" : "失敗"}」。這個環境目前不能視為已重現整個攻擊情境。</Notice>
           )}
+
+          <VersionBasisCard ir={ir} context="report" />
 
           {LEVELS.map((l, i) => (
             <div key={l.key} className="card flush">

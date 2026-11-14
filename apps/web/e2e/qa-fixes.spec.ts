@@ -5,11 +5,34 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
+import { relayGets } from "./net-relay";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../../..");
 const EVIDENCE = path.join(ROOT, "reports/overnight/evidence/frontend-eng");
 const PYTHON = path.join(process.env.CR_VENV ?? path.join(ROOT, ".venv"), "bin", "python");
+
+// Diagnostics for every test: what the browser itself reported. Attached to the report when a test fails, so an
+// intermittent failure (e.g. a page that never mounts) can be explained from evidence instead of a rerun.
+const diag = new WeakMap<Page, string[]>();
+test.beforeEach(async ({ page, context, baseURL }) => {
+  await relayGets(context, baseURL);
+  const lines: string[] = [];
+  diag.set(page, lines);
+  const at = () => new Date().toISOString().slice(11, 23);
+  page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") lines.push(`${at()} console.${m.type()} ${m.text().slice(0, 300)}`); });
+  page.on("pageerror", (e) => lines.push(`${at()} pageerror ${e.message.slice(0, 300)}`));
+  page.on("requestfailed", (r) => lines.push(`${at()} requestfailed ${r.failure()?.errorText ?? ""} ${r.url().slice(0, 200)}`));
+  page.on("response", (r) => { if (r.status() >= 400 && !r.url().includes("/api/")) lines.push(`${at()} http ${r.status()} ${r.url().slice(0, 200)}`); });
+  page.on("framenavigated", (f) => { if (f === page.mainFrame()) lines.push(`${at()} navigated ${f.url()}`); });
+});
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  const lines = diag.get(page) ?? [];
+  const mounted = await page.locator(".app-shell").count().catch(() => -1);
+  const body = await page.evaluate(() => document.body?.innerHTML.length ?? -1).catch(() => -1);
+  await info.attach("browser-diagnostics", { body: [`app-shell mounted: ${mounted}`, `body html length: ${body}`, ...lines].join("\n"), contentType: "text/plain" });
+});
 
 function seed(): string {
   const id = `scn_e2e${crypto.randomBytes(4).toString("hex")}`;
@@ -250,4 +273,31 @@ test("拓樸：推定的入口主機有「待確認」標記與中文備註", as
   await expect(page.getByText("推定入口・待確認")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(/被放在對外網路，當作推定的入侵入口/)).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "13-topology-inferred-entry.png"), fullPage: true });
+});
+
+test("讀取類 API 連線被中斷一次時自動重試，不顯示「無法連線到後端」；寫入類不重送", async ({ page }) => {
+  const id = seed();
+  // Fault injection only: the first read of the scenario list and of the deploy status is cut at the connection
+  // level, like a request cancelled by a network change. Later attempts reach the real API untouched.
+  const cut = { list: 0, status: 0, down: 0 };
+  await page.route("**/api/scenario/list", (route) => (cut.list++ === 0 ? route.abort("connectionfailed") : route.fallback()));
+  await page.route(`**/api/deploy/${id}/status`, (route) => (cut.status++ === 0 ? route.abort("connectionfailed") : route.fallback()));
+  await open(page, id, "/");
+  await expect(page.getByText(/e2e seeded \(no LLM\)/).first()).toBeVisible();
+  expect(cut.list, "the list was requested again after the cut").toBeGreaterThanOrEqual(2);
+  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toHaveCount(0);
+
+  await page.goto("/deploy");
+  await expect(page.getByTestId("deploy-state")).toBeVisible();
+  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toHaveCount(0);
+
+  // A write that fails at the connection level is reported, and sent exactly once.
+  await page.route(`**/api/ingest/${id}/supplement`, (route) => { cut.down++; return route.abort("connectionfailed"); });
+  await page.goto("/missing");
+  await page.getByRole("button", { name: "補充", exact: true }).first().click();
+  await page.getByRole("button", { name: "接受未知", exact: true }).click();
+  await page.getByRole("button", { name: "送出", exact: true }).click();
+  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toBeVisible();
+  await page.waitForTimeout(1200);
+  expect(cut.down, "a POST is never re-sent automatically").toBe(1);
 });

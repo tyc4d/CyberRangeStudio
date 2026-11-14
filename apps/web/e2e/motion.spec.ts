@@ -4,6 +4,9 @@
 //  - with prefers-reduced-motion the draw and the entrances are gone, while loading indicators still exist.
 // Runs after full-flow.spec.ts (alphabetical order) and reuses the newest scenario; it never saves, so it changes nothing.
 import { expect, test, type Page } from "@playwright/test";
+import { relayGets } from "./net-relay";
+
+test.beforeEach(async ({ context, baseURL }) => { await relayGets(context, baseURL); });
 
 async function openFlow(page: Page): Promise<boolean> {
   const list = await (await page.request.get("/api/scenario/list")).json();
