@@ -212,7 +212,7 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
         text: `依賴${name}尚未確認，拓樸規劃不會為它開通連線。${countsInChain(r, evById) ? "" : "它也沒有對得上原文的引文。"}`,
       });
     } else if (!countsInChain(r, evById)) {
-      out.push({ id: `unbacked:${r.id}`, level: "warn", text: `${name}的先後關係沒有對得上原文的引文，目前以虛線顯示、不計入攻擊鏈。對照原文後可在屬性面板確認或刪除。`, target: { type: "relation", id: r.id } });
+      out.push({ id: `unbacked:${r.id}`, level: "warn", text: `${name}的先後關係沒有對得上原文的引文，目前以橘色點線標示「無引文」、不計入攻擊鏈。對照原文後可在屬性面板確認或刪除。`, target: { type: "relation", id: r.id } });
     }
   }
   for (const c of conditions) {

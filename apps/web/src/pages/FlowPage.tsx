@@ -28,6 +28,9 @@ const KIND_LABEL: Record<RelationKind, string> = { temporal: "時間先後", dep
 // Attack Flow edges. Colours mirror theme.css tokens (--route / --ok / --warn / --text-dim): SVG markers cannot read CSS variables.
 const FLOW_COLOR: Record<FlowEdgeKind, string> = { effect: ROUTE, true: "#7ee2a8", false: "#f1c16c", asset: LABEL };
 const FLOW_LABEL: Record<FlowEdgeKind, string> = { effect: "流程", true: "成立", false: "不成立", asset: "資產" };
+/** A relation the model asserted without a quote found in the source. A warning hue of its own — not the grey of
+ *  "order only", not the amber of a "不成立" branch, not the red of a loop — so it is told apart by colour, not dash spacing. */
+const UNCITED = "#ff9a3d";
 const NODE_LABEL: Record<FlowNodeType, string> = { action: "攻擊行為", condition: "條件", operator: "運算", asset: "資產" };
 /** What a new line means. temporal/dependency are the editor's own relations; flow is an Attack Flow edge. */
 type ConnectKind = RelationKind | "flow";
@@ -231,7 +234,7 @@ function AssetNode({ data, selected }: NodeProps<AssetNodeData>) {
 }
 const nodeTypes = { action: ActionNode, condition: ConditionNode, operator: OperatorNode, asset: AssetNode };
 
-interface RelEdgeData { label: string; tone: "route" | "hold" | "temporal" | "barrier" | "flow" | "flow-true" | "flow-false" | "flow-asset"; draw: boolean }
+interface RelEdgeData { label: string; tone: "route" | "hold" | "temporal" | "barrier" | "flow" | "flow-true" | "flow-false" | "flow-asset"; draw: boolean; color?: string }
 
 /** A relation line. A new dependency is drawn once (pathLength=1 + dashoffset) and is static from then on;
  *  nothing here ever loops, so a line can never read as traffic or as an attack in progress. */
@@ -243,7 +246,7 @@ function RelEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targe
       <path d={d} fill="none" strokeOpacity={0} strokeWidth={22} className="react-flow__edge-interaction" />
       {data?.label && (
         <EdgeLabelRenderer>
-          <div className={`edge-label ${data.tone}`} style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)` }}>{data.label}</div>
+          <div className={`edge-label ${data.tone}`} style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)`, color: data.color }}>{data.label}</div>
         </EdgeLabelRenderer>
       )}
     </>
@@ -252,22 +255,26 @@ function RelEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targe
 const edgeTypes = { rel: RelEdge };
 
 /** counted: the relation is part of the chain (see countsInChain). An uncounted one — asserted without a quote that
- *  matches the source — is drawn dotted and faint. looped: it lies on a cycle, drawn in the barrier colour. */
+ *  matches the source — is drawn as a dotted line in the UNCITED warning colour and labelled "無引文". Dashes alone mean
+ *  "order only" (temporal). looped: it lies on a cycle, drawn in the barrier colour. */
 function toEdge(r: Relation, selected: boolean, fresh: boolean, counted: boolean, looped: boolean): Edge<RelEdgeData> {
   const dep = r.kind === "dependency";
   const confirmed = dep && (r as RelationX).confirmed === true;
-  const color = looped ? BARRIER : dep ? EDGE : TEMPORAL;
+  const color = looped ? BARRIER : !counted ? UNCITED : dep ? EDGE : TEMPORAL;
   // Temporal lines normally carry no label: the dashed stroke already says "order only" (see legend).
   const label = [dep ? "依賴" : null, looped ? "循環" : null, !counted ? "無引文" : dep && !confirmed ? "未確認" : null].filter(Boolean).join(" · ");
   return {
     id: r.id, type: "rel", source: r.from_action, target: r.to_action, selected,
     // Dashed temporal lines cannot use the dash-offset draw, so a new one simply fades in.
-    className: fresh ? (dep ? "fresh" : "fresh-fade") : undefined,
-    data: { label, tone: looped ? "barrier" : dep && confirmed ? "route" : dep || !counted ? "hold" : "temporal", draw: fresh && dep },
+    className: fresh ? (dep && counted ? "fresh" : "fresh-fade") : undefined,
+    data: {
+      label, tone: looped ? "barrier" : dep && confirmed ? "route" : dep || !counted ? "hold" : "temporal", draw: fresh && dep && counted,
+      color: !counted && !looped ? UNCITED : undefined,
+    },
     style: {
-      stroke: color, strokeWidth: 1.5,
-      strokeDasharray: !counted ? (dep ? "7 6" : "2 7") : dep ? undefined : "5 5",
-      opacity: !counted ? 0.5 : dep && !confirmed ? 0.55 : 1,
+      stroke: color, strokeWidth: !counted ? 2 : 1.5, strokeLinecap: !counted ? "round" : undefined,
+      strokeDasharray: !counted ? "1 7" : dep ? undefined : "5 5",
+      opacity: counted && dep && !confirmed ? 0.55 : 1,
     },
     markerEnd: { type: dep ? MarkerType.ArrowClosed : MarkerType.Arrow, color, width: 18, height: 18 },
   };
@@ -287,25 +294,59 @@ function toFlowEdge(e: FlowEdge, selected: boolean, fresh: boolean, looped: bool
   };
 }
 
-const FIT = { padding: 0.1, maxZoom: 1 };
-/** Fit every node into the part of the canvas that is actually free: below the floating toolbar, above the status
- *  line. React Flow's own fitView centres on the whole pane, which hides the top row behind the toolbar. */
+/** Never fit below this: smaller and the cards are unreadable dots. A graph that does not fit is panned/scrolled instead. */
+const MIN_FIT = 0.5;
+const FIT = { padding: 0.1, maxZoom: 1, minZoom: MIN_FIT };
+const SIDE = 32;
+/** The part of the canvas nothing floats over: below the toolbar (which wraps, so it is measured), above the
+ *  legend / status line and the minimap. */
+function freeArea(pane: HTMLElement) {
+  const box = pane.getBoundingClientRect();
+  let top = 84, bottom = 64;
+  pane.querySelectorAll<HTMLElement>("[data-fit-inset]").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (el.dataset.fitInset === "top") top = Math.max(top, r.bottom - box.top + 14);
+    else bottom = Math.max(bottom, box.bottom - r.top + 14);
+  });
+  return { top, bottom, left: SIDE, right: SIDE, w: pane.clientWidth - SIDE * 2, h: pane.clientHeight - top - bottom };
+}
+/** Fit every node into the free part of the canvas, but never below MIN_FIT. What does not fit at that zoom starts
+ *  at the top-left (the first step) and the rest is reached by scrolling or dragging the canvas. */
 function fitAll(inst: ReactFlowInstance, pane: HTMLElement | null) {
   const ns = inst.getNodes().filter((n) => n.width && n.height);
   if (!pane || ns.length === 0) { inst.fitView(FIT); return; }
   const minX = Math.min(...ns.map((n) => n.position.x)), minY = Math.min(...ns.map((n) => n.position.y));
   const w = Math.max(...ns.map((n) => n.position.x + n.width!)) - minX, h = Math.max(...ns.map((n) => n.position.y + n.height!)) - minY;
-  const inset = { top: 84, right: 32, bottom: 64, left: 32 };
-  const freeW = pane.clientWidth - inset.left - inset.right, freeH = pane.clientHeight - inset.top - inset.bottom;
-  if (freeW <= 0 || freeH <= 0) { inst.fitView(FIT); return; }
-  const zoom = Math.max(0.15, Math.min(1, freeW / w, freeH / h));
-  inst.setViewport({ x: inset.left + (freeW - w * zoom) / 2 - minX * zoom, y: inset.top + (freeH - h * zoom) / 2 - minY * zoom, zoom });
+  const free = freeArea(pane);
+  if (free.w <= 0 || free.h <= 0 || w <= 0 || h <= 0) { inst.fitView(FIT); return; }
+  const zoom = Math.max(MIN_FIT, Math.min(1, free.w / w, free.h / h));
+  inst.setViewport({
+    x: free.left + Math.max(0, (free.w - w * zoom) / 2) - minX * zoom,
+    y: free.top + Math.max(0, (free.h - h * zoom) / 2) - minY * zoom,
+    zoom,
+  });
 }
 const COL_W = 310;
-const WRAP = 5;
-/** Left-to-right by dependency/order depth, with alternate columns dropped half a row: neighbours never sit on the
- *  same line, which leaves room for the relation label between them and keeps long chains legible without zooming out. */
-function flowLayout(ids: string[], relations: Relation[], flowEdges: FlowEdge[]) {
+const CARD_W = 276;
+const GAP_Y = 44;      // between two cards stacked in one column
+const BAND_GAP = 96;   // between two folded rows of columns
+const STAGGER = 56;
+const MAX_STACK = 6;   // more than this in one layer (e.g. many unlinked nodes) spills into the next column
+/** Height to assume for a node React Flow has not measured yet. Deliberately generous: a long name wraps to 3–4 lines. */
+const EST_H: Record<FlowNodeType, number> = { action: 250, condition: 150, operator: 60, asset: 96 };
+/** How many columns fit across the canvas at MIN_FIT, so folding the chain never forces a zoom below it. */
+function wrapFor(pane: HTMLElement | null) {
+  if (!pane || pane.clientWidth <= 0) return 5;
+  const cols = Math.floor(((pane.clientWidth - SIDE * 2) / MIN_FIT - CARD_W) / COL_W) + 1;
+  return Math.max(3, Math.min(8, Number.isFinite(cols) ? cols : 5));
+}
+/** Left-to-right by dependency/order depth, with alternate columns dropped a little: neighbours never sit on the
+ *  same line, which leaves room for the relation label between them.
+ *  Cards in one column are stacked by their real height (heightOf), so a tall card never covers the one below it.
+ *  A long chain is folded into bands of `wrap` columns; each band is only as tall as its own tallest column, so one
+ *  wide fan-out no longer pushes every band apart. */
+function flowLayout(ids: string[], relations: Relation[], flowEdges: FlowEdge[], heightOf: (id: string) => number, wrap = 5) {
   const all = [...relations.map((r) => ({ from: r.from_action, to: r.to_action })), ...flowEdges.map((e) => ({ from: e.from, to: e.to }))];
   // Drop the lines that close a cycle before layering; otherwise every node of the cycle is parked in one far column
   // and the chain cannot be read left to right.
@@ -323,16 +364,63 @@ function flowLayout(ids: string[], relations: Relation[], flowEdges: FlowEdge[])
     state.set(n, 2);
   };
   ids.forEach((n) => { if (!state.has(n)) visit(n); });
-  const pos = layeredLayout(ids, all.filter((_, i) => !back.has(i)), COL_W, 208);
-  for (const p of Object.values(pos)) if (Math.round(p.x / COL_W) % 2 === 1) p.y += 66;
-  // A long chain is folded into rows of WRAP columns, so fitting it into the window does not shrink the cards to dots.
-  const tall = Math.max(0, ...Object.values(pos).map((p) => p.y)) + 208 + 90;
-  for (const p of Object.values(pos)) {
-    const col = Math.round(p.x / COL_W);
-    p.x = (col % WRAP) * COL_W;
-    p.y += Math.floor(col / WRAP) * tall;
+  // Unit spacing: x is the layer (depth), list order inside a layer is the order of `ids`.
+  const layer = layeredLayout(ids, all.filter((_, i) => !back.has(i)), 1, 1);
+  const byDepth = new Map<number, string[]>();
+  for (const id of ids) {
+    const d = Math.round(layer[id]?.x ?? 0);
+    byDepth.set(d, [...(byDepth.get(d) ?? []), id]);
+  }
+  const cols: string[][] = [];
+  for (const d of [...byDepth.keys()].sort((a, b) => a - b)) {
+    const list = byDepth.get(d)!;
+    for (let i = 0; i < list.length; i += MAX_STACK) cols.push(list.slice(i, i + MAX_STACK));
+  }
+  const per = Math.max(1, Math.floor(wrap));
+  const pos: Record<string, { x: number; y: number }> = {};
+  let top = 0;
+  for (let b = 0; b * per < cols.length; b++) {
+    let bandH = 0;
+    cols.slice(b * per, (b + 1) * per).forEach((col, c) => {
+      let y = c % 2 === 1 ? STAGGER : 0;
+      for (const id of col) {
+        pos[id] = { x: c * COL_W, y: top + y };
+        const h = heightOf(id);
+        y += (Number.isFinite(h) && h > 0 ? h : EST_H.action) + GAP_Y;
+      }
+      bandH = Math.max(bandH, y - GAP_Y);
+    });
+    top += bandH + BAND_GAP;
   }
   return pos;
+}
+
+/** Always on the canvas: what each kind of line means. Colours are the ones the edges are drawn with. */
+const LEGEND: { label: string; hint: string; line: string }[] = [
+  { label: "依賴", hint: "後一步需要前一步才能進行（實線）", line: `2px solid ${EDGE}` },
+  { label: "時間先後", hint: "只記錄發生順序，有對得上原文的引文（灰色虛線）", line: `2px dashed ${TEMPORAL}` },
+  { label: "無引文", hint: "模型提出、但沒有對得上原文的引文的關係；不計入攻擊鏈，請對照原文後確認或刪除（橘色點線）", line: `2px dotted ${UNCITED}` },
+  { label: "循環", hint: "這些線繞成一圈，沒有哪一步能排在最前面；節點上也會標「循環」（紅色）", line: `2px solid ${BARRIER}` },
+  { label: "流程", hint: "Attack Flow 流程連線：這一步之後接到哪個節點", line: `2px solid ${FLOW_COLOR.effect}` },
+  { label: "成立", hint: "條件成立時走的路徑", line: `2px solid ${FLOW_COLOR.true}` },
+  { label: "不成立", hint: "條件不成立時走的路徑", line: `2px solid ${FLOW_COLOR.false}` },
+  { label: "資產", hint: "攻擊行為作用的對象（灰色點線）", line: `2px dotted ${FLOW_COLOR.asset}` },
+];
+function CanvasLegend() {
+  return (
+    <div className="legend" data-testid="flow-legend" data-fit-inset="bottom" role="group" aria-label="圖例"
+      style={{
+        position: "absolute", zIndex: 5, left: 68, bottom: 60, maxWidth: "calc(100% - 68px - 176px)", gap: "4px 14px", padding: "6px 10px",
+        background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "var(--radius)",
+      }}>
+      <strong style={{ fontWeight: 700 }}>圖例</strong>
+      {LEGEND.map((l) => (
+        <span key={l.label} title={l.hint} style={{ whiteSpace: "nowrap" }}>
+          <i className="line" style={{ borderTop: l.line }} />{l.label}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 let seq = 0;
@@ -367,8 +455,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const [connecting, setConnecting] = useState(false);
   const inspectorRef = useRef<HTMLDivElement>(null);
   useEffect(() => { inspectorRef.current?.scrollTo({ top: 0 }); }, [sel?.type, sel?.id]);
-  const posKey = `cr.flowpos.${ir.id}`;
+  // v2: positions saved before the layout fix were produced by the broken auto-layout (overlaps, huge row gaps).
+  const posKey = `cr.flowpos.v2.${ir.id}`;
   const stored = useRef(loadPositions(posKey));
+  // Nothing saved for this scenario: the whole graph is auto-placed, and re-placed once the real card heights are known.
+  const autoPlaced = useRef(Object.keys(stored.current ?? {}).length === 0);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<AnyNodeData>([]);
   // Objects created in this editing session: only these get an entrance, so loading a scenario never animates.
@@ -394,6 +485,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     return { nodes: new Set(found.flatMap((l) => l.nodes)), edges: new Set(found.flatMap((l) => [...l.relationIds, ...l.flowEdgeIds])) };
   }, [typeOf, relations, flowEdges]);
   const inChain = (r: Relation) => countsInChain(r, evById);
+  /** Auto-layout with the heights React Flow measured; a node not measured yet gets a generous estimate. */
+  const layoutWith = (ns: Node<AnyNodeData>[]) => {
+    const h = new Map(ns.map((n) => [n.id, n.height]));
+    return flowLayout([...typeOf.keys()], relations, flowEdges, (id) => h.get(id) || EST_H[typeOf.get(id) ?? "action"], wrapFor(paneRef.current));
+  };
 
   // Adopt a new IR from the server (after save / reload) only when there are no local edits to lose.
   const irStamp = `${ir.id}:${ir.ir_version}:${ir.updated_at}`;
@@ -407,7 +503,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   useEffect(() => {
     setNodes((prev) => {
       const prevPos = new Map(prev.map((n) => [n.id, n.position]));
-      const auto = flowLayout([...typeOf.keys()], relations, flowEdges);
+      const auto = layoutWith(prev);
       const common = (type: FlowNodeType, id: string): NodeCommon => ({
         fresh: fresh.current.has(id), start: startRefs.includes(id), looped: loops.nodes.has(id),
         issues: findings.filter((f) => f.level === "error" && f.target?.type === type && f.target.id === id).length,
@@ -534,35 +630,35 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   };
   /** Park a new node under everything else and mark it as created in this session. */
   const stage = (id: string, gap: number) => {
-    const maxY = nodes.reduce((m, n) => Math.max(m, n.position.y), -120);
+    const maxY = nodes.reduce((m, n) => Math.max(m, n.position.y + (n.height ?? EST_H[typeOf.get(n.id) ?? "action"])), -gap);
     stored.current[id] = { x: 0, y: maxY + gap };
     fresh.current.add(id);
   };
   // New Attack Flow nodes start as the author's own, unverified design choices — same as a new action.
   const addCondition = () => {
     const id = newId("cond", new Set(typeOf.keys()));
-    stage(id, 210);
+    stage(id, GAP_Y);
     setConditions((xs) => [...xs, { id, description: "", on_true_refs: [], on_false_refs: [], epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "condition", id });
     touch();
   };
   const addOperator = () => {
     const id = newId("op", new Set(typeOf.keys()));
-    stage(id, 210);
+    stage(id, GAP_Y);
     setOperators((xs) => [...xs, { id, operator: "AND", effect_refs: [], epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "operator", id });
     touch();
   };
   const addAsset = () => {
     const id = newId("asset", new Set(typeOf.keys()));
-    stage(id, 210);
+    stage(id, GAP_Y);
     setAssets((xs) => [...xs, { id, name: "新資產", epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "asset", id });
     touch();
   };
   const addAction = () => {
     const id = newId("act", new Set(typeOf.keys()));
-    stage(id, 150);
+    stage(id, GAP_Y);
     setActions((xs) => [...xs, { id, name: "新攻擊行為", epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "action", id });
     touch();
@@ -630,6 +726,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     if (!measured || fitted.current || !rf.current) return;
     fitted.current = true;
     const inst = rf.current;
+    // The first placement used estimated heights. Now that the cards are measured, place them again so none overlap.
+    if (autoPlaced.current) {
+      const auto = layoutWith(nodes);
+      setNodes((ns) => ns.map((n) => ({ ...n, position: auto[n.id] ?? n.position })));
+    }
     requestAnimationFrame(() => fitAll(inst, paneRef.current));
   }, [measured]);
   const persistPositions = () => {
@@ -638,7 +739,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     savePositions(posKey, pos);
   };
   const autoLayout = () => {
-    const auto = flowLayout([...typeOf.keys()], relations, flowEdges);
+    const auto = layoutWith(nodes);
     stored.current = auto;
     savePositions(posKey, auto);
     setNodes((ns) => ns.map((n) => ({ ...n, position: auto[n.id] ?? n.position })));
@@ -769,7 +870,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
 
       <div className="canvas-col">
         <div className="canvas" ref={paneRef}>
-          <div className="canvas-tools" role="toolbar" aria-label="畫布工具">
+          <div className="canvas-tools" role="toolbar" aria-label="畫布工具" data-fit-inset="top">
             <span className="canvas-label">攻擊鏈</span>
             <span className="badge">{actions.length} 步驟</span>
             <button onClick={addAction}>＋ 新增行為</button>
@@ -808,14 +909,17 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             }}
             deleteKeyCode={["Delete", "Backspace"]}
             onInit={(inst) => { rf.current = inst; }}
-            fitView fitViewOptions={FIT} minZoom={0.15}
+            defaultViewport={{ x: SIDE, y: 96, zoom: MIN_FIT }} minZoom={0.2}
+            panOnScroll zoomOnPinch
             proOptions={{ hideAttribution: true }}
           >
             <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
-            <Controls showInteractive={false} position="bottom-left" />
+            <Controls showInteractive={false} position="bottom-left" fitViewOptions={FIT}
+              onFitView={() => { if (rf.current) fitAll(rf.current, paneRef.current); }} />
             <MiniMap pannable position="bottom-right" nodeColor={EDGE} nodeStrokeWidth={0} maskColor="#070b11c7" style={{ width: 140, height: 90 }} ariaLabel="畫布縮圖" />
           </ReactFlow>
-          <div className="canvas-status">
+          <CanvasLegend />
+          <div className="canvas-status" data-fit-inset="bottom">
             <span className="local-indicator" />
             <span>設計圖，不是執行紀錄</span>
             {deps.length > 0 && (
@@ -913,7 +1017,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             <EpistemicSelect value={selRelation.epistemic_status} onChange={(v) => patchRelation(selRelation.id, { epistemic_status: v })} />
             <QuoteList refs={selRelation.evidence_refs} byId={evById} source={selRelation.source} />
             {!inChain(selRelation) && (
-              <p className="dock-hint">這條關係沒有對得上原文的引文，所以畫成虛線、不計入攻擊鏈。對照原文後，確認它成立就會計入；不成立請刪除。</p>
+              <p className="dock-hint">這條關係沒有對得上原文的引文，所以畫成橘色點線並標「無引文」、不計入攻擊鏈。對照原文後，確認它成立就會計入；不成立請刪除。</p>
             )}
             {selRelation.kind === "dependency" ? (
               <label className="row" style={{ gap: 8, fontSize: 12 }}>
@@ -1023,7 +1127,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             </div>
             {uncountedTemporal.length > 0 && (
               <div className="muted" style={{ fontSize: 12 }} data-testid="uncounted-relations">
-                另有 {uncountedTemporal.length} 條先後關係沒有對得上原文的引文，以虛線顯示、未計入上面的數字。
+                另有 {uncountedTemporal.length} 條先後關係沒有對得上原文的引文，以橘色點線標示「無引文」、未計入上面的數字。
               </div>
             )}
             {(flowNodes > 0 || flowEdges.length > 0 || startRefs.length > 0) && (
@@ -1085,14 +1189,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <summary>這張圖代表什麼</summary>
               <p>這是攻擊流程的設計：連線只表示「後一步需要前一步」或發生順序。這裡不執行任何攻擊；部署與驗證在後面的步驟，並且只顯示後端回報的真實狀態。</p>
               <p>流程連線、條件與 AND/OR 運算依 MITRE Attack Flow 的畫法記錄「設計上有哪些分支」。條件的「成立／不成立」是兩條可能的路徑，不是任何一次執行的判定結果。</p>
-              <div className="legend">
-                <span><i className="line" />依賴</span>
-                <span><i className="line temporal" />時間先後</span>
-                <span><i className="line flow" />流程</span>
-                <span><i className="line flow-true" />成立</span>
-                <span><i className="line flow-false" />不成立</span>
-                <span><i className="line flow-asset" />資產</span>
-              </div>
+              <p>各種連線的圖例常駐在畫布左下角。灰色虛線只代表「時間先後」；沒有對得上原文引文的關係另以橘色點線標示「無引文」。</p>
             </details>
             <Link to="/missing" className="muted" style={{ fontSize: 12 }}>← 缺失補充</Link>
           </div>
