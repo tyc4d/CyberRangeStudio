@@ -1,6 +1,7 @@
 """Safe Docker Compose generation for local CyberRange proof-of-concepts."""
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -20,6 +21,31 @@ _PORT_MAX = 65535
 _PUBLISHED_PORT_MIN = 42000
 _PUBLISHED_PORT_MAX = 42999
 _DEMO_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
+_EDGE_NETWORK = "edge"
+# Values that are resolved only at deploy time (never written to disk as literals).
+_RUNTIME_REF_RE = re.compile(r"^\$\{CR_[A-Z0-9_]+(?::[?-][^${}]*)?\}$")
+_HOSTPORT_RE = re.compile(r"^\$\{(CR_HOSTPORT_\d+):-(\d+)\}$")
+# Capabilities a catalogue profile may add back after cap_drop: ALL. Nothing that
+# grants host, network-admin or raw-socket power is allowed.
+_ALLOWED_CAP_ADD = {"NET_BIND_SERVICE", "CHOWN", "SETUID", "SETGID", "DAC_OVERRIDE", "FOWNER"}
+_DEFAULT_LIMITS = {"mem_limit": "512m", "cpus": 1.0, "pids_limit": 256}
+_DEMO_LIMITS = {"mem_limit": "128m", "cpus": 0.5, "pids_limit": 64}
+# The edge bridge exists only so a host port can be published. Containers on it must
+# not talk to each other through it and must not get working outbound NAT.
+_EDGE_DRIVER_OPTS = {"com.docker.network.bridge.enable_icc": "false",
+                     "com.docker.network.bridge.enable_ip_masquerade": "false"}
+
+
+def hostport_env(index: int) -> str:
+    return f"CR_HOSTPORT_{index}"
+
+
+def _profile(catalogue: dict[str, Any] | None) -> dict[str, Any]:
+    return (catalogue or {}).get("container") or {}
+
+
+def _is_isolated_only(catalogue: dict[str, Any] | None) -> bool:
+    return bool(catalogue) and (catalogue.get("exposure") == "isolated_only" or bool(catalogue.get("vulnerable")))
 
 
 class PlanError(ValueError):
@@ -213,6 +239,22 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             host_report["base_image"] = resolved["base_image"]
         if resolved.get("catalogue"):
             host_report["catalogue_component"] = resolved["catalogue"]["id"]
+        catalogue_for_host = resolved.get("catalogue") if resolved.get("component_mode") == "real" else None
+        on_external_network = any(not network_by_id.get(n, {}).get("internal", True) for n in host.get("networks", []))
+        isolated_only = _is_isolated_only(catalogue_for_host)
+        publish = component in {"demo-api", "real"} and on_external_network and not isolated_only
+        host_report["published"] = False  # set True below once a host port is actually mapped
+        if component is not None:
+            host_report["exposure"] = ("isolated_only" if isolated_only else
+                                       "publishable" if on_external_network else "internal_only")
+            host_report["healthcheck"] = bool(_profile(catalogue_for_host).get("healthcheck")) or component != "real"
+            host_report["limits"] = {**(_DEMO_LIMITS if component != "real" else _DEFAULT_LIMITS),
+                                     **(_profile(catalogue_for_host).get("limits") or {})}
+        if catalogue_for_host and catalogue_for_host.get("vulnerable"):
+            host_report["vulnerable"] = True
+            host_report["cves"] = list(catalogue_for_host.get("cves", []))
+            host_report["isolation"] = ("deliberately vulnerable exercise image: joined only to internal networks, "
+                                        "never published to a host port")
         if resolved["substitute"]:
             host_report["fidelity_difference"] = (
                 "harmless Python demo behavior; does not reproduce the named component or its vulnerabilities"
@@ -253,12 +295,19 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                                        if p.get("protocol", "tcp") == "tcp"}
                     if port not in supported_ports:
                         errors.append(f"host {host_id} declares port {port}, unsupported by {catalogue.get('id')}")
+                if not publish:
+                    # Reachable only from containers on its declared internal networks.
+                    continue
                 host_port = next_published_port
                 if host_port > _PUBLISHED_PORT_MAX:
                     errors.append("plan needs more than 1000 host ports in the allowed 42000-42999 range")
                 else:
-                    mappings.append({"host_id": host_id, "container_port": port, "host_port": host_port})
+                    # host_port is only the default; the deploy runtime picks a free port in
+                    # the same range and passes it through the named environment variable.
+                    mappings.append({"host_id": host_id, "container_port": port, "host_port": host_port,
+                                     "env": hostport_env(len(mappings))})
                     next_published_port += 1
+                    host_report["published"] = True
             elif component == "demo-client":
                 errors.append(f"host {host_id} declares a listening service but its safe client image has no server")
 
@@ -284,6 +333,39 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
     for host_report in components:
         if not host_report["deployable"]:
             errors.append(f"host {host_report['host_id']} cannot be resolved to a safe local image")
+    if _EDGE_NETWORK in network_ids:
+        errors.append(f"network id {_EDGE_NETWORK!r} is reserved for the generated publishing network")
+
+    # Service wiring: a component that only works with a backing service (e.g. a web
+    # application and its database) must have a declared connection to one.
+    wiring: dict[str, dict[str, Any]] = {}
+    for host in hosts:
+        resolved = resolved_by_host.get(host.get("id", ""), {})
+        catalogue = resolved.get("catalogue") if resolved.get("component_mode") == "real" else None
+        for rule in (catalogue or {}).get("wiring", []):
+            wanted = set(rule.get("software", []))
+            match = None
+            for connection in plan.get("connections", []):
+                if connection.get("from_host") != host.get("id"):
+                    continue
+                target = resolved_by_host.get(connection.get("to_host"), {})
+                target_catalogue = target.get("catalogue") if target.get("component_mode") == "real" else None
+                if target_catalogue and target_catalogue.get("software") in wanted and connection.get("port"):
+                    match = {"host": connection["to_host"], "port": connection["port"],
+                             "software": target_catalogue["software"]}
+                    break
+            if match:
+                environment = {key: str(value).replace("{host}", match["host"]).replace("{port}", str(match["port"]))
+                               for key, value in rule.get("environment", {}).items()}
+                wiring.setdefault(host["id"], {"environment": {}, "targets": []})
+                wiring[host["id"]]["environment"].update(environment)
+                wiring[host["id"]]["targets"].append(match)
+            elif rule.get("required", False):
+                errors.append(f"host {host.get('id')} ({catalogue.get('id')}) needs a declared connection to a "
+                              f"{'/'.join(sorted(wanted))} host; without it the service cannot work")
+    for host_report in components:
+        if host_report["host_id"] in wiring:
+            host_report["wired_to"] = wiring[host_report["host_id"]]["targets"]
     if not hosts:
         errors.append("at least one host is required")
 
@@ -295,6 +377,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "components": components,
         "vms": vm_definitions,
         "host_port_mappings": mappings,
+        "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
         "networks": [
             {"id": n.get("id"), "name": f"cr-demo-{scenario_id}-{n.get('id')}",
              "internal": True, "plan_internal": bool(n.get("internal", True))}
@@ -302,7 +385,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         ],
         "errors": errors,
     }
-    return {"hosts": hosts, "networks": networks, "components": resolved_by_host, "mappings": mappings}, report
+    return {"hosts": hosts, "networks": networks, "components": resolved_by_host, "mappings": mappings,
+            "wiring": wiring}, report
 
 
 def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
@@ -331,39 +415,31 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
         }
         if component == "real":
             catalogue = resolved["catalogue"]
+            profile = _profile(catalogue)
             service["image"] = resolved["image"]
-            service["tmpfs"] = list(service["tmpfs"])
-            component_id = catalogue["id"]
-            if component_id == "oss-nginx":
-                service["tmpfs"].extend([
-                    "/var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755",
-                    "/var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755",
-                    "/var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755",
-                ])
-                service["cap_add"] = ["NET_BIND_SERVICE"]
-                service["user"] = "101:101"
-            elif component_id == "oss-httpd":
-                service["tmpfs"].append("/usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755")
-                service["cap_add"] = ["NET_BIND_SERVICE"]
-                service["user"] = "1:1"
-            elif component_id == "oss-postgres":
-                service["tmpfs"].extend([
-                    "/var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700",
-                    "/var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700",
-                ])
-                service["environment"] = {
-                    "POSTGRES_PASSWORD": "${CR_PG_PASSWORD:?set at deploy time}",
-                    "POSTGRES_HOST_AUTH_METHOD": "${CR_PG_AUTH_METHOD:-trust}",
-                }
-                service["user"] = "70:70"
-            elif component_id == "oss-attacker":
-                service["command"] = ["sh", "-c", "sleep 2147483647"]
-                service["user"] = "65532:65532"
+            service["tmpfs"] = list(service["tmpfs"]) + list(profile.get("tmpfs", []))
+            if profile.get("read_only") is False:
+                # Some upstream images cannot run on a read-only root filesystem. This is
+                # recorded in the catalogue and surfaced in report.json, never silent.
+                service["read_only"] = False
+            for key in ("user", "command", "entrypoint", "working_dir"):
+                if profile.get(key) is not None:
+                    service[key] = copy.deepcopy(profile[key])
+            if profile.get("cap_add"):
+                service["cap_add"] = list(profile["cap_add"])
+            environment = {**profile.get("environment", {}),
+                           **normalized.get("wiring", {}).get(host_id, {}).get("environment", {})}
+            if environment:
+                service["environment"] = environment
+            if profile.get("healthcheck"):
+                service["healthcheck"] = copy.deepcopy(profile["healthcheck"])
+            limits = {**_DEFAULT_LIMITS, **(profile.get("limits") or {})}
         elif component == "demo-api":
             service["image"] = f"cr-demo-{scenario_id}-{host_id}:local"
             service["build"] = {"context": "../../templates/demo-app", "dockerfile": "Dockerfile", "pull": False}
             port = host.get("services", [{}])[0].get("port", 8080)
             service["environment"] = {"PORT": str(port)}
+            limits = dict(_DEMO_LIMITS)
             service["user"] = "10001:10001"
             service["healthcheck"] = {
                 "test": ["CMD", "python", "-c", f"import urllib.request; urllib.request.urlopen('http://127.0.0.1:{port}/health', timeout=2).read()"],
@@ -372,6 +448,7 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
         elif component == "demo-client":
             service["image"] = _DEMO_IMAGE
             service["command"] = ["python", "-c", "import time; time.sleep(2147483647)"]
+            limits = dict(_DEMO_LIMITS)
             service["user"] = "65532:65532"
             service["healthcheck"] = {
                 "test": ["CMD", "python", "-c", "pass"],
@@ -384,15 +461,46 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             service_ports = []
             for mapping in ports_by_host.get(host_id, []):
                 service_ports.append({
-                    "target": mapping["container_port"], "published": str(mapping["host_port"]),
+                    "target": mapping["container_port"],
+                    "published": "${%s:-%d}" % (mapping["env"], mapping["host_port"]),
                     "host_ip": "${CR_BIND_IP:-127.0.0.1}", "protocol": "tcp",
                 })
             if service_ports:
                 service["ports"] = service_ports
                 service["expose"] = [str(p["target"]) for p in service_ports]
+        service.update(limits)
         service_doc[host_id] = service
 
-    edge_network = "edge"
+    # Start order and readiness follow the declared connections: a host that uses another
+    # host's service waits for it (healthy when it has a healthcheck). Edges that would
+    # close a cycle are skipped so Compose never rejects the file.
+    depends: dict[str, dict[str, Any]] = {host_id: {} for host_id in service_doc}
+
+    def _reaches(start: str, goal: str) -> bool:
+        stack, seen = [start], set()
+        while stack:
+            current = stack.pop()
+            if current == goal:
+                return True
+            if current in seen:
+                continue
+            seen.add(current)
+            stack.extend(depends.get(current, {}))
+        return False
+
+    for connection in plan.get("connections", []):
+        source, target = connection.get("from_host"), connection.get("to_host")
+        if source not in service_doc or target not in service_doc or source == target:
+            continue
+        if _reaches(target, source):
+            continue
+        condition = "service_healthy" if service_doc[target].get("healthcheck") else "service_started"
+        depends[source][target] = {"condition": condition}
+    for host_id, wanted in depends.items():
+        if wanted:
+            service_doc[host_id]["depends_on"] = wanted
+
+    edge_network = _EDGE_NETWORK
     for host_id in ports_by_host:
         if edge_network not in service_doc[host_id]["networks"]:
             service_doc[host_id]["networks"].append(edge_network)
@@ -408,6 +516,7 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
     if ports_by_host:
         document["networks"][edge_network] = {
             "name": f"cr-demo-{scenario_id}-edge", "internal": False,
+            "driver_opts": dict(_EDGE_DRIVER_OPTS),
         }
     content = "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\n"
     content += yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
@@ -422,36 +531,57 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
         raise PlanError([f"generated YAML is invalid: {exc}"]) from exc
     if not isinstance(doc, dict) or not isinstance(doc.get("services"), dict) or not doc["services"]:
         raise PlanError(["generated compose must contain at least one service"])
-    serialized = json.dumps(doc, sort_keys=True).lower()
-    serialized = serialized.replace('"postgres_password": "${cr_pg_password:?set at deploy time}"', '"runtime_pg_credential_reference": ""')
-    serialized = serialized.replace('"postgres_host_auth_method": "${cr_pg_auth_method:-trust}"', '"postgres_host_auth_method": ""')
+    # Deploy-time references (e.g. ${CR_DB_PASSWORD:?...}) are not literals; everything
+    # else is scanned so no credential or privilege setting can be written to disk.
+    scrubbed = copy.deepcopy(doc)
+    for service in scrubbed["services"].values():
+        environment = service.get("environment")
+        if isinstance(environment, dict):
+            service["environment"] = {key: value for key, value in environment.items()
+                                      if not (isinstance(value, str) and _RUNTIME_REF_RE.fullmatch(value))}
+    serialized = json.dumps(scrubbed, sort_keys=True).lower()
     forbidden = ("privileged", "password", "passwd", "api_key", "apikey", "secret", "private_key", "token")
     if any(term in serialized for term in forbidden):
         raise PlanError(["generated compose contains a forbidden credential or privilege setting"])
     for service_name, service in doc["services"].items():
-        if not service_name.startswith(("demo", "api", "client", "web", "host", "node", "svc", "h")) and not _ID_RE.fullmatch(service_name):
+        if not _ID_RE.fullmatch(service_name):
             raise PlanError([f"unsafe service name: {service_name}"])
         if service.get("privileged", False):
             raise PlanError([f"service {service_name} may not run privileged"])
         if "ALL" not in service.get("cap_drop", []):
             raise PlanError([f"service {service_name} must drop all Linux capabilities"])
+        if not set(service.get("cap_add", [])) <= _ALLOWED_CAP_ADD:
+            raise PlanError([f"service {service_name} adds a capability outside the allowed set"])
         if "no-new-privileges:true" not in service.get("security_opt", []):
             raise PlanError([f"service {service_name} must set no-new-privileges"])
+        for forbidden_key in ("volumes", "devices", "network_mode", "pid", "ipc", "extra_hosts", "cap_add_all"):
+            if forbidden_key in service:
+                raise PlanError([f"service {service_name} may not set {forbidden_key}"])
+        for limit in ("mem_limit", "cpus", "pids_limit"):
+            if not service.get(limit):
+                raise PlanError([f"service {service_name} must declare {limit}"])
         image = service.get("image", "")
-        if image.startswith(("nginx:", "httpd:", "postgres:", "alpine:")) and "@sha256:" not in image:
-            raise PlanError([f"service {service_name} must use a versioned image pinned by digest"])
+        local_build = image == f"cr-demo-{scenario_id}-{service_name}:local" and isinstance(service.get("build"), dict)
+        if not local_build and not re.search(r"@sha256:[0-9a-f]{64}$", image):
+            raise PlanError([f"service {service_name} must use an image pinned by digest"])
         for port in service.get("ports", []):
-            published = int(port["published"])
-            if not _PUBLISHED_PORT_MIN <= published <= _PUBLISHED_PORT_MAX or port.get("host_ip") != "${CR_BIND_IP:-127.0.0.1}":
+            published = _HOSTPORT_RE.fullmatch(str(port.get("published", "")))
+            if (not published or not _PUBLISHED_PORT_MIN <= int(published.group(2)) <= _PUBLISHED_PORT_MAX
+                    or port.get("host_ip") != "${CR_BIND_IP:-127.0.0.1}"):
                 raise PlanError([f"service {service_name} has an unsafe published port"])
-    for network in doc.get("networks", {}).values():
-        if network.get("internal") is not (network.get("name") != f"cr-demo-{scenario_id}-edge") or not network.get("name", "").startswith(f"cr-demo-{scenario_id}-"):
-            raise PlanError(["generated networks must use the cr-demo- prefix and only the edge network may be external"])
-    for service_name, service in doc["services"].items():
-        if service.get("image", "").startswith("postgres:"):
-            environment = service.get("environment", {})
-            if environment.get("POSTGRES_HOST_AUTH_METHOD") != "${CR_PG_AUTH_METHOD:-trust}" or environment.get("POSTGRES_PASSWORD") != "${CR_PG_PASSWORD:?set at deploy time}":
-                raise PlanError([f"service {service_name} must use runtime PostgreSQL authentication settings"])
+        if service.get("ports") and _EDGE_NETWORK not in service.get("networks", []):
+            raise PlanError([f"service {service_name} publishes a port without the edge network"])
+        if _EDGE_NETWORK in service.get("networks", []) and not service.get("ports"):
+            raise PlanError([f"service {service_name} joins the edge network without publishing a port"])
+    for network_id, network in doc.get("networks", {}).items():
+        name = network.get("name", "")
+        if not name.startswith(f"cr-demo-{scenario_id}-"):
+            raise PlanError(["generated networks must use the cr-demo- prefix"])
+        if network_id == _EDGE_NETWORK:
+            if network.get("internal") is not False or network.get("driver_opts") != _EDGE_DRIVER_OPTS:
+                raise PlanError(["the edge network must disable inter-container traffic and outbound NAT"])
+        elif network.get("internal") is not True:
+            raise PlanError(["only the edge network may be non-internal"])
 
 
 def generate(scenario_id: str) -> dict[str, Any]:

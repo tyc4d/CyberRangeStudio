@@ -1,0 +1,17 @@
+{
+  "hosts": [
+    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["external"]},
+    {"id": "web", "role": "exposed web server", "image_hint": "oss-nginx", "component_mode": "real",
+     "services": [{"name": "http", "port": 80, "protocol": "tcp"}], "networks": ["scenario-internal", "external"]},
+    {"id": "db", "role": "internal database", "image_hint": "oss-postgres", "component_mode": "real",
+     "services": [{"name": "postgres", "port": 5432, "protocol": "tcp"}], "networks": ["scenario-internal"]}
+  ],
+  "networks": [{"id": "scenario-internal", "segment": "scenario", "internal": true},
+               {"id": "external", "segment": "external", "internal": false}],
+  "connections": [
+    {"from_host": "attacker", "to_host": "web", "port": 80, "protocol": "tcp", "reason": "attacker reaches exposed web"},
+    {"from_host": "web", "to_host": "db", "port": 5432, "protocol": "tcp", "reason": "web tier uses database"}
+  ],
+  "verify_blocked": [{"from_host": "attacker", "to_host": "db", "port": 5432, "protocol": "tcp", "reason": "attacker must not reach db"}],
+  "approval": {"approved": false}
+}

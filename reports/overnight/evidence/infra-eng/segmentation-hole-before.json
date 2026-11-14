@@ -1,0 +1,338 @@
+{
+  "scenario_id": "infra-eng-2dab330a",
+  "steps": [
+    {
+      "step": "generate",
+      "at": "02:19:05",
+      "result": {
+        "status": 200,
+        "body": {
+          "compose": "# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.\nname: cr-demo-infra-eng-2dab330a\nx-cr-test-approval-required: 'POST /api/deploy/{id}/up with {\"test_approved\": true}'\nservices:\n  web:\n    container_name: cr-demo-infra-eng-2dab330a-web\n    networks:\n    - dmz\n    - edge\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0755\n    - /var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0755\n    - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0755\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82\n    cap_add:\n    - NET_BIND_SERVICE\n    user: 101:101\n    ports:\n    - target: 80\n      published: '42000'\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    expose:\n    - '80'\n  db:\n    container_name: cr-demo-infra-eng-2dab330a-db\n    networks:\n    - internal\n    - edge\n    read_only: true\n    tmpfs:\n    - /tmp:rw,noexec,nosuid,size=16m\n    - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700\n    - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700\n    cap_drop:\n    - ALL\n    security_opt:\n    - no-new-privileges:true\n    restart: 'no'\n    image: postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2\n    environment:\n      POSTGRES_PASSWORD: ${CR_PG_PASSWORD:?set at deploy time}\n      POSTGRES_HOST_AUTH_METHOD: ${CR_PG_AUTH_METHOD:-trust}\n    user: 70:70\n    ports:\n    - target: 5432\n      published: '42001'\n      host_ip: ${CR_BIND_IP:-127.0.0.1}\n      protocol: tcp\n    expose:\n    - '5432'\nnetworks:\n  dmz:\n    name: cr-demo-infra-eng-2dab330a-dmz\n    internal: true\n  internal:\n    name: cr-demo-infra-eng-2dab330a-internal\n    internal: true\n  edge:\n    name: cr-demo-infra-eng-2dab330a-edge\n    internal: false\n",
+          "report": {
+            "scenario_id": "infra-eng-2dab330a",
+            "deployable": true,
+            "components": [
+              {
+                "host_id": "web",
+                "image_hint": "oss-nginx",
+                "component": "oss-nginx",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "version": "1.31.8",
+                "digest": "sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+                "substitute": false,
+                "catalogue_component": "oss-nginx",
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              },
+              {
+                "host_id": "db",
+                "image_hint": "oss-postgres",
+                "component": "oss-postgres",
+                "component_mode": "real",
+                "runtime": "container",
+                "deployable": true,
+                "image": "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+                "version": "16.16",
+                "digest": "sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+                "substitute": false,
+                "catalogue_component": "oss-postgres",
+                "reason": "resolved to a catalogue image pinned by version and sha256 digest"
+              }
+            ],
+            "vms": [],
+            "host_port_mappings": [
+              {
+                "host_id": "web",
+                "container_port": 80,
+                "host_port": 42000
+              },
+              {
+                "host_id": "db",
+                "container_port": 5432,
+                "host_port": 42001
+              }
+            ],
+            "networks": [
+              {
+                "id": "dmz",
+                "name": "cr-demo-infra-eng-2dab330a-dmz",
+                "internal": true,
+                "plan_internal": true
+              },
+              {
+                "id": "internal",
+                "name": "cr-demo-infra-eng-2dab330a-internal",
+                "internal": true,
+                "plan_internal": true
+              }
+            ],
+            "errors": []
+          }
+        }
+      }
+    },
+    {
+      "step": "docker_compose_config",
+      "at": "02:19:06",
+      "result": {
+        "cmd": "env CR_PG_PASSWORD=x docker compose -f /home/tyc4d/cr-project/.worktrees/infra-eng/infra/generated/infra-eng-2dab330a/docker-compose.yml config --quiet",
+        "rc": 0,
+        "out": "",
+        "err": ""
+      }
+    },
+    {
+      "step": "approve",
+      "at": "02:19:06",
+      "result": {
+        "status": 200
+      }
+    },
+    {
+      "step": "up_1",
+      "at": "02:19:14",
+      "result": {
+        "status": 200,
+        "seconds": 8.7,
+        "body": {
+          "scenario_id": "infra-eng-2dab330a",
+          "project_name": "cr-demo-infra-eng-2dab330a",
+          "state": "running",
+          "containers": [
+            {
+              "service": "db",
+              "name": "cr-demo-infra-eng-2dab330a-db",
+              "id": "aad00d5a7332",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": ""
+            },
+            {
+              "service": "web",
+              "name": "cr-demo-infra-eng-2dab330a-web",
+              "id": "50b645cdf282",
+              "state": "running",
+              "status": "Up Less than a second",
+              "health": ""
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "command_result": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": " Network cr-demo-infra-eng-2dab330a-edge Creating \n Network cr-demo-infra-eng-2dab330a-edge Created \n Network cr-demo-infra-eng-2dab330a-internal Creating \n Network cr-demo-infra-eng-2dab330a-internal Created \n Network cr-demo-infra-eng-2dab330a-dmz Creating \n Network cr-demo-infra-eng-2dab330a-dmz Created \n Container cr-demo-infra-eng-2dab330a-web Creating \n Container cr-demo-infra-eng-2dab330a-db Creating \n Container cr-demo-infra-eng-2dab330a-db Created \n Container cr-demo-infra-eng-2dab330a-web Created \n Container cr-demo-infra-eng-2dab330a-db Starting \n Container cr-demo-infra-eng-2dab330a-web Starting \n Container cr-demo-infra-eng-2dab330a-web Started \n Container cr-demo-infra-eng-2dab330a-db Started \n"
+          },
+          "deployment_record": {
+            "id": 5,
+            "scenario_id": "infra-eng-2dab330a",
+            "project_name": "cr-demo-infra-eng-2dab330a",
+            "action": "up",
+            "state": "running",
+            "details": {
+              "exit_code": 0,
+              "stdout": "",
+              "stderr": " Network cr-demo-infra-eng-2dab330a-edge Creating \n Network cr-demo-infra-eng-2dab330a-edge Created \n Network cr-demo-infra-eng-2dab330a-internal Creating \n Network cr-demo-infra-eng-2dab330a-internal Created \n Network cr-demo-infra-eng-2dab330a-dmz Creating \n Network cr-demo-infra-eng-2dab330a-dmz Created \n Container cr-demo-infra-eng-2dab330a-web Creating \n Container cr-demo-infra-eng-2dab330a-db Creating \n Container cr-demo-infra-eng-2dab330a-db Created \n Container cr-demo-infra-eng-2dab330a-web Created \n Container cr-demo-infra-eng-2dab330a-db Starting \n Container cr-demo-infra-eng-2dab330a-web Starting \n Container cr-demo-infra-eng-2dab330a-web Started \n Container cr-demo-infra-eng-2dab330a-db Started \n",
+              "expose": "internal",
+              "password_set": false,
+              "scenario_id": "infra-eng-2dab330a",
+              "project_name": "cr-demo-infra-eng-2dab330a",
+              "state": "running",
+              "containers": [
+                {
+                  "service": "db",
+                  "name": "cr-demo-infra-eng-2dab330a-db",
+                  "id": "aad00d5a7332",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": ""
+                },
+                {
+                  "service": "web",
+                  "name": "cr-demo-infra-eng-2dab330a-web",
+                  "id": "50b645cdf282",
+                  "state": "running",
+                  "status": "Up Less than a second",
+                  "health": ""
+                }
+              ],
+              "error": null
+            },
+            "recorded_at": "2026-11-14T18:19:14Z"
+          },
+          "expose": "internal",
+          "lan_host": null
+        }
+      }
+    },
+    {
+      "step": "status_1",
+      "at": "02:19:14",
+      "result": {
+        "scenario_id": "infra-eng-2dab330a",
+        "project_name": "cr-demo-infra-eng-2dab330a",
+        "state": "running",
+        "containers": [
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-2dab330a-db",
+            "id": "aad00d5a7332",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": ""
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-2dab330a-web",
+            "id": "50b645cdf282",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": ""
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "health_1",
+      "at": "02:19:14",
+      "result": {
+        "scenario_id": "infra-eng-2dab330a",
+        "project_name": "cr-demo-infra-eng-2dab330a",
+        "state": "healthy",
+        "healthy": true,
+        "containers": [
+          {
+            "service": "db",
+            "name": "cr-demo-infra-eng-2dab330a-db",
+            "id": "aad00d5a7332",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": ""
+          },
+          {
+            "service": "web",
+            "name": "cr-demo-infra-eng-2dab330a-web",
+            "id": "50b645cdf282",
+            "state": "running",
+            "status": "Up Less than a second",
+            "health": ""
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "step": "docker_ps_1",
+      "at": "02:19:14",
+      "result": {
+        "cmd": "docker ps -a --filter name=cr-demo-infra-eng-2dab330a --format {{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}",
+        "rc": 0,
+        "out": "cr-demo-infra-eng-2dab330a-db|postgres:16.16-alpine3.23|Up Less than a second|127.0.0.1:42001->5432/tcp\ncr-demo-infra-eng-2dab330a-web|nginx:1.31.8|Up Less than a second|127.0.0.1:42000->80/tcp\n",
+        "err": ""
+      }
+    },
+    {
+      "step": "validate_1",
+      "at": "02:19:15",
+      "result": {
+        "status": 200,
+        "body": {
+          "scenario_id": "infra-eng-2dab330a",
+          "deployment_id": "cr-demo-infra-eng-2dab330a",
+          "run_at": "2026-11-14T18:19:15.003935+00:00",
+          "levels": {
+            "env_build": "PASS",
+            "behavior_repro": "NOT_TESTED",
+            "full_chain": "PARTIAL"
+          },
+          "level_criteria": {
+            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "full_chain": "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+          },
+          "checks": [
+            {
+              "id": "service-up-web",
+              "name": "web 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "service-up-db",
+              "name": "db 服務執行狀態",
+              "category": "service_up",
+              "status": "PASS",
+              "expected": "容器狀態為執行中",
+              "observed": "容器狀態=running，健康狀態=沒有健康狀態資料",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "version-web",
+              "name": "web 執行指定版本 1.31.8",
+              "category": "version",
+              "status": "PASS",
+              "expected": "1.31.8",
+              "observed": "nginx version: nginx/1.31.8",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "version-db",
+              "name": "db 執行指定版本 16.16",
+              "category": "version",
+              "status": "PASS",
+              "expected": "16.16",
+              "observed": "postgres (PostgreSQL) 16.16",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "behavior-web",
+              "name": "web 無害服務行為",
+              "category": "behavior",
+              "status": "NOT_TESTED",
+              "expected": "已宣告的來源至服務探測回傳預期結果",
+              "observed": "未宣告適用的主機至服務連線",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "behavior-db",
+              "name": "db 無害服務行為",
+              "category": "behavior",
+              "status": "NOT_TESTED",
+              "expected": "已宣告的來源至服務探測回傳預期結果",
+              "observed": "未宣告適用的主機至服務連線",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            },
+            {
+              "id": "segmentation-1",
+              "name": "web 無法連線至 db:5432",
+              "category": "segmentation",
+              "status": "FAIL",
+              "expected": "TCP 連線來源 web to db:5432 遭封鎖",
+              "observed": "probed db=172.26.0.2:5432 from web; 已連線（CONNECTED）",
+              "evidence": "validation-runs/infra-eng-2dab330a/498c659735b746a7a488c2e43e5aa663.json"
+            }
+          ],
+          "fidelity": {
+            "reproduced": [],
+            "partial": [],
+            "not_reproduced": [],
+            "not_tested": [],
+            "substitutes_used": [],
+            "summary": "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+          }
+        }
+      }
+    },
+    {
+      "step": "kept",
+      "at": "02:19:15",
+      "result": "cr-demo-infra-eng-2dab330a"
+    }
+  ]
+}
