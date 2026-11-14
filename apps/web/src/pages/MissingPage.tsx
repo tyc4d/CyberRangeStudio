@@ -26,31 +26,61 @@ function ItemCard({ item, scenarioId, onDone }: { item: MissingItem; scenarioId:
   const [mode, setMode] = useState<Resolution>("user_supplied");
   const [text, setText] = useState("");
   const res = RESOLUTIONS.find((r) => r.v === mode)!;
-  const submit = useAction(async () => {
-    const resp = await api.supplement(scenarioId, { text: text.trim(), targets_missing_item: item.id, status: mode });
+  const isOpen = item.status === "open";
+
+  const send = async (statusV: Resolution, textV: string) => {
+    const resp = await api.supplement(scenarioId, { text: textV.trim(), targets_missing_item: item.id, status: statusV });
     await onDone(resp);
     setOpen(false);
     setText("");
-  });
-  const isOpen = item.status === "open";
+  };
+  const submit = useAction(() => send(mode, text));
+  // One click: accept a benign substitute (never recorded as a report fact).
+  const accept = useAction((value: string) => send("substitute_chosen", value));
+
+  const prefill = (example: string) => { setMode("user_supplied"); setOpen(true); setText(example); };
+  const suggestions = item.suggestions?.length ? item.suggestions : item.suggestion ? [item.suggestion] : [];
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="row" style={{ gap: 8 }}>
-        <span style={{ fontWeight: 600 }}>{item.field}</span>
+        {/* Lead with a plain-language question so the user need not read the whole report. */}
+        <span style={{ fontWeight: 600 }}>{item.question || item.field}</span>
         <span className="tag">{CATEGORY[item.category] ?? item.category}</span>
         {item.severity && <span className={`tag ${item.severity}`}>{SEVERITY[item.severity] ?? item.severity}</span>}
         <span style={{ marginLeft: "auto", fontSize: 12 }} className={isOpen ? "status-PARTIAL" : item.status === "llm_suggested" ? "muted" : "status-PASS"}>
           {STATUS[item.status] ?? item.status}
         </span>
       </div>
-      <div className="muted" style={{ fontSize: 13 }}>{item.reason}</div>
+
+      {item.affects?.length ? (
+        <div className="muted" style={{ fontSize: 12 }}>相關步驟：{item.affects.join("、")}</div>
+      ) : null}
+      {/* Keep the original field name + rationale available, but secondary. */}
+      <div className="muted" style={{ fontSize: 12 }}>
+        <span className="mono">{item.field}</span>{item.reason ? `　·　${item.reason}` : ""}
+      </div>
+
       {item.resolution && (
         <div style={{ fontSize: 13 }}>
           <span className="muted">處理內容：</span>{item.resolution} <SourceTag source={item.resolution_source} />
           {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 12 }}>（LLM 的建議，尚未經你確認）</span>}
         </div>
       )}
+
+      {/* Benign substitutes the user can accept in one click. Each is clearly a substitute, not a report fact. */}
+      {suggestions.length > 0 && isOpen && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--bg-elev2, transparent)" }}>
+          <span className="muted" style={{ fontSize: 12 }}>建議替身（點一下直接採用，會記為「已選替代方案」）：</span>
+          <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+            {suggestions.map((s) => (
+              <button key={s} className="small" disabled={accept.busy} onClick={() => accept.run(s)} title="以此替身補上，並標記為『已選替代方案』">{s}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      <ApiNotice error={accept.error} what="採用建議" />
+
       {!open ? (
         <div><button className="small" onClick={() => setOpen(true)}>{isOpen ? "補充" : "修改"}</button></div>
       ) : (
@@ -58,6 +88,15 @@ function ItemCard({ item, scenarioId, onDone }: { item: MissingItem; scenarioId:
           <div className="seg" style={{ alignSelf: "flex-start" }}>
             {RESOLUTIONS.map((r) => <button key={r.v} className={mode === r.v ? "on" : ""} onClick={() => setMode(r.v)} disabled={submit.busy}>{r.label}</button>)}
           </div>
+          {/* Example answers make an abstract field concrete; click to fill. Examples only, not report claims. */}
+          {mode === "user_supplied" && item.examples?.length ? (
+            <div className="row" style={{ gap: 6, flexWrap: "wrap", fontSize: 12 }}>
+              <span className="muted">範例：</span>
+              {item.examples.map((ex) => (
+                <button key={ex} className="small" onClick={() => prefill(ex)} disabled={submit.busy}>{ex}</button>
+              ))}
+            </div>
+          ) : null}
           <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy} />
           <div className="row">
             <button className="primary small" disabled={submit.busy || (res.needText && !text.trim())} onClick={() => submit.run()}>
@@ -91,7 +130,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   return (
     <div className="page" style={{ maxWidth: 980 }}>
-      <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。你可以補上答案、選擇替代方案，或明確接受未知。補充內容會標示為使用者來源，不會與原文證據混淆。" />
+      <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。每一項都附上白話問題、相關步驟與範例；你可以直接填答案、點範例帶入、採用建議替身，或明確接受未知。補充內容一律標示為使用者來源，不會與原文證據混淆。" />
 
       <div className="row">
         <div className="seg">
