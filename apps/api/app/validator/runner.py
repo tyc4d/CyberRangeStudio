@@ -539,7 +539,11 @@ def run(scenario_id: str) -> dict[str, Any]:
             # Probe the target IP, not its name: a blocked path must be proven by a real
             # TCP refusal/unreachable to the address, not by the name failing to resolve
             # (which also happens whenever there is simply no shared network).
-            target_ip = manager.container_ipv4(scenario_id, target)
+            # Probe the target IP on a network the SOURCE shares, so a closed port on a
+            # reachable host surfaces as a refusal (-> NOT_TESTED), not as "unreachable"
+            # that would be mistaken for segmentation (R6 / reviewer P2). Falls back to a
+            # non-edge target IP when the two share no plan network (genuinely segmented).
+            target_ip = manager.container_ipv4(scenario_id, target, from_service=source)
             if not target_ip:
                 status, observed = "NOT_TESTED", (
                     "could not determine target container IP; segmentation not proven at the TCP layer")

