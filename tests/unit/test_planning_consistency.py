@@ -261,13 +261,26 @@ class DifferentProductsAreNotAliases(unittest.TestCase):
             services=[{"id": "s1", "name": service_name, "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
 
     def test_vendor_word_inside_another_product_name_does_not_match(self):
-        for name in ("Apache Struts Web Framework", "Apache Struts", "Apache Tomcat", "Apache ActiveMQ"):
+        from app.planner.catalogue import component_by_id
+        for name in ("Apache Struts Web Framework", "Apache Struts", "Apache Tomcat", "Apache ActiveMQ", "Apache Kafka"):
             planned = self.plan(name, f"exploited a vulnerability in {name} on the portal")
             self.assertEqual([s["id"] for s in planned["services"]], ["s1"], name)
-            self.assertTrue(planned["services"][0].get("no_component"), name)
+            service = planned["services"][0]
             self.assertNotIn("oss-httpd", str(planned["services"]), name)
+            component = component_by_id(service.get("catalogue_component"))
+            if component is None:
+                self.assertTrue(service.get("no_component"), name)
+            else:
+                # A match is only legitimate through that component's own alias for this very name.
+                self.assertIn(name.casefold(), {alias.casefold() for alias in component["aliases"]}, name)
             host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
             self.assertNotEqual(host.get("image_hint"), "oss-httpd", name)
+
+    def test_products_the_catalogue_does_not_have_stay_unmatched(self):
+        for name in ("Apache ActiveMQ", "Apache Kafka", "Apache Nonexistent Product"):
+            planned = self.plan(name, f"exploited a vulnerability in {name} on the portal")
+            self.assertTrue(planned["services"][0].get("no_component"), name)
+            host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
             self.assertNotEqual(host.get("component_mode"), "real", name)
 
     def test_the_product_itself_still_matches_with_generic_words_around_it(self):
