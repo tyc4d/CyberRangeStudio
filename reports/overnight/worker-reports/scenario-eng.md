@@ -136,3 +136,35 @@ $P $E/dump.py $E/before/cisa-aa22-320a-single     # 人可讀的比對輸出
 | 原文明寫的跨主機步驟開通該路徑 | H11、Q3 | 行為有 `source_host_ref`≠`target_host_ref`、且是原文支持或使用者建立時，開通「來源→目標：該步驟點名的服務埠」。只有先後順序仍不開路徑 | 同上 | `test_stated_cross_host_step_opens_exactly_that_path`、`test_inferred_step_does_not…`、`test_temporal_order_alone…` |
 | 不支援的元件不標成可部署 | H10 | catalogue runtime 為 `external_platform`／`unsupported` 的主機輸出 `runtime=<該值>`、`deployable=false`、不給 `component_mode`；無法建置的 VM 元件不再標 `real` | 同上 | `UnsupportedComponents` |
 
+
+## 3. 真實 LLM 驗證（`gpt-4.1-mini`，single_pass，最終程式）
+
+九份情資的輸入／輸出在 `evidence/scenario-eng/after/<案例>/`，總表 `after-run.log`；重跑 `sh reports/overnight/evidence/scenario-eng/run_all.sh after`，
+比對摘要 `python reports/overnight/evidence/scenario-eng/summary.py <目錄>`。修復前輸出在 `before/`。
+
+| 案例 | 對照標準答案的結果 |
+|---|---|
+| AA22-320A（cti-research） | 主機拆成 4 台（Horizon、VDI-KMS、DC、多台主機群）；15 條關係中 10 條附有陳述連結的原句、5 條如實標推論／不足；原文的 technique／tactic 保留 |
+| Equifax（cti-research） | 8 個攻擊者行為對應 B1–B8；防守方行為 8 項被排除；3 月→5 月標為先後而非相依（符合「separate incident」陷阱）；沒有憑空產生 CVE／ATT&CK；Struts 不再被當成 httpd。**未達成**：三組資料庫仍併成一筆主機群 |
+| 負向（資訊不足） | 沒有 CVE／產品／工具名稱；應變措施 7 項被排除。此批跑完後才加上「不確定語氣」標記與「無目標軟體」blocker，**尚未用真 LLM 重跑確認** |
+| qa-admin lifecycle | attacker→web:80、web→db:5432、attacker→db 必須阻擋；版本 1.31.8／16.16 帶到 |
+| demo-intrusion.md（最後一次重跑） | web→db:5432 開通、attacker→db 阻擋。**未修好**：`web service` 沒有連接埠，attacker→victim-web:80 仍沒開通 |
+
+## 4. 測試
+
+`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **105 passed**（開工時 54 passed, 1 failed）。
+
+## 5. 未完成／未解
+
+- **demo-intrusion.md 回歸（Lead 最後交辦）沒修完**：行為文字寫了 `victim-web over TCP/80`，但服務名稱是通用的「web service」，沒有 catalogue 別名可命中，連接埠沒被讀進服務 → 攻擊機到 web 的路徑沒開。apps/web 的 full-flow e2e **沒有跑**。
+- Reviewer P1–P3 已修並有測試；修完後 **尚未送回 reviewer 複審**。
+- `missing.py` 舊的固定產品清單（Horizon／Log4j／WordPress…）仍在，只是多了通用路徑，沒有移除。
+- STIX 的 `extract_stix_candidates` 仍未接進流程（M12）；一個行為多個 technique（L1）未處理。
+- Schema JSON 未改，新欄位只寫在 `types.ts` 與 contracts README。
+- 前端待辦（不歸我）：`source_certainty=hedged`、`epistemic_reason`、`write_back`、`exposure_basis`、`quality.excluded_non_attacker_actions` 目前畫面上不會顯示。
+- 分析現在是三次 LLM 呼叫（流程、環境、關係），費用與時間約為原本的 2–3 倍。
+
+## 6. 需產品負責人決定
+
+- 推論出的入口主機要不要自動放上對外網段（目前會放並標示需確認）。
+- 原文語氣不確定的行為，要不要擋住後續部署（目前只標記）。

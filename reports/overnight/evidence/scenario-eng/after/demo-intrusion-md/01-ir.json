@@ -1,0 +1,538 @@
+{
+ "schema_version": "1.0",
+ "name": "demo-intrusion",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "e66b0a11cc97850f1b5739e2ec687de88e5c9b8881ff77a55e9707151fc249dd",
+  "source_name": "demo-intrusion"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Reconnaissance",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "Exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "Enumerated the internal network and identified `db` as an internal database host",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a4",
+   "name": "Used `victim-web` to connect to `db` over TCP/5432 and collect records",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the reconnaissance preceded the exploitation activity",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "With the web-shell foothold on `victim-web`",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The web-shell foothold and discovery of `db` were prerequisites for this access",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing web application",
+   "source": "llm",
+   "name": "victim-web",
+   "network_placement": "external network",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "internal database host",
+   "source": "llm",
+   "name": "db",
+   "network_placement": "internal network",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "web service",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "database service",
+   "source": "llm",
+   "host_ref": "h2",
+   "port": 5432,
+   "protocol": "tcp",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "web shell",
+   "type": "tool",
+   "id": "artifact-1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "From the external network, the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the internet-facing web application; this reconnaissance preceded the exploitation activity and selected the exposed service as the target.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "From the external network, the attacker first sent HTTP requests to `victim web` over TCP/80 to identify the internet facing web application; this reconnaissanc"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Next, the attacker exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell; the exposed application was the entry point for this initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Next, the attacker exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell; the exposed application was the ent"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network and identified `db` as an internal database host; `db` was not directly reachable from the external network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With the web shell foothold on `victim web`, the attacker enumerated the internal network and identified `db` as an internal database host; `db` was not directl"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Finally, the attacker used `victim web` to connect to `db` over TCP/5432 and collect records."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "this reconnaissance preceded the exploitation activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "this reconnaissance preceded the exploitation activity"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With the web shell foothold on `victim web`, the attacker enumerated the internal network"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records. The web-shell foothold and discovery of `db` were prerequisites for this access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Finally, the attacker used `victim web` to connect to `db` over TCP/5432 and collect records. The web shell foothold and discovery of `db` were prerequisites fo"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the internet-facing web application",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attacker first sent HTTP requests to `victim web` over TCP/80 to identify the internet facing web application"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "the exposed application was the entry point for this initial access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the exposed application was the entry point for this initial access"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "identified `db` as an internal database host; `db` was not directly reachable from the external network",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "identified `db` as an internal database host; `db` was not directly reachable from the external network"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "used `victim-web` to connect to `db` over TCP/5432 and collect records",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "used `victim web` to connect to `db` over TCP/5432 and collect records"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "obtained command execution through a web shell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "obtained command execution through a web shell"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim-web — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim-web 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim-web",
+    "action:a1 — Reconnaissance",
+    "action:a2 — Exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim-web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim-web — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim-web 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim-web",
+    "action:a1 — Reconnaissance",
+    "action:a2 — Exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim-web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "db — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a3 — Enumerated the internal network and identified `db` as an internal database host",
+    "action:a4 — Used `victim-web` to connect to `db` over TCP/5432 and collect records"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "db — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a3 — Enumerated the internal network and identified `db` as an internal database host",
+    "action:a4 — Used `victim-web` to connect to `db` over TCP/5432 and collect records"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "web service — 版本",
+   "category": "version",
+   "reason": "IR 指出 web service，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 web service 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — web service",
+    "action:a2 — Exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "web service",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 0,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0
+ },
+ "id": "scn_evidence"
+}
