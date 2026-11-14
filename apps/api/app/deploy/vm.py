@@ -607,23 +607,35 @@ def vm_create(scenario_id: str, vm_id: str, template: str, *, networks: list[str
     template_volume = f"tpl-{template}.qcow2"
     if not volume_exists(template_volume):
         raise VmError(f"template volume {template_volume} is missing; build it first")
-    network_names = []
-    for network_id in networks or []:
-        status = network_create(scenario_id, network_id)
-        if not status["isolated"]:
-            raise VmError(f"network {status['name']} is not isolated: {status}")
-        network_names.append(status["name"])
     disk_volume = f"{name}.qcow2"
     if volume_exists(disk_volume):
         raise VmError(f"volume {disk_volume} already exists")
-    capacity = re.search(r"Capacity:\s+(\d+)", virsh(["vol-info", "--pool", POOL, template_volume, "--bytes"])["stdout"])
-    _must(virsh(["vol-create-as", POOL, disk_volume, capacity.group(1) if capacity else "40G", "--format", "qcow2",
-                 "--backing-vol", template_volume, "--backing-vol-format", "qcow2"]), "vol-create-as overlay")
+    network_names: list[str] = []
+    created_networks: list[str] = []   # only the ones this call brought into existence
+    disk_created = False
     try:
+        for network_id in networks or []:
+            existed = virsh(["net-info", network_name(scenario_id, network_id)], timeout=10)["returncode"] == 0
+            status = network_create(scenario_id, network_id)
+            if not existed:
+                created_networks.append(network_id)
+            if not status["isolated"]:
+                raise VmError(f"network {status['name']} is not isolated: {status}")
+            network_names.append(status["name"])
+        capacity = re.search(r"Capacity:\s+(\d+)",
+                             virsh(["vol-info", "--pool", POOL, template_volume, "--bytes"])["stdout"])
+        _must(virsh(["vol-create-as", POOL, disk_volume, capacity.group(1) if capacity else "40G", "--format", "qcow2",
+                     "--backing-vol", template_volume, "--backing-vol-format", "qcow2"]), "vol-create-as overlay")
+        disk_created = True
         _define(_domain_xml(name, _metadata_xml(scenario_id, vm_id, role="scenario-vm"), vcpus=vcpus,
                             memory_mib=memory_mib, disk_path=volume_path(disk_volume), networks=network_names))
     except VmError:
-        virsh(["vol-delete", "--pool", POOL, disk_volume])
+        # A failed create leaves nothing behind: not the disk, and not a network that
+        # exists only because of this attempt (networks that were already there stay).
+        if disk_created:
+            virsh(["vol-delete", "--pool", POOL, disk_volume])
+        for network_id in created_networks:
+            network_destroy(scenario_id, network_id)
         raise
     return {"name": name, "state": "defined", "disk_volume": disk_volume, "template": template_volume,
             "networks": network_names, "vcpus": vcpus, "memory_mib": memory_mib}
@@ -649,8 +661,21 @@ def _agent(name: str, payload: dict[str, Any], timeout: int = 15) -> dict[str, A
         return None
 
 
+_GUEST_PROGRAMS = {"powershell.exe", "cmd.exe"}
+
+
 def guest_exec(scenario_id: str, vm_id: str, path: str, arguments: list[str], timeout: int = 60) -> dict[str, Any]:
-    """Run one fixed read-only command inside the guest through the agent and return its output."""
+    """Run a command inside an owned guest through the agent (as SYSTEM) and return its output.
+
+    This is a general execution primitive, not a read-only one: whatever the caller passes
+    is run. It is therefore internal — no API route exposes it, only the two Windows shells
+    are accepted as the program, and callers in this code base pass fixed command lines
+    (health facts, validation probes). Do not wire request data into it.
+    """
+    if path.lower() not in _GUEST_PROGRAMS:
+        raise VmError(f"guest program not allowed: {path!r}")
+    if not isinstance(arguments, list) or any(not isinstance(a, str) or "\x00" in a for a in arguments):
+        raise VmError("guest arguments must be a list of strings")
     if not domain_owned(scenario_id, vm_id):
         raise VmError("VM ownership could not be verified")
     return _guest_exec_named(domain_name(scenario_id, vm_id), path, arguments, timeout)
@@ -755,15 +780,42 @@ def vm_stop(scenario_id: str, vm_id: str, timeout: int = 180) -> dict[str, Any]:
             "error": request["stderr"] or "guest did not power off in time"}
 
 
+def overlay_is_ours(volume: str) -> bool:
+    """A disk volume counts as this product's overlay only if it is a qcow2 in our pool
+    whose backing file is one of our templates (``tpl-*.qcow2`` in the same pool).
+
+    Volumes carry no ownership metadata, so the name alone is never enough to delete one.
+    """
+    dump = virsh(["vol-dumpxml", "--pool", POOL, _check_volume(volume)], timeout=15)
+    if dump["returncode"] != 0:
+        return False
+    try:
+        root = ET.fromstring(dump["stdout"])
+    except ET.ParseError:
+        return False
+    backing = root.findtext("backingStore/path") or ""
+    own_path = root.findtext("target/path") or ""
+    fmt = root.find("target/format")
+    return (fmt is not None and fmt.get("type") == "qcow2"
+            and os.path.basename(backing).startswith("tpl-") and backing.endswith(".qcow2")
+            and os.path.dirname(backing) == os.path.dirname(own_path) != "")
+
+
 def vm_destroy(scenario_id: str, vm_id: str) -> dict[str, Any]:
     """Remove the VM and its overlay disk. Refuses anything without this scenario's metadata."""
     name = domain_name(scenario_id, vm_id)
     disk_volume = f"{name}.qcow2"
     if domain_state(name) == "absent":
-        removed = False
+        # Leftover disk from an interrupted create: delete it only when its backing chain
+        # proves it is one of our overlays, never on the strength of its name.
+        removed, skipped = False, None
         if volume_exists(disk_volume):
-            removed = virsh(["vol-delete", "--pool", POOL, disk_volume])["returncode"] == 0
-        return {"name": name, "state": "absent", "ok": True, "removed_volume": removed}
+            if overlay_is_ours(disk_volume):
+                removed = virsh(["vol-delete", "--pool", POOL, disk_volume])["returncode"] == 0
+            else:
+                skipped = f"volume {disk_volume} is not an overlay of a product template; left untouched"
+        return {"name": name, "state": "absent", "ok": skipped is None, "removed_volume": removed,
+                "error": skipped}
     if not domain_owned(scenario_id, vm_id):
         return {"name": name, "state": "unverified", "ok": False,
                 "error": "VM ownership could not be verified; nothing was removed"}

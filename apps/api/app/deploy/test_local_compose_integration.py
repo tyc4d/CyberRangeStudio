@@ -455,6 +455,11 @@ class HostIsolationIntegrationTests(unittest.TestCase):
                     self.assertEqual(body, "cr-demo-demo-ok")
                 finally:
                     listener.close()
-                    manager.do_down(scenario_id)
+                    down = manager.do_down(scenario_id)
+                    # teardown also removes the image this scenario built locally
+                    images = manager._run(["docker", "images", "--filter",
+                                           f"reference={manager.project_name(scenario_id)}-*:local", "-q"], timeout=20)
+                    self.assertTrue(down["ok"])
+                    self.assertEqual(images["stdout"].strip(), "")
                     if output_dir.exists() and not output_dir.is_symlink():
                         shutil.rmtree(output_dir)

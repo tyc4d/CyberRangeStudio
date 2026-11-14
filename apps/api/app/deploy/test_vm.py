@@ -105,13 +105,47 @@ class NetworkIsolationTests(unittest.TestCase):
         self.assertEqual(status["forward"], "nat")
 
     def test_vm_is_not_created_on_a_network_that_is_not_isolated(self):
+        calls = []
+
+        def fake_virsh(args, timeout=60):
+            calls.append(args[0])
+            return _ok() if args[0] == "net-info" else _fail()   # the network already existed
+
         with patch.object(vm, "domain_state", return_value="absent"), patch.object(vm, "_owned_count", return_value=0), \
-                patch.object(vm, "volume_exists", return_value=True), \
+                patch.object(vm, "volume_exists", side_effect=lambda name: name.startswith("tpl-")), \
                 patch.object(vm, "network_create", return_value={"name": "cr-scn-net-lab", "isolated": False}), \
-                patch.object(vm, "virsh") as virsh:
+                patch.object(vm, "network_destroy") as network_destroy, \
+                patch.object(vm, "virsh", side_effect=fake_virsh):
             with self.assertRaises(vm.VmError):
                 vm.vm_create("scn", "win1", "ws2022", networks=["lab"])
-        virsh.assert_not_called()
+        self.assertEqual(set(calls), {"net-info"})      # no disk, no domain was created
+        network_destroy.assert_not_called()             # a pre-existing network is left alone
+
+    def test_failed_create_removes_the_disk_and_only_the_networks_it_created(self):
+        calls = []
+
+        def fake_virsh(args, timeout=60):
+            calls.append(args)
+            if args[0] == "net-info":
+                return _ok() if args[1].endswith("net-old") else _fail()
+            if args[0] == "vol-info":
+                return _ok("Capacity: 1000")
+            if args[0] == "vol-path":
+                return _ok("/pool/x.qcow2")
+            if args[0] == "define":
+                return _fail("error: unsupported configuration")
+            return _ok()
+
+        destroyed = []
+        with patch.object(vm, "domain_state", return_value="absent"), patch.object(vm, "_owned_count", return_value=0), \
+                patch.object(vm, "volume_exists", side_effect=lambda name: name.startswith("tpl-")), \
+                patch.object(vm, "network_create", side_effect=lambda s, n: {"name": f"cr-{s}-net-{n}", "isolated": True}), \
+                patch.object(vm, "network_destroy", side_effect=lambda s, n: destroyed.append(n)), \
+                patch.object(vm, "virsh", side_effect=fake_virsh):
+            with self.assertRaises(vm.VmError):
+                vm.vm_create("scn", "win1", "ws2022", networks=["old", "new"])
+        self.assertEqual(destroyed, ["new"])
+        self.assertIn(["vol-delete", "--pool", vm.POOL, "cr-scn-win1.qcow2"], calls)
 
 
 class OwnershipAndCleanupTests(unittest.TestCase):
@@ -156,6 +190,50 @@ class OwnershipAndCleanupTests(unittest.TestCase):
         self.assertEqual(order, ["destroy", "undefine", "vol-delete"])
         deleted = next(args for args in calls if args[0] == "vol-delete")
         self.assertEqual(deleted[-1], "cr-scn-win1.qcow2")  # only the overlay, never the template
+
+    OVERLAY_XML = ("<volume><name>cr-scn-win1.qcow2</name><target><path>/pool/cr-scn-win1.qcow2</path>"
+                   "<format type='qcow2'/></target><backingStore><path>/pool/tpl-ws2022.qcow2</path></backingStore></volume>")
+    PLAIN_XML = ("<volume><name>cr-scn-win1.qcow2</name><target><path>/pool/cr-scn-win1.qcow2</path>"
+                 "<format type='qcow2'/></target></volume>")
+
+    def _destroy_orphan(self, volume_xml):
+        calls = []
+
+        def fake_virsh(args, timeout=60):
+            calls.append(args[0])
+            if args[0] == "domstate":
+                return _fail()
+            if args[0] == "vol-dumpxml":
+                return _ok(volume_xml)
+            return _ok()
+
+        with patch.object(vm, "virsh", side_effect=fake_virsh):
+            return vm.vm_destroy("scn", "win1"), calls
+
+    def test_orphan_disk_is_deleted_only_when_it_is_an_overlay_of_our_template(self):
+        outcome, calls = self._destroy_orphan(self.OVERLAY_XML)
+        self.assertTrue(outcome["ok"] and outcome["removed_volume"])
+        self.assertIn("vol-delete", calls)
+
+    def test_same_named_disk_that_is_not_our_overlay_is_left_untouched(self):
+        outcome, calls = self._destroy_orphan(self.PLAIN_XML)
+        self.assertFalse(outcome["ok"])
+        self.assertFalse(outcome["removed_volume"])
+        self.assertNotIn("vol-delete", calls)
+        other_pool = self.OVERLAY_XML.replace("/pool/tpl-", "/elsewhere/tpl-")
+        outcome, calls = self._destroy_orphan(other_pool)
+        self.assertNotIn("vol-delete", calls)
+
+    def test_guest_exec_accepts_only_the_windows_shells_and_owned_guests(self):
+        with patch.object(vm, "_agent") as agent:
+            with self.assertRaises(vm.VmError):
+                vm.guest_exec("scn", "win1", "C:\\Windows\\System32\\net.exe", ["user"])
+            with self.assertRaises(vm.VmError):
+                vm.guest_exec("scn", "win1", "cmd.exe", "not-a-list")
+            with patch.object(vm, "domain_owned", return_value=False):
+                with self.assertRaises(vm.VmError):
+                    vm.guest_exec("scn", "win1", "cmd.exe", ["/c", "ver"])
+        agent.assert_not_called()
 
     def test_foreign_network_is_never_removed(self):
         foreign = "<network><name>cr-scn-net-lab</name><bridge name='virbr0'/></network>"
