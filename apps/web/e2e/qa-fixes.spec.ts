@@ -179,3 +179,31 @@ test("攻擊流程：1280×720 展開設計檢查（截圖供人工檢視重疊�
   await page.getByText("隨畫布即時計算").click();
   await shot(page, { path: path.join(EVIDENCE, "08-flow-1280x720.png") });
 });
+
+test("換頁後從新頁面頂端開始，不沿用前一頁的捲動位置", async ({ page }) => {
+  const id = seed();
+  await open(page, id, "/analysis");
+  await expect(heading(page, "分析結果")).toBeVisible();
+  const main = page.locator("main.main");
+  await main.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+  await page.getByRole("button", { name: "下一步：缺失補充" }).click();
+  await expect(heading(page, "缺失補充")).toBeVisible();
+  expect(await main.evaluate((el) => el.scrollTop)).toBe(0);
+  await expect(heading(page, "缺失補充")).toBeInViewport();
+});
+
+test("缺失補充：嚴重度沿用後端的 major；沒有原文依據的佔位主機不標成「原文已知」", async ({ page }) => {
+  const id = seed();
+  const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
+  // Preconditions read from the seeded data, so the test fails loudly if the fixture changes.
+  expect(ir.missing_items.every((m: any) => m.severity === "major")).toBe(true);
+  expect(ir.missing_items[0].known[0].epistemic_status).toBe("insufficient");
+  await open(page, id, "/missing");
+  await expect(heading(page, "缺失補充")).toBeVisible();
+  const cards = page.getByTestId("known-vs-decide");
+  await expect(cards.first()).toContainText("系統推定（原文未證實）");
+  await expect(page.getByText("原文已知：")).toHaveCount(0);
+  await expect(page.getByText("次要", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("重要", { exact: true }).first()).toBeVisible();
+  await shot(page, { path: path.join(EVIDENCE, "09-missing-severity-and-source-labels.png") });
+});

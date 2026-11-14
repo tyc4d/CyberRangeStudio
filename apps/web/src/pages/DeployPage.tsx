@@ -46,6 +46,12 @@ function recordReason(d: any): string | undefined {
   }
   return typeof d.exit_code === "number" && d.exit_code !== 0 ? `結束代碼 ${d.exit_code}` : undefined;
 }
+/** The command output kept with an attempt, verbatim, for the expandable row detail. */
+function recordOutput(d: any): string | undefined {
+  if (!d || typeof d !== "object") return undefined;
+  const parts = [["stderr", d.stderr], ["stdout", d.stdout]].filter(([, v]) => typeof v === "string" && v.trim()).map(([k, v]) => `[${k}]\n${String(v).trim()}`);
+  return parts.length ? parts.join("\n\n") : undefined;
+}
 const REASON_ZH: Record<string, string> = {
   "topology not approved": "拓樸尚未核准",
   "approval stale; topology changed since approval": "核准後拓樸已變更，需重新核准",
@@ -95,7 +101,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
   const ACTION: Record<string, string> = { up: "啟動", down: "關閉" };
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
-  const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details) }));
+  const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details), output: recordOutput(r.details) }));
   const liveContainers = Array.isArray(containers) ? containers.length : 0;
   // Nothing was ever generated and nothing is running: a down would only fail and add a failed record.
   const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? "沒有已生成的部署設定，也沒有容器在執行，無需關閉" : undefined;
@@ -181,6 +187,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
             : health.data === null || health.data === undefined ? <span className="muted">沒有健康檢查結果。</span>
             : noCompose(health.data) ? <span className="muted" style={{ fontSize: 13 }}>尚未部署，沒有可檢查的容器。這不是健康，也不是故障。</span>
             : <DataView data={health.data} />}
+          {health.data && !noCompose(health.data) && !health.error && (
+            <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              這裡的 healthy 只代表容器都在執行、且沒有容器回報不健康；容器沒有設定健康檢查時不會實際探測服務。服務是否真的可用，請看「驗證報告」。
+            </div>
+          )}
         </div>
       </div>
 
@@ -196,7 +207,15 @@ function Body({ ir }: { ir: ScenarioIR }) {
                   <td className="nowrap muted">{fmtTime(r.at)}</td>
                   <td>{ACTION[r.action] ?? r.action}</td>
                   <td><span className={stateClass(String(r.state))}>{String(r.state)}</span></td>
-                  <td className="muted" style={{ overflowWrap: "anywhere" }}>{r.reason ?? "—"}</td>
+                  <td className="muted" style={{ overflowWrap: "anywhere" }}>
+                    {r.reason ?? "—"}
+                    {r.output && (
+                      <details style={{ marginTop: 4 }}>
+                        <summary style={{ cursor: "pointer", fontSize: 12 }}>完整輸出</summary>
+                        <pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{r.output}</pre>
+                      </details>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
