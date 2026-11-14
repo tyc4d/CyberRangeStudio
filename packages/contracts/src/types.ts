@@ -45,6 +45,8 @@ export interface Relation {
   evidence_refs?: string[];
   epistemic_status: EpistemicStatus;
   source: Source;
+  /** User ticked "I checked the source, this ordering holds" for an edge with no matching quote. */
+  confirmed?: boolean;
 }
 
 export interface Host {
@@ -88,6 +90,30 @@ export interface MissingItem {
   suggestion?: string;
   /** Benign substitutes the user can accept in one click. Substitutes, not report facts. */
   suggestions?: string[];
+  /** Facts the report DOES give that bound this gap (shown as "原文已知"). Derived from IR, never invented. */
+  known?: { field: string; value: unknown; source_ref?: string; epistemic_status?: EpistemicStatus; evidence_refs?: string[] }[];
+  /** True when the gap is a choice for the user to make rather than a fact to recover from the report. */
+  needs_user_decision?: boolean;
+  /** Reliable jump target in the source PDF; only present when the backend is confident. */
+  anchor?: { page: number; quote: string; evidence_ref?: string };
+}
+
+export interface Indicator {
+  id: string;
+  type: "ip" | "domain" | "url" | "hash" | "cve";
+  value: string;
+  source: Source;
+  epistemic_status: EpistemicStatus;
+  evidence_refs?: string[];
+}
+
+export interface CommandItem {
+  id: string;
+  interpreter: "powershell" | "cmd";
+  command: string;
+  source: Source;
+  epistemic_status: EpistemicStatus;
+  evidence_refs?: string[];
 }
 
 export interface Supplement {
@@ -95,6 +121,11 @@ export interface Supplement {
   text: string;
   targets_missing_item?: string;
   source: Source;
+  /** When the supplement fills a concrete field, it is written back to this host/service field. */
+  host_id?: string;
+  service_id?: string;
+  field?: string;
+  value?: string;
 }
 
 export interface EnvHostService { name: string; port: number; protocol?: "tcp" | "udp"; }
@@ -118,12 +149,14 @@ export interface Quality {
   absent_count?: number;
   method?: "single_pass" | "staged" | "staged_review";
   provisional?: boolean;
+  /** Which quote grader produced the levels; lets stale scenarios be re-graded on read. */
+  grader_version?: string;
 }
 
 export interface ValidationCheck {
   id: string;
   name: string;
-  category: "service_up" | "connectivity" | "dependency_present" | "behavior" | "chain";
+  category: "service_up" | "connectivity" | "dependency_present" | "behavior" | "chain" | "version";
   status: CheckStatus;
   expected?: string;
   observed?: string;
@@ -164,6 +197,8 @@ export interface ScenarioIR {
   evidence?: Evidence[];
   actions: Action[];
   relations: Relation[];
+  indicators?: Indicator[];
+  commands?: CommandItem[];
   flow?: AttackFlowMetadata;
   conditions?: AttackFlowCondition[];
   operators?: AttackFlowOperator[];
