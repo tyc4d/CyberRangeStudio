@@ -176,6 +176,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const actions = ir.actions.filter(match);
   const relations = ir.relations.filter(match);
   const q = ir.quality;
+  const qx = q as { excluded_non_attacker_actions?: { id?: string; name?: string; actor?: string }[]; dropped_placeholder_hosts?: number } | undefined;
+  const excluded = Array.isArray(qx?.excluded_non_attacker_actions) ? qx!.excluded_non_attacker_actions! : [];
+  const dropped = typeof qx?.dropped_placeholder_hosts === "number" ? qx.dropped_placeholder_hosts : 0;
   // Only show the reproducibility column once the backend reports it for at least one step.
   const hasRepro = useMemo(() => ir.actions.some((a) => reproOf(a) !== null), [ir.actions]);
   const cite = (x: Action | Relation) => summarizeCitations(x.evidence_refs, evById);
@@ -267,6 +270,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
           ))}
         </div>
       )}
+      {excluded.length > 0 && (
+        <details className="card" data-testid="excluded-actions">
+          <summary style={{ cursor: "pointer", fontSize: 13 }}>未納入攻擊流程的行為（{excluded.length}）：分析判定不是攻擊者做的</summary>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+            {excluded.map((x, i) => <li key={i}>{x.name || x.id || "（未命名）"}{x.actor && <span className="muted">　行為者：{x.actor}</span>}</li>)}
+          </ul>
+          <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>這些是原文中防守方或其他角色的動作（例如偵測、攔阻、通報），沒有被當成攻擊步驟。若判定有誤，可在「攻擊流程」自行新增行為。</div>
+        </details>
+      )}
+      {dropped > 0 && <div className="muted" style={{ fontSize: 12 }}>分析過程丟棄了 {dropped} 個名稱為「unknown」的佔位主機，沒有把它們當成真實主機。</div>}
       {q?.method && <div className="muted" style={{ fontSize: 12, marginTop: -6 }}>分析方式：{METHOD_LABEL[q.method] ?? q.method}</div>}
 
       <ReproBanner actions={ir.actions} />
@@ -319,7 +332,12 @@ function Body({ ir }: { ir: ScenarioIR }) {
                           );
                         })()}
                       </td>
-                      <td className="nowrap"><EpistemicBadge status={a.epistemic_status} source={a.source} /><div style={{ marginTop: 4 }}><SourceTag source={a.source} /></div></td>
+                      <td className="nowrap">
+                        <EpistemicBadge status={a.epistemic_status} source={a.source} /><div style={{ marginTop: 4 }}><SourceTag source={a.source} /></div>
+                        {(a as { source_certainty?: string }).source_certainty === "hedged" && (
+                          <div style={{ marginTop: 4 }}><span className="tag sub" title="原文對這個行為用的是推測語氣（例如 likely、may、reportedly），不是肯定的陳述">原文語氣不確定</span></div>
+                        )}
+                      </td>
                       {hasRepro && <td className="nowrap"><ReproBadge action={a} /></td>}
                       <td>
                         <div style={{ marginBottom: 5 }}><CitationBadge summary={cite(a)} source={a.source} basis={isInferred(a)} /></div>

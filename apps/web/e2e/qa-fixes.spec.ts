@@ -235,3 +235,19 @@ test("補件會說明答案寫到哪裡，送出後顯示已寫入的欄位；�
   expect(item, "an item records applied_to os").toBeTruthy();
   expect(ir.hosts.find((h: any) => h.id === item.applied_to.id).os).toBe("Windows Server 2019");
 });
+
+test("拓樸：推定的入口主機有「待確認」標記與中文備註", async ({ page }) => {
+  const id = seed();
+  // Same edit the flow editor makes (target host of every action), sent to the real API to keep the test short.
+  const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
+  for (const a of ir.actions) a.target_host_ref = ir.hosts[0].id;
+  expect((await page.request.put(`/api/scenario/${id}`, { data: { ir, note: "e2e: set target hosts" } })).ok()).toBe(true);
+  await open(page, id, "/deps");
+  await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
+  await expect(page.getByText("依賴分析完成")).toBeVisible({ timeout: 60_000 });
+  await page.goto("/topology");
+  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
+  await expect(page.getByText("推定入口・待確認")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/被放在對外網路，當作推定的入侵入口/)).toBeVisible();
+  await shot(page, { path: path.join(EVIDENCE, "13-topology-inferred-entry.png"), fullPage: true });
+});

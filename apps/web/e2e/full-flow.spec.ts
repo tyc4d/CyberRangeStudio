@@ -267,7 +267,7 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     for (const lv of ["env_build", "behavior_repro", "full_chain"]) {
       await expect(pills.filter({ hasText: label[report.levels[lv]] }).first()).toBeVisible();
     }
-    await expect(page.getByRole("heading", { name: "擬真度（fidelity）" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "擬真度", exact: true })).toBeVisible();
     // The sidebar's stage marker reflects the verdict too (it used to stay blank after a successful run).
     await expect(page.locator(".stages a", { hasText: "驗證報告" }).locator(".state")).toHaveAttribute("title", /通過|未測|失敗/);
     expect(report.levels.env_build, "environment build level").toBe("PASS");
