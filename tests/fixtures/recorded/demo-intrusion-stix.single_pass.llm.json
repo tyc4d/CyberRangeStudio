@@ -1,0 +1,166 @@
+{
+ "actions": [
+  {
+   "id": "a1",
+   "name": "External web reconnaissance",
+   "target_host_ref": "h1",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "From the external network, the attacker first sent HTTP requests to `victim-web` over TCP/80 to identify the internet-facing web application; this reconnaissance preceded the exploitation activity and selected the exposed service as the target.",
+     "source_ref": "s0_description"
+    }
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Public web application exploitation",
+   "target_host_ref": "h1",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "Next, the attacker exploited a publicly disclosed CVE in the web service and obtained command execution through a web shell; the exposed application was the entry point for this initial access.",
+     "source_ref": "s1_description"
+    }
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Internal database discovery",
+   "target_host_ref": "h1",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network and identified `db` as an internal database host; `db` was not directly reachable from the external network.",
+     "source_ref": "s2_description"
+    }
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "Database collection from web host",
+   "target_host_ref": "h1",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records. The web-shell foothold and discovery of `db` were prerequisites for this access because the database accepted connections only from the internal network.",
+     "source_ref": "s3_description"
+    }
+   ]
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "this reconnaissance preceded the exploitation activity",
+     "source_ref": "s0_description"
+    }
+   ]
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "With the web-shell foothold on `victim-web`, the attacker enumerated the internal network",
+     "source_ref": "s2_description"
+    }
+   ]
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "Finally, the attacker used `victim-web` to connect to `db` over TCP/5432 and collect records. The web-shell foothold and discovery of `db` were prerequisites for this access",
+     "source_ref": "s3_description"
+    }
+   ]
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "The web-shell foothold and discovery of `db` were prerequisites for this access",
+     "source_ref": "s3_description"
+    }
+   ]
+  },
+  {
+   "id": "r5",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "epistemic_status": "supported",
+   "evidence": [
+    {
+     "quote": "The web-shell foothold and discovery of `db` were prerequisites for this access",
+     "source_ref": "s3_description"
+    }
+   ]
+  }
+ ],
+ "artifacts": [],
+ "target_context": {
+  "hosts": [
+   {
+    "id": "h1",
+    "role": "web server",
+    "evidence": [
+     {
+      "quote": "`victim-web`",
+      "source_ref": "s0_description"
+     }
+    ]
+   },
+   {
+    "id": "h2",
+    "role": "database server",
+    "evidence": [
+     {
+      "quote": "`db` as an internal database host; `db` was not directly reachable from the external network.",
+      "source_ref": "s2_description"
+     }
+    ]
+   }
+  ],
+  "services": [
+   {
+    "id": "svc1",
+    "name": "web service",
+    "evidence": [
+     {
+      "quote": "the attacker exploited a publicly disclosed CVE in the web service",
+      "source_ref": "s1_description"
+     }
+    ]
+   },
+   {
+    "id": "svc2",
+    "name": "database service",
+    "evidence": [
+     {
+      "quote": "used `victim-web` to connect to `db` over TCP/5432",
+      "source_ref": "s3_description"
+     }
+    ]
+   }
+  ]
+ }
+}

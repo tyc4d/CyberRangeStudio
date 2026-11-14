@@ -1,0 +1,26 @@
+[
+ {
+  "id": "p1",
+  "text": "# admin QA lifecycle lab — synthetic configuration, not real CTI"
+ },
+ {
+  "id": "p2",
+  "text": "This is a user-supplied synthetic local lab for administrator lifecycle testing. It does not establish any facts about a real intrusion. NGINX and PostgreSQL are explicit lab substitutions. No real CVE or exploit is claimed, and no attack success may be inferred from service readiness."
+ },
+ {
+  "id": "p3",
+  "text": "The host `web` has role `NGINX web server`, Linux OS, and runs nginx version 1.31.8 on TCP/80 using catalogue component oss-nginx. The service `nginx` belongs to host `web`. Pin the image to the catalogue digest."
+ },
+ {
+  "id": "p4",
+  "text": "The host `db` has role `PostgreSQL database server`, Linux OS, and runs PostgreSQL version 16.16 on TCP/5432 using catalogue component oss-postgres. The service `postgres` belongs to host `db`. Pin the image to the catalogue digest."
+ },
+ {
+  "id": "p5",
+  "text": "The local attacker host uses the Alpine attacker toolbox component oss-attacker. All networks are isolated local Docker networks, without host published ports. The attacker is on the external lab segment only, web is on external and internal segments, db is on internal only. Direct attacker-to-db access must remain blocked. Permit only attacker-to-web TCP/80 and web-to-db TCP/5432."
+ },
+ {
+  "id": "p6",
+  "text": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80. This precedes the internal discovery step.\n2. Internal discovery: from the web host, the operator identifies the PostgreSQL database server `db`. This requires the web foothold, which is a supplied lab precondition and is not an exploit result.\n3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432. It depends on the discovery of db and on the supplied web foothold. The result only establishes connectivity; database record collection and command execution remain NOT_TESTED."
+ }
+]

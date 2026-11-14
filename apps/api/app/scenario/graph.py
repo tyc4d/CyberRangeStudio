@@ -33,13 +33,22 @@ def validate_ir(ir: dict[str, Any]) -> list[str]:
     return []
 
 
+_EMPTY = (None, "", [], {}, False)
+
+
+def _meaningful(item: dict[str, Any]) -> dict[str, Any]:
+    """Fields that carry content. A key that is absent, null, empty or false says the same
+    thing in every spelling, so a client that omits a default (for example ``confirmed``)
+    has not edited the item."""
+    return {key: value for key, value in item.items() if key != "source" and value not in _EMPTY}
+
+
 def mark_user_change(current: dict[str, Any] | None, updated: dict[str, Any]) -> dict[str, Any]:
     """Keep provenance on untouched items; edits and new graph nodes belong to the user."""
     result = copy.deepcopy(updated)
     if current is not None:
-        before = {key: value for key, value in current.items() if key != "source"}
-        after = {key: value for key, value in result.items() if key != "source"}
-        if before == after:
+        if _meaningful(current) == _meaningful(result):
+            # Untouched: the stored provenance stands, whatever source the client echoed back.
             result["source"] = current.get("source", "user")
             return result
     result["source"] = "user"
@@ -49,12 +58,6 @@ def mark_user_change(current: dict[str, Any] | None, updated: dict[str, Any]) ->
 def reconcile_graph_sources(ir: dict[str, Any], current: dict[str, Any]) -> None:
     for field in ("actions", "relations"):
         old = {item.get("id"): item for item in current.get(field, [])}
-        reconciled = []
-        for item in ir.get(field, []):
-            previous = old.get(item.get("id"))
-            if field == "relations" and previous is not None and "confirmed" not in previous:
-                previous = {**previous, "confirmed": False}
-            reconciled.append(mark_user_change(previous, item))
-        ir[field] = reconciled
+        ir[field] = [mark_user_change(old.get(item.get("id")), item) for item in ir.get(field, [])]
     for relation in ir.get("relations", []):
         relation.setdefault("confirmed", False)
