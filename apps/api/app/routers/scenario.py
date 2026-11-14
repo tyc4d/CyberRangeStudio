@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Response
 
 from app import store
 from app.cti.citations import GRADER_VERSION, grade_evidence_against_units
+from app.cti.missing import refresh_missing_items
 from app.cti.parser import parse_source
 from app.scenario.graph import mark_user_change, reconcile_graph_sources, validate_ir
 
@@ -38,6 +39,8 @@ def _validate_ir(ir: dict[str, Any]) -> None:
 
 
 def _save_user_edit(scenario_id: str, ir: dict[str, Any], note: str) -> dict[str, Any]:
+    # The open questions describe the IR; an edited IR needs them recomputed.
+    ir["missing_items"] = refresh_missing_items(ir)
     _validate_ir(ir)
     try:
         return store.update(scenario_id, ir, note=note, bump_version=True)

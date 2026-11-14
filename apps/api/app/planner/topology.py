@@ -39,13 +39,64 @@ def _role_contains(role: str, term: str) -> bool:
     return bool(re.search(rf"(?<![a-z0-9]){re.escape(term.casefold())}(?![a-z0-9])", role.casefold()))
 
 
+_EXPOSED_TERMS = ("exposed", "external", "internet", "internet-facing", "public", "public-facing", "web", "dmz", "對外")
+_INTERNAL_TERMS = ("internal", "內部", "內網", "management", "isolated", "隔離")
+_NO_HOST = frozenset({"", "unknown", "unspecified", "none", "null", "n/a"})
+# Techniques whose target is, by definition, where the intrusion enters from outside.
+_ENTRY_TECHNIQUES = ("T1190", "T1133", "T1189", "T1566", "T1195", "T1199")
+
+
+def _stated_exposure(host: dict[str, Any]) -> bool | None:
+    """Exposure the IR states for this host: placement first (it may be a user answer), then role."""
+    for text in (str(host.get("network_placement", "")), str(host.get("role", ""))):
+        if not text.strip():
+            continue
+        if any(_role_contains(text, term) or (not term.isascii() and term in text) for term in _INTERNAL_TERMS):
+            return False
+        if any(_role_contains(text, term) or (not term.isascii() and term in text) for term in _EXPOSED_TERMS):
+            return True
+    return None
+
+
 def _is_exposed(host: dict[str, Any]) -> bool:
     if _is_attacker(host):
         return True
-    role = str(host.get("role", ""))
-    if _role_contains(role, "internal"):
-        return False
-    return any(_role_contains(role, term) for term in ("exposed", "external", "internet", "public", "web", "dmz"))
+    if host.get("_inferred_entry"):
+        return True
+    return _stated_exposure(host) is True
+
+
+def _entry_host_ids(ir: dict[str, Any], candidates: set[str]) -> tuple[list[str], str]:
+    """Hosts the attack must enter through when the IR states no exposure for any host.
+
+    Preference: targets of initial-access actions; otherwise the target of the earliest
+    action that names a host. Returned with the basis so the plan can say it is inferred.
+    """
+    actions = [action for action in ir.get("actions", []) if isinstance(action, dict)]
+
+    def target(action: dict[str, Any]) -> str | None:
+        ref = action.get("target_host_ref")
+        if not isinstance(ref, str) or ref.strip().casefold() in _NO_HOST:
+            return None
+        hid = _host_id(ref)
+        return hid if hid in candidates else None
+
+    initial = []
+    for action in actions:
+        tactic = str(action.get("attack_tactic") or action.get("tactic_id") or "").casefold()
+        technique = str(action.get("attack_technique") or action.get("technique_id") or "").upper()
+        if tactic in {"initial-access", "ta0001"} or technique.startswith(_ENTRY_TECHNIQUES):
+            if target(action):
+                initial.append((target(action), str(action.get("id"))))
+    if initial:
+        ids = list(dict.fromkeys(hid for hid, _ in initial))
+        return ids, "initial-access action(s) " + ", ".join(aid for _, aid in initial)
+    has_predecessor = {relation.get("to_action") for relation in ir.get("relations", []) if isinstance(relation, dict)}
+    ordered = [a for a in actions if a.get("id") not in has_predecessor] + [a for a in actions if a.get("id") in has_predecessor]
+    for action in ordered:
+        if target(action):
+            return [target(action)], f"earliest action with a named target ({action.get('id')})"
+    return [], ""
 
 
 def _port_for(service: dict[str, Any]) -> tuple[int, str] | None:
@@ -122,6 +173,19 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
 
     services = [item for item in ir.get("services", []) if item.get("id")]
     target_ids = {_host_id(host["id"]) for host in target_hosts}
+
+    # Without any reachable target the attacker has no way in and the chain cannot start.
+    # If the IR states no exposure, expose only the entry host and say that this is inferred.
+    if ir.get("actions") and not any(_stated_exposure(host) is True for host in target_hosts):
+        undecided = {hid for hid in target_ids if _stated_exposure(hosts_by_id[hid]) is None}
+        entry_ids, basis = _entry_host_ids(ir, undecided)
+        for hid in entry_ids:
+            hosts_by_id[hid]["_inferred_entry"] = True
+            notes.append(f"Host {hid} was placed on the external network as the inferred entry point "
+                         f"(basis: {basis}); the source does not state its network placement. Confirm or correct it.")
+        if not entry_ids:
+            notes.append("No target host is stated or inferable as reachable from outside; the attacker has no path "
+                         "to any target until a host's network placement is supplied.")
     assigned: dict[str, list[dict[str, Any]]] = {hid: [] for hid in target_ids}
     unassigned: list[str] = []
     for service in services:
@@ -162,6 +226,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             "networks": network_refs,
             "services": entries,
         }
+        if host.get("_inferred_entry"):
+            env_host["exposure_basis"] = "inferred_entry_point"
+        elif not _is_attacker(host) and _stated_exposure(host) is not None:
+            env_host["exposure_basis"] = "stated"
         component_ids = list(dict.fromkeys(service.get("catalogue_component") for service in assigned.get(hid, [])
                                            if service.get("catalogue_component")))
         if len(component_ids) > 1:
@@ -177,7 +245,14 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             # A host whose service maps to a real catalogue component is deployed as the
             # real open-source software; otherwise it falls back to a benign substitute.
             component = component_by_id(env_host.get("image_hint"))
-            if component and component.get("runtime") == "vm":
+            if component and component.get("runtime") not in (None, "container", "vm"):
+                # The catalogue knows this software but cannot deploy it. Say so instead of
+                # presenting it as a real or substitute component.
+                env_host["runtime"] = str(component.get("runtime") or "unsupported")
+                env_host["deployable"] = False
+                notes.append(f"Host {hid} needs {component.get('name', component['id'])}, which the catalogue cannot "
+                             f"deploy ({component.get('fidelity') or 'no deployable fixture'}). It is not replaced by a stand-in.")
+            elif component and component.get("runtime") == "vm":
                 env_host["runtime"] = "vm"
                 spec = component.get("vm_spec", {})
                 env_host["guest"] = {
@@ -185,7 +260,13 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                     "image_ref": component.get("image_ref"), "image_digest": component.get("image_digest"),
                     "cpu": spec.get("cpu"), "memory_mib": spec.get("memory_mib"), "disk_gib": spec.get("disk_gib"),
                 }
-                env_host["component_mode"] = "real"
+                if component.get("deployable") is False:
+                    # A VM the catalogue cannot build yet is neither "real" nor a substitute.
+                    env_host["deployable"] = False
+                    notes.append(f"Host {hid} needs {component.get('name', component['id'])} as a VM, which is not "
+                                 f"deployable yet ({component.get('fidelity') or 'no validated image'}).")
+                else:
+                    env_host["component_mode"] = "real"
             else:
                 env_host["runtime"] = "container"
                 env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
