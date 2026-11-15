@@ -21,6 +21,7 @@ class ExecutionRequest:
     cancel: Any = None
     on_progress: Callable[[dict[str, Any]], None] | None = None
     proof_id: str | None = None
+    job_id: str | None = None
 
 
 @dataclass(frozen=True)
