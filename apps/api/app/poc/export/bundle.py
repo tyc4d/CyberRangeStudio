@@ -73,10 +73,17 @@ NOT_GENERATED_IAC = (
 )
 
 # --- secret handling ---------------------------------------------------------
+# STRUCTURAL redaction. A value is treated as a secret because of the structure around it — a
+# secret-named key or label (bare, quoted or escaped), an Authorization/Cookie header, URL userinfo
+# (with or without scheme), a secret-named (percent-decoded) query parameter, or a secret-named
+# ${VAR} branch — never because of how the value looks. The value extent is parsed structurally:
+# every concatenated quoted/bare/${...} segment, so quoting, escaping or concatenation cannot hide
+# part of it. The SAME parsers drive redaction and the final scan, and every redacted string is
+# re-scanned: anything still flagged is replaced whole (fail closed).
 _SECRET_KEY_RE = re.compile(
     r"(?:^|[_\-.])(password|passwd|pwd|passphrase|secret|secrets|token|tokens|api[_-]?key|apikey|"
-    r"access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|cookie|cookies|"
-    r"credential|credentials|auth[_-]?token|bearer)(?:$|[_\-.])",
+    r"access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|cookie|cookies|set[_-]?cookie|"
+    r"credential|credentials|auth[_-]?token|bearer|authorization|session[_-]?id|sessionid)(?:$|[_\-.])",
     re.IGNORECASE,
 )
 # High-confidence secret material: always redacted from text and fatal if found at the end.
@@ -87,23 +94,23 @@ _SECRET_VALUE_PATTERNS = (
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{40,}\b"),
     re.compile(r"\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}\b"),
     re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),
-    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/-]{16,}=*"),
+    re.compile(r"(?i)\bbearer\s+(?!\[REDACTED\])[A-Za-z0-9._~+/-]{16,}=*"),
     re.compile(r"PVEAPIToken=[^\s'\"]+"),
 )
-# Free-text "password=xyz" / "token: 'xyz'" / apiKey="xyz" — redact the value, keep the label.
-# Quoted values run to the matching quote (or end of line); bare values include apostrophes so
-# a quote cannot cut the scan short. Deploy-time references (${...}) and <placeholders> are kept.
-_INLINE_LABEL = (r"[A-Za-z0-9_.\-]*?(?:password|passwd|pwd|passphrase|token|secret|api[_\-]?key|apikey|"
-                 r"access[_\-]?key|credential)[A-Za-z0-9_\-]*")
-_INLINE_SECRET_RE = re.compile(
-    r"(?i)(?<![A-Za-z0-9_{.\-])(" + _INLINE_LABEL + r")([ \t]*[:=][ \t]*)"
-    r"(?:(['\"])((?:(?!\3)[^\n])*)(\3?)|(?!\$\{|<)([^\s\",;&]+))")
-# URL userinfo: everything between "scheme://" and the LAST "@" of the authority (stops at / ? # or
-# whitespace). Quotes and colon-less token-as-username forms are covered; the whole userinfo is redacted.
-_URL_USERINFO_RE = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*://)([^\s/?#\"<>\\]*)@")
-# Query / fragment parameters (?access_token=..., &%61pi_key=..., #id_token=...). The parameter NAME is
-# percent-decoded before it is classified; the value runs to & # or whitespace (apostrophes included).
-_QUERY_PARAM_RE = re.compile(r"([?&#;])([^=&#\s\"<>?;]+)=([^&#\s\"<>]*)")
+# Secret label in free text: optional (escaped) quote, label, optional quote, then ':' or '='.
+_LABEL_WORDS = (r"password|passwd|pwd|passphrase|secret|token|api[_\-]?key|apikey|access[_\-]?key|"
+                r"private[_\-]?key|credential|session[_\-]?id|sessionid|cookie|authorization")
+_LABEL_RE = re.compile(
+    r"(?i)(?<![A-Za-z0-9_.\-])(?<!\$\{)(\\*[\"']?)([A-Za-z0-9_.\-]*?(?:" + _LABEL_WORDS + r")[A-Za-z0-9_\-]*)"
+    r"(\\*[\"']?)([ \t]*[:=][ \t]*)")
+_HEADER_LABELS = {"authorization", "proxy-authorization", "cookie", "set-cookie"}
+_QUOTE_RE = re.compile(r"\\*[\"']")
+_BARE_STOP = set(" \t\r\n,;&<>")
+_NULLISH = {"true", "false", "null", "none"}
+# URL userinfo, with or without scheme: everything after '//' up to the LAST '@' of the authority.
+_URL_USERINFO_RE = re.compile(r"(?i)((?:\b[a-z][a-z0-9+.\-]*:)?//)([^\s/?#<>\\]*)@")
+# Query / fragment parameters; the NAME is fully percent-decoded before classification.
+_QUERY_PARAM_RE = re.compile(r"([?&#;])([^=&#\s\"'<>?;]+)=([^&#\s<>]*)")
 _QUERY_SECRET_NAME_RE = re.compile(
     r"token|secret|pass|pwd|api[_\-]?key|apikey|access[_\-]?key|auth|sig|session|credential|cookie|key",
     re.IGNORECASE)
@@ -124,6 +131,24 @@ def _now() -> str:
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _decode_name(name: str) -> str:
+    for _ in range(4):
+        decoded = unquote(name)
+        if decoded == name:
+            break
+        name = decoded
+    return name
+
+
+def _is_secret_key(key: Any) -> bool:
+    """Secret-named field? Fully percent-decoded and camelCase-split before matching."""
+    if not isinstance(key, str):
+        return False
+    decoded = _decode_name(key)
+    snake = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", decoded)
+    return bool(_SECRET_KEY_RE.search(decoded) or _SECRET_KEY_RE.search(snake))
 
 
 def _env_secret_values() -> list[str]:
@@ -151,10 +176,9 @@ def _matching_brace(text: str, open_idx: int) -> Optional[int]:
 def _walk_refs(text: str, force: bool = False) -> str:
     """Rewrite ${...} interpolations (nesting-aware).
 
-    force=True (inside a secret-named field): every branch argument (:- - := = :+ + :? ?) becomes
-    [REDACTED]. Otherwise a secret-named variable's value branches (- = +) are redacted; its ``?``
-    branch is an error message and is redacted too, since it may carry the literal. Arguments of
-    non-secret refs are walked recursively, so a nested secret ref is still caught.
+    force=True (inside a secret-named field): every branch argument becomes [REDACTED]. Otherwise
+    the branches of secret-named variables are redacted, and arguments of other refs are walked
+    recursively so a nested secret-named ref is still caught.
     """
     out: list[str] = []
     i = 0
@@ -184,34 +208,97 @@ def _walk_refs(text: str, force: bool = False) -> str:
     return "".join(out)
 
 
-def _secret_query_param(m: re.Match) -> bool:
-    """True if this ?name=value carries a secret-named parameter with a value that is not redacted."""
+def _value_end(text: str, start: int, header: bool) -> int:
+    """End of the value that follows a secret label: ALL adjacent quoted / ${...} / bare segments.
+
+    A header value (Authorization, Cookie) runs to the end of the line.
+    """
+    n = len(text)
+    if header:
+        nl = text.find("\n", start)
+        return n if nl < 0 else nl
+    j = start
+    after_quote = False
+    while j < n:
+        q = _QUOTE_RE.match(text, j)
+        if q:
+            close = text.find(q.group(0), q.end())
+            nl = text.find("\n", q.end())
+            if close < 0 or 0 <= nl < close:  # unterminated quote: take the rest of the line
+                return n if nl < 0 else nl
+            j = close + len(q.group(0))
+            after_quote = True
+            continue
+        if text.startswith("${", j):
+            k = _matching_brace(text, j + 1)
+            if k is None:
+                return n
+            j = k + 1
+            continue
+        if text[j] in _BARE_STOP or (after_quote and text[j] in "}])"):
+            break  # a closing bracket right after a quoted value closes the enclosing structure
+        j += 1
+    return j
+
+
+def _value_safe(value: str, compose: bool = False) -> bool:
+    """A labelled value is safe only if it is WHOLLY empty / [REDACTED] / nullish / bare refs."""
+    s = value.strip()
+    while True:
+        m = re.fullmatch(r"(\\*[\"'])(.*)\1", s, re.S)
+        if not m:
+            break
+        s = m.group(2)
+    if s in ("", REDACTED) or s.lower() in _NULLISH or _SAFE_SECRET_REF_RE.fullmatch(s):
+        return True
+    # The generator's own deploy-time refs (e.g. ${CR_DB_PASSWORD:?set at deploy time}) in its compose.
+    return compose and bool(generator._RUNTIME_REF_RE.fullmatch(s))
+
+
+def _label_pass(text: str, fix: bool, compose: bool = False) -> tuple[str, bool]:
+    """Find secret-labelled values; with fix=True replace each unsafe value whole."""
+    out: list[str] = []
+    pos = 0
+    found = False
+    search_from = 0
+    while True:
+        m = _LABEL_RE.search(text, search_from)
+        if not m:
+            break
+        label = m.group(2).lower()
+        header = label in _HEADER_LABELS
+        vstart = m.end()
+        vend = _value_end(text, vstart, header)
+        value = text[vstart:vend]
+        if not _value_safe(value, compose):
+            found = True
+            if fix:
+                q = _QUOTE_RE.match(value)
+                quote = q.group(0) if q and not header else ""
+                out.append(text[pos:vstart] + quote + REDACTED + quote)
+                pos = vend
+        search_from = max(vend, m.end(), search_from + 1)
+    out.append(text[pos:])
+    return ("".join(out) if fix else text), found
+
+
+def _unsafe_userinfo(m: re.Match) -> bool:
+    return m.group(2) not in ("", REDACTED)
+
+
+def _unsafe_query(m: re.Match) -> bool:
     value = m.group(3)
-    return bool(value) and value != REDACTED and bool(_QUERY_SECRET_NAME_RE.search(unquote(m.group(2))))
+    return value not in ("", REDACTED) and bool(_QUERY_SECRET_NAME_RE.search(_decode_name(m.group(2))))
 
 
-def _inline_value_unsafe(m: re.Match) -> bool:
-    if m.group(3) is not None:  # quoted
-        value = m.group(4)
-        return bool(value) and value != REDACTED and not value.startswith("${")
-    bare = m.group(6)
-    return (bare is not None and not bare.startswith(REDACTED)
-            and bare.strip("`'.)").lower() not in {"true", "false", "null", "none"})
-
-
-def _redact_inline(m: re.Match) -> str:
-    if not _inline_value_unsafe(m):
-        return m.group(0)
-    if m.group(3) is not None:
-        return m.group(1) + m.group(2) + m.group(3) + REDACTED + m.group(5)
-    return m.group(1) + m.group(2) + REDACTED
-
-
-def _redact_urls(text: str) -> str:
-    text = _URL_USERINFO_RE.sub(
-        lambda m: m.group(0) if m.group(2) == REDACTED else m.group(1) + REDACTED + "@", text)
-    return _QUERY_PARAM_RE.sub(
-        lambda m: m.group(1) + m.group(2) + "=" + REDACTED if _secret_query_param(m) else m.group(0), text)
+def _secret_ref_branch(text: str) -> bool:
+    for m in re.finditer(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?[-+=])", text):
+        if _SECRET_VAR_NAME_RE.search(m.group(1)):
+            k = _matching_brace(text, m.start() + 1)
+            arg = text[m.end():k] if k is not None else text[m.end():]
+            if arg and arg != REDACTED:
+                return True
+    return False
 
 
 def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
@@ -219,9 +306,12 @@ def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
         text = text.replace(secret, REDACTED)
     for pattern in _SECRET_VALUE_PATTERNS:
         text = pattern.sub(REDACTED, text)
-    text = _redact_urls(text)
+    text = _URL_USERINFO_RE.sub(lambda m: m.group(1) + REDACTED + "@" if _unsafe_userinfo(m) else m.group(0), text)
+    text = _QUERY_PARAM_RE.sub(
+        lambda m: m.group(1) + m.group(2) + "=" + REDACTED if _unsafe_query(m) else m.group(0), text)
     text = _walk_refs(text)
-    return _INLINE_SECRET_RE.sub(_redact_inline, text)
+    text, _ = _label_pass(text, fix=True)
+    return text
 
 
 def _redact_secret_field(value: str) -> str:
@@ -232,6 +322,29 @@ def _redact_secret_field(value: str) -> str:
     return rewritten if _SAFE_SECRET_REF_RE.fullmatch(rewritten) else REDACTED
 
 
+def _embedded_structure(text: str) -> Any:
+    """Parse a string that is itself JSON (object/array), else None."""
+    s = text.strip()
+    if not s or s[0] not in "{[":
+        return None
+    try:
+        obj = json.loads(s)
+    except ValueError:
+        return None
+    return obj if isinstance(obj, (dict, list)) else None
+
+
+def _redact_free_string(value: str, env_secrets: list[str]) -> str:
+    embedded = _embedded_structure(value)
+    if embedded is not None:
+        cleaned = json.dumps(redact(embedded, env_secrets), ensure_ascii=False)
+    else:
+        cleaned = redact_text(value, env_secrets)
+    # Fail closed per value: if any structural indicator survives, drop the whole string.
+    return REDACTED if find_secrets(cleaned, env_secrets) or find_field_secrets(_embedded_structure(cleaned)) \
+        else cleaned
+
+
 # Mapping keys allowed to stay as-is INSIDE a secret-named subtree (field names, not data).
 _BENIGN_SECRET_SUBKEYS = frozenset({
     "id", "name", "type", "kind", "username", "user", "user_name", "login", "account", "password", "passwd",
@@ -239,16 +352,7 @@ _BENIGN_SECRET_SUBKEYS = frozenset({
     "private_key", "client_id", "client_secret", "note", "notes", "description", "source", "host", "port",
     "service", "scope", "expires", "expires_at", "created_at", "issuer", "hash", "algorithm", "format", "redacted",
 })
-_REDACTED_KEY_RE = re.compile(r"\[REDACTED-key-\d+\]")
-
-
-def _is_secret_key(key: Any) -> bool:
-    """Secret-named field? Percent-decoded and camelCase-split before matching."""
-    if not isinstance(key, str):
-        return False
-    decoded = unquote(key)
-    snake = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", decoded)
-    return bool(_SECRET_KEY_RE.search(decoded) or _SECRET_KEY_RE.search(snake))
+_REDACTED_KEY_RE = re.compile(r"\[REDACTED-key-\d+(?:-\d+)?\]")
 
 
 def _key_allowed_under_secret(key: Any) -> bool:
@@ -256,10 +360,11 @@ def _key_allowed_under_secret(key: Any) -> bool:
 
 
 def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False) -> Any:
-    """Deep copy with secret-named fields, secret-looking text AND mapping keys redacted.
+    """Deep copy with secret-named fields, secret-structured text AND mapping keys redacted.
 
     Inside a secret-named subtree a key is kept only if it is a known field name; any other key
-    (which may itself be the credential) becomes ``[REDACTED-key-<n>]``.
+    (which may itself be the credential) becomes ``[REDACTED-key-<n>]``. A string that is itself
+    JSON is parsed and redacted structurally.
     """
     env_secrets = _env_secret_values() if env_secrets is None else env_secrets
     if isinstance(obj, dict):
@@ -270,28 +375,29 @@ def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool =
                 if _under_secret and not _key_allowed_under_secret(key):
                     new_key = f"[REDACTED-key-{n}]"
                 else:
-                    new_key = redact_text(key, env_secrets)
+                    new_key = _redact_free_string(key, env_secrets)
             else:
                 new_key = REDACTED if _under_secret else key
             while new_key in out:
-                new_key = f"[REDACTED-key-{n}-{len(out)}]" if _under_secret else f"{new_key}#{n}"
+                new_key = f"[REDACTED-key-{n}-{len(out)}]"
             out[new_key] = redact(value, env_secrets, _under_secret or secret_key)
         return out
     if isinstance(obj, list):
         return [redact(v, env_secrets, _under_secret) for v in obj]
     if isinstance(obj, str):
-        return _redact_secret_field(obj) if _under_secret else redact_text(obj, env_secrets)
+        return _redact_secret_field(obj) if _under_secret else _redact_free_string(obj, env_secrets)
     if _under_secret and isinstance(obj, (int, float)) and not isinstance(obj, bool):
         return REDACTED
     return obj
 
 
-def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
+def find_secrets(text: str, env_secrets: list[str] | None = None, *, structural: bool = True,
+                 compose: bool = False) -> list[str]:
     """Names of secret indicators present in ``text`` (empty = clean). Never returns the value.
 
-    Text-level check, valid for any file (including the generator's compose, whose
-    ``${CR_DB_PASSWORD:?set at deploy time}`` error messages are allowed here). Structured
-    files are additionally checked field-by-field by :func:`find_field_secrets`.
+    structural=False limits the check to literal env secrets + high-confidence value patterns
+    (used on the escaped text of JSON/YAML files, whose decoded strings are checked structurally).
+    compose=True allows the generator's own ${CR_...:?msg} deploy-time refs as labelled values.
     """
     hits = []
     for secret in env_secrets if env_secrets is not None else _env_secret_values():
@@ -300,35 +406,32 @@ def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
     for pattern in _SECRET_VALUE_PATTERNS:
         if pattern.search(text):
             hits.append(f"pattern {pattern.pattern[:32]}")
-    if any(m.group(2) != REDACTED for m in _URL_USERINFO_RE.finditer(text)):
+    if not structural:
+        return hits
+    if any(_unsafe_userinfo(m) for m in _URL_USERINFO_RE.finditer(text)):
         hits.append("credentials in URL userinfo")
-    if any(_secret_query_param(m) for m in _QUERY_PARAM_RE.finditer(text)):
+    if any(_unsafe_query(m) for m in _QUERY_PARAM_RE.finditer(text)):
         hits.append("secret-named URL query parameter")
-    unescaped = text.replace('\\"', '"')  # JSON-escaped quotes delimit inline values too
-    if any(_inline_value_unsafe(m) for m in _INLINE_SECRET_RE.finditer(unescaped)):
-        hits.append("inline secret label with a value")
-    for m in re.finditer(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?[-+=])", text):
-        if _SECRET_VAR_NAME_RE.search(m.group(1)):
-            k = _matching_brace(text, m.start() + 1)
-            arg = text[m.end():k] if k is not None else text[m.end():]
-            if arg and arg != REDACTED:
-                hits.append("literal value branch of a secret-named ${VAR...} reference")
-                break
+    if _secret_ref_branch(text):
+        hits.append("literal value branch of a secret-named ${VAR...} reference")
+    if _label_pass(text, fix=False, compose=compose)[1]:
+        hits.append("secret label/header with an unredacted value")
     return hits
 
 
 def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -> list[str]:
-    """Field-aware check of parsed JSON/YAML: every secret-named field must hold nothing usable.
+    """Field-aware check of parsed JSON/YAML (fail closed).
 
-    Allowed under a secret-named key: empty, null, bool, [REDACTED], or bare interpolations whose
-    branch arguments are all [REDACTED]. Anything else is reported (fail closed).
+    Under a secret-named key only empty / null / bool / [REDACTED] / bare redacted refs are allowed,
+    and only known field names as mapping keys. Every other string (and key) is checked with the
+    structural text scan; a string that is itself JSON is parsed and checked recursively.
     """
     hits: list[str] = []
     if isinstance(obj, dict):
         for n, (key, value) in enumerate(obj.items()):
             if _under_secret and not _key_allowed_under_secret(key):
                 hits.append(f"unredacted mapping key in secret-named field {_path}/#{n}")
-            elif isinstance(key, str) and find_secrets(key, []):
+            elif isinstance(key, str) and (find_secrets(key, []) or find_field_secrets(_embedded_structure(key))):
                 hits.append(f"secret material in mapping key {_path}/#{n}")
             shown = (isinstance(key, str) and re.fullmatch(r"[A-Za-z0-9_\-]{1,32}", key) is not None
                      and (_key_allowed_under_secret(key) or not _under_secret) and not find_secrets(key, []))
@@ -343,24 +446,33 @@ def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -
                 hits.append(f"unredacted value in secret-named field {_path}")
         elif obj is not None and not isinstance(obj, bool):
             hits.append(f"unredacted value in secret-named field {_path}")
+    elif isinstance(obj, str):
+        if find_secrets(obj, []):
+            hits.append(f"secret-structured text in {_path}")
+        embedded = _embedded_structure(obj)
+        if embedded is not None:
+            hits += find_field_secrets(embedded, False, f"{_path}(embedded)")
     return hits
 
 
-def _structured_secrets(path: str, data: bytes) -> list[str]:
-    """find_field_secrets for bundle JSON/YAML files; an unparsable structured file fails closed.
+_COMPOSE_PATH = "infrastructure/docker-compose.yml"
 
-    The generator's docker-compose.yml is exempt (its secret-named env keys legitimately hold
-    ``${CR_..._PASSWORD:?set at deploy time}``); it is covered by the text scan and by the
-    generator's own forbidden-credential check.
+
+def _file_secrets(path: str, data: bytes, env_secrets: list[str] | None = None) -> list[str]:
+    """Final per-file scan used by build_bundle AND verify_bundle.
+
+    JSON/YAML (except the generator compose): parsed and checked field-by-field on decoded strings,
+    plus literal/pattern checks on the raw text; unparsable => refused. Other files: full
+    structural text scan (the compose may hold only the generator's own deploy-time refs).
     """
-    if path == "infrastructure/docker-compose.yml" or not path.endswith((".json", ".yaml", ".yml")):
-        return []
-    try:
-        text = data.decode("utf-8")
-        obj = json.loads(text) if path.endswith(".json") else yaml.safe_load(text)
-    except (UnicodeDecodeError, ValueError, yaml.YAMLError):
-        return [f"cannot parse {path} to confirm it is secret-free"]
-    return find_field_secrets(obj)
+    text = data.decode("utf-8", errors="replace")
+    if path != _COMPOSE_PATH and path.endswith((".json", ".yaml", ".yml")):
+        try:
+            obj = json.loads(text) if path.endswith(".json") else yaml.safe_load(text)
+        except (ValueError, yaml.YAMLError):
+            return [f"cannot parse {path} to confirm it is secret-free"]
+        return find_secrets(text, env_secrets, structural=False) + find_field_secrets(obj)
+    return find_secrets(text, env_secrets, compose=(path == _COMPOSE_PATH))
 
 
 # --- collection ---------------------------------------------------------------
@@ -695,7 +807,7 @@ def build_bundle(scenario_id: str, fmt: str | None = "full") -> tuple[bytes, dic
 
     # Fail closed: nothing that looks like a secret may leave.
     for path, (data, _) in b.files.items():
-        hits = find_secrets(data.decode("utf-8", errors="replace"), env_secrets) + _structured_secrets(path, data)
+        hits = _file_secrets(path, data, env_secrets)
         if hits:
             raise ExportError(f"refusing to export: {path} contains secret material ({', '.join(sorted(set(hits)))})")
 
@@ -798,7 +910,7 @@ def verify_bundle(path_or_bytes: str | Path | bytes) -> list[str]:
             data = zf.read(f["path"])
             if _sha256(data) != f["sha256"]:
                 errors.append(f"sha256 mismatch: {f['path']}")
-            if find_secrets(data.decode("utf-8", errors="replace")) or _structured_secrets(f["path"], data):
+            if _file_secrets(f["path"], data):
                 errors.append(f"secret material in {f['path']}")
         for extra in sorted(names - listed - {"manifest.json"}):
             errors.append(f"unlisted file in bundle: {extra}")

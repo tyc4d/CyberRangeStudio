@@ -379,6 +379,35 @@ class ExposedPlanExportTests(ExportTestBase):
         self.assertEqual(B.find_secrets("secret = false; token: null; `contains_secrets` 為 false; "
                                         "password: '[REDACTED]' ${CR_DB_PASSWORD:?set at deploy time}", []), [])
 
+    def test_r4_structural_forms_are_redacted_precisely(self):
+        import base64
+        z = "m9-local-synthetic-cred-R4k3"
+        basic = base64.b64encode(f"u:{z}".encode()).decode()
+        cases = {
+            json.dumps({"password": z, "user": "x"}): '{"password": "[REDACTED]", "user": "x"}',
+            "'password': '" + z + "'": "'password': '[REDACTED]'",
+            "Authorization: Basic " + basic: "Authorization: [REDACTED]",
+            "Cookie: session_id=" + z + "; theme=dark": "Cookie: [REDACTED]",
+            "//u:" + z + "@h.invalid/p": "//[REDACTED]@h.invalid/p",
+            'https://u:pub"' + z + "@h.invalid/": "https://[REDACTED]@h.invalid/",
+            "password='public'\"" + z + '"': "password='[REDACTED]'",
+            "password='public''" + z + "'": "password='[REDACTED]'",
+            "password=[REDACTED]" + z: "password=[REDACTED]",
+            'password="${DB_PASSWORD}' + z + '"': 'password="[REDACTED]"',
+            "https://h.invalid/?%61%63%63%65%73%73%5f%74%6f%6b%65%6e=" + z: "https://h.invalid/?%61%63%63%65%73%73%5f%74%6f%6b%65%6e=[REDACTED]",
+        }
+        for raw, expected in cases.items():
+            self.assertEqual(B.redact(raw, []), expected, raw)
+            self.assertTrue(B.find_secrets(raw, []) or B.find_field_secrets(B._embedded_structure(raw)), raw)
+        self.assertEqual(B.redact({"%70%61%73%73%77%6f%72%64": z}, []), {"%70%61%73%73%77%6f%72%64": "[REDACTED]"})
+        nested = B.redact(json.dumps({"nested": json.dumps({"token": z})}), [])
+        self.assertNotIn(z, nested)
+        self.assertIn("nested", nested)
+        # safe references stay; generator compose refs allowed only in the compose scan
+        self.assertEqual(B.find_secrets('password="${DB_PASSWORD}" token=${T:-[REDACTED]}', []), [])
+        self.assertTrue(B.find_secrets("MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}", []))
+        self.assertEqual(B.find_secrets("MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}", [], compose=True), [])
+
     def test_secret_default_in_compose_aborts_export(self):
         real = _generated(self.plan)
 
