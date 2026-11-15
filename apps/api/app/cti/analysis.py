@@ -110,6 +110,58 @@ def _hedged_statement(quotes: list[str], unit_texts: list[str]) -> bool:
     return False
 
 
+_BLOCKED_RE = re.compile(
+    r"\b(?:was|were|been|being)\s+(?:stopped|blocked|prevented|thwarted|denied|interrupted)\b|"
+    r"\b(?:unsuccessful(?:ly)?|did\s+not\s+succeed|failed\s+to|without\s+success)\b|未成功|被阻擋|被攔阻|失敗", re.IGNORECASE)
+_PARTIAL_RE = re.compile(r"\b(?:a\s+portion\s+of|some\s+of|part\s+of|partially|partly)\b[^.]{0,60}\bsuccess", re.IGNORECASE)
+
+
+def _enclosing_sentences(quotes: list[str], unit_texts: list[str]) -> list[str]:
+    normalise = lambda value: re.sub(r"\s+", " ", value).strip().casefold()
+    found = list(quotes)
+    for quote in quotes:
+        needle = normalise(quote)
+        for text in unit_texts:
+            for sentence in re.split(r"(?<=[.!?])\s+", text):
+                plain = normalise(sentence)
+                if needle and plain and (needle in plain or plain in needle):
+                    found.append(sentence)
+    return found
+
+
+def _stated_outcome(model_value: str, quotes: list[str], unit_texts: list[str]) -> str | None:
+    """Outcome the source states for an action; a blocked attempt is never left looking successful."""
+    text = " ".join(_enclosing_sentences(quotes, unit_texts))
+    if _BLOCKED_RE.search(text):
+        return "failed"
+    if _PARTIAL_RE.search(text):
+        return "partial"
+    value = model_value.strip().casefold()
+    return value if value in {"succeeded", "failed", "partial"} else None
+
+
+def _technique_stated_for(technique_id: str, action_name: str, quotes: list[str], cited_units: list[str],
+                          units: list[SourceUnit], input_kind: str) -> bool:
+    """Whether the report gives this technique id for this behaviour.
+
+    Accepted when the id stands in a unit the action cites, or in a unit (such as an ATT&CK
+    table row) whose wording substantially overlaps the action. An id that the report lists
+    for some other behaviour, or does not contain at all, is not kept on the action.
+    """
+    pattern = re.compile(rf"(?<![A-Za-z0-9.]){re.escape(technique_id)}(?![0-9.]\d)", re.IGNORECASE)
+    if any(pattern.search(text) for text in cited_units):
+        return True
+    carrying = [unit.text for unit in units if pattern.search(unit.text)]
+    if not carrying:
+        # Structured STIX keeps ids in external references that are not text units.
+        return input_kind == "stix2.1"
+    words = lambda value: {word for word in re.findall(r"[a-z0-9]{4,}", value.casefold())}
+    wanted = words(action_name + " " + " ".join(quotes))
+    if not wanted:
+        return False
+    return any(len(wanted & words(text)) / len(wanted) >= 0.5 for text in carrying)
+
+
 def _locate_quote(quote: str, source_ref: str, units: list[SourceUnit]) -> str:
     """The unit a quote is really in, when the model named none or the wrong one.
 
@@ -584,6 +636,8 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
             "can do or is designed to do ('can run commands that ...', 'is able to', 'designed to'). List each capability the "
             "report enumerates as its own action; never present a capability as something that happened. Keep distinct "
             "operations as distinct actions (for example authenticating to a web shell, and each command it then accepts). In "
+            "Give every action an outcome field: 'succeeded', 'failed' (the report says the attempt was stopped, blocked or "
+            "unsuccessful), 'partial' (the report says only part of it succeeded) or 'unknown'. In "
             "name and description keep each value attached to the attribute the report attaches it to: do not move a value "
             "from one attribute to another or apply it to more attributes than the report does. Give every action an actor field: 'attacker' for the threat "
             "actor, 'defender' for the victim organisation, responders, vendors or investigators (detecting, patching, blocking, "
@@ -726,6 +780,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
     actions: list[dict[str, Any]] = []
     action_ids: set[str] = set()
     action_id_map: dict[str, str] = {}
+    misplaced_techniques: list[dict[str, str]] = []
     for index, raw in enumerate(actions_raw, start=1):
         item = dict(raw)
         action_id = _unique_id(item.get("id"), f"action-{index}", action_ids)
@@ -747,6 +802,17 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         _refs = attach(item)
         action["evidence_refs"] = _refs
         action["epistemic_status"] = settle_status(item, _refs)
+        cited_units = [unit.text for unit in units
+                       if any(unit.locator == rec["locator"] for rec in evidence if rec["id"] in _refs)]
+        cited_quotes = [rec["quote"] for rec in evidence if rec["id"] in _refs]
+        if technique_id and not _technique_stated_for(technique_id, action["name"], cited_quotes, cited_units, units, input_kind):
+            # The id is in the report, but next to a different behaviour (or not in it at all).
+            misplaced_techniques.append({"action": action_id, "technique": technique_id})
+            action.pop("attack_technique", None)
+            action.pop("attack_tactic", None)
+        outcome = _stated_outcome(str(item.get("outcome") or ""), cited_quotes, cited_units)
+        if outcome:
+            action["outcome"] = outcome
         if str(item.get("occurrence") or "").strip().casefold() == "capability":
             # What a tool can do is not an event of this incident. Keep the step, say what it is.
             action["occurrence"] = "capability"
@@ -994,6 +1060,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             "hedged_action_count": sum(1 for action in actions if action.get("source_certainty") == "hedged"),
             "capability_action_count": sum(1 for action in actions if action.get("occurrence") == "capability"),
             "dropped_non_software_services": dropped_non_software,
+            "dropped_misplaced_techniques": misplaced_techniques,
         },
     }
     ir["missing_items"] = calculate_missing_items(ir)

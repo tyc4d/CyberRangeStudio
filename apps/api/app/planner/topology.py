@@ -238,6 +238,13 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             continue
         _emitted.add(hid)
         entries = []
+        switched_off = [service for service in assigned.get(hid, []) if service.get("lab_enabled") is False]
+        if switched_off:
+            # The user answered that the lab will not run these; no port, no path, not reproduced.
+            assigned[hid] = [service for service in assigned[hid] if service.get("lab_enabled") is not False]
+            notes.append(f"Host {hid}: not enabled in the lab by the user's choice: "
+                         + ", ".join(str(service.get("name")) for service in switched_off)
+                         + ". Steps that rely on them are not reproduced.")
         unplaced = [service for service in assigned.get(hid, []) if service.get("placement") == "conflict"]
         if unplaced:
             # Module 4 found that these cannot share this host's single image.
