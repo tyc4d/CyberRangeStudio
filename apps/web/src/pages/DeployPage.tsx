@@ -106,12 +106,24 @@ const PVE_REASON: [RegExp, string][] = [
   [/active \S+ deployment/, "此情境在另一個部署後端仍有執行中的部署，需先切換到該後端關閉"],
 ];
 
-/** Reason the loaded Proxmox preflight refuses deployment, or undefined when it reports ready. */
+// Global capacity refusals: they only gate creating a NEW worker VM. Its own running worker occupies the quota.
+const PVE_CAPACITY = /runtime VM quota is exhausted|memory budget is exhausted|insufficient node memory|insufficient local-lvm space/;
+
+/** Reason the loaded Proxmox preflight refuses "up", or undefined when "up" is allowed. */
 function pveBlockReason(pf: any): { label: string; raw?: string } | undefined {
   const parts = [pf, pf?.capacity, pf?.isolation].filter((x) => x && typeof x === "object");
   const refused = parts.some((x) => x.ok === false || x.state === "unavailable");
   if (!refused) return undefined;
   const raw = parts.map((x) => x.error ?? x.reason).find((v) => typeof v === "string" && v.trim()) as string | undefined;
+  // This scenario already owns a running PVE deployment (current_state comes from its own worker VM). The backend's
+  // "up" then returns that deployment without a capacity check, so a global capacity refusal must not block it.
+  // Conflicts and other failures (template, version, VMID range, unknown) still block.
+  const ownedRunning = pf?.current_state === "running";
+  if (ownedRunning && raw && PVE_CAPACITY.test(raw)) {
+    return pf?.would_change_running_environment === true
+      ? { label: "此情境已有執行中的 PVE 部署，且設定已變更；需先關閉（down）再重新部署" }
+      : undefined;
+  }
   const hit = raw ? PVE_REASON.find(([re]) => re.test(raw)) : undefined;
   return { label: hit ? hit[1] : raw ?? "PVE 回報未就緒（未提供原因）", raw };
 }
