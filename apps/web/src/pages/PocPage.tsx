@@ -397,13 +397,32 @@ function Body({ ir }: { ir: ScenarioIR }) {
     return () => { gone = true; clearInterval(h); };
   }, [execAct.busy, ir.id]);
 
-  // Stop asks the backend to cancel (cancel flag + finally-kill + cleanup on the runner), then stops the client
-  // wait. Polling above keeps running until the run actually ends.
+  // Stop asks the backend to cancel the run, then keeps polling the job status until a TERMINAL state before it
+  // announces "stopped". If cancel is rejected or errors, or no terminal state is ever confirmed, it never claims a
+  // clean stop — it clears the cancelling flag and lets the honest failure notice surface (owner rule: no faked state).
   const stop = async () => {
     setCancelling(true);
-    try { await api.poc.executeCancel(ir.id); } catch { /* backend may not expose cancel yet; fall through to abort */ }
+    let accepted = false;
+    try {
+      const r = await api.poc.executeCancel(ir.id);
+      accepted = !!(r && r.cancelled);
+    } catch {
+      accepted = false;
+    }
+    // Stop the client wait regardless (the POST may hang); the run itself is ended by the backend cancel.
     abortRef.current?.abort();
-    setStopped(true);
+    if (!accepted) { setCancelling(false); return; }
+    const TERMINAL = ["cancelled", "canceled", "stopped", "terminated", "done", "complete", "completed", "failed", "error", "timeout"];
+    if (typeof api.poc.executeStatus === "function") {
+      for (let i = 0; i < 40; i++) {
+        let s;
+        try { s = await api.poc.executeStatus(ir.id); } catch { break; }
+        const state = s && (s.job_state || s.state);
+        if (typeof state === "string" && TERMINAL.includes(state.toLowerCase())) { setStopped(true); break; }
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+    }
+    setCancelling(false);
   };
   const liveResults: ExecutionResult[] | null = live && Array.isArray(live.results) ? live.results : null;
 
@@ -441,11 +460,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ? (f.reproduced?.length ?? 0) + (f.partial?.length ?? 0) + (f.not_reproduced?.length ?? 0) + (f.not_tested?.length ?? 0)
       : planTotal;
 
-    // Unverified = every action in scope that is NOT a confirmed exploit PASS: not-yet-executed, skipped,
-    // not_executable and BLOCKED all count honestly (owner rule: never a manufactured pass). review #5.
-    const passedIds = new Set(res.filter((r) => r.status === "PASS").map((r) => r.action_id));
+    // Unverified = every action in scope that is NOT confirmed by CURRENT valid verification. "Verified" means the
+    // chain roll-up marks the action PASS, or the fidelity report lists it as reproduced — NOT a raw runner
+    // status=='PASS' on its own, because a raw PASS can be invalidated later (IR changed, redeployed, artifact
+    // altered). So not-yet-executed, skipped, not_executable, BLOCKED and evidence-invalidated actions all stay
+    // counted as unverified (owner rule: never a manufactured pass). review2 R2-08.
+    const reproducedIds = Array.isArray(f?.reproduced) ? f.reproduced : [];
+    const chainPassIds = (chain?.per_action ?? []).filter((p) => p.status === "PASS").map((p) => p.action_id);
+    const verifiedIds = new Set([...reproducedIds, ...chainPassIds]);
     const universe = planTotal ? items.map((it) => it.action_id) : res.map((r) => r.action_id);
-    const unverifiedCount = universe.filter((id) => !passedIds.has(id)).length;
+    const unverifiedCount = universe.filter((id) => !verifiedIds.has(id)).length;
 
     return {
       any: planTotal > 0 || res.length > 0 || chainActions.length > 0,
@@ -524,8 +548,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
             )}
           </div>
         )}
+        {cancelling && !execAct.busy && <Notice kind="info">{t("poc.exec.cancelling")}</Notice>}
         {stopped && <Notice kind="warn">{t("poc.exec.stopped")}</Notice>}
-        {!stopped && <ApiNotice error={execAct.error} what={t("poc.what.execute")} />}
+        {!stopped && !cancelling && <ApiNotice error={execAct.error} what={t("poc.what.execute")} />}
         {results && (
           results.length ? (
             <>
