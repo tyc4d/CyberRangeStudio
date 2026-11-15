@@ -219,8 +219,13 @@ class HostBindingFromText(unittest.TestCase):
         self.assertEqual({host["id"] for host in planned["hosts"]}, {"victim-web", "db"})
         by_component = {service["catalogue_component"]: service for service in planned["services"]}
         nginx, postgres = by_component["oss-nginx"], by_component["oss-postgres"]
-        self.assertEqual((nginx["host_ref"], nginx["version"], nginx["port"], nginx["source"]), ("victim-web", "1.31.8", 80, "user"))
-        self.assertEqual((postgres["host_ref"], postgres["version"], postgres["port"]), ("db", "16.16", 5432))
+        self.assertEqual((nginx["host_ref"], nginx["lab_version"], nginx["port"], nginx["source"]), ("victim-web", "1.31.8", 80, "user"))
+        self.assertEqual((postgres["host_ref"], postgres["lab_version"], postgres["port"]), ("db", "16.16", 5432))
+        # USER_SUPPLIED: never a source-stated version, never "supported by the source".
+        for service in (nginx, postgres):
+            self.assertNotIn("version", service)
+            self.assertEqual((service["epistemic_status"], service["provenance_class"], service["version_basis"]),
+                             ("absent", "USER_SUPPLIED", "user_supplied"))
         self.assertEqual(nginx["supplement_ref"], "supplement-1")
         # Planning twice gives the same services: nothing stale, nothing duplicated.
         again = plan_dependencies(planned)
@@ -303,7 +308,8 @@ class SupplementAnswersBindToTheAskedHost(unittest.TestCase):
                           "text": "Linux running PostgreSQL 16.16"}])
         planned = plan_dependencies(ir)
         postgres = next(s for s in planned["services"] if s.get("catalogue_component") == "oss-postgres")
-        self.assertEqual((postgres["host_ref"], postgres["version"], postgres["source"]), ("h2", "16.16", "user"))
+        self.assertEqual((postgres["host_ref"], postgres["lab_version"], postgres["source"]), ("h2", "16.16", "user"))
+        self.assertNotIn("version", postgres)
         self.assertIn(postgres["id"], next(h for h in planned["hosts"] if h["id"] == "h2")["service_refs"])
 
 
@@ -604,6 +610,54 @@ class OneHostOneComponent(unittest.TestCase):
         again = plan_dependencies(ir)
         self.assertFalse(any("conflict" in item["id"] for item in again["missing_items"]))
         self.assertFalse(any(service.get("placement") for service in again["services"]))
+
+
+class UserTextIsNeverSourceFact(unittest.TestCase):
+    """QA round 2 (AR2-01, QA-I-R2-02, UXR2-02): caveats and lab choices in free text stay the user's."""
+
+    def ir(self, text):
+        return base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "role": "records store", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}],
+            supplements=[{"id": "supplement-1", "source": "user", "text": text}])
+
+    def test_limitation_statement_creates_no_service(self):
+        for text in ("Linux/Solr 只能作入口漏洞教學替代，不等於 Horizon、Windows Defender、RDP 或 AD 完整重現",
+                     "Solr is only a teaching stand-in; it is not VMware Horizon and does not reproduce Active Directory.",
+                     "不能重現加密通道；postgres 不代表原本的資料庫"):
+            planned = plan_dependencies(self.ir(text))
+            self.assertEqual([service["id"] for service in planned["services"]], ["s1"], text)
+
+    def test_product_named_without_a_host_creates_no_orphan_service(self):
+        planned = plan_dependencies(self.ir("the lab will also have redis somewhere"))
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])
+        self.assertFalse(any(not service.get("host_ref") for service in planned["services"]))
+
+    def test_lab_release_named_by_the_user_is_not_recorded_as_the_source_version(self):
+        planned = plan_dependencies(self.ir(
+            "struts2 2.3.30 與 postgres 是本機隔離教學替代元件；不能重現加密通道；OS 與原始版本仍未知。"))
+        struts = next(service for service in planned["services"] if service["id"] == "s1")
+        self.assertNotIn("version", struts)
+        self.assertEqual((struts["lab_version"], struts["field_sources"]["lab_version"], struts["version_basis"]),
+                         ("2.3.30", "user", "user_supplied"))
+        self.assertEqual((struts["source"], struts["epistemic_status"]), ("llm", "supported"))
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])  # no host-less postgres
+
+    def test_answered_planner_question_survives_as_history(self):
+        first = plan_dependencies(base_ir(
+            actions=[action("a1", "SQL injection against Progress MOVEit Transfer", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "internet-facing file transfer server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Progress MOVEit Transfer", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
+        question = next(i for i in first["missing_items"] if i["id"].startswith("planner_dep_software"))
+        question.update({"status": "substitute_chosen", "resolution": "nginx", "resolution_source": "user"})
+        first["supplements"] = [{"id": "supplement-9", "source": "user", "text": "nginx", "targets_missing_item": question["id"]}]
+        second = plan_dependencies(first)
+        kept = next(i for i in second["missing_items"] if i["id"] == question["id"])
+        self.assertEqual((kept["status"], kept["resolution"], kept["superseded"]), ("substitute_chosen", "nginx", True))
+        third = plan_dependencies(second)
+        self.assertEqual(len([i for i in third["missing_items"] if i["id"] == question["id"]]), 1)
 
 
 class UnsupportedComponents(unittest.TestCase):

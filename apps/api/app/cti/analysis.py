@@ -8,7 +8,7 @@ import re
 from typing import Any
 
 from app.cti.attack import lookup as lookup_attack_technique
-from app.cti.citations import evidence_record
+from app.cti.citations import evidence_record, grade_quote, strip_attack_tags
 from app.cti.missing import calculate_missing_items, is_communication_description
 from app.cti.parser import SourceUnit
 from app.llm.client import complete
@@ -108,6 +108,27 @@ def _hedged_statement(quotes: list[str], unit_texts: list[str]) -> bool:
                 if plain and (needle in plain or plain in needle) and _HEDGE_RE.search(sentence):
                     return True
     return False
+
+
+def _locate_quote(quote: str, source_ref: str, units: list[SourceUnit]) -> str:
+    """The unit a quote is really in, when the model named none or the wrong one.
+
+    Whether a quote is in the source is a fact about the source, not about the locator the
+    model typed. The same sentence must verify the same way for an action and for a relation.
+    """
+    if not quote.strip():
+        return source_ref
+    named = next((unit for unit in units if unit.id == source_ref), None)
+    if named is not None and grade_quote(strip_attack_tags(quote), named.text)["level"] in {"exact", "strong"}:
+        return source_ref
+    best: tuple[int, str] | None = None
+    for unit in units:
+        level = grade_quote(strip_attack_tags(quote), unit.text)["level"]
+        if level == "exact":
+            return unit.id
+        if level == "strong" and best is None:
+            best = (1, unit.id)
+    return best[1] if best else source_ref
 
 
 def _relation_cue(kind: str, quotes: list[str]) -> str | None:
@@ -651,6 +672,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
 
         item_refs: list[str] = []
         for quote, source_ref in pairs:
+            source_ref = _locate_quote(quote, source_ref, units)
             cache_key = (quote, source_ref)
             evidence_id = evidence_cache.get(cache_key)
             if evidence_id is None:
@@ -890,6 +912,19 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["evidence_refs"] = _refs
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
+
+    # A CVE the source names in the same sentence as a recorded product belongs to that product.
+    sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
+    for service in services:
+        name = str(service.get("name") or "").casefold().strip()
+        if len(name) < 4:
+            continue
+        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if name in sentence.casefold()
+                 for match in _CVE_RE.findall(sentence)]
+        merged = list(dict.fromkeys([*service.get("cve", []), *found]))
+        if merged != service.get("cve", []):
+            service["cve"] = merged
+            service.setdefault("field_sources", {})["cve"] = "source_quote"
 
     # Explicit non-factual seeds keep downstream modules aware that target data
     # is not yet known. The accompanying missing_items explain what is absent.

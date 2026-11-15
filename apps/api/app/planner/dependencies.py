@@ -333,6 +333,25 @@ def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> 
     return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
 
 
+_LIMITATION_RE = re.compile(
+    r"不等於|不是|並非|無法|不能|不可|僅可|只能|只可|不代表|不重現|未重現|≠|"
+    r"\b(?:not|cannot|can't|doesn't|don't|won't|never|only|instead\s+of|rather\s+than|without|unlike|except)\b",
+    re.IGNORECASE)
+
+
+def _assertive_clauses(text: str) -> str:
+    """The part of a free-text supplement that states what the lab has.
+
+    A clause saying what something is *not*, or is *only* a stand-in for ("Solr can only stand
+    in for the entry point, it is not Horizon"), explains a limitation. Reading product names
+    out of it would turn the user's caveat into services that the user never asked for.
+    """
+    # Sentence-level pieces only: "map X to host web, nginx 1.31.8 on TCP/80" must stay together
+    # so the product keeps the host named earlier in the same sentence.
+    return "\n".join(clause for clause in re.split(r"(?<=[.;!?])\s+|(?<=[。；！？])\s*|\n+", text)
+                     if clause.strip() and not _LIMITATION_RE.search(clause))
+
+
 def _is_os_image(component: dict[str, Any] | None) -> bool:
     """A catalogue entry that is an operating-system image rather than an application."""
     return bool(component) and component.get("runtime") == "vm" and "os_release" in component
@@ -492,12 +511,15 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
             continue  # a substitute chosen for one service is applied to that service, not added as another
         where = (item or {}).get("applied_to") or (item or {}).get("target") or {}
         answers_os = isinstance(where, dict) and where.get("field") in {"os", "os_version"}
-        for mention in _mentions_bound_to_hosts(supplement["text"], hosts, _answered_host(ir, supplement)):
+        for mention in _mentions_bound_to_hosts(_assertive_clauses(supplement["text"]), hosts, _answered_host(ir, supplement)):
             if answers_os and _is_os_image(match_software(mention["name"])[0]):
                 # "Windows Server 2019" answering an OS question is the host's OS (already written
                 # to the host record), not a file-sharing service to expose on that host.
                 continue
             mention["from_supplement"] = str(supplement.get("id") or "supplement")
+            # A release the user names is what the lab will run, never what the source stated.
+            mention["lab_version"], mention["version"] = mention.get("version"), None
+            mention["host_explicit"] = bool(mention.get("host_explicit") or (item and mention.get("host_ref")))
             candidates.append(mention)
 
     candidates.extend(_context_text_candidates(context))
@@ -535,6 +557,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         if not matches and candidate.get("from_mention") and not candidate.get("host_explicit") and len(same_product) == 1:
             # The text does not say where this product runs; it is the one already known.
             matches = same_product
+        if not matches and candidate.get("from_supplement") and not candidate.get("host_explicit"):
+            # A free-text remark that names a product without saying which host runs it adds no
+            # service: there is nowhere to put it, and it may only be commentary.
+            continue
         elif not matches and candidate.get("host_explicit"):
             # The text pins the product to a host: correct an earlier guess for the same product.
             guesses = [item for item in same_product if item.get("from_mention") and not item.get("host_explicit")]
@@ -561,8 +587,8 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
             target["port"] = target.get("port") or candidate.get("port")
             if candidate.get("from_supplement"):
                 target.setdefault("from_supplement", candidate["from_supplement"])
-                if candidate.get("version"):
-                    target["version"] = candidate["version"]  # the user's statement wins
+                if candidate.get("lab_version"):
+                    target["lab_version"] = candidate["lab_version"]
     return unique
 
 
@@ -679,6 +705,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 service.setdefault("epistemic_status", "inferred")
                 service.setdefault("source", "user")
                 service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
+                if candidate.get("lab_version"):
+                    # What the user says the lab runs; the service's own `version` stays the source's.
+                    service["lab_version"] = candidate["lab_version"]
+                    service.setdefault("field_sources", {})["lab_version"] = "user"
                 for key in ("version", "port"):
                     if candidate.get(key) and service.get(key) != candidate[key]:
                         # Filled from a supplement or a verified source quote, not by the analysis record.
@@ -739,8 +769,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         }
         if candidate.get("from_supplement"):
             # Stated by the user in a supplement, not derived by the planner.
-            service.update({"source": "user", "epistemic_status": "supported",
+            # "absent": the source does not provide it; the user did (USER_SUPPLIED).
+            service.update({"source": "user", "epistemic_status": "absent", "provenance_class": "USER_SUPPLIED",
                             "supplement_ref": candidate["from_supplement"]})
+            if candidate.get("lab_version"):
+                service["lab_version"] = candidate["lab_version"]
+                service.setdefault("field_sources", {})["lab_version"] = "user"
         if candidate.get("version"):
             service["version"] = candidate["version"]
         if candidate.get("port"):
@@ -831,8 +865,15 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if not pinned or service.get("is_substitute") or not component.get("image"):
             continue
         stated = str(service.get("version") or "").strip()
-        if stated and (stated == pinned or pinned.startswith(stated + ".") or stated.startswith(pinned + ".")):
-            service["version_basis"] = "stated"
+        same = lambda value: bool(value) and (value == pinned or pinned.startswith(value + ".") or value.startswith(pinned + "."))
+        if same(stated):
+            by_user = (service.get("field_sources") or {}).get("version") == "user" or service.get("source") == "user"
+            service["version_basis"] = "user_supplied" if by_user else "stated"
+            continue
+        if not stated and same(str(service.get("lab_version") or "").strip()):
+            # The user picked this release for the lab; the source still states none.
+            service["version_basis"] = "user_supplied"
+            service["deployed_version"] = pinned
             continue
         service["version_basis"] = "substituted" if stated else "assumed"
         service["deployed_version"] = pinned
@@ -921,6 +962,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]
     result["services"] = services
+    regenerated = {str(item.get("id")) for item in missing}
+    for ident, earlier in previous_planner_items.items():
+        if ident not in regenerated and earlier.get("resolution_source") == "user":
+            # The question no longer arises because the user answered it; keep it so the
+            # supplement that answered it still points at something.
+            missing.append({**earlier, "superseded": True})
     result["missing_items"] = missing
     # Planning may have filled in what an analysis-stage question asked (a version read from
     # a quote or a supplement); recompute those questions so they do not stay open.
