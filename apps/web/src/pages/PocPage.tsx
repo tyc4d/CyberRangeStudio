@@ -11,7 +11,7 @@ import type {
   PocEvidenceKind, ScenarioIR, ValidationItem, ValidationPlan,
 } from "@contracts";
 import { t, type MsgKey } from "../i18n";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { useAction } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, Empty, fmtTime, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
@@ -339,6 +339,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [stopped, setStopped] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [live, setLive] = useState<any | null>(null);
   const [format, setFormat] = useState("full");
   const [dlUnavail, setDlUnavail] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -353,6 +355,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setStopped(false);
+    setCancelling(false);
+    setLive(null);
     const d = await api.poc.execute(ir.id, Array.from(selected), ctrl.signal);
     setResults(d);
     void reportAct.run();
@@ -374,7 +378,34 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const runnable = useMemo(() => (plan?.items ?? []).filter((it) => it.strategy === "poc_exec"), [plan]);
   useEffect(() => { setSelected(new Set(runnable.map((it) => it.action_id))); }, [runnable]);
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const stop = () => { abortRef.current?.abort(); setStopped(true); };
+
+  // Live status: while a run is in flight, poll the backend job state for per-action stages. Stop polling if the
+  // route is absent, to avoid hammering it (same guard the deploy page uses).
+  useEffect(() => {
+    if (!execAct.busy) return;
+    let gone = false;
+    const tick = async () => {
+      try {
+        const s = await api.poc.executeStatus(ir.id);
+        if (!gone) setLive(s);
+      } catch (e) {
+        if (e instanceof ApiError && e.kind === "unimplemented") gone = true;
+      }
+    };
+    void tick();
+    const h = setInterval(() => { if (!gone && !document.hidden) void tick(); }, 1500);
+    return () => { gone = true; clearInterval(h); };
+  }, [execAct.busy, ir.id]);
+
+  // Stop asks the backend to cancel (cancel flag + finally-kill + cleanup on the runner), then stops the client
+  // wait. Polling above keeps running until the run actually ends.
+  const stop = async () => {
+    setCancelling(true);
+    try { await api.poc.executeCancel(ir.id); } catch { /* backend may not expose cancel yet; fall through to abort */ }
+    abortRef.current?.abort();
+    setStopped(true);
+  };
+  const liveResults: ExecutionResult[] | null = live && Array.isArray(live.results) ? live.results : null;
 
   // Per-action status and evidence counts, from the chain roll-up first, then the raw execution results.
   const statusByAction = useMemo(() => {
@@ -399,8 +430,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
     const res = results ?? [];
     const vulnPassed = res.filter((r) => r.status === "PASS").length;
 
+    // End-to-end chain is ONE whole-chain verdict, not a per-action PASS ratio: independent per-action passes
+    // never make the chain pass. Read chain.passes/objective_reached (review #13) so a failed chain is 0/1, not 2/2.
+    const chainReached = !!chain && chain.passes === true && chain.objective_reached === true;
     const chainActions = chain?.per_action ?? [];
-    const chainPassed = chainActions.filter((p) => p.status === "PASS").length;
 
     const f = report?.fidelity;
     const scenarioRepro = Array.isArray(f?.reproduced) ? f.reproduced.length : vulnPassed;
@@ -408,18 +441,19 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ? (f.reproduced?.length ?? 0) + (f.partial?.length ?? 0) + (f.not_reproduced?.length ?? 0) + (f.not_tested?.length ?? 0)
       : planTotal;
 
-    const notExec = items.filter((it) => it.strategy === "not_executable").length;
-    const blocked = res.filter((r) => r.status === "BLOCKED").length;
-    const notTested = res.filter((r) => r.status === "NOT_TESTED").length;
-    const unverified = notExec + blocked + notTested;
+    // Unverified = every action in scope that is NOT a confirmed exploit PASS: not-yet-executed, skipped,
+    // not_executable and BLOCKED all count honestly (owner rule: never a manufactured pass). review #5.
+    const passedIds = new Set(res.filter((r) => r.status === "PASS").map((r) => r.action_id));
+    const universe = planTotal ? items.map((it) => it.action_id) : res.map((r) => r.action_id);
+    const unverifiedCount = universe.filter((id) => !passedIds.has(id)).length;
 
     return {
       any: planTotal > 0 || res.length > 0 || chainActions.length > 0,
       deploy: planTotal ? { n: deployReady, total: planTotal } : undefined,
       vuln: res.length ? { n: vulnPassed, total: res.length } : undefined,
-      chain: chainActions.length ? { n: chainPassed, total: chainActions.length } : undefined,
+      chain: chain ? { n: chainReached ? 1 : 0, total: 1 } : undefined,
       scenario: scenarioTotal ? { n: scenarioRepro, total: scenarioTotal } : undefined,
-      unverified: (planTotal || res.length) ? { n: unverified, total: planTotal || res.length } : undefined,
+      unverified: universe.length ? { n: unverifiedCount, total: universe.length } : undefined,
     };
   }, [plan, results, chain, report]);
 
@@ -475,12 +509,21 @@ function Body({ ir }: { ir: ScenarioIR }) {
                 onClick={() => { if (window.confirm(t("poc.exec.confirm"))) void execAct.run(); }}>
                 {results ? t("poc.exec.rerun") : t("poc.exec.run")}
               </button>
-              {execAct.busy && <button className="danger" onClick={stop}>{t("poc.exec.stop")}</button>}
+              {execAct.busy && <button className="danger" disabled={cancelling} onClick={() => void stop()}>{cancelling ? t("poc.exec.cancelling") : t("poc.exec.stop")}</button>}
               <span className="muted" style={{ fontSize: 12 }}>{t("poc.exec.selected", { n: selected.size })}</span>
             </div>
           </>
         )}
-        {execAct.busy && <div className="card"><Busy label={t("poc.exec.busy")} elapsed={execAct.elapsed} /></div>}
+        {execAct.busy && (
+          <div className="card">
+            <Busy label={cancelling ? t("poc.exec.cancelling") : t("poc.exec.busy")} elapsed={execAct.elapsed} />
+            {liveResults && liveResults.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+                {liveResults.map((r) => <ResultCard key={r.action_id} r={r} name={actionName.get(r.action_id) ?? r.action_id} />)}
+              </div>
+            )}
+          </div>
+        )}
         {stopped && <Notice kind="warn">{t("poc.exec.stopped")}</Notice>}
         {!stopped && <ApiNotice error={execAct.error} what={t("poc.what.execute")} />}
         {results && (
