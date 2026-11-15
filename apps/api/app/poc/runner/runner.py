@@ -4,8 +4,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import queue
-import threading
 import time
 import uuid
 from dataclasses import asdict, replace
@@ -14,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from app import config
+from app import config, store as scenario_store
 from app.deploy import manager
 from app.poc import store as poc_store
 from app.poc.models import Evidence, ExecStages, ExecutionResult
@@ -22,7 +20,7 @@ from app.poc.models import Evidence, ExecStages, ExecutionResult
 from .adapters import get_adapter
 from .guard import TargetBlocked, assert_target_owned
 from .models import AdapterInput, ExecutionRequest
-from .payloads import KNOWN_POC_PROOFS
+from .payloads import KNOWN_POC_PROOFS, verifies_effect
 
 _MAX_TIMEOUT = 300
 _HELPER_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
@@ -67,6 +65,31 @@ def _write_artifact(path: Path, content: str) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _run_context(request: ExecutionRequest, run_id: str, started: str,
+                 ownership: dict[str, Any] | None) -> dict[str, Any]:
+    """Bind hashed log evidence to this attempt, IR snapshot, and deployment."""
+    ir = scenario_store.get(request.scenario_id)
+    scenario_sha = None
+    if isinstance(ir, dict):
+        canonical = json.dumps(ir, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        scenario_sha = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return {"run_id": run_id, "scenario_id": request.scenario_id, "action_id": request.action_id,
+            "job_id": request.job_id,
+            "scenario_sha256": scenario_sha, "started_at": started,
+            "payload_sha256": hashlib.sha256(request.payload.encode("utf-8")).hexdigest(),
+            "deployment_record_id": (ownership or {}).get("deployment_record_id"),
+            "ownership": ownership}
+
+
+def _result_dict(result: ExecutionResult) -> dict[str, Any]:
+    # Shared model versions before to_dict still serialize safely during worker
+    # integration. Never emit null for optional fields in the frozen contract.
+    serializer = getattr(result, "to_dict", None)
+    if callable(serializer):
+        return serializer()
+    return asdict(result, dict_factory=lambda items: {key: value for key, value in items if value is not None})
+
+
 def _emit_progress(request: ExecutionRequest, stages: ExecStages) -> None:
     if request.on_progress:
         try:
@@ -88,7 +111,10 @@ def _command_result(scenario_id: str, argv: list[str], timeout: int = 10) -> dic
 
 
 def _cleanup_probe(scenario_id: str, service: str, payload: str, started_epoch: float) -> str:
-    """Best-effort remove a timed-out helper, only when its identity is unambiguous."""
+    """Emergency cleanup of every helper whose owned identity is verified.
+
+    This scan is not a launch fence and cannot authorize attack execution.
+    """
     target_name = f"cr-demo-{scenario_id}-{service}"
     target_inspect = _command_result(scenario_id, ["inspect", "-f", "{{.Id}}", target_name], 10)
     target_id = target_inspect.get("stdout", "").strip()
@@ -118,39 +144,30 @@ def _cleanup_probe(scenario_id: str, service: str, payload: str, started_epoch: 
                 and network_mode in {f"container:{target_name}", f"container:{target_id}"}
                 and created >= started_epoch - 2 and "-c" in command and payload in command):
             matching.append(str(info.get("Id") or container_id))
-    if len(matching) != 1:
-        return "cleanup did not remove a helper because identity was not uniquely proven"
-    removed = _command_result(scenario_id, ["rm", "-f", matching[0]], 10)
-    return "timed-out sandbox helper removed" if removed.get("returncode") == 0 else "best-effort helper removal failed"
+    if not matching:
+        return "cleanup did not find a helper with verified ownership"
+    failed = False
+    for helper in matching:
+        removed = _command_result(scenario_id, ["rm", "-f", helper], 10)
+        failed = failed or removed.get("returncode") != 0
+    return "best-effort helper removal failed" if failed else "verified sandbox helpers removed"
 
 
 def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> tuple[dict[str, Any], str | None]:
-    """Bound the manager call, watch cancellation, and clean up a uniquely identified helper."""
-    result_queue: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=1)
-    attempt_started = time.time()
+    """Refuse attacks until the transport can guarantee cancellation and cleanup.
 
-    def invoke() -> None:
-        try:
-            result_queue.put(manager.probe_in_service(request.scenario_id, request.service_ref,
-                                                      script, timeout=timeout))
-        except BaseException as exc:  # communicate worker errors without leaking their text
-            result_queue.put({"returncode": 127, "stdout": "", "stderr": type(exc).__name__})
-
-    worker = threading.Thread(target=invoke, name="poc-sandbox-probe", daemon=True)
-    worker.start()
-    deadline = time.monotonic() + timeout + 1
-    while True:
-        if _cancelled(request.cancel):
-            cleanup = _cleanup_probe(request.scenario_id, request.service_ref, script, attempt_started)
-            return {"returncode": 125, "stdout": "", "stderr": "cancelled"}, cleanup
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            cleanup = _cleanup_probe(request.scenario_id, request.service_ref, script, attempt_started)
-            return {"returncode": 124, "stdout": "", "stderr": "probe wrapper timeout"}, cleanup
-        try:
-            return result_queue.get(timeout=min(0.1, remaining)), None
-        except queue.Empty:
-            continue
+    The existing synchronous manager API exposes neither its pending launch nor
+    the QGA process handle. A thread around it cannot stop a delayed launch, and a
+    one-time Docker scan is insufficient. Do not invoke it, including on PVE.
+    """
+    if manager.deploy_backend() == "local-docker":
+        reason = "D6: local Docker is restricted to non-attack QA; PoC payload execution is forbidden"
+    elif _cancelled(request.cancel):
+        return {"returncode": 125, "stdout": "", "stderr": "cancelled before payload delivery"}, None
+    else:
+        reason = ("attack execution requires a guaranteed-cancel transport handle with a launch fence, "
+                  "finally-kill and join; no helper was started")
+    return {"returncode": 127, "stdout": "", "stderr": reason}, None
 
 
 class SandboxRunner:
@@ -164,7 +181,9 @@ class SandboxRunner:
         ref = dict(request.ref or {})
         safe_scenario = hashlib.sha256(request.scenario_id.encode("utf-8")).hexdigest()[:16]
         safe_action = hashlib.sha256(request.action_id.encode("utf-8")).hexdigest()[:16]
-        logs_path = f"poc-runs/{safe_scenario}/{safe_action}.log"
+        run_id = uuid.uuid4().hex
+        run_directory = f"poc-runs/{safe_scenario}/{safe_action}/{run_id}"
+        logs_path = f"{run_directory}/output.log"
         artifact = config.DATA_DIR / logs_path
         poc = {"source_url": _redact_url(request.source_url),
                "ref": {key: _redact(str(value)) for key, value in ref.items()},
@@ -186,12 +205,16 @@ class SandboxRunner:
         except TargetBlocked as exc:
             reason = str(exc)
             output = "BLOCKED: ownership/isolation not verified; payload was not executed."
-            digest = _write_artifact(artifact, output)
+            log_text = json.dumps({"context": _run_context(request, run_id, started, None),
+                                   "status": "BLOCKED", "output": output, "reason": reason},
+                                  ensure_ascii=False, sort_keys=True)
+            digest = _write_artifact(artifact, log_text)
             return ExecutionResult(request.action_id, poc, "BLOCKED", stages, logs_path, confidence,
                                    False, payload_hash, started, _now(), evidence=[Evidence(
                                        "log", logs_path, digest, True, "ownership guard blocked execution")],
                                    failure_reason=reason)
 
+        context = _run_context(request, run_id, started, ownership)
         stages.started = True
         _emit_progress(request, stages)
         adapter = get_adapter(request.exec_method)
@@ -224,14 +247,13 @@ class SandboxRunner:
                 else:
                     timeout = max(1, min(int(request.timeout), _MAX_TIMEOUT))
                     try:
-                        # manager.probe_in_service owns the `--rm --pull=never`,
-                        # non-root, no-host-mount helper and shares only this target's
-                        # namespace. The helper image is already pinned by deploy.
                         result, cleanup_note = _probe_with_cancel(request, prepared.payload, timeout)
                         exit_code = int(result.get("returncode", 2))
                         output = _redact((result.get("stdout", "") + result.get("stderr", ""))[-12000:])
-                        stages.delivered = exit_code != 127 and exit_code != 2
-                        stages.responded = bool(output)
+                        # Wrapper errors/cancellation do not attest target delivery
+                        # or a target response. Preserve BLOCKED through roll-up.
+                        stages.delivered = exit_code not in {2, 124, 125, 127}
+                        stages.responded = stages.delivered and bool(output)
                         _emit_progress(request, stages)
                         if exit_code == 124:
                             status, reason = "BLOCKED", f"sandbox timed out after {timeout}s"
@@ -245,7 +267,7 @@ class SandboxRunner:
                             status, reason = "BLOCKED", output[:500] or "sandbox could not start safely"
                         else:
                             marker = request.expected_marker
-                            reproduced = bool(marker and marker in output)
+                            reproduced = verifies_effect(verifier, result)
                             status = "PASS" if reproduced else "FAIL"
                             stages.vuln_behavior = reproduced
                             stages.state_change = reproduced
@@ -254,7 +276,7 @@ class SandboxRunner:
                             confidence = 0.99 if reproduced else 0.0
                             if reproduced:
                                 evidence_text = _redact(f"Expected exploit-effect marker observed: {marker}\n")
-                                effect_path = config.DATA_DIR / "poc-runs" / safe_scenario / f"{safe_action}-effect.txt"
+                                effect_path = config.DATA_DIR / run_directory / "effect.txt"
                                 digest = _write_artifact(effect_path, evidence_text)
                                 evidence.append(Evidence("exploit_effect", str(effect_path.relative_to(config.DATA_DIR)),
                                                          digest, True,
@@ -267,7 +289,7 @@ class SandboxRunner:
             prepared = adapter.prepare(AdapterInput(request.payload))
             status, reason = "BLOCKED", prepared.blocked_reason or "adapter is not supported by the pinned sandbox"
 
-        log_text = json.dumps({"action_id": request.action_id, "status": status,
+        log_text = json.dumps({"context": context, "action_id": request.action_id, "status": status,
                                "ownership": ownership, "output": output, "reason": reason,
                                "cleanup": cleanup_note},
                               ensure_ascii=False, sort_keys=True)
@@ -313,9 +335,9 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
                 poc_store.request_cancel(job_id)
                 break
             current = replace(request, timeout=max(1, min(request.timeout, remaining)),
-                              cancel=cancellation, on_progress=report_progress)
+                              cancel=cancellation, on_progress=report_progress, job_id=job_id)
             result = SandboxRunner().execute(current)
-            serialized = asdict(result)
+            serialized = _result_dict(result)
             results.append(serialized)
             poc_store.save_run(scenario_id, serialized)
             if deadline and time.monotonic() >= deadline:

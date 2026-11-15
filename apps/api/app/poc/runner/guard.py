@@ -31,11 +31,53 @@ def _docker_json(args: list[str]) -> Any:
         raise TargetBlocked("Docker returned invalid ownership metadata") from exc
 
 
+def _pve_docker_json(scenario_id: str, args: list[str]) -> Any:
+    result = manager._pve_guest_exec(scenario_id, ["/usr/bin/docker", *args], 15,
+                                     require_isolation=True)
+    if result.get("returncode") != 0:
+        raise TargetBlocked("Proxmox container ownership inspection failed")
+    try:
+        return json.loads(result.get("stdout", ""))
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise TargetBlocked("Proxmox returned invalid container metadata") from exc
+
+
+def _owned_container(service: str, service_doc: dict, project: str, expected_name: str,
+                     inspect: Any) -> dict[str, Any]:
+    container = inspect(["inspect", expected_name])
+    if not isinstance(container, list) or len(container) != 1:
+        raise TargetBlocked("owned target container is not uniquely inspectable")
+    info = container[0]
+    labels = (info.get("Config") or {}).get("Labels") or {}
+    if labels.get("com.docker.compose.project") != project or labels.get("com.docker.compose.service") != service:
+        raise TargetBlocked("container labels do not match this scenario deployment")
+    if not (info.get("State") or {}).get("Running"):
+        raise TargetBlocked("owned target container is not running")
+    networks = (info.get("NetworkSettings") or {}).get("Networks") or {}
+    declared = set(service_doc.get("networks") or [])
+    if not networks or not declared:
+        raise TargetBlocked("target has no declared lab network")
+    approved = {f"{project}-{name}" for name in declared if name != "edge"}
+    for name in networks:
+        if name not in approved:
+            raise TargetBlocked("target is attached to an additional non-lab network")
+        network = inspect(["network", "inspect", name])
+        if not isinstance(network, list) or len(network) != 1:
+            raise TargetBlocked("attached lab network is not uniquely inspectable")
+        net = network[0]
+        options = net.get("Options") or {}
+        if not (net.get("Internal") is True
+                and options.get("com.docker.network.bridge.gateway_mode_ipv4") == "isolated"
+                and info.get("Id") in (net.get("Containers") or {})):
+            raise TargetBlocked("an attached network lacks verified internal isolation")
+    return {"container_id": info.get("Id"), "networks": list(networks)}
+
+
 def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[str, Any]:
     """Return verified target metadata or raise before payload construction/execution.
 
-    ``target`` is normally a service id. An optional ``vmid`` is explicitly rejected
-    for now; the PVE runtime is not wired for PoC execution.
+    ``target`` is normally a generated Compose service id. An optional ``vmid``
+    must match the active owned PVE worker; protected assets are always refused.
     """
     try:
         scenario_id = validate_id(scenario_id)
@@ -82,9 +124,11 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
             containers = manager._parse_compose_ps(status.get("stdout", ""))
             if not any(row.get("name") == expected_name and row.get("state") == "running" for row in containers):
                 raise TargetBlocked("target service container is not running in the owned Proxmox worker")
+            container = _owned_container(service, service_doc, project, expected_name,
+                                         lambda args: _pve_docker_json(scenario_id, args))
             return {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
-                    "vmid": vmid, "networks": list(service_doc.get("networks") or []),
-                    "deployment_record_id": None}
+                    "vmid": vmid, "host_id": deployment.get("host_id"), **container,
+                    "deployment_record_id": deployment.get("id")}
 
         if vmid:
             raise TargetBlocked("VM targets are unsupported by the selected local Docker backend")
@@ -99,38 +143,10 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
         isolation = details.get("host_isolation")
         if not isinstance(isolation, dict) or isolation.get("isolated") is not True:
             raise TargetBlocked("deployment record does not prove host isolation")
-        container = _docker_json(["inspect", expected_name])
-        if not isinstance(container, list) or len(container) != 1:
-            raise TargetBlocked("owned target container is not uniquely inspectable")
-        info = container[0]
-        labels = (info.get("Config") or {}).get("Labels") or {}
-        if labels.get("com.docker.compose.project") != project or labels.get("com.docker.compose.service") != service:
-            raise TargetBlocked("container labels do not match this scenario deployment")
-        state = info.get("State") or {}
-        if not state.get("Running"):
-            raise TargetBlocked("owned target container is not running")
-        networks = (info.get("NetworkSettings") or {}).get("Networks") or {}
-        declared = set(service_doc.get("networks") or [])
-        if not networks or not declared:
-            raise TargetBlocked("target has no declared lab network")
-        verified_networks: list[str] = []
-        for network_name in networks:
-            if network_name == f"{project}-edge" or network_name not in {f"{project}-{n}" for n in declared}:
-                continue
-            network = _docker_json(["network", "inspect", network_name])
-            if not isinstance(network, list) or len(network) != 1:
-                continue
-            net = network[0]
-            options = (net.get("Options") or {})
-            if (net.get("Internal") is True and
-                    options.get("com.docker.network.bridge.gateway_mode_ipv4") == "isolated" and
-                    info.get("Id") in (net.get("Containers") or {})):
-                verified_networks.append(network_name)
-        if not verified_networks:
-            raise TargetBlocked("target is not attached to a verified isolated internal network")
+        container = _owned_container(service, service_doc, project, expected_name, _docker_json)
     except TargetBlocked:
         raise
     except Exception as exc:
         raise TargetBlocked("target ownership or network isolation could not be verified") from exc
     return {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
-            "container_id": info.get("Id"), "networks": verified_networks, "deployment_record_id": record.get("id")}
+            **container, "deployment_record_id": record.get("id")}
