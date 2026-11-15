@@ -94,6 +94,62 @@ class DiscoveryTests(unittest.TestCase):
               "actions": [{"id": "a1", "target_host_ref": "h1", "name": "Exploit service"}]}
         return client, ir
 
+    def test_metadata_version_operators_survive_discovery_and_ranking(self):
+        cases = [
+            ("2.15.0", "versions after 2.15.0", .05),
+            ("2.15.1", "versions after 2.15.0", 1),
+            ("2.15.0", "versions < 2.15.0", .05),
+            ("2.14.1", "versions < 2.15.0", 1),
+            ("2.15.0", "versions <= 2.15.0", 1),
+            ("2.15.0", "versions > 2.15.0", .05),
+            ("2.15.0", "versions >= 2.15.0", 1),
+            ("2.15.0", "versions before 2.15.0", .05),
+            ("2.14.1", "versions before 2.15.0", 1),
+            ("2.15.0", "versions prior to 2.15.0", .05),
+            ("2.15.0", "versions through 2.15.0", 1),
+            ("2.15.0", "versions 2.0.0 through 2.15.0", 1),
+            ("2.15.1", "versions 2.0.0 through 2.15.0", .05),
+            ("2.10.0", "versions 2.10.x", 1),
+            ("2.11.0", "versions 2.10.x", .05),
+        ]
+        for target, expression, expected in cases:
+            with self.subTest(target=target, expression=expression):
+                client, ir = self.linked_fixture()
+                ir["services"][0]["version"] = target
+                client.github_search.return_value[0]["description"] = (
+                    "Apache Log4j CVE-2021-44228 exploit affects " + expression)
+                items = DiscoveryEngine(client).discover("s", ir, "t")["items"]
+                self.assertEqual(len(items), 1)
+                self.assertEqual(items[0]["version_range"], expression)
+                self.assertEqual(items[0]["score_breakdown"]["version"], expected)
+
+    def test_unrecognised_metadata_version_clause_stays_unknown(self):
+        for expression in ("versions != 2.15.0", "versions not 2.15.0",
+                           "not versions 2.15.0", "unparsed prose versions 2.15.0",
+                           "versions approximately 2.15.0", "versions 2.15.0-rc1",
+                           "versions >=2.0.0, <2.15.0", "versions between 2.15.0 and 2.16.0"):
+            with self.subTest(expression=expression):
+                client, ir = self.linked_fixture()
+                ir["services"][0]["version"] = "2.15.0"
+                client.github_search.return_value[0]["description"] = (
+                    "Apache Log4j CVE-2021-44228 exploit affects " + expression)
+                items = DiscoveryEngine(client).discover("s", ir, "t")["items"]
+                self.assertEqual(len(items), 1)
+                self.assertEqual(items[0]["version_range"], expression)
+                self.assertEqual(items[0]["score_breakdown"]["version"], .45)
+
+    def test_unlabelled_metadata_preserves_qualifiers_and_unparsed_prose(self):
+        for suffix, expected in (("after 2.15.0", .05), ("< 2.15.0", .05),
+                                 ("not 2.15.0", .45), ("unparsed prose 2.15.0", .45),
+                                 ("2.15.0-rc1", .45)):
+            for prefix in ("", "Apache Log4j CVE-2021-44228 exploit ", "Apache Log4j affects "):
+                with self.subTest(prefix=prefix, suffix=suffix):
+                    hint = DiscoveryEngine._version_hint(prefix + suffix)
+                    self.assertEqual(hint, suffix)
+                    score = score_candidate({"product": "Apache Log4j", "version_range": hint},
+                                            {"product": "Apache Log4j", "version": "2.15.0"})
+                    self.assertEqual(score["version"], expected)
+
     def test_target_host_resolves_services_using_either_ir_link(self):
         for link in ("service_refs", "host_ref", "both"):
             with self.subTest(link=link):
