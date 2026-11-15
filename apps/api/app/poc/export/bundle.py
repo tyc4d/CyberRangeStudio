@@ -14,7 +14,7 @@ Layout (owner prompt / CONTRACT §ExportManifest)::
     validation/validation-plan.json    poc_plans row
     validation/poc-manifest.json       poc_candidates rows
     validation/results.json            poc_runs rows + latest poc_chains row
-    validation/fidelity-report.json    poc.service.report(), only if it produces one
+    validation/fidelity-report.json    poc.chain fidelity report from the stored plan + runs (read-only)
     evidence/evidence-index.json       index of run evidence (raw evidence is NOT copied)
 
 Rules: nothing is fabricated. An artifact the project has not actually produced is omitted
@@ -55,7 +55,7 @@ GEN_EXPORT = "app.poc.export"
 GEN_PLAN = "app.poc.store:poc_plans"
 GEN_CANDIDATES = "app.poc.store:poc_candidates"
 GEN_RUNS = "app.poc.store:poc_runs+poc_chains"
-GEN_FIDELITY = "app.poc.service.report"
+GEN_FIDELITY = "app.poc.chain.build_fidelity_report (from stored plan + runs)"
 
 # The generator writes the compose under infra/generated/<id>/ with a build context two
 # levels up; inside the bundle the template sits next to the compose instead.
@@ -301,7 +301,7 @@ def _env_example(env_vars: list[tuple[str, str, str]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _validation(b: _Bundle, env_secrets: list[str]) -> list[dict[str, Any]]:
+def _validation(b: _Bundle, ir: dict[str, Any], env_secrets: list[str]) -> list[dict[str, Any]]:
     sid = b.scenario_id
     plan = poc_store.get_plan(sid)
     if plan:
@@ -322,14 +322,28 @@ def _validation(b: _Bundle, env_secrets: list[str]) -> list[dict[str, Any]]:
                    GEN_RUNS)
     else:
         b.notes.append("validation/results.json omitted: no PoC execution or chain validation recorded.")
+    # Export is read-only: never call service.report()/plan(), which re-generate and persist a plan.
+    # The fidelity report is derived (pure functions of poc.chain) from the STORED plan + runs only.
     fidelity = None
-    try:
-        from app.poc import service
-        fidelity = service.report(sid)
-    except NotImplementedError:
-        b.notes.append("validation/fidelity-report.json omitted: fidelity report not implemented in this build.")
-    except Exception as exc:  # no data yet / unknown scenario for the report
-        b.notes.append(f"validation/fidelity-report.json omitted: report unavailable ({type(exc).__name__}).")
+    if not plan:
+        b.notes.append("validation/fidelity-report.json omitted: no stored ValidationPlan to report against.")
+    else:
+        try:
+            from app.poc import chain as chain_mod
+            raw_runs = poc_store.get_runs(sid)
+            chain_obj = chain_mod.validate_chain(sid, ir, plan, raw_runs)
+            validation_report = None
+            try:
+                from app.validator import runner as v_runner
+                validation_report = v_runner.get_latest_report(sid)
+            except Exception:
+                validation_report = None
+            fidelity = chain_mod.build_fidelity_report(sid, ir, plan, raw_runs, chain_obj,
+                                                       validation_report=validation_report)
+        except ImportError:
+            b.notes.append("validation/fidelity-report.json omitted: fidelity report not available in this build.")
+        except Exception as exc:
+            b.notes.append(f"validation/fidelity-report.json omitted: report unavailable ({type(exc).__name__}).")
     if fidelity:
         b.add_json("validation/fidelity-report.json", redact(fidelity, env_secrets), GEN_FIDELITY)
     return runs
@@ -455,7 +469,7 @@ def build_bundle(scenario_id: str, fmt: str | None = "full") -> tuple[bytes, dic
     _scenario(b, ir, env_secrets)
     _missing_hosts(b, _plan_report(ir, scenario_id))
     _infrastructure(b)
-    runs = _validation(b, env_secrets)
+    runs = _validation(b, ir, env_secrets)
     _evidence_index(b, runs)
     b.informational.extend(NOT_GENERATED_IAC)
 
