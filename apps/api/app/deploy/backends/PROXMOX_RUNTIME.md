@@ -1,0 +1,31 @@
+# Proxmox runtime backend integration
+
+Use `ProxmoxBackend.from_env()` only when the explicitly selected runtime backend is `proxmox`. This backend has no local-Docker fallback. All Compose commands and Compose file writes run in the worker guest via QEMU guest agent (QGA); the API host never runs Docker or Compose.
+
+Required runtime environment:
+
+- `CR_PVE_URL=https://192.168.16.214:8006`
+- `CR_PVE_TOKEN_ID=<PVE token identity>`
+- `CR_PVE_TOKEN_SECRET=<PVE token secret>`
+
+`CR_PVE_FINGERPRINT` may override the approved SHA-256 pin; when unset, the backend uses the approved pin `4dbfcdb1eb96af751c42d3c14e5a128a582fcff3e40b7149585fcc52619e05b7`. Pin verification runs in `HTTPSConnection.connect()` before HTTP headers, including Authorization, are sent.
+
+Mode defaults to `probe`. Set `CR_PVE_MODE=dry-run` to record write plans without sending writes. Live writes require `CR_PVE_MODE=live`, `CR_PVE_LIVE_ENABLED=true`, and `CR_PVE_RESERVATION_DB` set to a non-empty absolute path for a shared SQLite database mounted at the same path in every API worker.
+
+Optional fixed-target settings are `CR_PVE_NODE=pve4-bbf`, `CR_PVE_POOL=cr-range`, `CR_PVE_STORAGE=local-lvm`, `CR_PVE_BRIDGE=vmbr990`, and `CR_PVE_TEMPLATE_VMID=900000`. Bounds can be adjusted with `CR_PVE_REQUEST_TIMEOUT`, `CR_PVE_TASK_TIMEOUT`, `CR_PVE_TASK_POLL_INTERVAL`, `CR_PVE_MAX_TASK_POLLS`, `CR_PVE_MAX_RESPONSE_BYTES`, `CR_PVE_RESERVED_MEMORY_MIB`, `CR_PVE_POOL_MEMORY_MIB`, and `CR_PVE_DATASTORE_RESERVE_GIB`.
+
+The FastAPI process must receive these variables explicitly at startup; it does not load the repository `.env` automatically. This module never prints credentials. Runtime ACLs need scoped PVE read access, `Pool.Audit`, clone/config/power/guest-agent and VM allocation rights on the approved pool, datastore, bridge, and read-only node audit path.
+
+Integration interface:
+
+- `preflight() -> dict`: read-only version, template ownership/state/hardware, pool, node and pool memory, VM quota, and storage checks.
+- `plan(scenario_id, compose_yaml, *, compose_sha256=None, attach_lab_network=False) -> dict`: candidate VMID and planned API calls; contains no Compose text.
+- `up(scenario_id, compose_yaml, *, host_id="worker", attach_lab_network=False, compose_sha256=None) -> dict`: returns the worker `vmid` and digest; persist `(scenario_id, host_id, vmid, compose_sha256)` for later calls.
+- `status(scenario_id, *, vmid, host_id="worker") -> dict` and `down(...) -> dict`: require that persisted identity and revalidate pool membership, tags, and JSON description before guest or destructive actions.
+- `guest_exec(scenario_id, *, vmid, host_id, command, timeout=60, require_isolation=True) -> dict`: bounded public QGA command interface requiring the matching active durable reservation and a passing isolation report by default.
+
+The guest Compose project name is `cr-demo-<scenario_id>`, matching the existing `manager.project_name` contract. PVE VM names map scenario-ID underscores to hyphens to satisfy the PVE DNS-name rule; ownership metadata keeps the original scenario ID. Host-only `cr-gateway` and `edge` are removed during PVE normalization, and all service `ports` host mappings are stripped; PVE does not publish host ports, while container `expose` declarations and internal network attachments remain. PVE workers always have zero NICs, and `attach_lab_network=True` is rejected. Any network without the default/omitted `bridge` driver, `internal: true`, and exact `driver_opts: {com.docker.network.bridge.gateway_mode_ipv4: isolated}` is rejected. Isolation reporting also requires Docker inspect `Driver=bridge`. The only supported Compose build uses the fixed context `../../templates/demo-app`, `Dockerfile`, and `pull: false`, plus a generated `container_name` of `cr-demo-<scenario_id>-<host_id>` and matching image `<container_name>:local`; it is rewritten to `./demo-app`, and the fixed repository `Dockerfile` and `server.py` are sent to `/opt/cr-runtime/demo-app` via QGA. Other build identities, services, contexts, Dockerfiles, and build options fail before clone. Each QGA file write is capped at 60,000 UTF-8 bytes. Before `up` succeeds, the guest's normalized Compose network names, Docker `Internal`, and Docker `Options` are checked through QGA; missing or mismatched isolation evidence triggers owned cleanup. Up/down operations serialize placement and destruction with an exclusive SQLite lock and durable singleton reservation row. The row is committed before clone, retained while the worker exists, and removed only after successful down or verified cleanup. A process crash leaves the row in `creating`, `active`, `deleting`, or `reconcile` state and blocks further placement pending manual reconciliation. In live mode, every API worker/container must mount the same `CR_PVE_RESERVATION_DB` path; live mode fails closed if the variable is absent. Failed clone/config steps return a recoverable reconciliation record when an exact provisional clone cannot safely be removed.
+
+The Linux template is fixed at VMID 900000 with exactly `scsi0` (20 GiB) and `ide2=local-lvm:vm-900000-cloudinit,media=cdrom`. Worker VMIDs are 900100–900999. At most one scenario worker may exist in the worker range at a time. Each worker is fixed at 2 vCPU and 4096 MiB; the node must also retain the configured 3072 MiB reserve. QGA Compose file writes are limited to 60,000 UTF-8 bytes (below PVE's 61,440 character ceiling). The worker template has no NIC, and the backend never adds one.
+
+Live smoke verification was completed on 2026-11-15 against PVE 9.2.2 using the approved synthetic `scn_2acb1b9c902c` scenario. The official API created worker VMID 900100, started its two preloaded services inside the zero-NIC guest, confirmed the guest network isolation evidence, then `/down` removed the Compose resources and VM. A post-cleanup preflight reported zero worker VMs and the shared reservation table was empty. This verifies one internal deployment lifecycle only; it does not validate concurrent API workers, external client access, vulnerable-image deployment/probes, or production operations. Keep live mode explicitly gated and retain manual reconciliation for uncertain clone outcomes.
