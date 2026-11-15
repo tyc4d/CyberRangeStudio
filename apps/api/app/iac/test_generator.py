@@ -421,3 +421,54 @@ class ValidationListenerTests(unittest.TestCase):
         document["services"]["cr-listener"]["command"] = ["python", "-c", "print(1)"]
         with self.assertRaises(PlanError):
             _assert_compose_safe(yaml.safe_dump(document), "lst")
+
+
+class NotDeployedHostTests(unittest.TestCase):
+    """A host the plan marks as not deployable is left out and reported, never faked."""
+
+    def _plan(self, **marker):
+        return {"hosts": [
+                    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["external"]},
+                    {"id": "h1", "role": "online dispute portal", "image_hint": "vuln-struts2-s2-045", "component_mode": "real",
+                     "services": [{"name": "Apache Struts", "port": 8080}], "networks": ["scenario-internal", "external"]},
+                    {"id": "h2", "role": "databases containing PII", "networks": ["scenario-internal"], "services": [], **marker}],
+                "networks": [{"id": "scenario-internal", "internal": True}, {"id": "external", "internal": False}],
+                "connections": [{"from_host": "attacker", "to_host": "h1", "port": 8080},
+                                {"from_host": "h1", "to_host": "h2", "port": 5432}],
+                "verify_blocked": [{"from_host": "attacker", "to_host": "h2", "port": 5432}]}
+
+    def test_unmarked_host_without_software_still_blocks_the_plan(self):
+        _, report = inspect_plan(self._plan(), "nd")
+        self.assertFalse(report["deployable"])
+        self.assertIn("no_image_for_host", {b["code"] for b in report["blockers"]})
+
+    def test_marked_host_is_skipped_and_listed_with_the_plans_reason(self):
+        reason = "報告只說資料存放在資料庫，沒有指出任何可部署的軟體"
+        for marker in ({"deployable": False, "not_deployed_reason": reason}, {"deploy": False, "reason": reason}):
+            plan = self._plan(**marker)
+            normalized, report = inspect_plan(plan, "nd")
+            self.assertTrue(report["deployable"], report["errors"])
+            self.assertEqual(report["not_deployed_hosts"][0]["host_id"], "h2")
+            self.assertEqual(report["not_deployed_hosts"][0]["reason"], reason)
+            self.assertEqual(report["deployed_host_ids"], ["attacker", "h1"])
+            by_host = {c["host_id"]: c for c in report["components"]}
+            self.assertTrue(by_host["h2"]["skipped"])
+            self.assertFalse(by_host["h2"]["deployable"])
+            self.assertIsNone(by_host["h2"]["image"])
+            self.assertEqual(report["skipped_connections"][0]["to_host"], "h2")
+            services = yaml.safe_load(compose_document(plan, "nd"))["services"]
+            self.assertEqual(sorted(services), ["attacker", "h1"])       # no stand-in container for h2
+            self.assertNotIn("depends_on", services["h1"])
+            self.assertEqual([h["id"] for h in normalized["hosts"]], ["attacker", "h1"])
+
+    def test_marker_without_a_reason_says_so(self):
+        _, report = inspect_plan(self._plan(deployable=False), "nd")
+        self.assertIn("沒有附原因", report["not_deployed_hosts"][0]["reason"])
+
+    def test_plan_with_no_deployable_target_is_refused(self):
+        plan = self._plan(deployable=False, not_deployed_reason="x")
+        plan["hosts"][1].update({"deployable": False, "not_deployed_reason": "no image"})
+        plan["hosts"][1].pop("image_hint")
+        _, report = inspect_plan(plan, "nd")
+        self.assertFalse(report["deployable"])
+        self.assertIn("no_deployable_target", {b["code"] for b in report["blockers"]})
