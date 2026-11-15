@@ -169,3 +169,12 @@ scenario-eng@592e1c7 併入 main（77a3ab7）後已 `git merge main`。
 測試：
 - **真實產品流程** `tests/e2e/test_log4shell_product_validation.py`：API 部署真實 vulhub solr＋自動 cr-listener，驗證器探針觀測到來自 solr 的真實 LDAP 回呼→動作 a1=PASS、behavior_repro=PASS；良性請求 0 回呼；實跑 46s 通過。
 - 全套件 **205 passed, 3 subtests passed**。測完環境清除、無殘留。
+
+## 里程碑 10：未部署主機如實呈現（infra not_deployed_hosts）
+
+已 `git merge agent/infra-eng`（IaC 報告新增 `not_deployed_hosts`、`skipped_connections`、`deployed_host_ids`）。驗證器（`runner.py`）：
+- 每台未部署主機新增 `service_up` NOT_TESTED 檢查（附計畫原因）；故 **env_build 在有主機未部署時不為單純 PASS**，彙總為 PARTIAL，如實呈現「已部署的通過、N 台未部署」。
+- 連到／自未部署主機的路徑：connectivity 標 NOT_TESTED 並寫明「主機未部署：<原因>」（不再誤報 container not running）；以未部署主機為目標且有情境動作者，攻擊行為標 NOT_TESTED（目標未部署）。
+- 以未部署主機為目標的情境動作 → action NOT_TESTED，observed 寫明未部署原因；full_chain 因此不可能 PASS。
+- 報告新增 `not_deployed`、`skipped_connections`、`deployed_host_ids` 欄位；fidelity.summary 寫明「已部署 X 台、未部署 N 台」。
+- 測試：新增真實產品流程 `tests/e2e/test_not_deployed_validation.py`（計畫含 deployable:false 的 db → 部署 attacker+web、db 不部署；驗證 service-up-db NOT_TESTED、env_build PARTIAL、action-a2 NOT_TESTED 附原因、full_chain≠PASS、not_deployed 列出 db）。全套件 **210 passed, 3 subtests**。

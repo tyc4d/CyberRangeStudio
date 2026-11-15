@@ -495,6 +495,12 @@ def run(scenario_id: str) -> dict[str, Any]:
     hosts = normalized["hosts"]
     component_by_id = normalized["components"]
     plan_connections = plan.get("connections", [])
+    # Hosts the plan says NOT to deploy (infra report). Their service, their behavior,
+    # and any action/path targeting them must be NOT_TESTED-not-deployed, and env_build
+    # must not read as a clean PASS while a host is missing.
+    not_deployed_hosts = component_report.get("not_deployed_hosts", [])
+    not_deployed_by_id = {item["host_id"]: item for item in not_deployed_hosts if item.get("host_id")}
+    skipped_connections = component_report.get("skipped_connections", [])
     actions = [action for action in ir.get("actions", []) if isinstance(action, dict) and action.get("id")]
     run_at = datetime.now(timezone.utc).isoformat()
     run_id = uuid.uuid4().hex
@@ -547,6 +553,19 @@ def run(scenario_id: str) -> dict[str, Any]:
                     if container else "Docker Compose 狀態清單中沒有此容器")
         check = _check(f"service-up-{host_id}", f"{host_id} 服務執行狀態", "service_up", status,
                        "container state is running", observed)
+        check["evidence"] = evidence_path
+        service_checks.append(check)
+        checks.append(check)
+
+    # Not-deployed hosts are part of the scenario but not of the environment: record each
+    # as service_up NOT_TESTED with the plan's reason. This keeps env_build from reading
+    # as a clean PASS while a host is missing (it aggregates to PARTIAL).
+    for item in not_deployed_hosts:
+        host_id = item.get("host_id")
+        reason = str(item.get("reason") or "plan marked this host as not deployed")
+        check = _check(f"service-up-{host_id}", f"{host_id} 未部署（{item.get('role') or '主機'}）", "service_up",
+                       "NOT_TESTED", "host is deployed and running",
+                       f"主機未部署（not deployed）：{reason}")
         check["evidence"] = evidence_path
         service_checks.append(check)
         checks.append(check)
@@ -617,6 +636,40 @@ def run(scenario_id: str) -> dict[str, Any]:
         protocol = connection.get("protocol", "tcp")
         action_refs = _action_refs_for_connection(connection, actions)
         action_ref = action_refs[0] if action_refs else None
+
+        # A path to/from a host the plan did not deploy cannot exist. Say so precisely
+        # (not "container not running"), and mark any attack behavior on it NOT_TESTED-
+        # not-deployed rather than calling it a teaching substitute.
+        if source in not_deployed_by_id or target in not_deployed_by_id:
+            which = target if target in not_deployed_by_id else source
+            reason = str(not_deployed_by_id[which].get("reason") or "plan marked this host as not deployed")
+            note = f"主機 {which} 未部署（not deployed）：{reason}"
+            connectivity = _check(f"connectivity-{index}", f"{source} 可連線至 {target}:{port}", "connectivity",
+                                  "NOT_TESTED", f"one TCP connection to declared service {target}:{port}", note, action_ref)
+            connectivity["evidence"] = evidence_path
+            checks.append(connectivity)
+            connectivity_checks.append(connectivity)
+            connectivity_by_index[index] = connectivity
+            targets_an_action = bool(_explicit_action_refs(connection, actions)) or any(
+                _host_ref_eq(a.get("target_host_ref"), target) for a in actions)
+            if target in not_deployed_by_id and targets_an_action:
+                attack = _check(f"attack-{index}", f"{target} 攻擊行為（目標未部署，未執行）", "behavior",
+                                "NOT_TESTED", "action-specific attack probe", note, action_ref)
+                attack["evidence"] = evidence_path
+                checks.append(attack)
+                behavior_checks.append(attack)
+                attack_behavior_by_index[index] = attack
+            chain_inputs = [connectivity]
+            if index in attack_behavior_by_index:
+                chain_inputs.append(attack_behavior_by_index[index])
+            chain = _check(f"chain-{index}", f"{source} 完成至 {target} 的宣告路徑", "chain",
+                           _aggregate(chain_inputs), "declared TCP path and its behavior pass",
+                           note, action_ref)
+            chain["evidence"] = evidence_path
+            checks.append(chain)
+            declared_chain_checks.append(chain)
+            continue
+
         source_host = next((h for h in hosts if h["id"] == source), {})
         target_host = next((h for h in hosts if h["id"] == target), {})
         source_vm = source_host.get("runtime") == "vm"
@@ -800,7 +853,13 @@ def run(scenario_id: str) -> dict[str, Any]:
         attack_statuses = [attack_behavior_by_index[index]["status"] for index in related_indexes
                            if index in attack_behavior_by_index]
         proven_prerequisite = any(check["status"] == "PASS" for check in related_connectivity)
-        if "PASS" in attack_statuses:
+        target_nd = next((not_deployed_by_id[h] for h in not_deployed_by_id
+                          if _host_ref_eq(action.get("target_host_ref"), h)), None)
+        if target_nd:
+            status = "NOT_TESTED"
+            observed = (f"目標主機 {target_nd.get('host_id')} 未部署（not deployed）：{target_nd.get('reason')}；"
+                        "此動作無法驗證。")
+        elif "PASS" in attack_statuses:
             status = "PASS"
             observed = "An action-specific attack probe reproduced this behavior against the real target."
         elif "FAIL" in attack_statuses:
@@ -851,8 +910,20 @@ def run(scenario_id: str) -> dict[str, Any]:
         "deployment_id": manager.project_name(scenario_id),
         "run_at": run_at,
         "levels": {"env_build": env_build, "behavior_repro": behavior_repro, "full_chain": full_chain},
+        # Hosts the plan did not deploy, and the paths that therefore do not exist. Any
+        # action targeting a not-deployed host is NOT_TESTED (see its action check).
+        "not_deployed": [
+            {"host_id": item.get("host_id"), "role": item.get("role"), "reason": item.get("reason")}
+            for item in not_deployed_hosts
+        ],
+        "skipped_connections": skipped_connections,
+        "deployed_host_ids": component_report.get("deployed_host_ids", []),
         "level_criteria": {
-            "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
+            "env_build": (
+                "每個已部署主機的 service_up 皆 PASS 才算該部分通過；若計畫有主機未部署，"
+                "env_build 不為單純 PASS（未部署主機以 NOT_TESTED 計入，整體為 PARTIAL），"
+                "如實呈現『已部署的通過、N 台未部署』。"
+            ),
             "behavior_repro": (
                 "只彙總『動作專屬攻擊行為探針』的結果（如 Struts OGNL 求值、Log4Shell 回呼）。"
                 "服務存活檢查（HTTP 200／pg_isready）屬連通性證據，不計入本層，故不會因首頁回應而 PASS。"
@@ -872,6 +943,8 @@ def run(scenario_id: str) -> dict[str, Any]:
             "not_tested": not_tested,
             "substitutes_used": substitutes,
             "summary": (
+                f"已部署 {len(component_report.get('deployed_host_ids', []))} 台主機，"
+                f"{len(not_deployed_hosts)} 台未部署；未部署主機及以其為目標的行為一律標 NOT_TESTED（未部署）。"
                 "行為重現層只採信動作專屬攻擊探針（真實漏洞映像＋隔離守門下的真實觀測）。"
                 "服務存活、容器狀態、版本與 TCP 路徑屬環境與連通性佐證，不等於攻擊行為重現。"
                 "沒有動作專屬攻擊佐證時，不會宣稱已重現情境動作。"
