@@ -26,3 +26,13 @@ After independent QA (CHANGES REQUESTED, 15 findings / 26 repro tests), fix roun
 - m9-chain final hardening delta (symlink/read-race/env-FAIL) to merge on top.
 - Then re-dispatch m9-review (round 2).
 - Real multi-service PVE E2E remains the owner-gated step (see module9-realpayload-blocker).
+
+## Fix round 2 complete (15df414)
+- Round-2 QA (9 findings) fixed: R2-01 export secrets, R2-02 predecessor bypass, R2-03b batch-cancel scope,
+  R2-04 one-job protocol (service.execute single run_job + chain keeps all), R2-05 canonical host.service_refs,
+  R2-06 sandbox caps, R2-07 version-range operators, R2-08 unverified metric, R2-09 persistence; plus the
+  runner-found [FAIL,BLOCKED] same-job chain edge.
+- Full backend suite: **263 passed**. review2 file: **89/89**. review1 file: **57/1**.
+- The sole remaining failure is #5 (guaranteed-cancel transport handle) — genuinely needs the shared deploy
+  layer's cancellable execute API; runner is fail-closed BLOCKED (honest). #14 caps are now DONE.
+- Pending: reviewer round 3; then owner decisions (PVE real run; deploy-layer #5 coordination); then demo video.
