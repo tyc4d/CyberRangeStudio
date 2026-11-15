@@ -1,138 +1,220 @@
-"""Validate dependency DAGs and explicit state transfers from execution evidence."""
+"""Conservative dependency DAG, execution order and consumed-state verification."""
 from __future__ import annotations
 
+import json
 import re
+from collections import Counter, deque
 from typing import Any
 
-from app.poc.chain.evidence import verify_execution
+from app.poc.chain.evidence import (
+    artifact_bytes, current_deployment_id, evidence_is_bound, execution_log,
+    registered_verifier, scenario_digest, timestamp, verify_execution,
+)
 
-_CARRIED = ("cred", "session", "network", "token", "artifact")
+_CARRIED = {"cred", "session", "network", "token", "artifact"}
 _CAUSAL_KINDS = {"dependency", "causal"}
 
 
-def _text(value: Any) -> str:
-    if isinstance(value, str):
-        return value.lower()
-    if isinstance(value, (list, tuple)):
-        return " ".join(_text(part) for part in value)
-    if isinstance(value, dict):
-        return " ".join(_text(part) for part in value.values())
-    return ""
-
-
-def _order(results: list[dict[str, Any]]) -> dict[str, int]:
-    return {str(item.get("action_id")): index for index, item in enumerate(results) if item.get("action_id")}
-
-
 def _relation_has_causal_support(rel: dict[str, Any], ir_evidence: list[Any]) -> bool:
-    """Require relation-local citation that resolves to an IR evidence record."""
     refs = rel.get("evidence_refs") or rel.get("evidence") or []
     if isinstance(refs, str):
         refs = [refs]
-    if not refs:
+    known = {str(entry[key]) for entry in ir_evidence if isinstance(entry, dict)
+             for key in ("id", "evidence_id", "ref") if entry.get(key)}
+    return bool(refs) and any(str(ref) in known for ref in refs)
+
+
+def _select_runs(executions: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Any]], set[str]]:
+    """Use one batch containing the newest attempt, never splice action successes.
+
+    Legacy/malformed records can still explain FAIL/BLOCKED, but cannot verify PASS.
+    Distinct attempts for the same action within a batch are ambiguous, not last-row wins.
+    """
+    candidates = [r for r in executions if isinstance(r, dict) and r.get("action_id")]
+    if not candidates:
+        return {}, set()
+    dated = [r for r in candidates if timestamp(r.get("started_at")) is not None]
+    if len(dated) != len(candidates):
+        return {}, {str(r["action_id"]) for r in candidates}
+    newest_time = max(timestamp(r["started_at"]) for r in dated)
+    newest = [r for r in dated if timestamp(r["started_at"]) == newest_time]
+    logs = [(r, execution_log(r)) for r in candidates]
+    anchors = [execution_log(r) for r in newest]
+    jobs = {log["context"]["job_id"] for log in anchors if log}
+    if len(jobs) > 1:
+        return {}, {str(r["action_id"]) for r in candidates}
+    if not jobs or any(log is None for log in anchors):
+        # Do not fall back to older valid successes after a corrupt/missing newest log.
+        eligible = [r for r, log in logs if log is None]
+    else:
+        job_id = next(iter(jobs))
+        eligible = [r for r, log in logs if log and log["context"]["job_id"] == job_id]
+    selected: dict[str, dict[str, Any]] = {}
+    ambiguous: set[str] = set()
+    for run in eligible:
+        action_id = str(run["action_id"])
+        if action_id in selected and selected[action_id] != run:
+            ambiguous.add(action_id)
+        selected[action_id] = run
+    if jobs and eligible:
+        batch_start = min(timestamp(r["started_at"]) for r in eligible)
+        ambiguous.update(str(r["action_id"]) for r, log in logs
+                         if log is None and timestamp(r["started_at"]) >= batch_start)
+    # A malformed newest attempt must never leave another action's old PASS eligible.
+    return selected, ambiguous
+
+
+def _ordered(predecessor: dict[str, Any] | None, successor: dict[str, Any] | None) -> bool:
+    if not predecessor or not successor:
         return False
-    known = set()
-    for entry in ir_evidence:
-        if isinstance(entry, dict):
-            for key in ("id", "evidence_id", "ref"):
-                if entry.get(key):
-                    known.add(str(entry[key]))
-    return any(str(ref) in known for ref in refs)
+    start_a, end_a = timestamp(predecessor.get("started_at")), timestamp(predecessor.get("ended_at"))
+    start_b, end_b = timestamp(successor.get("started_at")), timestamp(successor.get("ended_at"))
+    return bool(start_a and end_a and start_b and end_b and start_a <= end_a <= start_b <= end_b)
 
 
-def _transfer_for(rel: dict[str, Any], predecessor: dict[str, Any] | None, successor: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Match explicit carried type in predecessor evidence and successor precondition."""
+def _receipts(run: dict[str, Any], log: dict[str, Any], event: str, carried: str) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    receipts = []
+    for evidence in run.get("evidence", []):
+        if not isinstance(evidence, dict) or evidence.get("kind") != "state_change" or not evidence_is_bound(evidence, log):
+            continue
+        try:
+            receipt = json.loads(artifact_bytes(evidence))
+        except (ValueError, TypeError, UnicodeDecodeError):
+            continue
+        if (isinstance(receipt, dict) and receipt.get("event") == event and receipt.get("carried") == carried
+                and receipt.get("action_id") == run["action_id"]
+                and receipt.get("run_id") == log["context"]["run_id"]
+                and isinstance(receipt.get("state_id"), str)
+                and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", receipt["state_id"])
+                and isinstance(receipt.get("value_sha256"), str)
+                and re.fullmatch(r"[0-9a-f]{64}", receipt["value_sha256"])):
+            receipts.append((evidence, receipt))
+    return receipts
+
+
+def _transfer_for(rel: dict[str, Any], predecessor: dict[str, Any] | None,
+                  successor: dict[str, Any] | None, statuses: dict[str, str]) -> dict[str, Any] | None:
     carried = rel.get("carried") or rel.get("transfer")
     if isinstance(carried, dict):
         carried = carried.get("type") or carried.get("kind")
-    evidence = (predecessor or {}).get("evidence", []) or []
-    preconditions = (successor or {}).get("preconditions", []) or []
-    if not carried:
-        evidence_text = " ".join(_text(item.get("note")) for item in evidence if isinstance(item, dict))
-        condition_text = " ".join(_text(item) for item in preconditions)
-        expected = [kind for kind in _CARRIED if re.search(rf"\b{re.escape(kind)}\b", condition_text)]
-        # The successor precondition identifies what must transfer; predecessor evidence
-        # determines verification. An absent/mismatched proof remains explicitly unverified.
-        carried = expected[0] if len(expected) == 1 else ""
-    carried = str(carried or "").lower()
-    if carried not in _CARRIED:
-        # No declared or uniquely evidenced transfer type means there is no verifiable transfer.
+    if not isinstance(carried, str) or carried not in _CARRIED:
         return None
-    evidence_refs: list[str] = []
-    evidence_match = False
-    for item in evidence:
-        if not isinstance(item, dict):
+    src, dst = str(rel.get("from_action")), str(rel.get("to_action"))
+    transfer = {"from_action": src, "to_action": dst, "carried": carried, "verified": False}
+    if statuses.get(src) != "PASS" or statuses.get(dst) != "PASS" or not _ordered(predecessor, successor):
+        return transfer
+    source_log, target_log = execution_log(predecessor), execution_log(successor)
+    if not source_log or not target_log:
+        return transfer
+    if source_log["context"]["job_id"] != target_log["context"]["job_id"]:
+        return transfer
+    for run, log in ((predecessor, source_log), (successor, target_log)):
+        proof = registered_verifier(run, log)
+        # Arithmetic exploit evidence is not a credential/session/network transfer verifier.
+        if not proof or carried not in proof.get("state_transfer_types", []):
+            return transfer
+        if run.get("stages", {}).get("state_change") is not True:
+            return transfer
+    produced = _receipts(predecessor, source_log, "produced", carried)
+    consumed = _receipts(successor, target_log, "consumed", carried)
+    matches = []
+    for evidence, source in produced:
+        for _, target in consumed:
+            if (target.get("state_id") == source["state_id"]
+                    and target.get("value_sha256") == source["value_sha256"]
+                    and target.get("from_action") == src
+                    and target.get("from_run_id") == source_log["context"]["run_id"]
+                    and target.get("source_evidence") == {"path": evidence["path"], "sha256": evidence["sha256"]}):
+                matches.append(evidence["path"])
+    if len(matches) == 1:
+        transfer.update(verified=True, evidence_ref=matches[0])
+    return transfer
+
+
+def _dag(action_ids: list[str], edges: list[dict[str, Any]]) -> tuple[list[str], set[str], bool]:
+    successors = {aid: set() for aid in action_ids}
+    degrees = dict.fromkeys(action_ids, 0)
+    undirected = {aid: set() for aid in action_ids}
+    for edge in edges:
+        src, dst = str(edge.get("from_action")), str(edge.get("to_action"))
+        if src not in successors or dst not in successors:
             continue
-        note = _text(item.get("note"))
-        if item.get("kind") == "state_change" or re.search(rf"\b{re.escape(carried)}\b", note):
-            if re.search(rf"\b{re.escape(carried)}\b", note):
-                evidence_match = True
-                ref = item.get("path")
-                if ref:
-                    evidence_refs.append(str(ref))
-    condition = " ".join(_text(item) for item in preconditions)
-    condition_match = bool(re.search(rf"\b{re.escape(carried)}\b", condition))
-    if not evidence_match or not condition_match:
-        return {"from_action": str(rel.get("from_action")), "to_action": str(rel.get("to_action")),
-                "carried": carried, "verified": False}
-    return {"from_action": str(rel.get("from_action")), "to_action": str(rel.get("to_action")),
-            "carried": carried, "verified": True, "evidence_ref": evidence_refs[0]}
+        if dst not in successors[src]:
+            degrees[dst] += 1
+        successors[src].add(dst)
+        undirected[src].add(dst)
+        undirected[dst].add(src)
+    ready = deque(aid for aid, degree in degrees.items() if degree == 0)
+    ordered = []
+    while ready:
+        src = ready.popleft()
+        ordered.append(src)
+        for dst in successors[src]:
+            degrees[dst] -= 1
+            if degrees[dst] == 0:
+                ready.append(dst)
+    reached = set()
+    pending = [action_ids[0]] if action_ids else []
+    while pending:
+        aid = pending.pop()
+        if aid not in reached:
+            reached.add(aid)
+            pending.extend(undirected[aid] - reached)
+    return ordered, set(action_ids) - set(ordered), bool(edges) and reached == set(action_ids)
 
 
 def validate_chain(scenario_id: str, ir: dict[str, Any], plan: dict[str, Any],
                    executions: list[dict[str, Any]]) -> dict[str, Any]:
-    """Build ChainValidation from declared actions, cited dependencies and run evidence.
+    """Return the frozen ChainValidation shape with a separate full-chain outcome.
 
-    Temporal/unclassified relations and uncited dependencies are not promoted into edges.
+    Only declared IR dependencies affect propagation. Citations are additionally required
+    to verify a causal transfer; temporal/textual coincidences never create dependencies.
     """
     actions = [a for a in (ir.get("actions") or []) if isinstance(a, dict) and a.get("id")]
     action_ids = [str(a["id"]) for a in actions]
     items = {str(i.get("action_id")): i for i in plan.get("items", []) if isinstance(i, dict)}
-    runs = {str(r.get("action_id")): r for r in executions if isinstance(r, dict) and r.get("action_id")}
+    runs, ambiguous = _select_runs(executions)
+    expected = {"scenario_id": scenario_id, "scenario_sha256": scenario_digest(ir),
+                "deployment_record_id": current_deployment_id(scenario_id)}
     statuses: dict[str, str] = {}
-    for action_id in action_ids:
-        run = runs.get(action_id)
-        item = items.get(action_id)
+    for aid in action_ids:
+        item, run = items.get(aid), runs.get(aid)
         if item and item.get("strategy") == "not_executable":
-            statuses[action_id] = "NOT_TESTED"
+            statuses[aid] = "NOT_TESTED"
+        elif aid in ambiguous:
+            statuses[aid] = "BLOCKED"
         elif run is None:
-            statuses[action_id] = "NOT_TESTED"
+            statuses[aid] = "NOT_TESTED"
         else:
-            statuses[action_id] = verify_execution(run, item)
-
+            statuses[aid] = verify_execution(run, item, expected_context=expected)
     relations = [r for r in (ir.get("relations") or []) if isinstance(r, dict) and r.get("kind") in _CAUSAL_KINDS]
-    ir_evidence = ir.get("evidence") or []
-    edges = [r for r in relations if _relation_has_causal_support(r, ir_evidence)
-             and str(r.get("from_action")) in statuses and str(r.get("to_action")) in statuses]
-
-    # A declared dependency lacking causal citation is withheld, leaving order conservative.
-    uncited_dependencies = [r for r in relations if r.get("kind") == "dependency"
-                            and str(r.get("from_action")) in statuses and str(r.get("to_action")) in statuses
-                            and not _relation_has_causal_support(r, ir_evidence)]
-    positions = _order(executions)
-    order_ok = not uncited_dependencies and all(
-        str(edge["from_action"]) in positions and str(edge["to_action"]) in positions
-        and positions[str(edge["from_action"])] < positions[str(edge["to_action"])]
-        for edge in edges
-    )
+    declared = {(str(r.get("from_action")), str(r.get("to_action"))) for r in relations}
+    edges = [r for r in relations if str(r.get("from_action")) in statuses and str(r.get("to_action")) in statuses]
+    cited = [r for r in edges if _relation_has_causal_support(r, ir.get("evidence") or [])]
+    ordered, cyclic, connected = _dag(action_ids, edges)
+    # Missing/extra plan requirements block a dependent, but never invent an IR edge.
+    for aid, item in items.items():
+        if any((str(src), aid) not in declared for src in (item.get("required_predecessors") or [])):
+            if statuses.get(aid) in {"PASS", "PARTIAL"}:
+                statuses[aid] = "BLOCKED"
+    for aid in cyclic:
+        if statuses[aid] in {"PASS", "PARTIAL"}:
+            statuses[aid] = "BLOCKED"
+    for aid in ordered:
+        predecessors = [src for src, dst in declared if dst == aid]
+        if any(statuses.get(src) != "PASS" for src in predecessors) and statuses[aid] in {"PASS", "PARTIAL"}:
+            statuses[aid] = "BLOCKED"
+    unique_actions = all(count == 1 for count in Counter(action_ids).values())
+    order_ok = bool(cited) and unique_actions and not cyclic and len(cited) == len(relations) and all(
+        _ordered(runs.get(str(edge["from_action"])), runs.get(str(edge["to_action"]))) for edge in edges)
     transfers = []
-    for edge in edges:
-        transfer = _transfer_for(edge, runs.get(str(edge["from_action"])), items.get(str(edge["to_action"])))
+    for edge in cited:
+        transfer = _transfer_for(edge, runs.get(str(edge["from_action"])), runs.get(str(edge["to_action"])), statuses)
         if transfer:
             transfers.append(transfer)
-
-    # A failed/blocked predecessor prevents its dependent from being reported as PASS.
-    for edge in edges:
-        src, dst = str(edge["from_action"]), str(edge["to_action"])
-        if statuses.get(src) in {"FAIL", "BLOCKED"} and statuses.get(dst) == "PASS":
-            statuses[dst] = "PARTIAL"
-
-    required = set(action_ids)
-    required.update(str(r.get("to_action")) for r in relations)
-    required.update(str(r.get("from_action")) for r in relations)
-    per_action = [{"action_id": action_id, "status": statuses[action_id]} for action_id in action_ids]
-    all_actions_pass = bool(required) and all(statuses.get(action_id) == "PASS" for action_id in required)
-    transfers_ok = all(t["verified"] for t in transfers) and len(transfers) == len(edges)
-    objective_reached = all_actions_pass and transfers_ok and order_ok
+    transfers_ok = bool(transfers) and len(transfers) == len(relations) and all(t["verified"] for t in transfers)
+    objective_reached = bool(action_ids) and connected and order_ok and transfers_ok and all(
+        statuses[aid] == "PASS" for aid in action_ids)
     return {"scenario_id": scenario_id, "objective_reached": objective_reached, "passes": objective_reached,
-            "transfers": transfers, "order_ok": order_ok, "per_action": per_action}
+            "transfers": transfers, "order_ok": order_ok,
+            "per_action": [{"action_id": aid, "status": statuses[aid]} for aid in action_ids]}
