@@ -269,6 +269,22 @@ class ExposedPlanExportTests(ExportTestBase):
         poc_store.save_export(SID, "/etc/passwd", {"scenario_version": 3, "rebuildable": False})
         self.assertEqual(B.latest_bundle(SID), Path(second["bundle_path"]).resolve())
 
+    def test_export_is_read_only_for_poc_state(self):
+        """Regression: exporting must not create/overwrite a plan (service.report() used to call plan())."""
+        from app.poc import store as poc_store
+        B.build_bundle(SID)
+        self.assertIsNone(poc_store.get_plan(SID))
+        self._seed_validation()
+        before = poc_store.get_plan(SID)
+        B.build_bundle(SID)
+        self.assertEqual(poc_store.get_plan(SID), before)
+
+    def test_service_report_is_never_called(self):
+        with patch("app.poc.service.report", side_effect=AssertionError("export must not call report()")), \
+                patch("app.poc.service.plan", side_effect=AssertionError("export must not call plan()")):
+            self._seed_validation()
+            B.build_bundle(SID)
+
     def test_unknown_scenario_raises_key_error(self):
         with self.assertRaises(KeyError):
             B.build_bundle("scn_nope")
