@@ -291,3 +291,13 @@ UI, i18n and read-only tests only. No API, deployment or other scope. Not commit
 - `tsc`, `i18n:check` (0 hard-coded strings, 1183 keys) and `git diff --check` pass. e2e type check: only the existing `@types/node` errors.
 - Focused run: 10/10 passed. Whole `mobile-rwd.spec.ts`: **20/20 passed**. Both on the existing API 8077, scenario `scn_6125b061b4af`, own Vite on 5198 (stopped afterwards).
 - `git status`: no artifacts or evidence images.
+
+## Lead verification after integration into `agent/acceptance-lead`
+
+- Commits: `43548e3` (base mobile/i18n), `3b70ff7` (instructor panel and mobile refinements), `d431c8c` (QA record). The branch remains unmerged and unpushed.
+- `npm run i18n:check`: 1183 keys, 0 hard-coded strings; 3 dynamic keys have no literal reference.
+- `npx tsc --noEmit`: pass. `npm run build`: pass with the existing large PDF-worker chunk warning.
+- `git diff --cached --check` and `git diff --check`: pass.
+- Independent lead browser run: **12/12 real-API, read-only mobile tests passed** on `scn_fa2301161837`; command excluded the fixed-status and fixed-plan rendering tests. API requests were GET only; no non-GET was attempted. Output was written under `/tmp/cr-acceptance-final`.
+- The candidate preview now listens on 5177 behind a read-only proxy. It allows loopback and `192.168.0.0/16`, forwards only GET/HEAD, and returns 405 for writes. From the host's `192.168.16.213` interface, UI and scenario GET both returned 200, and POST returned 405. Remote-device reachability was not independently measured.
+- No deployment, reset, probe, Docker command, or PVE write was run for this UI acceptance.
