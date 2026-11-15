@@ -61,18 +61,29 @@ def test_log4shell_action_is_reproduced_through_product_flow():
                 assert client.post(f"/api/iac/{sid}/generate").status_code == 200
                 assert client.post(f"/api/planning/{sid}/topology/approve",
                                    json={"approved": True, "approved_by": "poc-eng"}).status_code == 200
-                up = client.post(f"/api/deploy/{sid}/up", json={"test_approved": True})
+                # Solr is a slow JVM target; `up` blocks on compose --wait for health and
+                # can momentarily fail under load. Retry a few times before giving up so a
+                # slow box runs the probe for real instead of skipping.
+                up = None
+                for _ in range(3):
+                    up = client.post(f"/api/deploy/{sid}/up", json={"test_approved": True})
+                    if up.status_code == 200:
+                        break
+                    time.sleep(15)
                 if up.status_code != 200:
-                    pytest.skip(f"lab could not stand up (transient infra): {up.text[:200]}")
+                    pytest.skip(f"lab could not stand up after retries (transient infra): {up.text[:200]}")
                 try:
+                    # Even once healthy, Log4j's first logged lookup can lag; poll validation
+                    # for up to ~4 min so the real callback is observed rather than skipped.
                     report = None
-                    for _ in range(12):  # Solr/JVM needs time before the logged lookup fires
+                    deadline = time.time() + 240
+                    while time.time() < deadline:
                         report = client.post(f"/api/validate/{sid}/run").json()
                         attack = next((c for c in report["checks"]
                                        if c["id"].startswith("attack-") and c["status"] in {"PASS", "FAIL"}), None)
                         if attack and attack["status"] == "PASS":
                             break
-                        time.sleep(6)
+                        time.sleep(8)
                 finally:
                     client.post(f"/api/deploy/{sid}/down")
 
