@@ -121,6 +121,17 @@ class ExecutionResult:
     exit_code: Optional[int] = None
     failure_reason: Optional[str] = None
 
+    def to_dict(self) -> dict:
+        """Serialize, omitting None optional fields.
+
+        The frozen poc-validation schema allows these optionals to be OMITTED, not
+        present-and-null. stdlib asdict() would emit nulls (exit_code=None on a BLOCKED
+        result, failure_reason=None on a PASS), which violates the schema. Drop them.
+        """
+        from dataclasses import asdict as _asdict
+
+        return {k: v for k, v in _asdict(self).items() if v is not None}
+
 
 # --- Chain (m9-chain) -------------------------------------------------------
 @dataclass

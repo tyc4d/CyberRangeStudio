@@ -34,8 +34,18 @@ def _now() -> str:
 
 
 def _is_exploitation(action: dict[str, Any]) -> bool:
+    """An exploitation step — by ATT&CK technique OR by the action's own wording.
+
+    A report often names the exploit in the action text without a technique id, so the
+    classifier's exploit-word detection is reused (exploit*/vulnerab*/injection/zero-day).
+    """
     tech = str(action.get("attack_technique") or "").upper()
-    return tech.startswith(_EXPLOIT_TECHNIQUES)
+    if tech.startswith(_EXPLOIT_TECHNIQUES):
+        return True
+    from app.planner.reproducibility import _EXPLOIT_WORDS
+
+    text = " ".join(str(action.get(k, "")) for k in ("name", "description"))
+    return bool(_EXPLOIT_WORDS.search(text))
 
 
 def _predecessors(action_id: str, ir: dict[str, Any]) -> list[str]:
@@ -88,15 +98,18 @@ def _build_item(action: dict[str, Any], ir: dict[str, Any]) -> dict[str, Any]:
     if cve:
         item["cve"] = cve
 
+    is_exploit = _is_exploitation(action)
+    has_verifier = _proof_for_service(service) is not None
+
     if repro in ("not_reproducible", "needs_vm"):
         item["strategy"] = "not_executable"
         item["poc_required"] = False
         item["not_executable_reason"] = reason
-        item["expected_evidence"] = (
-            "None executable in this environment — " + reason
-        )
+        item["expected_evidence"] = "None executable in this environment — " + reason
         item["preconditions"] = []
     elif repro == "substitute_only":
+        # A substitute shows limited benign behaviour; a config_check on it is the honest
+        # outcome (never claimed as a real exploit). This is a distinct accepted category.
         item["strategy"] = "config_check"
         item["poc_required"] = False
         item["expected_evidence"] = (
@@ -104,28 +117,38 @@ def _build_item(action: dict[str, Any], ir: dict[str, Any]) -> dict[str, Any]:
             "(limited fidelity; not a real exploit): " + reason
         )
         item["preconditions"] = ["substitute service deployed and reachable on the isolated network"]
-    else:  # reproducible
-        if _is_exploitation(action):
-            item["strategy"] = "poc_exec"
-            item["poc_required"] = True
-            svc_name = service.get("name") if service else (item.get("service_ref") or "target service")
-            item["expected_evidence"] = (
-                f"Concrete exploit effect proving the vulnerability on {svc_name} "
-                "(e.g. echoed command output, in-lab callback, file written, shell output). "
-                "A 200/health/LLM opinion is NOT sufficient."
-            )
-            pre = ["target host deployed by this scenario and ownership-verified",
-                   "target service reachable on the isolated network",
-                   "a compatible PoC pinned by commit sha"]
-            item["preconditions"] = pre
-        else:
-            item["strategy"] = "config_check"
-            item["poc_required"] = False
-            item["expected_evidence"] = (
-                "Benign step-specific check against the pinned component confirms the "
-                "expected state/behaviour (not an exploit): " + reason
-            )
-            item["preconditions"] = ["target service deployed and reachable on the isolated network"]
+    elif is_exploit and not has_verifier:
+        # Reproducible real target, but no vetted SHA-pinned verifier, so a real exploit
+        # cannot be run and proved. Honest: not_executable, never a silent skip that later
+        # reads as success. (owner: no manufactured PASS.)
+        item["strategy"] = "not_executable"
+        item["poc_required"] = False
+        item["not_executable_reason"] = (
+            "No vetted, SHA-pinned PoC verifier is registered for this service, so a real "
+            "payload cannot be executed and proved in this environment."
+        )
+        item["expected_evidence"] = "None executable — " + item["not_executable_reason"]
+        item["preconditions"] = []
+    elif is_exploit:  # reproducible + a vetted verifier exists
+        item["strategy"] = "poc_exec"
+        item["poc_required"] = True
+        svc_name = service.get("name") if service else (item.get("service_ref") or "target service")
+        item["expected_evidence"] = (
+            f"Concrete exploit effect proving the vulnerability on {svc_name} "
+            "(e.g. echoed command output, in-lab callback, file written, shell output). "
+            "A 200/health/LLM opinion is NOT sufficient."
+        )
+        item["preconditions"] = ["target host deployed by this scenario and ownership-verified",
+                                 "target service reachable on the isolated network",
+                                 "a compatible PoC pinned by commit sha"]
+    else:
+        item["strategy"] = "config_check"
+        item["poc_required"] = False
+        item["expected_evidence"] = (
+            "Benign step-specific check against the pinned component confirms the "
+            "expected state/behaviour (not an exploit): " + reason
+        )
+        item["preconditions"] = ["target service deployed and reachable on the isolated network"]
 
     return item
 
@@ -189,14 +212,72 @@ def _proof_for_service(service: dict[str, Any] | None) -> str | None:
 def discover(scenario_id: str) -> dict[str, Any]:  # m9-discovery
     ir = _load_ir(scenario_id)
     from app.poc import discovery
-    return discovery.discover(scenario_id, ir)
+    from app.poc import store as poc_store
+
+    manifest = discovery.discover(scenario_id, ir)
+    poc_store.save_manifest(scenario_id, manifest)  # persist so export sees it (#12)
+    return manifest
+
+
+def _compose_service_ref(ir: dict[str, Any], item: dict[str, Any]) -> str:
+    """Map the IR service to the ACTUAL compose/environment host id the target uses.
+
+    The runner/guard target a deployed compose service, which the IaC generator keys by the
+    environment-plan host id — NOT the IR service id. Passing the raw IR service id makes the
+    guard reject a service that does not exist (#8).
+    """
+    ep = ir.get("environment_plan") or {}
+    hosts = [h for h in (ep.get("hosts") or []) if isinstance(h, dict)]
+    host_ids = {h.get("id") for h in hosts}
+    svc = _service_by_id(ir, item.get("service_ref"))
+    host_ref = (svc or {}).get("host_ref") or item.get("target_host_ref")
+    if host_ref in host_ids:
+        return str(host_ref)
+    if len(hosts) == 1:
+        return str(hosts[0].get("id"))
+    return str(item.get("service_ref") or host_ref or "")
+
+
+def _topo_order(ids: list[str], preds: dict[str, list[str]]) -> list[str]:
+    idset = set(ids)
+    ordered: list[str] = []
+    seen: set[str] = set()
+
+    def visit(a: str, stack: frozenset[str]) -> None:
+        if a in seen or a not in idset or a in stack:
+            return
+        for p in preds.get(a, []):
+            if p in idset:
+                visit(p, stack | {a})
+        if a not in seen:
+            seen.add(a)
+            ordered.append(a)
+
+    for a in ids:
+        visit(a, frozenset())
+    return ordered
+
+
+def _blocked_result(action_id: str, req: Any, reason: str) -> dict[str, Any]:
+    from app.poc.models import ExecStages, ExecutionResult
+
+    now = _now()
+    res = ExecutionResult(
+        action_id=action_id,
+        poc={"source_url": req.source_url, "ref": req.ref, "sha256": req.sha256},
+        status="BLOCKED", stages=ExecStages(), logs_path="",
+        confidence=0.0, target_ownership_verified=False, payload_sha256=req.sha256,
+        started_at=now, ended_at=now, failure_reason=reason,
+    )
+    return res.to_dict()
 
 
 def execute(scenario_id: str, action_ids: list[str] | None = None) -> list[dict[str, Any]]:  # m9-runner
-    """Build ExecutionRequests for poc_exec plan items that have a vetted verifier, then run them.
+    """Run real payloads for poc_exec items that have a vetted verifier, in dependency order.
 
-    An action without a registered runner-owned verifier is skipped here (the plan keeps it;
-    it is never fabricated as executed). Ownership/isolation/D6 are enforced inside run_job.
+    An action with no registered runner-owned verifier is NOT executed (the plan already marks
+    it not_executable; never fabricated as a PASS). A dependent whose executed predecessor did
+    not PASS is BLOCKED, not run (#7). Ownership/isolation/D6 are enforced inside run_job.
     """
     ir = _load_ir(scenario_id)
     plan_obj = plan(scenario_id)
@@ -205,33 +286,46 @@ def execute(scenario_id: str, action_ids: list[str] | None = None) -> list[dict[
     from app.poc.runner.runner import run_job
 
     wanted = set(action_ids) if action_ids else None
-    requests: list[ExecutionRequest] = []
+    preds = {it.get("action_id"): list(it.get("required_predecessors") or [])
+             for it in plan_obj.get("items", [])}
+    reqs: dict[str, ExecutionRequest] = {}
+    order: list[str] = []
     for item in plan_obj.get("items", []):
+        aid = item.get("action_id")
         if item.get("strategy") != "poc_exec":
             continue
-        if wanted is not None and item.get("action_id") not in wanted:
+        if wanted is not None and aid not in wanted:
             continue
         service = _service_by_id(ir, item.get("service_ref"))
         proof_id = _proof_for_service(service)
         if not proof_id:
-            continue
+            continue  # no vetted verifier -> never fabricated
         proof = payloads.KNOWN_POC_PROOFS[proof_id]
-        requests.append(ExecutionRequest(
-            action_id=str(item.get("action_id")),
-            scenario_id=scenario_id,
-            service_ref=str(item.get("service_ref") or ""),
+        reqs[str(aid)] = ExecutionRequest(
+            action_id=str(aid), scenario_id=scenario_id,
+            service_ref=_compose_service_ref(ir, item),
             target_host_ref=item.get("target_host_ref"),
-            source_url=proof["source_url"],
-            ref={},
-            sha256=proof["sha256"],
-            exec_method=proof["exec_method"],
-            payload=proof["payload"],
-            expected_marker=proof["expected_marker"],
-            proof_id=proof_id,
-        ))
-    if not requests:
+            source_url=proof["source_url"], ref={}, sha256=proof["sha256"],
+            exec_method=proof["exec_method"], payload=proof["payload"],
+            expected_marker=proof["expected_marker"], proof_id=proof_id,
+        )
+        order.append(str(aid))
+    if not reqs:
         return []
-    return run_job(scenario_id, requests)
+
+    status: dict[str, str] = {}
+    results: list[dict[str, Any]] = []
+    for aid in _topo_order(order, preds):
+        unmet = [p for p in preds.get(aid, []) if p in reqs and status.get(p) != "PASS"]
+        if unmet:
+            res = _blocked_result(aid, reqs[aid],
+                                  f"required predecessor(s) {unmet} did not pass; dependent not executed")
+        else:
+            out = run_job(scenario_id, [reqs[aid]])
+            res = out[0] if out else _blocked_result(aid, reqs[aid], "execution produced no result")
+        status[aid] = str(res.get("status"))
+        results.append(res)
+    return results
 
 
 def _executions(scenario_id: str) -> list[dict[str, Any]]:
@@ -242,7 +336,11 @@ def _executions(scenario_id: str) -> list[dict[str, Any]]:
 def chain(scenario_id: str) -> dict[str, Any]:  # m9-chain
     ir = _load_ir(scenario_id)
     from app.poc import chain as chain_mod
-    return chain_mod.validate_chain(scenario_id, ir, plan(scenario_id), _executions(scenario_id))
+    from app.poc import store as poc_store
+
+    result = chain_mod.validate_chain(scenario_id, ir, plan(scenario_id), _executions(scenario_id))
+    poc_store.save_chain(scenario_id, result)  # persist so export sees it (#12)
+    return result
 
 
 def report(scenario_id: str) -> dict[str, Any]:  # m9-chain
