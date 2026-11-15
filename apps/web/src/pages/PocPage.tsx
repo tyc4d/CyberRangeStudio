@@ -327,9 +327,14 @@ function ExportManifestView({ manifest, bundlePath }: { manifest: ExportManifest
 
 /* ---------- page body ---------- */
 
-// __pocGen is a per-scenario response-generation counter kept on the IR object (the only handle shared by the
-// execute/chain/report callbacks). It is non-enumerable, so it is never serialized back to the backend.
-function Body({ ir }: { ir: ScenarioIR & { __pocGen?: number } }) {
+// The execute LIFECYCLE is tracked on the IR object (the only handle shared by the execute/chain/report callbacks),
+// with two non-enumerable counters so they are never serialized back to the backend:
+//   __execStarted — bumped only when an execute begins (a chain/report snapshot read never bumps it);
+//   __execDone    — set to __execStarted once that execute settles (success or failure).
+// A chain/report snapshot read is kept ONLY if no newer execute has started since it began AND no execute is in
+// flight (__execDone === __execStarted). This keeps a snapshot read from invalidating an in-flight execute's
+// completion, and keeps an in-flight execute from being overwritten by a stale snapshot. R5-02.
+function Body({ ir }: { ir: ScenarioIR & { __execStarted?: number; __execDone?: number } }) {
   const actionName = useMemo(() => new Map(ir.actions.map((a) => [a.id, a.name])), [ir.actions]);
 
   const [plan, setPlan] = useState<ValidationPlan | null>(null);
@@ -352,19 +357,21 @@ function Body({ ir }: { ir: ScenarioIR & { __pocGen?: number } }) {
   const planAct = useAction(async () => { const d = await api.poc.plan(ir.id); setPlan(d); return d; });
   const discoverAct = useAction(async () => { const d = await api.poc.discover(ir.id); setCandidates(d.items ?? []); return d; });
   const reportAct = useAction(async () => {
-    const g = (ir.__pocGen || 0) + 1;
-    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
+    const gs = ir.__execStarted || 0;
     const d = await api.poc.report(ir.id);
-    // Drop a late response: a newer execute/chain/report has already superseded this one. R4-02.
-    if (ir.__pocGen === g) setReport(d);
+    // Keep this snapshot only if no newer execute started and none is in flight; otherwise it is stale. R5-02.
+    if ((ir.__execStarted || 0) === gs && (ir.__execDone || 0) === (ir.__execStarted || 0)) setReport(d);
     return d;
   });
   const chainAct = useAction(async () => {
-    const g = (ir.__pocGen || 0) + 1;
-    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
+    const gs = ir.__execStarted || 0;
     const d = await api.poc.chain(ir.id);
-    if (ir.__pocGen !== g) return d;
-    setChain(d); void reportAct.run(); return d;
+    // Keep this snapshot only if no newer execute started and none is in flight; a snapshot read never cancels an
+    // in-flight execute, and a stale read never overwrites it. The report refresh still fires (its own guard
+    // decides whether to apply), so the request ordering the backend sees is unchanged. R5-02.
+    if ((ir.__execStarted || 0) === gs && (ir.__execDone || 0) === (ir.__execStarted || 0)) setChain(d);
+    void reportAct.run();
+    return d;
   });
   const execAct = useAction(async () => {
     const ctrl = new AbortController();
@@ -372,18 +379,29 @@ function Body({ ir }: { ir: ScenarioIR & { __pocGen?: number } }) {
     setStopped(false);
     setCancelling(false);
     setLive(null);
-    const g = (ir.__pocGen || 0) + 1;
-    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
-    // A new run invalidates the previous verification snapshot — raw results, chain roll-up AND fidelity report —
-    // BEFORE the request goes out, so a pending or rejected/aborted rerun cannot leave a stale PASS badge or a wrong
-    // unverified count. The generation guard (g) then stops a late OLD execute/chain/report response from
-    // overwriting newer state. No action stays counted verified from a prior run. R4-02 / R3-02.
+    // Begin a new execute batch. Only an execute bumps __execStarted; chain/report reads never do, so a snapshot
+    // read can never invalidate this run's completion. Invalidate raw results, chain and report BEFORE the request
+    // so a pending or rejected/aborted rerun cannot leave a stale PASS badge or a wrong unverified count. R4-02 / R5-02.
+    const g = (ir.__execStarted || 0) + 1;
+    Object.defineProperty(ir, "__execStarted", { value: g, writable: true, enumerable: false, configurable: true });
     setResults(null);
     setChain(null);
     setReport(null);
-    const d = await api.poc.execute(ir.id, Array.from(selected), ctrl.signal);
-    if (ir.__pocGen === g) { setResults(d); void reportAct.run(); }
-    return d;
+    try {
+      const d = await api.poc.execute(ir.id, Array.from(selected), ctrl.signal);
+      // This execute's results (including a BLOCKED with its reason) are always stored unless a NEWER execute has
+      // since started. A concurrent chain/report read never blocks this. Mark the run settled first so the report
+      // refresh it triggers is allowed to apply. R5-02.
+      if (ir.__execStarted === g) {
+        Object.defineProperty(ir, "__execDone", { value: g, writable: true, enumerable: false, configurable: true });
+        setResults(d);
+        void reportAct.run();
+      }
+      return d;
+    } catch (e) {
+      if (ir.__execStarted === g) Object.defineProperty(ir, "__execDone", { value: g, writable: true, enumerable: false, configurable: true });
+      throw e;
+    }
   });
   const exportAct = useAction(async () => { const d = await api.poc.export(ir.id, format); setBundle(d); setDlUnavail(false); return d; });
   const downloadAct = useAction(async () => {
@@ -629,7 +647,8 @@ function Body({ ir }: { ir: ScenarioIR & { __pocGen?: number } }) {
       {/* 3. Attack chain validation */}
       <Section n="3" title={t("poc.s.chain")} desc={t("poc.s.chain.desc")}>
         <div className="row">
-          <button className={chain ? "" : "primary"} disabled={chainAct.busy} onClick={() => chainAct.run()}>
+          {/* A chain snapshot read mid-execute is incompatible: block it while an execute is in flight. R5-02. */}
+          <button className={chain ? "" : "primary"} disabled={chainAct.busy || execAct.busy} title={execAct.busy ? t("poc.exec.busy") : undefined} onClick={() => chainAct.run()}>
             {chain ? t("poc.chain.rerun") : t("poc.chain.run")}
           </button>
           {chain && (
