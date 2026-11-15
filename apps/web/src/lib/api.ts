@@ -193,13 +193,17 @@ export const api = {
   poc: {
     plan: (id: string) => post<ValidationPlan>(`/api/poc/${enc(id)}/plan`),
     discover: (id: string) => post<PocManifest>(`/api/poc/${enc(id)}/discover`),
-    /** Real, ownership-gated payload execution. `signal` lets the GUI stop waiting (client-side abort). */
+    /** Real, ownership-gated payload execution. `signal` also aborts the client wait if the backend is unreachable. */
     execute: (id: string, actionIds?: string[], signal?: AbortSignal) =>
       req<ExecutionResult[]>(`/api/poc/${enc(id)}/execute`, {
         method: "POST",
         body: JSON.stringify(actionIds && actionIds.length ? { action_ids: actionIds } : {}),
         signal,
       }),
+    /** Live job state while a run is in flight: job state + per-action stages, for the GUI to poll. */
+    executeStatus: (id: string) => req<any>(`/api/poc/${enc(id)}/execute/status`),
+    /** Ask the backend to cancel the in-flight run (cancel flag + finally-kill + cleanup). */
+    executeCancel: (id: string) => post<any>(`/api/poc/${enc(id)}/execute/cancel`),
     chain: (id: string) => post<ChainValidation>(`/api/poc/${enc(id)}/chain`),
     report: (id: string) => req<any>(`/api/poc/${enc(id)}/report`),
     /** `format` is additive (CONTRACT has no field yet; a backend may ignore it). */
