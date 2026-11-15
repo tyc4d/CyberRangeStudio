@@ -36,6 +36,7 @@ import json
 import os
 import re
 import zipfile
+from urllib.parse import unquote
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -89,18 +90,23 @@ _SECRET_VALUE_PATTERNS = (
     re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/-]{16,}=*"),
     re.compile(r"PVEAPIToken=[^\s'\"]+"),
 )
-# Free-text "password=xyz" / "token: xyz" — redact the value, keep the label. Deploy-time
-# references (${...}) and <placeholders> are not values.
+# Free-text "password=xyz" / "token: 'xyz'" / apiKey="xyz" — redact the value, keep the label.
+# Quoted values run to the matching quote (or end of line); bare values include apostrophes so
+# a quote cannot cut the scan short. Deploy-time references (${...}) and <placeholders> are kept.
+_INLINE_LABEL = (r"[A-Za-z0-9_.\-]*?(?:password|passwd|pwd|passphrase|token|secret|api[_\-]?key|apikey|"
+                 r"access[_\-]?key|credential)[A-Za-z0-9_\-]*")
 _INLINE_SECRET_RE = re.compile(
-    r"(?i)\b(password|passwd|pwd|passphrase|token|secret|api[_-]?key)(\s*[:=]\s*)(?!\$\{|<|\[REDACTED\])([^\s'\",;&]+)"
-)
+    r"(?i)(?<![A-Za-z0-9_{.\-])(" + _INLINE_LABEL + r")([ \t]*[:=][ \t]*)"
+    r"(?:(['\"])((?:(?!\3)[^\n])*)(\3?)|(?!\$\{|<)([^\s\",;&]+))")
 # URL userinfo: everything between "scheme://" and the LAST "@" of the authority (stops at / ? # or
 # whitespace). Quotes and colon-less token-as-username forms are covered; the whole userinfo is redacted.
 _URL_USERINFO_RE = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*://)([^\s/?#\"<>\\]*)@")
-# Secret-looking query / fragment parameters (?access_token=..., &api_key=..., #id_token=...).
-_QUERY_SECRET_RE = re.compile(
-    r"(?i)([?&#;](?:[a-z0-9_.\-]*(?:token|secret|pass|pwd|api[_\-]?key|apikey|access[_\-]?key|auth|sig|"
-    r"signature|session|credential|cookie)[a-z0-9_.\-]*)=)([^&#\s\"'<>\\]+)")
+# Query / fragment parameters (?access_token=..., &%61pi_key=..., #id_token=...). The parameter NAME is
+# percent-decoded before it is classified; the value runs to & # or whitespace (apostrophes included).
+_QUERY_PARAM_RE = re.compile(r"([?&#;])([^=&#\s\"<>?;]+)=([^&#\s\"<>]*)")
+_QUERY_SECRET_NAME_RE = re.compile(
+    r"token|secret|pass|pwd|api[_\-]?key|apikey|access[_\-]?key|auth|sig|session|credential|cookie|key",
+    re.IGNORECASE)
 _REF_HEAD_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(:?[-?+=])?", re.S)
 _SAFE_SECRET_REF_RE = re.compile(r"(?:\$\{[A-Za-z_][A-Za-z0-9_]*(?::?[-?+=](?:\[REDACTED\])?)?\})+")
 _SECRET_VAR_NAME_RE = re.compile(r"PASS|PWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIAL|COOKIE",
@@ -124,7 +130,7 @@ def _env_secret_values() -> list[str]:
     """Literal values of secret-looking variables in the API process environment."""
     values = {config.OPENAI_API_KEY} if getattr(config, "OPENAI_API_KEY", "") else set()
     for key, value in os.environ.items():
-        if value and _SECRET_KEY_RE.search(key):
+        if value and _is_secret_key(key):
             values.add(value)
     # Short values (e.g. "1", "true") would match everywhere and are not credentials.
     return sorted((v for v in values if len(v) >= 8), key=len, reverse=True)
@@ -178,10 +184,34 @@ def _walk_refs(text: str, force: bool = False) -> str:
     return "".join(out)
 
 
+def _secret_query_param(m: re.Match) -> bool:
+    """True if this ?name=value carries a secret-named parameter with a value that is not redacted."""
+    value = m.group(3)
+    return bool(value) and value != REDACTED and bool(_QUERY_SECRET_NAME_RE.search(unquote(m.group(2))))
+
+
+def _inline_value_unsafe(m: re.Match) -> bool:
+    if m.group(3) is not None:  # quoted
+        value = m.group(4)
+        return bool(value) and value != REDACTED and not value.startswith("${")
+    bare = m.group(6)
+    return (bare is not None and not bare.startswith(REDACTED)
+            and bare.strip("`'.)").lower() not in {"true", "false", "null", "none"})
+
+
+def _redact_inline(m: re.Match) -> str:
+    if not _inline_value_unsafe(m):
+        return m.group(0)
+    if m.group(3) is not None:
+        return m.group(1) + m.group(2) + m.group(3) + REDACTED + m.group(5)
+    return m.group(1) + m.group(2) + REDACTED
+
+
 def _redact_urls(text: str) -> str:
     text = _URL_USERINFO_RE.sub(
         lambda m: m.group(0) if m.group(2) == REDACTED else m.group(1) + REDACTED + "@", text)
-    return _QUERY_SECRET_RE.sub(lambda m: m.group(0) if m.group(2) == REDACTED else m.group(1) + REDACTED, text)
+    return _QUERY_PARAM_RE.sub(
+        lambda m: m.group(1) + m.group(2) + "=" + REDACTED if _secret_query_param(m) else m.group(0), text)
 
 
 def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
@@ -191,7 +221,7 @@ def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
         text = pattern.sub(REDACTED, text)
     text = _redact_urls(text)
     text = _walk_refs(text)
-    return _INLINE_SECRET_RE.sub(lambda m: m.group(1) + m.group(2) + REDACTED, text)
+    return _INLINE_SECRET_RE.sub(_redact_inline, text)
 
 
 def _redact_secret_field(value: str) -> str:
@@ -202,14 +232,50 @@ def _redact_secret_field(value: str) -> str:
     return rewritten if _SAFE_SECRET_REF_RE.fullmatch(rewritten) else REDACTED
 
 
+# Mapping keys allowed to stay as-is INSIDE a secret-named subtree (field names, not data).
+_BENIGN_SECRET_SUBKEYS = frozenset({
+    "id", "name", "type", "kind", "username", "user", "user_name", "login", "account", "password", "passwd",
+    "pwd", "passphrase", "secret", "token", "value", "key", "api_key", "apikey", "access_key", "secret_key",
+    "private_key", "client_id", "client_secret", "note", "notes", "description", "source", "host", "port",
+    "service", "scope", "expires", "expires_at", "created_at", "issuer", "hash", "algorithm", "format", "redacted",
+})
+_REDACTED_KEY_RE = re.compile(r"\[REDACTED-key-\d+\]")
+
+
+def _is_secret_key(key: Any) -> bool:
+    """Secret-named field? Percent-decoded and camelCase-split before matching."""
+    if not isinstance(key, str):
+        return False
+    decoded = unquote(key)
+    snake = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", decoded)
+    return bool(_SECRET_KEY_RE.search(decoded) or _SECRET_KEY_RE.search(snake))
+
+
+def _key_allowed_under_secret(key: Any) -> bool:
+    return isinstance(key, str) and (key.lower() in _BENIGN_SECRET_SUBKEYS or bool(_REDACTED_KEY_RE.fullmatch(key)))
+
+
 def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False) -> Any:
-    """Deep copy with secret-named fields and secret-looking text replaced by [REDACTED]."""
+    """Deep copy with secret-named fields, secret-looking text AND mapping keys redacted.
+
+    Inside a secret-named subtree a key is kept only if it is a known field name; any other key
+    (which may itself be the credential) becomes ``[REDACTED-key-<n>]``.
+    """
     env_secrets = _env_secret_values() if env_secrets is None else env_secrets
     if isinstance(obj, dict):
-        out = {}
-        for key, value in obj.items():
-            secret_key = isinstance(key, str) and bool(_SECRET_KEY_RE.search(key))
-            out[key] = redact(value, env_secrets, _under_secret or secret_key)
+        out: dict[Any, Any] = {}
+        for n, (key, value) in enumerate(obj.items(), 1):
+            secret_key = _is_secret_key(key)
+            if isinstance(key, str):
+                if _under_secret and not _key_allowed_under_secret(key):
+                    new_key = f"[REDACTED-key-{n}]"
+                else:
+                    new_key = redact_text(key, env_secrets)
+            else:
+                new_key = REDACTED if _under_secret else key
+            while new_key in out:
+                new_key = f"[REDACTED-key-{n}-{len(out)}]" if _under_secret else f"{new_key}#{n}"
+            out[new_key] = redact(value, env_secrets, _under_secret or secret_key)
         return out
     if isinstance(obj, list):
         return [redact(v, env_secrets, _under_secret) for v in obj]
@@ -236,8 +302,11 @@ def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
             hits.append(f"pattern {pattern.pattern[:32]}")
     if any(m.group(2) != REDACTED for m in _URL_USERINFO_RE.finditer(text)):
         hits.append("credentials in URL userinfo")
-    if any(m.group(2) != REDACTED for m in _QUERY_SECRET_RE.finditer(text)):
+    if any(_secret_query_param(m) for m in _QUERY_PARAM_RE.finditer(text)):
         hits.append("secret-named URL query parameter")
+    unescaped = text.replace('\\"', '"')  # JSON-escaped quotes delimit inline values too
+    if any(_inline_value_unsafe(m) for m in _INLINE_SECRET_RE.finditer(unescaped)):
+        hits.append("inline secret label with a value")
     for m in re.finditer(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?[-+=])", text):
         if _SECRET_VAR_NAME_RE.search(m.group(1)):
             k = _matching_brace(text, m.start() + 1)
@@ -256,9 +325,15 @@ def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -
     """
     hits: list[str] = []
     if isinstance(obj, dict):
-        for key, value in obj.items():
-            secret_key = isinstance(key, str) and bool(_SECRET_KEY_RE.search(key))
-            hits += find_field_secrets(value, _under_secret or secret_key, f"{_path}/{key}")
+        for n, (key, value) in enumerate(obj.items()):
+            if _under_secret and not _key_allowed_under_secret(key):
+                hits.append(f"unredacted mapping key in secret-named field {_path}/#{n}")
+            elif isinstance(key, str) and find_secrets(key, []):
+                hits.append(f"secret material in mapping key {_path}/#{n}")
+            shown = (isinstance(key, str) and re.fullmatch(r"[A-Za-z0-9_\-]{1,32}", key) is not None
+                     and (_key_allowed_under_secret(key) or not _under_secret) and not find_secrets(key, []))
+            hits += find_field_secrets(value, _under_secret or _is_secret_key(key),
+                                       f"{_path}/{key if shown else '#' + str(n)}")
     elif isinstance(obj, list):
         for n, value in enumerate(obj):
             hits += find_field_secrets(value, _under_secret, f"{_path}/{n}")
@@ -414,9 +489,9 @@ def _env_example(env_vars: list[tuple[str, str, str]]) -> str:
     if not env_vars:
         lines.append("# (docker-compose.yml reads no variables)")
     for name, op, arg in env_vars:
-        secret = bool(_SECRET_KEY_RE.search(name))
+        secret = _is_secret_key(name)
         if secret or "?" in op:
-            lines.append(f"# REQUIRED{' secret' if secret else ''}: set at deploy time"
+            lines.append(f"# REQUIRED{' (sensitive value)' if secret else ''} - set at deploy time"
                          + (" — generate a fresh random value" if secret else ""))
             lines.append(f"{name}=")
         elif "-" in op:
@@ -559,7 +634,7 @@ def _readme(b: _Bundle, ir: dict[str, Any], manifest: dict[str, Any]) -> str:
     lines += [
         "## 安全",
         "",
-        "- 包內不含任何真實密碼、token 或金鑰（`contains_secrets: false`）；疑似秘密的欄位已以 `[REDACTED]` 取代。",
+        "- 包內不含任何真實密碼、token 或金鑰（manifest 的 `contains_secrets` 為 false）；疑似秘密的欄位已以 `[REDACTED]` 取代。",
         "- 原始證據檔不在包內，只有 `evidence/evidence-index.json` 的索引與 sha256。",
         "",
     ]

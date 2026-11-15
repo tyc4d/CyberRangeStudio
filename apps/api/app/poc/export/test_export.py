@@ -348,6 +348,37 @@ class ExposedPlanExportTests(ExportTestBase):
                 w.writestr(n, json.dumps(manifest).encode() if n == "manifest.json" else body)
         self.assertIn("secret material in scenario/scenario.json", B.verify_bundle(out.getvalue()))
 
+    def test_r3_quoted_encoded_and_mapping_key_secrets_are_redacted(self):
+        z = "m9-local-synthetic-cred-R3q7"
+        self.ir["description"] = (f"a password='{z}' b password=\"{z}\" c apiKey: '{z}' "
+                                  f"d https://example.invalid/?access_token=public'{z} "
+                                  f"e https://example.invalid/?%61ccess_token={z}&page=2")
+        self.ir["hosts"] = [{"id": "w1", "credentials": {z: "[REDACTED]", "username": "svc"}},
+                            {"id": "w2", "clientSecret": z}]
+        data, manifest, zf = self.build()  # must build (not refuse) and must not leak
+        self.assertEqual([n for n in zf.namelist() if z.encode() in zf.read(n)], [])
+        scenario = json.loads(zf.read("scenario/scenario.json"))
+        self.assertIn("password='[REDACTED]'", scenario["description"])
+        self.assertIn('password="[REDACTED]"', scenario["description"])
+        self.assertIn("?%61ccess_token=[REDACTED]&page=2", scenario["description"])
+        self.assertEqual(scenario["hosts"][0]["credentials"], {"[REDACTED-key-1]": "[REDACTED]", "username": "[REDACTED]"})
+        self.assertEqual(scenario["hosts"][1]["clientSecret"], "[REDACTED]")
+        self.assertEqual(B.verify_bundle(data), [])
+
+    def test_r3_scanners_flag_each_form_and_never_echo_the_value(self):
+        z = "m9-local-synthetic-cred-R3q7"
+        for text in (f"password='{z}'", f'password="{z}"', f"https://h.invalid/?access_token=public'{z}",
+                     f"https://h.invalid/?%61ccess_token={z}", f'{{"d": "password=\\"{z}\\""}}'):
+            hits = B.find_secrets(text, [])
+            self.assertTrue(hits, text)
+            self.assertNotIn(z, " ".join(hits))
+        hits = B.find_field_secrets({"credentials": {z: "[REDACTED]"}}) + B.find_field_secrets({"clientSecret": z})
+        self.assertEqual(len(hits), 2)
+        self.assertNotIn(z, " ".join(hits))
+        # no false positives on benign text the bundle itself emits
+        self.assertEqual(B.find_secrets("secret = false; token: null; `contains_secrets` 為 false; "
+                                        "password: '[REDACTED]' ${CR_DB_PASSWORD:?set at deploy time}", []), [])
+
     def test_secret_default_in_compose_aborts_export(self):
         real = _generated(self.plan)
 
