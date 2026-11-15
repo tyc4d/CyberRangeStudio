@@ -117,7 +117,8 @@ _PARTIAL_RE = re.compile(r"\b(?:a\s+portion\s+of|some\s+of|part\s+of|partially|p
 
 
 def _enclosing_sentences(quotes: list[str], unit_texts: list[str]) -> list[str]:
-    normalise = lambda value: re.sub(r"\s+", " ", value).strip().casefold()
+    # Stored quotes have inline ATT&CK tags removed; the source sentence still carries them.
+    normalise = lambda value: re.sub(r"\s+", " ", strip_attack_tags(value)).strip().casefold()
     found = list(quotes)
     for quote in quotes:
         needle = normalise(quote)
@@ -138,6 +139,23 @@ def _stated_outcome(model_value: str, quotes: list[str], unit_texts: list[str]) 
         return "partial"
     value = model_value.strip().casefold()
     return value if value in {"succeeded", "failed", "partial"} else None
+
+
+_INLINE_TECHNIQUE_RE = re.compile(r"\[(T\d{4}(?:\.\d{3})?)\]", re.IGNORECASE)
+
+
+def _inline_technique(quotes: list[str], unit_texts: list[str]) -> str | None:
+    """The single technique id the source tags inside the sentence(s) an action cites.
+
+    Only when those sentences carry exactly one tag: with several, the text does not say
+    which behaviour each belongs to, and none is assigned.
+    """
+    sentences = [sentence for sentence in _enclosing_sentences(quotes, unit_texts) if sentence not in quotes]
+    ids = list(dict.fromkeys(match.upper() for sentence in sentences for match in _INLINE_TECHNIQUE_RE.findall(sentence)))
+    if len(ids) != 1:
+        return None
+    technique_id, _ = _validated_attack_technique(ids[0])
+    return technique_id
 
 
 def _technique_stated_for(technique_id: str, action_name: str, quotes: list[str], cited_units: list[str],
@@ -451,6 +469,7 @@ def analyze_source(
             )
         else:
             result = draft
+    _merge_missed_actions(result, source_payload)
     _merge_target_context(result, source_payload)
     _merge_relations(result, source_payload)
     return _build_ir(
@@ -526,6 +545,81 @@ def _merge_target_context(result: dict[str, Any], source_payload: list[dict[str,
         action.pop("source_host_ref", None)
         if entry and entry.get("source_host_ref"):
             action["source_host_ref"] = entry["source_host_ref"]
+
+
+_COMPLETENESS_RULES = (
+    "Return only a JSON object {\"additional_actions\":[...]}. You are given the source units and the attacker actions already "
+    "extracted from them. List only attacker behaviours that the source states and that no listed action covers; return an "
+    "empty array when nothing is missing. Read each sentence that describes the threat actor, a tool or malware: when one "
+    "sentence states several operations (an operation and what it was used to accomplish, or operations joined by 'and' or "
+    "'then'), each operation is a separate action, and so is each item of a list of things a tool does. Do not repeat or "
+    "rephrase a listed action, do not add defender or victim activity, and do not add anything the source does not state. "
+    "Each additional action needs: id (new, not used above), name in the source's own wording, actor 'attacker', occurrence "
+    "('performed' when the source says it happened in this incident, 'capability' when it only says what a tool can do), "
+    "outcome ('succeeded', 'failed', 'partial' or 'unknown'), epistemic_status 'supported', and evidence:[{quote, "
+    "source_ref}] where quote is an exact, unaltered substring of that source unit. Never add ATT&CK ids or bracketed notes."
+)
+
+
+def _merge_missed_actions(result: dict[str, Any], source_payload: list[dict[str, Any]]) -> None:
+    """Completeness pass: add attacker behaviours the source states that the first pass left out.
+
+    One sentence often carries two operations and the first pass keeps only one. The additions
+    are placed in narrative order (by the source unit they cite). A failed pass changes nothing.
+    """
+    listed = [item for item in result.get("actions") or [] if isinstance(item, dict)]
+    if not listed:
+        return
+    messages = [
+        {"role": "system", "content": "You are a careful cyber threat intelligence analyst producing provisional, evidence-grounded data."},
+        {"role": "user", "content": json.dumps({
+            "task": "Find attacker behaviours stated in the source that the listed actions do not cover",
+            "rules": _COMPLETENESS_RULES,
+            "listed_actions": [{"id": item.get("id"), "name": item.get("name"),
+                                "evidence": [entry.get("quote") for entry in item.get("evidence") or [] if isinstance(entry, dict)]}
+                               for item in listed],
+            "source_units": source_payload,
+        }, ensure_ascii=False)},
+    ]
+    try:
+        answer = _call_json(messages, purpose="cti_analysis_completeness")
+    except AnalysisError:
+        return
+    extra = answer.get("additional_actions")
+    if not isinstance(extra, list):
+        return
+    order = {unit["source_ref"]: index for index, unit in enumerate(source_payload)}
+    words = lambda value: {word for word in re.findall(r"[a-z0-9]{4,}", str(value).casefold())}
+
+    def position(item: dict[str, Any]) -> int:
+        refs = [order.get(entry.get("source_ref")) for entry in item.get("evidence") or [] if isinstance(entry, dict)]
+        refs = [ref for ref in refs if ref is not None]
+        return min(refs) if refs else len(order)
+
+    used_ids = {str(item.get("id")) for item in listed}
+    for item in extra:
+        if not isinstance(item, dict) or not _string(item.get("name")) or not item.get("evidence"):
+            continue
+        wanted = words(item["name"])
+        quotes = {re.sub(r"\s+", " ", str(entry.get("quote") or "")).strip().casefold()
+                  for entry in item.get("evidence") or [] if isinstance(entry, dict)}
+
+        def cited_by(other: dict[str, Any]) -> set[str]:
+            return {re.sub(r"\s+", " ", str(entry.get("quote") or "")).strip().casefold()
+                    for entry in other.get("evidence") or [] if isinstance(entry, dict)}
+
+        if any((wanted and len(wanted & words(other.get("name"))) / len(wanted) >= 0.8)
+               or (quotes and quotes <= cited_by(other)) for other in listed):
+            continue  # the same behaviour in other words, or the very sentence an action already cites
+        if str(item.get("id")) in used_ids or not _string(item.get("id")):
+            item["id"] = f"a{len(listed) + 1}"
+            while item["id"] in used_ids:
+                item["id"] += "x"
+        used_ids.add(str(item["id"]))
+        where = position(item)
+        index = next((i for i, other in enumerate(listed) if position(other) > where), len(listed))
+        listed.insert(index, item)
+    result["actions"] = listed
 
 
 _RELATION_RULES = (
@@ -810,6 +904,12 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             misplaced_techniques.append({"action": action_id, "technique": technique_id})
             action.pop("attack_technique", None)
             action.pop("attack_tactic", None)
+        if "attack_technique" not in action:
+            tagged = _inline_technique(cited_quotes, cited_units)
+            if tagged:
+                # The report itself tags this sentence; the model merely did not copy the id.
+                action["attack_technique"] = tagged
+                action.setdefault("field_sources", {})["attack_technique"] = "source_quote"
         outcome = _stated_outcome(str(item.get("outcome") or ""), cited_quotes, cited_units)
         if outcome:
             action["outcome"] = outcome
@@ -983,10 +1083,10 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
     # A CVE the source names in the same sentence as a recorded product belongs to that product.
     sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
     for service in services:
-        name = str(service.get("name") or "").casefold().strip()
-        if len(name) < 4:
+        service_name = str(service.get("name") or "").casefold().strip()
+        if len(service_name) < 4:
             continue
-        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if name in sentence.casefold()
+        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if service_name in sentence.casefold()
                  for match in _CVE_RE.findall(sentence)]
         merged = list(dict.fromkeys([*service.get("cve", []), *found]))
         if merged != service.get("cve", []):

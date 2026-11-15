@@ -237,6 +237,83 @@ class CveBelongsToTheProductNamedWithIt(unittest.TestCase):
         self.assertEqual(service["field_sources"], {"cve": "source_quote"})
 
 
+class ScenarioNameIsTheUsers(unittest.TestCase):
+    """frontend-eng: the name given at import must survive analysis, whatever services are found."""
+
+    def test_name_is_not_replaced_by_a_service_name(self):
+        source = "The group exploited CVE-2023-34362 in MOVEit Transfer and queried databases containing PII."
+        units, parsed = parse_source("text", source)
+        reply = {"actions": [], "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": [
+            {"id": "s1", "name": "MOVEit Transfer", "epistemic_status": "supported",
+             "evidence": [{"quote": "MOVEit Transfer", "source_ref": "p1"}]},
+            {"id": "s2", "name": "Databases containing PII", "epistemic_status": "supported",
+             "evidence": [{"quote": "databases containing PII", "source_ref": "p1"}]}]}}
+        with patch.object(analysis, "complete", lambda *a, **k: {"text": json.dumps(reply)}):
+            ir = analysis.analyze_source(input_kind="text", content=source, source_name="equifax-goal", units=units,
+                                         parsed_source=parsed, method="single_pass", name="My Equifax scenario")
+        self.assertEqual(ir["name"], "My Equifax scenario")
+        self.assertEqual(ir["provenance"]["source_name"], "equifax-goal")
+        self.assertEqual([service["name"] for service in ir["services"]], ["MOVEit Transfer", "Databases containing PII"])
+
+
+class CompletenessPass(unittest.TestCase):
+    SOURCE = ("The group exploited the portal to install a web shell named helper.aspx [T1190].\n\n"
+              "The web shell was then used to copy the customer table. The company reset all passwords.")
+    FIRST = {"actions": [
+        {"id": "a1", "name": "exploited the portal", "epistemic_status": "supported",
+         "evidence": [{"quote": "The group exploited the portal", "source_ref": "p1"}]},
+        {"id": "a2", "name": "copy the customer table", "epistemic_status": "supported",
+         "evidence": [{"quote": "used to copy the customer table", "source_ref": "p2"}]}],
+        "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": []}}
+
+    def analyse(self, additional):
+        units, parsed = parse_source("text", self.SOURCE)
+
+        def fake(messages, **kwargs):
+            reply = {"cti_analysis_completeness": {"additional_actions": additional}}.get(kwargs["purpose"], self.FIRST)
+            return {"text": json.dumps(reply)}
+
+        with patch.object(analysis, "complete", fake):
+            return analysis.analyze_source(input_kind="text", content=self.SOURCE, source_name="t", units=units,
+                                           parsed_source=parsed, method="single_pass", name="t")
+
+    def test_missed_behaviour_is_added_in_narrative_order_and_verified_like_any_other(self):
+        ir = self.analyse([
+            {"id": "a1", "name": "install a web shell named helper.aspx", "actor": "attacker", "epistemic_status": "supported",
+             "evidence": [{"quote": "install a web shell named helper.aspx", "source_ref": "p1"}]},
+            {"id": "x9", "name": "exploited the portal server", "actor": "attacker", "epistemic_status": "supported",
+             "evidence": [{"quote": "The group exploited the portal", "source_ref": "p1"}]},
+            {"id": "x8", "name": "reset all passwords", "actor": "defender", "epistemic_status": "supported",
+             "evidence": [{"quote": "The company reset all passwords.", "source_ref": "p2"}]},
+            {"id": "x7", "name": "wiped the backups", "actor": "attacker", "epistemic_status": "supported",
+             "evidence": [{"quote": "The group wiped the backups.", "source_ref": "p2"}]}])
+        names = [action["name"] for action in ir["actions"]]
+        self.assertEqual(names, ["exploited the portal", "install a web shell named helper.aspx", "copy the customer table",
+                                 "wiped the backups"])
+        self.assertEqual(len({action["id"] for action in ir["actions"]}), 4)
+        # a behaviour the source does not contain is kept visible as unverified, never as supported
+        self.assertEqual(ir["actions"][3]["epistemic_status"], "insufficient")
+        self.assertEqual(ir["actions"][1]["epistemic_status"], "supported")
+        self.assertEqual([item["name"] for item in ir["quality"]["excluded_non_attacker_actions"]], ["reset all passwords"])
+
+    def test_single_inline_tag_in_the_cited_sentence_is_taken_from_the_source(self):
+        ir = self.analyse([])
+        a1, a2 = ir["actions"]
+        self.assertEqual((a1["attack_technique"], a1["field_sources"]), ("T1190", {"attack_technique": "source_quote"}))
+        self.assertNotIn("attack_technique", a2)
+
+    def test_sentence_with_several_tags_assigns_none(self):
+        source = "The actors used RDP [T1021.001] and the DefaultAccount [T1078.001] to move laterally."
+        units, parsed = parse_source("text", source)
+        reply = {"actions": [{"id": "a1", "name": "used RDP", "epistemic_status": "supported",
+                              "evidence": [{"quote": "The actors used RDP", "source_ref": "p1"}]}],
+                 "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": []}}
+        with patch.object(analysis, "complete", lambda *a, **k: {"text": json.dumps(reply)}):
+            ir = analysis.analyze_source(input_kind="text", content=source, source_name="t", units=units,
+                                         parsed_source=parsed, method="single_pass", name="t")
+        self.assertNotIn("attack_technique", ir["actions"][0])
+
+
 class ActorFilter(unittest.TestCase):
     def test_defender_actions_and_their_edges_stay_out_of_the_attack_flow(self):
         source = "The actor exploited the portal.\n\nThen the company blocked the addresses and notified the FBI."
@@ -298,8 +375,9 @@ class FocusedPasses(unittest.TestCase):
 
     def test_passes_supply_hosts_services_action_placement_and_cited_relations(self):
         ir, calls = self.analyse({"cti_analysis_single_pass": self.FIRST, "cti_analysis_context": self.CONTEXT,
-                                  "cti_analysis_relations": self.RELATIONS})
-        self.assertEqual(calls, ["cti_analysis_single_pass", "cti_analysis_context", "cti_analysis_relations"])
+                                  "cti_analysis_relations": self.RELATIONS, "cti_analysis_completeness": {"additional_actions": []}})
+        self.assertEqual(calls, ["cti_analysis_single_pass", "cti_analysis_completeness", "cti_analysis_context",
+                                 "cti_analysis_relations"])
         self.assertEqual([(h["id"], h["name"]) for h in ir["hosts"]], [("h1", "WEB-1"), ("h2", "DB-1")])
         self.assertEqual([(a["target_host_ref"], a.get("source_host_ref")) for a in ir["actions"]], [("h1", None), ("h2", "h1")])
         self.assertEqual((ir["services"][0]["host_ref"], ir["services"][0]["port"]), ("h2", 5432))
@@ -308,7 +386,8 @@ class FocusedPasses(unittest.TestCase):
 
     def test_unusable_pass_output_falls_back_to_the_first_pass(self):
         ir, _ = self.analyse({"cti_analysis_single_pass": self.FIRST, "cti_analysis_context": "not json",
-                              "cti_analysis_relations": {"relations": "nope"}})
+                              "cti_analysis_relations": {"relations": "nope"}, "cti_analysis_completeness": "not json"})
+        self.assertEqual(len(ir["actions"]), 2)
         self.assertEqual([a["target_host_ref"] for a in ir["actions"]], ["unknown", "unknown"])
         self.assertEqual((ir["relations"][0]["kind"], ir["relations"][0]["epistemic_status"]), ("temporal", "inferred"))
 
