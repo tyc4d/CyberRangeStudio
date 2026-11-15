@@ -15,6 +15,44 @@ _CARRIED = {"cred", "session", "network", "token", "artifact"}
 _CAUSAL_KINDS = {"dependency", "causal"}
 
 
+def latest_execute_job(scenario_id: str) -> dict[str, Any] | None:
+    """Read the current batch even when it has not produced any execution rows.
+
+    Job creation order determines the current batch; completion/run timestamps
+    cannot do so when an older overlapping job finishes last. Read failures
+    propagate instead of silently falling back to historical successes.
+    """
+    from app.poc import store
+
+    with store._LOCK:
+        db = store._conn()
+        try:
+            row = db.execute(
+                "SELECT id, scenario_id, state, created_at, updated_at FROM poc_jobs "
+                "WHERE scenario_id=? AND kind='execute' ORDER BY created_at DESC, rowid DESC LIMIT 1",
+                (scenario_id,),
+            ).fetchone()
+        finally:
+            db.close()
+    return dict(row) if row else None
+
+
+def _index_runs(eligible: list[dict[str, Any]], logs: list[tuple[dict[str, Any], Any]]) -> tuple[dict[str, dict[str, Any]], set[str]]:
+    selected: dict[str, dict[str, Any]] = {}
+    ambiguous: set[str] = set()
+    for run in eligible:
+        action_id = str(run["action_id"])
+        if action_id in selected and selected[action_id] != run:
+            ambiguous.add(action_id)
+        selected[action_id] = run
+    if eligible:
+        batch_start = min(timestamp(r["started_at"]) for r in eligible)
+        ambiguous.update(str(r["action_id"]) for r, log in logs
+                         if log is None and timestamp(r.get("started_at")) is not None
+                         and timestamp(r["started_at"]) >= batch_start)
+    return selected, ambiguous
+
+
 def _relation_has_causal_support(rel: dict[str, Any], ir_evidence: list[Any]) -> bool:
     refs = rel.get("evidence_refs") or rel.get("evidence") or []
     if isinstance(refs, str):
@@ -24,21 +62,27 @@ def _relation_has_causal_support(rel: dict[str, Any], ir_evidence: list[Any]) ->
     return bool(refs) and any(str(ref) in known for ref in refs)
 
 
-def _select_runs(executions: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Any]], set[str]]:
-    """Use one batch containing the newest attempt, never splice action successes.
+def _select_runs(executions: list[dict[str, Any]], *,
+                 job: dict[str, Any] | None = None) -> tuple[dict[str, dict[str, Any]], set[str]]:
+    """Use the selected persisted job, including an empty batch; never splice jobs.
 
-    Legacy/malformed records can still explain FAIL/BLOCKED, but cannot verify PASS.
+    Without a persisted job, standalone artifact validation uses attempt identity.
+    Legacy/malformed records can then explain FAIL/BLOCKED, but cannot verify PASS.
     Distinct attempts for the same action within a batch are ambiguous, not last-row wins.
     """
     candidates = [r for r in executions if isinstance(r, dict) and r.get("action_id")]
     if not candidates:
         return {}, set()
+    logs = [(r, execution_log(r)) for r in candidates]
+    if job is not None:
+        eligible = [r for r, log in logs if log and log["context"].get("job_id") == job["id"]
+                    and log["context"].get("scenario_id") == job["scenario_id"]]
+        return _index_runs(eligible, logs)
     dated = [r for r in candidates if timestamp(r.get("started_at")) is not None]
     if len(dated) != len(candidates):
         return {}, {str(r["action_id"]) for r in candidates}
     newest_time = max(timestamp(r["started_at"]) for r in dated)
     newest = [r for r in dated if timestamp(r["started_at"]) == newest_time]
-    logs = [(r, execution_log(r)) for r in candidates]
     anchors = [execution_log(r) for r in newest]
     jobs = {log["context"]["job_id"] for log in anchors if log}
     if len(jobs) > 1:
@@ -49,19 +93,8 @@ def _select_runs(executions: list[dict[str, Any]]) -> tuple[dict[str, dict[str, 
     else:
         job_id = next(iter(jobs))
         eligible = [r for r, log in logs if log and log["context"]["job_id"] == job_id]
-    selected: dict[str, dict[str, Any]] = {}
-    ambiguous: set[str] = set()
-    for run in eligible:
-        action_id = str(run["action_id"])
-        if action_id in selected and selected[action_id] != run:
-            ambiguous.add(action_id)
-        selected[action_id] = run
-    if jobs and eligible:
-        batch_start = min(timestamp(r["started_at"]) for r in eligible)
-        ambiguous.update(str(r["action_id"]) for r, log in logs
-                         if log is None and timestamp(r["started_at"]) >= batch_start)
     # A malformed newest attempt must never leave another action's old PASS eligible.
-    return selected, ambiguous
+    return _index_runs(eligible, logs if jobs else [])
 
 
 def _ordered(predecessor: dict[str, Any] | None, successor: dict[str, Any] | None) -> bool:
@@ -164,7 +197,8 @@ def _dag(action_ids: list[str], edges: list[dict[str, Any]]) -> tuple[list[str],
 
 
 def validate_chain(scenario_id: str, ir: dict[str, Any], plan: dict[str, Any],
-                   executions: list[dict[str, Any]]) -> dict[str, Any]:
+                   executions: list[dict[str, Any]], *,
+                   execution_job: dict[str, Any] | None = None) -> dict[str, Any]:
     """Return the frozen ChainValidation shape with a separate full-chain outcome.
 
     Only declared IR dependencies affect propagation. Citations are additionally required
@@ -173,7 +207,8 @@ def validate_chain(scenario_id: str, ir: dict[str, Any], plan: dict[str, Any],
     actions = [a for a in (ir.get("actions") or []) if isinstance(a, dict) and a.get("id")]
     action_ids = [str(a["id"]) for a in actions]
     items = {str(i.get("action_id")): i for i in plan.get("items", []) if isinstance(i, dict)}
-    runs, ambiguous = _select_runs(executions)
+    job = execution_job if execution_job is not None else latest_execute_job(scenario_id)
+    runs, ambiguous = _select_runs(executions, job=job)
     expected = {"scenario_id": scenario_id, "scenario_sha256": scenario_digest(ir),
                 "deployment_record_id": current_deployment_id(scenario_id)}
     statuses: dict[str, str] = {}
