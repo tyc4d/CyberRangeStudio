@@ -250,3 +250,8 @@ cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-
 - 新欄位（`occurrence`、`outcome`、`lab_version`、`provenance_class`、`placement`、`unplaced_services`、`lab_enabled`、`superseded`、`not_deployed_reason`）前端需接上才會顯示。
 - `missing.py` 舊的固定產品清單仍在；STIX 的 `extract_stix_candidates` 仍未接入；一個行為只能存一個 technique。
 
+### 第二輪修復後的測試
+
+- 後端完整套件（合併 main 後）：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **235 passed**；之後只加了一個可重現性規則與其測試，再跑 `tests/unit` 與 planner／cti／iac／scenario 模組測試為 163 passed（完整套件未再重跑）。
+- apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker，自己的埠 8101／8102）：**2 passed**，14 個步驟全部通過，含部署 4 個容器、驗證、報告、清理。
+  驗證層級 `env_build=PASS, behavior_repro=NOT_TESTED, full_chain=PARTIAL`。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log-round2.json`。事後無殘留容器或程序。
