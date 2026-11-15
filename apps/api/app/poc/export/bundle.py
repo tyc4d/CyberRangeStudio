@@ -208,24 +208,63 @@ def _walk_refs(text: str, force: bool = False) -> str:
     return "".join(out)
 
 
-def _value_end(text: str, start: int, header: bool) -> int:
-    """End of the value that follows a secret label: ALL adjacent quoted / ${...} / bare segments.
+_BLOCK_INDICATOR_RE = re.compile(r"[|>][+-]?[0-9]?[+-]?(?:[ \t]+#.*)?")
 
-    A header value (Authorization, Cookie) runs to the end of the line.
+
+def _line_end(text: str, pos: int) -> int:
+    nl = text.find("\n", pos)
+    return len(text) if nl < 0 else nl
+
+
+def _indent_of_line(text: str, pos: int) -> int:
+    start = text.rfind("\n", 0, pos) + 1
+    line = text[start:_line_end(text, start)]
+    return len(line) - len(line.lstrip(" \t"))
+
+
+def _continuation_end(text: str, eol: int, indent: int) -> int:
+    """Extend over following lines that are blank or indented deeper than ``indent`` (YAML block /
+    plain multi-line scalar / folded header). Returns the new end offset."""
+    n = len(text)
+    j = eol
+    while j < n and text[j] == "\n":
+        nxt = _line_end(text, j + 1)
+        line = text[j + 1:nxt]
+        if line.strip() and len(line) - len(line.lstrip(" \t")) <= indent:
+            break
+        if not line.strip() and nxt >= n:
+            break  # do not swallow the final newline
+        j = nxt
+    # trailing blank lines are not part of the value
+    while j > eol and text[j - 1:j] == "\n":
+        j -= 1
+    return j
+
+
+def _value_end(text: str, start: int, header: bool, indent: int = 0) -> int:
+    """End of the value that follows a secret label — across lines where the structure says so.
+
+    Covers ALL adjacent quoted / ${...} / bare segments; quoted segments may span lines; a shell
+    backslash-newline continues the value; an empty rest-of-line or a YAML block indicator (| >)
+    takes every following line indented deeper than the label; a value ending at end-of-line is
+    extended over deeper-indented continuation lines (YAML plain multi-line). Headers run to the end
+    of the line plus folded continuation lines.
     """
     n = len(text)
+    eol = _line_end(text, start)
+    rest = text[start:eol].strip()
     if header:
-        nl = text.find("\n", start)
-        return n if nl < 0 else nl
+        return _continuation_end(text, eol, indent)
+    if rest == "" or _BLOCK_INDICATOR_RE.fullmatch(rest):
+        return _continuation_end(text, eol, indent)
     j = start
     after_quote = False
     while j < n:
         q = _QUOTE_RE.match(text, j)
         if q:
             close = text.find(q.group(0), q.end())
-            nl = text.find("\n", q.end())
-            if close < 0 or 0 <= nl < close:  # unterminated quote: take the rest of the line
-                return n if nl < 0 else nl
+            if close < 0:  # unterminated quote: everything after it is the value
+                return n
             j = close + len(q.group(0))
             after_quote = True
             continue
@@ -235,9 +274,17 @@ def _value_end(text: str, start: int, header: bool) -> int:
                 return n
             j = k + 1
             continue
+        if text[j] == "\\" and text[j + 1:j + 2] == "\n":  # shell line continuation
+            j += 2
+            continue
+        if text[j] == "\\" and text[j + 1:j + 3] == "\r\n":
+            j += 3
+            continue
         if text[j] in _BARE_STOP or (after_quote and text[j] in "}])"):
             break  # a closing bracket right after a quoted value closes the enclosing structure
         j += 1
+    if text[j:_line_end(text, j)].strip() == "":
+        j = max(j, _continuation_end(text, _line_end(text, j), indent))
     return j
 
 
@@ -268,7 +315,7 @@ def _label_pass(text: str, fix: bool, compose: bool = False) -> tuple[str, bool]
         label = m.group(2).lower()
         header = label in _HEADER_LABELS
         vstart = m.end()
-        vend = _value_end(text, vstart, header)
+        vend = _value_end(text, vstart, header, _indent_of_line(text, m.start()))
         value = text[vstart:vend]
         if not _value_safe(value, compose):
             found = True
@@ -322,8 +369,8 @@ def _redact_secret_field(value: str) -> str:
     return rewritten if _SAFE_SECRET_REF_RE.fullmatch(rewritten) else REDACTED
 
 
-def _embedded_structure(text: str) -> Any:
-    """Parse a string that is itself JSON (object/array), else None."""
+def _embedded_json(text: str) -> Any:
+    """Parse a string that is itself JSON (object/array), else None. Used to re-write it structurally."""
     s = text.strip()
     if not s or s[0] not in "{[":
         return None
@@ -334,13 +381,31 @@ def _embedded_structure(text: str) -> Any:
     return obj if isinstance(obj, (dict, list)) else None
 
 
+def _embedded_structure(text: str) -> Any:
+    """JSON or (multi-line / key: value) YAML embedded in a string, parsed; else None. For CHECKING:
+    parsing normalises block scalars, folding, quoting and continuations."""
+    if not isinstance(text, str):
+        return None
+    obj = _embedded_json(text)
+    if obj is not None:
+        return obj
+    if "\n" not in text and ": " not in text:
+        return None
+    try:
+        obj = yaml.safe_load(text)
+    except Exception:  # not YAML: the text scan still applies
+        return None
+    return obj if isinstance(obj, (dict, list)) else None
+
+
 def _redact_free_string(value: str, env_secrets: list[str]) -> str:
-    embedded = _embedded_structure(value)
+    embedded = _embedded_json(value)
     if embedded is not None:
         cleaned = json.dumps(redact(embedded, env_secrets), ensure_ascii=False)
     else:
         cleaned = redact_text(value, env_secrets)
-    # Fail closed per value: if any structural indicator survives, drop the whole string.
+    # Fail closed per value: if any structural indicator survives (text scan, or a parsed embedded
+    # JSON/YAML structure with a secret-named key holding a real value), drop the whole string.
     return REDACTED if find_secrets(cleaned, env_secrets) or find_field_secrets(_embedded_structure(cleaned)) \
         else cleaned
 
@@ -438,6 +503,8 @@ def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -
             hits += find_field_secrets(value, _under_secret or _is_secret_key(key),
                                        f"{_path}/{key if shown else '#' + str(n)}")
     elif isinstance(obj, list):
+        if _under_secret and obj == ["REDACTED"]:
+            return hits  # how YAML parses an unquoted `key: [REDACTED]` marker in free text
         for n, value in enumerate(obj):
             hits += find_field_secrets(value, _under_secret, f"{_path}/{n}")
     elif _under_secret:

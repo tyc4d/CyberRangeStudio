@@ -408,6 +408,28 @@ class ExposedPlanExportTests(ExportTestBase):
         self.assertTrue(B.find_secrets("MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}", []))
         self.assertEqual(B.find_secrets("MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}", [], compose=True), [])
 
+    def test_r5_multiline_values_are_redacted_whole_and_checked_by_parsing(self):
+        z = "m9-local-synthetic-cred-R5m1"
+        cases = {
+            "password: |\n  " + z + "\n  second line\n": "password: [REDACTED]\n",
+            "password: >-\n  " + z + "\n": "password: [REDACTED]\n",
+            "password:\n  " + z + "\n": "password:[REDACTED]\n",
+            'password: "public\n  ' + z + '"\n': 'password: "[REDACTED]"\n',
+            "password=public\\\n" + z + "\n": "password=[REDACTED]\n",
+            "Intro.\ncreds:\n  password: |\n    " + z + "\nafter: ok\n": "Intro.\ncreds:\n  password: [REDACTED]\nafter: ok\n",
+        }
+        for raw, expected in cases.items():
+            self.assertEqual(B.redact(raw, []), expected, raw)
+            self.assertTrue(B.find_secrets(raw, []) or B.find_field_secrets(B._embedded_structure(raw)), raw)
+        # parse-based check: an embedded YAML secret key with a real value is a leak even with no label hit
+        self.assertTrue(B.find_field_secrets({"description": "a: 1\npassword: >\n  " + z + "\n"}))
+        self.assertEqual(B.find_field_secrets({"description": "a: 1\npassword: [REDACTED]\n"}), [])
+        self.ir["description"] = "Intro.\npassword: |\n  " + z + "\nafter: ok\n"
+        data, _, zf = self.build()
+        self.assertEqual([n for n in zf.namelist() if z.encode() in zf.read(n)], [])
+        self.assertIn("after: ok", json.loads(zf.read("scenario/scenario.json"))["description"])
+        self.assertEqual(B.verify_bundle(data), [])
+
     def test_secret_default_in_compose_aborts_export(self):
         real = _generated(self.plan)
 
