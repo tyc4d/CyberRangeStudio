@@ -16,6 +16,10 @@ class UpRequest(BaseModel):
     lan_host: str | None = None
 
 
+class ResetRequest(BaseModel):
+    test_approved: bool = False
+
+
 def _validate(scenario_id: str) -> str:
     try:
         return validate_id(scenario_id)
@@ -80,6 +84,19 @@ def deployment_health(scenario_id: str):
 def deployment_down(scenario_id: str):
     scenario_id = _validate(scenario_id)
     result = manager.do_down(scenario_id)
+    if not result["ok"]:
+        raise HTTPException(status_code=503, detail=result)
+    return result
+
+
+@router.post("/{scenario_id}/reset")
+def deployment_reset(scenario_id: str, request: ResetRequest):
+    """Rollback an active Proxmox worker to its verified deployed snapshot."""
+    scenario_id = _validate(scenario_id)
+    if request.test_approved is not True:
+        manager.record(scenario_id, "reset", "rejected", {"reason": "explicit reset approval required"})
+        raise HTTPException(status_code=400, detail="explicit reset approval required: send test_approved=true")
+    result = manager.do_reset(scenario_id)
     if not result["ok"]:
         raise HTTPException(status_code=503, detail=result)
     return result

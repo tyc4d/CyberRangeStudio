@@ -191,6 +191,7 @@ class PveClient:
             if path not in {
                 "/api2/json/version", "/api2/json/nodes", "/api2/json/pools/cr-range",
                 "/api2/json/nodes/pve4-bbf/status", "/api2/json/nodes/pve4-bbf/storage/local-lvm/status",
+                "/api2/json/nodes/pve4-bbf/network",
                 "/api2/json/nodes/pve4-bbf/qemu/900000/config",
                 "/api2/json/nodes/pve4-bbf/qemu/900000/status/current",
                 "/api2/json/cluster/nextid",
@@ -198,7 +199,7 @@ class PveClient:
             } and not re.fullmatch(r"/api2/json/cluster/nextid", path):
                 if not (path in {"/api2/json/nodes/pve4-bbf/qemu/900000/config",
                                  "/api2/json/nodes/pve4-bbf/qemu/900000/status/current"}
-                        or re.fullmatch(r"/api2/json/nodes/pve4-bbf/qemu/900[1-9]\d{2}/(?:config|status/current|agent/exec-status)", path)
+                        or re.fullmatch(r"/api2/json/nodes/pve4-bbf/qemu/900[1-9]\d{2}/(?:config|status/current|agent/exec-status|snapshot(?:/deployed/config)?)", path)
                         or re.fullmatch(r"/api2/json/nodes/pve4-bbf/tasks/[^/]+/status", path)):
                     raise PveError("GET endpoint is not allowlisted")
             if params:
@@ -232,7 +233,7 @@ class PveClient:
             raise PveError("VM deletion requires fresh client-side ownership proof")
         if suffix == "config" and getattr(self, "_config_proof", None) != vmid:
             raise PveError("worker configuration requires fresh provisional-clone ownership proof")
-        if suffix in {"status/start", "status/shutdown", "agent/exec", "agent/file-write", "snapshot"} and getattr(self, "_owner_proof", None) != vmid:
+        if suffix in {"status/start", "status/shutdown", "agent/exec", "agent/file-write", "snapshot", "snapshot/deployed/rollback"} and getattr(self, "_owner_proof", None) != vmid:
             raise PveError("worker write requires fresh pool/tag/description ownership proof")
         if data.get("pool", "cr-range") != "cr-range":
             raise PveError("write may not leave the approved resource pool")
@@ -240,6 +241,7 @@ class PveClient:
             (method in {"PUT", "POST"} and suffix == "config") or
             (method == "POST" and suffix in {"status/start", "status/shutdown", "agent/exec", "agent/file-write"}) or
             (method == "POST" and suffix == "snapshot") or
+            (method == "POST" and suffix == "snapshot/deployed/rollback" and not data) or
             (method == "DELETE" and suffix == "")
         )
         if not allowed:
@@ -249,7 +251,7 @@ class PveClient:
             "status/start": set(), "status/shutdown": set(),
             "agent/exec": {"command", "input-data"},
             "agent/file-write": {"file", "content"},
-            "snapshot": {"snapname", "description"},
+            "snapshot": {"snapname", "description"}, "snapshot/deployed/rollback": set(),
         }
         if suffix in allowed_fields and set(data) - allowed_fields[suffix]:
             raise PveError("write parameters are not allowlisted")
@@ -359,7 +361,7 @@ class PveClient:
                       backend_instance: str, data: Mapping[str, Any] | None = None,
                       purpose: str = "") -> Any:
         """Send an allowlisted worker write only after live ownership revalidation."""
-        match = re.fullmatch(r"/api2/json/nodes/pve4-bbf/qemu/(900[1-9]\d{2})/(?:status/(?:start|shutdown)|agent/(?:exec|file-write)|snapshot)", path)
+        match = re.fullmatch(r"/api2/json/nodes/pve4-bbf/qemu/(900[1-9]\d{2})/(?:status/(?:start|shutdown)|agent/(?:exec|file-write)|snapshot|snapshot/deployed/rollback)", path)
         if not match:
             raise PveError("owned write path is not allowlisted")
         vmid = int(match.group(1))

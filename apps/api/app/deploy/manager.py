@@ -1158,3 +1158,31 @@ def do_down(scenario_id: str) -> dict[str, Any]:
             "state": state, "ok": result["returncode"] == 0, "command_result": result,
             "deployment_record": audit}
 
+
+def do_reset(scenario_id: str) -> dict[str, Any]:
+    """Reset the active Proxmox worker to its approved deployed snapshot."""
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    if selected != "proxmox":
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": "reset is supported only for an active Proxmox worker"}
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": conflict}
+    existing = _active_proxmox_deployment(scenario_id)
+    if existing is None or existing.get("orphan"):
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": "active owned Proxmox worker deployment is required for reset"}
+    try:
+        outcome = _proxmox_backend().reset(scenario_id, vmid=existing["vmid"], host_id=existing["host_id"])
+    except Exception as exc:
+        outcome = {"ok": False, "state": "failed", "error": f"Proxmox reset failed: {type(exc).__name__}"}
+    success = outcome.get("ok") is True
+    audit = record(scenario_id, "reset", "running" if success else "failed",
+                   {"backend": "proxmox", "vmid": existing["vmid"], "host_id": existing["host_id"],
+                    "result": outcome})
+    return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": selected,
+            "state": "running" if success else "failed", "ok": success, "result": outcome,
+            "deployment_record": audit}
+

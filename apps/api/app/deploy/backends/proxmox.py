@@ -277,11 +277,57 @@ class ProxmoxBackend:
         elif isinstance(payload, Mapping) and payload.get("upid"):
             self.client.wait_task(str(payload["upid"]))
 
+    def bridge_v1_report(self) -> dict[str, Any]:
+        """Read-only fail-closed proof that the approved lab bridge has no address/uplink."""
+        iface = self.settings.bridge
+        try:
+            rows = self._get("/api2/json/nodes/pve4-bbf/network")
+            if not isinstance(rows, list):
+                raise ProxmoxBackendError("node network response is not a list")
+            matches = [row for row in rows if isinstance(row, Mapping) and row.get("iface") == iface]
+            if len(matches) != 1:
+                raise ProxmoxBackendError(f"node network response must contain exactly one {iface} interface")
+            row = matches[0]
+            errors: list[str] = []
+            if row.get("type") != "bridge":
+                errors.append("interface is not explicitly a Linux bridge")
+            for method_field in ("method", "method6"):
+                if row.get(method_field) != "manual":
+                    errors.append(f"{method_field} is not explicitly manual")
+            # The list endpoint schema exposes bridge_ports. Missing is unknown, not empty.
+            if "bridge_ports" not in row:
+                errors.append("bridge member-port configuration is missing")
+            elif row.get("bridge_ports") != "":
+                errors.append("bridge has a configured or unverified member port")
+            address_fields = ("address", "netmask", "cidr", "address6", "netmask6", "cidr6",
+                              "gateway", "gateway6", "gw", "gw6")
+            configured_addresses = {key: row[key] for key in address_fields
+                                    if key in row and row[key] not in (None, "")}
+            if configured_addresses:
+                errors.append("bridge has configured address or gateway fields")
+            evidence_fields = ("iface", "type", "active", "exists", "autostart", "method", "method6",
+                               "families", "bridge_ports", *address_fields)
+            evidence = {key: row[key] for key in evidence_fields if key in row}
+            evidence["address_state"] = {
+                key: ("not_configured" if key not in row or row[key] in (None, "") else row[key])
+                for key in address_fields
+            }
+            return {"checked": True, "ok": not errors, "iface": iface,
+                    "evidence": evidence, "errors": errors}
+        except (PveError, ProxmoxBackendError, KeyError, TypeError, ValueError) as exc:
+            return {"checked": False, "ok": False, "iface": iface,
+                    "evidence": {}, "errors": [str(redact(str(exc)))[:500]]}
+
     def preflight(self) -> dict[str, Any]:
         """Read-only readiness and capacity report; absence/failure means not ready."""
         report: dict[str, Any] = {"backend": "proxmox", "mode": self.settings.mode, "ok": False, "checks": {},
                                   "placement_target": self.placement_target()}
         try:
+            bridge_v1 = self.bridge_v1_report()
+            report["checks"]["bridge_v1"] = bridge_v1
+            if not bridge_v1.get("checked") or not bridge_v1.get("ok"):
+                detail = "; ".join(bridge_v1.get("errors", [])) or "bridge state is unverified"
+                raise ProxmoxBackendError(f"V1 isolated bridge check failed: {detail}")
             version = self._get("/api2/json/version")
             report["checks"]["version"] = version
             if str(version.get("version", "")).split(".")[:2] != ["9", "2"]:
@@ -439,6 +485,12 @@ class ProxmoxBackend:
         vmid = self._next_vmid()
         if any(held["vmid"] == vmid for held in held_reservations):
             raise ProxmoxBackendError("candidate VMID already holds a durable reservation; manual reconciliation required")
+        bridge_v1_before = self.bridge_v1_report()
+        if not bridge_v1_before.get("checked") or not bridge_v1_before.get("ok"):
+            detail = "; ".join(bridge_v1_before.get("errors", [])) or "bridge state is unverified"
+            return {"ok": False, "state": "preflight_failed",
+                    "error": f"V1 isolated bridge check failed immediately before deployment: {detail}",
+                    "bridge_v1": {"before": bridge_v1_before}}
         reservation_written = self.settings.mode == "live"
         if reservation_written:
             _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
@@ -500,14 +552,42 @@ class ProxmoxBackend:
             self._owned_write("POST", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/snapshot",
                               {"snapname": "deployed", "description": f"compose_sha256={digest}"},
                               scenario_id, host_id, "record deployed reset point")
+            containers = self._compose_ps(vmid, scenario_id, host_id)
+            self._require_healthy_compose(containers, set(parsed_compose["services"]))
+            bridge_v1_after = self.bridge_v1_report()
+            result["bridge_v1"] = {"preflight": ready["checks"].get("bridge_v1"),
+                                   "before": bridge_v1_before, "after": bridge_v1_after}
+            if not bridge_v1_after.get("checked") or not bridge_v1_after.get("ok"):
+                detail = "; ".join(bridge_v1_after.get("errors", [])) or "bridge state is unverified"
+                raise ProxmoxBackendError(f"V1 isolated bridge check failed after deployment: {detail}")
             result.update(ok=True, state="running", compose_sha256=digest, isolation=isolation,
-                          containers=self._compose_ps(vmid, scenario_id, host_id))
+                          containers=containers)
             if reservation_written:
-                _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
-                                     vmid=vmid, state="active")
+                try:
+                    _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                         vmid=vmid, state="active")
+                except (sqlite3.Error, ProxmoxBackendError) as exc:
+                    # The worker is already running. Preserve the durable creating row (or
+                    # the possibly committed active row) and make a best-effort transition
+                    # to reconcile; never report success or delete a live worker just because
+                    # the final reservation write had an uncertain outcome.
+                    result.update(ok=False, state="failed",
+                                  error=f"could not persist active worker reservation ({type(exc).__name__}); "
+                                        "worker retained for reconciliation")
+                    try:
+                        _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                             host_id=host_id, vmid=vmid, state="reconcile")
+                        result["reservation_state"] = "reconcile"
+                    except (sqlite3.Error, ProxmoxBackendError):
+                        result["reservation_state"] = "unconfirmed"
+                    result["recoverable_orphan"] = {
+                        "vmid": vmid, "scenario_id": scenario_id, "host_id": host_id,
+                        "state": "requires_manual_reconciliation",
+                    }
+                    return result
             return result
         except (PveError, ProxmoxBackendError) as exc:
-            result.update(state="failed", error=str(redact(str(exc))))
+            result.update(ok=False, state="failed", error=str(redact(str(exc))))
             # Clean only if all three live ownership checks still pass.
             try:
                 if ownership_configured:
@@ -581,6 +661,105 @@ class ProxmoxBackend:
         return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid, "placement": placement,
                 "state": status.get("status", "unknown"), "qmpstatus": status.get("qmpstatus"),
                 "compose": qga}
+
+    def reset(self, scenario_id: str, *, vmid: int, host_id: str = "worker") -> dict[str, Any]:
+        """Rollback only to this reservation's deployed snapshot and re-prove isolation."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            held = _reservation(reservation_db, vmid)
+            if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
+                    or held["vmid"] != vmid or held["state"] != "active"):
+                raise ProxmoxBackendError("matching active durable worker reservation is required for reset")
+            config = self._assert_owned(vmid, scenario_id, host_id)
+            if any(re.fullmatch(r"net\d+", str(key)) and value for key, value in config.items()):
+                raise ProxmoxBackendError("refusing reset because the worker is not zero-NIC")
+            expected_digest = _description(config.get("description", "")).get("compose_sha256")
+            if not isinstance(expected_digest, str) or not re.fullmatch(r"[a-f0-9]{64}", expected_digest):
+                raise ProxmoxBackendError("owned worker has no valid deployed Compose digest")
+            snapshot_path = f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/snapshot"
+            snapshots = _data(self.client.request("GET", snapshot_path, purpose="verify deployed reset snapshot"))
+            if not isinstance(snapshots, list) or not any(
+                    isinstance(item, Mapping) and item.get("name") == "deployed" for item in snapshots):
+                raise ProxmoxBackendError("approved deployed snapshot is missing")
+            snapshot = _data(self.client.request(
+                "GET", f"{snapshot_path}/deployed/config", purpose="verify deployed snapshot identity"))
+            snapshot_description = str(snapshot.get("description", "")) if isinstance(snapshot, Mapping) else ""
+            if snapshot_description != f"compose_sha256={expected_digest}":
+                raise ProxmoxBackendError("deployed snapshot Compose digest does not match this worker")
+
+            state = self._get(f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/current")
+            if state.get("status") == "running":
+                self._owned_write("POST", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/shutdown", {},
+                                  scenario_id, host_id, "stop owned worker before reset")
+                self._wait_stopped(vmid)
+            elif state.get("status") != "stopped":
+                raise ProxmoxBackendError("worker state is not safe for reset")
+            self._assert_owned(vmid, scenario_id, host_id)
+            self._owned_write("POST", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/snapshot/deployed/rollback", {},
+                              scenario_id, host_id, "rollback owned worker to approved deployed snapshot")
+            self._assert_owned(vmid, scenario_id, host_id)
+            self._owned_write("POST", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/start", {},
+                              scenario_id, host_id, "start reset owned worker")
+            self._wait_qga(vmid, scenario_id, host_id)
+            isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
+            if not isolation.get("checked") or not isolation.get("isolated"):
+                raise ProxmoxBackendError("worker isolation could not be confirmed after reset; reservation retained")
+            compose_start = self._guest_exec(
+                vmid, _compose_command(scenario_id, "up", "--detach", "--pull", "never",
+                                       "--wait", "--wait-timeout", "240"),
+                scenario_id=scenario_id, host_id=host_id, timeout=900)
+            if int(compose_start.get("exitcode", 1)) != 0:
+                detail = _safe_guest_diagnostic(compose_start.get("stderr") or compose_start.get("stdout"))
+                message = f"worker Compose services could not be restored after reset (exit code {compose_start.get('exitcode', 1)})"
+                if detail:
+                    message += f": {detail}"
+                raise ProxmoxBackendError(message)
+            isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
+            if not isolation.get("checked") or not isolation.get("isolated"):
+                raise ProxmoxBackendError("worker isolation could not be confirmed after restoring services; reservation retained")
+            compose = self._compose_ps(vmid, scenario_id, host_id)
+            self._require_healthy_compose(compose)
+            return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid,
+                    "state": "running", "ok": True, "compose_sha256": expected_digest,
+                    "isolation": isolation, "containers": compose}
+
+    @staticmethod
+    def _require_healthy_compose(result: Mapping[str, Any],
+                                 expected_services: set[str] | None = None) -> None:
+        """Require successful Compose JSON/JSONL status and optionally every planned service."""
+        exitcode = result.get("exitcode")
+        if isinstance(exitcode, bool) or not isinstance(exitcode, int) or exitcode != 0:
+            raise ProxmoxBackendError("worker Compose status could not be confirmed")
+        output = result.get("stdout")
+        if not isinstance(output, str) or not output.strip():
+            raise ProxmoxBackendError("worker Compose status returned no containers")
+        try:
+            decoded = json.loads(output)
+        except json.JSONDecodeError:
+            # Compose 5.7 emits one JSON object per line for `ps --format json`.
+            rows = []
+            try:
+                for line in output.splitlines():
+                    if line.strip():
+                        rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                raise ProxmoxBackendError("worker Compose status returned invalid JSONL") from None
+        else:
+            rows = decoded if isinstance(decoded, list) else [decoded]
+        if not rows or any(not isinstance(row, Mapping) for row in rows):
+            raise ProxmoxBackendError("worker Compose status returned no valid container records")
+        observed_services: set[str] = set()
+        for row in rows:
+            service = row.get("Service")
+            state = str(row.get("State") or "").strip().lower()
+            health = str(row.get("Health") or "").strip().lower()
+            if not isinstance(service, str) or not service:
+                raise ProxmoxBackendError("worker Compose status omitted a service identity")
+            observed_services.add(service)
+            if state != "running" or health not in {"", "healthy"}:
+                raise ProxmoxBackendError("one or more worker Compose services are not healthy")
+        if expected_services is not None and not expected_services.issubset(observed_services):
+            raise ProxmoxBackendError("worker Compose status omitted one or more planned services")
 
     def isolation_report(self, scenario_id: str, *, vmid: int, host_id: str) -> dict[str, Any]:
         """Fail-closed isolation evidence from PVE config and the owned guest's Docker networks."""
@@ -680,8 +859,12 @@ class ProxmoxBackend:
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         held = _reservation(reservation_db, vmid)
         if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
-                or held["vmid"] != vmid or held["state"] != "active"):
-            raise ProxmoxBackendError("matching active durable worker reservation is required for down")
+                or held["vmid"] != vmid
+                or held["state"] not in {"active", "creating", "reconcile", "deleting"}):
+            raise ProxmoxBackendError("matching durable worker reservation is required for down")
+        # Reservation state alone is never authority to delete. Prove this is the exact
+        # owned worker before advancing even a stale/partial lifecycle row to deleting.
+        self._assert_owned(vmid, scenario_id, host_id)
         _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
                              vmid=vmid, state="deleting")
         self._assert_owned(vmid, scenario_id, host_id)
