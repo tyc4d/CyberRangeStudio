@@ -1,0 +1,125 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim organization’s on-premises environment",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h2",
+   "role": "virtualized server managed by USER1",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h3",
+   "role": "virtualized workstation of the former employee",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "component_mode": "substitute"
+  },
+  {
+   "id": "h4",
+   "role": "Active Directory domain controller",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "h1",
+   "to_host": "h4",
+   "reason": "Action a4 is stated to run from h1 against h4.",
+   "port": 389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "h1",
+   "to": "h4",
+   "action": "allow",
+   "port": 389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service internal virtual private network (VPN) access point (s1); it remains unreachable by default.",
+  "No port is known for service Common Internet File Service (CIFS) (s3); it remains unreachable by default.",
+  "Host h4 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology)."
+ ]
+}
