@@ -65,13 +65,13 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
         chain_status = "FAIL"
     elif not chain_ok and any(status in {"PASS", "PARTIAL"} for status in statuses.values()):
         chain_status = "PARTIAL"
-    full_chain = "PASS" if env_build == behavior_repro == "PASS" and chain_ok else "NOT_TESTED"
-    if not chain_ok and any(status == "FAIL" for status in statuses.values()):
+    full_chain = "NOT_TESTED"
+    if env_build == "FAIL" or behavior_repro == "FAIL" or chain_status == "FAIL":
         full_chain = "FAIL"
-    elif not chain_ok and chain_status == "PARTIAL":
+    elif env_build == behavior_repro == "PASS" and chain_ok:
+        full_chain = "PASS"
+    elif chain_status == "PARTIAL":
         full_chain = "PARTIAL"
-    elif env_build == "FAIL" or behavior_repro == "FAIL":
-        full_chain = "FAIL"
 
     checks = list(base.get("checks") or [])
     runs, ambiguous = _select_runs(executions)

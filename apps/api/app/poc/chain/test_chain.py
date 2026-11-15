@@ -155,6 +155,25 @@ class EvidenceTests(ArtifactFixture):
         self.seal(second)
         self.assertEqual(verify_execution(second), "PARTIAL")
 
+    def test_symlink_to_another_run_is_not_immutable_evidence(self):
+        first, second = self.run_result("a1"), self.run_result("a1", start=20)
+        linked = self.root / second["evidence"][0]["path"]
+        linked.unlink()
+        linked.symlink_to(self.root / first["evidence"][0]["path"])
+        self.assertFalse(proves_effect(second["evidence"][0]))
+        self.assertEqual(verify_execution(second), "PARTIAL")
+
+    def test_missing_identity_and_artifact_without_effect_marker_are_unverified(self):
+        result = self.run_result("a1")
+        self.logs[id(result)]["context"].pop("deployment_record_id")
+        self.seal(result)
+        self.assertEqual(verify_execution(result), "PARTIAL")
+        result = self.run_result("a1")
+        effect = result["evidence"][0]
+        effect.update(self.artifact(Path(effect["path"]).parent, "effect.txt", b"HTTP 200"))
+        self.seal(result)
+        self.assertEqual(verify_execution(result), "PARTIAL")
+
     def test_changed_scenario_or_redeployment_invalidates_old_success(self):
         result = self.run_result("a1")
         self.ir["ir_version"] = 2
@@ -296,6 +315,16 @@ class ChainTests(ArtifactFixture):
         self.assertEqual(result["per_action"][0]["status"], "BLOCKED")
         self.assertFalse(result["passes"])
 
+    def test_invalid_middle_attempt_cannot_leave_an_old_success_eligible(self):
+        a = self.run_result("a1")
+        bad = self.run_result("a1", start=10)
+        b = self.run_result("a2", start=20)
+        self.state_pair(a, b)
+        (self.root / bad["logs_path"]).unlink()
+        result = self.validate([a, bad, b])
+        self.assertEqual(result["per_action"][0]["status"], "BLOCKED")
+        self.assertFalse(result["passes"])
+
     def test_receipts_require_matching_consumed_state_source_run_and_digest(self):
         for key in ("state_id", "value_sha256", "from_run_id", "source_evidence"):
             a, b = self.run_result("a1"), self.run_result("a2")
@@ -319,6 +348,13 @@ class ChainTests(ArtifactFixture):
 
 
 class FidelityTests(unittest.TestCase):
+    def test_environment_failure_remains_failure_when_chain_is_partial(self):
+        chain = {"passes": False, "objective_reached": False, "per_action": [{"action_id": "a1", "status": "PASS"}]}
+        report = build_fidelity_report("s1", {"actions": [{"id": "a1"}]}, {"items": []}, [], chain,
+                                       {"levels": {"env_build": "FAIL", "behavior_repro": "PASS"}})
+        self.assertEqual(report["levels"]["env_build"], "FAIL")
+        self.assertEqual(report["levels"]["full_chain"], "FAIL")
+
     def test_full_chain_requires_all_three_levels_and_chain(self):
         ir = {"actions": [{"id": "a1"}]}
         plan = {"items": [{"action_id": "a1", "strategy": "poc_exec", "expected_evidence": "effect"}]}
