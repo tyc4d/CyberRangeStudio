@@ -295,7 +295,7 @@ class ExposedPlanExportTests(ExportTestBase):
         leaking = [n for n in zf.namelist() if synthetic.encode() in zf.read(n)]
         self.assertEqual(leaking, [])
         scenario = json.loads(zf.read("scenario/scenario.json"))
-        self.assertIn("https://qa-user:[REDACTED]@example.invalid/private", scenario["description"])
+        self.assertIn("https://[REDACTED]@example.invalid/private", scenario["description"])  # whole userinfo
         self.assertEqual(scenario["hosts"][0]["password"], "${DB_PASSWORD:-[REDACTED]}")
         self.assertEqual(scenario["hosts"][1]["secret"], "${APP_MODE:-[REDACTED]}")
         self.assertEqual(scenario["hosts"][2]["mode"], "${CR_PG_AUTH_METHOD:-trust}")  # non-secret default kept
@@ -304,8 +304,49 @@ class ExposedPlanExportTests(ExportTestBase):
     def test_final_scan_flags_userinfo_and_secret_defaults(self):
         self.assertTrue(B.find_secrets("x https://u:p4ss@h.invalid/ y", []))
         self.assertTrue(B.find_secrets("${DB_PASSWORD:-hunter2}", []))
-        self.assertFalse(B.find_secrets("https://u:[REDACTED]@h.invalid/ ${DB_PASSWORD:-[REDACTED]} "
+        self.assertFalse(B.find_secrets("https://[REDACTED]@h.invalid/ ${DB_PASSWORD:-[REDACTED]} "
                                         "${CR_BIND_IP:-127.0.0.1} ${CR_DB_PASSWORD:?set at deploy time}", []))
+
+    def test_fresh_secret_syntax_is_redacted_and_rescanned(self):
+        """R2-01: quoted userinfo, token-as-username, query tokens, every ${...} branch, nesting."""
+        z = "m9-local-synthetic-cred-R2x9"
+        self.ir["description"] = (f"a https://qa-user:{z}'ok@example.invalid/p b https://{z}@example.invalid/p "
+                                  f"c https://example.invalid/?x=1&access_token={z}#frag d ${{SERVICE_TOKEN:={z}}} "
+                                  f"e ${{CFG:-${{DB_PASSWORD:-{z}}}}}")
+        self.ir["hosts"] = [{"id": "w1", "password": "${DB_PASSWORD:?" + z + "}"},
+                            {"id": "w2", "password": "${DB_PASSWORD:-${FALLBACK:-" + z + "}}"},
+                            {"id": "w3", "token": "prefix-${T}-" + z}]
+        data, _, zf = self.build()
+        self.assertEqual([n for n in zf.namelist() if z.encode() in zf.read(n)], [])
+        hosts = json.loads(zf.read("scenario/scenario.json"))["hosts"]
+        self.assertEqual([h.get("password", h.get("token")) for h in hosts],
+                         ["${DB_PASSWORD:?[REDACTED]}", "${DB_PASSWORD:-[REDACTED]}", "[REDACTED]"])
+        self.assertEqual(B.verify_bundle(data), [])
+
+    def test_scanners_flag_each_fresh_form(self):
+        z = "m9-local-synthetic-cred-R2x9"
+        for text in (f"https://u:{z}'ok@h.invalid/", f"https://{z}@h.invalid/", f"https://h.invalid/?access_token={z}",
+                     "${SERVICE_TOKEN:=" + z + "}", "${CFG:-${DB_PASSWORD:-" + z + "}}"):
+            self.assertTrue(B.find_secrets(text, []), text)
+        for field in ("${DB_PASSWORD:?" + z + "}", "${DB_PASSWORD:-${FALLBACK:-" + z + "}}", z, 12345):
+            self.assertTrue(B.find_field_secrets({"hosts": [{"password": field}]}), field)
+        self.assertFalse(B.find_field_secrets({"password": "${DB_PASSWORD:?[REDACTED]}", "user": z}))
+
+    def test_verify_bundle_reports_secret_left_in_secret_field(self):
+        data, manifest, zf = self.build()
+        out = io.BytesIO()
+        with zipfile.ZipFile(out, "w") as w:
+            for n in zf.namelist():
+                body = zf.read(n)
+                if n == "scenario/scenario.json":
+                    obj = json.loads(body)
+                    obj["hosts"][0]["credentials"]["password"] = "${DB_PASSWORD:?leak-value}"
+                    body = json.dumps(obj).encode()
+                    for f in manifest["files"]:
+                        if f["path"] == n:
+                            f["sha256"] = hashlib.sha256(body).hexdigest()
+                w.writestr(n, json.dumps(manifest).encode() if n == "manifest.json" else body)
+        self.assertIn("secret material in scenario/scenario.json", B.verify_bundle(out.getvalue()))
 
     def test_secret_default_in_compose_aborts_export(self):
         real = _generated(self.plan)

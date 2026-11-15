@@ -78,7 +78,6 @@ _SECRET_KEY_RE = re.compile(
     r"credential|credentials|auth[_-]?token|bearer)(?:$|[_\-.])",
     re.IGNORECASE,
 )
-_RUNTIME_REF_RE = re.compile(r"^\$\{[A-Z][A-Z0-9_]*(?::?[-?][^${}]*)?\}$")
 # High-confidence secret material: always redacted from text and fatal if found at the end.
 _SECRET_VALUE_PATTERNS = (
     re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)"),
@@ -95,11 +94,15 @@ _SECRET_VALUE_PATTERNS = (
 _INLINE_SECRET_RE = re.compile(
     r"(?i)\b(password|passwd|pwd|passphrase|token|secret|api[_-]?key)(\s*[:=]\s*)(?!\$\{|<|\[REDACTED\])([^\s'\",;&]+)"
 )
-# Credentials in URL userinfo: scheme://user:secret@host -> scheme://user:[REDACTED]@host
-_URL_USERINFO_RE = re.compile(
-    r"(?i)\b([a-z][a-z0-9+.\-]*://)([^\s/@:\"'<>]+):(?!\[REDACTED\]@)([^\s/@\"'<>]+)@")
-# ${VAR:-literal} / ${VAR-literal}: the literal default is a real value, not a reference.
-_REF_DEFAULT_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?-)([^}]*)\}")
+# URL userinfo: everything between "scheme://" and the LAST "@" of the authority (stops at / ? # or
+# whitespace). Quotes and colon-less token-as-username forms are covered; the whole userinfo is redacted.
+_URL_USERINFO_RE = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*://)([^\s/?#\"<>\\]*)@")
+# Secret-looking query / fragment parameters (?access_token=..., &api_key=..., #id_token=...).
+_QUERY_SECRET_RE = re.compile(
+    r"(?i)([?&#;](?:[a-z0-9_.\-]*(?:token|secret|pass|pwd|api[_\-]?key|apikey|access[_\-]?key|auth|sig|"
+    r"signature|session|credential|cookie)[a-z0-9_.\-]*)=)([^&#\s\"'<>\\]+)")
+_REF_HEAD_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(:?[-?+=])?", re.S)
+_SAFE_SECRET_REF_RE = re.compile(r"(?:\$\{[A-Za-z_][A-Za-z0-9_]*(?::?[-?+=](?:\[REDACTED\])?)?\})+")
 _SECRET_VAR_NAME_RE = re.compile(r"PASS|PWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIAL|COOKIE",
                                  re.IGNORECASE)
 _ENV_REF_RE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)(?:(:?[-?])([^}]*))?\}")
@@ -127,14 +130,58 @@ def _env_secret_values() -> list[str]:
     return sorted((v for v in values if len(v) >= 8), key=len, reverse=True)
 
 
-def _redact_ref_defaults(text: str, all_defaults: bool = False) -> str:
-    """Replace literal defaults of secret-named ${VAR:-default} refs (or of every ref if all_defaults)."""
-    def sub(m: re.Match) -> str:
-        name, op, default = m.groups()
-        if default and default != REDACTED and (all_defaults or _SECRET_VAR_NAME_RE.search(name)):
-            return "${" + name + op + REDACTED + "}"
-        return m.group(0)
-    return _REF_DEFAULT_RE.sub(sub, text)
+def _matching_brace(text: str, open_idx: int) -> Optional[int]:
+    depth = 0
+    for i in range(open_idx, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+    return None
+
+
+def _walk_refs(text: str, force: bool = False) -> str:
+    """Rewrite ${...} interpolations (nesting-aware).
+
+    force=True (inside a secret-named field): every branch argument (:- - := = :+ + :? ?) becomes
+    [REDACTED]. Otherwise a secret-named variable's value branches (- = +) are redacted; its ``?``
+    branch is an error message and is redacted too, since it may carry the literal. Arguments of
+    non-secret refs are walked recursively, so a nested secret ref is still caught.
+    """
+    out: list[str] = []
+    i = 0
+    while True:
+        j = text.find("${", i)
+        if j < 0:
+            out.append(text[i:])
+            break
+        out.append(text[i:j])
+        k = _matching_brace(text, j + 1)
+        if k is None:  # unbalanced: nothing structured left to keep
+            out.append(REDACTED if force else text[j:])
+            break
+        inner = text[j + 2:k]
+        m = _REF_HEAD_RE.match(inner)
+        if not m:
+            out.append("${" + _walk_refs(inner, force) + "}")
+        else:
+            name, op = m.group(1), m.group(2) or ""
+            arg = inner[m.end():]
+            if arg and arg != REDACTED and (force or (op and _SECRET_VAR_NAME_RE.search(name))):
+                arg = REDACTED
+            elif arg:
+                arg = _walk_refs(arg, force)
+            out.append("${" + name + op + arg + "}")
+        i = k + 1
+    return "".join(out)
+
+
+def _redact_urls(text: str) -> str:
+    text = _URL_USERINFO_RE.sub(
+        lambda m: m.group(0) if m.group(2) == REDACTED else m.group(1) + REDACTED + "@", text)
+    return _QUERY_SECRET_RE.sub(lambda m: m.group(0) if m.group(2) == REDACTED else m.group(1) + REDACTED, text)
 
 
 def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
@@ -142,9 +189,17 @@ def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
         text = text.replace(secret, REDACTED)
     for pattern in _SECRET_VALUE_PATTERNS:
         text = pattern.sub(REDACTED, text)
-    text = _URL_USERINFO_RE.sub(lambda m: m.group(1) + m.group(2) + ":" + REDACTED + "@", text)
-    text = _redact_ref_defaults(text)
+    text = _redact_urls(text)
+    text = _walk_refs(text)
     return _INLINE_SECRET_RE.sub(lambda m: m.group(1) + m.group(2) + REDACTED, text)
+
+
+def _redact_secret_field(value: str) -> str:
+    """A string inside a secret-named field: keep only bare interpolation structure, else redact."""
+    if not value or value == REDACTED:
+        return value
+    rewritten = _walk_refs(value, force=True)
+    return rewritten if _SAFE_SECRET_REF_RE.fullmatch(rewritten) else REDACTED
 
 
 def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False) -> Any:
@@ -159,19 +214,19 @@ def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool =
     if isinstance(obj, list):
         return [redact(v, env_secrets, _under_secret) for v in obj]
     if isinstance(obj, str):
-        if _RUNTIME_REF_RE.fullmatch(obj):
-            # A deploy-time reference is not a value — but a literal default inside it is.
-            return _redact_ref_defaults(obj, all_defaults=_under_secret)
-        if _under_secret:
-            return REDACTED if obj else obj
-        return redact_text(obj, env_secrets)
+        return _redact_secret_field(obj) if _under_secret else redact_text(obj, env_secrets)
     if _under_secret and isinstance(obj, (int, float)) and not isinstance(obj, bool):
         return REDACTED
     return obj
 
 
 def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
-    """Names of secret indicators present in ``text`` (empty = clean). Never returns the value."""
+    """Names of secret indicators present in ``text`` (empty = clean). Never returns the value.
+
+    Text-level check, valid for any file (including the generator's compose, whose
+    ``${CR_DB_PASSWORD:?set at deploy time}`` error messages are allowed here). Structured
+    files are additionally checked field-by-field by :func:`find_field_secrets`.
+    """
     hits = []
     for secret in env_secrets if env_secrets is not None else _env_secret_values():
         if secret in text:
@@ -179,11 +234,58 @@ def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
     for pattern in _SECRET_VALUE_PATTERNS:
         if pattern.search(text):
             hits.append(f"pattern {pattern.pattern[:32]}")
-    if _URL_USERINFO_RE.search(text):
+    if any(m.group(2) != REDACTED for m in _URL_USERINFO_RE.finditer(text)):
         hits.append("credentials in URL userinfo")
-    if _redact_ref_defaults(text) != text:
-        hits.append("literal default of a secret-named ${VAR:-...} reference")
+    if any(m.group(2) != REDACTED for m in _QUERY_SECRET_RE.finditer(text)):
+        hits.append("secret-named URL query parameter")
+    for m in re.finditer(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?[-+=])", text):
+        if _SECRET_VAR_NAME_RE.search(m.group(1)):
+            k = _matching_brace(text, m.start() + 1)
+            arg = text[m.end():k] if k is not None else text[m.end():]
+            if arg and arg != REDACTED:
+                hits.append("literal value branch of a secret-named ${VAR...} reference")
+                break
     return hits
+
+
+def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -> list[str]:
+    """Field-aware check of parsed JSON/YAML: every secret-named field must hold nothing usable.
+
+    Allowed under a secret-named key: empty, null, bool, [REDACTED], or bare interpolations whose
+    branch arguments are all [REDACTED]. Anything else is reported (fail closed).
+    """
+    hits: list[str] = []
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            secret_key = isinstance(key, str) and bool(_SECRET_KEY_RE.search(key))
+            hits += find_field_secrets(value, _under_secret or secret_key, f"{_path}/{key}")
+    elif isinstance(obj, list):
+        for n, value in enumerate(obj):
+            hits += find_field_secrets(value, _under_secret, f"{_path}/{n}")
+    elif _under_secret:
+        if isinstance(obj, str):
+            if obj and obj != REDACTED and not _SAFE_SECRET_REF_RE.fullmatch(obj):
+                hits.append(f"unredacted value in secret-named field {_path}")
+        elif obj is not None and not isinstance(obj, bool):
+            hits.append(f"unredacted value in secret-named field {_path}")
+    return hits
+
+
+def _structured_secrets(path: str, data: bytes) -> list[str]:
+    """find_field_secrets for bundle JSON/YAML files; an unparsable structured file fails closed.
+
+    The generator's docker-compose.yml is exempt (its secret-named env keys legitimately hold
+    ``${CR_..._PASSWORD:?set at deploy time}``); it is covered by the text scan and by the
+    generator's own forbidden-credential check.
+    """
+    if path == "infrastructure/docker-compose.yml" or not path.endswith((".json", ".yaml", ".yml")):
+        return []
+    try:
+        text = data.decode("utf-8")
+        obj = json.loads(text) if path.endswith(".json") else yaml.safe_load(text)
+    except (UnicodeDecodeError, ValueError, yaml.YAMLError):
+        return [f"cannot parse {path} to confirm it is secret-free"]
+    return find_field_secrets(obj)
 
 
 # --- collection ---------------------------------------------------------------
@@ -291,7 +393,7 @@ def _infrastructure(b: _Bundle) -> None:
                            "so it resolves inside this bundle.")
     generated_by = GEN_IAC + (" (build context path relocated by app.poc.export)" if needs_template else "")
     b.add("infrastructure/docker-compose.yml", compose.encode("utf-8"), generated_by)
-    b.add_json("infrastructure/iac-report.json", gen["report"], GEN_IAC)
+    b.add_json("infrastructure/iac-report.json", redact(gen["report"]), GEN_IAC)
 
     b.images = sorted({s["image"] for s in services.values() if s.get("image") and not s.get("build")})
     seen: dict[str, tuple[str, str, str]] = {}
@@ -518,7 +620,7 @@ def build_bundle(scenario_id: str, fmt: str | None = "full") -> tuple[bytes, dic
 
     # Fail closed: nothing that looks like a secret may leave.
     for path, (data, _) in b.files.items():
-        hits = find_secrets(data.decode("utf-8", errors="replace"), env_secrets)
+        hits = find_secrets(data.decode("utf-8", errors="replace"), env_secrets) + _structured_secrets(path, data)
         if hits:
             raise ExportError(f"refusing to export: {path} contains secret material ({', '.join(sorted(set(hits)))})")
 
@@ -621,7 +723,7 @@ def verify_bundle(path_or_bytes: str | Path | bytes) -> list[str]:
             data = zf.read(f["path"])
             if _sha256(data) != f["sha256"]:
                 errors.append(f"sha256 mismatch: {f['path']}")
-            if find_secrets(data.decode("utf-8", errors="replace")):
+            if find_secrets(data.decode("utf-8", errors="replace")) or _structured_secrets(f["path"], data):
                 errors.append(f"secret material in {f['path']}")
         for extra in sorted(names - listed - {"manifest.json"}):
             errors.append(f"unlisted file in bundle: {extra}")
