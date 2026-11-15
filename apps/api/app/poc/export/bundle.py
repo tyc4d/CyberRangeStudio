@@ -451,6 +451,11 @@ def build_bundle(scenario_id: str) -> tuple[bytes, dict[str, Any]]:
         "missing_for_rebuild": list(dict.fromkeys(b.blocking + b.informational)),
         "contains_secrets": False,
     }
+    # TODO(Lead, integration): once the ExportManifest schema gains the optional
+    # `export_levels` field (approved), set it here:
+    #   manifest["export_levels"] = {"descriptors_exportable": True,   # scenario exists -> descriptors always exported
+    #                                "fully_rebuildable": manifest["rebuildable"]}
+    # Must be set before _validate_manifest() and before the README/file list is built.
     # README lists every other file, so build it against a provisional file list first.
     manifest["files"] = [{"path": p, "sha256": _sha256(d), "generated_by": g} for p, (d, g) in sorted(b.files.items())]
     b.add("README.md", _readme(b, ir, manifest).encode("utf-8"), GEN_EXPORT)
