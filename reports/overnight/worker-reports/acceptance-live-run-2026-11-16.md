@@ -2,7 +2,7 @@
 
 ## Candidate and safety boundary
 
-- Candidate branch: `agent/acceptance-lead`, based on `agent/trapa-deploy-ui` at `f020597`. PVE acceptance updates are locally committed; `main` remains `4c2c5fa`, and no acceptance commit has been pushed or merged.
+- Candidate branch: `agent/acceptance-lead`, based on `agent/trapa-deploy-ui` at `f020597`; latest report/evidence commit is `f571599`. PVE acceptance updates are locally committed; `main` remains `4c2c5fa`, and no acceptance commit has been pushed or merged.
 - The live test used the explicitly approved synthetic scenario `scn_2acb1b9c902c`; every deploy/reset/down request included `test_approved=true`.
 - The ten initial create/deploy/snapshot/destroy cycles used the candidate API on `127.0.0.1:8077`. Reset/rollback used a temporary API on port `8293` from `agent/acceptance-lead`; ports `8077` and `8283` were left untouched.
 - A separate existing worker, VMID `900100` for `scn_db358a6d2c07`, was confirmed running before and after. It was not stopped, modified, or deleted.
