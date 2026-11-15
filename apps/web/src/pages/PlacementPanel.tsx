@@ -64,18 +64,6 @@ function SegmentLabel({ network }: { network: EnvNetwork }) {
   return <span className={`placement-segment is-${category}`}>{t(`pl.seg.${category}`)}</span>;
 }
 
-/** Isolation as a short safety state. Shown only when the runtime reports it; never inferred. */
-function IsolationChip({ known, nicCount }: { known: boolean; nicCount?: number }) {
-  if (!known) return null;
-  const s = nicCount === 0 ? "ok" : nicCount === undefined ? "pending" : "bad";
-  const cls = s === "ok" ? "status-PASS" : s === "bad" ? "status-FAIL" : "status-NOT_TESTED";
-  return (
-    <span className="placement-live-state" title={t(`pl.iso.${s}.hint`)} data-testid="isolation-state">
-      <span className={`placement-dot ${cls}`} />{t(`pl.iso.${s}`)}
-    </span>
-  );
-}
-
 export function PlacementPanel({
   hosts,
   networks,
@@ -147,6 +135,8 @@ export function PlacementPanel({
     hosts: hosts.filter((host) => host.networks?.includes(id)),
   }));
   const withoutSegment = hosts.filter((host) => !host.networks?.length);
+  // A host on several networks is drawn once per network. Say so, so it is not read as several machines.
+  const repeated = hosts.some((host) => new Set(host.networks ?? []).size > 1);
   if (withoutSegment.length) grouped.push({ network: { id: "__unspecified__", segment: t("pl.seg.none"), internal: false }, hosts: withoutSegment });
 
   return (
@@ -161,7 +151,6 @@ export function PlacementPanel({
             <span className={`placement-dot ${stateClass(state)}`} />
             <span>{displayState(state, statusLoading, statusError)}</span>
           </span>
-          <IsolationChip known={isProxmox} nicCount={worker?.nic_count} />
         </div>
         <Link className="placement-edit-link" to="/topology">{t("pl.editTopology")}</Link>
       </header>
@@ -212,6 +201,7 @@ export function PlacementPanel({
               ))}
             </div>
           )}
+          {repeated && <p className="placement-map__footnote" data-testid="multi-network-note">{t("pl.multiNet")}</p>}
         </main>
 
         <aside className="placement-inspector" aria-live="polite">

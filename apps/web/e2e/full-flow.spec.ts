@@ -10,6 +10,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { relayGets } from "./net-relay";
+import zh from "../src/i18n/zh-TW";
+
+// UI text comes from the zh-TW locale file (the app's default language), so selectors follow the locale keys
+// instead of repeating the wording. Roles, labels and test ids stay the anchors.
+type K = keyof typeof zh;
+/** A message as the page renders it. Placeholders without a value stay as written. */
+const L = (k: K, v: Record<string, string | number> = {}) => zh[k].replace(/\{(\w+)\}/g, (m, n: string) => (n in v ? String(v[n]) : m));
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Whole-text pattern for a message whose placeholders are numbers. */
+const R = (k: K) => new RegExp(`^${esc(zh[k]).replace(/\\\{\w+\\\}/g, "\\d+")}$`);
+/** The longest fixed part of a message whose variable values the test does not know. */
+const P = (k: K) => zh[k].split(/\{\w+\}/).map((s) => s.trim()).sort((a, b) => b.length - a.length)[0];
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ARTIFACTS = path.join(HERE, "artifacts");
@@ -80,7 +92,11 @@ async function substituteHosts(): Promise<any[]> {
   return (ir.environment_plan?.hosts ?? []).filter((h: any) => h.substitute_for);
 }
 
-const nextStep = (label: string) => page.getByRole("button", { name: `下一步：${label}` });
+const nextStep = (stage: K) => page.getByRole("button", { name: L("next.step", { label: L(stage) }) });
+/** A stage link in the workflow navigation. */
+const stageLink = (stage: K) => page.getByRole("navigation", { name: L("shell.workflow") }).getByRole("link", { name: L(stage) });
+/** The deploy page keeps state, records and health in a folded section. Open it before reading visible text there. */
+const openDeployDetails = async () => { const d = page.locator("details.deploy-more", { has: page.getByTestId("deploy-records") }); if (!(await d.evaluate((el) => (el as HTMLDetailsElement).open))) await d.locator("summary").first().click(); };
 const heading = (title: string) => page.getByRole("heading", { level: 1, name: title, exact: true });
 const errorNotices = () => page.locator(".notice.err");
 
@@ -116,79 +132,79 @@ test.afterAll(async ({ request }) => {
 test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴、拓樸、IaC、核准）", async () => {
   await step("upload-report", async () => {
     await page.goto("/");
-    await page.getByRole("button", { name: "＋ 新建情境" }).click();
-    await expect(heading("情資匯入")).toBeVisible();
+    await page.getByRole("button", { name: `＋ ${L("home.new")}` }).click();
+    await expect(heading(L("imp.title"))).toBeVisible();
     await page.locator('input[type="file"]').setInputFiles(REPORT_FIXTURE);
-    await expect(page.getByText(/已載入 demo-intrusion\.md/)).toBeVisible();
-    await expect(page.getByLabel("輸入格式")).toHaveValue("markdown");
-    await page.getByLabel("情境名稱（選填）").fill(`gui-e2e ${new Date().toISOString().slice(0, 19)}`);
+    await expect(page.getByText(L("imp.loaded", { name: "demo-intrusion.md" }).split("{")[0])).toBeVisible();
+    await expect(page.getByLabel(L("imp.kind"))).toHaveValue("markdown");
+    await page.getByLabel(L("imp.name")).fill(`gui-e2e ${new Date().toISOString().slice(0, 19)}`);
   });
 
   await step("analyze", async () => {
-    await page.getByRole("button", { name: "開始分析" }).click();
-    await expect(heading("分析結果")).toBeVisible({ timeout: LLM_TIMEOUT });
+    await page.getByRole("button", { name: L("imp.start") }).click();
+    await expect(heading(L("an.title"))).toBeVisible({ timeout: LLM_TIMEOUT });
     log.scenario_id = await page.evaluate(() => localStorage.getItem("cr.scenario"));
     expect(log.scenario_id, "scenario id stored after analysis").toBeTruthy();
-    const tab = page.getByRole("button", { name: /^攻擊行為 \d+$/ });
+    const tab = page.getByRole("button", { name: R("an.tab.actions") });
     const actions = Number((await tab.innerText()).replace(/\D/g, ""));
     expect(actions, "analysis produced attack actions").toBeGreaterThan(0);
-    await page.getByRole("button", { name: /^關係 \d+$/ }).click();
+    await page.getByRole("button", { name: R("an.tab.relations") }).click();
     return `scenario ${log.scenario_id}, ${actions} actions`;
   });
 
   await step("supplement-missing", async () => {
-    await nextStep("缺失補充").click();
-    await expect(heading("缺失補充")).toBeVisible();
-    const openTab = page.getByRole("button", { name: /^待補充 \d+$/ });
+    await nextStep("stage.missing").click();
+    await expect(heading(L("ms.title"))).toBeVisible();
+    const openTab = page.getByRole("button", { name: R("ms.tab.open") });
     const openBefore = Number((await openTab.innerText()).replace(/\D/g, ""));
     let note = `open items before: ${openBefore}`;
     if (openBefore > 0) {
-      await page.getByRole("button", { name: "補充", exact: true }).first().click();
-      await page.getByPlaceholder(/填入實際資訊/).fill("示範環境以開源的無害 HTTP 替身代表受害網站，版本不限。");
-      await page.getByRole("button", { name: "送出", exact: true }).click();
-      await expect(openTab).toHaveText(`待補充 ${openBefore - 1}`);
+      await page.getByRole("button", { name: L("ms.answer"), exact: true }).first().click();
+      await page.getByPlaceholder(L("ms.res.user.ph")).fill("示範環境以開源的無害 HTTP 替身代表受害網站，版本不限。");
+      await page.getByRole("button", { name: L("ms.send"), exact: true }).click();
+      await expect(openTab).toHaveText(L("ms.tab.open", { n: openBefore - 1 }));
       note += `, after: ${openBefore - 1}`;
     }
-    await page.getByPlaceholder("輸入補充說明").fill("受害環境為單一對外網站與一台只允許內網連線的資料庫。");
-    await page.getByRole("button", { name: "加入補充" }).click();
-    await expect(page.getByRole("heading", { name: "已加入的補充" })).toBeVisible();
+    await page.getByPlaceholder(L("ms.free.ph")).fill("受害環境為單一對外網站與一台只允許內網連線的資料庫。");
+    await page.getByRole("button", { name: L("ms.free.add") }).click();
+    await expect(page.getByRole("heading", { name: L("ms.added") })).toBeVisible();
     await expect(errorNotices()).toHaveCount(0);
     return note;
   });
 
   await step("edit-flow-confirm-dependencies", async () => {
-    await nextStep("攻擊流程").click();
-    await expect(page.getByRole("complementary", { name: "設計工作台" })).toBeVisible();
+    await nextStep("stage.flow").click();
+    await expect(page.getByRole("complementary", { name: L("fl.workbench") })).toBeVisible();
     await expect(page.locator(".react-flow__node").first()).toBeVisible();
     // Open one node in the inspector to prove the editor responds to clicks.
     await page.locator(".react-flow__node").first().click();
-    await expect(page.getByRole("heading", { name: "攻擊行為", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: L("fl.n.action"), exact: true })).toBeVisible();
     const bar = page.getByTestId("dep-confirm-bar");
     await expect(bar, "the analysis must contain dependency relations to confirm").toBeVisible();
     const total = Number((await bar.innerText()).match(/\/\s*(\d+)/)?.[1]);
-    await bar.getByRole("button", { name: "確認全部依賴關係" }).click();
-    await expect(bar).toContainText(`依賴關係已確認 ${total} / ${total}`);
-    await page.getByPlaceholder("版本備註（選填）").fill("e2e：確認依賴關係");
-    await page.getByRole("button", { name: "儲存為新版本", exact: true }).click();
-    await expect(page.getByText("已儲存為新版本。")).toBeVisible();
+    await bar.getByRole("button", { name: L("fl.confirmAll") }).click();
+    await expect(bar).toContainText(L("fl.depsConfirmed", { ok: total, total }));
+    await page.getByPlaceholder(L("fl.notePh")).fill("e2e：確認依賴關係");
+    await page.getByRole("button", { name: L("fl.save"), exact: true }).click();
+    await expect(page.getByText(L("fl.saved"))).toBeVisible();
     // The confirmation must survive the round trip through the backend.
-    await expect(bar).toContainText(`依賴關係已確認 ${total} / ${total}`);
+    await expect(bar).toContainText(L("fl.depsConfirmed", { ok: total, total }));
     return `${total} dependency relations confirmed and saved`;
   });
 
   await step("dependencies", async () => {
-    await page.getByRole("link", { name: /軟體依賴/ }).first().click();
-    await expect(heading("軟體依賴")).toBeVisible();
-    await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
-    await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeEnabled({ timeout: 60_000 });
+    await stageLink("stage.deps").click();
+    await expect(heading(L("dep.title"))).toBeVisible();
+    await page.getByRole("button", { name: new RegExp(`^(${esc(L("dep.run"))}|${esc(L("dep.rerun"))})$`) }).click();
+    await expect(page.getByRole("button", { name: L("dep.rerun"), exact: true })).toBeEnabled({ timeout: 60_000 });
     await expect(errorNotices()).toHaveCount(0);
   });
 
   await step("topology-plan", async () => {
-    await nextStep("拓樸").click();
-    await expect(heading("拓樸")).toBeVisible();
-    await page.getByRole("button", { name: /產生拓樸規劃|重新規劃拓樸/ }).click();
-    await expect(page.getByTestId("approval-state")).toHaveText("尚未核准", { timeout: 60_000 });
+    await nextStep("stage.topology").click();
+    await expect(heading(L("tp.title"))).toBeVisible();
+    await page.getByRole("button", { name: new RegExp(`^(${esc(L("tp.plan"))}|${esc(L("tp.replan"))})$`) }).click();
+    await expect(page.getByTestId("approval-state")).toHaveText(L("tp.notApproved"), { timeout: 60_000 });
     await expect(page.locator(".react-flow__node").first()).toBeVisible();
     // The approval gate lists both sides of the decision: what gets opened and what must stay shut.
     const opened = await page.getByTestId("open-paths").locator(".path").count();
@@ -203,11 +219,12 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
   });
 
   await step("iac-preview", async () => {
-    await nextStep("IaC 預覽").click();
-    await expect(heading("IaC 預覽")).toBeVisible();
-    await page.getByRole("button", { name: /^(生成 IaC|重新生成)$/ }).click();
+    await nextStep("stage.iac").click();
+    await expect(heading(L("iac.title"))).toBeVisible();
+    await page.getByRole("button", { name: new RegExp(`^(${esc(L("iac.gen"))}|${esc(L("iac.regen"))})$`) }).click();
     await expect(page.locator("pre.code")).toContainText("services:", { timeout: 60_000 });
-    await expect(page.getByRole("heading", { name: "可部署報告" })).toBeVisible();
+    // The check report is now a folded section; its summary line proves the report is shown.
+    await expect(page.locator("details > summary", { hasText: L("iac.report") })).toBeVisible();
     await expect(errorNotices()).toHaveCount(0);
     const subs = await substituteHosts();
     await expect(page.getByTestId("substitute-card")).toHaveCount(subs.length ? 1 : 0);
@@ -215,28 +232,28 @@ test("情資上傳到拓樸核准（上傳、分析、補充、流程、依賴�
   });
 
   await step("deploy-blocked-before-approval", async () => {
-    await nextStep("部署管理").click();
-    await expect(heading("部署管理")).toBeVisible();
-    await expect(page.getByText("拓樸尚未核准，不能部署")).toBeVisible();
-    await expect(page.getByRole("button", { name: "啟動（up）" })).toBeDisabled();
+    await nextStep("stage.deploy").click();
+    await expect(heading(L("dp.title"))).toBeVisible();
+    await expect(page.getByText(L("dp.n.notApproved"))).toBeVisible();
+    await expect(page.getByRole("button", { name: L("dp.act.up"), exact: true })).toBeDisabled();
   });
 
   await step("approve-topology", async () => {
-    await page.getByRole("button", { name: "前往拓樸頁" }).click();
-    await expect(heading("拓樸")).toBeVisible();
-    await page.getByLabel("核准備註").fill("e2e：核准本機隔離 PoC 拓樸");
-    await page.getByRole("button", { name: "核准並繼續" }).click();
-    await expect(heading("IaC 預覽")).toBeVisible();
+    await page.getByRole("button", { name: L("dp.n.toTopology") }).click();
+    await expect(heading(L("tp.title"))).toBeVisible();
+    await page.getByLabel(L("tp.note"), { exact: true }).fill("e2e：核准本機隔離 PoC 拓樸");
+    await page.getByRole("button", { name: L("tp.approve") }).click();
+    await expect(heading(L("iac.title"))).toBeVisible();
     // Back on the topology page the approval is shown as recorded by the backend.
-    await page.getByRole("link", { name: /拓樸/ }).first().click();
-    await expect(page.getByTestId("approval-state")).toHaveText("已核准");
+    await stageLink("stage.topology").click();
+    await expect(page.getByTestId("approval-state")).toHaveText(L("tp.approved"));
     await expect(page.getByTestId("topology-approval")).toContainText("e2e：核准本機隔離 PoC 拓樸");
   });
 
   await step("home-progress", async () => {
-    await page.getByRole("link", { name: "專案首頁" }).click();
+    await stageLink("stage.home").click();
     await expect(page.getByTestId("rangeline")).toBeVisible();
-    await expect(page.getByTestId("rangeline").locator(".stop.gate-stop")).toHaveAttribute("title", "拓樸已核准");
+    await expect(page.getByTestId("rangeline").locator(".stop.gate-stop")).toHaveAttribute("title", L("stageState.approved"));
     await page.waitForTimeout(1600); // let the hero's one-time line draw finish before the evidence screenshot
   });
 });
@@ -246,19 +263,20 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
   test.skip(!log.steps.some((s) => s.step === "approve-topology" && s.status === "passed"), "前半段未完成，沒有已核准的拓樸可部署");
 
   await step("deploy-up", async () => {
-    await page.getByRole("link", { name: /部署管理/ }).first().click();
-    await expect(heading("部署管理")).toBeVisible();
-    const up = page.getByRole("button", { name: "啟動（up）" });
+    await stageLink("stage.deploy").click();
+    await expect(heading(L("dp.title"))).toBeVisible();
+    const up = page.getByRole("button", { name: L("dp.act.up"), exact: true });
     await expect(up).toBeEnabled();
     deployed = true;
     await up.click();
-    await expect(page.getByText("啟動中，正在建立網路與容器…")).toBeVisible();
-    await expect(page.getByText("啟動中，正在建立網路與容器…")).toBeHidden({ timeout: DEPLOY_TIMEOUT });
+    await expect(page.getByText(L("dp.busyUp"))).toBeVisible();
+    await expect(page.getByText(L("dp.busyUp"))).toBeHidden({ timeout: DEPLOY_TIMEOUT });
+    await openDeployDetails();
     await expect(errorNotices(), "deploy must not report an error").toHaveCount(0);
     await expect(page.getByTestId("deploy-state")).toHaveText("running");
     // Health is polled by the page; wait until every container reports healthy.
     await expect(page.getByTestId("health-state")).toHaveText("healthy", { timeout: 120_000 });
-    await expect(page.getByTestId("deploy-records").locator("tbody tr").first()).toContainText("啟動");
+    await expect(page.getByTestId("deploy-records").locator("tbody tr").first()).toContainText(L("dp.act.up"));
     // The forwarder is shown as a platform component, never as a scenario host; ports shown are the ones Docker bound.
     const live = await (await page.request.get(`/api/deploy/${log.scenario_id}/status`)).json();
     const gateways = live.containers.filter((c: any) => c.service === "cr-gateway").length;
@@ -271,10 +289,10 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
   });
 
   await step("validate", async () => {
-    await nextStep("驗證報告").click();
-    await expect(heading("驗證報告")).toBeVisible();
-    await page.getByRole("button", { name: /^(執行驗證|重新驗證)$/ }).click();
-    await expect(page.getByRole("button", { name: "重新驗證" })).toBeEnabled({ timeout: 180_000 });
+    await nextStep("stage.report").click();
+    await expect(heading(L("rp.title"))).toBeVisible();
+    await page.getByRole("button", { name: new RegExp(`^(${esc(L("rp.run"))}|${esc(L("rp.rerun"))})$`) }).click();
+    await expect(page.getByRole("button", { name: L("rp.rerun"), exact: true })).toBeEnabled({ timeout: 180_000 });
     await expect(errorNotices()).toHaveCount(0);
   });
 
@@ -285,14 +303,14 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
     const subs = await substituteHosts();
     await expect(page.getByTestId("substitute-card")).toHaveCount(subs.length ? 1 : 0);
     // What the page shows must be what the backend reported, level by level.
-    const label: Record<string, string> = { PASS: "通過", FAIL: "失敗", PARTIAL: "部分", NOT_TESTED: "未測" };
+    const label: Record<string, string> = { PASS: L("check.PASS"), FAIL: L("check.FAIL"), PARTIAL: L("check.PARTIAL"), NOT_TESTED: L("check.NOT_TESTED") };
     const pills = page.locator(".pill");
     for (const lv of ["env_build", "behavior_repro", "full_chain"]) {
       await expect(pills.filter({ hasText: label[report.levels[lv]] }).first()).toBeVisible();
     }
-    await expect(page.getByRole("heading", { name: "擬真度", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: L("rp.fidelity"), exact: true })).toBeVisible();
     // The sidebar's stage marker reflects the verdict too (it used to stay blank after a successful run).
-    await expect(page.locator(".stages a", { hasText: "驗證報告" }).locator(".state")).toHaveAttribute("title", /通過|未測|失敗/);
+    await expect(stageLink("stage.report").locator(".state")).toHaveAttribute("title", new RegExp([L("stageState.allPass"), L("stageState.partial"), L("stageState.fail")].map(esc).join("|")));
     expect(report.levels.env_build, "environment build level").toBe("PASS");
     expect(Object.values(report.levels), "no validation level may be FAIL").not.toContain("FAIL");
     // Guard against a false PASS: this flow deploys the environment and runs only benign checks. No attack step is
@@ -302,13 +320,14 @@ test("部署、驗證、報告、清理（需要 Docker）", async () => {
   });
 
   await step("teardown", async () => {
-    await page.getByRole("link", { name: /部署管理/ }).first().click();
-    await expect(heading("部署管理")).toBeVisible();
-    await page.getByRole("button", { name: "關閉（down）" }).click();
-    await expect(page.getByText("關閉中，正在移除容器…")).toBeHidden({ timeout: 180_000 });
+    await stageLink("stage.deploy").click();
+    await expect(heading(L("dp.title"))).toBeVisible();
+    await page.getByRole("button", { name: L("dp.act.down"), exact: true }).click();
+    await expect(page.getByText(L("dp.busyDown"))).toBeHidden({ timeout: 180_000 });
     await expect(errorNotices()).toHaveCount(0);
-    await expect(page.getByText("目前沒有容器在執行。")).toBeVisible();
-    await expect(page.getByTestId("deploy-records").locator("tbody tr").first()).toContainText("關閉");
+    await openDeployDetails();
+    await expect(page.getByText(L("dp.nothingRunning"))).toBeVisible();
+    await expect(page.getByTestId("deploy-records").locator("tbody tr").first()).toContainText(L("dp.act.down"));
     const left = execFileSync("docker", ["ps", "-a", "--filter", `name=cr-demo-${log.scenario_id}`, "--format", "{{.Names}}"]).toString().trim();
     expect(left, "no containers left behind").toBe("");
     deployed = false;

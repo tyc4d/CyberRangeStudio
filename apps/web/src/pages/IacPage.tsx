@@ -137,7 +137,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                 <div className="seg">{files.map((f, i) => <button key={f.name} className={`mono ${file === f ? "on" : ""}`} onClick={() => setActive(i)}>{f.name}</button>)}</div>
               ) : <h2 className="mono">{file?.name ?? "docker-compose.yml"}</h2>}
               {file && <div className="right">
-                <span className="muted" style={{ fontSize: 12 }}>{t("iac.lines", { n: file.content.split("\n").length })}</span>
+                <span className="muted" style={{ fontSize: 13 }}>{t("iac.lines", { n: file.content.split("\n").length })}</span>
                 <button className="small" onClick={copy}>{copied ? t("iac.copied") : t("iac.copy")}</button>
               </div>}
             </div>
@@ -150,7 +150,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
           <details className="card deploy-more">
             <summary>{t("iac.report")}</summary>
-            {report === undefined || report === null ? <span className="muted" style={{ fontSize: 13 }}>{t("iac.noReport")}</span> : <DataView data={report} />}
+            {report === undefined || report === null ? <span className="muted" style={{ fontSize: 14 }}>{t("iac.noReport")}</span> : <DataView data={report} />}
           </details>
         </>
       )}

@@ -44,7 +44,7 @@ export function VersionBasisCard({ ir, context }: { ir: ScenarioIR; context: "ia
   const notFact = rows.filter((r) => r.basis !== "stated");
   return (
     <div className="card flush" data-testid="version-basis-card">
-      <div className="card-head"><h2>{t("vb.title")}</h2><span className="muted" style={{ fontSize: 12 }}>{notFact.length ? t("vb.notFact", { n: notFact.length }) : t("vb.allStated")}</span></div>
+      <div className="card-head"><h2>{t("vb.title")}</h2><span className="muted" style={{ fontSize: 13 }}>{notFact.length ? t("vb.notFact", { n: notFact.length }) : t("vb.allStated")}</span></div>
       <div style={{ overflowX: "auto" }}>
         <table className="tbl">
           <thead><tr><th>{t("vb.host")}</th><th>{t("vb.software")}</th><th>{t("vb.statedCol")}</th><th>{t("vb.deployedCol")}</th><th>{t("vb.basis")}</th></tr></thead>
@@ -54,14 +54,14 @@ export function VersionBasisCard({ ir, context }: { ir: ScenarioIR; context: "ia
                 <td>{r.hostName}</td><td>{r.software}</td>
                 <td>{r.stated ?? <span className="muted">{t("vb.notStated")}</span>}</td>
                 <td className="mono">{r.deployed ?? "—"}</td>
-                <td><BasisTag of={{ version_basis: r.basis }} /><div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{BASIS[r.basis].explain}</div></td>
+                <td><BasisTag of={{ version_basis: r.basis }} /><div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{BASIS[r.basis].explain}</div></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       {notFact.length > 0 && (
-        <div className="muted" style={{ fontSize: 12, padding: "10px 14px" }}>
+        <div className="muted" style={{ fontSize: 13, padding: "10px 14px" }}>
           {context === "report"
             ? t("vb.noteReport")
             : t("vb.noteIac")}
@@ -93,7 +93,7 @@ export function SubstituteCard({ ir, context }: { ir: ScenarioIR; context: "iac"
   if (!rows.length) return null;
   return (
     <div className="card flush" data-testid="substitute-card">
-      <div className="card-head"><h2>{t("sub.title")}</h2><span className="muted" style={{ fontSize: 12 }}>{t("sub.count", { n: rows.length })}</span></div>
+      <div className="card-head"><h2>{t("sub.title")}</h2><span className="muted" style={{ fontSize: 13 }}>{t("sub.count", { n: rows.length })}</span></div>
       <div style={{ overflowX: "auto" }}>
         <table className="tbl">
           <thead><tr><th>{t("vb.host")}</th><th>{t("sub.original")}</th><th>{t("sub.deployed")}</th><th>{t("sub.who")}</th><th>{t("sub.port")}</th></tr></thead>
@@ -103,14 +103,14 @@ export function SubstituteCard({ ir, context }: { ir: ScenarioIR; context: "iac"
                 <td>{r.hostName}</td>
                 <td>{r.original || <span className="muted">—</span>}</td>
                 <td><span className="tag sub">{t("sub.tag")}</span> <span className="mono">{r.image ?? "—"}</span></td>
-                <td>{SUBSTITUTE_BASIS[r.basis]?.label ?? (r.basis || "—")}<div className="muted" style={{ fontSize: 12 }}>{SUBSTITUTE_BASIS[r.basis]?.explain}</div></td>
+                <td>{SUBSTITUTE_BASIS[r.basis]?.label ?? (r.basis || "—")}<div className="muted" style={{ fontSize: 13 }}>{SUBSTITUTE_BASIS[r.basis]?.explain}</div></td>
                 <td>{r.ports.length ? r.ports.map((p, i) => <div key={i} className="mono">{t("sub.portUse", { port: p.port, stated: p.stated })}</div>) : <span className="muted">{t("sub.portSame")}</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div className="muted" style={{ fontSize: 12, padding: "10px 14px" }}>
+      <div className="muted" style={{ fontSize: 13, padding: "10px 14px" }}>
         {context === "report"
           ? t("sub.noteReport")
           : t("sub.noteIac")}

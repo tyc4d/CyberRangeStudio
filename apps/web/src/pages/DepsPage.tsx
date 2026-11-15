@@ -18,7 +18,7 @@ function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
       <td>
         <span className="mono">{s.version ?? <span className="muted">{t("dep.notStated")}</span>}</span>
         {basisOf(s as Versioned) && (
-          <div style={{ marginTop: 4, fontSize: 12 }}>
+          <div style={{ marginTop: 4, fontSize: 13 }}>
             <BasisTag of={s as Versioned} />
             {(s as Versioned).deployed_version && <span className="muted"> {t("dep.deployed", { v: (s as Versioned).deployed_version })}</span>}
           </div>
@@ -89,7 +89,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
           <div data-testid="no-component">
             <div>{t("dep.noComp.body1", { list: joinList(noComponent.map((s) => s.name || s.id)) })}</div>
             <div>{t("dep.noComp.body2")}</div>
-            <div className="muted" style={{ fontSize: 12 }}>{t("dep.noComp.body3")}</div>
+            <div className="muted" style={{ fontSize: 13 }}>{t("dep.noComp.body3")}</div>
           </div>
         </Notice>
       )}
@@ -144,7 +144,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       {/* Reference data. Folded, because most users never need the full catalog. */}
       <details className="card flush deploy-more">
-        <summary>{t("dep.catalog")}{catItems && <span className="muted" style={{ fontSize: 12 }}>{catItems.length}</span>}</summary>
+        <summary>{t("dep.catalog")}{catItems && <span className="muted" style={{ fontSize: 13 }}>{catItems.length}</span>}</summary>
         <div style={{ padding: catItems?.length ? 0 : 14 }}>
           {catalogue.error ? <ApiNotice error={catalogue.error} what={t("dep.catalogWhat")} onRetry={() => catalogue.reload()} />
             : catalogue.loading ? <span className="muted"><span className="spinner" /> {t("dep.loading")}</span>

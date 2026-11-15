@@ -6,6 +6,18 @@
 import { expect, test, type Page } from "@playwright/test";
 import { relayGets } from "./net-relay";
 import { seedScenario } from "./seed";
+import zh from "../src/i18n/zh-TW";
+
+// UI text comes from the zh-TW locale file (the app's default language), so selectors follow the locale keys
+// instead of repeating the wording. Roles, labels and test ids stay the anchors.
+type K = keyof typeof zh;
+/** A message as the page renders it. Placeholders without a value stay as written. */
+const L = (k: K, v: Record<string, string | number> = {}) => zh[k].replace(/\{(\w+)\}/g, (m, n: string) => (n in v ? String(v[n]) : m));
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Whole-text pattern for a message whose placeholders are numbers. */
+const R = (k: K) => new RegExp(`^${esc(zh[k]).replace(/\\\{\w+\\\}/g, "\\d+")}$`);
+/** The longest fixed part of a message whose variable values the test does not know. */
+const P = (k: K) => zh[k].split(/\{\w+\}/).map((s) => s.trim()).sort((a, b) => b.length - a.length)[0];
 
 test.beforeEach(async ({ context, baseURL }) => { await relayGets(context, baseURL); });
 
@@ -38,10 +50,10 @@ const loopingGraphAnimations = (page: Page) => page.evaluate(() =>
 
 /** Add a new action from the toolbar and pull a dependency line from an existing node onto it. */
 async function connectNewDependency(page: Page) {
-  await page.getByRole("toolbar", { name: "畫布工具" }).getByRole("button", { name: "依賴", exact: true }).click();
+  await page.getByRole("toolbar", { name: L("fl.tools") }).getByRole("button", { name: L("fl.k.dependency"), exact: true }).click();
   const nodesBefore = await page.locator(".react-flow__node").count();
   const before = await page.locator(".react-flow__edge").count();
-  await page.getByRole("button", { name: "＋ 新增行為" }).click();
+  await page.getByRole("toolbar", { name: L("fl.tools") }).getByRole("button", { name: `＋ ${L("fl.addStep")}` }).click();
   // The new node exists and the canvas has stopped moving before the handles are measured for the drag.
   await expect(page.locator(".react-flow__node")).toHaveCount(nodesBefore + 1);
   await settled(page);
@@ -75,9 +87,9 @@ test("依賴連線只在建立時畫一次，之後靜止；既有連線載入�
   expect(await loopingGraphAnimations(page)).toBe(0);
 
   // The new, unconfirmed dependency is reported by the design check and labelled as unconfirmed, not as done.
-  await expect(page.getByTestId("validation-console")).toContainText("待處理");
-  await expect(page.locator(".edge-label.hold").last()).toHaveText("依賴 · 未確認");
-  await expect(page.getByText("有未儲存的修改").first()).toBeVisible();
+  await expect(page.getByTestId("validation-console")).toContainText(L("fl.lv.warn"));
+  await expect(page.locator(".edge-label.hold").last()).toHaveText(`${L("fl.k.dependency")} · ${L("fl.unconfirmed")}`);
+  await expect(page.getByText(L("fl.unsaved")).first()).toBeVisible();
 });
 
 test.describe("prefers-reduced-motion", () => {
@@ -97,7 +109,7 @@ test.describe("prefers-reduced-motion", () => {
     expect(await page.locator(".gnode.fresh").evaluate((el) => getComputedStyle(el).animationName)).toBe("fade-only");
 
     // Home hero: the GSAP line draw is not registered at all under reduced motion.
-    await page.getByRole("link", { name: "專案首頁" }).click();
+    await page.getByRole("navigation", { name: L("shell.workflow") }).getByRole("link", { name: L("stage.home"), exact: true }).click();
     await expect(page.getByTestId("rangeline")).toBeVisible();
     const hero = await page.getByTestId("rangeline").locator(".rail-done").evaluate((el) => getComputedStyle(el).transform);
     expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(hero);

@@ -245,7 +245,8 @@ function RelEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targe
   return (
     <>
       <path id={id} d={d} fill="none" className="react-flow__edge-path" style={style} markerEnd={markerEnd} pathLength={data?.draw ? 1 : undefined} />
-      <path d={d} fill="none" strokeOpacity={0} strokeWidth={22} className="react-flow__edge-interaction" />
+      {/* Invisible touch stroke. Phones: 56 units, so it stays at least 44 px at the 0.8 zoom floor. */}
+      <path d={d} fill="none" strokeOpacity={0} strokeWidth={isPhone() ? 56 : 22} className="react-flow__edge-interaction" />
       {data?.label && (
         <EdgeLabelRenderer>
           <div className={`edge-label ${data.tone}`} style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)`, color: data.color }}>{data.label}</div>
@@ -304,6 +305,8 @@ const SIDE = 32;
 const isPhone = () => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
 const minFit = () => (isPhone() ? 0.8 : MIN_FIT);
 const side = () => (isPhone() ? 12 : SIDE);
+/** fitView options with the zoom floor for this screen (React Flow's own fit is used before nodes are measured). */
+const fitOpts = () => ({ ...FIT, minZoom: minFit() });
 /** The part of the canvas nothing floats over: below the toolbar (which wraps, so it is measured), above the
  *  legend / status line and the minimap. */
 function freeArea(pane: HTMLElement) {
@@ -322,11 +325,11 @@ function freeArea(pane: HTMLElement) {
  *  at the top-left (the first step) and the rest is reached by scrolling or dragging the canvas. */
 function fitAll(inst: ReactFlowInstance, pane: HTMLElement | null) {
   const ns = inst.getNodes().filter((n) => n.width && n.height);
-  if (!pane || ns.length === 0) { inst.fitView(FIT); return; }
+  if (!pane || ns.length === 0) { inst.fitView(fitOpts()); return; }
   const minX = Math.min(...ns.map((n) => n.position.x)), minY = Math.min(...ns.map((n) => n.position.y));
   const w = Math.max(...ns.map((n) => n.position.x + n.width!)) - minX, h = Math.max(...ns.map((n) => n.position.y + n.height!)) - minY;
   const free = freeArea(pane);
-  if (free.w <= 0 || free.h <= 0 || w <= 0 || h <= 0) { inst.fitView(FIT); return; }
+  if (free.w <= 0 || free.h <= 0 || w <= 0 || h <= 0) { inst.fitView(fitOpts()); return; }
   const zoom = Math.max(minFit(), Math.min(1, free.w / w, free.h / h));
   inst.setViewport({
     x: free.left + Math.max(0, (free.w - w * zoom) / 2) - minX * zoom,
@@ -815,7 +818,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const flowNodes = conditions.length + operators.length + assets.length;
   /** "標記為流程起點" for the inspector; the same switch as the flag on the node toolbar. */
   const startToggle = (id: string) => (
-    <label className="row" style={{ gap: 8, fontSize: 12 }}>
+    <label className="row" style={{ gap: 8, fontSize: 13 }}>
       <input type="checkbox" checked={startRefs.includes(id)} onChange={() => toggleStart(id)} />
       {t("fl.isStart")}
     </label>
@@ -933,7 +936,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             proOptions={{ hideAttribution: true }}
           >
             <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
-            <Controls showInteractive={false} position="bottom-left" fitViewOptions={FIT}
+            <Controls showInteractive={false} position="bottom-left" fitViewOptions={fitOpts()}
               onFitView={() => { if (rf.current) fitAll(rf.current, paneRef.current); }} />
             <MiniMap pannable position="bottom-right" nodeColor={EDGE} nodeStrokeWidth={0} maskColor="#070b11c7" style={{ width: 140, height: 90 }} ariaLabel={t("fl.minimap")} />
           </ReactFlow>
@@ -1017,17 +1020,17 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selRelation.id}</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>
               {nameOf.get(selRelation.from_action) ?? selRelation.from_action} <span className="muted">→</span> {nameOf.get(selRelation.to_action) ?? selRelation.to_action}
             </div>
-            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">{t("fl.type")}</span>
+            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 13 }} className="muted">{t("fl.type")}</span>
               <div className="seg">
                 {(["temporal", "dependency"] as RelationKind[]).map((k) => (
                   <button key={k} className={selRelation.kind === k ? "on" : ""} aria-pressed={selRelation.kind === k} onClick={() => selRelation.kind !== k && patchRelation(selRelation.id, { kind: k })}>{KIND_LABEL[k]}</button>
                 ))}
               </div>
             </div>
-            <div className="muted" style={{ fontSize: 12 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
               {selRelation.kind === "dependency" ? t("fl.dep.explain") : t("fl.temporal.explain")}
             </div>
             <label className="field"><span>{t("fl.reason")}</span>
@@ -1039,13 +1042,13 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <p className="dock-hint">{t("fl.uncited.explain")}</p>
             )}
             {selRelation.kind === "dependency" ? (
-              <label className="row" style={{ gap: 8, fontSize: 12 }}>
+              <label className="row" style={{ gap: 8, fontSize: 13 }}>
                 <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
                   onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
                 {t("fl.confirmDep")}
               </label>
             ) : (selRelation.source !== "user" && selRelation.source !== "stix" && !relationBacked(selRelation, evById)) && (
-              <label className="row" style={{ gap: 8, fontSize: 12 }}>
+              <label className="row" style={{ gap: 8, fontSize: 13 }}>
                 <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
                   onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
                 {t("fl.confirmTemporal")}
@@ -1078,14 +1081,14 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selOperator.id}</div>
-            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">{t("fl.opMode")}</span>
+            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 13 }} className="muted">{t("fl.opMode")}</span>
               <div className="seg">
                 {(["AND", "OR"] as const).map((k) => (
                   <button key={k} className={selOperator.operator === k ? "on" : ""} aria-pressed={selOperator.operator === k} onClick={() => selOperator.operator !== k && patchOperator(selOperator.id, { operator: k })}>{k}</button>
                 ))}
               </div>
             </div>
-            <div className="muted" style={{ fontSize: 12 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
               {selOperator.operator === "AND" ? t("fl.and.explain") : t("fl.or.explain")}{" "}
               {t("fl.opInputs", { n: flowEdges.filter((e) => e.to === selOperator.id).length })}
             </div>
@@ -1109,7 +1112,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <textarea rows={3} value={selAsset.description ?? ""} onChange={(e) => patchAsset(selAsset.id, { description: e.target.value || undefined })} />
             </label>
             <EpistemicSelect value={selAsset.epistemic_status} onChange={(v) => patchAsset(selAsset.id, { epistemic_status: v })} />
-            <div className="muted" style={{ fontSize: 12 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
               {t("fl.assetFrom", { list: joinList(flowEdges.filter((e) => e.to === selAsset.id).map((e) => nameOf.get(e.from) ?? e.from)) || t("fl.none") })}
             </div>
             <div><button className="danger quiet" onClick={() => removeNodes([selAsset.id])}><Trash2 size={15} />{t("fl.delAsset")}</button></div>
@@ -1120,11 +1123,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <h2>{t("fl.flowLine")}</h2>
               <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>
               {nameOf.get(selFlow.from) ?? selFlow.from} <span className="muted">→</span> {nameOf.get(selFlow.to) ?? selFlow.to}
             </div>
             <div><span className={`edge-chip ${selFlow.kind === "effect" ? "flow" : `flow-${selFlow.kind}`}`}>{FLOW_LABEL[selFlow.kind]}</span></div>
-            <div className="muted" style={{ fontSize: 12 }}>
+            <div className="muted" style={{ fontSize: 13 }}>
               {selFlow.kind === "effect" ? t("fl.effect.explain", { from: NODE_LABEL[typeOf.get(selFlow.from) ?? "action"] })
                 : selFlow.kind === "asset" ? t("fl.asset.edge")
                 : selFlow.kind === "true" ? t("fl.true.edge") : t("fl.false.edge")}
@@ -1145,7 +1148,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <span>{t("fl.sum.temporal", { n: temporal.length - uncountedTemporal.length })}</span>
             </div>
             {uncountedTemporal.length > 0 && (
-              <div className="muted" style={{ fontSize: 12 }} data-testid="uncounted-relations">
+              <div className="muted" style={{ fontSize: 13 }} data-testid="uncounted-relations">
                 {t("fl.sum.uncited", { n: uncountedTemporal.length })}
               </div>
             )}
@@ -1210,7 +1213,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               <p>{t("fl.about2")}</p>
               <p>{t("fl.about3")}</p>
             </details>
-            <Link to="/missing" className="muted" style={{ fontSize: 12 }}>← {t("stage.missing")}</Link>
+            <Link to="/missing" className="muted" style={{ fontSize: 13 }}>← {t("stage.missing")}</Link>
           </div>
         )}
       </aside>
@@ -1223,7 +1226,7 @@ function QuoteList({ refs, byId, source }: { refs?: string[]; byId: Map<string, 
   const ids = Array.isArray(refs) ? refs : [];
   return (
     <div className="ref-list">
-      <span className="row" style={{ gap: 8 }}><span className="muted" style={{ fontSize: 12 }}>{t("fl.quote")}</span><CitationBadge summary={summarizeCitations(ids, byId)} source={source} /></span>
+      <span className="row" style={{ gap: 8 }}><span className="muted" style={{ fontSize: 13 }}>{t("fl.quote")}</span><CitationBadge summary={summarizeCitations(ids, byId)} source={source} /></span>
       {ids.map((id) => <div key={id} className="ref-row"><span className="name"><QuoteSnippet evidence={byId.get(id)} id={id} max={60} /></span></div>)}
     </div>
   );

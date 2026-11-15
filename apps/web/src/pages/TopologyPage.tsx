@@ -48,7 +48,7 @@ function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
             {t("tp.sub", { orig: (h as HostX).substitute_for })}
           </span>
         )}
-        {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
+        {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 12 }}>{(h as Versioned).deployed_version}</span>}</>}
         {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title={t("tp.entry.hint")}>{t("tp.entry")}</span>}
         {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title={t("tp.notDeployable.hint")}>{t("tp.notDeployable")}</span>}
       </div>
@@ -117,7 +117,7 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
       id: `b:${i}`, source: `host:${b.from_host}`, sourceHandle: "r", target: `host:${b.to_host}`, targetHandle: "l",
       label: `${t("tp.blocked")}${b.port ? ` ${b.protocol ?? "tcp"}/${b.port}` : ""}`,
       style: { stroke: BARRIER, strokeWidth: 1.5, strokeDasharray: "3 5" },
-      labelStyle: { fill: BARRIER, fontSize: 10, fontWeight: 600 }, labelBgStyle: { fill: CANVAS },
+      labelStyle: { fill: BARRIER, fontSize: 12, fontWeight: 600 }, labelBgStyle: { fill: CANVAS },
     });
   });
   return { nodes, edges };
@@ -164,6 +164,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   });
   const [ranOk, setRanOk] = useState(false);
   const run = useAction(async () => { setRanOk(false); await absorb(await api.planTopology(ir.id)); setRanOk(true); });
+  const phone = typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
   const { locale } = useI18n();
   // Edge labels are translated, so the graph is rebuilt when the language changes.
   const graph = useMemo(() => (plan ? buildGraph(plan, ranOk) : null), [plan, ranOk, locale]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -208,7 +209,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
               <ReactFlow
                 key={`${stamp}:${ir.updated_at ?? ""}:${ir.ir_version ?? ""}`}
                 defaultNodes={graph.nodes} defaultEdges={graph.edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
-                nodesConnectable={false} deleteKeyCode={null} elementsSelectable
+                nodesConnectable={false} deleteKeyCode={null}
+                // Selecting or dragging a topology item changes nothing in the plan. On phones both are off, so the
+                // canvas pans and zooms without small fake targets; the zoom buttons stay 44 px.
+                elementsSelectable={!phone} nodesDraggable={!phone} nodesFocusable={!phone} edgesFocusable={!phone}
                 fitView fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }} minZoom={0.2}
                 proOptions={{ hideAttribution: true }}
               >
@@ -217,7 +221,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
               </ReactFlow>
             )}
           </div>
-          {danglingConn > 0 && <div className="status-PARTIAL" style={{ fontSize: 12 }}>{t("tp.dangling", { n: danglingConn })}</div>}
+          {danglingConn > 0 && <div className="status-PARTIAL" style={{ fontSize: 13 }}>{t("tp.dangling", { n: danglingConn })}</div>}
 
           <section className={`gate ${approved ? "approved" : "pending"} ${justApproved ? "just-approved" : ""}`} data-testid="topology-approval" aria-label={t("tp.gate.aria")}>
             <div className="gate-head">
@@ -234,7 +238,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <span className="to">{name(c.to_host)}</span>
                     {c.reason && <span className="why">{c.reason}</span>}
                   </div>
-                )) : <div className="muted" style={{ fontSize: 13 }}>{t("tp.noOpen")}</div>}
+                )) : <div className="muted" style={{ fontSize: 14 }}>{t("tp.noOpen")}</div>}
               </div>
               <div className="gate-col shut" data-testid="blocked-paths">
                 <h3>{t("tp.shut", { n: blocked.length })}</h3>
@@ -245,14 +249,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <span className="to">{name(b.to_host)}</span>
                     {b.reason && <span className="why">{b.reason}</span>}
                   </div>
-                )) : <div className="muted" style={{ fontSize: 13 }}>{t("tp.noShut")}</div>}
-                <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>{t("tp.shutNote")}</div>
+                )) : <div className="muted" style={{ fontSize: 14 }}>{t("tp.noShut")}</div>}
+                <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>{t("tp.shutNote")}</div>
               </div>
             </div>
             <div className="gate-foot">
               {approved ? (
                 <>
-                  <div style={{ fontSize: 13 }}>
+                  <div style={{ fontSize: 14 }}>
                     {t("tp.approvedBy", { who: approval?.approved_by ?? "—", when: fmtTime(approval?.approved_at) })}
                     {approval?.note ? <> {t("tp.approvedNote", { note: approval.note })}</> : null} {t("tp.approvedScope")}
                   </div>
@@ -263,7 +267,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 13 }}>{t("tp.beforeApprove")}</div>
+                  <div style={{ fontSize: 14 }}>{t("tp.beforeApprove")}</div>
                   <div className="row approve-row">
                     <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("tp.notePh")} disabled={approve.busy} aria-label={t("tp.note")} style={{ maxWidth: 420 }} />
                     <button className="primary" style={{ flex: "none" }} disabled={approve.busy || run.busy} onClick={() => approve.run()}>
@@ -277,7 +281,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </section>
 
           <details className="card flush deploy-more" style={{ overflowX: "auto" }}>
-              <summary>{t("tp.rules")} <span className="muted" style={{ fontSize: 12 }}>{plan.access_rules?.length ?? 0}</span></summary>
+              <summary>{t("tp.rules")} <span className="muted" style={{ fontSize: 13 }}>{plan.access_rules?.length ?? 0}</span></summary>
               {plan.access_rules?.length ? (
                 <table className="tbl">
                   <thead><tr><th>{t("tp.col.action")}</th><th>{t("tp.col.from")}</th><th>{t("tp.col.to")}</th><th>{t("tp.col.port")}</th></tr></thead>
@@ -295,7 +299,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
           {plan.notes?.length ? (
             <details className="card deploy-more" open={!(plan.connections?.length)}>
-              <summary>{t("tp.notes")} <span className="muted" style={{ fontSize: 12 }}>{plan.notes.length}</span></summary>
+              <summary>{t("tp.notes")} <span className="muted" style={{ fontSize: 13 }}>{plan.notes.length}</span></summary>
               {/* Known planner notes are shown in the UI language. An unknown note is kept as the planner wrote it, because it may explain a closed path. */}
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>{plan.notes.map((n, i) => <li key={i} lang={noteText(n) ? undefined : "en"}>{noteText(n) ?? n}</li>)}</ul>
             </details>

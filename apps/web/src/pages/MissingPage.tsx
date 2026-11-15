@@ -142,7 +142,7 @@ export function SourceTextViewer({ text, title, mono, target, onLocated }: {
         <span className="pageno">{t("ms.chars", { n: text.length.toLocaleString() })}</span>
       </div>
       <div className="pdfv-scroll" ref={scrollRef} tabIndex={0} aria-label={t("imp.sourceTitle")}>
-        <pre className={mono ? "mono" : undefined} style={{ margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: mono ? undefined : "inherit", fontSize: 13, lineHeight: 1.7, color: "var(--text)", background: "none", border: 0, padding: 0 }}>
+        <pre className={mono ? "mono" : undefined} style={{ margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: mono ? undefined : "inherit", fontSize: 14, lineHeight: 1.7, color: "var(--text)", background: "none", border: 0, padding: 0 }}>
           {range ? (
             <>
               {text.slice(0, range[0])}
@@ -540,15 +540,15 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
         <span style={{ fontWeight: 600 }}>{group.title}</span>
         <span className="tag">{CATEGORY[item.category] ?? CATEGORY.other}</span>
         {group.tier.label && <span className={`tag ${group.tier.cls}`} title={group.tier.why} data-testid="item-priority">{group.tier.label}</span>}
-        <span style={{ marginLeft: "auto", fontSize: 12 }} className={isOpen ? "status-PARTIAL" : item.status === "llm_suggested" ? "muted" : "status-PASS"}>
+        <span style={{ marginLeft: "auto", fontSize: 13 }} className={isOpen ? "status-PARTIAL" : item.status === "llm_suggested" ? "muted" : "status-PASS"}>
           {STATUS[item.status] ?? item.status}
         </span>
       </div>
 
-      {reason && <div className="muted" style={{ fontSize: 12 }}>{t("ms.why", { reason })}</div>}
+      {reason && <div className="muted" style={{ fontSize: 13 }}>{t("ms.why", { reason })}</div>}
 
       {affects.length > 0 && (
-        <details style={{ fontSize: 12 }} data-testid="item-affects">
+        <details style={{ fontSize: 13 }} data-testid="item-affects">
           <summary className="muted" style={{ cursor: "pointer", width: "fit-content" }}>{affectSummary(affects)}</summary>
           <ul style={{ margin: "6px 0 0", paddingLeft: 18, display: "flex", flexDirection: "column", gap: 2 }}>
             {affects.map((a, i) => (
@@ -559,7 +559,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
       )}
 
       {(known.length > 0 || needsDecision) && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }} data-testid="known-vs-decide">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }} data-testid="known-vs-decide">
           {known.length > 0 && (
             <div style={{ borderLeft: "2px solid var(--ok, var(--accent))", paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-start" }}>
               {known.map((k, i) => {
@@ -570,7 +570,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
                   <button key={i} className="link" data-testid="known-locate" onClick={() => locate!(a)}
                     title={t("ms.locateTitle", { q: clip(a.quote ?? "", 200) })}
                     style={{ textAlign: "left", whiteSpace: "normal", height: "auto", color: "inherit", fontWeight: "inherit" }}>
-                    {body}<span style={{ color: "var(--accent)", marginLeft: 8, fontSize: 12, whiteSpace: "nowrap" }}>{t("ms.locate")} ›</span>
+                    {body}<span style={{ color: "var(--accent)", marginLeft: 8, fontSize: 13, whiteSpace: "nowrap" }}>{t("ms.locate")} ›</span>
                   </button>
                 ) : (
                   <div key={i} title={k.anchor?.quote ? t("ms.srcQuote", { q: k.anchor.quote }) : undefined}>{body}</div>
@@ -588,12 +588,12 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
       )}
 
       {item.resolution && (
-        <div style={{ fontSize: 13 }}>
+        <div style={{ fontSize: 14 }}>
           <span className="muted">{t("ms.resolution")}</span> {item.resolution} <SourceTag source={item.resolution_source} />
-          {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 12 }}>{t("ms.llmPending")}</span>}
-          {whereText(itemX(item).applied_to, ir) && <div className="muted" style={{ fontSize: 12 }} data-testid="applied-to">{t("ms.applied", { where: whereText(itemX(item).applied_to, ir) })}</div>}
-          {!itemX(item).applied_to && itemX(item).write_back && <div className="muted" style={{ fontSize: 12 }} data-testid="write-back">{t("ms.textOnly", { text: itemX(item).write_back })}</div>}
-          {!itemX(item).applied_to && !itemX(item).write_back && item.status !== "open" && item.status !== "accepted_unknown" && <div className="muted" style={{ fontSize: 12 }}>{t("ms.textOnlyNote")}</div>}
+          {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 13 }}>{t("ms.llmPending")}</span>}
+          {whereText(itemX(item).applied_to, ir) && <div className="muted" style={{ fontSize: 13 }} data-testid="applied-to">{t("ms.applied", { where: whereText(itemX(item).applied_to, ir) })}</div>}
+          {!itemX(item).applied_to && itemX(item).write_back && <div className="muted" style={{ fontSize: 13 }} data-testid="write-back">{t("ms.textOnly", { text: itemX(item).write_back })}</div>}
+          {!itemX(item).applied_to && !itemX(item).write_back && item.status !== "open" && item.status !== "accepted_unknown" && <div className="muted" style={{ fontSize: 13 }}>{t("ms.textOnlyNote")}</div>}
         </div>
       )}
 
@@ -621,7 +621,7 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
 
       {/* One row of options (substitutes + examples). Clicking fills the form below; nothing is saved until 送出. */}
       {(isOpen || open) && (choices.length > 0 || hints.length > 0) && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12 }} data-testid="item-choices">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }} data-testid="item-choices">
           {choices.length > 0 && (
             <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
               <span className="muted">{ranked ? t("ms.optionsRanked") : t("ms.options")}:</span>
@@ -648,17 +648,17 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
           <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy}
             aria-label={res.needText ? t("ms.required", { label: res.label }) : t("ms.optional", { label: res.label })} aria-required={res.needText} />
           {mode !== "accepted_unknown" && whereText(itemX(item).target, ir) && (
-            <div className="muted" style={{ fontSize: 12 }} data-testid="write-target">
+            <div className="muted" style={{ fontSize: 13 }} data-testid="write-target">
               {t("ms.writeTarget", { where: whereText(itemX(item).target, ir) })}
             </div>
           )}
-          <div className="muted" style={{ fontSize: 12 }} data-testid="resolution-hint">
+          <div className="muted" style={{ fontSize: 13 }} data-testid="resolution-hint">
             {res.needText
               ? (text.trim() ? t("ms.userSource") : t("ms.needText"))
               : t("ms.unknownNote")}
           </div>
-          {note && <div className="muted" style={{ fontSize: 12 }}>{t("ms.note", { note })}</div>}
-          {group.items.length > 1 && <div className="muted" style={{ fontSize: 12 }}>{t("ms.merged", { n: group.items.length })}</div>}
+          {note && <div className="muted" style={{ fontSize: 13 }}>{t("ms.note", { note })}</div>}
+          {group.items.length > 1 && <div className="muted" style={{ fontSize: 13 }}>{t("ms.merged", { n: group.items.length })}</div>}
           <div className="row">
             <button className="primary small" disabled={submit.busy || (res.needText && !text.trim())} onClick={() => submit.run()}>
               {submit.busy ? <><span className="spinner" /> {t("ms.sending")}</> : t("ms.send")}
@@ -784,7 +784,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
           <button className={show === "open" ? "on" : ""} onClick={() => setShow("open")}>{t("ms.tab.open", { n: openGroups.length })}</button>
           <button className={show === "all" ? "on" : ""} onClick={() => setShow("all")}>{t("ms.tab.all", { n: groups.length })}</button>
         </div>
-        {blockers > 0 && <span className="status-FAIL" style={{ fontSize: 13 }}>{t("ms.blockers", { n: blockers })}</span>}
+        {blockers > 0 && <span className="status-FAIL" style={{ fontSize: 14 }}>{t("ms.blockers", { n: blockers })}</span>}
       </div>
 
       {groups.length === 0 ? (
@@ -801,7 +801,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <h2 style={{ margin: 0 }}>{t("ms.free")}</h2>
-        <div className="muted" style={{ fontSize: 13 }}>{t("ms.free.desc")}</div>
+        <div className="muted" style={{ fontSize: 14 }}>{t("ms.free.desc")}</div>
         <textarea rows={3} value={free} onChange={(e) => setFree(e.target.value)} placeholder={t("ms.free.ph")} disabled={addFree.busy} />
         <div><button className="primary small" disabled={!free.trim() || addFree.busy} onClick={() => addFree.run()}>
           {addFree.busy ? <><span className="spinner" /> {t("ms.sending")}</> : t("ms.free.add")}
@@ -811,7 +811,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       {supplements.length > 0 && (
         <div className="card flush">
-          <div className="card-head"><h2>{t("ms.added")}</h2><span className="muted" style={{ fontSize: 12 }}>{supplements.length}</span></div>
+          <div className="card-head"><h2>{t("ms.added")}</h2><span className="muted" style={{ fontSize: 13 }}>{supplements.length}</span></div>
           <table className="tbl">
             <thead><tr><th>{t("ms.col.text")}</th><th>{t("ms.col.item")}</th><th>{t("ms.col.source")}</th></tr></thead>
             <tbody>

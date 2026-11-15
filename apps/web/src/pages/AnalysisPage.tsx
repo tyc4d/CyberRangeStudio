@@ -65,7 +65,7 @@ function ReproBanner({ actions }: { actions: Action[] }) {
           {t("an.r.overall")} <b>{allOk ? REPRO.reproducible.label : unknown > 0 && lowest === "reproducible" ? t("an.r.notDone") : REPRO[lowest].label}</b>
           {!allOk && ` ${t("an.r.notWhole")}`}
         </div>
-        <div className="muted" style={{ fontSize: 12 }}>{t("an.r.meaning")}
+        <div className="muted" style={{ fontSize: 13 }}>{t("an.r.meaning")}
         </div>
       </div>
     </Notice>
@@ -252,7 +252,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
         <Metric k={t("an.k.frag")} v={tile(steps.fragment)} placeholder={t("an.na")} hint={t("an.k.frag.hint")} />
         <Metric k={t("an.k.none")} v={tile(steps.none)} placeholder={t("an.na")} hint={t("an.k.none.hint")} />
       </div>
-      <div className="muted" style={{ fontSize: 12, marginTop: -6 }}>
+      <div className="muted" style={{ fontSize: 13, marginTop: -6 }}>
         {[
           t("an.steps", { n: ir.actions.length }),
           !noQuotes && steps.inferred > 0 && t("an.steps.inferred", { n: steps.inferred }),
@@ -264,23 +264,23 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       {evTotal > 0 && (
         <div className="row" style={{ gap: 10, marginTop: -6, flexWrap: "wrap", alignItems: "center" }}>
-          <span className="muted" style={{ fontSize: 12 }}>{t("an.quotes", { n: evTotal })}</span>
+          <span className="muted" style={{ fontSize: 13 }}>{t("an.quotes", { n: evTotal })}</span>
           {(["exact", "strong", "partial", "none"] as const).map((l) => (
-            <span key={l} className={QUOTE_LEVEL[l].cls} style={{ fontSize: 12 }} title={QUOTE_LEVEL[l].desc}>{QUOTE_LEVEL[l].mark} {QUOTE_LEVEL[l].word} {evMatch[l]}</span>
+            <span key={l} className={QUOTE_LEVEL[l].cls} style={{ fontSize: 13 }} title={QUOTE_LEVEL[l].desc}>{QUOTE_LEVEL[l].mark} {QUOTE_LEVEL[l].word} {evMatch[l]}</span>
           ))}
         </div>
       )}
       {excluded.length > 0 && (
         <details className="card" data-testid="excluded-actions">
-          <summary style={{ cursor: "pointer", fontSize: 13 }}>{t("an.excluded", { n: excluded.length })}</summary>
-          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+          <summary style={{ cursor: "pointer", fontSize: 14 }}>{t("an.excluded", { n: excluded.length })}</summary>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 14 }}>
             {excluded.map((x, i) => <li key={i}>{x.name || x.id || t("an.unnamed")}{x.actor && <span className="muted"> · {t("an.actor", { actor: x.actor })}</span>}</li>)}
           </ul>
-          <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("an.excluded.note")}</div>
+          <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>{t("an.excluded.note")}</div>
         </details>
       )}
-      {dropped > 0 && <div className="muted" style={{ fontSize: 12 }}>{t("an.dropped", { n: dropped })}</div>}
-      {q?.method && <div className="muted" style={{ fontSize: 12, marginTop: -6 }}>{t("an.method", { m: METHOD_LABEL[q.method] ?? q.method })}</div>}
+      {dropped > 0 && <div className="muted" style={{ fontSize: 13 }}>{t("an.dropped", { n: dropped })}</div>}
+      {q?.method && <div className="muted" style={{ fontSize: 13, marginTop: -6 }}>{t("an.method", { m: METHOD_LABEL[q.method] ?? q.method })}</div>}
 
       <ReproBanner actions={ir.actions} />
 
@@ -299,11 +299,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "minmax(0, 1.7fr) minmax(280px, 1fr)", alignItems: "start" }}>
+      <div className="grid analysis-split">
         <div className="card flush" style={{ overflowX: "auto" }}>
           {tab === "actions" ? (
             actions.length === 0 ? <Empty>{ir.actions.length ? t("an.noMatchActions") : t("an.noActions")}</Empty> : (
-              <table className="tbl" style={{ tableLayout: "fixed", width: "100%", minWidth: hasRepro ? 760 : 640 }}>
+              <table className={`tbl analysis-tbl ${hasRepro ? "w760" : "w640"}`}>
                 <colgroup><col /><col style={{ width: 170 }} /><col style={{ width: 118 }} />{hasRepro && <col style={{ width: 120 }} />}<col style={{ width: 230 }} /></colgroup>
                 <thead><tr><th>{t("an.col.action")}</th><th>ATT&CK</th><th>{t("an.col.claim")}</th>{hasRepro && <th title={t("an.col.repro.hint")}>{t("an.col.repro")}</th>}<th title={t("an.col.cite.hint")}>{t("an.col.cite")}</th></tr></thead>
                 <tbody>
@@ -311,8 +311,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <tr key={a.id} className="clickable" onClick={() => { setFocusRefs(a.evidence_refs ?? []); setActiveEv(null); }}>
                       <td>
                         <div style={{ fontWeight: 600 }}>{a.name}</div>
-                        {a.description && <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{a.description}</div>}
-                        {(() => { const tg = target(a); return tg && <div className="muted" style={{ fontSize: 12, marginTop: 2 }} title={tg.hint}>{t("an.target", { text: tg.text })}</div>; })()}
+                        {a.description && <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{a.description}</div>}
+                        {(() => { const tg = target(a); return tg && <div className="muted" style={{ fontSize: 13, marginTop: 2 }} title={tg.hint}>{t("an.target", { text: tg.text })}</div>; })()}
                       </td>
                       <td style={{ overflowWrap: "anywhere" }}>
                         {(() => {
@@ -325,9 +325,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
                                 <a className="mono" href={info.url} target="_blank" rel="noreferrer"
                                   title={info.description} onClick={(e) => e.stopPropagation()}>{info.id}</a>
                               ) : <span className="mono">{a.attack_technique}</span>}
-                              {info && <div style={{ fontSize: 12 }}>{info.name}</div>}
-                              {tactics && <div className="muted" style={{ fontSize: 12 }}>{tactics}</div>}
-                              {info && <div className="muted" style={{ fontSize: 11 }}>{t("an.official")}</div>}
+                              {info && <div style={{ fontSize: 13 }}>{info.name}</div>}
+                              {tactics && <div className="muted" style={{ fontSize: 13 }}>{tactics}</div>}
+                              {info && <div className="muted" style={{ fontSize: 12 }}>{t("an.official")}</div>}
                             </>
                           );
                         })()}
@@ -349,7 +349,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
               </table>
             )
           ) : relations.length === 0 ? <Empty>{ir.relations.length ? t("an.noMatchRel") : t("an.noRel")}</Empty> : (
-            <table className="tbl" style={{ tableLayout: "fixed", width: "100%", minWidth: 700 }}>
+            <table className="tbl analysis-tbl w700">
               <colgroup><col /><col style={{ width: 84 }} /><col /><col /><col style={{ width: 118 }} /><col style={{ width: 210 }} /></colgroup>
               <thead><tr><th>{t("an.col.from")}</th><th>{t("an.col.kind")}</th><th>{t("an.col.to")}</th><th>{t("an.col.why")}</th><th>{t("an.col.claim")}</th><th>{t("an.col.cite")}</th></tr></thead>
               <tbody>
@@ -358,7 +358,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <td>{actionName.get(r.from_action) ?? <span className="mono muted">{r.from_action}</span>}</td>
                     <td><span className={`tag ${r.kind === "dependency" ? "dep" : "temporal"}`}>{r.kind === "dependency" ? t("an.dep") : t("an.temporal")}</span></td>
                     <td>{actionName.get(r.to_action) ?? <span className="mono muted">{r.to_action}</span>}</td>
-                    <td className="muted" style={{ fontSize: 12 }}>
+                    <td className="muted" style={{ fontSize: 13 }}>
                       {r.rationale ?? "—"}
                       {(r as { epistemic_reason?: string }).epistemic_reason && <div title={t("an.relReason.hint")}>{t("an.relReason", { reason: (r as { epistemic_reason?: string }).epistemic_reason })}</div>}
                     </td>
@@ -377,11 +377,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
         <div className="card flush" style={{ position: "sticky", top: 0 }}>
           <div className="card-head">
             <h2>{t("an.ev.title")}</h2>
-            <span className="muted" style={{ fontSize: 12 }}>{shownEvidence.length} / {evidence.length}</span>
+            <span className="muted" style={{ fontSize: 13 }}>{shownEvidence.length} / {evidence.length}</span>
             {focusRefs && <div className="right"><button className="small" onClick={() => setFocusRefs(null)}>{t("an.ev.showAll")}</button></div>}
           </div>
           {evidence.length > 0 && (pdf.state === "none" || pdf.state === "error") && (
-            <div className="muted" style={{ fontSize: 12, padding: "8px 12px 0" }}>
+            <div className="muted" style={{ fontSize: 13, padding: "8px 12px 0" }}>
               {pdf.state === "none" ? t("an.ev.noPdf") : t("an.ev.pdfFail")}
             </div>
           )}
@@ -394,10 +394,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     {(() => {
                       // Graded source support first — the id is only a handle, so it comes last and small.
                       const level = quoteLevel(e);
-                      if (!level) return <span className="muted" style={{ fontSize: 12 }} title={t("an.ev.ungraded")}>· {t("quote.unchecked")}</span>;
+                      if (!level) return <span className="muted" style={{ fontSize: 13 }} title={t("an.ev.ungraded")}>· {t("quote.unchecked")}</span>;
                       const M = QUOTE_LEVEL[level];
                       const tip = e.matched_text ? `${M.desc}\n${t("an.ev.fragment", { text: e.matched_text })}` : M.desc;
-                      return <span className={M.cls} style={{ fontSize: 12, fontWeight: 700 }} title={tip}>{M.mark} {M.word}</span>;
+                      return <span className={M.cls} style={{ fontSize: 13, fontWeight: 700 }} title={tip}>{M.mark} {M.word}</span>;
                     })()}
                     {(() => {
                       // Where the quote sits, in words. Once it has been located in the PDF, the real page number is known too.
@@ -405,18 +405,18 @@ function Body({ ir }: { ir: ScenarioIR }) {
                       const f = pdfFound[e.id];
                       return (
                         <>
-                          {where && <span className="muted" style={{ fontSize: 12 }} title={t("an.ev.where")}>{where}</span>}
-                          {f?.state === "found" && <span className="muted" style={{ fontSize: 12 }}>{t("an.ev.pdfPage", { page: f.page })}</span>}
+                          {where && <span className="muted" style={{ fontSize: 13 }} title={t("an.ev.where")}>{where}</span>}
+                          {f?.state === "found" && <span className="muted" style={{ fontSize: 13 }}>{t("an.ev.pdfPage", { page: f.page })}</span>}
                         </>
                       );
                     })()}
-                    <span className="muted mono" style={{ marginLeft: "auto", fontSize: 11 }}>{e.id}</span>
+                    <span className="muted mono" style={{ marginLeft: "auto", fontSize: 12 }}>{e.id}</span>
                   </div>
                   <blockquote className="quote" style={activeEv === e.id ? { borderLeftColor: "var(--accent)" } : undefined}>{e.quote}</blockquote>
                   {pdf.state === "ready" ? (
-                    <button className="link" style={{ fontSize: 12, marginTop: 4 }} data-testid="view-in-pdf" onClick={() => viewInPdf(e)}>{t("an.ev.viewPdf")}</button>
+                    <button className="link" style={{ fontSize: 13, marginTop: 4 }} data-testid="view-in-pdf" onClick={() => viewInPdf(e)}>{t("an.ev.viewPdf")}</button>
                   ) : pdf.state === "loading" ? (
-                    <span className="muted" style={{ fontSize: 12 }}>{t("an.ev.pdfLoading")}</span>
+                    <span className="muted" style={{ fontSize: 13 }}>{t("an.ev.pdfLoading")}</span>
                   ) : null}
                 </div>
               ))}

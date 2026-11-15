@@ -107,7 +107,7 @@ export const INFERRED_BASIS = live(() => ({ label: t("basis.label"), hint: t("ba
 export function CitationBadge({ summary, source, basis }: { summary: CitationSummary; source?: Source; basis?: boolean }) {
   if (basis)
     return <span className="badge absent" title={INFERRED_BASIS.hint}>{summary.total > 0 ? INFERRED_BASIS.label : t("basis.none")}</span>;
-  if (summary.state === "empty" && isImported(source)) return <span className="muted" style={{ fontSize: 11 }} title={IMPORTED.hint}>{t("cite.importNoQuotes")}</span>;
+  if (summary.state === "empty" && isImported(source)) return <span className="muted" style={{ fontSize: 12 }} title={IMPORTED.hint}>{t("cite.importNoQuotes")}</span>;
   const c = CITATION[summary.state];
   const onlyFragments = summary.state === "some" && summary.ok === 0 && (summary.missing ?? 0) === 0;
   const hint = onlyFragments ? t("cite.onlyFragments.hint") : c.hint;
@@ -244,7 +244,7 @@ export function ApiNotice({ error, what, onRetry }: { error: ApiError | null; wh
 export function Busy({ label, elapsed }: { label: string; elapsed?: number }) {
   return (
     <div role="status" aria-live="polite">
-      <div className="row" style={{ marginBottom: 8, fontSize: 13 }}>
+      <div className="row" style={{ marginBottom: 8, fontSize: 14 }}>
         <span className="spinner" /> <span>{label}</span>
         {elapsed !== undefined && <span className="muted mono">{t("busy.elapsed", { n: elapsed })}</span>}
       </div>

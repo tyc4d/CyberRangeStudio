@@ -30,7 +30,7 @@ function BackendStatus() {
           const s = r[m.key];
           const ok = s === "ok";
           return (
-            <span key={m.key} title={s ?? t("home.modNoReport")} style={{ fontSize: 13 }}>
+            <span key={m.key} title={s ?? t("home.modNoReport")} style={{ fontSize: 14 }}>
               <span className={`dot ${ok ? "done" : s ? "err" : ""}`} style={{ marginRight: 6 }} />
               {t(m.label)}
               {!ok && <span className="muted"> ({s ? t("home.modFailed") : t("home.modUnknown")})</span>}
@@ -38,7 +38,7 @@ function BackendStatus() {
           );
         })}
       </div>
-      <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
+      <p className="muted" style={{ fontSize: 13, margin: "10px 0 0" }}>
         {t("home.modNote")}
       </p>
     </div>

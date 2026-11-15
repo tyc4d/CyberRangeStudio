@@ -87,11 +87,11 @@ function CheckTable({ checks, actionName }: { checks: ValidationCheck[]; actionN
               <td className="nowrap"><StatusPill status={c.status} /></td>
               <td data-label={t("rp.col.check")}>
                 <div><Bi text={c.name} rules={NAME_RULES} /></div>
-                {c.action_ref && <div className="muted" style={{ fontSize: 12 }}>{t("rp.forAction", { name: actionName.get(c.action_ref) ?? c.action_ref })}</div>}
+                {c.action_ref && <div className="muted" style={{ fontSize: 13 }}>{t("rp.forAction", { name: actionName.get(c.action_ref) ?? c.action_ref })}</div>}
               </td>
               <td className="nowrap muted" data-label={t("rp.col.cat")}>{categoryLabel(c.category)}</td>
-              <td style={{ fontSize: 12 }} data-label={t("rp.col.expected")}><Bi text={c.expected} rules={EXPECT_RULES} /></td>
-              <td style={{ fontSize: 12 }} data-label={t("rp.col.observed")}>
+              <td style={{ fontSize: 13 }} data-label={t("rp.col.expected")}><Bi text={c.expected} rules={EXPECT_RULES} /></td>
+              <td style={{ fontSize: 13 }} data-label={t("rp.col.observed")}>
                 <Bi text={c.observed} rules={OBSERVED_RULES} raw />
                 {c.evidence && <details style={{ marginTop: 4 }}><summary className="muted" style={{ cursor: "pointer" }}>{t("rp.evidence")}</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 200, whiteSpace: "pre-wrap" }}>{c.evidence}</pre></details>}
               </td>
@@ -108,8 +108,8 @@ function FidelityList({ title, cls, items, actionName }: { title: string; cls: s
     <div className="metric">
       <div className={`k ${cls}`} style={{ fontWeight: 600 }}>{title} · {items?.length ?? 0}</div>
       {items?.length ? (
-        <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>{items.map((x, i) => <li key={i}>{actionName.get(x) ?? x}</li>)}</ul>
-      ) : <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("rp.none")}</div>}
+        <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 14 }}>{items.map((x, i) => <li key={i}>{actionName.get(x) ?? x}</li>)}</ul>
+      ) : <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>{t("rp.none")}</div>}
     </div>
   );
 }
@@ -162,7 +162,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
       {run.busy && <div className="card"><Busy label={t("rp.busy")} elapsed={run.elapsed} /></div>}
       <ApiNotice error={run.error} what={t("rp.runWhat")} />
       {remote.error && !noReportYet && <ApiNotice error={remote.error} what={t("rp.readWhat")} onRetry={() => remote.reload()} />}
-      {remote.error && !noReportYet && report && <div className="muted" style={{ fontSize: 12, marginTop: -8 }}>{t("rp.savedReport")}</div>}
+      {remote.error && !noReportYet && report && <div className="muted" style={{ fontSize: 13, marginTop: -8 }}>{t("rp.savedReport")}</div>}
 
       {remote.loading && !report ? (
         <div className="card"><Busy label={t("rp.loading")} /></div>
@@ -170,7 +170,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
         <div className="card"><Empty>{t("rp.empty")}</Empty></div>
       ) : (
         <>
-          <div className="muted" style={{ fontSize: 12 }}>
+          <div className="muted" style={{ fontSize: 13 }}>
             {t("rp.runAt", { time: fmtTime(report.run_at) })}
           </div>
 
@@ -183,8 +183,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     <span className="muted mono">{i + 1}</span><h2>{l.title}</h2>
                     <span style={{ marginLeft: "auto" }}><StatusPill status={report.levels[l.key]} /></span>
                   </div>
-                  <div className="muted" style={{ fontSize: 12 }}>{l.question}</div>
-                  <div className="mono muted" style={{ fontSize: 12 }}>
+                  <div className="muted" style={{ fontSize: 13 }}>{l.question}</div>
+                  <div className="mono muted" style={{ fontSize: 13 }}>
                     {cs.length === 0 ? t("rp.noLevelChecks") : t("rp.counts", { p: count(cs, "PASS"), pa: count(cs, "PARTIAL"), f: count(cs, "FAIL"), n: count(cs, "NOT_TESTED") })}
                   </div>
                 </div>
@@ -216,9 +216,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
           <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <h2 style={{ margin: 0 }}>{t("rp.fidelity")}</h2>
-            {!f ? <span className="muted" style={{ fontSize: 13 }}>{t("rp.noFidelity")}</span> : (
+            {!f ? <span className="muted" style={{ fontSize: 14 }}>{t("rp.noFidelity")}</span> : (
               <>
-                {f.summary && <div style={{ fontSize: 13, lineHeight: 1.6 }} lang={hasCJK(f.summary) ? undefined : "en"} className={hasCJK(f.summary) ? undefined : "muted"}>{f.summary}</div>}
+                {f.summary && <div style={{ fontSize: 14, lineHeight: 1.6 }} lang={hasCJK(f.summary) ? undefined : "en"} className={hasCJK(f.summary) ? undefined : "muted"}>{f.summary}</div>}
                 <div className="grid c4">
                   <FidelityList title={t("rp.f.reproduced")} cls="status-PASS" items={f.reproduced} actionName={actionName} />
                   <FidelityList title={t("rp.f.partial")} cls="status-PARTIAL" items={f.partial} actionName={actionName} />
@@ -239,7 +239,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                         ))}
                       </tbody>
                     </table>
-                  ) : <span className="muted" style={{ fontSize: 13 }}>{t("rp.noSubs")}</span>}
+                  ) : <span className="muted" style={{ fontSize: 14 }}>{t("rp.noSubs")}</span>}
                 </div>
               </>
             )}

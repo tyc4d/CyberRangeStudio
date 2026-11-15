@@ -172,7 +172,7 @@ export function ImportPage() {
           <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <strong>{title}</strong>
-              <span className="muted mono" style={{ fontSize: 12 }}>
+              <span className="muted mono" style={{ fontSize: 13 }}>
                 {id}
                 {source && <> · {hasPdf && source.input_kind === "text" ? pdfKindLabel() : kindLabel(source.input_kind)} · {t("imp.chars", { n: Number(source.chars ?? 0).toLocaleString() })}</>}
               </span>
@@ -243,10 +243,10 @@ export function ImportPage() {
                             const matched = (e as unknown as { matched_text?: unknown }).matched_text;
                             setTextTarget((prev) => ({ evidenceId: e.id, quote: e.quote, alts: typeof matched === "string" && matched.trim() ? [matched] : undefined, seq: (prev?.seq ?? 0) + 1 }));
                           }}
-                          style={{ display: "block", width: "100%", flex: "none", textAlign: "left", whiteSpace: "normal", height: "auto", minHeight: 0, padding: "8px 10px", fontSize: 13, lineHeight: 1.5, borderColor: on ? "var(--accent)" : undefined }}>
+                          style={{ display: "block", width: "100%", flex: "none", textAlign: "left", whiteSpace: "normal", height: "auto", minHeight: 0, padding: "8px 10px", fontSize: 14, lineHeight: 1.5, borderColor: on ? "var(--accent)" : undefined }}>
                           「{e.quote.length > 220 ? `${e.quote.slice(0, 220)}…` : e.quote}」
                           {hit && (
-                            <span className="muted" role="status" style={{ display: "block", fontSize: 12, marginTop: 4 }}>
+                            <span className="muted" role="status" style={{ display: "block", fontSize: 13, marginTop: 4 }}>
                               {hit.found ? (hit.line ? t("imp.hitLine", { line: hit.line }) : t("imp.hit")) : t("imp.miss")}
                             </span>
                           )}
@@ -292,7 +292,7 @@ export function ImportPage() {
             </select>
           </label>
         </div>
-        <div className="muted" style={{ fontSize: 12, marginTop: -6, display: "flex", flexDirection: "column", gap: 2 }} data-testid="method-estimates">
+        <div className="muted" style={{ fontSize: 13, marginTop: -6, display: "flex", flexDirection: "column", gap: 2 }} data-testid="method-estimates">
           {/* Only the chosen method is described, so the form stays short. */}
           {METHODS.filter((m) => m.v === method).map((m) => (
             <div key={m.v} style={{ color: "var(--text)" }}>
@@ -310,7 +310,7 @@ export function ImportPage() {
           className="row"
         >
           <button onClick={() => fileRef.current?.click()} disabled={analyze.busy || extracting}>{t("imp.chooseFile")}</button>
-          <span className="muted" style={{ fontSize: 13 }}>
+          <span className="muted" style={{ fontSize: 14 }}>
             {extracting ? <><span className="spinner" /> {t("imp.extracting")}</> : fileNote ?? t("imp.dropHint")}
           </span>
           <input ref={fileRef} type="file" accept=".pdf,.txt,.text,.md,.markdown,.json,.xml" hidden
@@ -333,12 +333,12 @@ export function ImportPage() {
         ) : (
           <div className="row">
             <button className="primary" disabled={!canSubmit} onClick={() => analyze.run()}>{t("imp.start")}</button>
-            {!content.trim() && <span className="muted" style={{ fontSize: 12 }}>{t("imp.needContent")}</span>}
+            {!content.trim() && <span className="muted" style={{ fontSize: 13 }}>{t("imp.needContent")}</span>}
           </div>
         )}
         <ApiNotice error={analyze.error} what={t("imp.what")} onRetry={canSubmit ? () => analyze.run() : undefined} />
         {analyze.error && analyze.error.kind !== "unimplemented" && (
-          <div className="muted" style={{ fontSize: 12 }}>{t("imp.kept")}</div>
+          <div className="muted" style={{ fontSize: 13 }}>{t("imp.kept")}</div>
         )}
       </div>
     </div>

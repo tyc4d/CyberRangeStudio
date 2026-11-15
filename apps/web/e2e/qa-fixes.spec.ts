@@ -6,6 +6,18 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { relayGets } from "./net-relay";
 import { seedScenario } from "./seed";
+import zh from "../src/i18n/zh-TW";
+
+// UI text comes from the zh-TW locale file (the app's default language), so selectors follow the locale keys
+// instead of repeating the wording. Roles, labels and test ids stay the anchors.
+type K = keyof typeof zh;
+/** A message as the page renders it. Placeholders without a value stay as written. */
+const L = (k: K, v: Record<string, string | number> = {}) => zh[k].replace(/\{(\w+)\}/g, (m, n: string) => (n in v ? String(v[n]) : m));
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Whole-text pattern for a message whose placeholders are numbers. */
+const R = (k: K) => new RegExp(`^${esc(zh[k]).replace(/\\\{\w+\\\}/g, "\\d+")}$`);
+/** The longest fixed part of a message whose variable values the test does not know. */
+const P = (k: K) => zh[k].split(/\{\w+\}/).map((s) => s.trim()).sort((a, b) => b.length - a.length)[0];
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../../..");
@@ -52,19 +64,19 @@ test("缺失補充：「接受未知」備註留白也能送出，且不會出�
   const failed: string[] = [];
   page.on("response", (r) => { if (r.url().includes("/api/") && r.status() >= 400) failed.push(`${r.status()} ${new URL(r.url()).pathname}`); });
   await open(page, id, "/missing");
-  await expect(heading(page, "缺失補充")).toBeVisible();
-  const openTab = page.getByRole("button", { name: /^待補充 \d+$/ });
+  await expect(heading(page, L("ms.title"))).toBeVisible();
+  const openTab = page.getByRole("button", { name: R("ms.tab.open") });
   const before = Number((await openTab.innerText()).replace(/\D/g, ""));
   expect(before).toBeGreaterThan(0);
 
-  await page.getByRole("button", { name: "補充", exact: true }).first().click();
-  const send = page.getByRole("button", { name: "送出", exact: true });
+  await page.getByRole("button", { name: L("ms.answer"), exact: true }).first().click();
+  const send = page.getByRole("button", { name: L("ms.send"), exact: true });
   // Default mode needs text: the button is disabled and the form says why.
   await expect(send).toBeDisabled();
-  await expect(page.getByTestId("resolution-hint")).toContainText("必填");
+  await expect(page.getByTestId("resolution-hint")).toContainText(L("ms.needText"));
 
-  await page.getByRole("button", { name: "接受未知", exact: true }).click();
-  await expect(page.getByTestId("resolution-hint")).toContainText("備註選填");
+  await page.getByRole("button", { name: L("ms.res.unknown"), exact: true }).click();
+  await expect(page.getByTestId("resolution-hint")).toContainText(L("ms.unknownNote"));
   await expect(send).toBeEnabled();
   await shot(page, { path: path.join(EVIDENCE, "01-accept-unknown-blank-note.png") });
   await send.click();
@@ -80,7 +92,7 @@ test("缺失補充：「接受未知」備註留白也能送出，且不會出�
   const resolved = ir.missing_items.filter((m: any) => m.status === "accepted_unknown");
   expect(resolved.length).toBeGreaterThan(0);
   // The page agrees with the stored state: every still-open item is counted, the accepted one is not.
-  await expect(openTab).toHaveText(`待補充 ${ir.missing_items.filter((m: any) => m.status === "open").length}`);
+  await expect(openTab).toHaveText(L("ms.tab.open", { n: ir.missing_items.filter((m: any) => m.status === "open").length }));
   for (const m of resolved) expect(m.resolution).toBe("接受未知（使用者未填寫備註）");
 });
 
@@ -89,7 +101,7 @@ test("缺失補充：「接受未知」備註留白也能送出，且不會出�
 test("後端契約：補充的 text 留白會回 422（前端因此代填備註）", async ({ page }) => {
   const id = seed();
   await open(page, id, "/missing");
-  await expect(heading(page, "缺失補充")).toBeVisible();
+  await expect(heading(page, L("ms.title"))).toBeVisible();
   // Whitespace-only free text passes no client check on purpose here: send it straight to the real API.
   const status = await page.evaluate(async (sid) => (await fetch(`/api/ingest/${sid}/supplement`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "" }) })).status, id);
   expect(status).toBe(422); // documents the backend contract the UI adapts to
@@ -98,21 +110,21 @@ test("後端契約：補充的 text 留白會回 422（前端因此代填備註�
 test("部署管理：拓樸已核准但尚未生成 IaC 時，「啟動」停用並說明下一步", async ({ page }) => {
   const id = seed();
   await open(page, id, "/topology");
-  await expect(heading(page, "拓樸")).toBeVisible();
-  await page.getByRole("button", { name: /產生拓樸規劃|重新規劃拓樸/ }).first().click();
-  const approve = page.getByRole("button", { name: /核准/ }).first();
+  await expect(heading(page, L("tp.title"))).toBeVisible();
+  await page.getByRole("button", { name: new RegExp(`^(${esc(L("tp.plan"))}|${esc(L("tp.replan"))})$`) }).first().click();
+  const approve = page.getByRole("button", { name: L("tp.approve") });
   await expect(approve).toBeEnabled({ timeout: 60_000 });
   await approve.click();
 
   await page.goto("/deploy");
-  await expect(heading(page, "部署管理")).toBeVisible();
-  await expect(page.getByText("尚未生成 IaC，不能部署")).toBeVisible();
-  const up = page.getByRole("button", { name: "啟動（up）" });
+  await expect(heading(page, L("dp.title"))).toBeVisible();
+  await expect(page.getByText(L("dp.n.noFiles"))).toBeVisible();
+  const up = page.getByRole("button", { name: L("dp.act.up"), exact: true });
   await expect(up).toBeDisabled();
-  await expect(up).toHaveAttribute("title", /IaC/);
+  await expect(up).toHaveAttribute("title", L("dp.block.files"));
   await shot(page, { path: path.join(EVIDENCE, "02-deploy-blocked-no-iac.png") });
-  await page.getByRole("button", { name: "前往 IaC 預覽" }).click();
-  await expect(heading(page, "IaC 預覽")).toBeVisible();
+  await page.getByRole("button", { name: L("dp.n.toFiles") }).click();
+  await expect(heading(page, L("iac.title"))).toBeVisible();
   // No up attempt was made, so nothing may be in the audit trail.
   const rec = await (await page.request.get(`/api/deploy/${id}/records`)).json();
   expect(rec.records ?? []).toEqual([]);
@@ -121,56 +133,58 @@ test("部署管理：拓樸已核准但尚未生成 IaC 時，「啟動」停用
 test("導覽列的缺失數與缺失頁「待補充」數一致", async ({ page }) => {
   const id = seed();
   await open(page, id, "/missing");
-  await expect(heading(page, "缺失補充")).toBeVisible();
-  const tab = Number((await page.getByRole("button", { name: /^待補充 \d+$/ }).innerText()).replace(/\D/g, ""));
-  const nav = page.locator("nav a, .stages a, a").filter({ hasText: "缺失補充" }).first();
+  await expect(heading(page, L("ms.title"))).toBeVisible();
+  const tab = Number((await page.getByRole("button", { name: R("ms.tab.open") }).innerText()).replace(/\D/g, ""));
+  const nav = page.getByRole("navigation", { name: L("shell.workflow") }).getByRole("link", { name: L("stage.missing") });
   expect(Number((await nav.innerText()).replace(/\D/g, "").slice(1) || NaN), "nav count (after the step number)").toBe(tab);
 });
 
 test("首頁「＋ 新建情境」在已選情境時也開啟空白匯入表單", async ({ page }) => {
   const id = seed();
   await open(page, id, "/");
-  await page.getByRole("button", { name: "＋ 新建情境" }).click();
-  await expect(heading(page, "情資匯入")).toBeVisible();
-  await expect(page.getByRole("button", { name: "開始分析" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "匯入新報告" })).toHaveCount(0);
+  await page.getByRole("button", { name: `＋ ${L("home.new")}` }).click();
+  await expect(heading(page, L("imp.title"))).toBeVisible();
+  await expect(page.getByRole("button", { name: L("imp.start") })).toBeVisible();
+  await expect(page.getByRole("button", { name: L("imp.importNew") })).toHaveCount(0);
 });
 
 test("參照不一致的情境：依賴→拓樸→IaC→部署→驗證 每一站都說明狀態與下一步，且不顯示成可部署", async ({ page }) => {
   const id = seed();
   await open(page, id, "/deps");
-  await expect(heading(page, "軟體依賴")).toBeVisible();
-  await expect(page.getByText("尚未執行依賴分析")).toBeVisible();
-  await page.getByRole("button", { name: "執行依賴分析" }).click();
-  await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeVisible({ timeout: 60_000 });
+  await expect(heading(page, L("dep.title"))).toBeVisible();
+  await expect(page.getByText(L("dep.notRun.title"))).toBeVisible();
+  await page.getByRole("button", { name: L("dep.run") }).click();
+  await expect(page.getByRole("button", { name: L("dep.rerun"), exact: true })).toBeVisible({ timeout: 60_000 });
   const issues = page.getByTestId("ref-issues");
-  await expect(issues).toContainText("沒有歸屬任何主機");
-  await expect(issues).toContainText("目前的限制");
+  await expect(issues).toContainText(P("ref.unplaced"));
+  await expect(issues).toContainText(L("ref.limit"));
   await shot(page, { path: path.join(EVIDENCE, "03-deps-ref-issues.png"), fullPage: true });
 
   await page.goto("/topology");
-  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
-  await expect(page.getByText("這份規劃沒有任何會開通的連線")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: L("tp.plan"), exact: true }).click();
+  await expect(page.getByText(L("tp.noConn.title"))).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId("ref-issues")).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "04-topology-no-connections.png"), fullPage: true });
-  await page.getByRole("button", { name: "核准並繼續" }).click();
+  await page.getByRole("button", { name: L("tp.approve") }).click();
 
-  await expect(heading(page, "IaC 預覽")).toBeVisible();
-  await page.getByRole("button", { name: "生成 IaC" }).click();
+  await expect(heading(page, L("iac.title"))).toBeVisible();
+  await page.getByRole("button", { name: L("iac.gen") }).click();
   const failure = page.getByTestId("iac-failure");
   await expect(failure).toBeVisible({ timeout: 60_000 });
-  await expect(failure).toContainText("沒有產生任何 compose 檔");
-  await expect(page.getByText("可部署", { exact: true })).toHaveCount(1); // only the table header, no "可部署" verdict
+  await expect(failure).toContainText(P("iac.fail.body"));
+  // Only the table header says "deployable"; there is no ready-to-deploy verdict.
+  await expect(page.getByText(L("iac.col.ok"), { exact: true })).toHaveCount(1);
+  await expect(page.getByText(L("iac.ok"), { exact: true })).toHaveCount(0);
   await shot(page, { path: path.join(EVIDENCE, "05-iac-failure-readable.png"), fullPage: true });
 
   await page.goto("/deploy");
-  await expect(page.getByText("尚未生成 IaC，不能部署")).toBeVisible();
-  await expect(page.getByRole("button", { name: "啟動（up）" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "關閉（down）" })).toBeDisabled();
+  await expect(page.getByText(L("dp.n.noFiles"))).toBeVisible();
+  await expect(page.getByRole("button", { name: L("dp.act.up"), exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: L("dp.act.down"), exact: true })).toBeDisabled();
 
   await page.goto("/report");
-  await expect(page.getByText("環境尚未部署，不能執行驗證")).toBeVisible();
-  await expect(page.getByRole("button", { name: "執行驗證" })).toBeDisabled();
+  await expect(page.getByText(L("rp.notDeployed.title"))).toBeVisible();
+  await expect(page.getByRole("button", { name: L("rp.run"), exact: true })).toBeDisabled();
   await shot(page, { path: path.join(EVIDENCE, "06-report-not-deployed.png"), fullPage: true });
   const rec = await (await page.request.get(`/api/deploy/${id}/records`)).json();
   expect(rec.records ?? []).toEqual([]);
@@ -183,7 +197,7 @@ test("部署紀錄：失敗的嘗試顯示原因，不是「—」", async ({ pa
   expect(r.status(), "down without a compose file fails").toBeGreaterThanOrEqual(400);
   await open(page, id, "/deploy");
   const row = page.getByTestId("deploy-records").locator("tbody tr").first();
-  await expect(row).toContainText("關閉");
+  await expect(row).toContainText(L("dp.act.down"));
   await expect(row).toContainText("failed");
   await expect(row.locator("td").last()).not.toHaveText("—");
   await shot(page, { path: path.join(EVIDENCE, "07-deploy-record-reason.png"), fullPage: true });
@@ -194,20 +208,21 @@ test("攻擊流程：1280×720 展開設計檢查（截圖供人工檢視重疊�
   await page.setViewportSize({ width: 1280, height: 720 });
   await open(page, id, "/flow");
   await expect(page.locator(".react-flow")).toBeVisible();
-  await page.getByText("隨畫布即時計算").click();
+  // Opens the design-check console with its toggle button.
+  await page.getByTestId("validation-console").getByRole("button").first().click();
   await shot(page, { path: path.join(EVIDENCE, "08-flow-1280x720.png") });
 });
 
 test("換頁後從新頁面頂端開始，不沿用前一頁的捲動位置", async ({ page }) => {
   const id = seed();
   await open(page, id, "/analysis");
-  await expect(heading(page, "分析結果")).toBeVisible();
+  await expect(heading(page, L("an.title"))).toBeVisible();
   const main = page.locator("main.main");
   await main.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
-  await page.getByRole("button", { name: "下一步：缺失補充" }).click();
-  await expect(heading(page, "缺失補充")).toBeVisible();
+  await page.getByRole("button", { name: L("next.step", { label: L("stage.missing") }) }).click();
+  await expect(heading(page, L("ms.title"))).toBeVisible();
   expect(await main.evaluate((el) => el.scrollTop)).toBe(0);
-  await expect(heading(page, "缺失補充")).toBeInViewport();
+  await expect(heading(page, L("ms.title"))).toBeInViewport();
 });
 
 test("缺失補充：嚴重度沿用後端的 major；沒有原文依據的佔位主機不標成「原文已知」", async ({ page }) => {
@@ -217,35 +232,35 @@ test("缺失補充：嚴重度沿用後端的 major；沒有原文依據的佔�
   expect(ir.missing_items.every((m: any) => m.severity === "major")).toBe(true);
   expect(ir.missing_items[0].known[0].epistemic_status).toBe("insufficient");
   await open(page, id, "/missing");
-  await expect(heading(page, "缺失補充")).toBeVisible();
+  await expect(heading(page, L("ms.title"))).toBeVisible();
   const cards = page.getByTestId("known-vs-decide");
-  await expect(cards.first()).toContainText("系統推定（原文未證實）");
-  await expect(page.getByText("原文已知：")).toHaveCount(0);
-  await expect(page.getByText("次要", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("重要", { exact: true }).first()).toBeVisible();
+  await expect(cards.first()).toContainText(L("ms.guess"));
+  await expect(page.getByText(L("ms.known"))).toHaveCount(0);
+  await expect(page.getByText(L("ms.sev.minor"), { exact: true })).toHaveCount(0);
+  await expect(page.getByText(L("ms.sev.major"), { exact: true }).first()).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "09-missing-severity-and-source-labels.png") });
 });
 
 test("補件會說明答案寫到哪裡，送出後顯示已寫入的欄位；目錄沒有的軟體明確標示", async ({ page }) => {
   const id = seed();
   await open(page, id, "/deps");
-  await page.getByRole("button", { name: "執行依賴分析" }).click();
-  await expect(page.getByRole("button", { name: "重新分析依賴" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: L("dep.run") }).click();
+  await expect(page.getByRole("button", { name: L("dep.rerun"), exact: true })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId("no-component")).toContainText("Progress MOVEit Transfer");
-  await expect(page.getByText("目錄無此元件")).toBeVisible();
+  await expect(page.getByText(L("dep.noComp"))).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "10-deps-no-component.png"), fullPage: true });
 
   await page.goto("/missing");
-  await expect(heading(page, "缺失補充")).toBeVisible();
+  await expect(heading(page, L("ms.title"))).toBeVisible();
   const card = page.locator(".card", { hasText: "實際使用哪個作業系統" }).first();
-  await card.getByRole("button", { name: "補充", exact: true }).click();
-  await expect(card.getByTestId("write-target")).toContainText("的作業系統");
-  await card.getByPlaceholder(/填入實際資訊/).fill("Windows Server 2019");
+  await card.getByRole("button", { name: L("ms.answer"), exact: true }).click();
+  await expect(card.getByTestId("write-target")).toContainText(`的${L("ms.wf.os")}`);
+  await card.getByPlaceholder(L("ms.res.user.ph")).fill("Windows Server 2019");
   await shot(page, { path: path.join(EVIDENCE, "11-missing-write-target.png") });
-  await card.getByRole("button", { name: "送出", exact: true }).click();
+  await card.getByRole("button", { name: L("ms.send"), exact: true }).click();
   await expect(page.locator(".notice.err")).toHaveCount(0);
-  await page.getByRole("button", { name: /^全部 \d+$/ }).click();
-  await expect(page.getByTestId("applied-to").first()).toContainText("的作業系統");
+  await page.getByRole("button", { name: R("ms.tab.all") }).click();
+  await expect(page.getByTestId("applied-to").first()).toContainText(`的${L("ms.wf.os")}`);
   await shot(page, { path: path.join(EVIDENCE, "12-missing-applied-to.png") });
   // The page's claim matches what the backend stored.
   const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
@@ -261,12 +276,15 @@ test("拓樸：推定的入口主機有「待確認」標記與中文備註", as
   for (const a of ir.actions) a.target_host_ref = ir.hosts[0].id;
   expect((await page.request.put(`/api/scenario/${id}`, { data: { ir, note: "e2e: set target hosts" } })).ok()).toBe(true);
   await open(page, id, "/deps");
-  await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
-  await expect(page.getByText("依賴分析完成")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: new RegExp(`^(${esc(L("dep.run"))}|${esc(L("dep.rerun"))})$`) }).click();
+  await expect(page.getByText(L("dep.done"))).toBeVisible({ timeout: 60_000 });
   await page.goto("/topology");
-  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
-  await expect(page.getByText("推定入口・待確認")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/被放在對外網路，當作推定的入侵入口/)).toBeVisible();
+  await page.getByRole("button", { name: L("tp.plan"), exact: true }).click();
+  await expect(page.getByText(L("tp.entry"))).toBeVisible({ timeout: 60_000 });
+  // Planning notes are a folded section when the plan opens connections; open it to read the note.
+  const notes = page.locator("details", { has: page.locator("summary", { hasText: L("tp.notes") }) });
+  if (!(await notes.evaluate((el) => (el as HTMLDetailsElement).open))) await notes.locator("summary").click();
+  await expect(page.getByText(P("tp.n.entry"))).toBeVisible();
   await shot(page, { path: path.join(EVIDENCE, "13-topology-inferred-entry.png"), fullPage: true });
 });
 
@@ -280,19 +298,21 @@ test("讀取類 API 連線被中斷一次時自動重試，不顯示「無法連
   await open(page, id, "/");
   await expect(page.getByText(/e2e seeded \(no LLM\)/).first()).toBeVisible();
   expect(cut.list, "the list was requested again after the cut").toBeGreaterThanOrEqual(2);
-  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toHaveCount(0);
+  await expect(page.locator(".notice.warn", { hasText: P("notice.offline.title") })).toHaveCount(0);
 
   await page.goto("/deploy");
+  // The current state sits in the folded details section of the deploy page.
+  await page.locator("details.deploy-more > summary", { hasText: L("dp.more") }).click();
   await expect(page.getByTestId("deploy-state")).toBeVisible();
-  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toHaveCount(0);
+  await expect(page.locator(".notice.warn", { hasText: P("notice.offline.title") })).toHaveCount(0);
 
   // A write that fails at the connection level is reported, and sent exactly once.
   await page.route(`**/api/ingest/${id}/supplement`, (route) => { cut.down++; return route.abort("connectionfailed"); });
   await page.goto("/missing");
-  await page.getByRole("button", { name: "補充", exact: true }).first().click();
-  await page.getByRole("button", { name: "接受未知", exact: true }).click();
-  await page.getByRole("button", { name: "送出", exact: true }).click();
-  await expect(page.locator(".notice.warn", { hasText: "無法連線到後端" })).toBeVisible();
+  await page.getByRole("button", { name: L("ms.answer"), exact: true }).first().click();
+  await page.getByRole("button", { name: L("ms.res.unknown"), exact: true }).click();
+  await page.getByRole("button", { name: L("ms.send"), exact: true }).click();
+  await expect(page.locator(".notice.warn", { hasText: P("notice.offline.title") })).toBeVisible();
   await page.waitForTimeout(1200);
   expect(cut.down, "a POST is never re-sent automatically").toBe(1);
 });
@@ -311,8 +331,8 @@ test("版本依據與平台閘道：替代版本在依賴／拓樸／IaC／報�
   page.on("dialog", (d) => void d.accept());
 
   await open(page, id, "/deps");
-  await page.getByRole("button", { name: /執行依賴分析|重新分析依賴/ }).click();
-  await expect(page.getByText("依賴分析完成")).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: new RegExp(`^(${esc(L("dep.run"))}|${esc(L("dep.rerun"))})$`) }).click();
+  await expect(page.getByText(L("dep.done"))).toBeVisible({ timeout: 60_000 });
   const ir = await (await page.request.get(`/api/scenario/${id}`)).json();
   const svc = ir.services.find((s: any) => s.version_basis);
   expect(svc.version_basis, "backend classifies the deployed release").toBe("substituted");
@@ -324,16 +344,16 @@ test("版本依據與平台閘道：替代版本在依賴／拓樸／IaC／報�
   await shot(page, { path: path.join(EVIDENCE, "15-deps-version-basis.png"), fullPage: true });
 
   await page.goto("/topology");
-  await page.getByRole("button", { name: "產生拓樸規劃" }).click();
+  await page.getByRole("button", { name: L("tp.plan"), exact: true }).click();
   await expect(page.locator(".gnode.host").getByTestId("version-basis-substituted")).toBeVisible({ timeout: 60_000 });
   await shot(page, { path: path.join(EVIDENCE, "16-topology-version-basis.png"), fullPage: true });
-  await page.getByRole("button", { name: "核准並繼續" }).click();
+  await page.getByRole("button", { name: L("tp.approve") }).click();
 
-  await expect(heading(page, "IaC 預覽")).toBeVisible();
-  await page.getByRole("button", { name: "生成 IaC" }).click();
+  await expect(heading(page, L("iac.title"))).toBeVisible();
+  await page.getByRole("button", { name: L("iac.gen") }).click();
   const card = page.getByTestId("version-basis-card");
   await expect(card).toBeVisible({ timeout: 60_000 });
-  await expect(card).toContainText("1 項不是原文事實");
+  await expect(card).toContainText(L("vb.notFact", { n: 1 }));
   await expect(card).toContainText("1.18.0");
   await expect(card).toContainText(svc.deployed_version);
   await shot(page, { path: path.join(EVIDENCE, "17-iac-version-basis.png"), fullPage: true });
@@ -341,12 +361,13 @@ test("版本依據與平台閘道：替代版本在依賴／拓樸／IaC／報�
   test.skip(!docker, "Docker 不可用：部署頁與報告頁的部分未執行（不是通過）");
   try {
     await page.goto("/deploy");
-    await page.getByRole("button", { name: "啟動（up）" }).click();
+    await page.getByRole("button", { name: L("dp.act.up"), exact: true }).click();
     await expect(page.getByTestId("deploy-state")).toHaveText("running", { timeout: 4 * 60_000 });
     const table = page.getByTestId("container-table");
     await expect(table.locator('tr[data-kind="platform"]')).toHaveCount(1);
-    await expect(table.locator('tr[data-kind="platform"]')).toContainText("平台元件");
-    await expect(table.locator('tr[data-kind="platform"]')).toContainText("cr-gateway");
+    await expect(table.locator('tr[data-kind="platform"]')).toContainText(L("dp.platform"));
+    // The forwarder is named in words now; its internal service id is no longer shown.
+    await expect(table.locator('tr[data-kind="platform"]')).toContainText(L("dp.gateway"));
     await expect(table.locator('tr[data-kind="lab"]')).toHaveCount(2);
     // The port shown is the one Docker really bound, and it answers.
     const status = await (await page.request.get(`/api/deploy/${id}/status`)).json();
@@ -354,16 +375,18 @@ test("版本依據與平台閘道：替代版本在依賴／拓樸／IaC／報�
     expect(bound.length).toBe(1);
     const ports = page.getByTestId("published-ports");
     await expect(ports).toContainText(`127.0.0.1:${bound[0]}`);
-    await expect(ports).toContainText("只有這台主機本身連得到");
+    await expect(ports).toContainText(L("ia.scope.local"));
+    // A bound port is never presented as verified access.
+    await expect(ports).toContainText(L("ia.st.unverified"));
     const http = await page.request.get(`http://127.0.0.1:${bound[0]}/`);
     expect(http.status(), "the published port reaches the lab web server through the gateway").toBe(200);
     await shot(page, { path: path.join(EVIDENCE, "18-deploy-gateway-and-ports.png"), fullPage: true });
 
     await page.goto("/report");
-    await page.getByRole("button", { name: /執行驗證|重新驗證/ }).click();
+    await page.getByRole("button", { name: new RegExp(`^(${esc(L("rp.run"))}|${esc(L("rp.rerun"))})$`) }).click();
     const rcard = page.getByTestId("version-basis-card");
     await expect(rcard).toBeVisible({ timeout: 3 * 60_000 });
-    await expect(rcard).toContainText("不能據此說環境重現了原事件的版本");
+    await expect(rcard).toContainText(L("vb.noteReport"));
     await shot(page, { path: path.join(EVIDENCE, "19-report-version-basis.png"), fullPage: true });
   } finally {
     // Always remove what this test deployed.

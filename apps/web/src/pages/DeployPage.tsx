@@ -7,6 +7,7 @@ import { isPlanApproved } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, DataView, Empty, fmtTime, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
 import { PlacementPanel } from "./PlacementPanel";
+import { InstructorAccess, type PublishedPort } from "./InstructorAccess";
 import { getLocale, live, t, type MsgKey } from "../i18n";
 import type { EnvHost, EnvNetwork } from "@contracts";
 
@@ -28,7 +29,7 @@ function ContainerTable({ containers, roleOf }: { containers: any[]; roleOf: (sv
   const gw = containers.filter((c) => c?.service === GATEWAY);
   return (
     <div data-testid="container-table">
-      <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t("dp.hostsCount", { n: lab.length })}{gw.length > 0 && <> · {t("dp.platformCount", { n: gw.length })}</>}</div>
+      <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>{t("dp.hostsCount", { n: lab.length })}{gw.length > 0 && <> · {t("dp.platformCount", { n: gw.length })}</>}</div>
       <table className="tbl">
         <thead><tr><th>{t("dp.col.kind")}</th><th>{t("dp.col.name")}</th><th>{t("dp.col.state")}</th><th>{t("dp.col.health")}</th></tr></thead>
         <tbody>
@@ -40,7 +41,7 @@ function ContainerTable({ containers, roleOf }: { containers: any[]; roleOf: (sv
                   ? <span className="tag" title={t("dp.platform.hint")}>{t("dp.platform")}</span>
                   : <span className="tag">{t("dp.scenarioHost")}</span>}</td>
                 <td>{isGw ? t("dp.gateway") : roleOf(String(c?.service)) ?? String(c?.service ?? "—")}</td>
-                <td><span className={stateClass(String(c?.state ?? ""))}>{String(c?.state ?? "—")}</span>{c?.status && <div className="muted" style={{ fontSize: 11 }}>{String(c.status)}</div>}</td>
+                <td><span className={stateClass(String(c?.state ?? ""))}>{String(c?.state ?? "—")}</span>{c?.status && <div className="muted" style={{ fontSize: 12 }}>{String(c.status)}</div>}</td>
                 <td className="muted">{c?.health ? String(c.health) : t("dp.noHealth")}</td>
               </tr>
             );
@@ -63,7 +64,7 @@ function CommandFailure({ error, what }: { error: ApiError | null; what: string 
     <Notice kind="err" title={t("dp.failed", { what })}>
       <div data-testid="command-failure">
         <div>{cause ?? t("dp.noCause")}{typeof cmd.returncode === "number" && <span className="muted mono">{t("dp.exitCode", { n: cmd.returncode })}</span>}</div>
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("dp.failNote")}</div>
+        <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>{t("dp.failNote")}</div>
         {stderr && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>{t("dp.fullOutput")}</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{stderr}</pre></details>}
       </div>
     </Notice>
@@ -186,11 +187,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const planHosts: EnvHost[] = (ir.environment_plan as any)?.hosts ?? [];
   const planNetworks: EnvNetwork[] = (ir.environment_plan as any)?.networks ?? [];
   const roleOf = (svc: string): string | undefined => planHosts.find((h) => h.id === svc)?.role;
-  // Ports of the running deployment: the newest successful "up" in the audit trail (the up response carries the same list).
-  const lastUp = rawRecords.find((r) => r.action === "up");
-  const published: any[] | null = lastUp && lastUp.state === "running" && Array.isArray(lastUp.details?.published_ports) ? lastUp.details.published_ports : null;
-  const boundPorts: string[] = (Array.isArray(containers) ? containers : []).flatMap((c: any) =>
-    (Array.isArray(c?.ports) ? c.ports : []).map((p: any) => `${p.host_ip ?? ""}:${p.host_port}`));
+  // Ports bound right now, as the status endpoint reports them (the backend reads the running gateway; [] on Proxmox).
+  const published: PublishedPort[] | undefined = s && typeof s === "object" && Array.isArray(s.published_ports) ? s.published_ports : undefined;
   const liveContainers = Array.isArray(containers) ? containers.length : 0;
   // Nothing was ever generated and nothing is running: a down would only fail and add a failed record.
   const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? t("dp.block.down") : undefined;
@@ -232,13 +230,25 @@ function Body({ ir }: { ir: ScenarioIR }) {
       )}
       {isProxmox && !pf && preflight.loading && <Notice kind="info">{t("dp.n.checking")}</Notice>}
       {isProxmox && preflight.error && (
-        <><ApiNotice error={preflight.error} what={t("dp.n.preflightWhat")} onRetry={() => preflight.reload()} /><div className="muted" style={{ fontSize: 12, marginTop: -8 }}>{t("dp.n.preflightNote")}</div></>
+        <><ApiNotice error={preflight.error} what={t("dp.n.preflightWhat")} onRetry={() => preflight.reload()} /><div className="muted" style={{ fontSize: 13, marginTop: -8 }}>{t("dp.n.preflightNote")}</div></>
       )}
       {up.busy && <div className="card"><Busy label={t("dp.busyUp")} elapsed={up.elapsed} /></div>}
       {down.busy && <div className="card"><Busy label={t("dp.busyDown")} elapsed={down.elapsed} /></div>}
       <CommandFailure error={up.error} what={t("dp.upWhat")} />
       <CommandFailure error={down.error} what={t("dp.downWhat")} />
       {status.error && <ApiNotice error={status.error} what={t("dp.statusWhat")} onRetry={() => status.reload()} />}
+
+      <InstructorAccess
+        backend={backend}
+        state={state}
+        loading={status.loading}
+        failed={!!status.error}
+        published={published}
+        hosts={planHosts}
+        networks={planNetworks}
+        connections={(ir.environment_plan as any)?.connections ?? []}
+        hasPlan={!!ir.environment_plan}
+      />
 
       <PlacementPanel
         hosts={planHosts}
@@ -262,56 +272,25 @@ function Body({ ir }: { ir: ScenarioIR }) {
             ? <span className="pill status-NOT_TESTED" data-testid="deploy-state" >{t("dp.notDeployed")}</span>
             : <span className={`pill ${stateClass(state)}`} data-testid="deploy-state">{state}</span>)}
           <div className="right">
-            {status.data && lastAt && <span className="muted" style={{ fontSize: 12 }}>{t("dp.updatedAt", { time: lastAt.toLocaleTimeString(getLocale(), { hour12: false }) })}</span>}
-            <label className="row muted" style={{ gap: 5, fontSize: 12 }}>
+            {status.data && lastAt && <span className="muted" style={{ fontSize: 13 }}>{t("dp.updatedAt", { time: lastAt.toLocaleTimeString(getLocale(), { hour12: false }) })}</span>}
+            <label className="row muted" style={{ gap: 5, fontSize: 13 }}>
               <input type="checkbox" style={{ width: "auto" }} checked={auto} onChange={(e) => setAuto(e.target.checked)} /> {t("dp.auto")}
             </label>
             <button className="small" onClick={() => status.reload()} disabled={status.loading}>{t("dp.refresh")}</button>
           </div>
         </div>
         <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
-          {status.error && status.data && <div className="muted" style={{ fontSize: 12 }}>{t("dp.stale")}</div>}
+          {status.error && status.data && <div className="muted" style={{ fontSize: 13 }}>{t("dp.stale")}</div>}
           {status.loading && !status.data && !status.error && <Busy label={t("dp.loading")} />}
-          {noCompose(s) && <span className="muted" style={{ fontSize: 13 }}>{t("dp.noFilesState")}</span>}
+          {noCompose(s) && <span className="muted" style={{ fontSize: 14 }}>{t("dp.noFilesState")}</span>}
           {status.data !== null && status.data !== undefined && !noCompose(s) && (
             <>
               {containers !== undefined && (
                 <div>
                   <h3 style={{ marginBottom: 8 }}>{t("dp.parts")}</h3>
-                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.nothingRunning")}</span>
+                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 14 }}>{t("dp.nothingRunning")}</span>
                     : Array.isArray(containers) ? <ContainerTable containers={containers} roleOf={roleOf} />
                     : <DataView data={containers} />}
-                </div>
-              )}
-              {state === "running" && (
-                <div data-testid="published-ports">
-                  <h3 style={{ marginBottom: 8 }}>{t("dp.ports")}</h3>
-                  {published === null ? (
-                    <span className="muted" style={{ fontSize: 13 }}>
-                      {t("dp.ports.unknown")}{" "}
-                      {boundPorts.length > 0
-                        ? <>{t("dp.ports.bound", { list: "" })}<span className="mono">{boundPorts.join(", ")}</span></>
-                        : t("dp.ports.noneBound")}
-                    </span>
-                  )
-                    : published.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.ports.none")}</span> : (
-                    <>
-                      <table className="tbl">
-                        <thead><tr><th>{t("dp.ports.from")}</th><th>{t("dp.ports.to")}</th></tr></thead>
-                        <tbody>
-                          {published.map((p, i) => (
-                            <tr key={i}>
-                              <td className="mono">{p.host_ip ?? "127.0.0.1"}:{p.host_port ?? "?"}</td>
-                              <td>{t("dp.ports.target", { host: roleOf(String(p.host_id)) ?? p.host_id, port: p.container_port })}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-                        {t("dp.ports.note")} {published.some((p) => p.host_ip && p.host_ip !== "127.0.0.1") ? t("dp.ports.lan") : t("dp.ports.local")}
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
               {rest && Object.keys(rest).length > 0 && <DataView data={rest} />}
@@ -336,10 +315,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
           {health.error ? <ApiNotice error={health.error} what={t("dp.health.what")} onRetry={() => health.reload()} />
             : health.loading && !health.data ? <Busy label={t("dp.health.busy")} />
             : health.data === null || health.data === undefined ? <span className="muted">{t("dp.health.none")}</span>
-            : noCompose(health.data) ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.health.notDeployed")}</span>
+            : noCompose(health.data) ? <span className="muted" style={{ fontSize: 14 }}>{t("dp.health.notDeployed")}</span>
             : <DataView data={health.data} />}
           {health.data && !noCompose(health.data) && !health.error && (
-            <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            <div className="muted" style={{ fontSize: 13, marginTop: 10 }}>
               {t("dp.health.note")}
             </div>
           )}
@@ -347,7 +326,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
       </div>
 
       <div className="card flush">
-        <div className="card-head"><h2>{t("dp.records")}</h2><span className="muted" style={{ fontSize: 12 }}>{history.length}</span></div>
+        <div className="card-head"><h2>{t("dp.records")}</h2><span className="muted" style={{ fontSize: 13 }}>{history.length}</span></div>
         {records.error && records.error.kind !== "unimplemented" ? <div style={{ padding: 14 }}><ApiNotice error={records.error} what={t("dp.recordsWhat")} onRetry={() => records.reload()} /></div>
           : history.length === 0 ? <Empty>{t("dp.noRecords")}</Empty> : (
           <table className="tbl" data-testid="deploy-records">
@@ -362,7 +341,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     {r.reason ?? "—"}
                     {r.output && (
                       <details style={{ marginTop: 4 }}>
-                        <summary style={{ cursor: "pointer", fontSize: 12 }}>{t("dp.output")}</summary>
+                        <summary style={{ cursor: "pointer", fontSize: 13 }}>{t("dp.output")}</summary>
                         <pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{r.output}</pre>
                       </details>
                     )}
