@@ -427,8 +427,25 @@ def _readme(b: _Bundle, ir: dict[str, Any], manifest: dict[str, Any]) -> str:
 
 
 # --- public API ---------------------------------------------------------------
-def build_bundle(scenario_id: str) -> tuple[bytes, dict[str, Any]]:
-    """Collect real artifacts and return (zip_bytes, manifest). Raises KeyError if unknown."""
+# Export variants (GUI). Each variant is a subset of the full bundle plus its own manifest.json.
+EXPORT_FORMATS = ("full", "iac", "evidence")
+_FORMAT_PREFIXES = {"iac": ("infrastructure/",), "evidence": ("validation/", "evidence/")}
+_EVIDENCE_ONLY_MISSING = ("infrastructure/ — not included: this is an evidence-only export (format=evidence); "
+                          "export format=full or format=iac to rebuild the environment")
+
+
+def normalize_format(fmt: Any) -> str:
+    """Unknown or absent format means the full bundle."""
+    return fmt if isinstance(fmt, str) and fmt in EXPORT_FORMATS else "full"
+
+
+def build_bundle(scenario_id: str, fmt: str | None = "full") -> tuple[bytes, dict[str, Any]]:
+    """Collect real artifacts and return (zip_bytes, manifest). Raises KeyError if unknown.
+
+    ``fmt``: "full" (everything), "iac" (infrastructure/ + manifest.json),
+    "evidence" (validation/ + evidence/ + manifest.json). Anything else -> "full".
+    """
+    fmt = normalize_format(fmt)
     ir = store.get(scenario_id)
     if not isinstance(ir, dict):
         raise KeyError(scenario_id)
@@ -467,6 +484,16 @@ def build_bundle(scenario_id: str) -> tuple[bytes, dict[str, Any]]:
         if hits:
             raise ExportError(f"refusing to export: {path} contains secret material ({', '.join(sorted(set(hits)))})")
 
+    if fmt != "full":
+        keep = _FORMAT_PREFIXES[fmt]
+        b.files = {p: v for p, v in b.files.items() if p.startswith(keep)}
+        manifest["files"] = [{"path": p, "sha256": _sha256(d), "generated_by": g}
+                             for p, (d, g) in sorted(b.files.items())]
+        if fmt == "evidence":
+            # This archive alone cannot rebuild anything; say so instead of inheriting the full verdict.
+            manifest["rebuildable"] = False
+            manifest["missing_for_rebuild"] = [_EVIDENCE_ONLY_MISSING] + manifest["missing_for_rebuild"]
+
     _validate_manifest(manifest)
 
     buf = io.BytesIO()
@@ -489,12 +516,12 @@ def _validate_manifest(manifest: dict[str, Any]) -> None:
         raise ExportError("manifest does not match the ExportManifest contract: " + "; ".join(errors))
 
 
-def _output_path(scenario_id: str, version: Any) -> Path:
+def _output_path(scenario_id: str, version: Any, fmt: str = "full") -> Path:
     generator.validate_id(scenario_id)  # also guarantees a safe path component
     out_dir = config.DATA_DIR / "exports" / scenario_id
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    base = f"{scenario_id}-v{version}-{stamp}"
+    base = f"{scenario_id}-v{version}-{stamp}" + ("" if fmt == "full" else f"-{fmt}")
     candidate, n = out_dir / f"{base}.zip", 1
     while candidate.exists():  # never overwrite an earlier export
         n += 1
@@ -502,10 +529,11 @@ def _output_path(scenario_id: str, version: Any) -> Path:
     return candidate
 
 
-def export(scenario_id: str) -> dict[str, Any]:
+def export(scenario_id: str, fmt: str | None = "full") -> dict[str, Any]:
     """Build, write and record the bundle. Returns ``{bundle_path, manifest}`` (CONTRACT §HTTP API)."""
-    data, manifest = build_bundle(scenario_id)
-    path = _output_path(scenario_id, manifest["scenario_version"])
+    fmt = normalize_format(fmt)
+    data, manifest = build_bundle(scenario_id, fmt)
+    path = _output_path(scenario_id, manifest["scenario_version"], fmt)
     tmp = path.with_suffix(".zip.partial")
     with open(tmp, "xb") as f:
         f.write(data)
@@ -514,6 +542,28 @@ def export(scenario_id: str) -> dict[str, Any]:
     os.replace(tmp, path)
     poc_store.save_export(scenario_id, str(path), manifest)
     return {"bundle_path": str(path), "manifest": manifest}
+
+
+def latest_bundle(scenario_id: str) -> Optional[Path]:
+    """Path of the most recent recorded export that still exists under DATA_DIR/exports/<id>, else None.
+
+    Reads the poc_exports table (poc.store has no getter for it). The path is re-checked to lie
+    inside this scenario's export directory so a tampered row can never serve another file.
+    """
+    generator.validate_id(scenario_id)
+    root = (config.DATA_DIR / "exports" / scenario_id).resolve()
+    with poc_store._LOCK:
+        c = poc_store._conn()
+        try:
+            rows = c.execute("SELECT bundle_path FROM poc_exports WHERE scenario_id=? ORDER BY id DESC",
+                             (scenario_id,)).fetchall()
+        finally:
+            c.close()
+    for row in rows:
+        p = Path(row["bundle_path"]).resolve()
+        if root in p.parents and p.suffix == ".zip" and p.is_file():
+            return p
+    return None
 
 
 def verify_bundle(path_or_bytes: str | Path | bytes) -> list[str]:

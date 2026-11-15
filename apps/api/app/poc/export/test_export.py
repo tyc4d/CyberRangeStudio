@@ -221,6 +221,54 @@ class ExposedPlanExportTests(ExportTestBase):
         self.assertEqual([r[0] for r in rows], [first["bundle_path"], second["bundle_path"]])
         self.assertEqual({r[1] for r in rows}, {0})
 
+    def test_iac_variant_has_only_infrastructure_and_manifest(self):
+        self._seed_validation()
+        data, _ = B.build_bundle(SID, "iac")
+        zf = zipfile.ZipFile(io.BytesIO(data))
+        names = set(zf.namelist())
+        self.assertIn("infrastructure/docker-compose.yml", names)
+        self.assertEqual({n for n in names if not n.startswith("infrastructure/")}, {"manifest.json"})
+        self.assertEqual(B.verify_bundle(data), [])
+
+    def test_evidence_variant_has_only_validation_evidence_and_is_not_rebuildable(self):
+        self._seed_validation()
+        data, manifest = B.build_bundle(SID, "evidence")
+        names = set(zipfile.ZipFile(io.BytesIO(data)).namelist())
+        self.assertEqual({n for n in names if not n.startswith(("validation/", "evidence/"))}, {"manifest.json"})
+        self.assertIn("evidence/evidence-index.json", names)
+        self.assertFalse(manifest["rebuildable"])
+        self.assertTrue(manifest["missing_for_rebuild"][0].startswith("infrastructure/ — not included"))
+        self.assertEqual(B.verify_bundle(data), [])
+
+    def test_no_secret_values_in_any_variant(self):
+        self._seed_validation()
+        for fmt in ("full", "iac", "evidence", "bogus", None):
+            data, _ = B.build_bundle(SID, fmt)
+            zf = zipfile.ZipFile(io.BytesIO(data))
+            for name in zf.namelist():
+                body = zf.read(name).decode("utf-8")
+                for secret in (PLAIN_PASSWORD, INLINE_PASSWORD, AWS_KEY, ENV_TOKEN):
+                    self.assertNotIn(secret, body, f"{fmt}: {secret!r} leaked into {name}")
+
+    def test_unknown_or_absent_format_is_full(self):
+        for fmt in (None, "", "bogus", 3):
+            self.assertEqual(B.normalize_format(fmt), "full")
+        full = set(zipfile.ZipFile(io.BytesIO(B.build_bundle(SID)[0])).namelist())
+        bogus = set(zipfile.ZipFile(io.BytesIO(B.build_bundle(SID, "bogus")[0])).namelist())
+        self.assertEqual(full, bogus)
+        self.assertIn("README.md", bogus)
+
+    def test_latest_bundle_returns_newest_existing_export_or_none(self):
+        self.assertIsNone(B.latest_bundle(SID))
+        B.export(SID)
+        second = B.export(SID, "iac")
+        self.assertEqual(B.latest_bundle(SID), Path(second["bundle_path"]).resolve())
+        self.assertTrue(second["bundle_path"].endswith("-iac.zip"))
+        # a row pointing outside this scenario's export dir is never served
+        from app.poc import store as poc_store
+        poc_store.save_export(SID, "/etc/passwd", {"scenario_version": 3, "rebuildable": False})
+        self.assertEqual(B.latest_bundle(SID), Path(second["bundle_path"]).resolve())
+
     def test_unknown_scenario_raises_key_error(self):
         with self.assertRaises(KeyError):
             B.build_bundle("scn_nope")

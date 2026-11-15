@@ -2,6 +2,8 @@
 
 See bundle.py. Public entry point: ``export(scenario_id) -> {bundle_path, manifest}``.
 """
-from app.poc.export.bundle import build_bundle, export, verify_bundle
+from app.poc.export.bundle import (EXPORT_FORMATS, ExportError, build_bundle, export, latest_bundle,
+                                     normalize_format, verify_bundle)
 
-__all__ = ["build_bundle", "export", "verify_bundle"]
+__all__ = ["EXPORT_FORMATS", "ExportError", "build_bundle", "export", "latest_bundle", "normalize_format",
+           "verify_bundle"]
