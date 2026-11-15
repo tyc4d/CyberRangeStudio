@@ -20,6 +20,8 @@ from app.deploy.pve_client import PveClient, PveError, PveSettings, PROTECTED_VM
 WORKER_MEMORY_MIB = 4096
 WORKER_VCPUS = 2
 WORKER_DISK_GIB = 20
+# Owner-approved 2026-11-15: at most two product worker VMs (900100-900999) at once.
+MAX_WORKER_VMS = 2
 OWNER = "cyberrange"
 _BACKEND_INSTANCE = "codex-20261115"
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
@@ -75,13 +77,14 @@ def _placement_lock(database_path: str):
     connection = sqlite3.connect(path, timeout=60, isolation_level=None)
     try:
         connection.execute("PRAGMA busy_timeout=60000")
-        connection.execute(
-            "CREATE TABLE IF NOT EXISTS pve_worker_reservation ("
-            "slot INTEGER PRIMARY KEY CHECK(slot = 1), scenario_id TEXT NOT NULL, "
-            "host_id TEXT NOT NULL, vmid INTEGER NOT NULL, state TEXT NOT NULL, "
-            "updated_at TEXT NOT NULL)"
-        )
         connection.execute("BEGIN EXCLUSIVE")
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS pve_worker_reservations ("
+            "vmid INTEGER PRIMARY KEY CHECK(vmid BETWEEN 900100 AND 900999), "
+            "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, state TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL, UNIQUE(scenario_id, host_id))"
+        )
+        _migrate_singleton_reservation(connection)
         yield connection
     finally:
         if connection.in_transaction:
@@ -89,24 +92,49 @@ def _placement_lock(database_path: str):
         connection.close()
 
 
-def _reservation(connection: sqlite3.Connection) -> dict[str, Any] | None:
-    row = connection.execute(
-        "SELECT scenario_id, host_id, vmid, state FROM pve_worker_reservation WHERE slot = 1"
+def _migrate_singleton_reservation(connection: sqlite3.Connection) -> None:
+    """Move the pre-2026-11-15 single-slot row into the per-VMID table, atomically."""
+    legacy = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='pve_worker_reservation'"
     ).fetchone()
-    if row is None:
-        return None
-    return {"scenario_id": row[0], "host_id": row[1], "vmid": int(row[2]), "state": row[3]}
+    if legacy is None:
+        return
+    rows = connection.execute(
+        "SELECT scenario_id, host_id, vmid, state, updated_at FROM pve_worker_reservation"
+    ).fetchall()
+    for row in rows:
+        connection.execute(
+            "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at) "
+            "VALUES(?, ?, ?, ?, ?)", (int(row[2]), row[0], row[1], row[3], row[4]),
+        )
+    connection.execute("DROP TABLE pve_worker_reservation")
+    connection.commit()
+    connection.execute("BEGIN EXCLUSIVE")
+
+
+def _reservations(connection: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = connection.execute(
+        "SELECT scenario_id, host_id, vmid, state FROM pve_worker_reservations ORDER BY vmid"
+    ).fetchall()
+    return [{"scenario_id": row[0], "host_id": row[1], "vmid": int(row[2]), "state": row[3]}
+            for row in rows]
+
+
+def _reservation(connection: sqlite3.Connection, vmid: int) -> dict[str, Any] | None:
+    return next((held for held in _reservations(connection) if held["vmid"] == vmid), None)
 
 
 def _persist_reservation(connection: sqlite3.Connection, *, scenario_id: str,
                          host_id: str, vmid: int, state: str) -> None:
-    connection.execute(
-        "INSERT INTO pve_worker_reservation(slot, scenario_id, host_id, vmid, state, updated_at) "
-        "VALUES(1, ?, ?, ?, ?, ?) ON CONFLICT(slot) DO UPDATE SET "
-        "scenario_id=excluded.scenario_id, host_id=excluded.host_id, vmid=excluded.vmid, "
-        "state=excluded.state, updated_at=excluded.updated_at",
-        (scenario_id, host_id, vmid, state, datetime.now(timezone.utc).isoformat()),
+    cursor = connection.execute(
+        "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at) "
+        "VALUES(?, ?, ?, ?, ?) ON CONFLICT(vmid) DO UPDATE SET "
+        "state=excluded.state, updated_at=excluded.updated_at "
+        "WHERE scenario_id=excluded.scenario_id AND host_id=excluded.host_id",
+        (vmid, scenario_id, host_id, state, datetime.now(timezone.utc).isoformat()),
     )
+    if cursor.rowcount != 1:
+        raise ProxmoxBackendError("durable worker reservation identity changed; manual reconciliation required")
     connection.commit()
     connection.execute("BEGIN EXCLUSIVE")
 
@@ -114,8 +142,8 @@ def _persist_reservation(connection: sqlite3.Connection, *, scenario_id: str,
 def _clear_reservation(connection: sqlite3.Connection, *, scenario_id: str,
                        host_id: str, vmid: int) -> None:
     cursor = connection.execute(
-        "DELETE FROM pve_worker_reservation WHERE slot=1 AND scenario_id=? AND host_id=? AND vmid=?",
-        (scenario_id, host_id, vmid),
+        "DELETE FROM pve_worker_reservations WHERE vmid=? AND scenario_id=? AND host_id=?",
+        (vmid, scenario_id, host_id),
     )
     if cursor.rowcount != 1:
         raise ProxmoxBackendError("durable worker reservation identity changed; manual reconciliation required")
@@ -329,7 +357,7 @@ class ProxmoxBackend:
                 raise ProxmoxBackendError("insufficient node memory; notify product owner, no existing VM will be stopped")
             if pool_memory_available < WORKER_MEMORY_MIB:
                 raise ProxmoxBackendError("cr-range memory budget is exhausted; notify product owner")
-            if worker_vmid_count >= 1 or running_pool_vms >= 4:
+            if worker_vmid_count >= MAX_WORKER_VMS or running_pool_vms >= 4:
                 raise ProxmoxBackendError("cr-range runtime VM quota is exhausted")
             if storage_free < (self.settings.datastore_reserve_gib + WORKER_DISK_GIB) * 1024**3:
                 raise ProxmoxBackendError("insufficient local-lvm space; notify product owner")
@@ -385,9 +413,16 @@ class ProxmoxBackend:
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         if attach_lab_network:
             raise ProxmoxBackendError("PVE workers are zero-NIC; attach_lab_network is unsupported")
-        if self.settings.mode == "live" and _reservation(reservation_db) is not None:
+        held_reservations = _reservations(reservation_db) if self.settings.mode == "live" else []
+        if any(held["state"] != "active" for held in held_reservations):
             return {"ok": False, "state": "reservation_conflict",
-                    "error": "a durable worker reservation exists; manual reconciliation is required"}
+                    "error": "a durable worker reservation is not active; manual reconciliation is required"}
+        if any(held["scenario_id"] == scenario_id and held["host_id"] == host_id for held in held_reservations):
+            return {"ok": False, "state": "reservation_conflict",
+                    "error": "this scenario host already holds a durable worker reservation"}
+        if len(held_reservations) >= MAX_WORKER_VMS:
+            return {"ok": False, "state": "reservation_conflict",
+                    "error": "the approved worker VM limit is fully reserved"}
         if not isinstance(compose_yaml, str) or not compose_yaml:
             raise ProxmoxBackendError("Compose document is empty")
         source_digest = hashlib.sha256(compose_yaml.encode()).hexdigest()
@@ -402,6 +437,8 @@ class ProxmoxBackend:
         if not ready["ok"]:
             return {"ok": False, "state": "preflight_failed", "preflight": ready}
         vmid = self._next_vmid()
+        if any(held["vmid"] == vmid for held in held_reservations):
+            raise ProxmoxBackendError("candidate VMID already holds a durable reservation; manual reconciliation required")
         reservation_written = self.settings.mode == "live"
         if reservation_written:
             _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
@@ -641,7 +678,7 @@ class ProxmoxBackend:
     def _down_locked(self, scenario_id: str, *, vmid: int, host_id: str,
                      reservation_db: sqlite3.Connection) -> dict[str, Any]:
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
-        held = _reservation(reservation_db)
+        held = _reservation(reservation_db, vmid)
         if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
                 or held["vmid"] != vmid or held["state"] != "active"):
             raise ProxmoxBackendError("matching active durable worker reservation is required for down")
@@ -732,7 +769,7 @@ class ProxmoxBackend:
         scenario_id = _safe_id(scenario_id, "scenario id")
         host_id = _safe_id(host_id, "host id")
         with _placement_lock(self.settings.reservation_db) as reservation_db:
-            held = _reservation(reservation_db)
+            held = _reservation(reservation_db, vmid)
             if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
                     or held["vmid"] != vmid or held["state"] != "active"):
                 raise ProxmoxBackendError("public guest command requires its matching active durable reservation")
