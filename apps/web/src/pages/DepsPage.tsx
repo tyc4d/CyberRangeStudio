@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { joinList, t } from "../i18n";
 import type { ScenarioIR, ServiceItem } from "@contracts";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
@@ -15,21 +16,21 @@ function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
         <div className="mono muted">{s.id}</div>
       </td>
       <td>
-        <span className="mono">{s.version ?? <span className="muted">原文未寫</span>}</span>
+        <span className="mono">{s.version ?? <span className="muted">{t("dep.notStated")}</span>}</span>
         {basisOf(s as Versioned) && (
           <div style={{ marginTop: 4, fontSize: 12 }}>
             <BasisTag of={s as Versioned} />
-            {(s as Versioned).deployed_version && <span className="muted">　部署 <span className="mono">{(s as Versioned).deployed_version}</span></span>}
+            {(s as Versioned).deployed_version && <span className="muted"> {t("dep.deployed", { v: (s as Versioned).deployed_version })}</span>}
           </div>
         )}
       </td>
-      <td>{hosts?.length ? hosts.join("、") : <span className="muted">—</span>}</td>
+      <td>{hosts?.length ? joinList(hosts) : <span className="muted">—</span>}</td>
       <td>
         {s.catalogue_component ? <span className="mono">{s.catalogue_component}</span>
           : (s as { no_component?: boolean }).no_component
-            ? <span className="status-FAIL" title="元件目錄裡沒有這個軟體，也不會自動用別的軟體頂替。要部署需在「缺失補充」明確選擇替代方案。">目錄無此元件</span>
-            : <span className="muted">未對應</span>}
-        {s.is_substitute && <span className="tag sub" style={{ marginLeft: 6 }} title="環境中使用的不是報告裡的原始軟體">{(s as { substitute_basis?: string }).substitute_basis === "user_chosen" ? "替代品・你選的" : "替代品"}</span>}
+            ? <span className="status-FAIL" title={t("dep.noComp.hint")}>{t("dep.noComp")}</span>
+            : <span className="muted">{t("dep.unmapped")}</span>}
+        {s.is_substitute && <span className="tag sub" style={{ marginLeft: 6 }} title={t("dep.sub.hint")}>{(s as { substitute_basis?: string }).substitute_basis === "user_chosen" ? t("dep.subMine") : t("dep.sub")}</span>}
       </td>
       <td>{s.cve?.length ? s.cve.map((c) => <div key={c} className="mono">{c}</div>) : <span className="muted">—</span>}</td>
       <td><EpistemicBadge status={s.epistemic_status} /></td>
@@ -67,57 +68,57 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   return (
     <div className="page">
-      <PageHead title="軟體依賴" desc="重建這條攻擊流程需要的主機與軟體，以及它們對應到哪個可部署的元件。標為「替代品」的項目與報告中的原始軟體不同，會影響重現的擬真度。">
-        <button className={analysed ? "" : "primary"} disabled={run.busy} onClick={() => run.run()}>{analysed ? "重新分析依賴" : "執行依賴分析"}</button>
+      <PageHead title={t("dep.title")} desc={t("dep.desc")}>
+        <button className={analysed ? "" : "primary"} disabled={run.busy} onClick={() => run.run()}>{analysed ? t("dep.rerun") : t("dep.run")}</button>
       </PageHead>
 
-      {run.busy && <div className="card"><Busy label="分析軟體依賴中…" elapsed={run.elapsed} /></div>}
-      <ApiNotice error={run.error} what="依賴分析" />
+      {run.busy && <div className="card"><Busy label={t("dep.busy")} elapsed={run.elapsed} /></div>}
+      <ApiNotice error={run.error} what={t("dep.what")} />
       {ranOk && !run.busy && (has
-        ? <Notice kind="info">依賴分析完成，結果已更新。</Notice>
-        : <Notice kind="warn" title="分析完成，但沒有結果">後端沒有從目前的攻擊流程與補充資訊推導出任何主機或服務。可以回到「缺失補充」補上軟體與版本資訊後再試。</Notice>)}
+        ? <Notice kind="info">{t("dep.done")}</Notice>
+        : <Notice kind="warn" title={t("dep.empty.title")}>{t("dep.empty.body")}</Notice>)}
 
       {has && !analysed && !run.busy && (
-        <Notice kind="warn" title="尚未執行依賴分析">
-          下方只是情資分析階段擷取到的主機與服務，還沒有對應到可部署的元件，也可能缺少項目。請按右上角「執行依賴分析」；補充缺失或修改攻擊流程之後也要重新分析一次。
+        <Notice kind="warn" title={t("dep.notRun.title")}>
+          {t("dep.notRun.body")}
         </Notice>
       )}
       {analysed && <RefIssuesNotice ir={ir} context="deps" />}
       {analysed && noComponent.length > 0 && (
-        <Notice kind="warn" title={`${noComponent.length} 個軟體在元件目錄中沒有可部署的對應`}>
+        <Notice kind="warn" title={t("dep.noComp.title", { n: noComponent.length })}>
           <div data-testid="no-component">
-            {noComponent.map((s) => s.name || s.id).join("、")}。系統不會自動拿別的軟體頂替，所以目前這個情境無法生成可部署的 IaC。
-            若接受用替代軟體教學，可到「缺失補充」對相關項目選「用替代方案」並寫明用什麼替代，再回來重新分析。
-            重新分析後請在下方確認：替代軟體有出現在該主機的「服務」欄，且「對應元件」有值。只出現在服務清單、「所在主機」是「—」的替代軟體不會被部署。
+            <div>{t("dep.noComp.body1", { list: joinList(noComponent.map((s) => s.name || s.id)) })}</div>
+            <div>{t("dep.noComp.body2")}</div>
+            <div className="muted" style={{ fontSize: 12 }}>{t("dep.noComp.body3")}</div>
           </div>
         </Notice>
       )}
 
       {!has ? (
-        <div className="card"><Empty>這個情境還沒有主機與服務資料。按右上角「執行依賴分析」由後端產生。</Empty></div>
+        <div className="card"><Empty>{t("dep.noData")}</Empty></div>
       ) : (
         <>
           <div className="grid c4">
-            <Metric k="主機" v={hosts.length} />
-            <Metric k="服務／軟體" v={services.length} />
-            <Metric k="使用替代品" v={substitutes.length} hint="is_substitute 為真的服務數" />
-            <Metric k="尚未對應元件" v={services.filter((s) => !s.catalogue_component).length} />
+            <Metric k={t("dep.m.hosts")} v={hosts.length} />
+            <Metric k={t("dep.m.services")} v={services.length} />
+            <Metric k={t("dep.m.subs")} v={substitutes.length} hint={t("dep.m.subs.hint")} />
+            <Metric k={t("dep.m.unmapped")} v={services.filter((s) => !s.catalogue_component).length} />
           </div>
 
           <div className="card flush" style={{ overflowX: "auto" }}>
-            <div className="card-head"><h2>主機</h2></div>
-            {hosts.length === 0 ? <Empty>沒有主機資料。</Empty> : (
+            <div className="card-head"><h2>{t("dep.hosts")}</h2></div>
+            {hosts.length === 0 ? <Empty>{t("dep.noHosts")}</Empty> : (
               <table className="tbl">
-                <thead><tr><th>角色</th><th>作業系統</th><th>服務</th><th>依據</th><th>來源</th></tr></thead>
+                <thead><tr><th>{t("dep.col.role")}</th><th>{t("dep.col.os")}</th><th>{t("dep.col.services")}</th><th>{t("dep.col.basis")}</th><th>{t("dep.col.source")}</th></tr></thead>
                 <tbody>
                   {hosts.map((h) => (
                     <tr key={h.id}>
                       <td><div style={{ fontWeight: 600 }}>{h.role}</div><div className="mono muted">{h.id}</div></td>
-                      <td>{h.os ? `${h.os}${h.os_version ? ` ${h.os_version}` : ""}` : <span className="muted">未知</span>}</td>
+                      <td>{h.os ? `${h.os}${h.os_version ? ` ${h.os_version}` : ""}` : <span className="muted">{t("dep.unknown")}</span>}</td>
                       <td>
                         {h.service_refs?.length ? h.service_refs.map((r) => {
                           const s = svcById.get(r);
-                          return <span key={r} className={`tag ${s?.is_substitute ? "sub" : ""}`} style={{ marginRight: 4 }} title={s ? undefined : "找不到這個服務"}>{s ? `${s.name}${s.version ? ` ${s.version}` : ""}` : r}</span>;
+                          return <span key={r} className={`tag ${s?.is_substitute ? "sub" : ""}`} style={{ marginRight: 4 }} title={s ? undefined : t("dep.svcMissing")}>{s ? `${s.name}${s.version ? ` ${s.version}` : ""}` : r}</span>;
                         }) : <span className="muted">—</span>}
                       </td>
                       <td><EpistemicBadge status={h.epistemic_status} /></td>
@@ -130,10 +131,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </div>
 
           <div className="card flush" style={{ overflowX: "auto" }}>
-            <div className="card-head"><h2>服務／軟體</h2></div>
-            {services.length === 0 ? <Empty>沒有服務資料。</Empty> : (
+            <div className="card-head"><h2>{t("dep.services")}</h2></div>
+            {services.length === 0 ? <Empty>{t("dep.noServices")}</Empty> : (
               <table className="tbl">
-                <thead><tr><th>名稱</th><th>版本</th><th>所在主機</th><th>對應元件</th><th>CVE</th><th>依據</th><th>來源</th></tr></thead>
+                <thead><tr><th>{t("dep.col.name")}</th><th>{t("dep.col.version")}</th><th>{t("dep.col.host")}</th><th>{t("dep.col.component")}</th><th>CVE</th><th>{t("dep.col.basis")}</th><th>{t("dep.col.source")}</th></tr></thead>
                 <tbody>{services.map((s) => <ServiceRow key={s.id} s={s} hosts={hostsOf.get(s.id) ?? hostOfRef(s)} />)}</tbody>
               </table>
             )}
@@ -141,22 +142,23 @@ function Body({ ir }: { ir: ScenarioIR }) {
         </>
       )}
 
-      <div className="card flush">
-        <div className="card-head"><h2>可用元件 catalogue</h2>{catItems && <span className="muted" style={{ fontSize: 12 }}>{catItems.length}</span>}</div>
+      {/* Reference data. Folded, because most users never need the full catalog. */}
+      <details className="card flush deploy-more">
+        <summary>{t("dep.catalog")}{catItems && <span className="muted" style={{ fontSize: 12 }}>{catItems.length}</span>}</summary>
         <div style={{ padding: catItems?.length ? 0 : 14 }}>
-          {catalogue.error ? <ApiNotice error={catalogue.error} what="元件 catalogue" onRetry={() => catalogue.reload()} />
-            : catalogue.loading ? <span className="muted"><span className="spinner" /> 載入中…</span>
-            : catItems ? (catItems.length ? <DataView data={catItems} /> : <span className="muted">catalogue 是空的。</span>)
+          {catalogue.error ? <ApiNotice error={catalogue.error} what={t("dep.catalogWhat")} onRetry={() => catalogue.reload()} />
+            : catalogue.loading ? <span className="muted"><span className="spinner" /> {t("dep.loading")}</span>
+            : catItems ? (catItems.length ? <DataView data={catItems} /> : <span className="muted">{t("dep.catalogEmpty")}</span>)
             : <DataView data={catalogue.data} />}
         </div>
-      </div>
+      </details>
 
-      <NextStep prev={{ to: "/flow", label: "攻擊流程" }} next={{ to: "/topology", label: "拓樸" }} />
+      <NextStep prev={{ to: "/flow", label: t("stage.flow") }} next={{ to: "/topology", label: t("stage.topology") }} />
     </div>
   );
 }
 
 export function DepsPage() {
   const { ir } = useScenario();
-  return <ScenarioGate title="軟體依賴">{ir && <Body ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("dep.title")}>{ir && <Body ir={ir} />}</ScenarioGate>;
 }

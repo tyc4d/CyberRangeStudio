@@ -1,15 +1,16 @@
 // Whether a deployed version is a fact from the report, an assumption, or a substitute.
 // The backend decides (version_basis / deployed_version); this only renders its verdict, never infers one.
 import type { ScenarioIR } from "@contracts";
+import { live, t } from "../i18n";
 
 export type Basis = "stated" | "assumed" | "substituted";
 export interface Versioned { version_basis?: string; deployed_version?: string; version?: string }
 
-export const BASIS: Record<Basis, { label: string; cls: string; explain: string }> = {
-  stated: { label: "原文版本", cls: "", explain: "部署的版本與原文（或你的補充）寫的版本相符。" },
-  assumed: { label: "假設版本", cls: "sub", explain: "原文沒有寫版本；部署的是靶場元件目錄現有的版本，是假設，不是原文事實。" },
-  substituted: { label: "替代版本", cls: "sub", explain: "原文寫的是另一個版本；元件目錄沒有那個版本，部署的是替代版本，行為可能與原事件不同。" },
-};
+export const BASIS: Record<Basis, { label: string; cls: string; explain: string }> = live(() => ({
+  stated: { label: t("vb.stated"), cls: "", explain: t("vb.stated.explain") },
+  assumed: { label: t("vb.assumed"), cls: "sub", explain: t("vb.assumed.explain") },
+  substituted: { label: t("vb.substituted"), cls: "sub", explain: t("vb.substituted.explain") },
+}));
 export const basisOf = (x: Versioned | undefined | null): Basis | null =>
   x && (x.version_basis === "stated" || x.version_basis === "assumed" || x.version_basis === "substituted") ? x.version_basis : null;
 
@@ -43,15 +44,15 @@ export function VersionBasisCard({ ir, context }: { ir: ScenarioIR; context: "ia
   const notFact = rows.filter((r) => r.basis !== "stated");
   return (
     <div className="card flush" data-testid="version-basis-card">
-      <div className="card-head"><h2>部署版本的依據</h2><span className="muted" style={{ fontSize: 12 }}>{notFact.length ? `${notFact.length} 項不是原文事實` : "皆與原文相符"}</span></div>
+      <div className="card-head"><h2>{t("vb.title")}</h2><span className="muted" style={{ fontSize: 12 }}>{notFact.length ? t("vb.notFact", { n: notFact.length }) : t("vb.allStated")}</span></div>
       <div style={{ overflowX: "auto" }}>
         <table className="tbl">
-          <thead><tr><th>主機</th><th>軟體</th><th>原文寫的版本</th><th>實際部署的版本</th><th>依據</th></tr></thead>
+          <thead><tr><th>{t("vb.host")}</th><th>{t("vb.software")}</th><th>{t("vb.statedCol")}</th><th>{t("vb.deployedCol")}</th><th>{t("vb.basis")}</th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
                 <td>{r.hostName}</td><td>{r.software}</td>
-                <td>{r.stated ?? <span className="muted">原文未寫</span>}</td>
+                <td>{r.stated ?? <span className="muted">{t("vb.notStated")}</span>}</td>
                 <td className="mono">{r.deployed ?? "—"}</td>
                 <td><BasisTag of={{ version_basis: r.basis }} /><div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{BASIS[r.basis].explain}</div></td>
               </tr>
@@ -62,8 +63,8 @@ export function VersionBasisCard({ ir, context }: { ir: ScenarioIR; context: "ia
       {notFact.length > 0 && (
         <div className="muted" style={{ fontSize: 12, padding: "10px 14px" }}>
           {context === "report"
-            ? "驗證中的「版本」檢查通過，只代表容器跑的是上表「實際部署的版本」；標為假設或替代的項目，不能據此說環境重現了原事件的版本。"
-            : "標為假設或替代的版本是靶場的選擇，不是原文的內容。教學時請向學員說明這個差異。"}
+            ? t("vb.noteReport")
+            : t("vb.noteIac")}
         </div>
       )}
     </div>
@@ -71,10 +72,10 @@ export function VersionBasisCard({ ir, context }: { ir: ScenarioIR; context: "ia
 }
 
 /* ---------- substitutes: a host whose image stands in for the software the report names ---------- */
-export const SUBSTITUTE_BASIS: Record<string, { label: string; explain: string }> = {
-  user_chosen: { label: "你選的替代品", explain: "你在「缺失補充」選擇用這個軟體代替原文的軟體。" },
-  catalogue_substitute: { label: "平台選的替代品", explain: "原文只用功能稱呼這個服務（沒有指名產品），平台從元件目錄挑了同類軟體代替。" },
-};
+export const SUBSTITUTE_BASIS: Record<string, { label: string; explain: string }> = live(() => ({
+  user_chosen: { label: t("sub.user"), explain: t("sub.user.explain") },
+  catalogue_substitute: { label: t("sub.catalogue"), explain: t("sub.catalogue.explain") },
+}));
 interface PlanHostX { id: string; role?: string; image_hint?: string; substitute_for?: string; substitute_basis?: string; services?: { name?: string; port?: number; stated_port?: number; port_basis?: string }[] }
 export interface SubstituteRow { hostId: string; hostName: string; original: string; image?: string; basis: string; ports: { name?: string; port?: number; stated: number }[] }
 /** Hosts the plan deploys with a stand-in, and services whose port had to follow the stand-in. Straight from the plan. */
@@ -92,18 +93,18 @@ export function SubstituteCard({ ir, context }: { ir: ScenarioIR; context: "iac"
   if (!rows.length) return null;
   return (
     <div className="card flush" data-testid="substitute-card">
-      <div className="card-head"><h2>使用替代品的主機</h2><span className="muted" style={{ fontSize: 12 }}>{rows.length} 台不是原文的軟體</span></div>
+      <div className="card-head"><h2>{t("sub.title")}</h2><span className="muted" style={{ fontSize: 12 }}>{t("sub.count", { n: rows.length })}</span></div>
       <div style={{ overflowX: "auto" }}>
         <table className="tbl">
-          <thead><tr><th>主機</th><th>原文的軟體／服務</th><th>實際部署</th><th>誰決定的</th><th>連接埠</th></tr></thead>
+          <thead><tr><th>{t("vb.host")}</th><th>{t("sub.original")}</th><th>{t("sub.deployed")}</th><th>{t("sub.who")}</th><th>{t("sub.port")}</th></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.hostId}>
                 <td>{r.hostName}</td>
                 <td>{r.original || <span className="muted">—</span>}</td>
-                <td><span className="tag sub">替代品</span> <span className="mono">{r.image ?? "—"}</span></td>
+                <td><span className="tag sub">{t("sub.tag")}</span> <span className="mono">{r.image ?? "—"}</span></td>
                 <td>{SUBSTITUTE_BASIS[r.basis]?.label ?? (r.basis || "—")}<div className="muted" style={{ fontSize: 12 }}>{SUBSTITUTE_BASIS[r.basis]?.explain}</div></td>
-                <td>{r.ports.length ? r.ports.map((p, i) => <div key={i}>使用 <span className="mono">{p.port}</span>，原文是 <span className="mono">{p.stated}</span></div>) : <span className="muted">與原文相同或原文未寫</span>}</td>
+                <td>{r.ports.length ? r.ports.map((p, i) => <div key={i} className="mono">{t("sub.portUse", { port: p.port, stated: p.stated })}</div>) : <span className="muted">{t("sub.portSame")}</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -111,8 +112,8 @@ export function SubstituteCard({ ir, context }: { ir: ScenarioIR; context: "iac"
       </div>
       <div className="muted" style={{ fontSize: 12, padding: "10px 14px" }}>
         {context === "report"
-          ? "這些主機跑的不是原事件的軟體。對它們的檢查通過，只代表替代品正常運作，不代表原軟體的漏洞或行為被重現。"
-          : "替代品只提供相同種類的服務，沒有原軟體的漏洞與行為。連接埠若與原文不同，攻擊步驟中的埠也要跟著對應。"}
+          ? t("sub.noteReport")
+          : t("sub.noteIac")}
       </div>
     </div>
   );

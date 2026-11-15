@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Thin API client. All backend calls go through here. Never touches API keys.
 // Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
 // are the frontend's working assumption (see apps/web/README.md). They live only in this file.
@@ -29,7 +30,7 @@ export class ApiError extends Error {
     /** Structured error payload (e.g. validation errors, a failed deploy result), when the backend sent one. */
     public data?: unknown,
   ) {
-    super(`${status || "網路錯誤"} ${detail}`);
+    super(`${status || t("api.networkError")} ${detail}`);
   }
 }
 
@@ -50,12 +51,12 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     // The connection failed before any answer arrived. Browsers cancel in-flight requests when the machine's
     // network interfaces change, which a deploy or teardown on the same host causes (Docker networks come and go).
     // A read is safe to send again once; anything that changes state (POST/PUT/DELETE) is never re-sent.
-    if (method !== "GET") throw new ApiError(0, e instanceof Error ? e.message : "無法連線", method, path, "offline");
+    if (method !== "GET") throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), method, path, "offline");
     await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
     try {
       r = await send();
     } catch (e2) {
-      throw new ApiError(0, e2 instanceof Error ? e2.message : "無法連線", method, path, "offline");
+      throw new ApiError(0, e2 instanceof Error ? e2.message : t("api.offline"), method, path, "offline");
     }
   }
   const text = await r.text();
@@ -124,7 +125,7 @@ export const api = {
     try {
       r = await fetch(path);
     } catch (e) {
-      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "GET", path, "offline");
+      throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "GET", path, "offline");
     }
     if (r.status === 404) return null;
     if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
@@ -143,7 +144,7 @@ export const api = {
       // No Content-Type header: the browser sets the multipart boundary itself.
       r = await fetch("/api/ingest/extract", { method: "POST", body: fd });
     } catch (e) {
-      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "POST", "/api/ingest/extract", "offline");
+      throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "POST", "/api/ingest/extract", "offline");
     }
     const text = await r.text();
     let body: any; try { body = text ? JSON.parse(text) : undefined; } catch { /* non-JSON */ }

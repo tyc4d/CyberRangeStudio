@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { t } from "../i18n";
 import type { ScenarioIR } from "@contracts";
 import { api, type ApiError } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
@@ -32,8 +33,8 @@ function Verdict({ report }: { report: any }) {
   const d = report?.deployable;
   if (typeof d !== "boolean") return null;
   return d
-    ? <Notice kind="info" title="可部署">後端檢查認為這份設定可以部署。細節見下方報告。</Notice>
-    : <Notice kind="err" title="目前不可部署">後端檢查發現阻擋部署的問題，請依下方報告修正後重新生成。</Notice>;
+    ? <Notice kind="info" title={t("iac.ok")}>{t("iac.ok.body")}</Notice>
+    : <Notice kind="err" title={t("iac.bad")}>{t("iac.bad.body")}</Notice>;
 }
 
 /** The generator's refusal payload ({errors, report}); null for any other failure. */
@@ -43,42 +44,45 @@ function planFailure(e: ApiError | null): { errors: string[]; report: any } | nu
   return { errors: d.errors.map(String), report: d.report };
 }
 const ERR_RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
-  [/^host (.+) cannot be resolved to a safe local image$/, (m) => `主機 ${m[1]} 找不到可用的安全本機映像（它的服務沒有對應到元件目錄中的元件）。`],
-  [/^host (.+) could not be resolved to a supported component$/, (m) => `主機 ${m[1]} 無法對應到支援的元件。`],
-  [/^host (.+) runtime=vm is not supported by the configured deployment backend: (.*)$/, (m) => `主機 ${m[1]} 需要虛擬機，但這台伺服器的虛擬機後端尚未安裝或設定。`],
-  [/^connection (.+) -> (.+):(\d+) does not match a declared target service$/, (m) => `連線 ${m[1]} → ${m[2]}:${m[3]} 對不上目標主機宣告的任何服務。`],
-  [/^at least one host is required$/, () => "規劃中至少要有一台主機。"],
+  [/^host (.+) cannot be resolved to a safe local image$/, (m) => t("iac.e.image", { host: m[1] })],
+  [/^host (.+) could not be resolved to a supported component$/, (m) => t("iac.e.component", { host: m[1] })],
+  [/^host (.+) runtime=vm is not supported by the configured deployment backend: (.*)$/, (m) => t("iac.e.vm", { host: m[1] })],
+  [/^connection (.+) -> (.+):(\d+) does not match a declared target service$/, (m) => t("iac.e.conn", { from: m[1], to: m[2], port: m[3] })],
+  [/^at least one host is required$/, () => t("iac.e.noHost")],
 ];
-const errZh = (t: string): string | null => { for (const [re, f] of ERR_RULES) { const m = t.match(re); if (m) return f(m); } return null; };
+const errText = (s: string): string | null => { for (const [re, f] of ERR_RULES) { const m = s.match(re); if (m) return f(m); } return null; };
 
 function IacFailure({ detail }: { detail: { errors: string[]; report: any } }) {
   const comps: any[] = Array.isArray(detail.report?.components) ? detail.report.components : [];
   return (
-    <Notice kind="err" title="IaC 沒有生成：這份規劃目前不可部署">
+    <Notice kind="err" title={t("iac.fail.title")}>
       <div data-testid="iac-failure">
-        <div>沒有產生任何 compose 檔，也沒有啟動任何東西。阻擋原因（{detail.errors.length}）：</div>
+        <div>{t("iac.fail.body", { n: detail.errors.length })}</div>
         <ul style={{ margin: "4px 0", paddingLeft: 18 }}>
-          {detail.errors.map((e, i) => { const z = errZh(e); return <li key={i}>{z ?? e}{z && <div className="muted" lang="en" style={{ fontSize: 11, overflowWrap: "anywhere" }}>{e}</div>}</li>; })}
+          {detail.errors.map((e, i) => <li key={i}>{errText(e) ?? t("notice.generic")}</li>)}
         </ul>
         {comps.length > 0 && (
           <div style={{ overflowX: "auto", margin: "8px 0" }}>
             <table className="tbl">
-              <thead><tr><th>主機</th><th>對應元件</th><th>映像</th><th>可部署</th></tr></thead>
+              <thead><tr><th>{t("iac.col.host")}</th><th>{t("iac.col.component")}</th><th>{t("iac.col.image")}</th><th>{t("iac.col.ok")}</th></tr></thead>
               <tbody>
                 {comps.map((c, i) => (
                   <tr key={i}>
                     <td className="mono">{String(c.host_id ?? "—")}</td>
-                    <td>{c.component ? String(c.component) : <span className="muted">未對應</span>}</td>
-                    <td className="mono">{c.image ? `${c.image}${c.version ? `:${c.version}` : ""}` : <span className="muted">無</span>}</td>
-                    <td className={c.deployable ? "status-PASS" : "status-FAIL"}>{c.deployable ? "是" : "否"}</td>
+                    <td>{c.component ? String(c.component) : <span className="muted">{t("iac.unmapped")}</span>}</td>
+                    <td className="mono">{c.image ? `${c.image}${c.version ? `:${c.version}` : ""}` : <span className="muted">{t("iac.none")}</span>}</td>
+                    <td className={c.deployable ? "status-PASS" : "status-FAIL"}>{c.deployable ? t("data.yes") : t("data.no")}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        <div>下一步：回「軟體依賴」查看哪些主機的服務沒有「對應元件」。要讓一台主機可部署，它的服務必須對應到元件目錄中的元件，且該服務的「所在主機」是這台主機；條件滿足後重新規劃拓樸、重新核准，再回來生成。在此之前這個情境維持不可部署。</div>
-        {detail.report && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>後端原始檢查報告</summary><div style={{ marginTop: 6 }}><DataView data={detail.report} /></div></details>}
+        <div>{t("iac.fail.next")}</div>
+        <details className="tech-details"><summary>{t("notice.techDetails")}</summary>
+          <ul style={{ margin: "4px 0", paddingLeft: 18 }} lang="en">{detail.errors.map((e, i) => <li key={i} className="mono">{e}</li>)}</ul>
+          {detail.report && <DataView data={detail.report} />}
+        </details>
       </div>
     </Notice>
   );
@@ -107,21 +111,21 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   return (
     <div className="page">
-      <PageHead title="IaC 預覽" desc="由環境規劃生成的 Docker Compose 設定，以及它是否可以部署的檢查報告。這一步只產生檔案，不會啟動任何容器。">
-        <button className={files.length ? "" : "primary"} disabled={gen.busy} onClick={() => gen.run()}>{files.length ? "重新生成" : "生成 IaC"}</button>
+      <PageHead title={t("iac.title")} desc={t("iac.desc")}>
+        <button className={files.length ? "" : "primary"} disabled={gen.busy} onClick={() => gen.run()}>{files.length ? t("iac.regen") : t("iac.gen")}</button>
       </PageHead>
 
-      {!ir.environment_plan && <Notice kind="warn" title="尚無環境規劃">IaC 由拓樸規劃生成，建議先完成「拓樸」步驟。</Notice>}
-      {gen.busy && <div className="card"><Busy label="生成 IaC 中…" elapsed={gen.elapsed} /></div>}
-      {planFailure(gen.error) ? <IacFailure detail={planFailure(gen.error)!} /> : <ApiNotice error={gen.error} what="IaC 生成" />}
+      {!ir.environment_plan && <Notice kind="warn" title={t("iac.noPlan.title")}>{t("iac.noPlan.body")}</Notice>}
+      {gen.busy && <div className="card"><Busy label={t("iac.busy")} elapsed={gen.elapsed} /></div>}
+      {planFailure(gen.error) ? <IacFailure detail={planFailure(gen.error)!} /> : <ApiNotice error={gen.error} what={t("iac.genWhat")} />}
       {ir.environment_plan && <RefIssuesNotice ir={ir} context="iac" />}
 
       {iac.loading && !iac.data ? (
-        <div className="card"><Busy label="讀取已生成的 IaC…" /></div>
+        <div className="card"><Busy label={t("iac.loading")} /></div>
       ) : iac.error && !notGenerated && !iac.data ? (
-        <ApiNotice error={iac.error} what="IaC 讀取" onRetry={() => iac.reload()} />
+        <ApiNotice error={iac.error} what={t("iac.readWhat")} onRetry={() => iac.reload()} />
       ) : !iac.data || notGenerated ? (
-        <div className="card"><Empty>這個情境還沒有生成 IaC。按右上角「生成 IaC」。</Empty></div>
+        <div className="card"><Empty>{t("iac.empty")}</Empty></div>
       ) : (
         <>
           <Verdict report={report} />
@@ -133,30 +137,30 @@ function Body({ ir }: { ir: ScenarioIR }) {
                 <div className="seg">{files.map((f, i) => <button key={f.name} className={`mono ${file === f ? "on" : ""}`} onClick={() => setActive(i)}>{f.name}</button>)}</div>
               ) : <h2 className="mono">{file?.name ?? "docker-compose.yml"}</h2>}
               {file && <div className="right">
-                <span className="muted" style={{ fontSize: 12 }}>{file.content.split("\n").length} 行</span>
-                <button className="small" onClick={copy}>{copied ? "已複製" : "複製"}</button>
+                <span className="muted" style={{ fontSize: 12 }}>{t("iac.lines", { n: file.content.split("\n").length })}</span>
+                <button className="small" onClick={copy}>{copied ? t("iac.copied") : t("iac.copy")}</button>
               </div>}
             </div>
             {file ? (
               <pre className="code" style={{ border: "none", borderRadius: 0 }}>
                 {file.content.replace(/\n$/, "").split("\n").map((l, i) => <span key={i} className="ln">{l || " "}</span>)}
               </pre>
-            ) : <Empty>後端有回應，但其中沒有 compose 內容。</Empty>}
+            ) : <Empty>{t("iac.noContent")}</Empty>}
           </div>
 
-          <div className="card">
-            <h2>可部署報告</h2>
-            {report === undefined || report === null ? <span className="muted" style={{ fontSize: 13 }}>後端沒有提供可部署報告。</span> : <DataView data={report} />}
-          </div>
+          <details className="card deploy-more">
+            <summary>{t("iac.report")}</summary>
+            {report === undefined || report === null ? <span className="muted" style={{ fontSize: 13 }}>{t("iac.noReport")}</span> : <DataView data={report} />}
+          </details>
         </>
       )}
 
-      <NextStep prev={{ to: "/topology", label: "拓樸" }} next={{ to: "/deploy", label: "部署管理" }} />
+      <NextStep prev={{ to: "/topology", label: t("stage.topology") }} next={{ to: "/deploy", label: t("stage.deploy") }} />
     </div>
   );
 }
 
 export function IacPage() {
   const { ir } = useScenario();
-  return <ScenarioGate title="IaC 預覽">{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("iac.title")}>{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
 }

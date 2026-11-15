@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type SelectHTMLAttributes, type SyntheticEvent } from "react";
+import { joinList, live, t, useI18n } from "../i18n";
+import { knownErrorKey } from "../lib/errors";
 import ReactFlow, {
   Background, BackgroundVariant, Controls, EdgeLabelRenderer, getBezierPath, Handle, MarkerType, MiniMap, NodeToolbar, Position, useEdgesState, useNodesState,
   type Connection, type Edge, type EdgeProps, type Node, type NodeChange, type NodeProps, type ReactFlowInstance,
@@ -24,14 +26,14 @@ import {
   Save, ScanLine, Search, Server, TerminalSquare, Trash2, X,
 } from "lucide-react";
 
-const KIND_LABEL: Record<RelationKind, string> = { temporal: "時間先後", dependency: "依賴" };
+const KIND_LABEL: Record<RelationKind, string> = live(() => ({ temporal: t("fl.k.temporal"), dependency: t("fl.k.dependency") }));
 // Attack Flow edges. Colours mirror theme.css tokens (--route / --ok / --warn / --text-dim): SVG markers cannot read CSS variables.
 const FLOW_COLOR: Record<FlowEdgeKind, string> = { effect: ROUTE, true: "#7ee2a8", false: "#f1c16c", asset: LABEL };
-const FLOW_LABEL: Record<FlowEdgeKind, string> = { effect: "流程", true: "成立", false: "不成立", asset: "資產" };
+const FLOW_LABEL: Record<FlowEdgeKind, string> = live(() => ({ effect: t("fl.f.effect"), true: t("fl.f.true"), false: t("fl.f.false"), asset: t("fl.f.asset") }));
 /** A relation the model asserted without a quote found in the source. A warning hue of its own — not the grey of
  *  "order only", not the amber of a "不成立" branch, not the red of a loop — so it is told apart by colour, not dash spacing. */
 const UNCITED = "#ff9a3d";
-const NODE_LABEL: Record<FlowNodeType, string> = { action: "攻擊行為", condition: "條件", operator: "運算", asset: "資產" };
+const NODE_LABEL: Record<FlowNodeType, string> = live(() => ({ action: t("fl.n.action"), condition: t("fl.n.condition"), operator: t("fl.n.operator"), asset: t("fl.n.asset") }));
 /** What a new line means. temporal/dependency are the editor's own relations; flow is an Attack Flow edge. */
 type ConnectKind = RelationKind | "flow";
 
@@ -84,10 +86,10 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
     <>
       <NodeToolbar isVisible={selected} position={Position.Top} offset={12}>
         <div className="node-toolbar nodrag nopan" onClick={(e) => e.stopPropagation()}>
-          <button aria-label="複製這個行為" title="複製（不含連線）" onClick={data.onDuplicate}><Copy size={15} /></button>
-          <button aria-label="刪除這個行為" title="刪除（連同相關連線）" onClick={data.onDelete}><Trash2 size={15} /></button>
-          <button aria-label={data.start ? "取消起點標記" : "標記為流程起點"} aria-pressed={data.start} title={data.start ? "取消起點標記" : "標記為流程起點"} onClick={data.onToggleStart}><Flag size={15} /></button>
-          <button aria-label="查看這個行為的設計檢查" title="設計檢查" onClick={data.onCheck}><ScanLine size={15} /></button>
+          <button aria-label={t("fl.dupStep")} title={t("fl.dupTitle")} onClick={data.onDuplicate}><Copy size={15} /></button>
+          <button aria-label={t("fl.delStep")} title={t("fl.delTitle")} onClick={data.onDelete}><Trash2 size={15} /></button>
+          <button aria-label={data.start ? t("fl.unstart") : t("fl.start")} aria-pressed={data.start} title={data.start ? t("fl.unstart") : t("fl.start")} onClick={data.onToggleStart}><Flag size={15} /></button>
+          <button aria-label={t("fl.checkStep")} title={t("fl.check")} onClick={data.onCheck}><ScanLine size={15} /></button>
         </div>
       </NodeToolbar>
       {/* Handles sit outside the article so its clipped corner does not cut them; only the article ever animates. */}
@@ -96,45 +98,45 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
         <div className="node-top">
           <span className="step-icon"><Icon size={17} /></span>
           <span className="node-number">STEP {String(data.index + 1).padStart(2, "0")}</span>
-          {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
-          {data.looped && <span className="badge insufficient" title="這個步驟在一圈互相指向的連線裡，沒有哪一步能排在最前面">循環</span>}
+          {data.start && <span className="start-flag"><Flag size={11} />{t("fl.startFlag")}</span>}
+          {data.looped && <span className="badge insufficient" title={t("fl.loop.hint")}>{t("fl.loop")}</span>}
           {a.attack_technique && <span className="badge technique">{a.attack_technique}</span>}
         </div>
         {selected ? (
           // Edit the core fields right here. Everything carries nodrag/nopan; description, tactic and evidence stay in the dock.
           <div className="node-edit nodrag nopan" onPointerDown={stop} onClick={stop} onKeyDown={stop}>
-            <input className="node-name-input nodrag nopan" aria-label="行為名稱" placeholder="為這個行為命名"
+            <input className="node-name-input nodrag nopan" aria-label={t("fl.stepName")} placeholder={t("fl.stepNamePh")}
               value={a.name} onChange={(e) => data.onPatch({ name: e.target.value })} />
-            <label className="node-field"><span>目標主機</span>
+            <label className="node-field"><span>{t("fl.targetHost")}</span>
               {data.hosts.length ? (
-                <Select nodeSafe aria-label="目標主機" value={a.target_host_ref ?? ""}
+                <Select nodeSafe aria-label={t("fl.targetHost")} value={a.target_host_ref ?? ""}
                   onChange={(e) => data.onPatch({ target_host_ref: e.target.value || undefined })}>
-                  <option value="">（未指定）</option>
+                  <option value="">{t("fl.unset")}</option>
                   {a.target_host_ref && !data.hosts.some((h) => h.id === a.target_host_ref) && <option value={a.target_host_ref}>{a.target_host_ref}</option>}
                   {data.hosts.map((h) => <option key={h.id} value={h.id}>{h.role}（{h.id}）</option>)}
                 </Select>
               ) : (
-                <input className="mono nodrag nopan" aria-label="目標主機" placeholder="尚無主機，可直接輸入" value={a.target_host_ref ?? ""}
+                <input className="mono nodrag nopan" aria-label={t("fl.targetHost")} placeholder={t("fl.hostPh")} value={a.target_host_ref ?? ""}
                   onChange={(e) => data.onPatch({ target_host_ref: e.target.value || undefined })} />
               )}
             </label>
             <div className="node-edit-row">
-              <label className="node-field"><span>依據程度</span>
-                <Select nodeSafe aria-label="依據程度" value={a.epistemic_status}
+              <label className="node-field"><span>{t("fl.basis")}</span>
+                <Select nodeSafe aria-label={t("fl.basis")} value={a.epistemic_status}
                   onChange={(e) => data.onPatch({ epistemic_status: e.target.value as EpistemicStatus })}>
                   {EPISTEMIC_ORDER.map((s) => <option key={s} value={s}>{EPISTEMIC[s].label}</option>)}
                 </Select>
               </label>
-              <label className="node-field"><span>ATT&amp;CK 技術</span>
-                <input className="mono nodrag nopan" aria-label="ATT&CK 技術" placeholder="T1190" value={a.attack_technique ?? ""}
+              <label className="node-field"><span>{t("fl.technique")}</span>
+                <input className="mono nodrag nopan" aria-label={t("fl.technique")} placeholder="T1190" value={a.attack_technique ?? ""}
                   onChange={(e) => data.onPatch({ attack_technique: e.target.value || undefined })} />
               </label>
             </div>
           </div>
         ) : (
           <>
-            <strong>{a.name || "（未命名）"}</strong>
-            <div className="node-target"><ArrowRight size={13} /><span>{data.host ?? "未指定目標主機"}</span></div>
+            <strong>{a.name || t("fl.unnamed")}</strong>
+            <div className="node-target"><ArrowRight size={13} /><span>{data.host ?? t("fl.noTarget")}</span></div>
           </>
         )}
         {/* Quote quality is its own line, separate from the claim status below: a step can be "原文" and still have a quote that did not match. */}
@@ -145,9 +147,9 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
           </div>
         )}
         <div className="node-bottom">
-          <span><GitBranch size={12} />{data.requires ? `${data.requires} 項前置` : "無前置依賴"}</span>
+          <span><GitBranch size={12} />{data.requires ? t("fl.requires", { n: data.requires }) : t("fl.noRequires")}</span>
           {/* What the report supports, or a design problem — never a run result. */}
-          <span className={data.issues ? "issue-text" : ""}>{data.issues ? `${data.issues} 個問題` : claimLabel(a.epistemic_status, a.source)}{a.source === "user" ? "・已編輯" : ""}</span>
+          <span className={data.issues ? "issue-text" : ""}>{data.issues ? t("fl.issues", { n: data.issues }) : claimLabel(a.epistemic_status, a.source)}{a.source === "user" ? t("fl.edited") : ""}</span>
         </div>
       </article>
       <Handle type="source" position={Position.Right} />
@@ -161,9 +163,9 @@ function FlowNodeTools({ data, selected, what, canStart = true, children }: { da
     <NodeToolbar isVisible={selected} position={Position.Top} offset={12}>
       <div className="node-toolbar nodrag nopan" onClick={(e) => e.stopPropagation()}>
         {children}
-        <button aria-label={`刪除這個${what}`} title="刪除（連同相關連線）" onClick={data.onDelete}><Trash2 size={15} /></button>
-        {canStart && <button aria-label={data.start ? "取消起點標記" : "標記為流程起點"} aria-pressed={data.start} title={data.start ? "取消起點標記" : "標記為流程起點"} onClick={data.onToggleStart}><Flag size={15} /></button>}
-        <button aria-label={`查看這個${what}的設計檢查`} title="設計檢查" onClick={data.onCheck}><ScanLine size={15} /></button>
+        <button aria-label={t("fl.delWhat", { what })} title={t("fl.delTitle")} onClick={data.onDelete}><Trash2 size={15} /></button>
+        {canStart && <button aria-label={data.start ? t("fl.unstart") : t("fl.start")} aria-pressed={data.start} title={data.start ? t("fl.unstart") : t("fl.start")} onClick={data.onToggleStart}><Flag size={15} /></button>}
+        <button aria-label={t("fl.checkWhat", { what })} title={t("fl.check")} onClick={data.onCheck}><ScanLine size={15} /></button>
       </div>
     </NodeToolbar>
   );
@@ -176,17 +178,17 @@ function ConditionNode({ data, selected }: NodeProps<ConditionNodeData>) {
   const c = data.condition;
   return (
     <>
-      <FlowNodeTools data={data} selected={selected} what="條件" />
+      <FlowNodeTools data={data} selected={selected} what={t("fl.n.condition")} />
       <Handle type="target" position={Position.Left} />
       <div className={fnodeClass("cond", data)}>
         <svg className="shape" viewBox="0 0 220 132" aria-hidden><polygon points="110,1 219,66 110,131 1,66" /></svg>
-        {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
+        {data.start && <span className="start-flag"><Flag size={11} />{t("fl.startFlag")}</span>}
         <div className="body">
-          <span className="kind">條件{data.looped && <span style={{ color: "var(--err)" }}>・循環</span>}</span>
-          <span className="text" title={c.description}>{c.description?.trim() || "（未描述）"}</span>
+          <span className="kind">{t("fl.n.condition")}{data.looped && <span style={{ color: "var(--err)" }}> · {t("fl.loop")}</span>}</span>
+          <span className="text" title={c.description}>{c.description?.trim() || t("fl.noDesc")}</span>
         </div>
-        <span className="branch yes">成立</span>
-        <span className="branch no">不成立</span>
+        <span className="branch yes">{t("fl.f.true")}</span>
+        <span className="branch no">{t("fl.f.false")}</span>
       </div>
       <Handle id="true" type="source" position={Position.Right} className="branch-true" />
       <Handle id="false" type="source" position={Position.Bottom} className="branch-false" />
@@ -198,14 +200,14 @@ function ConditionNode({ data, selected }: NodeProps<ConditionNodeData>) {
 function OperatorNode({ data, selected }: NodeProps<OperatorNodeData>) {
   return (
     <>
-      <FlowNodeTools data={data} selected={selected} what="運算">
-        <button aria-label={`改為 ${data.op.operator === "AND" ? "OR" : "AND"}`} title={`改為 ${data.op.operator === "AND" ? "OR" : "AND"}`} onClick={data.onToggleOp} className="op-swap">{data.op.operator === "AND" ? "OR" : "AND"}</button>
+      <FlowNodeTools data={data} selected={selected} what={t("fl.n.operator")}>
+        <button aria-label={t("fl.toOp", { op: data.op.operator === "AND" ? "OR" : "AND" })} title={t("fl.toOp", { op: data.op.operator === "AND" ? "OR" : "AND" })} onClick={data.onToggleOp} className="op-swap">{data.op.operator === "AND" ? "OR" : "AND"}</button>
       </FlowNodeTools>
       <Handle type="target" position={Position.Left} />
-      <div className={fnodeClass("op", data)} title={data.op.operator === "AND" ? "AND：所有輸入路徑都要成立" : "OR：任一輸入路徑成立即可"}>
-        {data.start && <span className="start-flag"><Flag size={11} />起點</span>}
+      <div className={fnodeClass("op", data)} title={data.op.operator === "AND" ? t("fl.and.hint") : t("fl.or.hint")}>
+        {data.start && <span className="start-flag"><Flag size={11} />{t("fl.startFlag")}</span>}
         <strong>{data.op.operator}</strong>
-        <small>{data.inputs} 入{data.looped && <span style={{ color: "var(--err)" }}>・循環</span>}</small>
+        <small>{t("fl.inputs", { n: data.inputs })}{data.looped && <span style={{ color: "var(--err)" }}> · {t("fl.loop")}</span>}</small>
       </div>
       <Handle type="source" position={Position.Right} />
     </>
@@ -217,7 +219,7 @@ function AssetNode({ data, selected }: NodeProps<AssetNodeData>) {
   const s = data.asset;
   return (
     <>
-      <FlowNodeTools data={data} selected={selected} what="資產" canStart={false} />
+      <FlowNodeTools data={data} selected={selected} what={t("fl.n.asset")} canStart={false} />
       <Handle type="target" position={Position.Left} />
       <div className={fnodeClass("asset", data)}>
         <svg className="shape" viewBox="0 0 180 92" aria-hidden>
@@ -225,8 +227,8 @@ function AssetNode({ data, selected }: NodeProps<AssetNodeData>) {
           <ellipse cx="90" cy="15" rx="89" ry="14" />
         </svg>
         <div className="body">
-          <span className="kind"><Database size={11} />資產</span>
-          <span className="text" title={s.description}>{s.name?.trim() || "（未命名）"}</span>
+          <span className="kind"><Database size={11} />{t("fl.n.asset")}</span>
+          <span className="text" title={s.description}>{s.name?.trim() || t("fl.unnamed")}</span>
         </div>
       </div>
     </>
@@ -262,7 +264,7 @@ function toEdge(r: Relation, selected: boolean, fresh: boolean, counted: boolean
   const confirmed = dep && (r as RelationX).confirmed === true;
   const color = looped ? BARRIER : !counted ? UNCITED : dep ? EDGE : TEMPORAL;
   // Temporal lines normally carry no label: the dashed stroke already says "order only" (see legend).
-  const label = [dep ? "依賴" : null, looped ? "循環" : null, !counted ? "無引文" : dep && !confirmed ? "未確認" : null].filter(Boolean).join(" · ");
+  const label = [dep ? t("fl.k.dependency") : null, looped ? t("fl.loop") : null, !counted ? t("fl.uncited") : dep && !confirmed ? t("fl.unconfirmed") : null].filter(Boolean).join(" · ");
   return {
     id: r.id, type: "rel", source: r.from_action, target: r.to_action, selected,
     // Dashed temporal lines cannot use the dash-offset draw, so a new one simply fades in.
@@ -288,7 +290,7 @@ function toFlowEdge(e: FlowEdge, selected: boolean, fresh: boolean, looped: bool
     id: e.id, type: "rel", source: e.from, target: e.to, selected,
     sourceHandle: e.kind === "true" || e.kind === "false" ? e.kind : undefined,
     className: fresh ? (asset ? "fresh-fade" : "fresh") : undefined,
-    data: { label: looped ? `${FLOW_LABEL[e.kind]} · 循環` : FLOW_LABEL[e.kind], tone: looped ? "barrier" : e.kind === "effect" ? "flow" : (`flow-${e.kind}` as RelEdgeData["tone"]), draw: fresh && !asset },
+    data: { label: looped ? `${FLOW_LABEL[e.kind]} · ${t("fl.loop")}` : FLOW_LABEL[e.kind], tone: looped ? "barrier" : e.kind === "effect" ? "flow" : (`flow-${e.kind}` as RelEdgeData["tone"]), draw: fresh && !asset },
     style: { stroke: color, strokeWidth: asset ? 1.5 : 2, strokeDasharray: asset ? "2 5" : undefined },
     markerEnd: { type: MarkerType.ArrowClosed, color, width: 16, height: 16 },
   };
@@ -298,6 +300,10 @@ function toFlowEdge(e: FlowEdge, selected: boolean, fresh: boolean, looped: bool
 const MIN_FIT = 0.5;
 const FIT = { padding: 0.1, maxZoom: 1, minZoom: MIN_FIT };
 const SIDE = 32;
+/** Phones: a higher floor, so card text stays readable. The rest of the graph is reached by dragging. */
+const isPhone = () => typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
+const minFit = () => (isPhone() ? 0.8 : MIN_FIT);
+const side = () => (isPhone() ? 12 : SIDE);
 /** The part of the canvas nothing floats over: below the toolbar (which wraps, so it is measured), above the
  *  legend / status line and the minimap. */
 function freeArea(pane: HTMLElement) {
@@ -309,7 +315,8 @@ function freeArea(pane: HTMLElement) {
     if (el.dataset.fitInset === "top") top = Math.max(top, r.bottom - box.top + 14);
     else bottom = Math.max(bottom, box.bottom - r.top + 14);
   });
-  return { top, bottom, left: SIDE, right: SIDE, w: pane.clientWidth - SIDE * 2, h: pane.clientHeight - top - bottom };
+  const sd = side();
+  return { top, bottom, left: sd, right: sd, w: pane.clientWidth - sd * 2, h: pane.clientHeight - top - bottom };
 }
 /** Fit every node into the free part of the canvas, but never below MIN_FIT. What does not fit at that zoom starts
  *  at the top-left (the first step) and the rest is reached by scrolling or dragging the canvas. */
@@ -320,7 +327,7 @@ function fitAll(inst: ReactFlowInstance, pane: HTMLElement | null) {
   const w = Math.max(...ns.map((n) => n.position.x + n.width!)) - minX, h = Math.max(...ns.map((n) => n.position.y + n.height!)) - minY;
   const free = freeArea(pane);
   if (free.w <= 0 || free.h <= 0 || w <= 0 || h <= 0) { inst.fitView(FIT); return; }
-  const zoom = Math.max(MIN_FIT, Math.min(1, free.w / w, free.h / h));
+  const zoom = Math.max(minFit(), Math.min(1, free.w / w, free.h / h));
   inst.setViewport({
     x: free.left + Math.max(0, (free.w - w * zoom) / 2) - minX * zoom,
     y: free.top + Math.max(0, (free.h - h * zoom) / 2) - minY * zoom,
@@ -397,23 +404,23 @@ function flowLayout(ids: string[], relations: Relation[], flowEdges: FlowEdge[],
 
 /** Always on the canvas: what each kind of line means. Colours are the ones the edges are drawn with. */
 const LEGEND: { label: string; hint: string; line: string }[] = [
-  { label: "依賴", hint: "後一步需要前一步才能進行（實線）", line: `2px solid ${EDGE}` },
-  { label: "時間先後", hint: "只記錄發生順序，有對得上原文的引文（灰色虛線）", line: `2px dashed ${TEMPORAL}` },
-  { label: "無引文", hint: "模型提出、但沒有對得上原文的引文的關係；不計入攻擊鏈，請對照原文後確認或刪除（橘色點線）", line: `2px dotted ${UNCITED}` },
-  { label: "循環", hint: "這些線繞成一圈，沒有哪一步能排在最前面；節點上也會標「循環」（紅色）", line: `2px solid ${BARRIER}` },
-  { label: "流程", hint: "Attack Flow 流程連線：這一步之後接到哪個節點", line: `2px solid ${FLOW_COLOR.effect}` },
-  { label: "成立", hint: "條件成立時走的路徑", line: `2px solid ${FLOW_COLOR.true}` },
-  { label: "不成立", hint: "條件不成立時走的路徑", line: `2px solid ${FLOW_COLOR.false}` },
-  { label: "資產", hint: "攻擊行為作用的對象（灰色點線）", line: `2px dotted ${FLOW_COLOR.asset}` },
+  { label: t("fl.k.dependency"), hint: t("fl.lg.dep"), line: `2px solid ${EDGE}` },
+  { label: t("fl.k.temporal"), hint: t("fl.lg.temporal"), line: `2px dashed ${TEMPORAL}` },
+  { label: t("fl.uncited"), hint: t("fl.lg.uncited"), line: `2px dotted ${UNCITED}` },
+  { label: t("fl.loop"), hint: t("fl.lg.loop"), line: `2px solid ${BARRIER}` },
+  { label: t("fl.f.effect"), hint: t("fl.lg.flow"), line: `2px solid ${FLOW_COLOR.effect}` },
+  { label: t("fl.f.true"), hint: t("fl.lg.true"), line: `2px solid ${FLOW_COLOR.true}` },
+  { label: t("fl.f.false"), hint: t("fl.lg.false"), line: `2px solid ${FLOW_COLOR.false}` },
+  { label: t("fl.f.asset"), hint: t("fl.lg.asset"), line: `2px dotted ${FLOW_COLOR.asset}` },
 ];
 function CanvasLegend() {
   return (
-    <div className="legend" data-testid="flow-legend" data-fit-inset="bottom" role="group" aria-label="圖例"
+    <div className="legend" data-testid="flow-legend" data-fit-inset="bottom" role="group" aria-label={t("fl.legend")}
       style={{
         position: "absolute", zIndex: 5, left: 68, bottom: 60, maxWidth: "calc(100% - 68px - 176px)", gap: "4px 14px", padding: "6px 10px",
         background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "var(--radius)",
       }}>
-      <strong style={{ fontWeight: 700 }}>圖例</strong>
+      <strong style={{ fontWeight: 700 }}>{t("fl.legend")}</strong>
       {LEGEND.map((l) => (
         <span key={l.label} title={l.hint} style={{ whiteSpace: "nowrap" }}>
           <i className="line" style={{ borderTop: l.line }} />{l.label}
@@ -466,12 +473,14 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const fresh = useRef(new Set<string>());
   const [consoleOpen, setConsoleOpen] = useState(false);
   const consoleSeen = useRef(false);
+  const { locale } = useI18n();
   const hostRole = useMemo(() => new Map((ir.hosts ?? []).map((h) => [h.id, h.role])), [ir.hosts]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const evById = useMemo(() => new Map((ir.evidence ?? []).map((e): [string, Evidence] => [e.id, e])), [ir.evidence]);
   const extras = useMemo(() => ({ conditions, operators, assets, startRefs, evidence: ir.evidence ?? [] }), [conditions, operators, assets, startRefs, ir.evidence]);
   const flowEdges = useMemo(() => flowEdgesOf(actions, extras), [actions, extras]);
-  const findings = useMemo(() => lintFlow(actions, relations, extras), [actions, relations, extras]);
+  // Findings and names carry translated text, so they are rebuilt when the language changes.
+  const findings = useMemo(() => lintFlow(actions, relations, extras), [actions, relations, extras, locale]); // eslint-disable-line react-hooks/exhaustive-deps
   const typeOf = useMemo(() => {
     const m = new Map<string, FlowNodeType>();
     actions.forEach((a) => m.set(a.id, "action")); conditions.forEach((c) => m.set(c.id, "condition"));
@@ -548,7 +557,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
       ...flowEdges.filter((e) => typeOf.has(e.from) && typeOf.has(e.to))
         .map((e) => toFlowEdge(e, sel?.type === "flow" && sel.id === e.id, fresh.current.has(e.id), loops.edges.has(e.id))),
     ]);
-  }, [relations, flowEdges, typeOf, sel, loops, evById]); // eslint-disable-line
+  }, [relations, flowEdges, typeOf, sel, loops, evById, locale]); // eslint-disable-line
 
   const touch = () => { setDirty(true); setSavedMsg(null); };
   const patchAction = (id: string, p: Partial<Action>) => {
@@ -653,14 +662,14 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const addAsset = () => {
     const id = newId("asset", new Set(typeOf.keys()));
     stage(id, GAP_Y);
-    setAssets((xs) => [...xs, { id, name: "新資產", epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
+    setAssets((xs) => [...xs, { id, name: t("fl.newAsset"), epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "asset", id });
     touch();
   };
   const addAction = () => {
     const id = newId("act", new Set(typeOf.keys()));
     stage(id, GAP_Y);
-    setActions((xs) => [...xs, { id, name: "新攻擊行為", epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
+    setActions((xs) => [...xs, { id, name: t("fl.newStep"), epistemic_status: "inferred", source: "user", evidence_refs: [] }]);
     setSel({ type: "action", id });
     touch();
   };
@@ -672,7 +681,7 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     const at = nodes.find((n) => n.id === srcId)?.position ?? { x: 0, y: 0 };
     stored.current[id] = { x: at.x + 40, y: at.y + 150 };
     fresh.current.add(id);
-    setActions((xs) => [...xs, { ...src, id, name: `${src.name}（複製）`, source: "user", effect_refs: undefined, asset_refs: undefined }]);
+    setActions((xs) => [...xs, { ...src, id, name: t("fl.copySuffix", { name: src.name }), source: "user", effect_refs: undefined, asset_refs: undefined }]);
     setSel({ type: "action", id });
     touch();
   };
@@ -680,11 +689,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     if (!c.source || !c.target) return;
     const from = typeOf.get(c.source), to = typeOf.get(c.target);
     if (!from || !to) return;
-    if (c.source === c.target) { setHint(from === "action" ? "行為不能連到自己。" : "節點不能連到自己。"); return; }
+    if (c.source === c.target) { setHint(from === "action" ? t("fl.h.selfStep") : t("fl.h.self")); return; }
     // temporal / dependency exist only between two actions. Any line touching a condition, operator or asset is a flow edge.
     if (newKind !== "flow" && from === "action" && to === "action") {
       if (relations.some((r) => r.from_action === c.source && r.to_action === c.target && r.kind === newKind)) {
-        setHint(`這兩個行為之間已經有「${KIND_LABEL[newKind]}」關係。`);
+        setHint(t("fl.h.dupRel", { kind: KIND_LABEL[newKind] }));
         return;
       }
       setHint(null);
@@ -695,12 +704,12 @@ function Editor({ ir }: { ir: ScenarioIR }) {
       touch();
       return;
     }
-    if (to === "asset" && from !== "action") { setHint("只有攻擊行為可以連到資產節點。"); return; }
+    if (to === "asset" && from !== "action") { setHint(t("fl.h.assetOnly")); return; }
     const kind: FlowEdgeKind = to === "asset" ? "asset" : from === "condition" ? (c.sourceHandle === "false" ? "false" : "true") : "effect";
     const id = flowEdgeId(c.source, kind, c.target);
-    if (flowEdges.some((e) => e.id === id)) { setHint("這兩個節點之間已經有相同的流程連線。"); return; }
+    if (flowEdges.some((e) => e.id === id)) { setHint(t("fl.h.dupFlow")); return; }
     if (from === "condition" && flowEdges.some((e) => e.from === c.source && e.to === c.target)) {
-      setHint("這個節點已經接在此條件的另一個分支上；同一個節點不能同時是成立與不成立的去向。");
+      setHint(t("fl.h.bothBranches"));
       return;
     }
     setHint(null);
@@ -765,11 +774,11 @@ function Editor({ ir }: { ir: ScenarioIR }) {
     if (ir.operators || operators.length) next.operators = operators;
     if (ir.assets || assets.length) next.assets = assets;
     if (ir.flow || startRefs.length) next.flow = { ...ir.flow, start_refs: startRefs };
-    const resp = await api.saveScenario(ir.id, next, note.trim() || "流程編輯");
+    const resp = await api.saveScenario(ir.id, next, note.trim() || t("fl.defaultNote"));
     setDirty(false);
     setNote("");
     await absorb(resp);
-    setSavedMsg("已儲存為新版本。");
+    setSavedMsg(t("fl.saved"));
     void versions.reload(true);
   });
   const discard = () => { adoptIr(); setDirty(false); setSel(null); setHint(null); };
@@ -799,16 +808,16 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   const selFlow = sel?.type === "flow" ? flowEdges.find((e) => e.id === sel.id) : undefined;
   const nameOf = useMemo(() => new Map<string, string>([
     ...actions.map((a): [string, string] => [a.id, a.name]),
-    ...conditions.map((c): [string, string] => [c.id, `條件：${c.description?.trim() || "（未描述）"}`]),
-    ...operators.map((o): [string, string] => [o.id, `${o.operator} 運算`]),
-    ...assets.map((x): [string, string] => [x.id, `資產：${x.name?.trim() || "（未命名）"}`]),
-  ]), [actions, conditions, operators, assets]);
+    ...conditions.map((c): [string, string] => [c.id, t("fl.nameCond", { text: c.description?.trim() || t("fl.noDesc") })]),
+    ...operators.map((o): [string, string] => [o.id, t("fl.nameOp", { op: o.operator })]),
+    ...assets.map((x): [string, string] => [x.id, t("fl.nameAsset", { name: x.name?.trim() || t("fl.unnamed") })]),
+  ]), [actions, conditions, operators, assets, locale]); // eslint-disable-line react-hooks/exhaustive-deps
   const flowNodes = conditions.length + operators.length + assets.length;
   /** "標記為流程起點" for the inspector; the same switch as the flag on the node toolbar. */
   const startToggle = (id: string) => (
     <label className="row" style={{ gap: 8, fontSize: 12 }}>
       <input type="checkbox" checked={startRefs.includes(id)} onChange={() => toggleStart(id)} />
-      這是流程的起點之一
+      {t("fl.isStart")}
     </label>
   );
   const versionRows = Array.isArray(versions.data) ? versions.data : [];
@@ -822,20 +831,20 @@ function Editor({ ir }: { ir: ScenarioIR }) {
   return (
     <div className="workspace">
       <TopbarActions>
-        {dirty && <span className="save-state">有未儲存的修改</span>}
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="版本備註（選填）" aria-label="版本備註" disabled={save.busy} />
-        <button className="primary" disabled={!dirty || save.busy || unnamed > 0} title={unnamed > 0 ? "有行為沒有名稱，請先命名" : undefined} onClick={() => save.run()}>
-          {save.busy ? <span className="spinner" /> : <Save size={15} />}{save.busy ? "儲存中…" : "儲存為新版本"}
+        {dirty && <span className="save-state">{t("fl.unsaved")}</span>}
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("fl.notePh")} aria-label={t("fl.note")} disabled={save.busy} />
+        <button className="primary" disabled={!dirty || save.busy || unnamed > 0} title={unnamed > 0 ? t("fl.needNames") : undefined} onClick={() => save.run()}>
+          {save.busy ? <span className="spinner" /> : <Save size={15} />}<span className="btn-label">{save.busy ? t("fl.saving") : t("fl.save")}</span>
         </button>
-        <button disabled={!dirty || save.busy} onClick={discard}>捨棄修改</button>
-        <button onClick={() => setConsoleOpen((o) => !o)} aria-pressed={consoleOpen}><ScanLine size={15} />設計檢查</button>
+        <button disabled={!dirty || save.busy} onClick={discard}>{t("fl.discard")}</button>
+        <button onClick={() => setConsoleOpen((o) => !o)} aria-pressed={consoleOpen}><ScanLine size={15} /><span className="btn-label">{t("fl.check")}</span></button>
       </TopbarActions>
 
-      <aside className="library" aria-label="元件">
-        <h2>元件</h2>
-        <h3>主機</h3>
+      <aside className="library" aria-label={t("fl.parts")}>
+        <h2>{t("fl.parts")}</h2>
+        <h3>{t("fl.hosts")}</h3>
         {hosts.length === 0 ? (
-          <p className="note">還沒有主機。完成「軟體依賴」後，這裡會列出由攻擊行為推得的主機與服務。</p>
+          <p className="note">{t("fl.noHosts")}</p>
         ) : hosts.map((h) => {
           const svcs = svcOf(h.id);
           return (
@@ -846,59 +855,59 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             </div>
           );
         })}
-        <h3>步驟</h3>
+        <h3>{t("fl.steps")}</h3>
         {actions.map((a, i) => (
           <button key={a.id} className={`library-item ${sel?.type === "action" && sel.id === a.id ? "on" : ""}`} onClick={() => setSel({ type: "action", id: a.id })}>
             <span className="ico">{i + 1}</span>
-            <span className="name">{a.name || "（未命名）"}</span>
+            <span className="name">{a.name || t("fl.unnamed")}</span>
           </button>
         ))}
-        <button className="library-item" onClick={addAction} aria-label="新增一個空白行為">
-          <span className="ico"><Plus size={14} /></span><span className="name muted">新增行為</span>
+        <button className="library-item" onClick={addAction} aria-label={t("fl.addStepAria")}>
+          <span className="ico"><Plus size={14} /></span><span className="name muted">{t("fl.addStep")}</span>
         </button>
-        <h3>流程節點</h3>
-        {flowNodes === 0 && <p className="note">條件、AND/OR 運算與資產節點用來畫出分支。可從畫布上方的工具列新增。</p>}
+        <h3>{t("fl.flowNodes")}</h3>
+        {flowNodes === 0 && <p className="note">{t("fl.flowNodesNote")}</p>}
         {conditions.map((c) => (
           <button key={c.id} className={`library-item ${sel?.type === "condition" && sel.id === c.id ? "on" : ""}`} onClick={() => setSel({ type: "condition", id: c.id })}>
             <span className="ico"><GitBranch size={14} /></span>
-            <span className="name">{c.description?.trim() || "（未描述的條件）"}</span>
+            <span className="name">{c.description?.trim() || t("fl.condUnnamed")}</span>
           </button>
         ))}
         {operators.map((o) => (
           <button key={o.id} className={`library-item ${sel?.type === "operator" && sel.id === o.id ? "on" : ""}`} onClick={() => setSel({ type: "operator", id: o.id })}>
             <span className="ico mono">{o.operator === "AND" ? "&" : "|"}</span>
-            <span className="name">{o.operator} 運算</span>
+            <span className="name">{t("fl.nameOp", { op: o.operator })}</span>
           </button>
         ))}
         {assets.map((x) => (
           <button key={x.id} className={`library-item ${sel?.type === "asset" && sel.id === x.id ? "on" : ""}`} onClick={() => setSel({ type: "asset", id: x.id })}>
             <span className="ico"><Database size={14} /></span>
-            <span className="name">{x.name?.trim() || "（未命名的資產）"}</span>
+            <span className="name">{x.name?.trim() || t("fl.assetUnnamed")}</span>
           </button>
         ))}
       </aside>
 
       <div className="canvas-col">
         <div className="canvas" ref={paneRef}>
-          <div className="canvas-tools" role="toolbar" aria-label="畫布工具" data-fit-inset="top">
-            <span className="canvas-label">攻擊鏈</span>
-            <span className="badge">{actions.length} 步驟</span>
-            <button onClick={addAction}>＋ 新增行為</button>
-            <button onClick={addCondition} title="新增條件節點：依條件成立與否分成兩條路徑"><Plus size={14} />條件</button>
-            <button onClick={addOperator} title="新增 AND / OR 運算節點：把多條路徑合併成一條"><Plus size={14} />AND/OR</button>
-            <button onClick={addAsset} title="新增資產節點：攻擊行為作用的對象"><Plus size={14} />資產</button>
-            <button onClick={autoLayout}><LayoutGrid size={15} />自動排版</button>
+          <div className="canvas-tools" role="toolbar" aria-label={t("fl.tools")} data-fit-inset="top">
+            <span className="canvas-label">{t("fl.chain")}</span>
+            <span className="badge">{t("fl.stepCount", { n: actions.length })}</span>
+            <button onClick={addAction}>＋ {t("fl.addStep")}</button>
+            <button onClick={addCondition} title={t("fl.addCond.hint")}><Plus size={14} />{t("fl.n.condition")}</button>
+            <button onClick={addOperator} title={t("fl.addOp.hint")}><Plus size={14} />AND/OR</button>
+            <button onClick={addAsset} title={t("fl.addAsset.hint")}><Plus size={14} />{t("fl.n.asset")}</button>
+            <button onClick={autoLayout}><LayoutGrid size={15} />{t("fl.autoLayout")}</button>
             <span className="sep" />
-            <span className="canvas-label muted" style={{ fontWeight: 500 }}>新連線</span>
-            <button aria-pressed={newKind === "temporal"} onClick={() => setNewKind("temporal")}>時間先後</button>
-            <button aria-pressed={newKind === "dependency"} onClick={() => setNewKind("dependency")}>依賴</button>
-            <button aria-pressed={newKind === "flow"} title="Attack Flow 流程連線：這一步之後接到哪個節點。接到條件、運算或資產節點的線一律是流程連線。" onClick={() => setNewKind("flow")}>流程</button>
+            <span className="canvas-label muted" style={{ fontWeight: 500 }}>{t("fl.newLine")}</span>
+            <button aria-pressed={newKind === "temporal"} onClick={() => setNewKind("temporal")}>{t("fl.k.temporal")}</button>
+            <button aria-pressed={newKind === "dependency"} onClick={() => setNewKind("dependency")}>{t("fl.k.dependency")}</button>
+            <button aria-pressed={newKind === "flow"} title={t("fl.flow.hint")} onClick={() => setNewKind("flow")}>{t("fl.f.effect")}</button>
           </div>
           {typeOf.size === 0 && (
             <div className="canvas-empty">
-              <h2>尚無攻擊步驟</h2>
-              <span>這個情境還沒有攻擊行為。新增第一個行為，或回到情資匯入重新分析報告。</span>
-              <button className="primary" onClick={addAction}><Plus size={16} />新增第一個行為</button>
+              <h2>{t("fl.empty.title")}</h2>
+              <span>{t("fl.empty.body")}</span>
+              <button className="primary" onClick={addAction}><Plus size={16} />{t("fl.empty.add")}</button>
             </div>
           )}
           <ReactFlow
@@ -926,51 +935,51 @@ function Editor({ ir }: { ir: ScenarioIR }) {
             <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
             <Controls showInteractive={false} position="bottom-left" fitViewOptions={FIT}
               onFitView={() => { if (rf.current) fitAll(rf.current, paneRef.current); }} />
-            <MiniMap pannable position="bottom-right" nodeColor={EDGE} nodeStrokeWidth={0} maskColor="#070b11c7" style={{ width: 140, height: 90 }} ariaLabel="畫布縮圖" />
+            <MiniMap pannable position="bottom-right" nodeColor={EDGE} nodeStrokeWidth={0} maskColor="#070b11c7" style={{ width: 140, height: 90 }} ariaLabel={t("fl.minimap")} />
           </ReactFlow>
           <CanvasLegend />
           <div className="canvas-status" data-fit-inset="bottom">
             <span className="local-indicator" />
-            <span>設計圖，不是執行紀錄</span>
+            <span>{t("fl.designOnly")}</span>
             {deps.length > 0 && (
               <span data-testid="dep-confirm-bar" style={{ display: "inline-flex", alignItems: "center", gap: 9, marginLeft: 8 }}>
-                <span className={unconfirmed.length ? "status-PARTIAL" : "status-PASS"}>依賴關係已確認 {deps.length - unconfirmed.length} / {deps.length}</span>
-                {unconfirmed.length > 0 && <button className="small" title="只有經你確認的依賴關係，才會在拓樸規劃中開通主機間連線" onClick={confirmAllDeps}>確認全部依賴關係</button>}
+                <span className={unconfirmed.length ? "status-PARTIAL" : "status-PASS"}>{t("fl.depsConfirmed", { ok: deps.length - unconfirmed.length, total: deps.length })}</span>
+                {unconfirmed.length > 0 && <button className="small" title={t("fl.confirmAll.hint")} onClick={confirmAllDeps}>{t("fl.confirmAll")}</button>}
               </span>
             )}
           </div>
           {(hint || savedMsg || save.error) && (
             <div className="feedback" role="status">
-              {save.error ? <span className="status-FAIL">儲存失敗：{save.error.detail}。修改仍保留在畫面上，尚未寫入後端。</span>
+              {save.error ? <span className="status-FAIL">{t("fl.saveFail")}{(() => { const k = knownErrorKey(save.error); return k ? ` ${t(k)}` : ""; })()}</span>
                 : hint ? <span className="status-PARTIAL">{hint}</span>
                 : <span>{savedMsg}</span>}
-              <button className="quiet icon" aria-label="關閉訊息" onClick={() => { setHint(null); setSavedMsg(null); save.clearError(); }}><X size={15} /></button>
+              <button className="quiet icon" aria-label={t("fl.closeMsg")} onClick={() => { setHint(null); setSavedMsg(null); save.clearError(); }}><X size={15} /></button>
             </div>
           )}
         </div>
 
-        <section className={`console ${consoleOpen ? "open" : ""}`} data-testid="validation-console" aria-label="設計檢查">
+        <section className={`console ${consoleOpen ? "open" : ""}`} data-testid="validation-console" aria-label={t("fl.check")}>
           <button className="console-toggle" aria-expanded={consoleOpen} onClick={() => setConsoleOpen((o) => !o)}>
             <ScanLine size={16} />
-            <strong>設計檢查</strong>
-            {findings.length === 0 ? <span className="badge approved">沒有發現問題</span> : (
+            <strong>{t("fl.check")}</strong>
+            {findings.length === 0 ? <span className="badge approved">{t("fl.noIssues")}</span> : (
               <>
-                {errors > 0 && <span className="badge insufficient">{errors} 個問題</span>}
-                {warns > 0 && <span className="badge pending">{warns} 個待處理</span>}
-                {findings.length - errors - warns > 0 && <span className="badge">{findings.length - errors - warns} 個提醒</span>}
+                {errors > 0 && <span className="badge insufficient">{t("fl.issues", { n: errors })}</span>}
+                {warns > 0 && <span className="badge pending">{t("fl.warnCount", { n: warns })}</span>}
+                {findings.length - errors - warns > 0 && <span className="badge">{t("fl.infoCount", { n: findings.length - errors - warns })}</span>}
               </>
             )}
-            <span className="muted">隨畫布即時計算，只檢查這張設計圖；不代表部署或驗證結果</span>
+            <span className="muted">{t("fl.checkNote")}</span>
             <ChevronUp size={16} className="chev" aria-hidden />
           </button>
           <div className="console-body">
             <div {...(consoleOpen ? {} : { inert: "" })}>
               <ul className="console-list">
-                {findings.length === 0 && <li className="console-empty"><Check size={16} />流程圖本身沒有可指出的問題。</li>}
+                {findings.length === 0 && <li className="console-empty"><Check size={16} />{t("fl.checkClean")}</li>}
                 {findings.map((f) => (
                   <li key={f.id}>
                     <button className={`finding ${f.level}`} onClick={() => openFinding(f)}>
-                      <span className="badge">{f.level === "error" ? "問題" : f.level === "warn" ? "待處理" : "提醒"}</span>
+                      <span className="badge">{f.level === "error" ? t("fl.lv.error") : f.level === "warn" ? t("fl.lv.warn") : t("fl.lv.info")}</span>
                       <span className="text">{f.text}</span>
                       <small>{f.target?.id}</small>
                     </button>
@@ -982,36 +991,36 @@ function Editor({ ir }: { ir: ScenarioIR }) {
         </section>
       </div>
 
-      <aside className="context-dock" ref={inspectorRef} aria-label={sel ? "屬性" : "設計工作台"}>
+      <aside className="context-dock" ref={inspectorRef} aria-label={sel ? t("fl.props") : t("fl.workbench")}>
         {selAction ? (
           <div className="swap" key={`a:${selAction.id}`}>
             <div className="overview-title">
-              <h2>攻擊行為</h2><SourceTag source={selAction.source} />
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.n.action")}</h2><SourceTag source={selAction.source} />
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selAction.id}</div>
-            <p className="dock-hint">名稱、目標主機、依據程度與 ATT&amp;CK 技術現在可直接在畫布的卡片上編輯；這裡保留較少用到的欄位。</p>
-            <label className="field"><span>說明</span>
+            <p className="dock-hint">{t("fl.dockHint")}</p>
+            <label className="field"><span>{t("fl.desc")}</span>
               <textarea rows={4} value={selAction.description ?? ""} onChange={(e) => patchAction(selAction.id, { description: e.target.value || undefined })} />
             </label>
-            <label className="field"><span>ATT&amp;CK 戰術</span>
+            <label className="field"><span>{t("fl.tactic")}</span>
               <input value={selAction.attack_tactic ?? ""} placeholder="initial-access" onChange={(e) => patchAction(selAction.id, { attack_tactic: e.target.value || undefined })} />
             </label>
             {startToggle(selAction.id)}
             <QuoteList refs={selAction.evidence_refs} byId={evById} source={selAction.source} />
-            <div><button className="danger quiet" onClick={() => removeNodes([selAction.id])}><Trash2 size={15} />刪除行為（連同相關連線）</button></div>
+            <div><button className="danger quiet" onClick={() => removeNodes([selAction.id])}><Trash2 size={15} />{t("fl.delStepFull")}</button></div>
           </div>
         ) : selRelation ? (
           <div className="swap" key={`r:${selRelation.id}`}>
             <div className="overview-title">
-              <h2>關係</h2><SourceTag source={selRelation.source} />
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.relation")}</h2><SourceTag source={selRelation.source} />
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selRelation.id}</div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {nameOf.get(selRelation.from_action) ?? selRelation.from_action} <span className="muted">→</span> {nameOf.get(selRelation.to_action) ?? selRelation.to_action}
             </div>
-            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">類型</span>
+            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">{t("fl.type")}</span>
               <div className="seg">
                 {(["temporal", "dependency"] as RelationKind[]).map((k) => (
                   <button key={k} className={selRelation.kind === k ? "on" : ""} aria-pressed={selRelation.kind === k} onClick={() => selRelation.kind !== k && patchRelation(selRelation.id, { kind: k })}>{KIND_LABEL[k]}</button>
@@ -1019,57 +1028,57 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               </div>
             </div>
             <div className="muted" style={{ fontSize: 12 }}>
-              {selRelation.kind === "dependency" ? "依賴：沒有前一步，後一步無法進行。" : "時間先後：只記錄發生順序。若確定後者需要前者，請改為依賴。"}
+              {selRelation.kind === "dependency" ? t("fl.dep.explain") : t("fl.temporal.explain")}
             </div>
-            <label className="field"><span>理由</span>
+            <label className="field"><span>{t("fl.reason")}</span>
               <textarea rows={3} value={selRelation.rationale ?? ""} onChange={(e) => patchRelation(selRelation.id, { rationale: e.target.value || undefined })} />
             </label>
             <EpistemicSelect value={selRelation.epistemic_status} onChange={(v) => patchRelation(selRelation.id, { epistemic_status: v })} />
             <QuoteList refs={selRelation.evidence_refs} byId={evById} source={selRelation.source} />
             {!inChain(selRelation) && (
-              <p className="dock-hint">這條關係沒有對得上原文的引文，所以畫成橘色點線並標「無引文」、不計入攻擊鏈。對照原文後，確認它成立就會計入；不成立請刪除。</p>
+              <p className="dock-hint">{t("fl.uncited.explain")}</p>
             )}
             {selRelation.kind === "dependency" ? (
               <label className="row" style={{ gap: 8, fontSize: 12 }}>
                 <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
                   onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
-                我確認這個依賴關係成立
+                {t("fl.confirmDep")}
               </label>
             ) : (selRelation.source !== "user" && selRelation.source !== "stix" && !relationBacked(selRelation, evById)) && (
               <label className="row" style={{ gap: 8, fontSize: 12 }}>
                 <input type="checkbox" checked={(selRelation as RelationX).confirmed === true}
                   onChange={(e) => setConfirmed((r) => r.id === selRelation.id, e.target.checked)} />
-                我對照過原文，確認這個先後關係成立
+                {t("fl.confirmTemporal")}
               </label>
             )}
-            <div><button className="danger quiet" onClick={() => removeRelations([selRelation.id])}><Trash2 size={15} />刪除關係</button></div>
+            <div><button className="danger quiet" onClick={() => removeRelations([selRelation.id])}><Trash2 size={15} />{t("fl.delRelation")}</button></div>
           </div>
         ) : selCondition ? (
           <div className="swap" key={`c:${selCondition.id}`}>
             <div className="overview-title">
-              <h2>條件</h2><SourceTag source={selCondition.source} />
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.n.condition")}</h2><SourceTag source={selCondition.source} />
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selCondition.id}</div>
-            <p className="dock-hint">條件把流程分成兩條路徑：從右側拉線是「成立」，從下方拉線是「不成立」。這只是設計上的分支，不代表哪一條實際發生。</p>
-            <label className="field"><span>條件描述</span>
-              <textarea rows={3} placeholder="例如：取得網域管理員憑證" value={selCondition.description ?? ""} onChange={(e) => patchCondition(selCondition.id, { description: e.target.value })} />
+            <p className="dock-hint">{t("fl.cond.explain")}</p>
+            <label className="field"><span>{t("fl.condDesc")}</span>
+              <textarea rows={3} placeholder={t("fl.condPh")} value={selCondition.description ?? ""} onChange={(e) => patchCondition(selCondition.id, { description: e.target.value })} />
             </label>
-            <RefList title="成立時接到" kind="true" refs={selCondition.on_true_refs} from={selCondition.id} nameOf={nameOf} onRemove={removeFlowEdges} />
-            <RefList title="不成立時接到" kind="false" refs={selCondition.on_false_refs} from={selCondition.id} nameOf={nameOf} onRemove={removeFlowEdges} />
+            <RefList title={t("fl.trueTo")} kind="true" refs={selCondition.on_true_refs} from={selCondition.id} nameOf={nameOf} onRemove={removeFlowEdges} />
+            <RefList title={t("fl.falseTo")} kind="false" refs={selCondition.on_false_refs} from={selCondition.id} nameOf={nameOf} onRemove={removeFlowEdges} />
             <EpistemicSelect value={selCondition.epistemic_status} onChange={(v) => patchCondition(selCondition.id, { epistemic_status: v })} />
             {startToggle(selCondition.id)}
             <QuoteList refs={selCondition.evidence_refs} byId={evById} source={selCondition.source} />
-            <div><button className="danger quiet" onClick={() => removeNodes([selCondition.id])}><Trash2 size={15} />刪除條件（連同相關連線）</button></div>
+            <div><button className="danger quiet" onClick={() => removeNodes([selCondition.id])}><Trash2 size={15} />{t("fl.delCond")}</button></div>
           </div>
         ) : selOperator ? (
           <div className="swap" key={`o:${selOperator.id}`}>
             <div className="overview-title">
-              <h2>運算</h2><SourceTag source={selOperator.source} />
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.n.operator")}</h2><SourceTag source={selOperator.source} />
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selOperator.id}</div>
-            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">運算方式</span>
+            <div className="field"><span style={{ display: "block", marginBottom: 5, fontSize: 12 }} className="muted">{t("fl.opMode")}</span>
               <div className="seg">
                 {(["AND", "OR"] as const).map((k) => (
                   <button key={k} className={selOperator.operator === k ? "on" : ""} aria-pressed={selOperator.operator === k} onClick={() => selOperator.operator !== k && patchOperator(selOperator.id, { operator: k })}>{k}</button>
@@ -1077,81 +1086,81 @@ function Editor({ ir }: { ir: ScenarioIR }) {
               </div>
             </div>
             <div className="muted" style={{ fontSize: 12 }}>
-              {selOperator.operator === "AND" ? "AND：所有接進來的路徑都要成立，才往下走。" : "OR：接進來的路徑任一條成立，就往下走。"}
-              目前有 {flowEdges.filter((e) => e.to === selOperator.id).length} 條輸入。
+              {selOperator.operator === "AND" ? t("fl.and.explain") : t("fl.or.explain")}{" "}
+              {t("fl.opInputs", { n: flowEdges.filter((e) => e.to === selOperator.id).length })}
             </div>
-            <RefList title="輸出接到" kind="effect" refs={selOperator.effect_refs} from={selOperator.id} nameOf={nameOf} onRemove={removeFlowEdges} />
+            <RefList title={t("fl.outTo")} kind="effect" refs={selOperator.effect_refs} from={selOperator.id} nameOf={nameOf} onRemove={removeFlowEdges} />
             <EpistemicSelect value={selOperator.epistemic_status} onChange={(v) => patchOperator(selOperator.id, { epistemic_status: v })} />
             {startToggle(selOperator.id)}
-            <div><button className="danger quiet" onClick={() => removeNodes([selOperator.id])}><Trash2 size={15} />刪除運算（連同相關連線）</button></div>
+            <div><button className="danger quiet" onClick={() => removeNodes([selOperator.id])}><Trash2 size={15} />{t("fl.delOp")}</button></div>
           </div>
         ) : selAsset ? (
           <div className="swap" key={`s:${selAsset.id}`}>
             <div className="overview-title">
-              <h2>資產</h2><SourceTag source={selAsset.source} />
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.n.asset")}</h2><SourceTag source={selAsset.source} />
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div className="mono muted">{selAsset.id}</div>
-            <p className="dock-hint">資產是攻擊行為作用的對象。在「流程」連線模式下，從攻擊行為拉線到這個節點即可標示。</p>
-            <label className="field"><span>名稱</span>
-              <input value={selAsset.name ?? ""} placeholder="例如：網域控制站" onChange={(e) => patchAsset(selAsset.id, { name: e.target.value })} />
+            <p className="dock-hint">{t("fl.asset.explain")}</p>
+            <label className="field"><span>{t("fl.name")}</span>
+              <input value={selAsset.name ?? ""} placeholder={t("fl.assetPh")} onChange={(e) => patchAsset(selAsset.id, { name: e.target.value })} />
             </label>
-            <label className="field"><span>說明</span>
+            <label className="field"><span>{t("fl.desc")}</span>
               <textarea rows={3} value={selAsset.description ?? ""} onChange={(e) => patchAsset(selAsset.id, { description: e.target.value || undefined })} />
             </label>
             <EpistemicSelect value={selAsset.epistemic_status} onChange={(v) => patchAsset(selAsset.id, { epistemic_status: v })} />
             <div className="muted" style={{ fontSize: 12 }}>
-              被這些行為指到：{flowEdges.filter((e) => e.to === selAsset.id).map((e) => nameOf.get(e.from) ?? e.from).join("、") || "無"}
+              {t("fl.assetFrom", { list: joinList(flowEdges.filter((e) => e.to === selAsset.id).map((e) => nameOf.get(e.from) ?? e.from)) || t("fl.none") })}
             </div>
-            <div><button className="danger quiet" onClick={() => removeNodes([selAsset.id])}><Trash2 size={15} />刪除資產（連同相關連線）</button></div>
+            <div><button className="danger quiet" onClick={() => removeNodes([selAsset.id])}><Trash2 size={15} />{t("fl.delAsset")}</button></div>
           </div>
         ) : selFlow ? (
           <div className="swap" key={`f:${selFlow.id}`}>
             <div className="overview-title">
-              <h2>流程連線</h2>
-              <button className="quiet icon close" aria-label="關閉屬性" onClick={() => setSel(null)}><X size={16} /></button>
+              <h2>{t("fl.flowLine")}</h2>
+              <button className="quiet icon close" aria-label={t("fl.closeProps")} onClick={() => setSel(null)}><X size={16} /></button>
             </div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {nameOf.get(selFlow.from) ?? selFlow.from} <span className="muted">→</span> {nameOf.get(selFlow.to) ?? selFlow.to}
             </div>
             <div><span className={`edge-chip ${selFlow.kind === "effect" ? "flow" : `flow-${selFlow.kind}`}`}>{FLOW_LABEL[selFlow.kind]}</span></div>
             <div className="muted" style={{ fontSize: 12 }}>
-              {selFlow.kind === "effect" ? `Attack Flow 流程連線：「${NODE_LABEL[typeOf.get(selFlow.from) ?? "action"]}」之後接到下一個節點。它不是依賴關係，不會在拓樸規劃中開通連線。`
-                : selFlow.kind === "asset" ? "這個攻擊行為作用在這個資產上。"
-                : selFlow.kind === "true" ? "條件成立時走這條路徑。" : "條件不成立時走這條路徑。"}
+              {selFlow.kind === "effect" ? t("fl.effect.explain", { from: NODE_LABEL[typeOf.get(selFlow.from) ?? "action"] })
+                : selFlow.kind === "asset" ? t("fl.asset.edge")
+                : selFlow.kind === "true" ? t("fl.true.edge") : t("fl.false.edge")}
             </div>
             {(selFlow.kind === "true" || selFlow.kind === "false") && (
-              <div><button onClick={() => flipBranch(selFlow)}><GitBranch size={15} />改接到「{selFlow.kind === "true" ? "不成立" : "成立"}」分支</button></div>
+              <div><button onClick={() => flipBranch(selFlow)}><GitBranch size={15} />{t("fl.flip", { branch: selFlow.kind === "true" ? t("fl.f.false") : t("fl.f.true") })}</button></div>
             )}
-            <div><button className="danger quiet" onClick={() => removeFlowEdges([selFlow.id])}><Trash2 size={15} />刪除流程連線</button></div>
+            <div><button className="danger quiet" onClick={() => removeFlowEdges([selFlow.id])}><Trash2 size={15} />{t("fl.delFlow")}</button></div>
           </div>
         ) : (
           <div className="swap" key="overview">
-            <div className="overview-title"><Layers size={20} /><h2>設計工作台</h2></div>
+            <div className="overview-title"><Layers size={20} /><h2>{t("fl.workbench")}</h2></div>
             <p className="overview-name">{ir.name || ir.id}</p>
             <div className="overview-chain">
               <GitBranch size={16} />
-              <span>{actions.length} 步驟</span>
-              <span>{deps.length} 依賴{deps.length > 0 && `（已確認 ${deps.length - unconfirmed.length}）`}</span>
-              <span>{temporal.length - uncountedTemporal.length} 時序</span>
+              <span>{t("fl.stepCount", { n: actions.length })}</span>
+              <span>{t("fl.sum.deps", { n: deps.length })}{deps.length > 0 && t("fl.sum.depsOk", { n: deps.length - unconfirmed.length })}</span>
+              <span>{t("fl.sum.temporal", { n: temporal.length - uncountedTemporal.length })}</span>
             </div>
             {uncountedTemporal.length > 0 && (
               <div className="muted" style={{ fontSize: 12 }} data-testid="uncounted-relations">
-                另有 {uncountedTemporal.length} 條先後關係沒有對得上原文的引文，以橘色點線標示「無引文」、未計入上面的數字。
+                {t("fl.sum.uncited", { n: uncountedTemporal.length })}
               </div>
             )}
             {(flowNodes > 0 || flowEdges.length > 0 || startRefs.length > 0) && (
               <div className="overview-flow" data-testid="attack-flow-summary">
-                <span><Flag size={12} />{startRefs.length} 起點</span>
-                <span>{conditions.length} 條件</span>
-                <span>{operators.length} 運算</span>
-                <span>{assets.length} 資產</span>
-                <span>{flowEdges.length} 流程連線</span>
+                <span><Flag size={12} />{t("fl.sum.starts", { n: startRefs.length })}</span>
+                <span>{t("fl.sum.conds", { n: conditions.length })}</span>
+                <span>{t("fl.sum.ops", { n: operators.length })}</span>
+                <span>{t("fl.sum.assets", { n: assets.length })}</span>
+                <span>{t("fl.sum.flows", { n: flowEdges.length })}</span>
               </div>
             )}
             <div className="topology-summary">
-              <h3>訓練資產</h3>
-              {hosts.length === 0 ? <div><span className="muted">尚未分析軟體依賴</span></div> : hosts.map((h) => (
+              <h3>{t("fl.trainAssets")}</h3>
+              {hosts.length === 0 ? <div><span className="muted">{t("fl.noDeps")}</span></div> : hosts.map((h) => (
                 <div key={h.id}>
                   <span>{h.role}</span>
                   <span>{svcOf(h.id).map((x: any) => x.port).filter(Boolean).join(" / ") || "—"}</span>
@@ -1159,34 +1168,34 @@ function Editor({ ir }: { ir: ScenarioIR }) {
                 </div>
               ))}
             </div>
-            <ol className="design-route" aria-label="設計流程">
+            <ol className="design-route" aria-label={t("fl.route")}>
               <li className={designOk && !dirty ? "complete" : "current"}>
-                <span>{designOk && !dirty ? <Check size={12} /> : "1"}</span>編排設計
-                {dirty && <small>有未儲存的修改</small>}
+                <span>{designOk && !dirty ? <Check size={12} /> : "1"}</span>{t("fl.r.design")}
+                {dirty && <small>{t("fl.unsaved")}</small>}
               </li>
               <li className={designOk ? "complete" : ""}>
-                <span>{designOk ? <Check size={12} /> : "2"}</span>設計檢查
-                <small>{errors > 0 ? `${errors} 個問題` : unconfirmed.length > 0 ? `${unconfirmed.length} 條依賴未確認` : warns > 0 ? `${warns} 個待處理` : "通過"}</small>
+                <span>{designOk ? <Check size={12} /> : "2"}</span>{t("fl.r.check")}
+                <small>{errors > 0 ? t("fl.issues", { n: errors }) : unconfirmed.length > 0 ? t("fl.r.depsOpen", { n: unconfirmed.length }) : warns > 0 ? t("fl.warnCount", { n: warns }) : t("fl.r.pass")}</small>
               </li>
               <li className={approved ? "complete" : designOk && !dirty ? "current" : ""}>
-                <span>{approved ? <Check size={12} /> : "3"}</span>人工核准
-                <small>{approved ? "拓樸已核准" : "在拓樸頁進行"}</small>
+                <span>{approved ? <Check size={12} /> : "3"}</span>{t("fl.r.approve")}
+                <small>{approved ? t("fl.r.approved") : t("fl.r.onTopology")}</small>
               </li>
             </ol>
             {errors > 0 ? (
-              <button className="primary next-action" onClick={() => setConsoleOpen(true)}><ScanLine size={16} />查看設計檢查的問題<ArrowRight size={15} /></button>
+              <button className="primary next-action" onClick={() => setConsoleOpen(true)}><ScanLine size={16} />{t("fl.n.showIssues")}<ArrowRight size={15} /></button>
             ) : unconfirmed.length > 0 ? (
-              <button className="primary next-action" onClick={confirmAllDeps}><Check size={16} />確認所有依賴<ArrowRight size={15} /></button>
+              <button className="primary next-action" onClick={confirmAllDeps}><Check size={16} />{t("fl.n.confirmDeps")}<ArrowRight size={15} /></button>
             ) : dirty ? (
-              <button className="primary next-action" disabled={save.busy || unnamed > 0} onClick={() => save.run()}>{save.busy ? <span className="spinner" /> : <Save size={16} />}儲存這份設計<ArrowRight size={15} /></button>
+              <button className="primary next-action" disabled={save.busy || unnamed > 0} onClick={() => save.run()}>{save.busy ? <span className="spinner" /> : <Save size={16} />}{t("fl.n.save")}<ArrowRight size={15} /></button>
             ) : (
-              <Link className="next-action-link" to="/deps"><button className="primary next-action"><ArrowRight size={16} />下一步：軟體依賴<ArrowRight size={15} /></button></Link>
+              <Link className="next-action-link" to="/deps"><button className="primary next-action"><ArrowRight size={16} />{t("fl.n.next")}<ArrowRight size={15} /></button></Link>
             )}
             <details className="capability-note">
-              <summary>版本紀錄　v{ir.ir_version ?? 1}</summary>
-              {versions.error ? <ApiNotice error={versions.error} what="版本紀錄" onRetry={() => versions.reload()} />
-                : versions.loading && !versions.data ? <p><span className="spinner" /> 載入中…</p>
-                : versionRows.length === 0 ? <p>尚無版本紀錄。</p>
+              <summary>{t("fl.versions", { v: ir.ir_version ?? 1 })}</summary>
+              {versions.error ? <ApiNotice error={versions.error} what={t("fl.versionsWhat")} onRetry={() => versions.reload()} />
+                : versions.loading && !versions.data ? <p><span className="spinner" /> {t("fl.loading")}</p>
+                : versionRows.length === 0 ? <p>{t("fl.noVersions")}</p>
                 : versionRows.map((v) => (
                   <div key={v.ir_version} className="version-row">
                     <span className="mono" style={{ color: v.ir_version === ir.ir_version ? "var(--accent)" : undefined }}>v{v.ir_version}</span>
@@ -1196,12 +1205,12 @@ function Editor({ ir }: { ir: ScenarioIR }) {
                 ))}
             </details>
             <details className="capability-note">
-              <summary>這張圖代表什麼</summary>
-              <p>這是攻擊流程的設計：連線只表示「後一步需要前一步」或發生順序。這裡不執行任何攻擊；部署與驗證在後面的步驟，並且只顯示後端回報的真實狀態。</p>
-              <p>流程連線、條件與 AND/OR 運算依 MITRE Attack Flow 的畫法記錄「設計上有哪些分支」。條件的「成立／不成立」是兩條可能的路徑，不是任何一次執行的判定結果。</p>
-              <p>各種連線的圖例常駐在畫布左下角。灰色虛線只代表「時間先後」；沒有對得上原文引文的關係另以橘色點線標示「無引文」。</p>
+              <summary>{t("fl.about")}</summary>
+              <p>{t("fl.about1")}</p>
+              <p>{t("fl.about2")}</p>
+              <p>{t("fl.about3")}</p>
             </details>
-            <Link to="/missing" className="muted" style={{ fontSize: 12 }}>← 缺失補充</Link>
+            <Link to="/missing" className="muted" style={{ fontSize: 12 }}>← {t("stage.missing")}</Link>
           </div>
         )}
       </aside>
@@ -1214,7 +1223,7 @@ function QuoteList({ refs, byId, source }: { refs?: string[]; byId: Map<string, 
   const ids = Array.isArray(refs) ? refs : [];
   return (
     <div className="ref-list">
-      <span className="row" style={{ gap: 8 }}><span className="muted" style={{ fontSize: 12 }}>引文</span><CitationBadge summary={summarizeCitations(ids, byId)} source={source} /></span>
+      <span className="row" style={{ gap: 8 }}><span className="muted" style={{ fontSize: 12 }}>{t("fl.quote")}</span><CitationBadge summary={summarizeCitations(ids, byId)} source={source} /></span>
       {ids.map((id) => <div key={id} className="ref-row"><span className="name"><QuoteSnippet evidence={byId.get(id)} id={id} max={60} /></span></div>)}
     </div>
   );
@@ -1225,10 +1234,10 @@ function RefList({ title, kind, refs, from, nameOf, onRemove }: { title: string;
   return (
     <div className="ref-list">
       <span className={`edge-chip ${kind === "effect" ? "flow" : `flow-${kind}`}`}>{title}</span>
-      {(refs ?? []).length === 0 ? <span className="muted">尚未連線</span> : (refs ?? []).map((id) => (
+      {(refs ?? []).length === 0 ? <span className="muted">{t("fl.notLinked")}</span> : (refs ?? []).map((id) => (
         <div key={id} className="ref-row">
-          <span className="name">{nameOf.get(id) ?? `${id}（已不存在）`}</span>
-          <button className="quiet icon" aria-label="移除這條流程連線" onClick={() => onRemove([flowEdgeId(from, kind, id)])}><X size={14} /></button>
+          <span className="name">{nameOf.get(id) ?? t("fl.gone", { id })}</span>
+          <button className="quiet icon" aria-label={t("fl.removeFlow")} onClick={() => onRemove([flowEdgeId(from, kind, id)])}><X size={14} /></button>
         </div>
       ))}
     </div>
@@ -1237,8 +1246,8 @@ function RefList({ title, kind, refs, from, nameOf, onRemove }: { title: string;
 
 function EpistemicSelect({ value, onChange }: { value: EpistemicStatus; onChange: (v: EpistemicStatus) => void }) {
   return (
-    <label className="field"><span>依據程度</span>
-      <Select value={value} aria-label="依據程度" onChange={(e) => onChange(e.target.value as EpistemicStatus)}>
+    <label className="field"><span>{t("fl.basis")}</span>
+      <Select value={value} aria-label={t("fl.basis")} onChange={(e) => onChange(e.target.value as EpistemicStatus)}>
         {EPISTEMIC_ORDER.map((s) => <option key={s} value={s}>{EPISTEMIC[s].label}（{s}）</option>)}
       </Select>
     </label>
@@ -1248,5 +1257,5 @@ function EpistemicSelect({ value, onChange }: { value: EpistemicStatus; onChange
 export function FlowPage() {
   const { ir } = useScenario();
   // key by scenario so switching scenarios resets the local draft
-  return <ScenarioGate title="攻擊流程">{ir && <Editor key={ir.id} ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("fl.title")}>{ir && <Editor key={ir.id} ir={ir} />}</ScenarioGate>;
 }

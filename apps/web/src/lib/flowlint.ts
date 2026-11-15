@@ -1,5 +1,6 @@
 // Design checks for the attack-flow graph. Computed in the browser from what is on the canvas right now.
 // These say whether the DESIGN is coherent; they say nothing about deployment, validation or any attack outcome.
+import { joinList, t as tr } from "../i18n";
 import type { Action, AttackFlowAsset, AttackFlowCondition, AttackFlowOperator, Evidence, Relation } from "@contracts";
 import { summarizeCitations } from "../components/ui";
 import type { RelationX } from "./plan";
@@ -105,8 +106,8 @@ export function flowEdgesOf(actions: Action[], x: FlowExtras = {}): FlowEdge[] {
 // inferred = the report does not say it, it was filled in. insufficient = quotes were given but did not match the
 // source — that is a "go and read the original" case, not "the report is silent".
 const weakText = (name: string, status: string) => (status === "inferred"
-  ? `「${name}」是推論補全的項目，原文沒有明講。`
-  : `「${name}」附的引文沒有對上原文，需要人工對照原文確認。`);
+  ? tr("lint.inferred", { name })
+  : tr("lint.insufficient", { name }));
 const short = (s: string, n = 18) => (s.length > n ? `${s.slice(0, n)}…` : s);
 
 export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras = {}): Finding[] {
@@ -121,24 +122,24 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   operators.forEach((o) => typeOf.set(o.id, "operator"));
   assets.forEach((s) => typeOf.set(s.id, "asset"));
   const names = new Map<string, string>();
-  conditions.forEach((c) => names.set(c.id, c.description?.trim() ? `條件：${short(c.description.trim())}` : "未描述的條件"));
-  operators.forEach((o) => names.set(o.id, `${o.operator} 運算`));
-  assets.forEach((s) => names.set(s.id, s.name?.trim() ? `資產：${s.name.trim()}` : "未命名的資產"));
+  conditions.forEach((c) => names.set(c.id, c.description?.trim() ? tr("lint.condName", { text: short(c.description.trim()) }) : tr("lint.condUnnamed")));
+  operators.forEach((o) => names.set(o.id, tr("lint.opName", { op: o.operator })));
+  assets.forEach((s) => names.set(s.id, s.name?.trim() ? tr("lint.assetName", { name: s.name.trim() }) : tr("lint.assetUnnamed")));
   const label = (id: string) => byId.get(id)?.name?.trim() || names.get(id) || id;
   const target = (id: string) => ({ type: typeOf.get(id) ?? "action", id });
 
   for (const a of actions) {
-    if (!a.name.trim()) out.push({ id: `unnamed:${a.id}`, level: "error", text: "這個行為沒有名稱，無法儲存。", target: { type: "action", id: a.id } });
+    if (!a.name.trim()) out.push({ id: `unnamed:${a.id}`, level: "error", text: tr("lint.unnamed"), target: { type: "action", id: a.id } });
   }
   const seen = new Set<string>();
   for (const r of relations) {
     // An imported Attack Flow may relate an action to a condition or operator, so any node on the canvas is a valid end.
     if (!typeOf.has(r.from_action) || !typeOf.has(r.to_action)) {
-      out.push({ id: `dangling:${r.id}`, level: "error", text: "這條關係連到一個已不存在的節點。", target: { type: "relation", id: r.id } });
+      out.push({ id: `dangling:${r.id}`, level: "error", text: tr("lint.dangling"), target: { type: "relation", id: r.id } });
       continue;
     }
     const key = `${r.from_action}>${r.to_action}>${r.kind}`;
-    if (seen.has(key)) out.push({ id: `dup:${r.id}`, level: "error", text: `「${label(r.from_action)} → ${label(r.to_action)}」有重複的同類型關係。`, target: { type: "relation", id: r.id } });
+    if (seen.has(key)) out.push({ id: `dup:${r.id}`, level: "error", text: tr("lint.dup", { from: label(r.from_action), to: label(r.to_action) }), target: { type: "relation", id: r.id } });
     seen.add(key);
   }
 
@@ -160,7 +161,7 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   };
   actions.forEach((a) => { if (!state.has(a.id)) visit(a.id, []); });
   for (const r of deps) {
-    if (inCycle.has(r.id)) out.push({ id: `cycle:${r.id}`, level: "error", text: `「${label(r.from_action)} → ${label(r.to_action)}」在依賴循環裡：互相依賴的步驟沒有一個能先發生。`, target: { type: "relation", id: r.id } });
+    if (inCycle.has(r.id)) out.push({ id: `cycle:${r.id}`, level: "error", text: tr("lint.cycle", { from: label(r.from_action), to: label(r.to_action) }), target: { type: "relation", id: r.id } });
   }
 
   // ---- Attack Flow edges (the *_refs lists) ----
@@ -169,14 +170,14 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   for (const e of all) {
     const to = typeOf.get(e.to);
     if (!to) {
-      out.push({ id: `flowdangling:${e.id}`, level: "error", text: `「${label(e.from)}」的流程連線指向一個已不存在的節點（${e.to}）。`, target: target(e.from) });
+      out.push({ id: `flowdangling:${e.id}`, level: "error", text: tr("lint.flowDangling", { from: label(e.from), to: e.to }), target: target(e.from) });
     } else if (e.kind === "asset" ? to !== "asset" : to === "asset") {
       out.push({
         id: `flowkind:${e.id}`, level: "error", target: target(e.from),
-        text: e.kind === "asset" ? `「${label(e.from)}」的資產連線指向的不是資產節點。` : `「${label(e.from)}」的流程連線指向資產節點；資產只能由攻擊行為以「資產」連線指到。`,
+        text: e.kind === "asset" ? tr("lint.assetEdgeWrong", { from: label(e.from) }) : tr("lint.flowToAsset", { from: label(e.from) }),
       });
     } else if (e.from === e.to) {
-      out.push({ id: `flowself:${e.id}`, level: "error", text: `「${label(e.from)}」的流程連線連到自己。`, target: target(e.from) });
+      out.push({ id: `flowself:${e.id}`, level: "error", text: tr("lint.self", { from: label(e.from) }), target: target(e.from) });
     } else live.push(e);
   }
   const flowIn = new Map<string, number>();
@@ -187,17 +188,17 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   }
   const starts = new Set(x.startRefs ?? []);
   for (const id of starts) {
-    if (!typeOf.has(id)) out.push({ id: `startdangling:${id}`, level: "error", text: `流程起點指向一個已不存在的節點（${id}）。` });
-    else if (typeOf.get(id) === "asset") out.push({ id: `startasset:${id}`, level: "error", text: `「${label(id)}」是資產節點，不能當流程起點。`, target: target(id) });
+    if (!typeOf.has(id)) out.push({ id: `startdangling:${id}`, level: "error", text: tr("lint.startDangling", { id }) });
+    else if (typeOf.get(id) === "asset") out.push({ id: `startasset:${id}`, level: "error", text: tr("lint.startAsset", { name: label(id) }), target: target(id) });
   }
 
   // Loops through any kind of line. Pure dependency cycles are already reported above as errors, edge by edge.
   for (const loop of findLoops([...typeOf.keys()], relations, live)) {
     if (loop.relationIds.length > 0 && loop.flowEdgeIds.length === 0 && loop.relationIds.every((id) => inCycle.has(id))) continue;
-    const names = loop.nodes.slice(0, 4).map((n) => `「${short(label(n), 14)}」`).join("、");
+    const names = joinList(loop.nodes.slice(0, 4).map((n) => tr("lint.loopName", { name: short(label(n), 14) })));
     out.push({
       id: `loop:${loop.nodes.join(",")}`, level: "warn",
-      text: `${names}${loop.nodes.length > 4 ? ` 等 ${loop.nodes.length} 個節點` : ""}的連線繞成一圈：沒有哪一步能排在最前面。請檢查其中是否有方向畫反或不該有的連線。`,
+      text: tr("lint.loop", { names, more: loop.nodes.length > 4 ? ` ${tr("lint.loopMore", { n: loop.nodes.length, more: loop.nodes.length - 4 })}` : "" }),
       target: loop.relationIds[0] ? { type: "relation", id: loop.relationIds[0] } : target(loop.nodes[0]),
     });
   }
@@ -205,28 +206,28 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   const evById = new Map((x.evidence ?? []).map((e) => [e.id, e]));
   for (const r of relations) {
     if (!typeOf.has(r.from_action) || !typeOf.has(r.to_action)) continue;
-    const name = `「${label(r.from_action)} → ${label(r.to_action)}」`;
+    const name = tr("lint.relName", { from: label(r.from_action), to: label(r.to_action) });
     if (r.kind === "dependency" && (r as RelationX).confirmed !== true) {
       out.push({
         id: `unconfirmed:${r.id}`, level: "warn", target: { type: "relation", id: r.id },
-        text: `依賴${name}尚未確認，拓樸規劃不會為它開通連線。${countsInChain(r, evById) ? "" : "它也沒有對得上原文的引文。"}`,
+        text: `${tr("lint.unconfirmed", { name })}${countsInChain(r, evById) ? "" : ` ${tr("lint.unconfirmedNoQuote")}`}`,
       });
     } else if (!countsInChain(r, evById)) {
-      out.push({ id: `unbacked:${r.id}`, level: "warn", text: `${name}的先後關係沒有對得上原文的引文，目前以橘色點線標示「無引文」、不計入攻擊鏈。對照原文後可在屬性面板確認或刪除。`, target: { type: "relation", id: r.id } });
+      out.push({ id: `unbacked:${r.id}`, level: "warn", text: tr("lint.unbacked", { name }), target: { type: "relation", id: r.id } });
     }
   }
   for (const c of conditions) {
     const t = { type: "condition" as const, id: c.id };
-    if (!c.description?.trim()) out.push({ id: `conddesc:${c.id}`, level: "warn", text: "這個條件沒有描述，看不出它在判斷什麼。", target: t });
-    if (!(c.on_true_refs ?? []).length) out.push({ id: `condtrue:${c.id}`, level: "warn", text: `「${label(c.id)}」缺少「成立」分支：條件成立後沒有接到任何節點。`, target: t });
+    if (!c.description?.trim()) out.push({ id: `conddesc:${c.id}`, level: "warn", text: tr("lint.condNoDesc"), target: t });
+    if (!(c.on_true_refs ?? []).length) out.push({ id: `condtrue:${c.id}`, level: "warn", text: tr("lint.condNoTrue", { name: label(c.id) }), target: t });
     const both = (c.on_true_refs ?? []).filter((id) => (c.on_false_refs ?? []).includes(id));
-    if (both.length) out.push({ id: `condboth:${c.id}`, level: "warn", text: `「${label(c.id)}」的成立與不成立分支指向同一個節點（${label(both[0])}），這個條件沒有造成分歧。`, target: t });
+    if (both.length) out.push({ id: `condboth:${c.id}`, level: "warn", text: tr("lint.condBoth", { name: label(c.id), to: label(both[0]) }), target: t });
   }
   for (const o of operators) {
     const t = { type: "operator" as const, id: o.id };
     const n = flowIn.get(o.id) ?? 0;
-    if (n < 2) out.push({ id: `opin:${o.id}`, level: "warn", text: `${o.operator} 運算只有 ${n} 條輸入；要合併兩條以上的路徑才有意義。`, target: t });
-    if (!(flowOut.get(o.id) ?? 0)) out.push({ id: `opout:${o.id}`, level: "warn", text: `${o.operator} 運算沒有輸出，合併後沒有接到任何節點。`, target: t });
+    if (n < 2) out.push({ id: `opin:${o.id}`, level: "warn", text: tr("lint.opIn", { op: o.operator, n }), target: t });
+    if (!(flowOut.get(o.id) ?? 0)) out.push({ id: `opout:${o.id}`, level: "warn", text: tr("lint.opOut", { op: o.operator }), target: t });
   }
 
   // Orphans: a node no line of any kind touches. A lone start node in a one-node graph is not an orphan.
@@ -234,14 +235,14 @@ export function lintFlow(actions: Action[], relations: Relation[], x: FlowExtras
   live.forEach((e) => { linked.add(e.from); linked.add(e.to); });
   if (typeOf.size > 1) {
     for (const a of actions) {
-      if (!linked.has(a.id)) out.push({ id: `isolated:${a.id}`, level: "warn", text: `「${label(a.id)}」沒有和任何行為相連。`, target: { type: "action", id: a.id } });
+      if (!linked.has(a.id)) out.push({ id: `isolated:${a.id}`, level: "warn", text: tr("lint.isolated", { name: label(a.id) }), target: { type: "action", id: a.id } });
     }
   }
   for (const n of [...conditions, ...operators, ...assets]) {
-    if (!linked.has(n.id)) out.push({ id: `orphan:${n.id}`, level: "warn", text: `「${label(n.id)}」是孤兒節點：沒有任何連線接到它。`, target: target(n.id) });
+    if (!linked.has(n.id)) out.push({ id: `orphan:${n.id}`, level: "warn", text: tr("lint.orphan", { name: label(n.id) }), target: target(n.id) });
   }
   if (live.some((e) => e.kind !== "asset") && starts.size === 0) {
-    out.push({ id: "nostart", level: "info", text: "這張流程圖有流程連線，但還沒有標記任何起點。" });
+    out.push({ id: "nostart", level: "info", text: tr("lint.noStart") });
   }
 
   for (const a of actions) {

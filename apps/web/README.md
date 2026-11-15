@@ -48,3 +48,15 @@ React + TypeScript + Vite。`npm install && npm run dev`（5173，`/api` 代理�
 驗證報告（讀 IR 內的 validation）皆正常，無 console 錯誤。IaC／部署／驗證端點在該後端不存在時顯示「尚未提供」；
 這三頁有資料時的畫面，是在測試程式內以符合 infra 分支回傳格式的攔截回應驗證的（未連真實 Docker）。
 未實測：真實 LLM 分析（避免花預算）、補充缺失的成功路徑、真實 up/down。
+
+## 介面語言（i18n）
+
+- 預設繁體中文（zh-TW），頂列右側可切換英文；選擇記在瀏覽器（`cr.locale`）。
+- 所有固定介面文字都在 `src/i18n/zh-TW.ts`（鍵的來源）與 `src/i18n/en.ts`；`en.ts` 型別為 `Messages`，少一個鍵 `tsc` 就會失敗。英文需要單複數時用 `{ one, other }`。
+- 使用者情資、引文、名稱與 API 資料原樣顯示，不翻譯。後端固定錯誤訊息在 `src/lib/errors.ts` 對應到語系鍵；其他錯誤顯示簡短通用訊息，原始內容收在「技術細節」。
+- `npm run i18n:check`：找出 `src/` 中寫死的中文（`src/i18n/`、註解、標 `i18n-ignore` 的行與 `lib/errors.ts` 除外），並比對兩個語系的鍵與 `{變數}`。
+- 文案原則：參考 ASD-STE100 的結構規則（短句、主動語態、一句一個動作、不用分號、同一概念用同一個詞）。中文是比照這些原則的改寫，不是正式的 STE 標準；也未使用官方字典。
+
+## 手機版面
+
+`theme.css` 末段的 `@media (max-width: 760px)` 與 `(max-width: 400px)`：單欄、內文 15px、輸入框 16px、按鈕至少 44px 高。手機上多欄表格由 `src/lib/stackTables.ts` 依表頭加上 `data-label`，以卡片方式逐列顯示。

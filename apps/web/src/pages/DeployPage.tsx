@@ -7,6 +7,7 @@ import { isPlanApproved } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, DataView, Empty, fmtTime, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
 import { PlacementPanel } from "./PlacementPanel";
+import { getLocale, live, t, type MsgKey } from "../i18n";
 import type { EnvHost, EnvNetwork } from "@contracts";
 
 const POLL_MS = 5000;
@@ -27,21 +28,20 @@ function ContainerTable({ containers, roleOf }: { containers: any[]; roleOf: (sv
   const gw = containers.filter((c) => c?.service === GATEWAY);
   return (
     <div data-testid="container-table">
-      <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>情境主機 {lab.length} 個{gw.length > 0 && <>、平台元件 {gw.length} 個</>}</div>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t("dp.hostsCount", { n: lab.length })}{gw.length > 0 && <> · {t("dp.platformCount", { n: gw.length })}</>}</div>
       <table className="tbl">
-        <thead><tr><th>類別</th><th>名稱</th><th>容器</th><th>狀態</th><th>健康檢查</th></tr></thead>
+        <thead><tr><th>{t("dp.col.kind")}</th><th>{t("dp.col.name")}</th><th>{t("dp.col.state")}</th><th>{t("dp.col.health")}</th></tr></thead>
         <tbody>
           {[...lab, ...gw].map((c, i) => {
             const isGw = c?.service === GATEWAY;
             return (
               <tr key={c?.id ?? i} data-kind={isGw ? "platform" : "lab"}>
                 <td>{isGw
-                  ? <span className="tag" title="平台為了把指定的埠轉送進隔離網路而加上的轉發容器。它不是情境中的主機，不在拓樸裡，也不是攻擊目標。">平台元件</span>
-                  : <span className="tag">情境主機</span>}</td>
-                <td>{isGw ? "轉發閘道（不屬於情境）" : roleOf(String(c?.service)) ?? String(c?.service ?? "—")}<div className="mono muted" style={{ fontSize: 11 }}>{String(c?.service ?? "")}</div></td>
-                <td className="mono muted" style={{ fontSize: 12, overflowWrap: "anywhere" }}>{String(c?.name ?? "—")}{c?.id && <div>{String(c.id).slice(0, 12)}</div>}</td>
+                  ? <span className="tag" title={t("dp.platform.hint")}>{t("dp.platform")}</span>
+                  : <span className="tag">{t("dp.scenarioHost")}</span>}</td>
+                <td>{isGw ? t("dp.gateway") : roleOf(String(c?.service)) ?? String(c?.service ?? "—")}</td>
                 <td><span className={stateClass(String(c?.state ?? ""))}>{String(c?.state ?? "—")}</span>{c?.status && <div className="muted" style={{ fontSize: 11 }}>{String(c.status)}</div>}</td>
-                <td className="muted">{c?.health ? String(c.health) : "未設定"}</td>
+                <td className="muted">{c?.health ? String(c.health) : t("dp.noHealth")}</td>
               </tr>
             );
           })}
@@ -60,11 +60,11 @@ function CommandFailure({ error, what }: { error: ApiError | null; what: string 
   const stderr = String(cmd.stderr ?? d.error ?? "").trim();
   const cause = recordReason({ stderr, exit_code: cmd.returncode });
   return (
-    <Notice kind="err" title={`${what}失敗`}>
+    <Notice kind="err" title={t("dp.failed", { what })}>
       <div data-testid="command-failure">
-        <div>{cause ?? "指令失敗，沒有回報原因。"}{typeof cmd.returncode === "number" && <span className="muted mono">（結束代碼 {cmd.returncode}）</span>}</div>
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>這次嘗試已記入下方「部署紀錄」。實際的容器狀態以「目前狀態」為準，失敗不代表沒有殘留的容器。</div>
-        {stderr && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>完整錯誤輸出</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{stderr}</pre></details>}
+        <div>{cause ?? t("dp.noCause")}{typeof cmd.returncode === "number" && <span className="muted mono">{t("dp.exitCode", { n: cmd.returncode })}</span>}</div>
+        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("dp.failNote")}</div>
+        {stderr && <details style={{ marginTop: 6 }}><summary className="muted" style={{ cursor: "pointer" }}>{t("dp.fullOutput")}</summary><pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{stderr}</pre></details>}
       </div>
     </Notice>
   );
@@ -73,12 +73,12 @@ function CommandFailure({ error, what }: { error: ApiError | null; what: string 
 /** Why an attempt ended the way it did, from whatever the audit record kept. Tool output is shown as-is, never reworded. */
 function recordReason(d: any): string | undefined {
   if (!d || typeof d !== "object") return undefined;
-  if (typeof d.reason === "string" && d.reason) return REASON_ZH[d.reason] ?? d.reason;
+  if (typeof d.reason === "string" && d.reason) return REASON[d.reason] ?? d.reason;
   for (const k of ["error", "stderr"]) {
     const v = typeof d[k] === "string" ? d[k].trim() : "";
-    if (v) { const line = v.split("\n").filter(Boolean).pop()!; return REASON_ZH[line] ?? line; }
+    if (v) { const line = v.split("\n").filter(Boolean).pop()!; return REASON[line] ?? line; }
   }
-  return typeof d.exit_code === "number" && d.exit_code !== 0 ? `結束代碼 ${d.exit_code}` : undefined;
+  return typeof d.exit_code === "number" && d.exit_code !== 0 ? t("dp.exit", { n: d.exit_code }) : undefined;
 }
 /** The command output kept with an attempt, verbatim, for the expandable row detail. */
 function recordOutput(d: any): string | undefined {
@@ -86,24 +86,25 @@ function recordOutput(d: any): string | undefined {
   const parts = [["stderr", d.stderr], ["stdout", d.stdout]].filter(([, v]) => typeof v === "string" && v.trim()).map(([k, v]) => `[${k}]\n${String(v).trim()}`);
   return parts.length ? parts.join("\n\n") : undefined;
 }
-const REASON_ZH: Record<string, string> = {
-  "topology not approved": "拓樸尚未核准",
-  "approval stale; topology changed since approval": "核准後拓樸已變更，需重新核准",
-  "explicit local PoC approval required": "未取得部署測試的明確同意",
-  "explicit deployment test approval required": "未取得部署測試的明確同意",
-  "compose file has not been generated": "尚未生成 IaC（沒有 compose 檔）",
-};
+const REASON: Record<string, string> = live(() => ({
+  "topology not approved": t("dp.r.notApproved"),
+  "approval stale; topology changed since approval": t("dp.r.stale"),
+  "explicit local PoC approval required": t("dp.r.noConsent"),
+  "explicit deployment test approval required": t("dp.r.noConsent"),
+  "compose file has not been generated": t("dp.r.noFiles"),
+}));
 
-// Known Proxmox preflight refusals (apps/api/app/deploy/backends/proxmox.py). Anything else is shown verbatim.
-const PVE_REASON: [RegExp, string][] = [
-  [/runtime VM quota is exhausted/, "cr-range 執行中 VM 配額已用完（已有 worker VM 或執行中 VM 達上限）"],
-  [/memory budget is exhausted/, "cr-range 記憶體預算已用完，請通知產品負責人"],
-  [/insufficient node memory/, "PVE 節點可用記憶體不足，請通知產品負責人（不會停止既有 VM）"],
-  [/insufficient local-lvm space/, "local-lvm 儲存空間不足，請通知產品負責人"],
-  [/worker template 900000 failed/, "worker 範本 900000 驗證未通過"],
-  [/not the approved 9\.2\.x/, "PVE 版本不是核准的 9.2.x"],
-  [/outside the approved product VMID range/, "cr-range 內有不在核准 VMID 範圍的 VM"],
-  [/active \S+ deployment/, "此情境在另一個部署後端仍有執行中的部署，需先切換到該後端關閉"],
+// Known runtime preflight refusals (apps/api/app/deploy/backends/proxmox.py), in plain words for the user.
+// Anything else gets a generic line. The raw text stays in the collapsed technical details.
+const PVE_REASON: [RegExp, MsgKey][] = [
+  [/runtime VM quota is exhausted/, "dp.cap.quota"],
+  [/memory budget is exhausted/, "dp.cap.memory"],
+  [/insufficient node memory/, "dp.cap.nodeMemory"],
+  [/insufficient local-lvm space/, "dp.cap.storage"],
+  [/worker template 900000 failed/, "dp.cap.template"],
+  [/not the approved 9\.2\.x/, "dp.cap.version"],
+  [/outside the approved product VMID range/, "dp.cap.unknownVm"],
+  [/active \S+ deployment/, "dp.cap.otherBackend"],
 ];
 
 // Global capacity refusals: they only gate creating a NEW worker VM. Its own running worker occupies the quota.
@@ -121,11 +122,11 @@ function pveBlockReason(pf: any): { label: string; raw?: string } | undefined {
   const ownedRunning = pf?.current_state === "running";
   if (ownedRunning && raw && PVE_CAPACITY.test(raw)) {
     return pf?.would_change_running_environment === true
-      ? { label: "此情境已有執行中的 PVE 部署，且設定已變更；需先關閉（down）再重新部署" }
+      ? { label: t("dp.cap.changed") }
       : undefined;
   }
   const hit = raw ? PVE_REASON.find(([re]) => re.test(raw)) : undefined;
-  return { label: hit ? hit[1] : raw ?? "PVE 回報未就緒（未提供原因）", raw };
+  return { label: hit ? t(hit[1]) : t("dp.cap.noReason"), raw };
 }
 
 function Body({ ir }: { ir: ScenarioIR }) {
@@ -166,9 +167,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
   // Proxmox only: a preflight that loaded (no request error) and explicitly reports not-ready. A failed or pending request
   // is NOT a confirmed refusal and must not be shown as one; the backend still re-checks capacity on "up".
   const pveUnavailable = isProxmox && !!pf && !preflight.error ? pveBlockReason(pf) : undefined;
-  const upBlock = !approved ? "需先在「拓樸」頁核准拓樸" : iacMissing ? "需先在「IaC 預覽」頁生成 IaC" : iacBlocked ? "IaC 檢查報告判定目前不可部署"
-    : pveUnavailable ? `PVE 部署前檢查判定目前不可部署：${pveUnavailable.label}` : undefined;
-  const targetName = isProxmox ? "Proxmox worker VM" : backend === "local-docker" ? "本機 Docker" : "隔離執行環境";
+  const upBlock = !approved ? t("dp.block.approve") : iacMissing ? t("dp.block.files") : iacBlocked ? t("dp.block.check")
+    : pveUnavailable ? t("dp.block.runtime", { reason: pveUnavailable.label }) : undefined;
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
   const state = typeof stateRaw === "string" ? stateRaw : undefined;
   const containers: unknown = s && typeof s === "object" ? s.containers ?? s.services : undefined;
@@ -179,7 +179,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
     : null;
   // The status endpoint answers state=error with this text when no compose file exists. That is "nothing to deploy yet", not a fault.
   const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
-  const ACTION: Record<string, string> = { up: "啟動", down: "關閉" };
+  const ACTION: Record<string, string> = { up: t("dp.act.up"), down: t("dp.act.down") };
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
   const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details), output: recordOutput(r.details) }));
   // Host name for a compose service id, from the approved plan. The gateway is not in the plan: it is platform plumbing.
@@ -193,50 +193,52 @@ function Body({ ir }: { ir: ScenarioIR }) {
     (Array.isArray(c?.ports) ? c.ports : []).map((p: any) => `${p.host_ip ?? ""}:${p.host_port}`));
   const liveContainers = Array.isArray(containers) ? containers.length : 0;
   // Nothing was ever generated and nothing is running: a down would only fail and add a failed record.
-  const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? "沒有已生成的部署設定，也沒有容器在執行，無需關閉" : undefined;
+  const downBlock = iacMissing && liveContainers === 0 && state !== "running" ? t("dp.block.down") : undefined;
 
   return (
     <div className="page">
-      <PageHead title="部署管理" desc={`部署目標：${targetName}。狀態每 5 秒自動更新。`}>
-        <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm(`確定要在${targetName}啟動這個情境的容器？`)) void up.run(); }}>啟動（up）</button>
-        <button className="danger" disabled={busy || !!downBlock} title={downBlock} onClick={() => { if (window.confirm("確定要關閉並移除這個情境的部署？")) void down.run(); }}>關閉（down）</button>
+      <PageHead title={t("dp.title")} desc={t("dp.desc")}>
+        <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm(t("dp.confirmUp"))) void up.run(); }}>{t("dp.act.up")}</button>
+        <button className="danger" disabled={busy || !!downBlock} title={downBlock} onClick={() => { if (window.confirm(t("dp.confirmDown"))) void down.run(); }}>{t("dp.act.down")}</button>
       </PageHead>
 
       {!approved && (
-        <Notice kind="warn" title={ir.environment_plan ? "拓樸尚未核准，不能部署" : "尚無拓樸規劃，不能部署"}
-          action={<Link to="/topology"><button className="primary small">前往拓樸頁</button></Link>}>
-          部署前必須先由人核准拓樸（開通哪些連線、哪些路徑必須阻擋）。核准後「啟動」按鈕才會啟用。
+        <Notice kind="warn" title={ir.environment_plan ? t("dp.n.notApproved") : t("dp.n.noPlan")}
+          action={<Link to="/topology"><button className="primary small">{t("dp.n.toTopology")}</button></Link>}>
+          {t("dp.n.approveBody")}
         </Notice>
       )}
       {approved && iacMissing && (
-        <Notice kind="warn" title="尚未生成 IaC，不能部署"
-          action={<Link to="/iac"><button className="primary small">前往 IaC 預覽</button></Link>}>
-          拓樸已核准，但還沒有生成部署用的 Docker Compose 設定。請先到「IaC 預覽」頁按「生成 IaC」，生成後「啟動」按鈕才會啟用。
+        <Notice kind="warn" title={t("dp.n.noFiles")}
+          action={<Link to="/iac"><button className="primary small">{t("dp.n.toFiles")}</button></Link>}>
+          {t("dp.n.noFilesBody")}
         </Notice>
       )}
       {approved && iacBlocked && (
-        <Notice kind="err" title="IaC 檢查判定目前不可部署"
-          action={<Link to="/iac"><button className="small">查看 IaC 報告</button></Link>}>
-          已生成的設定沒有通過可部署檢查，因此「啟動」停用。請依「IaC 預覽」頁的報告修正後重新生成。
+        <Notice kind="err" title={t("dp.n.check")}
+          action={<Link to="/iac"><button className="small">{t("dp.n.viewReport")}</button></Link>}>
+          {t("dp.n.checkBody")}
         </Notice>
       )}
       {isProxmox && pveUnavailable && (
-        <Notice kind="err" title="PVE 部署前檢查：目前不可部署" >
+        <Notice kind="err" title={t("dp.n.runtime")} >
           <span data-testid="pve-preflight-block">{pveUnavailable.label}</span>
-          {pveUnavailable.raw && pveUnavailable.raw !== pveUnavailable.label && <> <span className="mono muted" style={{ fontSize: 12, overflowWrap: "anywhere" }}>（{pveUnavailable.raw}）</span></>}
-          <div className="muted" style={{ marginTop: 6 }}>因此「啟動」停用。這是 PVE 回報的實際檢查結果；系統不會為騰出空間而停止或刪除既有機器。</div>
-          <div style={{ marginTop: 8 }}><button className="small" onClick={() => preflight.reload()} disabled={preflight.loading}>重新檢查</button></div>
+          <div className="muted" style={{ marginTop: 6 }}>{t("dp.n.runtimeNote")}</div>
+          {pveUnavailable.raw && (
+            <details className="tech-details"><summary>{t("notice.techDetails")}</summary><div className="mono muted" style={{ overflowWrap: "anywhere" }}>{pveUnavailable.raw}</div></details>
+          )}
+          <div style={{ marginTop: 8 }}><button className="small" onClick={() => preflight.reload()} disabled={preflight.loading}>{t("dp.n.recheck")}</button></div>
         </Notice>
       )}
-      {isProxmox && !pf && preflight.loading && <Notice kind="info">正在向 PVE 檢查容量與隔離設定…</Notice>}
+      {isProxmox && !pf && preflight.loading && <Notice kind="info">{t("dp.n.checking")}</Notice>}
       {isProxmox && preflight.error && (
-        <ApiNotice error={preflight.error} what="PVE 部署前檢查（無法取得結果，未確認容量；啟動時後端仍會再檢查）" onRetry={() => preflight.reload()} />
+        <><ApiNotice error={preflight.error} what={t("dp.n.preflightWhat")} onRetry={() => preflight.reload()} /><div className="muted" style={{ fontSize: 12, marginTop: -8 }}>{t("dp.n.preflightNote")}</div></>
       )}
-      {up.busy && <div className="card"><Busy label="啟動中，正在建立網路與容器…" elapsed={up.elapsed} /></div>}
-      {down.busy && <div className="card"><Busy label="關閉中，正在移除容器…" elapsed={down.elapsed} /></div>}
-      <CommandFailure error={up.error} what="啟動部署" />
-      <CommandFailure error={down.error} what="關閉部署" />
-      {status.error && <ApiNotice error={status.error} what="部署狀態" onRetry={() => status.reload()} />}
+      {up.busy && <div className="card"><Busy label={t("dp.busyUp")} elapsed={up.elapsed} /></div>}
+      {down.busy && <div className="card"><Busy label={t("dp.busyDown")} elapsed={down.elapsed} /></div>}
+      <CommandFailure error={up.error} what={t("dp.upWhat")} />
+      <CommandFailure error={down.error} what={t("dp.downWhat")} />
+      {status.error && <ApiNotice error={status.error} what={t("dp.statusWhat")} onRetry={() => status.reload()} />}
 
       <PlacementPanel
         hosts={planHosts}
@@ -248,68 +250,65 @@ function Body({ ir }: { ir: ScenarioIR }) {
         state={state}
         statusLoading={status.loading}
         statusError={!!status.error}
-        projectName={s?.project_name ?? `cr-demo-${ir.id}`}
       />
 
       <details className="deploy-more">
-        <summary>容器明細、健康狀態與部署紀錄</summary>
+        <summary>{t("dp.more")}</summary>
         <div className="deploy-more__content">
       <div className="card flush">
         <div className="card-head">
-          <h2>目前狀態</h2>
+          <h2>{t("dp.now")}</h2>
           {state && (noCompose(s)
-            ? <span className="pill status-NOT_TESTED" data-testid="deploy-state" title="後端狀態：error（compose file has not been generated）">未部署（尚未生成 IaC）</span>
+            ? <span className="pill status-NOT_TESTED" data-testid="deploy-state" >{t("dp.notDeployed")}</span>
             : <span className={`pill ${stateClass(state)}`} data-testid="deploy-state">{state}</span>)}
           <div className="right">
-            {status.data && lastAt && <span className="muted" style={{ fontSize: 12 }}>更新於 {lastAt.toLocaleTimeString("zh-TW", { hour12: false })}</span>}
+            {status.data && lastAt && <span className="muted" style={{ fontSize: 12 }}>{t("dp.updatedAt", { time: lastAt.toLocaleTimeString(getLocale(), { hour12: false }) })}</span>}
             <label className="row muted" style={{ gap: 5, fontSize: 12 }}>
-              <input type="checkbox" style={{ width: "auto" }} checked={auto} onChange={(e) => setAuto(e.target.checked)} /> 自動更新
+              <input type="checkbox" style={{ width: "auto" }} checked={auto} onChange={(e) => setAuto(e.target.checked)} /> {t("dp.auto")}
             </label>
-            <button className="small" onClick={() => status.reload()} disabled={status.loading}>立即更新</button>
+            <button className="small" onClick={() => status.reload()} disabled={status.loading}>{t("dp.refresh")}</button>
           </div>
         </div>
         <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
-          {status.error && status.data && <div className="muted" style={{ fontSize: 12 }}>以下是最後一次成功取得的狀態，可能已過期。</div>}
-          {status.loading && !status.data && !status.error && <Busy label="讀取部署狀態…" />}
-          {noCompose(s) && <span className="muted" style={{ fontSize: 13 }}>這個情境還沒有生成部署設定（IaC），所以沒有任何容器，也沒有可查詢的部署。</span>}
+          {status.error && status.data && <div className="muted" style={{ fontSize: 12 }}>{t("dp.stale")}</div>}
+          {status.loading && !status.data && !status.error && <Busy label={t("dp.loading")} />}
+          {noCompose(s) && <span className="muted" style={{ fontSize: 13 }}>{t("dp.noFilesState")}</span>}
           {status.data !== null && status.data !== undefined && !noCompose(s) && (
             <>
               {containers !== undefined && (
                 <div>
-                  <h3 style={{ marginBottom: 8 }}>容器</h3>
-                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>目前沒有容器在執行。</span>
+                  <h3 style={{ marginBottom: 8 }}>{t("dp.parts")}</h3>
+                  {Array.isArray(containers) && containers.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.nothingRunning")}</span>
                     : Array.isArray(containers) ? <ContainerTable containers={containers} roleOf={roleOf} />
                     : <DataView data={containers} />}
                 </div>
               )}
               {state === "running" && (
                 <div data-testid="published-ports">
-                  <h3 style={{ marginBottom: 8 }}>對外開放的埠</h3>
+                  <h3 style={{ marginBottom: 8 }}>{t("dp.ports")}</h3>
                   {published === null ? (
                     <span className="muted" style={{ fontSize: 13 }}>
-                      找不到這次啟動的埠紀錄（可能不是從這個頁面啟動的）。
+                      {t("dp.ports.unknown")}{" "}
                       {boundPorts.length > 0
-                        ? <>容器目前實際綁定的主機埠：<span className="mono">{boundPorts.join("、")}</span>（由平台元件 <span className="mono">{GATEWAY}</span> 接收後轉送，轉送目標請看 IaC）。</>
-                        : "目前沒有容器綁定主機埠。"}
+                        ? <>{t("dp.ports.bound", { list: "" })}<span className="mono">{boundPorts.join(", ")}</span></>
+                        : t("dp.ports.noneBound")}
                     </span>
                   )
-                    : published.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>這次部署沒有在主機上開放任何埠；情境主機只在隔離的實驗網路內互通。</span> : (
+                    : published.length === 0 ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.ports.none")}</span> : (
                     <>
                       <table className="tbl">
-                        <thead><tr><th>在這台主機上連線到</th><th>轉送到</th><th>經由</th></tr></thead>
+                        <thead><tr><th>{t("dp.ports.from")}</th><th>{t("dp.ports.to")}</th></tr></thead>
                         <tbody>
                           {published.map((p, i) => (
                             <tr key={i}>
                               <td className="mono">{p.host_ip ?? "127.0.0.1"}:{p.host_port ?? "?"}</td>
-                              <td>情境主機 {roleOf(String(p.host_id)) ?? p.host_id} 的 <span className="mono">{p.container_port}</span> 埠</td>
-                              <td><span className="tag">平台元件</span> <span className="mono">{GATEWAY}</span></td>
+                              <td>{t("dp.ports.target", { host: roleOf(String(p.host_id)) ?? p.host_id, port: p.container_port })}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                       <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-                        埠號是這次啟動時由平台指派的，每次啟動可能不同。{published.some((p) => p.host_ip && p.host_ip !== "127.0.0.1") ? "綁定位址不是 127.0.0.1，區網內其他機器也連得到。" : "只綁定 127.0.0.1，只有這台主機本身連得到。"}
-                        情境主機不直接綁定主機埠，也連不到這台主機。
+                        {t("dp.ports.note")} {published.some((p) => p.host_ip && p.host_ip !== "127.0.0.1") ? t("dp.ports.lan") : t("dp.ports.local")}
                       </div>
                     </>
                   )}
@@ -324,35 +323,35 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
       <div className="card flush">
         <div className="card-head">
-          <h2>健康檢查</h2>
+          <h2>{t("dp.health")}</h2>
           {typeof health.data?.state === "string" && (noCompose(health.data)
-            ? <span className="pill status-NOT_TESTED" data-testid="health-state">未檢查（未部署）</span>
+            ? <span className="pill status-NOT_TESTED" data-testid="health-state">{t("dp.health.notChecked")}</span>
             : <span className={`pill ${stateClass(health.data.state)}`} data-testid="health-state">{health.data.state}</span>)}
           <div className="right">
             {health.loading && <span className="spinner" />}
-            <button className="small" onClick={() => health.reload()} disabled={health.loading}>重新檢查</button>
+            <button className="small" onClick={() => health.reload()} disabled={health.loading}>{t("dp.n.recheck")}</button>
           </div>
         </div>
         <div style={{ padding: 14 }}>
-          {health.error ? <ApiNotice error={health.error} what="健康檢查" onRetry={() => health.reload()} />
-            : health.loading && !health.data ? <Busy label="檢查中…" />
-            : health.data === null || health.data === undefined ? <span className="muted">沒有健康檢查結果。</span>
-            : noCompose(health.data) ? <span className="muted" style={{ fontSize: 13 }}>尚未部署，沒有可檢查的容器。這不是健康，也不是故障。</span>
+          {health.error ? <ApiNotice error={health.error} what={t("dp.health.what")} onRetry={() => health.reload()} />
+            : health.loading && !health.data ? <Busy label={t("dp.health.busy")} />
+            : health.data === null || health.data === undefined ? <span className="muted">{t("dp.health.none")}</span>
+            : noCompose(health.data) ? <span className="muted" style={{ fontSize: 13 }}>{t("dp.health.notDeployed")}</span>
             : <DataView data={health.data} />}
           {health.data && !noCompose(health.data) && !health.error && (
             <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-              這裡的 healthy 只代表容器都在執行、且沒有容器回報不健康；容器沒有設定健康檢查時不會實際探測服務。服務是否真的可用，請看「驗證報告」。
+              {t("dp.health.note")}
             </div>
           )}
         </div>
       </div>
 
       <div className="card flush">
-        <div className="card-head"><h2>部署紀錄</h2><span className="muted" style={{ fontSize: 12 }}>{history.length}</span></div>
-        {records.error && records.error.kind !== "unimplemented" ? <div style={{ padding: 14 }}><ApiNotice error={records.error} what="部署紀錄" onRetry={() => records.reload()} /></div>
-          : history.length === 0 ? <Empty>這個情境還沒有部署紀錄。啟動或關閉後，每一次嘗試（包含被拒絕的）都會記在這裡。</Empty> : (
+        <div className="card-head"><h2>{t("dp.records")}</h2><span className="muted" style={{ fontSize: 12 }}>{history.length}</span></div>
+        {records.error && records.error.kind !== "unimplemented" ? <div style={{ padding: 14 }}><ApiNotice error={records.error} what={t("dp.recordsWhat")} onRetry={() => records.reload()} /></div>
+          : history.length === 0 ? <Empty>{t("dp.noRecords")}</Empty> : (
           <table className="tbl" data-testid="deploy-records">
-            <thead><tr><th>時間</th><th>動作</th><th>結果</th><th>說明</th></tr></thead>
+            <thead><tr><th>{t("dp.col.time")}</th><th>{t("dp.col.action")}</th><th>{t("dp.col.result")}</th><th>{t("dp.col.note")}</th></tr></thead>
             <tbody>
               {history.map((r) => (
                 <tr key={r.id}>
@@ -363,7 +362,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
                     {r.reason ?? "—"}
                     {r.output && (
                       <details style={{ marginTop: 4 }}>
-                        <summary style={{ cursor: "pointer", fontSize: 12 }}>完整輸出</summary>
+                        <summary style={{ cursor: "pointer", fontSize: 12 }}>{t("dp.output")}</summary>
                         <pre className="mono" style={{ margin: "6px 0 0", maxHeight: 240, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{r.output}</pre>
                       </details>
                     )}
@@ -377,17 +376,12 @@ function Body({ ir }: { ir: ScenarioIR }) {
         </div>
       </details>
 
-      <Notice kind="info">
-        {isProxmox
-          ? "PVE 部署預期在零網卡 worker VM 內執行；啟動時會檢查隔離設定，且不發布本機或 LAN 連接埠。"
-          : "部署在本機隔離網路中進行。"} 容器名稱以 <span className="mono">cr-demo-</span> 開頭。
-      </Notice>
-      <NextStep prev={{ to: "/iac", label: "IaC 預覽" }} next={{ to: "/report", label: "驗證報告" }} />
+      <NextStep prev={{ to: "/iac", label: t("stage.iac") }} next={{ to: "/report", label: t("stage.report") }} />
     </div>
   );
 }
 
 export function DeployPage() {
   const { ir } = useScenario();
-  return <ScenarioGate title="部署管理">{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("dp.title")}>{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
 }
