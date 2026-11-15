@@ -15,7 +15,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from app import config, store as scenario_store
 from app.deploy import manager
 from app.poc import store as poc_store
-from app.poc.chain.evidence import scenario_digest
+from app.poc.chain.evidence import execution_log, scenario_digest
 from app.poc.models import Evidence, ExecStages, ExecutionResult
 
 from .adapters import get_adapter
@@ -385,30 +385,41 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
 
 
 def execution_status(scenario_id: str) -> dict[str, Any]:
-    """Return the newest execution job's state, live stages, and a redacted log tail."""
+    """Return the newest job's own stages and log, using its hashed job identity."""
     db = poc_store._conn()
     try:
         job_row = db.execute(
-            "SELECT * FROM poc_jobs WHERE scenario_id=? AND kind='execute' ORDER BY created_at DESC LIMIT 1",
+            "SELECT * FROM poc_jobs WHERE scenario_id=? AND kind='execute' "
+            "ORDER BY created_at DESC, rowid DESC LIMIT 1",
             (scenario_id,),
         ).fetchone()
         if not job_row:
             return {"job_state": "idle", "per_action": [], "logs_tail": ""}
         job = dict(job_row)
         rows = db.execute(
-            "SELECT result FROM poc_runs WHERE scenario_id=? AND ts>=? ORDER BY id",
-            (scenario_id, job["created_at"]),
+            "SELECT result FROM poc_runs WHERE scenario_id=? ORDER BY id",
+            (scenario_id,),
         ).fetchall()
     finally:
         db.close()
     per_action = []
-    latest_result: dict[str, Any] | None = None
+    latest_log: dict[str, Any] | None = None
     for row in rows:
         try:
             result = json.loads(row["result"])
         except (TypeError, json.JSONDecodeError):
             continue
-        latest_result = result
+        if not isinstance(result, dict):
+            continue
+        # The frozen result shape has no job_id column/field. Its immutable,
+        # hash-verified log is the persisted source of batch identity. A later
+        # saved row may belong to an older overlapping job; timestamps cannot
+        # associate that row with the selected job.
+        log = execution_log(result)
+        if (not log or log["context"].get("job_id") != job["id"]
+                or log["context"].get("scenario_id") != scenario_id):
+            continue
+        latest_log = log
         per_action.append({"action_id": result.get("action_id"), "stages": result.get("stages") or {}})
     try:
         detail = json.loads(job.get("detail") or "{}")
@@ -417,28 +428,22 @@ def execution_status(scenario_id: str) -> dict[str, Any]:
     current_id = detail.get("current_action_id")
     if current_id and not any(item.get("action_id") == current_id for item in per_action):
         per_action.append({"action_id": current_id, "stages": detail.get("stages") or asdict(ExecStages())})
-    logs_tail = ""
-    if latest_result and latest_result.get("logs_path"):
-        candidate = (config.DATA_DIR / latest_result["logs_path"]).resolve()
-        try:
-            candidate.relative_to(config.DATA_DIR.resolve())
-            logs_tail = _redact(candidate.read_text(encoding="utf-8", errors="replace")[-4000:])
-        except (OSError, ValueError):
-            logs_tail = ""
+    logs_tail = (_redact(json.dumps(latest_log, ensure_ascii=False, sort_keys=True)[-4000:])
+                 if latest_log is not None else "")
     return {"job_state": job["state"], "per_action": per_action, "logs_tail": logs_tail}
 
 
 def cancel_execution(scenario_id: str) -> dict[str, bool]:
-    """Request cancellation of the newest pending/running execution job."""
+    """Atomically flag every active execution job belonging to this scenario."""
     db = poc_store._conn()
     try:
-        row = db.execute(
-            "SELECT id,state FROM poc_jobs WHERE scenario_id=? AND kind='execute' ORDER BY created_at DESC LIMIT 1",
-            (scenario_id,),
-        ).fetchone()
+        updated = db.execute(
+            "UPDATE poc_jobs SET cancel=1, updated_at=? "
+            "WHERE scenario_id=? AND kind='execute' AND state IN ('pending','running')",
+            (time.time(), scenario_id),
+        )
+        flagged = updated.rowcount > 0
+        db.commit()
     finally:
         db.close()
-    if not row or row["state"] not in {"pending", "running"}:
-        return {"cancelled": False}
-    poc_store.request_cancel(row["id"])
-    return {"cancelled": True}
+    return {"cancelled": flagged}

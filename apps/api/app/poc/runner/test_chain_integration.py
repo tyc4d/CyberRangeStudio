@@ -244,3 +244,63 @@ def test_cancel_one_batch_stops_every_later_independent_action(lab):
     assert job["state"] == "cancelled" and job["cancel"] == 1
     assert runner.execution_status(SID)["job_state"] == "cancelled"
     assert runner.cancel_execution(SID) == {"cancelled": False}
+
+
+def test_overlapping_same_action_status_and_tail_belong_to_newest_job(lab):
+    _, _, _, req, transport = lab
+    nested = []
+    entered = False
+    def interleaved(current, *args):
+        nonlocal entered
+        if not entered:
+            entered = True
+            nested.extend(runner.run_job(SID, [current]))
+        return {"returncode": 0, "stdout": req.expected_marker, "stderr": ""}, None
+    transport.side_effect = interleaved
+    outer, = runner.run_job(SID, [req])
+    inner, = nested
+    assert verify_execution(outer) == verify_execution(inner) == "PASS"
+    outer_job = execution_log(outer)["context"]["job_id"]
+    inner_job = execution_log(inner)["context"]["job_id"]
+    assert outer_job != inner_job
+    status = runner.execution_status(SID)
+    assert status["per_action"] == [{"action_id": "a1", "stages": inner["stages"]}]
+    assert json.loads(status["logs_tail"])["context"]["job_id"] == inner_job
+
+
+def test_job_membership_uses_identity_when_timestamps_tie_or_rows_are_backdated(lab):
+    _, _, _, req, _ = lab
+    older, = runner.run_job(SID, [req])
+    newer, = runner.run_job(SID, [replace(req, action_id="a2")])
+    db = runner.poc_store._conn()
+    try:
+        db.execute("UPDATE poc_jobs SET created_at=100 WHERE scenario_id=?", (SID,))
+        db.execute("UPDATE poc_runs SET ts=0 WHERE scenario_id=?", (SID,))
+        db.commit()
+    finally:
+        db.close()
+    status = runner.execution_status(SID)
+    assert status["per_action"] == [{"action_id": "a2", "stages": newer["stages"]}]
+    context = json.loads(status["logs_tail"])["context"]
+    assert context["job_id"] == execution_log(newer)["context"]["job_id"]
+    assert context["job_id"] != execution_log(older)["context"]["job_id"]
+
+
+def test_cancel_flags_all_active_execute_jobs_without_touching_other_jobs(lab):
+    for job_id, scenario, kind, state in (
+        ("old-pending", SID, "execute", "pending"),
+        ("old-running", SID, "execute", "running"),
+        ("other-scenario", "unrelated", "execute", "running"),
+        ("other-kind", SID, "discover", "running"),
+        ("newer-done", SID, "execute", "done"),
+    ):
+        runner.poc_store.create_job(job_id, scenario, kind)
+        runner.poc_store.set_job_state(job_id, state)
+    assert runner.cancel_execution(SID) == {"cancelled": True}
+    for job_id in ("old-pending", "old-running"):
+        assert runner.poc_store.get_job(job_id)["cancel"] == 1
+    for job_id in ("other-scenario", "other-kind", "newer-done"):
+        assert runner.poc_store.get_job(job_id)["cancel"] == 0
+    for job_id in ("old-pending", "old-running"):
+        runner.poc_store.set_job_state(job_id, "cancelled")
+    assert runner.cancel_execution(SID) == {"cancelled": False}
