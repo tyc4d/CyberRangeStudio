@@ -95,6 +95,13 @@ _SECRET_VALUE_PATTERNS = (
 _INLINE_SECRET_RE = re.compile(
     r"(?i)\b(password|passwd|pwd|passphrase|token|secret|api[_-]?key)(\s*[:=]\s*)(?!\$\{|<|\[REDACTED\])([^\s'\",;&]+)"
 )
+# Credentials in URL userinfo: scheme://user:secret@host -> scheme://user:[REDACTED]@host
+_URL_USERINFO_RE = re.compile(
+    r"(?i)\b([a-z][a-z0-9+.\-]*://)([^\s/@:\"'<>]+):(?!\[REDACTED\]@)([^\s/@\"'<>]+)@")
+# ${VAR:-literal} / ${VAR-literal}: the literal default is a real value, not a reference.
+_REF_DEFAULT_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:?-)([^}]*)\}")
+_SECRET_VAR_NAME_RE = re.compile(r"PASS|PWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIAL|COOKIE",
+                                 re.IGNORECASE)
 _ENV_REF_RE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)(?:(:?[-?])([^}]*))?\}")
 
 
@@ -120,11 +127,23 @@ def _env_secret_values() -> list[str]:
     return sorted((v for v in values if len(v) >= 8), key=len, reverse=True)
 
 
+def _redact_ref_defaults(text: str, all_defaults: bool = False) -> str:
+    """Replace literal defaults of secret-named ${VAR:-default} refs (or of every ref if all_defaults)."""
+    def sub(m: re.Match) -> str:
+        name, op, default = m.groups()
+        if default and default != REDACTED and (all_defaults or _SECRET_VAR_NAME_RE.search(name)):
+            return "${" + name + op + REDACTED + "}"
+        return m.group(0)
+    return _REF_DEFAULT_RE.sub(sub, text)
+
+
 def redact_text(text: str, env_secrets: list[str] | None = None) -> str:
     for secret in env_secrets if env_secrets is not None else _env_secret_values():
         text = text.replace(secret, REDACTED)
     for pattern in _SECRET_VALUE_PATTERNS:
         text = pattern.sub(REDACTED, text)
+    text = _URL_USERINFO_RE.sub(lambda m: m.group(1) + m.group(2) + ":" + REDACTED + "@", text)
+    text = _redact_ref_defaults(text)
     return _INLINE_SECRET_RE.sub(lambda m: m.group(1) + m.group(2) + REDACTED, text)
 
 
@@ -141,7 +160,8 @@ def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool =
         return [redact(v, env_secrets, _under_secret) for v in obj]
     if isinstance(obj, str):
         if _RUNTIME_REF_RE.fullmatch(obj):
-            return obj  # deploy-time reference, not a value
+            # A deploy-time reference is not a value — but a literal default inside it is.
+            return _redact_ref_defaults(obj, all_defaults=_under_secret)
         if _under_secret:
             return REDACTED if obj else obj
         return redact_text(obj, env_secrets)
@@ -159,6 +179,10 @@ def find_secrets(text: str, env_secrets: list[str] | None = None) -> list[str]:
     for pattern in _SECRET_VALUE_PATTERNS:
         if pattern.search(text):
             hits.append(f"pattern {pattern.pattern[:32]}")
+    if _URL_USERINFO_RE.search(text):
+        hits.append("credentials in URL userinfo")
+    if _redact_ref_defaults(text) != text:
+        hits.append("literal default of a secret-named ${VAR:-...} reference")
     return hits
 
 

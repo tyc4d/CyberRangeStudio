@@ -285,6 +285,39 @@ class ExposedPlanExportTests(ExportTestBase):
             self._seed_validation()
             B.build_bundle(SID)
 
+    def test_url_userinfo_and_secret_ref_defaults_are_redacted_and_scanned(self):
+        synthetic = "m9-local-synthetic-pw-5521"
+        self.ir["description"] = f"repo at https://qa-user:{synthetic}@example.invalid/private, db ${{DB_PASSWORD:-{synthetic}}}"
+        self.ir["hosts"] = [{"id": "web", "password": "${DB_PASSWORD:-" + synthetic + "}"},
+                            {"id": "app", "secret": "${APP_MODE:-" + synthetic + "}"},
+                            {"id": "ok", "mode": "${CR_PG_AUTH_METHOD:-trust}"}]
+        data, manifest, zf = self.build()
+        leaking = [n for n in zf.namelist() if synthetic.encode() in zf.read(n)]
+        self.assertEqual(leaking, [])
+        scenario = json.loads(zf.read("scenario/scenario.json"))
+        self.assertIn("https://qa-user:[REDACTED]@example.invalid/private", scenario["description"])
+        self.assertEqual(scenario["hosts"][0]["password"], "${DB_PASSWORD:-[REDACTED]}")
+        self.assertEqual(scenario["hosts"][1]["secret"], "${APP_MODE:-[REDACTED]}")
+        self.assertEqual(scenario["hosts"][2]["mode"], "${CR_PG_AUTH_METHOD:-trust}")  # non-secret default kept
+        self.assertEqual(B.verify_bundle(data), [])
+
+    def test_final_scan_flags_userinfo_and_secret_defaults(self):
+        self.assertTrue(B.find_secrets("x https://u:p4ss@h.invalid/ y", []))
+        self.assertTrue(B.find_secrets("${DB_PASSWORD:-hunter2}", []))
+        self.assertFalse(B.find_secrets("https://u:[REDACTED]@h.invalid/ ${DB_PASSWORD:-[REDACTED]} "
+                                        "${CR_BIND_IP:-127.0.0.1} ${CR_DB_PASSWORD:?set at deploy time}", []))
+
+    def test_secret_default_in_compose_aborts_export(self):
+        real = _generated(self.plan)
+
+        def leaky(sid):
+            out = real(sid)
+            out["compose"] += "# ${DB_PASSWORD:-hunter2hunter2}\n"
+            return out
+        with patch("app.iac.generator.get_generated", side_effect=leaky):
+            with self.assertRaises(B.ExportError):
+                B.build_bundle(SID)
+
     def test_unknown_scenario_raises_key_error(self):
         with self.assertRaises(KeyError):
             B.build_bundle("scn_nope")
