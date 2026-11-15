@@ -237,6 +237,61 @@ class CveBelongsToTheProductNamedWithIt(unittest.TestCase):
         self.assertEqual(service["field_sources"], {"cve": "source_quote"})
 
 
+class ScenarioNameIsTheUsers(unittest.TestCase):
+    """frontend-eng: the name given at import must survive analysis, whatever services are found."""
+
+    def test_name_is_not_replaced_by_a_service_name(self):
+        source = "The group exploited CVE-2023-34362 in MOVEit Transfer and queried databases containing PII."
+        units, parsed = parse_source("text", source)
+        reply = {"actions": [], "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": [
+            {"id": "s1", "name": "MOVEit Transfer", "epistemic_status": "supported",
+             "evidence": [{"quote": "MOVEit Transfer", "source_ref": "p1"}]},
+            {"id": "s2", "name": "Databases containing PII", "epistemic_status": "supported",
+             "evidence": [{"quote": "databases containing PII", "source_ref": "p1"}]}]}}
+        with patch.object(analysis, "complete", lambda *a, **k: {"text": json.dumps(reply)}):
+            ir = analysis.analyze_source(input_kind="text", content=source, source_name="equifax-goal", units=units,
+                                         parsed_source=parsed, method="single_pass", name="My Equifax scenario")
+        self.assertEqual(ir["name"], "My Equifax scenario")
+        self.assertEqual(ir["provenance"]["source_name"], "equifax-goal")
+        self.assertEqual([service["name"] for service in ir["services"]], ["MOVEit Transfer", "Databases containing PII"])
+
+
+class InlineTechniqueAndBareQuotes(unittest.TestCase):
+    SOURCE = ("The group exploited the portal to install a web shell named helper.aspx [T1190].\n\n"
+              "The web shell was then used to copy the customer table.")
+
+    def analyse(self, source, actions):
+        units, parsed = parse_source("text", source)
+        reply = {"actions": actions, "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": []}}
+        with patch.object(analysis, "complete", lambda *a, **k: {"text": json.dumps(reply)}):
+            return analysis.analyze_source(input_kind="text", content=source, source_name="t", units=units,
+                                           parsed_source=parsed, method="single_pass", name="t")
+
+    def test_single_inline_tag_in_the_cited_sentence_is_taken_from_the_source(self):
+        ir = self.analyse(self.SOURCE, [
+            {"id": "a1", "name": "exploited the portal", "epistemic_status": "supported",
+             "evidence": [{"quote": "The group exploited the portal", "source_ref": "p1"}]},
+            {"id": "a2", "name": "copy the customer table", "epistemic_status": "supported",
+             "evidence": [{"quote": "used to copy the customer table", "source_ref": "p2"}]}])
+        a1, a2 = ir["actions"]
+        self.assertEqual((a1["attack_technique"], a1["field_sources"]), ("T1190", {"attack_technique": "source_quote"}))
+        self.assertNotIn("attack_technique", a2)
+
+    def test_sentence_with_several_tags_assigns_none(self):
+        ir = self.analyse("The actors used RDP [T1021.001] and the DefaultAccount [T1078.001] to move laterally.", [
+            {"id": "a1", "name": "used RDP", "epistemic_status": "supported",
+             "evidence": [{"quote": "The actors used RDP", "source_ref": "p1"}]}])
+        self.assertNotIn("attack_technique", ir["actions"][0])
+
+    def test_bare_string_evidence_is_accepted_and_located_by_the_program(self):
+        ir = self.analyse(self.SOURCE, [{"id": "a1", "name": "install a web shell named helper.aspx",
+                                         "epistemic_status": "supported", "evidence": ["install a web shell named helper.aspx"]}])
+        action = ir["actions"][0]
+        self.assertEqual(action["epistemic_status"], "supported")
+        record = next(e for e in ir["evidence"] if e["id"] == action["evidence_refs"][0])
+        self.assertEqual((record["quote_match"], record["locator"]["ref"]), ("exact", "1"))
+
+
 class ActorFilter(unittest.TestCase):
     def test_defender_actions_and_their_edges_stay_out_of_the_attack_flow(self):
         source = "The actor exploited the portal.\n\nThen the company blocked the addresses and notified the FBI."

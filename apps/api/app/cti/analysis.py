@@ -117,7 +117,8 @@ _PARTIAL_RE = re.compile(r"\b(?:a\s+portion\s+of|some\s+of|part\s+of|partially|p
 
 
 def _enclosing_sentences(quotes: list[str], unit_texts: list[str]) -> list[str]:
-    normalise = lambda value: re.sub(r"\s+", " ", value).strip().casefold()
+    # Stored quotes have inline ATT&CK tags removed; the source sentence still carries them.
+    normalise = lambda value: re.sub(r"\s+", " ", strip_attack_tags(value)).strip().casefold()
     found = list(quotes)
     for quote in quotes:
         needle = normalise(quote)
@@ -138,6 +139,23 @@ def _stated_outcome(model_value: str, quotes: list[str], unit_texts: list[str]) 
         return "partial"
     value = model_value.strip().casefold()
     return value if value in {"succeeded", "failed", "partial"} else None
+
+
+_INLINE_TECHNIQUE_RE = re.compile(r"\[(T\d{4}(?:\.\d{3})?)\]", re.IGNORECASE)
+
+
+def _inline_technique(quotes: list[str], unit_texts: list[str]) -> str | None:
+    """The single technique id the source tags inside the sentence(s) an action cites.
+
+    Only when those sentences carry exactly one tag: with several, the text does not say
+    which behaviour each belongs to, and none is assigned.
+    """
+    sentences = [sentence for sentence in _enclosing_sentences(quotes, unit_texts) if sentence not in quotes]
+    ids = list(dict.fromkeys(match.upper() for sentence in sentences for match in _INLINE_TECHNIQUE_RE.findall(sentence)))
+    if len(ids) != 1:
+        return None
+    technique_id, _ = _validated_attack_technique(ids[0])
+    return technique_id
 
 
 def _technique_stated_for(technique_id: str, action_name: str, quotes: list[str], cited_units: list[str],
@@ -710,10 +728,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             raise AnalysisError("Each claim's evidence and evidence_refs must be arrays.")
         pairs: list[tuple[str, str]] = []
         for citation in citations:
+            if isinstance(citation, str):
+                # A bare quote: where it stands in the source is established by the program anyway.
+                citation = {"quote": citation, "source_ref": ""}
             if not isinstance(citation, dict):
                 raise AnalysisError("Evidence entries must be objects with quote and source_ref.")
             quote = citation.get("quote", "")
-            source_ref = citation.get("source_ref", "")
+            source_ref = citation.get("source_ref") or ""
             if not isinstance(quote, str) or not isinstance(source_ref, str):
                 raise AnalysisError("Evidence quote and source_ref must be strings.")
             pairs.append((quote, source_ref))
@@ -810,6 +831,12 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             misplaced_techniques.append({"action": action_id, "technique": technique_id})
             action.pop("attack_technique", None)
             action.pop("attack_tactic", None)
+        if "attack_technique" not in action:
+            tagged = _inline_technique(cited_quotes, cited_units)
+            if tagged:
+                # The report itself tags this sentence; the model merely did not copy the id.
+                action["attack_technique"] = tagged
+                action.setdefault("field_sources", {})["attack_technique"] = "source_quote"
         outcome = _stated_outcome(str(item.get("outcome") or ""), cited_quotes, cited_units)
         if outcome:
             action["outcome"] = outcome
@@ -983,10 +1010,10 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
     # A CVE the source names in the same sentence as a recorded product belongs to that product.
     sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
     for service in services:
-        name = str(service.get("name") or "").casefold().strip()
-        if len(name) < 4:
+        service_name = str(service.get("name") or "").casefold().strip()
+        if len(service_name) < 4:
             continue
-        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if name in sentence.casefold()
+        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if service_name in sentence.casefold()
                  for match in _CVE_RE.findall(sentence)]
         merged = list(dict.fromkeys([*service.get("cve", []), *found]))
         if merged != service.get("cve", []):
