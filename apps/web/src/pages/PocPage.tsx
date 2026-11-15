@@ -340,7 +340,9 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [stopped, setStopped] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [live, setLive] = useState<any | null>(null);
+  // Shape of GET /execute/status (loose; the backend owns it). per_action is any[] so the liveResults map below
+  // stays plain JS the review harness can extract and run, without TS annotations inside the expression.
+  const [live, setLive] = useState<{ job_state?: string; state?: string; per_action?: any[]; results?: ExecutionResult[]; logs_tail?: string } | null>(null);
   const [format, setFormat] = useState("full");
   const [dlUnavail, setDlUnavail] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -357,6 +359,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
     setStopped(false);
     setCancelling(false);
     setLive(null);
+    // A new run invalidates the previous verification snapshot: the old chain roll-up and fidelity report are
+    // stale the moment we re-execute, so clear them before the run. An action must never keep a PASS badge or be
+    // counted verified from a prior run until THIS run re-verifies it (owner rule: no stale manufactured pass). R3-02.
+    setChain(null);
+    setReport(null);
     const d = await api.poc.execute(ir.id, Array.from(selected), ctrl.signal);
     setResults(d);
     void reportAct.run();
@@ -424,7 +431,24 @@ function Body({ ir }: { ir: ScenarioIR }) {
     }
     setCancelling(false);
   };
-  const liveResults: ExecutionResult[] | null = live && Array.isArray(live.results) ? live.results : null;
+  const liveResults: ExecutionResult[] | null = live && Array.isArray(live.per_action)
+    // Live view of the in-flight run from GET /execute/status: the backend reports per_action:[{action_id, stages}]
+    // + logs_tail; map each entry to the shape ResultCard renders so the per-action stage timeline shows (falls
+    // back to a full `results` array if a backend sends that early). R3-04.
+    ? live.per_action.map((p) => ({
+        action_id: p.action_id,
+        status: p.status ?? "NOT_TESTED",
+        stages: p.stages ?? {},
+        evidence: Array.isArray(p.evidence) ? p.evidence : [],
+        logs_path: p.logs_path ?? live.logs_tail ?? "",
+        poc: p.poc ?? { source_url: "", ref: {}, sha256: "" },
+        confidence: p.confidence ?? 0,
+        target_ownership_verified: p.target_ownership_verified ?? false,
+        payload_sha256: p.payload_sha256 ?? "",
+        started_at: p.started_at ?? "",
+        ended_at: p.ended_at ?? "",
+      }))
+    : (live && Array.isArray(live.results) ? live.results : null);
 
   // Per-action status and evidence counts, from the chain roll-up first, then the raw execution results.
   const statusByAction = useMemo(() => {
@@ -460,16 +484,18 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ? (f.reproduced?.length ?? 0) + (f.partial?.length ?? 0) + (f.not_reproduced?.length ?? 0) + (f.not_tested?.length ?? 0)
       : planTotal;
 
-    // Unverified = every action in scope that is NOT confirmed by CURRENT valid verification. "Verified" means the
-    // chain roll-up marks the action PASS, or the fidelity report lists it as reproduced — NOT a raw runner
-    // status=='PASS' on its own, because a raw PASS can be invalidated later (IR changed, redeployed, artifact
-    // altered). So not-yet-executed, skipped, not_executable, BLOCKED and evidence-invalidated actions all stay
-    // counted as unverified (owner rule: never a manufactured pass). review2 R2-08.
-    const reproducedIds = Array.isArray(f?.reproduced) ? f.reproduced : [];
-    const chainPassIds = (chain?.per_action ?? []).filter((p) => p.status === "PASS").map((p) => p.action_id);
-    const verifiedIds = new Set([...reproducedIds, ...chainPassIds]);
+    // Unverified = every action in scope that is NOT confirmed by CURRENT valid verification. "Verified" is decided
+    // by the chain roll-up first (its per-action verdict is the most current signal): an action the chain covers is
+    // verified ONLY if that entry is PASS, so a current BLOCKED/FAIL/PARTIAL overrides a stale report that still
+    // lists the action as reproduced. Only when the chain does not cover an action does the fidelity report decide.
+    // A raw runner status=='PASS' never counts on its own (it can be invalidated by a later IR change / redeploy /
+    // altered artifact), so not-yet-executed, skipped, not_executable, BLOCKED and invalidated actions all stay
+    // counted as unverified (owner rule: never a manufactured pass). review2 R2-08 + review3 R3-02.
+    const reproducedIds = new Set(Array.isArray(f?.reproduced) ? f.reproduced : []);
+    const chainStatus = new Map();
+    (chain?.per_action ?? []).forEach((p) => chainStatus.set(p.action_id, p.status));
     const universe = planTotal ? items.map((it) => it.action_id) : res.map((r) => r.action_id);
-    const unverifiedCount = universe.filter((id) => !verifiedIds.has(id)).length;
+    const unverifiedCount = universe.filter((id) => !(chainStatus.has(id) ? chainStatus.get(id) === "PASS" : reproducedIds.has(id))).length;
 
     return {
       any: planTotal > 0 || res.length > 0 || chainActions.length > 0,
