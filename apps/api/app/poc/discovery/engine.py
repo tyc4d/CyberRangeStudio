@@ -135,8 +135,17 @@ class DiscoveryEngine:
 
     @staticmethod
     def _version_hint(description: str) -> str:
-        matches = re.findall(r"(?:versions?\s+)?(?:before|prior to|through|up to)?\s*\d+(?:\.\d+){1,3}(?:\s*(?:through|to|-|–)\s*\d+(?:\.\d+){1,3})?", description, re.I)
-        return "; ".join(matches[:4])
+        # Keep the complete version clause, including operators and qualifiers.
+        # Mining numeric substrings turns e.g. "after X", "< X", "not X", or
+        # prereleases into a false exact match. Ranking owns the range grammar;
+        # any clause it cannot parse must remain unknown.
+        if not re.search(r"\d+\.\d+", description):
+            return description.strip() if re.search(r"\bversions?\b", description, re.I) else ""
+        # Metadata also uses "exploit before X" / "affects < X" without a
+        # version label. Preserve everything after the context delimiter too,
+        # so an unsupported qualifier cannot be silently discarded.
+        clause = re.search(r"\b(?:exploit(?:\s+affects)?|affects)\s+(.+)", description, re.I | re.S)
+        return (clause.group(1) if clause else description).strip()
 
     @staticmethod
     def _candidate(action_id: str, cve: str, row: Mapping[str, Any], product: str,
