@@ -73,11 +73,11 @@ def artifact_bytes(evidence: Any) -> bytes | None:
             return None
         candidate = Path(path)
         if not candidate.is_absolute():
-            candidate = config.DATA_DIR / candidate
-        candidate = candidate.resolve(strict=True)
-        if not candidate.is_relative_to(root) or not candidate.is_file():
+            candidate = data_root / candidate
+        resolved = candidate.resolve(strict=True)
+        if candidate != resolved or not resolved.is_relative_to(root) or not resolved.is_file():
             return None
-        with candidate.open("rb") as stream:
+        with resolved.open("rb") as stream:
             content = stream.read(_MAX_ARTIFACT_BYTES + 1)
         if len(content) > _MAX_ARTIFACT_BYTES or hashlib.sha256(content).hexdigest() != digest:
             return None
@@ -224,13 +224,15 @@ def verify_execution(result: Any, plan_item: Any | None = None, *,
             return "FAIL"
         log = execution_log(result)
         proof = registered_verifier(result, log) if log else None
+        marker = proof.get("expected_marker") if proof else None
         if (status == "PASS" and log and proof and identity_matches(log, expected_context)
                 and _get(result, "exit_code") == 0 and not _get(result, "failure_reason")
                 and all(_get(stages, key) is True for key in ("started", "delivered", "responded", "action_complete"))
-                and isinstance(log.get("output"), str)
-                and proof.get("expected_marker") in log["output"].splitlines()
+                and isinstance(marker, str) and marker and isinstance(log.get("output"), str)
+                and marker in log["output"].splitlines()
                 and "REQUEST_ERROR=" not in log["output"]
-                and any(proves_effect(e) and proof["expected_marker"].encode("utf-8") in artifact_bytes(e)
+                and any(isinstance(_get(e, "kind"), str) and _get(e, "kind") in _PROOF_KINDS
+                        and (content := artifact_bytes(e)) is not None and marker.encode("utf-8") in content
                         for e in (_get(result, "evidence", []) or []))):
             return "PASS"
         return "PARTIAL"
