@@ -50,3 +50,12 @@ After independent QA (CHANGES REQUESTED, 15 findings / 26 repro tests), fix roun
 - Full backend suite: **277 passed**. Review Python: review1 57/1, review2 89/0, review3 34/0, review4 59/0.
   Frontend checks: 4/4, 6/6, 9/9, 10/10.
 - Sole remaining failure: #5 deploy-layer guaranteed-cancel handle (honest fail-closed). Round-5 gate pending.
+
+## Fix round 5 complete (b81486c)
+- R5-01 (P1) export multi-line secret leak fixed by STRUCTURAL parse of emitted YAML/JSON (root-cause fix, not
+  another regex pattern); R5-02 (P2) GUI separate execute-lifecycle identity so snapshot reads can't discard an
+  in-flight execute. Prior rounds hold.
+- Full backend: **278 passed**. Review Python: 57/1, 89/0, 34/0, 59/0, 24/0. Frontend: 4/6/9/10/7 all pass.
+- Sole remaining failure: #5 deploy-layer guaranteed-cancel (honest fail-closed). Round-6 FINAL gate pending;
+  if round 6 still finds an export edge after the structural fix, escalate to owner (product decision on the
+  export guarantee) rather than loop further.
