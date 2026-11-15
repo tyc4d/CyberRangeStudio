@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -129,3 +130,117 @@ def test_blocked_ownership_still_writes_consistent_hashed_log(lab, monkeypatch):
     evidence, = run["evidence"]
     assert evidence["kind"] == "log"
     assert hashlib.sha256((config.DATA_DIR / evidence["path"]).read_bytes()).hexdigest() == evidence["sha256"]
+
+
+def assert_one_persisted_job(runs):
+    db = runner.poc_store._conn()
+    try:
+        jobs = [dict(row) for row in db.execute("SELECT * FROM poc_jobs WHERE scenario_id=?", (SID,))]
+    finally:
+        db.close()
+    assert len(jobs) == 1
+    for run in runs:
+        log = json.loads((config.DATA_DIR / run["logs_path"]).read_text())
+        assert log["context"]["job_id"] == jobs[0]["id"]
+    assert runner.poc_store.get_runs(SID) == runs
+    return jobs[0]
+
+
+@pytest.mark.parametrize("code", [0, 1, 127])
+def test_batch_predecessor_gate_uses_completed_status_in_the_same_job(lab, monkeypatch, code):
+    ir, _, _, req, transport = lab
+    ir["actions"].append({"id": "a2", "name": "Dependent action"})
+    guard_spy = Mock(side_effect=runner.assert_target_owned)
+    monkeypatch.setattr(runner, "assert_target_owned", guard_spy)
+    transport.side_effect = [
+        ({"returncode": code, "stdout": req.expected_marker if code == 0 else "no effect", "stderr": ""}, None),
+        ({"returncode": 0, "stdout": req.expected_marker, "stderr": ""}, None),
+    ]
+    dependent = replace(req, action_id="a2", required_predecessors=("a1",))
+    runs = runner.run_job(SID, [req, dependent])
+    assert [run["status"] for run in runs] == (
+        ["PASS", "PASS"] if code == 0 else ["FAIL" if code == 1 else "BLOCKED", "BLOCKED"])
+    assert transport.call_count == guard_spy.call_count == (2 if code == 0 else 1)
+    assert assert_one_persisted_job(runs)["state"] == "done"
+    if code == 0:
+        assert all(verify_execution(run) == "PASS" for run in runs)
+    else:
+        assert not any(runs[1]["stages"].values())
+        assert verify_execution(runs[1]) == "BLOCKED"
+        assert "a1" in runs[1]["failure_reason"]
+
+
+def test_missing_predecessor_blocks_without_inspection_or_delivery(lab, monkeypatch):
+    _, _, _, req, transport = lab
+    guard_spy = Mock(side_effect=AssertionError("a blocked dependent must not inspect a target"))
+    monkeypatch.setattr(runner, "assert_target_owned", guard_spy)
+    dependent = replace(req, action_id="a2", required_predecessors=("unselected",))
+    runs = runner.run_job(SID, [dependent])
+    assert runs[0]["status"] == "BLOCKED"
+    assert verify_execution(runs[0]) == "BLOCKED"
+    assert not any(runs[0]["stages"].values())
+    transport.assert_not_called()
+    guard_spy.assert_not_called()
+    assert_one_persisted_job(runs)
+
+
+def test_previous_job_pass_cannot_satisfy_current_job_predecessor(lab):
+    _, _, _, req, transport = lab
+    old, = runner.run_job(SID, [req])
+    assert verify_execution(old) == "PASS"
+    transport.reset_mock()
+    dependent = replace(req, action_id="a2", required_predecessors=("a1",))
+    current, = runner.run_job(SID, [dependent])
+    assert current["status"] == "BLOCKED"
+    transport.assert_not_called()
+    old_context = json.loads((config.DATA_DIR / old["logs_path"]).read_text())["context"]
+    current_context = json.loads((config.DATA_DIR / current["logs_path"]).read_text())["context"]
+    assert old_context["job_id"] != current_context["job_id"]
+    assert runner.poc_store.get_runs(SID) == [old, current]
+
+
+def test_one_missing_among_multiple_predecessors_still_blocks(lab):
+    _, _, _, req, transport = lab
+    dependent = replace(req, action_id="a2", required_predecessors=("a1", "unselected"))
+    runs = runner.run_job(SID, [req, dependent])
+    assert [run["status"] for run in runs] == ["PASS", "BLOCKED"]
+    transport.assert_called_once()
+    assert "unselected" in runs[1]["failure_reason"]
+    assert_one_persisted_job(runs)
+
+
+def test_failed_predecessor_blocks_all_transitive_requests_and_persists_them(lab):
+    _, _, _, req, transport = lab
+    transport.return_value = ({"returncode": 1, "stdout": "no effect", "stderr": ""}, None)
+    middle = replace(req, action_id="a2", required_predecessors=("a1",))
+    last = replace(req, action_id="a3", required_predecessors=("a2",))
+    runs = runner.run_job(SID, [req, middle, last])
+    assert [run["status"] for run in runs] == ["FAIL", "BLOCKED", "BLOCKED"]
+    transport.assert_called_once()
+    assert_one_persisted_job(runs)
+
+
+def test_request_order_does_not_treat_a_later_predecessor_as_completed(lab):
+    _, _, _, req, transport = lab
+    dependent = replace(req, action_id="a2", required_predecessors=("a1",))
+    runs = runner.run_job(SID, [dependent, req])
+    assert [(run["action_id"], run["status"]) for run in runs] == [("a2", "BLOCKED"), ("a1", "PASS")]
+    transport.assert_called_once()
+    assert_one_persisted_job(runs)
+
+
+def test_cancel_one_batch_stops_every_later_independent_action(lab):
+    _, _, _, req, transport = lab
+    cancellations = []
+    def cancel_during_first(*args):
+        cancellations.append(runner.cancel_execution(SID))
+        return {"returncode": 125, "stdout": "", "stderr": "cancelled before delivery"}, None
+    transport.side_effect = cancel_during_first
+    runs = runner.run_job(SID, [req, replace(req, action_id="a2"), replace(req, action_id="a3")])
+    assert cancellations == [{"cancelled": True}]
+    transport.assert_called_once()
+    assert [(run["action_id"], run["status"]) for run in runs] == [("a1", "BLOCKED")]
+    job = assert_one_persisted_job(runs)
+    assert job["state"] == "cancelled" and job["cancel"] == 1
+    assert runner.execution_status(SID)["job_state"] == "cancelled"
+    assert runner.cancel_execution(SID) == {"cancelled": False}

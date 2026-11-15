@@ -312,14 +312,38 @@ class _JobCancellation:
         return poc_store.is_cancelled(self.job_id)
 
 
+def _blocked_predecessor_result(request: ExecutionRequest, unmet: list[str]) -> ExecutionResult:
+    """Record an unmet prerequisite without inspecting a target or preparing a payload."""
+    started = _now()
+    run_id = uuid.uuid4().hex
+    safe_scenario = hashlib.sha256(request.scenario_id.encode("utf-8")).hexdigest()[:16]
+    logs_path = f"poc-runs/{safe_scenario}/{run_id}/output.log"
+    poc = {"source_url": _redact_url(request.source_url),
+           "ref": {key: _redact(str(value)) for key, value in (request.ref or {}).items()},
+           "sha256": request.sha256}
+    reason = f"required predecessor(s) {unmet} did not PASS in this job; dependent not executed"
+    result = ExecutionResult(
+        request.action_id, poc, "BLOCKED", ExecStages(), logs_path, 0.0, False,
+        hashlib.sha256(request.payload.encode("utf-8")).hexdigest(), started, _now(),
+        failure_reason=reason,
+    )
+    return _record_result(request, result, _run_context(request, run_id, None), None,
+                          "BLOCKED: required predecessors were not verified in this execution job.")
+
+
 def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float | None = None) -> list[dict[str, Any]]:
-    """Run a synchronous batch while persisting a pollable job and per-action results."""
+    """Run one ordered batch, gating prerequisites and cancellation within its single job.
+
+    Only a predecessor's completed PASS in this batch can permit its dependent.
+    Missing, later, and previous-job predecessors do not satisfy a requirement.
+    """
     if any(request.scenario_id != scenario_id for request in requests):
         raise ValueError("every execution request must belong to the job scenario")
     job_id = uuid.uuid4().hex
     poc_store.create_job(job_id, scenario_id, "execute", timeout_s=timeout_s)
     cancellation = _JobCancellation(job_id)
     results: list[dict[str, Any]] = []
+    statuses: dict[str, str] = {}
     poc_store.set_job_state(job_id, "running", json.dumps({"current_action_id": None, "stages": {}}))
     deadline = time.monotonic() + timeout_s if timeout_s else None
     try:
@@ -340,10 +364,14 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
                 break
             current = replace(request, timeout=max(1, min(request.timeout, remaining)),
                               cancel=cancellation, on_progress=report_progress, job_id=job_id)
-            result = SandboxRunner().execute(current)
+            unmet = [predecessor for predecessor in current.required_predecessors
+                     if statuses.get(predecessor) != "PASS"]
+            result = (_blocked_predecessor_result(current, unmet) if unmet
+                      else SandboxRunner().execute(current))
             serialized = _result_dict(result)
             results.append(serialized)
             poc_store.save_run(scenario_id, serialized)
+            statuses[request.action_id] = result.status
             if deadline and time.monotonic() >= deadline:
                 poc_store.request_cancel(job_id)
         if cancellation.is_set() or (deadline and time.monotonic() >= deadline):
