@@ -177,8 +177,78 @@ def _context_text_candidates(node: Any, host_ref: str | None = None, key: str | 
 _GENERIC_AFTER_PRODUCT = frozenset({
     "server", "servers", "service", "services", "web", "http", "https", "httpd", "database", "databases", "db",
     "version", "container", "image", "host", "hosts", "instance", "instances", "application", "applications", "app",
-    "software", "daemon", "process", "port", "tcp", "udp", "on", "in", "at", "to", "and", "or", "the", "a",
+    "software", "component", "components", "daemon", "process", "port", "tcp", "udp", "on", "in", "at", "to", "and", "or", "the", "a",
 })
+
+_CVE_AFFECTS_RE = re.compile(r"\b(?:affect(?:s|ed)?|impact(?:s|ed)?|appl(?:y|ies|ied)\s+to)\b", re.IGNORECASE)
+_CVE_AFFECTED_BY_RE = re.compile(r"\b(?:affected|impacted|vulnerable)\b.{0,24}\bby\b", re.IGNORECASE)
+_DEPLOYMENT_EVIDENCE_RE = re.compile(
+    r"\b(?:run(?:s|ning)?|install(?:ed|s)?|deploy(?:ed|s)?|operat(?:e|es|ed|ing)|"
+    r"us(?:e|es|ed|ing)|serv(?:e|es|ed|ing)|host(?:s|ed|ing)?|listen(?:s|ed|ing)?)\b",
+    re.IGNORECASE,
+)
+_NEGATED_DEPLOYMENT_SUFFIX_RE = re.compile(
+    r"\b(?:(?:is|are|was|were|has|have|had|does|do|did)\s+not|"
+    r"(?:is|are|was|were|has|have|had|does|do|did)n['’]?t|not|never)\s+"
+    r"(?:(?:yet|previously|currently|ever)\s+)?(?:(?:being|been)\s+)?$",
+    re.IGNORECASE,
+)
+_DEPLOYMENT_PREDICATE_ONLY_RE = re.compile(
+    r"\s*(?:(?:yet|previously|currently|ever)\s+)?(?:(?:being|been)\s+)?"
+    r"(?:run(?:s|ning)?|install(?:ed|s)?|deploy(?:ed|s)?|operat(?:e|es|ed|ing)|"
+    r"us(?:e|es|ed|ing)|serv(?:e|es|ed|ing)|host(?:s|ed|ing)?|listen(?:s|ed|ing)?|available)\s*",
+    re.IGNORECASE,
+)
+
+
+def _has_positive_deployment_evidence(context: str) -> bool:
+    """Ignore deployment verbs explicitly negated in the local product clause."""
+    # Suppress only a direct neither/nor pair of deployment states. The pair must
+    # immediately enumerate predicates (e.g. "neither installed nor available");
+    # unrelated constructions such as "neither vendor nor security team" do not
+    # invalidate a separate positive "installed" statement.
+    for pair in re.finditer(r"\bneither\b(.{0,40}?)\bnor\b(.{0,40}?)(?=[,.;!?]|$)", context,
+                            re.IGNORECASE):
+        if (_DEPLOYMENT_PREDICATE_ONLY_RE.fullmatch(pair.group(1))
+                and _DEPLOYMENT_PREDICATE_ONLY_RE.fullmatch(pair.group(2))):
+            return False
+    for match in _DEPLOYMENT_EVIDENCE_RE.finditer(context):
+        prefix = context[max(0, match.start() - 36):match.start()]
+        if _NEGATED_DEPLOYMENT_SUFFIX_RE.search(prefix):
+            continue
+        return True
+    return False
+
+
+def _is_affected_only_mention(text: str, start: int, end: int) -> bool:
+    """A CVE's affected-product clause is not evidence that the product is deployed."""
+    cves = list(_CVE_RE.finditer(text))
+    if not cves:
+        return False
+
+    affected_relation = False
+    for cve in cves:
+        if cve.end() <= start:
+            between = text[cve.end():start]
+            if len(between) <= 100 and _CVE_AFFECTS_RE.search(between):
+                affected_relation = True
+        elif cve.start() >= end:
+            between = text[end:cve.start()]
+            if len(between) <= 100 and _CVE_AFFECTED_BY_RE.search(between):
+                affected_relation = True
+    if not affected_relation:
+        return False
+
+    # An explicit runtime/deployment statement attached to this mention is stronger evidence
+    # than the affected-product relationship alone. Stop at a coordinator so a neighbouring
+    # product's verb cannot turn this affected-only mention into an installed service.
+    before = text[max(0, start - 100):start]
+    after = text[end:min(len(text), end + 100)]
+    contrast_boundary = r"\b(?:and|while|but|whereas|however|although|though|yet)\b"
+    before = re.split(contrast_boundary, before, flags=re.IGNORECASE)[-1]
+    after = re.split(contrast_boundary, after, flags=re.IGNORECASE)[0]
+    context = before + " " + after
+    return not _has_positive_deployment_evidence(context)
 
 
 def _is_part_of_other_product(text: str, end: int) -> bool:
@@ -209,9 +279,13 @@ def _candidate_from_mentions(text: str, host_ref: str | None = None):
                 continue
             if _is_part_of_other_product(text, match.end()):
                 continue
+            if _is_affected_only_mention(text, match.start(), match.end()):
+                continue
             occupied.append((match.start(), match.end()))
             name = text[match.start():match.end()]
-            yield _candidate(name, text[match.end():match.end() + 48], host_ref=host_ref)
+            # CVEs are linked by analysis/source evidence or explicit structured service data.
+            # A trailing-text window can cross products and attach an unrelated CVE here.
+            yield _candidate(name, text[match.end():match.end() + 48], cves=[], host_ref=host_ref)
 
 
 def _collect_hosts(target_context: Any, actions: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -252,6 +326,11 @@ def _collect_hosts(target_context: Any, actions: list[dict[str, Any]]) -> dict[s
 
 
 _CLAUSE_SPLIT_RE = re.compile(r"(?<=[.;!?])\s+|\n+")
+# A coordinated CVE clause must not inherit the deployed-product context on its left.
+_MENTION_CLAUSE_SPLIT_RE = re.compile(
+    r"(?<=[.;!?])\s+|\n+|(?:,\s*|\s+)\b(?:and|while|but|whereas|however|although|though|yet)\b\s+(?=CVE-\d{4}-\d{4,}\b)",
+    re.IGNORECASE,
+)
 _PORT_RE = re.compile(r"\b(?:tcp|udp|port)\s*[/ ]?\s*(\d{1,5})\b", re.IGNORECASE)
 
 
@@ -278,7 +357,7 @@ def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallba
     only host the clause names; otherwise the single host whose role fits the component;
     and only then the host the whole text is about (``fallback_host``).
     """
-    for clause in _CLAUSE_SPLIT_RE.split(text):
+    for clause in _MENTION_CLAUSE_SPLIT_RE.split(text):
         if not clause.strip():
             continue
         spans = _host_name_spans(clause, hosts)
@@ -875,13 +954,33 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             resolution=f"Used {component['name']} ({component['id']}) as a role-based substitute. This is not asserted to be the original software or a full recreation.",
         )
 
-    for action in actions:
-        text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
-        cves = _cves(text)
-        if cves and not any(cve in service.get("cve", []) for service in services for cve in cves):
-            for cve in cves:
-                add_missing(f"cve-{cve}", f"affected software for {cve}",
-                            "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.")
+    known_service_cves = {cve for service in services for cve in _cves(service.get("cve", []))}
+    mentioned_cves = list(dict.fromkeys(
+        cve
+        for action in actions
+        for cve in _cves(" ".join(str(action.get(key, "")) for key in ("name", "description")))
+    ))
+    mentioned_cves.extend(
+        cve
+        for indicator in result.get("indicators", []) or []
+        if isinstance(indicator, dict) and str(indicator.get("type") or "").casefold() == "cve"
+        and indicator.get("epistemic_status") in {"supported", "user_supplied"}
+        for cve in _cves(indicator.get("value"))
+    )
+    for cve in dict.fromkeys(mentioned_cves):
+        if cve in known_service_cves:
+            continue
+        # Module 1 already asks this when a literal CVE has no reliable service link.
+        # Do not add a second planner question for the same unresolved association.
+        already_asked = any(
+            cve.casefold() in str(item.get("field") or "").casefold()
+            and "affected software" in str(item.get("field") or "").casefold()
+            for item in missing
+        )
+        if already_asked:
+            continue
+        add_missing(f"cve-{cve}", f"affected software for {cve}",
+                    "The action or extracted source indicator names a vulnerability, but no target software service is reliably associated with it.")
 
     # The catalogue pins one release per component. Say whether that release is what the source
     # (or the user) stated, or only what the lab happens to have.

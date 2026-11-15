@@ -9,7 +9,7 @@ from typing import Any
 
 from cr_contracts import iter_errors
 
-from app.cti.missing import is_attacker_role
+from app.cti.missing import is_attacker_role, is_communication_description, literal_external_destinations
 from app.planner.catalogue import component_by_id
 
 
@@ -41,13 +41,140 @@ def _role_contains(role: str, term: str) -> bool:
 
 _EXPOSED_TERMS = ("exposed", "external", "internet", "internet-facing", "public", "public-facing", "web", "dmz", "對外")
 _INTERNAL_TERMS = ("internal", "內部", "內網", "management", "isolated", "隔離")
+_OUTBOUND_CUE_RE = re.compile(
+    r"\b(?:outbound|outgoing)\b|對外|向外|外部網域|"
+    r"發出.{0,16}(?:連線|connection)|"
+    r"(?:connected|connects?|connection|request)\b.{0,40}\bto\b.{0,24}\b(?:external|remote|internet)\b",
+    re.IGNORECASE,
+)
+_HTTP_PROTOCOL_RE = re.compile(r"\bhttps?\b", re.IGNORECASE)
+_DOMAIN_VALUE_RE = re.compile(
+    r"(?<![A-Za-z0-9_.-])(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![A-Za-z0-9_.-])"
+)
 _NO_HOST = frozenset({"", "unknown", "unspecified", "none", "null", "n/a"})
 # Techniques whose target is, by definition, where the intrusion enters from outside.
 _ENTRY_TECHNIQUES = ("T1190", "T1133", "T1189", "T1566", "T1195", "T1199")
 
 
-def _stated_exposure(host: dict[str, Any]) -> bool | None:
-    """Exposure the IR states for this host: placement first (it may be a user answer), then role."""
+def _source_clauses(text: str) -> list[str]:
+    """Split evidence at sentence/clause boundaries while preserving FQDNs."""
+    protected = _DOMAIN_VALUE_RE.sub(lambda match: match.group(0).replace(".", "\x00"), text)
+    return [part.strip().replace("\x00", ".")
+            for part in re.split(r"(?<=[.!?;；。！？])\s+|\n+", protected) if part.strip()]
+
+
+def _source_states_internal(host: dict[str, Any], evidence_by_id: dict[str, dict[str, Any]]) -> bool:
+    """Read an internal-host phrase only from verified evidence naming this exact host."""
+    name = str(host.get("name") or "").strip()
+    if not name:
+        return False
+    # A dot or hyphen continues a hostname label; it cannot delimit a shorter host alias.
+    name_re = re.compile(rf"(?<![A-Za-z0-9_.-]){re.escape(name)}(?![A-Za-z0-9_.-])", re.IGNORECASE)
+    host_kind = r"(?:host|endpoint|server|machine|computer|workstation|desktop|pc|database|db|asset|node|system|主機|端點|伺服器|資料庫|工作站|電腦)"
+    internal_re = r"(?:\binternal\b|內部|內網)"
+    internal_before_host = re.compile(
+        rf"{internal_re}(?:\s+(?:network|private|corporate|company|local|web))*\s*{host_kind}\s*[:#-]?\s*$",
+        re.IGNORECASE,
+    )
+    name_followed_by_internal = re.compile(
+        rf"^\s*(?:(?:is|was|,|:|[-(])\s*)?(?:an?\s+)?{internal_re}(?:\s+(?:{host_kind}|network|subnet|segment))?\b",
+        re.IGNORECASE,
+    )
+    name_in_internal_network = re.compile(
+        rf"^.{{0,40}}\b(?:in|within|on)\s+(?:the\s+)?{internal_re}\s+(?:network|subnet|segment)\b",
+        re.IGNORECASE,
+    )
+    for ref in host.get("evidence_refs", []) or []:
+        evidence = evidence_by_id.get(str(ref), {})
+        quote = str(evidence.get("quote") or "")
+        if evidence.get("quote_verified") is not True:
+            continue
+        for clause in _source_clauses(quote):
+            for mention in name_re.finditer(clause):
+                prefix, suffix = clause[:mention.start()], clause[mention.end():]
+                if (internal_before_host.search(prefix)
+                        or name_followed_by_internal.search(suffix)
+                        or name_in_internal_network.search(suffix)):
+                    return True
+    return False
+
+
+def _outbound_observations(ir: dict[str, Any], host: dict[str, Any]) -> list[tuple[str, str]]:
+    """Return verified host-to-external HTTPS observations from the host's own clause."""
+    name = str(host.get("name") or "").strip()
+    if not name:
+        return []
+    name_re = re.compile(rf"(?<![A-Za-z0-9_.-]){re.escape(name)}(?![A-Za-z0-9_.-])", re.IGNORECASE)
+    evidence_by_id = {
+        str(item.get("id")): item for item in ir.get("evidence", [])
+        if isinstance(item, dict) and item.get("id")
+    }
+    refs = set(str(ref) for ref in (host.get("evidence_refs") or []))
+    for action in ir.get("actions", []):
+        if not isinstance(action, dict):
+            continue
+        if host.get("id") in {action.get("source_host_ref"), action.get("target_host_ref")}:
+            refs.update(str(ref) for ref in (action.get("evidence_refs") or []))
+    observations: list[tuple[str, str]] = []
+    known_hosts = [entry for entry in ir.get("hosts", []) if isinstance(entry, dict)]
+    if not known_hosts:
+        known_hosts = [host]
+
+    def named_hosts(clause: str) -> set[str]:
+        """Host ids explicitly named in a source clause, with hostname-safe boundaries."""
+        matched: set[str] = set()
+        for entry in known_hosts:
+            if _is_attacker(entry):
+                continue
+            host_id = _host_id(entry.get("id") or entry.get("name") or entry.get("hostname"))
+            names = {str(entry.get("id") or ""), str(entry.get("name") or ""),
+                     str(entry.get("hostname") or "")}
+            for value in names:
+                value = value.strip()
+                if len(value) < 2:
+                    continue
+                boundary_name = re.compile(
+                    rf"(?<![A-Za-z0-9_.-]){re.escape(value)}(?![A-Za-z0-9_.-])", re.IGNORECASE)
+                if boundary_name.search(clause):
+                    matched.add(host_id)
+                    break
+        return matched
+
+    for ref in refs:
+        evidence = evidence_by_id.get(ref, {})
+        if evidence.get("quote_verified") is not True:
+            continue
+        for clause in _source_clauses(str(evidence.get("quote") or "")):
+            if not name_re.search(clause) or not _OUTBOUND_CUE_RE.search(clause) or not _HTTP_PROTOCOL_RE.search(clause):
+                continue
+            # A report about one host can mention another host as the network actor. When
+            # both are named in the same clause, attribution is ambiguous without a parseable
+            # subject relation, so leave the observation unattached.
+            explicitly_named = named_hosts(clause)
+            if explicitly_named != {_host_id(host.get("id") or host.get("name"))}:
+                continue
+            for domain in literal_external_destinations(clause):
+                if name_re.fullmatch(domain):
+                    continue
+                candidate = (domain, "HTTPS")
+                if candidate not in observations:
+                    observations.append(candidate)
+    return observations
+
+
+def _stated_exposure(host: dict[str, Any], evidence_by_id: dict[str, dict[str, Any]] | None = None) -> bool | None:
+    """Exposure the IR states for this host: user placement, source evidence, then role."""
+    field_sources = host.get("field_sources") if isinstance(host.get("field_sources"), dict) else {}
+    if field_sources.get("network_placement") == "user":
+        placement = str(host.get("network_placement") or "")
+        if any(_role_contains(placement, term) or (not term.isascii() and term in placement)
+               for term in _INTERNAL_TERMS):
+            return False
+        if any(_role_contains(placement, term) or (not term.isascii() and term in placement)
+               for term in _EXPOSED_TERMS):
+            return True
+    if evidence_by_id and _source_states_internal(host, evidence_by_id):
+        return False
     for text in (str(host.get("network_placement", "")), str(host.get("role", ""))):
         if not text.strip():
             continue
@@ -58,12 +185,12 @@ def _stated_exposure(host: dict[str, Any]) -> bool | None:
     return None
 
 
-def _is_exposed(host: dict[str, Any]) -> bool:
+def _is_exposed(host: dict[str, Any], evidence_by_id: dict[str, dict[str, Any]] | None = None) -> bool:
     if _is_attacker(host):
         return True
     if host.get("_inferred_entry"):
         return True
-    return _stated_exposure(host) is True
+    return _stated_exposure(host, evidence_by_id) is True
 
 
 def _entry_host_ids(ir: dict[str, Any], candidates: set[str]) -> tuple[list[str], str]:
@@ -179,6 +306,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
     hosts = [copy.deepcopy(host) for host in ir.get("hosts", []) if host.get("id")]
     seen = {_host_id(host["id"]) for host in hosts}
     hosts_by_id = {_host_id(host["id"]): host for host in hosts}
+    evidence_by_id = {
+        str(item.get("id")): item for item in ir.get("evidence", [])
+        if isinstance(item, dict) and item.get("id")
+    }
     target_hosts = [host for host in hosts if not _is_attacker(host)]
     if not target_hosts:
         target = {"id": "target", "role": "target", "service_refs": []}
@@ -205,8 +336,8 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
 
     # Without any reachable target the attacker has no way in and the chain cannot start.
     # If the IR states no exposure, expose only the entry host and say that this is inferred.
-    if ir.get("actions") and not any(_stated_exposure(host) is True for host in target_hosts):
-        undecided = {hid for hid in target_ids if _stated_exposure(hosts_by_id[hid]) is None}
+    if ir.get("actions") and not any(_stated_exposure(host, evidence_by_id) is True for host in target_hosts):
+        undecided = {hid for hid in target_ids if _stated_exposure(hosts_by_id[hid], evidence_by_id) is None}
         entry_ids, basis = _entry_host_ids(ir, undecided)
         for hid in entry_ids:
             hosts_by_id[hid]["_inferred_entry"] = True
@@ -215,6 +346,13 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
         if not entry_ids:
             notes.append("No target host is stated or inferable as reachable from outside; the attacker has no path "
                          "to any target until a host's network placement is supplied.")
+    for host in target_hosts:
+        for destination, protocol in _outbound_observations(ir, host):
+            name = str(host.get("name") or host.get("id"))
+            notes.append(
+                f"Verified source evidence describes outbound {protocol} from {name} to {destination}. "
+                "TCP/443 is only a default-port candidate; destination and port remain unconfirmed. "
+                "No egress allow rule was added; use an isolated sinkhole if the behavior is required.")
     assigned: dict[str, list[dict[str, Any]]] = {hid: [] for hid in target_ids}
     unassigned: list[str] = []
     for service in services:
@@ -277,7 +415,7 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                             "IaC generation will refuse this until the port or the component is changed.")
                 entries.append(entry)
         network_refs = [] if _is_attacker(host) else ["scenario-internal"]
-        if _is_exposed(host):
+        if _is_exposed(host, evidence_by_id):
             network_refs.append("external")
         env_host: dict[str, Any] = {
             "id": hid,
@@ -291,7 +429,7 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                  "reason": "host already uses another component"} for service in unplaced]
         if host.get("_inferred_entry"):
             env_host["exposure_basis"] = "inferred_entry_point"
-        elif not _is_attacker(host) and _stated_exposure(host) is not None:
+        elif not _is_attacker(host) and _stated_exposure(host, evidence_by_id) is not None:
             env_host["exposure_basis"] = "stated"
         component_ids = list(dict.fromkeys(service.get("catalogue_component") for service in assigned.get(hid, [])
                                            if service.get("catalogue_component")))
@@ -389,7 +527,7 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
     # Permit the lab attacker to reach only mapped target service ports.
     if attacker_id:
         targeted_refs = {_host_id(action.get("target_host_ref")) for action in ir.get("actions", []) if action.get("target_host_ref")}
-        exposed_targets = {hid for hid in target_ids if _is_exposed(hosts_by_id[hid])}
+        exposed_targets = {hid for hid in target_ids if _is_exposed(hosts_by_id[hid], evidence_by_id)}
         reachable_targets = [hid for hid in exposed_targets if not targeted_refs or hid in targeted_refs]
         for hid in reachable_targets:
             related_actions = [action for action in ir.get("actions", [])

@@ -10,6 +10,8 @@ sys.path.insert(0, str(ROOT / "apps" / "api"))
 
 from app.cti import analysis  # noqa: E402
 from app.cti.parser import parse_source  # noqa: E402
+from app.planner.dependencies import plan_dependencies  # noqa: E402
+from app.planner.topology import build_environment_plan  # noqa: E402
 from cr_contracts import iter_errors  # noqa: E402
 
 RECORDED = ROOT / "tests" / "fixtures" / "recorded"
@@ -129,7 +131,8 @@ class RelationAndHostRules(unittest.TestCase):
             "epistemic_status": "supported", "evidence": [{"quote": "over SMB port 445", "source_ref": "p3"}]},
             {"id": "s2", "name": "RDP", "host_ref": "h7", "port": 99999}]), "text")
         smb, rdp = ir["services"]
-        self.assertEqual((smb["host_ref"], smb["port"], smb["protocol"], smb["cve"]), ("h2", 445, "tcp", ["CVE-2020-0796"]))
+        self.assertEqual((smb["host_ref"], smb["port"], smb["protocol"]), ("h2", 445, "tcp"))
+        self.assertNotIn("cve", smb)  # model-only CVEs are dropped without a source relation
         self.assertNotIn("host_ref", rdp)
         self.assertNotIn("port", rdp)
 
@@ -224,17 +227,17 @@ class SameSentenceVerifiesTheSameEverywhere(unittest.TestCase):
 
 
 class CveBelongsToTheProductNamedWithIt(unittest.TestCase):
-    """QA round 2 (UXR2-05): a CVE the source states with a product is that product's CVE."""
+    """A CVE attaches only when the source explicitly states an affected relation."""
 
-    def test_cve_in_the_same_sentence_as_the_service_name_is_attached(self):
+    def test_cve_merely_listed_in_the_same_sentence_is_not_attached(self):
         source = ("The group exploited a SQL injection vulnerability CVE-2023-34362 in MOVEit Transfer web applications.\n\n"
                   "Separately, CVE-2023-0669 affected a different product.")
         ir = run(source, {"actions": [], "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": [
             {"id": "s1", "name": "MOVEit Transfer", "epistemic_status": "supported",
              "evidence": [{"quote": "MOVEit Transfer web applications", "source_ref": "p1"}]}]}}, "text")
         service = ir["services"][0]
-        self.assertEqual(service["cve"], ["CVE-2023-34362"])
-        self.assertEqual(service["field_sources"], {"cve": "source_quote"})
+        self.assertNotIn("cve", service)
+        self.assertIn("missing-cve-cve-2023-34362-software", {item["id"] for item in ir["missing_items"]})
 
 
 class ScenarioNameIsTheUsers(unittest.TestCase):
@@ -366,6 +369,268 @@ class FocusedPasses(unittest.TestCase):
                               "cti_analysis_relations": {"relations": "nope"}})
         self.assertEqual([a["target_host_ref"] for a in ir["actions"]], ["unknown", "unknown"])
         self.assertEqual((ir["relations"][0]["kind"], ir["relations"][0]["epistemic_status"]), ("temporal", "inferred"))
+
+
+class CveServiceAssociation(unittest.TestCase):
+    def model(self):
+        return {
+            "actions": [{
+                "id": "a1", "name": "exploited Apache Struts", "target_host_ref": "h1",
+                "epistemic_status": "supported",
+                "evidence": [{"quote": "Apache Struts Web Framework was vulnerable under CVE-2017-5638.", "source_ref": "p1"}],
+            }],
+            "relations": [],
+            "target_context": {
+                "hosts": [{"id": "h1", "role": "online dispute portal",
+                           "epistemic_status": "supported",
+                           "evidence": [{"quote": "Apache Struts Web Framework", "source_ref": "p1"}]}],
+                "services": [{"id": "s1", "name": "Apache Struts component", "host_ref": "h1",
+                              "epistemic_status": "supported",
+                              "evidence": [{"quote": "Apache Struts Web Framework", "source_ref": "p1"}]}],
+            },
+            "artifacts": [],
+        }
+
+    def test_literal_cve_is_attached_through_unique_product_alias_and_version_stays_unknown(self):
+        source = "Apache Struts Web Framework was vulnerable under CVE-2017-5638."
+        ir = run(source, self.model(), "text")
+        service = ir["services"][0]
+        self.assertEqual(service["name"], "Apache Struts component")
+        self.assertEqual(service["cve"], ["CVE-2017-5638"])
+        self.assertEqual(service["field_sources"]["cve"], "source_quote")
+        self.assertNotIn("version", service)
+        cve_refs = next(indicator["evidence_refs"] for indicator in ir["indicators"]
+                        if indicator["type"] == "cve" and indicator["value"] == "CVE-2017-5638")
+        self.assertTrue(set(cve_refs) <= set(service["evidence_refs"]))
+        relationship_evidence = [item for item in ir["evidence"] if item["id"] in service["evidence_refs"]]
+        self.assertTrue(any(
+            item["quote"] == source and all(term.casefold() in item["quote"].casefold()
+                                             for term in ("CVE-2017-5638", "Apache Struts", "vulnerable"))
+            and item["locator"] == {"kind": "paragraph", "ref": "1"}
+            for item in relationship_evidence))
+        missing_ids = {item["id"] for item in ir["missing_items"]}
+        self.assertIn("missing-service-s1-version", missing_ids)
+        self.assertNotIn("missing-cve-cve-2017-5638-software", missing_ids)
+        self.assertNotIn("missing-gap-exploited-weakness", missing_ids)
+
+        planned = plan_dependencies(ir)
+        self.assertEqual([entry["id"] for entry in planned["services"]], ["s1"])
+        planned_service = planned["services"][0]
+        self.assertEqual((planned_service["name"], planned_service["cve"]),
+                         ("Apache Struts component", ["CVE-2017-5638"]))
+        self.assertNotIn("version", planned_service)
+        self.assertEqual((planned_service["version_basis"], planned_service["deployed_version"]), ("assumed", "2.3.30"))
+        self.assertFalse(any("affected software for CVE-2017-5638" == item.get("field")
+                             for item in planned["missing_items"]))
+        host = next(host for host in build_environment_plan(planned)["hosts"] if host["id"] == "h1")
+        self.assertEqual(host["services"], [{"name": "Apache Struts component", "port": 8080, "protocol": "tcp"}])
+
+    def test_cve_in_a_separate_unit_is_not_guessed_onto_struts_and_asks_for_affected_product(self):
+        source = ("The online dispute portal used the Apache Struts Web Framework.\n\n"
+                  "CVE-2017-5638 is listed in a separate vulnerability table.")
+        model = self.model()
+        model["actions"][0]["evidence"] = [{"quote": "the Apache Struts Web Framework", "source_ref": "p1"}]
+        ir = run(source, model, "text")
+        service = ir["services"][0]
+        self.assertEqual(service["name"], "Apache Struts component")
+        self.assertNotIn("cve", service)
+        self.assertNotIn("version", service)
+        missing = {item["id"]: item for item in ir["missing_items"]}
+        self.assertIn("missing-cve-cve-2017-5638-software", missing)
+        self.assertIn("CVE-2017-5638", missing["missing-cve-cve-2017-5638-software"]["question"])
+        self.assertNotIn("missing-gap-exploited-weakness", missing)
+        planned = plan_dependencies(ir)
+        planned_service = next(item for item in planned["services"] if item["id"] == "s1")
+        self.assertFalse(planned_service.get("cve"))
+        self.assertEqual(len([item for item in planned["missing_items"]
+                              if item.get("field") == "affected software for CVE-2017-5638"]), 1)
+
+    def test_cve_for_http_server_is_not_attached_to_struts_mentioned_in_same_clause(self):
+        source = "Apache Struts runs the portal, while CVE-2024-12345 affects Apache HTTP Server."
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+            "evidence": [{"quote": "Apache Struts runs the portal", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertTrue(any(item["type"] == "cve" and item["value"] == "CVE-2024-12345"
+                            for item in ir["indicators"]))
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_multi_product_affected_phrase_is_not_substring_matched_to_struts(self):
+        source = "CVE-2024-12345 affects Apache Struts and Apache HTTP Server."
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+            "evidence": [{"quote": "Apache Struts", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_comma_separated_affected_products_are_not_truncated_to_struts(self):
+        source = "CVE-2024-12345 affects Apache Struts, Apache HTTP Server."
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+            "evidence": [{"quote": "Apache Struts", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertTrue(any(item["type"] == "cve" and item["value"] == "CVE-2024-12345"
+                            for item in ir["indicators"]))
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_semicolon_separated_affected_products_are_not_truncated_to_struts(self):
+        source = "CVE-2024-12345 affects Apache Struts; Apache HTTP Server."
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+            "evidence": [{"quote": "Apache Struts", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_unverified_model_supplied_cve_is_removed_and_asks_for_affected_product(self):
+        source = "Struts 用於入口網站。CVE-2024-12345 影響 Apache HTTP Server。"
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "cve": ["CVE-2024-12345"],
+            "epistemic_status": "supported", "evidence": [{"quote": "Struts", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertTrue(any(item["type"] == "cve" and item["value"] == "CVE-2024-12345"
+                            for item in ir["indicators"]))
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_product_editions_and_versions_are_not_normalized_together(self):
+        cases = (
+            ("CVE-2024-12345 affects Microsoft Windows Server.", "Microsoft Windows"),
+            ("CVE-2024-12345 affects Apache Struts 1.", "Apache Struts 2"),
+        )
+        for source, service_name in cases:
+            with self.subTest(service_name=service_name):
+                model = self.model()
+                model["actions"] = []
+                model["target_context"]["hosts"] = []
+                model["target_context"]["services"] = [{
+                    "id": "s1", "name": service_name, "epistemic_status": "supported",
+                    "evidence": [{"quote": service_name, "source_ref": "p1"}],
+                }]
+                ir = run(source, model, "text")
+                self.assertNotIn("cve", ir["services"][0])
+                self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+    def test_weak_cve_relation_wording_does_not_attach_product(self):
+        for source in ("CVE-2024-12345 is present in Apache Struts.", "CVE-2024-12345 in Apache Struts."):
+            with self.subTest(source=source):
+                model = self.model()
+                model["actions"] = []
+                model["target_context"]["hosts"] = []
+                model["target_context"]["services"] = [{
+                    "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+                    "evidence": [{"quote": "Apache Struts", "source_ref": "p1"}],
+                }]
+                ir = run(source, model, "text")
+                self.assertNotIn("cve", ir["services"][0])
+                self.assertIn("missing-cve-cve-2024-12345-software",
+                              {item["id"] for item in ir["missing_items"]})
+
+    def test_product_in_another_sentence_of_the_paragraph_does_not_receive_cve(self):
+        source = "The portal runs Apache Struts. CVE-2024-12345 affects Apache HTTP Server."
+        model = self.model()
+        model["actions"] = []
+        model["target_context"]["hosts"] = []
+        model["target_context"]["services"] = [{
+            "id": "s1", "name": "Apache Struts component", "epistemic_status": "supported",
+            "evidence": [{"quote": "Apache Struts", "source_ref": "p1"}],
+        }]
+        ir = run(source, model, "text")
+        self.assertNotIn("cve", ir["services"][0])
+        self.assertIn("missing-cve-cve-2024-12345-software", {item["id"] for item in ir["missing_items"]})
+
+
+class ProtocolListenerClassification(unittest.TestCase):
+    def test_outbound_https_is_not_kept_as_a_listener_or_opened_inbound(self):
+        source = "The portal server made an outbound HTTPS request to external domain update.example."
+        model = {
+            "actions": [{"id": "a1", "name": "The portal server made an outbound HTTPS request",
+                         "target_host_ref": "h1", "epistemic_status": "supported",
+                         "evidence": [{"quote": source, "source_ref": "p1"}]}],
+            "relations": [], "artifacts": [],
+            "target_context": {
+                "hosts": [{"id": "h1", "name": "portal", "role": "endpoint",
+                           "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+                "services": [{"id": "s1", "name": "HTTPS", "host_ref": "h1", "port": 443,
+                              "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+            },
+        }
+        ir = run(source, model, "text")
+        self.assertFalse(any(service.get("id") == "s1" for service in ir["services"]))
+        self.assertIn("HTTPS", ir["quality"]["dropped_non_software_services"])
+
+        planned = plan_dependencies(ir)
+        plan = build_environment_plan(planned)
+        self.assertFalse(any(connection.get("from_host") == "attacker" and connection.get("to_host") == "h1"
+                             and connection.get("port") == 443 for connection in plan["connections"]))
+        self.assertTrue(any("outbound HTTPS from portal to update.example" in note
+                            and "No egress allow rule" in note for note in plan["notes"]))
+
+    def test_source_confirmed_inbound_https_listener_is_preserved(self):
+        source = "The public portal listens for inbound HTTPS requests on port 443."
+        model = {
+            "actions": [{"id": "a1", "name": "The attacker requested the portal over HTTPS",
+                         "target_host_ref": "h1", "epistemic_status": "supported",
+                         "evidence": [{"quote": source, "source_ref": "p1"}]}],
+            "relations": [], "artifacts": [],
+            "target_context": {
+                "hosts": [{"id": "h1", "name": "portal", "role": "public web server",
+                           "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+                "services": [{"id": "s1", "name": "HTTPS", "host_ref": "h1", "port": 443,
+                              "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+            },
+        }
+        ir = run(source, model, "text")
+        listener = next(service for service in ir["services"] if service["id"] == "s1")
+        self.assertEqual(listener.get("service_kind"), "network_listener")
+        planned = plan_dependencies(ir)
+        self.assertTrue(any(service.get("id") == "s1" for service in planned["services"]))
+        plan = build_environment_plan(planned)
+        self.assertTrue(any(connection.get("from_host") == "attacker" and connection.get("to_host") == "h1"
+                            and connection.get("port") == 443 for connection in plan["connections"]))
+
+    def test_absent_https_listener_is_not_confirmed_by_does_not_have_or_lacks(self):
+        for absence in ("does not have", "lacks"):
+            with self.subTest(absence=absence):
+                source = f"The public portal {absence} an HTTPS listener."
+                model = {
+                    "actions": [{"id": "a1", "name": "The attacker targeted the portal",
+                                 "target_host_ref": "h1", "epistemic_status": "supported",
+                                 "evidence": [{"quote": source, "source_ref": "p1"}]}],
+                    "relations": [], "artifacts": [],
+                    "target_context": {
+                        "hosts": [{"id": "h1", "name": "portal", "role": "public web server",
+                                   "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+                        "services": [{"id": "s1", "name": "HTTPS", "host_ref": "h1", "port": 443,
+                                      "epistemic_status": "supported", "evidence": [{"quote": source, "source_ref": "p1"}]}],
+                    },
+                }
+                ir = run(source, model, "text")
+                self.assertFalse(any(service.get("id") == "s1" for service in ir["services"]))
+                self.assertIn("HTTPS", ir["quality"]["dropped_non_software_services"])
 
 
 if __name__ == "__main__":

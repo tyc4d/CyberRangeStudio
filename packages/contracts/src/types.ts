@@ -75,6 +75,7 @@ export interface Host {
 export interface ServiceItem {
   id: string;
   name: string;
+  service_kind?: "software" | "network_listener";
   version?: string;
   cpe?: string;
   cve?: string[];

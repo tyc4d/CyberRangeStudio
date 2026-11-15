@@ -7,6 +7,7 @@ from typing import Any, Iterable
 
 _UNKNOWN = {"unknown", "unspecified", "absent", "n/a", "none", "null"}
 _SUPPORTED_STATUSES = {"supported", "user_supplied"}
+_CVE_ID_RE = re.compile(r"CVE-\d{4}-\d{4,7}", re.IGNORECASE)
 
 
 _COMMUNICATION_WORDS = frozenset({
@@ -18,6 +19,13 @@ _COMMUNICATION_MODIFIERS = frozenset({
     "internet", "outbound", "inbound", "internal", "external", "remote", "data", "command", "control", "and", "of",
     "the", "a", "an", "c2", "covert", "trusted", "regular", "common", "application", "layer",
 })
+_NETWORK_PROTOCOL_ONLY = frozenset({"http", "https", "tls", "ssl"})
+_NETWORK_PROTOCOL_DESCRIPTORS = frozenset({"inbound", "listener", "listeners", "server", "servers", "service", "services", "endpoint"})
+_COMMON_FILE_SUFFIXES = frozenset({
+    "7z", "bat", "cfg", "cmd", "conf", "csv", "dat", "dll", "doc", "docm", "docx", "exe", "gz", "hta",
+    "html", "ini", "iso", "jar", "js", "json", "lnk", "log", "msi", "pdf", "ps1", "psm1", "py", "rar",
+    "rtf", "sh", "sql", "svg", "tar", "tmp", "txt", "vbs", "xml", "xz", "zip",
+})
 
 
 def is_communication_description(name: Any) -> bool:
@@ -28,8 +36,39 @@ def is_communication_description(name: Any) -> bool:
     (RDP, SMB, HTTPS) that could be installed on a host, mapped to a component or substituted.
     """
     words = re.findall(r"[a-z0-9]+", str(name or "").casefold())
+    if words and words[0] in _NETWORK_PROTOCOL_ONLY:
+        return all(word in _NETWORK_PROTOCOL_ONLY or word == "protocol"
+                   or word in _NETWORK_PROTOCOL_DESCRIPTORS for word in words)
     return (bool(words) and any(word in _COMMUNICATION_WORDS for word in words)
             and all(word in _COMMUNICATION_WORDS or word in _COMMUNICATION_MODIFIERS for word in words))
+
+
+_LITERAL_IPV4 = r"\b\d{1,3}(?:\[\.\]|\.)\d{1,3}(?:\[\.\]|\.)\d{1,3}(?:\[\.\]|\.)\d{1,3}\b"
+_LITERAL_DOMAIN = r"(?<![A-Za-z0-9_.-])(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![A-Za-z0-9_-])"
+_DESTINATION_CONTEXT_RE = re.compile(
+    rf"(?:\b(?:external|remote)\s+(?:domain|host|server)\s*[:=]?\s*"
+    rf"|\b(?:domain|hostname|destination)\s*[:=]?\s*"
+    rf"|\b(?:to|from|connected\s+to|connects?\s+to|requests?\s+to)\s+"
+    rf"(?:(?:the|an?|external|remote)\s+)*(?:(?:domain|host)\s+)?"
+    rf"|(?:external\s+)?外部?(?:網域|主機|目的地)\s*(?:為|是|[:：])?\s*"
+    rf"|(?:連到|連至|對外連線至|發往|傳至)\s*)"
+    rf"(?:https?://)?(?P<destination>{_LITERAL_IPV4}|{_LITERAL_DOMAIN})",
+    re.IGNORECASE,
+)
+
+
+def literal_external_destinations(text: Any) -> list[str]:
+    """Return address literals only where source wording marks them as destinations."""
+    found: list[str] = []
+    for match in _DESTINATION_CONTEXT_RE.finditer(str(text or "")):
+        value = match.group("destination")
+        suffix = value.rsplit(".", 1)[-1].casefold() if "." in value else ""
+        if suffix in _COMMON_FILE_SUFFIXES:
+            continue
+        normalized = value.casefold()
+        if normalized not in {item.casefold() for item in found}:
+            found.append(value)
+    return found
 
 
 _ATTACKER_ROLE_RE = re.compile(
@@ -655,6 +694,62 @@ def _service_dependency_questions(ir: dict[str, Any], services: list[dict[str, A
         )
 
 
+def _unmapped_cve_questions(ir: dict[str, Any], services: list[dict[str, Any]], actions: list[dict[str, Any]],
+                            items: list[dict[str, Any]]) -> None:
+    """Ask which product a literal CVE belongs to when no service carries that CVE."""
+    service_cves = {
+        str(cve).upper()
+        for service in services
+        for cve in (service.get("cve") or [])
+        if _CVE_ID_RE.fullmatch(str(cve)) and _supported_value(service, ("cve",))
+    }
+    for indicator in ir.get("indicators") or []:
+        if not isinstance(indicator, dict) or str(indicator.get("type") or "").casefold() != "cve":
+            continue
+        raw = str(indicator.get("value") or "").strip()
+        if not _CVE_ID_RE.fullmatch(raw):
+            continue
+        cve = raw.upper()
+        if cve in service_cves:
+            continue
+        indicator_refs = set(indicator.get("evidence_refs") or [])
+        linked_actions = [action for action in actions if (
+            cve.casefold() in _text(action).casefold()
+            or bool(indicator_refs.intersection(action.get("evidence_refs") or []))
+        )]
+        known = [fact for fact in (
+            _known_fact("已知軟體線索（尚未確認受此 CVE 影響）", _name(service),
+                        f"services:{service.get('id')}.name", service)
+            for service in services if service.get("id") != "service-unspecified"
+        ) if fact]
+        known.append({
+            "field": "來源列出的 CVE",
+            "value": cve,
+            "source_ref": f"indicators:{indicator.get('id')}",
+            "epistemic_status": indicator.get("epistemic_status") or "supported",
+            **({"evidence_refs": list(indicator_refs)} if indicator_refs else {}),
+        })
+        affects = [f"indicator:{indicator.get('id')} — {cve}"]
+        affects.extend(f"action:{action.get('id')} — {_name(action)}" for action in linked_actions)
+        refs = list(dict.fromkeys([
+            *indicator_refs,
+            *(ref for action in linked_actions for ref in (action.get("evidence_refs") or [])),
+        ]))
+        _add_item(
+            items, ir,
+            item_id=f"missing-cve-{_slug(cve)}-software",
+            field=f"affected software for {cve}",
+            category="software",
+            reason=f"來源提到 {cve}，但目前沒有足夠證據把它可靠地對應到某個服務。",
+            question=f"{cve} 影響哪個產品或服務？請依來源或可查證資料確認並註明依據；若無法確認，請保留未知，不要只靠 CVE 編號猜產品或版本。",
+            affects=affects,
+            known=known,
+            suggestions=["填入來源明確提到的受影響產品", "補上可查證資料與出處", "無法確認；保留未知"],
+            evidence_refs=refs,
+            anchor_terms=[cve],
+        )
+
+
 _GENERIC_TOOL_WORDS = frozenset({
     "legitimate", "administrative", "administration", "admin", "tools", "tool", "software", "utilities", "utility",
     "remote", "access", "custom", "malware", "malicious", "script", "scripts", "unknown", "designed", "exploit",
@@ -695,7 +790,11 @@ def _generic_gap_questions(ir: dict[str, Any], services: list[dict[str, Any]], a
                   ] + [action for action in actions if str(action.get("attack_technique") or "").upper().startswith(_EXPLOIT_TECHNIQUES)]
     exploiting = list({id(action): action for action in exploiting}.values())
     known_cve = any(service.get("cve") for service in real_services) or any(
-        re.search(r"CVE-\d{4}-\d+", _text(action), re.IGNORECASE) for action in exploiting)
+        re.search(r"CVE-\d{4}-\d+", _text(action), re.IGNORECASE) for action in exploiting) or any(
+            isinstance(indicator, dict) and str(indicator.get("type") or "").casefold() == "cve"
+            and indicator.get("epistemic_status") in _SUPPORTED_STATUSES
+            and _CVE_ID_RE.fullmatch(str(indicator.get("value") or ""))
+            for indicator in ir.get("indicators") or [])
     if exploiting and not known_cve:
         named = ", ".join(str(service.get("name")) for service in real_services) or "（IR 沒有任何目標軟體）"
         ask("exploited-weakness", "被利用的弱點（CVE／弱點類型）", "software",
@@ -1140,6 +1239,7 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
     _egress_questions(ir, actions, items, all_text)
     _phishing_domain_questions(ir, actions, items, all_text)
     _generic_entry_questions(ir, actions, items)
+    _unmapped_cve_questions(ir, services, actions, items)
     _generic_gap_questions(ir, services, actions, items)
     return items
 

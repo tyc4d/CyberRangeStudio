@@ -21,6 +21,11 @@ _PROMPT_FORMAT = {"type": "json_object"}
 _ATTACK_TECHNIQUE_RE = re.compile(r"^T\d{4}(?:\.\d{3})?$", re.IGNORECASE)
 _ATTACK_TACTIC_ID_RE = re.compile(r"^TA\d{4}$", re.IGNORECASE)
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\s*\d{4,7}\b", re.IGNORECASE)
+_SERVICE_DESCRIPTOR_WORDS = frozenset({
+    "application", "applications", "component", "components", "framework", "frameworks", "library", "libraries",
+    "middleware", "package", "packages", "product", "products", "server", "servers", "service", "services",
+    "software", "web",
+})
 _IPV4_RE = re.compile(r"(?<![\w.])\d{1,3}(?:\[\.\]|\.)\d{1,3}(?:\[\.\]|\.)\d{1,3}(?:\[\.\]|\.)\d{1,3}(?![\w.])")
 _DOMAIN_RE = re.compile(
     r"(?<![A-Za-z0-9@_-])(?:\*\.)?(?:[A-Za-z0-9_*~\u2010-\u2014-]+(?:\[\.\]|\.)+)+"
@@ -248,6 +253,56 @@ def _resolve_action_hosts(actions: list[dict[str, Any]], hosts: list[dict[str, A
             action["target_host_ref"] = next(iter(candidates))
 
 
+def _source_clauses(text: str) -> list[str]:
+    """Split at sentence boundaries without splitting periods inside FQDNs."""
+    protected = _DOMAIN_RE.sub(lambda match: match.group(0).replace(".", "\x00"), text)
+    return [part.strip().replace("\x00", ".")
+            for part in re.split(r"(?<=[.!?;；。！？])\s+|\n+", protected) if part.strip()]
+
+
+def _source_confirms_protocol_listener(item: dict[str, Any], units: list[SourceUnit]) -> bool:
+    """Keep a bare HTTP(S) label only when its cited text describes a listener/inbound endpoint."""
+    protocol = r"(?:https?|tls|ssl)"
+    listener = re.compile(
+        rf"\b{protocol}\b.{{0,35}}\b(?:listener|listens?|listening)\b|"
+        rf"\b(?:listener|listens?|listening)\b.{{0,35}}\b{protocol}\b|"
+        rf"\b(?:inbound|incoming)\b.{{0,30}}\b{protocol}\b|"
+        rf"\b{protocol}\b.{{0,30}}\b(?:inbound|incoming)\b",
+        re.IGNORECASE,
+    )
+    inbound = re.compile(r"\b(?:inbound|incoming)\b", re.IGNORECASE)
+    outbound_protocol = re.compile(
+        rf"\b(?:outbound|outgoing)\b.{{0,30}}\b{protocol}\b|\b{protocol}\b.{{0,30}}\b(?:outbound|outgoing)\b",
+        re.IGNORECASE,
+    )
+    negated = re.compile(
+        r"\b(?:no|not|never|without|does\s+not|did\s+not|cannot|can't|won't|lack(?:s|ed)?)\b"
+        r"[^.!?;；。！？]{0,45}\b(?:listener|listens?|listening|inbound|incoming)\b",
+        re.IGNORECASE,
+    )
+    evidence = item.get("evidence") or []
+    if isinstance(evidence, dict):
+        evidence = [evidence]
+    for citation in evidence:
+        if not isinstance(citation, dict):
+            continue
+        quote = strip_attack_tags(str(citation.get("quote") or "")).strip()
+        if not quote:
+            continue
+        source_ref = str(citation.get("source_ref") or "")
+        candidates = [unit for unit in units if not source_ref or unit.id == source_ref]
+        for clause in _source_clauses(quote):
+            if not listener.search(clause) or negated.search(clause):
+                continue
+            # A bare outbound request is not a listener. If the source explicitly gives
+            # listener/inbound wording, retain it even when another clause describes egress.
+            if outbound_protocol.search(clause) and not inbound.search(clause):
+                continue
+            if any(grade_quote(clause, unit.text)["level"] in {"exact", "strong"} for unit in candidates):
+                return True
+    return False
+
+
 class AnalysisError(ValueError):
     """Raised when the model response cannot be safely converted into an IR."""
 
@@ -396,6 +451,159 @@ def _extract_literal_indicators(units: list[SourceUnit]) -> list[dict[str, Any]]
             add("cve", value, quote, unit)
 
     return list(found.values())
+
+
+def _service_product_key(name: Any) -> str | None:
+    """Reduce a service label to its product words without changing the source label.
+
+    Context extraction can call the same product "Apache Struts component" and
+    "Apache Struts Web Framework". The extra words describe the product; they are
+    not evidence for a different one. Keep the original ``name`` untouched and use
+    this key only when connecting a literal CVE mention to one unambiguous product.
+    """
+    tokens = re.findall(r"[a-z0-9]+", str(name or "").casefold())
+    # Drop only known descriptive suffixes. Keep edition/product numbers and
+    # unknown words so unrelated products cannot collapse to the same key.
+    safe_suffix_descriptors = _SERVICE_DESCRIPTOR_WORDS - {"server", "servers"}
+    while tokens and tokens[-1] in safe_suffix_descriptors:
+        tokens.pop()
+    return " ".join(tokens) if tokens else None
+
+
+def _service_product_pattern(name: Any) -> tuple[str | None, re.Pattern[str] | None]:
+    key = _service_product_key(name)
+    if not key:
+        return None, None
+    words = key.split()
+    pattern = r"(?<![A-Za-z0-9])" + r"[\W_]+".join(re.escape(word) for word in words) + r"(?![A-Za-z0-9])"
+    return key, re.compile(pattern, re.IGNORECASE)
+
+
+def _affected_product_key(value: str) -> str | None:
+    """Normalize an affected-product phrase only when it identifies one product."""
+    # Conjunctions enumerate multiple products; never trim one side and accept it.
+    if re.search(r"[,;]|\b(?:and|or|nor)\b|\b(?:as well as|along with)\b", value, re.IGNORECASE):
+        return None
+    key = _service_product_key(value)
+    if not key:
+        return None
+    # A complete phrase may carry safe descriptive prefixes (e.g. "The Apache
+    # Struts Web Framework") but must reduce exactly to one service identity.
+    for service_word in ("the", "a", "an"):
+        if key.startswith(service_word + " "):
+            key = key[len(service_word) + 1:]
+    return key
+
+
+def _associate_source_cves_with_services(services: list[dict[str, Any]], indicators: list[dict[str, Any]],
+                                         evidence: list[dict[str, Any]], units: list[SourceUnit]) -> None:
+    """Attach a source-extracted CVE only when its source unit names one product.
+
+    CVE indicators are independently extracted from literal source text. A CVE is
+    associated with a service when the same source unit also names that service's
+    product words and no other product identity from the IR. Separate units and
+    ambiguous multi-product units stay unassociated for the missing-data question.
+    """
+    cve_indicators = {
+        str(indicator.get("value", "")).upper(): list(indicator.get("evidence_refs") or [])
+        for indicator in indicators
+        if indicator.get("type") == "cve" and _CVE_RE.fullmatch(str(indicator.get("value", "")).strip())
+    }
+    # Model-supplied service CVEs are untrusted until tied to an explicit source
+    # relation below. Preserve only IDs that this pass verifies.
+    for service in services:
+        service.pop("cve", None)
+        if isinstance(service.get("field_sources"), dict):
+            service["field_sources"].pop("cve", None)
+            if not service["field_sources"]:
+                service.pop("field_sources")
+    evidence_by_id = {str(item.get("id")): item for item in evidence}
+    service_patterns = [
+        (service, *_service_product_pattern(service.get("name")))
+        for service in services
+    ]
+    service_patterns = [(service, key, pattern) for service, key, pattern in service_patterns if key and pattern]
+    for unit in units:
+        # Analyze sentence boundaries, not SourceUnit paragraph boundaries. Keep
+        # commas and semicolons in the affected phrase so lists fail closed.
+        for clause in re.split(r"(?<=[.!?。！？])\s+|\n+", unit.text):
+            clause = clause.strip()
+            if not clause:
+                continue
+            matches = list(_CVE_RE.finditer(clause))
+            for match in matches:
+                cve = re.sub(r"\s+", "", match.group(0)).upper()
+                if cve not in cve_indicators:
+                    continue
+                # Keep the full post-CVE list through the sentence boundary. A
+                # comma may enumerate another affected product, so it cannot be
+                # treated as a safe end to the product phrase.
+                affected_clause = clause[match.start():]
+                # Only wording that explicitly links the CVE to an affected product
+                # is accepted. Include both sides of common relation constructions.
+                affected = re.search(
+                    r"(?:CVE[-\s]*\d{4}[-\s]*\d{4,7})\s+(?:affects?|impacts?|影響|影响)\s+(.{1,240})",
+                    affected_clause, re.IGNORECASE)
+                if not affected:
+                    # In product-first constructions, retain the full text before
+                    # the CVE so an enumerated affected list is not cut at commas.
+                    affected = re.search(
+                        r"(.{1,240}?)\s+(?:is\s+)?(?:was\s+)?(?:affected\s+by|vulnerable\s+(?:to|under)|impacts?)\s+"
+                        r"(?:the\s+)?(?:CVE[-\s]*\d{4}[-\s]*\d{4,7})",
+                        clause, re.IGNORECASE)
+                    if affected:
+                        product_text = affected.group(1)
+                        affected_key = _affected_product_key(product_text)
+                        if not affected_key:
+                            continue
+                        candidates = [(service, key) for service, key, _ in service_patterns
+                                      if key == affected_key]
+                        if len(candidates) != 1:
+                            continue
+                        refs = [ref for ref in cve_indicators.get(cve, [])
+                                if evidence_by_id.get(str(ref), {}).get("locator") == unit.locator]
+                        for service, _ in candidates:
+                            service["cve"] = list(dict.fromkeys([*(service.get("cve") or []), cve]))
+                            service.setdefault("field_sources", {})["cve"] = "source_quote"
+                            relation_quote = clause.strip()
+                            ref = next((ref for ref in refs if evidence_by_id.get(str(ref), {}).get("quote") == relation_quote), None)
+                            if ref is None:
+                                ref = f"evidence-{len(evidence) + 1}"
+                                while ref in {str(item.get("id")) for item in evidence}:
+                                    ref = f"evidence-{int(ref.rsplit('-', 1)[1]) + 1}"
+                                record = evidence_record(ref, relation_quote, unit.id, units, None)
+                                evidence.append(record)
+                                evidence_by_id[ref] = record
+                            service["evidence_refs"] = list(dict.fromkeys([*(service.get("evidence_refs") or []), *refs, ref]))
+                    continue
+                product_text = next((group for group in affected.groups() if group), "")
+                # Require exactly one mentioned mapped product and no unrepresented
+                # product phrase in the relation's affected-product side.
+                affected_key = _affected_product_key(product_text)
+                if not affected_key:
+                    continue
+                candidates = [(service, key) for service, key, _ in service_patterns
+                              if key == affected_key]
+                if len(candidates) != 1:
+                    continue
+                refs = [ref for ref in cve_indicators.get(cve, [])
+                        if evidence_by_id.get(str(ref), {}).get("locator") == unit.locator]
+                for service, _ in candidates:
+                    service["cve"] = list(dict.fromkeys([*(service.get("cve") or []), cve]))
+                    service.setdefault("field_sources", {})["cve"] = "source_quote"
+                    # The citation must prove the whole relationship, not just the
+                    # CVE token. Add an exact, locator-backed source quote record.
+                    relation_quote = clause.strip()
+                    ref = next((ref for ref in refs if evidence_by_id.get(str(ref), {}).get("quote") == relation_quote), None)
+                    if ref is None:
+                        existing_ids = {str(item.get("id")) for item in evidence}
+                        ref = f"evidence-{len(evidence) + 1}"
+                        while ref in existing_ids:
+                            ref = f"evidence-{int(ref.rsplit('-', 1)[1]) + 1}"
+                        record = evidence_record(ref, relation_quote, unit.id, units, None)
+                        evidence.append(record)
+                        evidence_by_id[ref] = record
+                    service["evidence_refs"] = list(dict.fromkeys([*(service.get("evidence_refs") or []), *refs, ref]))
 
 
 def _extract_literal_commands(units: list[SourceUnit]) -> list[dict[str, Any]]:
@@ -975,15 +1183,21 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
     dropped_non_software: list[str] = []
     for index, raw in enumerate(services_raw, start=1):
         item = dict(raw)
+        network_listener = False
         if is_communication_description(item.get("name")):
-            # A description of the attacker's traffic, not software to install on a host.
-            dropped_non_software.append(str(item.get("name")).strip())
-            continue
+            # A protocol is not software, but a source-confirmed inbound listener is
+            # useful network metadata and must survive analysis.
+            network_listener = _source_confirms_protocol_listener(item, units)
+            if not network_listener:
+                dropped_non_software.append(str(item.get("name")).strip())
+                continue
         service: dict[str, Any] = {
             "id": _unique_id(item.get("id"), f"service-{index}", {x["id"] for x in services}),
             "name": _string(item.get("name")) or "Unspecified service (absent)",
             "source": "llm",
         }
+        if network_listener:
+            service["service_kind"] = "network_listener"
         for key in ("version", "cpe", "catalogue_component"):
             if isinstance(item.get(key), str) and item[key].strip():
                 service[key] = item[key].strip()
@@ -1006,19 +1220,6 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["evidence_refs"] = _refs
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
-
-    # A CVE the source names in the same sentence as a recorded product belongs to that product.
-    sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
-    for service in services:
-        service_name = str(service.get("name") or "").casefold().strip()
-        if len(service_name) < 4:
-            continue
-        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if service_name in sentence.casefold()
-                 for match in _CVE_RE.findall(sentence)]
-        merged = list(dict.fromkeys([*service.get("cve", []), *found]))
-        if merged != service.get("cve", []):
-            service["cve"] = merged
-            service.setdefault("field_sources", {})["cve"] = "source_quote"
 
     # Explicit non-factual seeds keep downstream modules aware that target data
     # is not yet known. The accompanying missing_items explain what is absent.
@@ -1047,6 +1248,8 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         refs = attach({"evidence": citations, "epistemic_status": "supported"})
         indicator["evidence_refs"] = refs
         indicator["epistemic_status"] = settle_status(indicator, refs)
+
+    _associate_source_cves_with_services(services, indicators, evidence, units)
 
     commands = _extract_literal_commands(units)
     for command in commands:

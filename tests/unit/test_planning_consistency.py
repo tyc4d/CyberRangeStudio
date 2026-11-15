@@ -95,6 +95,43 @@ class RecordedServices(unittest.TestCase):
         self.assertNotIn("service-unspecified", [item["id"] for item in planned["services"]])
 
 
+class StrutsAliasNormalization(unittest.TestCase):
+    def test_component_suffix_and_action_alias_resolve_to_the_original_service(self):
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts component", "host_ref": "h1",
+                       "epistemic_status": "supported", "source": "llm"}]))
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])
+        service = planned["services"][0]
+        self.assertEqual(service["name"], "Apache Struts component")  # retain the source wording
+        self.assertEqual(service["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertFalse(service.get("no_component", False))
+        self.assertNotIn("version", service)  # no source version is manufactured
+        self.assertEqual(service["version_basis"], "assumed")
+        self.assertEqual(service["deployed_version"], "2.3.30")
+        self.assertEqual(next(host for host in planned["hosts"] if host["id"] == "h1")["service_refs"], ["s1"])
+
+        host = next(host for host in build_environment_plan(planned)["hosts"] if host["id"] == "h1")
+        self.assertEqual(host["image_hint"], "vuln-struts2-s2-045")
+        self.assertEqual(host["services"], [{"name": "Apache Struts component", "port": 8080, "protocol": "tcp"}])
+
+    def test_literal_cve_indicator_without_product_evidence_stays_unmapped_and_asks(self):
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", "exploited a vulnerable web service", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts component", "host_ref": "h1",
+                       "epistemic_status": "supported", "source": "llm"}],
+            indicators=[{"id": "indicator-1", "type": "cve", "value": "CVE-2017-5638",
+                         "epistemic_status": "supported", "source": "program", "evidence_refs": ["e1"]}] ))
+        service = next(item for item in planned["services"] if item["id"] == "s1")
+        self.assertFalse(service.get("cve"))
+        self.assertNotIn("version", service)
+        questions = [item for item in planned["missing_items"] if "CVE-2017-5638" in item.get("field", "")]
+        self.assertEqual(len(questions), 1)
+        self.assertIn("affected software", questions[0]["field"])
+
+
 class MentionNaming(unittest.TestCase):
     def test_vulnerability_nickname_and_role_are_not_used_as_software_names(self):
         ir = base_ir(
@@ -553,9 +590,10 @@ class TrafficDescriptionsAreNotSoftware(unittest.TestCase):
     def test_classifier_separates_descriptions_from_named_services(self):
         from app.cti.missing import is_communication_description as check
         for name in ("existing encrypted communication channels", "standard encrypted web protocols",
-                     "encrypted channels", "normal network traffic", "Encrypted Communication Channel"):
+                     "encrypted channels", "normal network traffic", "Encrypted Communication Channel",
+                     "HTTPS", "HTTPS protocol", "HTTPS listener"):
             self.assertTrue(check(name), name)
-        for name in ("RDP", "HTTPS", "SMB protocol service", "Apache Struts", "web service", "database service",
+        for name in ("RDP", "SMB protocol service", "Apache Struts", "web service", "database service",
                      "OpenVPN tunnel", "Remote Desktop Protocol", "File Transfer Protocol server", ""):
             self.assertFalse(check(name), name)
 
@@ -572,6 +610,191 @@ class TrafficDescriptionsAreNotSoftware(unittest.TestCase):
         host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
         self.assertEqual([entry["name"] for entry in host["services"]], ["Apache Struts"])
 
+
+class HostEvidenceTopologyBoundaries(unittest.TestCase):
+    def test_internal_fqdn_evidence_overrides_a_public_role_for_that_exact_hostname(self):
+        quote = "The internal host client.corp.example ran an endpoint agent."
+        plan = build_environment_plan(base_ir(
+            actions=[action("a1", "Exploit nginx", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "name": "client.corp.example", "role": "public web server",
+                    "evidence_refs": ["ev1"]}],
+            services=[{"id": "s1", "name": "nginx", "host_ref": "h1", "port": 80}],
+            evidence=[{"id": "ev1", "quote": quote, "quote_verified": True}],
+        ))
+        host = next(host for host in plan["hosts"] if host["id"] == "h1")
+        self.assertIn("scenario-internal", host["networks"])
+        self.assertNotIn("external", host["networks"])
+        self.assertFalse(any(connection.get("to_host") == "h1" for connection in plan["connections"]))
+
+    def test_internal_fqdn_prefix_does_not_match_a_longer_hostname(self):
+        quote = "The internal host client.corp.example.evil ran an endpoint agent."
+        plan = build_environment_plan(base_ir(
+            actions=[action("a1", "Exploit nginx", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "name": "client.corp.example", "role": "public web server",
+                    "evidence_refs": ["ev1"]}],
+            services=[{"id": "s1", "name": "nginx", "host_ref": "h1", "port": 80}],
+            evidence=[{"id": "ev1", "quote": quote, "quote_verified": True}],
+        ))
+        host = next(host for host in plan["hosts"] if host["id"] == "h1")
+        self.assertIn("external", host["networks"])
+        self.assertTrue(any(connection.get("from_host") == "attacker" and connection.get("to_host") == "h1"
+                            and connection.get("port") == 80 for connection in plan["connections"]))
+
+    def test_outbound_destination_is_attributed_only_to_the_host_in_its_clause(self):
+        quote = ("The internal database db was accessed through the public web host edge. "
+                 "The public web host edge connected to external domain update.example over HTTPS "
+                 "and downloaded payload.exe.")
+        plan = build_environment_plan(base_ir(
+            hosts=[{"id": "db", "name": "db", "role": "database", "evidence_refs": ["ev1"]},
+                   {"id": "edge", "name": "edge", "role": "public web host", "evidence_refs": ["ev1"]}],
+            services=[{"id": "s1", "name": "nginx", "host_ref": "edge", "port": 80}],
+            evidence=[{"id": "ev1", "quote": quote, "quote_verified": True}],
+        ))
+        db = next(host for host in plan["hosts"] if host["id"] == "db")
+        edge = next(host for host in plan["hosts"] if host["id"] == "edge")
+        self.assertNotIn("external", db["networks"])
+        self.assertIn("external", edge["networks"])
+        notes = [note for note in plan["notes"] if "outbound HTTPS" in note]
+        self.assertEqual(len(notes), 1)
+        self.assertIn("from edge to update.example", notes[0])
+        self.assertNotIn("payload.exe", notes[0])
+        self.assertEqual(plan["connections"], [])
+
+    def test_outbound_clause_naming_two_hosts_is_not_attributed_to_either(self):
+        quote = ("The internal database db received a report that the public web host edge "
+                 "connected to external domain update.example over HTTPS.")
+        plan = build_environment_plan(base_ir(
+            hosts=[{"id": "db", "name": "db", "role": "internal database", "evidence_refs": ["ev1"]},
+                   {"id": "edge", "name": "edge", "role": "public web host", "evidence_refs": ["ev1"]}],
+            evidence=[{"id": "ev1", "quote": quote, "quote_verified": True}],
+        ))
+        self.assertFalse(any("outbound HTTPS" in note for note in plan["notes"]))
+
+
+class CVEAffectedProductIsNotInstalled(unittest.TestCase):
+    def test_coordinated_affected_product_does_not_become_a_deployed_service(self):
+        statements = (
+            "Apache Struts runs the portal, and CVE-2024-12345 affects Apache HTTP Server.",
+            "Apache Struts runs the portal, while CVE-2024-12345 affects Apache HTTP Server.",
+            "CVE-2024-12345 affects Apache HTTP Server, while Apache Struts runs the portal.",
+        )
+        for text in statements:
+            with self.subTest(text=text):
+                planned = plan_dependencies(base_ir(
+                    actions=[action("a1", text, "h1", attack_technique="T1190")],
+                    hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+                ))
+                names = [service["name"] for service in planned["services"]]
+                self.assertTrue(any("Struts" in name for name in names), names)
+                self.assertFalse(any("HTTP Server" in name for name in names), names)
+                struts = next(service for service in planned["services"] if "Struts" in service["name"])
+                self.assertNotIn("CVE-2024-12345", struts.get("cve", []))
+                self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                                    for item in planned["missing_items"]))
+
+    def test_but_boundary_does_not_turn_affected_http_server_into_deployed_service(self):
+        text = "CVE-2024-12345 affects Apache HTTP Server, but Apache Struts runs the portal."
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        struts = next(service for service in planned["services"] if "Struts" in service["name"])
+        self.assertNotIn("CVE-2024-12345", struts.get("cve", []))
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_negated_installation_does_not_deploy_affected_http_server(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is not installed, "
+                "but Apache Struts runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_not_yet_installed_does_not_deploy_affected_http_server(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is not yet installed, "
+                "but Apache Struts runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_common_contracted_and_previously_negated_installation_is_not_deployed(self):
+        for negation in ("isnt installed", "is not installed", "arent installed", "wasnt installed",
+                         "werent installed", "hasnt installed", "havent installed",
+                         "is not previously installed"):
+            with self.subTest(negation=negation):
+                text = (f"CVE-2024-12345 affects Apache HTTP Server, which {negation}, "
+                        "but Apache Struts runs the portal.")
+                planned = plan_dependencies(base_ir(
+                    actions=[action("a1", text, "h1", attack_technique="T1190")],
+                    hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+                ))
+                names = [service["name"] for service in planned["services"]]
+                self.assertTrue(any("Struts" in name for name in names), names)
+                self.assertFalse(any("HTTP Server" in name for name in names), names)
+                self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                                    for item in planned["missing_items"]))
+
+    def test_explicitly_installed_running_affected_service_remains_a_candidate(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is installed and running, "
+                "but Apache Struts also runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("HTTP Server" in name for name in names), names)
+
+    def test_neither_installed_nor_running_affected_service_is_not_deployed(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is neither installed nor running, "
+                "but Apache Struts runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_neither_installed_nor_available_affected_service_is_not_deployed(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is neither installed nor available, "
+                "but Apache Struts runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_unrelated_neither_clause_does_not_negate_explicit_installation(self):
+        text = ("CVE-2024-12345 affects Apache HTTP Server, which is installed, "
+                "neither vendor nor security team documenting the version, "
+                "but Apache Struts runs the portal.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("HTTP Server" in name for name in names), names)
 
 class OneHostOneComponent(unittest.TestCase):
     """QA round 2: Struts:8080 plus an nginx stand-in on the same host must not reach IaC as deployable."""
