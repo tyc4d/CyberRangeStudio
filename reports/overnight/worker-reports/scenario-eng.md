@@ -255,3 +255,18 @@ cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-
 - 後端完整套件（合併 main 後）：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **235 passed**；之後只加了一個可重現性規則與其測試，再跑 `tests/unit` 與 planner／cti／iac／scenario 模組測試為 163 passed（完整套件未再重跑）。
 - apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker，自己的埠 8101／8102）：**2 passed**，14 個步驟全部通過，含部署 4 個容器、驗證、報告、清理。
   驗證層級 `env_build=PASS, behavior_repro=NOT_TESTED, full_chain=PARTIAL`。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log-round2.json`。事後無殘留容器或程序。
+
+## 8. Round-2 複審後追加
+
+| 項目 | 根因 | 作法 | 測試 |
+|---|---|---|---|
+| 新分析的情境名稱被服務名稱覆寫（frontend-eng） | 我在批次「CVE 掛到產品」加的迴圈用了 `name` 當區域變數，蓋掉了函式的情境名稱參數，之後就把最後一個服務的小寫名稱寫進 `ir.name` | 改用獨立變數；情境名稱只來自使用者給的值 | `ScenarioNameIsTheUsers`；真 LLM 重跑 Clop／Equifax，名稱維持輸入值 |
+| Clop a1 未帶原文標的 T1190 | 模型沒有把句中的 `[T1190]` 抄進欄位 | 行為引用的原文句子裡若剛好只有一個行內 ATT&CK 標記，由程式帶入（`field_sources.attack_technique=source_quote`）；同句多個標記時不指派 | `InlineTechniqueAndBareQuotes`（2 個）；真 LLM 重跑 a1 已有 T1190 |
+| 模型把引句回成純字串會讓整次分析失敗 | 證據項目只接受物件 | 純字串視為引句，位置由程式在原文定位 | `test_bare_string_evidence_is_accepted…` |
+
+**未採用的嘗試（如實記錄）**：為了補「安裝 web shell」這類同句第二個動作，我加過一次「完整性」提問（請模型列出原文有、清單沒有的攻擊者行為）。
+真 LLM 實測結果變差：Clop 由 7 個行為變 21 個，把集團歷史（Accellion、Get2、SDBot、Truebot、Cobalt Strike）當成本事件行為；Equifax 多出 6 個重述，
+而且仍然沒有補出「安裝 web shell」。這會破壞 QA 第二輪肯定的「不把歷史塞進本次事件」，所以已移除，沒有進入最終程式。
+當時的輸出保存在 `evidence/scenario-eng/completeness-pass-attempt/`。Clop 的「安裝 web shell（human2.aspx）」目前仍未獨立成行為。
+
+測試：合併 main 後完整套件 **250 passed**。這一批沒有重跑 full-flow e2e。

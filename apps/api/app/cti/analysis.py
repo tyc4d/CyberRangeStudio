@@ -469,7 +469,6 @@ def analyze_source(
             )
         else:
             result = draft
-    _merge_missed_actions(result, source_payload)
     _merge_target_context(result, source_payload)
     _merge_relations(result, source_payload)
     return _build_ir(
@@ -545,81 +544,6 @@ def _merge_target_context(result: dict[str, Any], source_payload: list[dict[str,
         action.pop("source_host_ref", None)
         if entry and entry.get("source_host_ref"):
             action["source_host_ref"] = entry["source_host_ref"]
-
-
-_COMPLETENESS_RULES = (
-    "Return only a JSON object {\"additional_actions\":[...]}. You are given the source units and the attacker actions already "
-    "extracted from them. List only attacker behaviours that the source states and that no listed action covers; return an "
-    "empty array when nothing is missing. Read each sentence that describes the threat actor, a tool or malware: when one "
-    "sentence states several operations (an operation and what it was used to accomplish, or operations joined by 'and' or "
-    "'then'), each operation is a separate action, and so is each item of a list of things a tool does. Do not repeat or "
-    "rephrase a listed action, do not add defender or victim activity, and do not add anything the source does not state. "
-    "Each additional action needs: id (new, not used above), name in the source's own wording, actor 'attacker', occurrence "
-    "('performed' when the source says it happened in this incident, 'capability' when it only says what a tool can do), "
-    "outcome ('succeeded', 'failed', 'partial' or 'unknown'), epistemic_status 'supported', and evidence:[{quote, "
-    "source_ref}] where quote is an exact, unaltered substring of that source unit. Never add ATT&CK ids or bracketed notes."
-)
-
-
-def _merge_missed_actions(result: dict[str, Any], source_payload: list[dict[str, Any]]) -> None:
-    """Completeness pass: add attacker behaviours the source states that the first pass left out.
-
-    One sentence often carries two operations and the first pass keeps only one. The additions
-    are placed in narrative order (by the source unit they cite). A failed pass changes nothing.
-    """
-    listed = [item for item in result.get("actions") or [] if isinstance(item, dict)]
-    if not listed:
-        return
-    messages = [
-        {"role": "system", "content": "You are a careful cyber threat intelligence analyst producing provisional, evidence-grounded data."},
-        {"role": "user", "content": json.dumps({
-            "task": "Find attacker behaviours stated in the source that the listed actions do not cover",
-            "rules": _COMPLETENESS_RULES,
-            "listed_actions": [{"id": item.get("id"), "name": item.get("name"),
-                                "evidence": [entry.get("quote") for entry in item.get("evidence") or [] if isinstance(entry, dict)]}
-                               for item in listed],
-            "source_units": source_payload,
-        }, ensure_ascii=False)},
-    ]
-    try:
-        answer = _call_json(messages, purpose="cti_analysis_completeness")
-    except AnalysisError:
-        return
-    extra = answer.get("additional_actions")
-    if not isinstance(extra, list):
-        return
-    order = {unit["source_ref"]: index for index, unit in enumerate(source_payload)}
-    words = lambda value: {word for word in re.findall(r"[a-z0-9]{4,}", str(value).casefold())}
-
-    def position(item: dict[str, Any]) -> int:
-        refs = [order.get(entry.get("source_ref")) for entry in item.get("evidence") or [] if isinstance(entry, dict)]
-        refs = [ref for ref in refs if ref is not None]
-        return min(refs) if refs else len(order)
-
-    used_ids = {str(item.get("id")) for item in listed}
-    for item in extra:
-        if not isinstance(item, dict) or not _string(item.get("name")) or not item.get("evidence"):
-            continue
-        wanted = words(item["name"])
-        quotes = {re.sub(r"\s+", " ", str(entry.get("quote") or "")).strip().casefold()
-                  for entry in item.get("evidence") or [] if isinstance(entry, dict)}
-
-        def cited_by(other: dict[str, Any]) -> set[str]:
-            return {re.sub(r"\s+", " ", str(entry.get("quote") or "")).strip().casefold()
-                    for entry in other.get("evidence") or [] if isinstance(entry, dict)}
-
-        if any((wanted and len(wanted & words(other.get("name"))) / len(wanted) >= 0.8)
-               or (quotes and quotes <= cited_by(other)) for other in listed):
-            continue  # the same behaviour in other words, or the very sentence an action already cites
-        if str(item.get("id")) in used_ids or not _string(item.get("id")):
-            item["id"] = f"a{len(listed) + 1}"
-            while item["id"] in used_ids:
-                item["id"] += "x"
-        used_ids.add(str(item["id"]))
-        where = position(item)
-        index = next((i for i, other in enumerate(listed) if position(other) > where), len(listed))
-        listed.insert(index, item)
-    result["actions"] = listed
 
 
 _RELATION_RULES = (
@@ -804,10 +728,13 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
             raise AnalysisError("Each claim's evidence and evidence_refs must be arrays.")
         pairs: list[tuple[str, str]] = []
         for citation in citations:
+            if isinstance(citation, str):
+                # A bare quote: where it stands in the source is established by the program anyway.
+                citation = {"quote": citation, "source_ref": ""}
             if not isinstance(citation, dict):
                 raise AnalysisError("Evidence entries must be objects with quote and source_ref.")
             quote = citation.get("quote", "")
-            source_ref = citation.get("source_ref", "")
+            source_ref = citation.get("source_ref") or ""
             if not isinstance(quote, str) or not isinstance(source_ref, str):
                 raise AnalysisError("Evidence quote and source_ref must be strings.")
             pairs.append((quote, source_ref))
