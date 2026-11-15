@@ -2,7 +2,10 @@ import { t } from "../i18n";
 // Thin API client. All backend calls go through here. Never touches API keys.
 // Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
 // are the frontend's working assumption (see apps/web/README.md). They live only in this file.
-import type { ScenarioIR, ValidationReport } from "@contracts";
+import type {
+  ScenarioIR, ValidationReport,
+  ValidationPlan, PocManifest, ExecutionResult, ChainValidation, ExportManifest,
+} from "@contracts";
 
 export interface Budget {
   est_total_usd: number;
@@ -183,4 +186,37 @@ export const api = {
   // module 8 validation
   getReport: (id: string) => req<ValidationReport | any>(`/api/validate/${enc(id)}/report`),
   runValidation: (id: string) => post<ValidationReport | any>(`/api/validate/${enc(id)}/run`),
+
+  // module 9 — PoC discovery, exploit validation & environment export (CONTRACT.md §HTTP API, prefix /api/poc).
+  // All six frozen routes. The /report response shape is not yet a @contracts type (m9-chain owns it), so it is
+  // typed loosely; the GUI derives its five separate fidelity metrics defensively. See requests/m9-gui.md.
+  poc: {
+    plan: (id: string) => post<ValidationPlan>(`/api/poc/${enc(id)}/plan`),
+    discover: (id: string) => post<PocManifest>(`/api/poc/${enc(id)}/discover`),
+    /** Real, ownership-gated payload execution. `signal` lets the GUI stop waiting (client-side abort). */
+    execute: (id: string, actionIds?: string[], signal?: AbortSignal) =>
+      req<ExecutionResult[]>(`/api/poc/${enc(id)}/execute`, {
+        method: "POST",
+        body: JSON.stringify(actionIds && actionIds.length ? { action_ids: actionIds } : {}),
+        signal,
+      }),
+    chain: (id: string) => post<ChainValidation>(`/api/poc/${enc(id)}/chain`),
+    report: (id: string) => req<any>(`/api/poc/${enc(id)}/report`),
+    /** `format` is additive (CONTRACT has no field yet; a backend may ignore it). */
+    export: (id: string, format?: string) =>
+      post<{ bundle_path: string; manifest: ExportManifest }>(`/api/poc/${enc(id)}/export`, format ? { format } : {}),
+    /** Fetch the built ZIP bytes. No frozen route yet (see requests/m9-gui.md); resolves null on 404/501. */
+    exportDownload: async (id: string): Promise<{ data: ArrayBuffer; contentType: string } | null> => {
+      const path = `/api/poc/${enc(id)}/export/download`;
+      let r: Response;
+      try {
+        r = await fetch(path);
+      } catch (e) {
+        throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "GET", path, "offline");
+      }
+      if (r.status === 404 || r.status === 501) return null;
+      if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
+      return { data: await r.arrayBuffer(), contentType: r.headers.get("content-type") ?? "" };
+    },
+  },
 };
