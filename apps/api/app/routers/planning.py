@@ -1,6 +1,7 @@
 """Dependency and topology planning endpoints (modules 4 and 5)."""
 from __future__ import annotations
 
+import copy
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,6 +12,7 @@ from cr_contracts import iter_errors
 from app import store
 from app.planner.catalogue import public_catalogue
 from app.planner.dependencies import plan_dependencies
+from app.planner.approval import topology_approval_state
 from app.planner.topology import attach_environment_plan, connections_digest
 
 router = APIRouter(prefix="/api/planning", tags=["planning"])
@@ -75,18 +77,41 @@ def approve_topology(scenario_id: str, request: ApprovalRequest):
     plan = ir.get("environment_plan")
     if not isinstance(plan, dict):
         raise HTTPException(status_code=409, detail="Topology has not been generated")
+    current_version = ir.get("ir_version")
+    if request.approved and (isinstance(current_version, bool) or not isinstance(current_version, int) or current_version < 1):
+        raise HTTPException(status_code=409, detail={
+            "code": "approval_stale",
+            "message": "無法確認目前情境版本；請重新載入情境後再核准。",
+        })
+    # Legacy plans have no source version. Since the user is approving the plan now,
+    # bind that approval to the current IR. Do not overwrite a recorded older version.
+    if request.approved and not any(key in plan and plan[key] is not None
+                                    for key in ("based_on_ir_version", "approved_ir_version", "ir_version")):
+        plan["based_on_ir_version"] = current_version
     approval: dict[str, Any] = {
         "approved": bool(request.approved),
         "approved_by": request.approved_by or "user",
         "approved_at": datetime.now(timezone.utc).isoformat(),
         "connections_digest": connections_digest(plan),
     }
+    if request.approved:
+        approval["approved_ir_version"] = current_version
+        approval["based_on_ir_version"] = current_version
     if request.note:
         approval["note"] = request.note
     plan["approval"] = approval
     ir["environment_plan"] = plan
-    _validated_update(scenario_id, ir, "topology-approval")
-    return plan
+    state = topology_approval_state(ir)
+    if request.approved and not state["deployable"]:
+        raise HTTPException(status_code=409, detail={
+            "code": "approval_stale",
+            "message": state["message"],
+            "approval": state,
+        })
+    saved = _validated_update(scenario_id, ir, "topology-approval")
+    response = copy.deepcopy(saved["environment_plan"])
+    response["approval_state"] = topology_approval_state(saved)
+    return response
 
 
 @router.get("/{scenario_id}/topology")
@@ -98,4 +123,6 @@ def get_topology(scenario_id: str):
     errors = iter_errors("environment-plan", plan)
     if errors:
         raise HTTPException(status_code=409, detail={"message": "Stored topology is invalid", "errors": errors})
-    return plan
+    response = copy.deepcopy(plan)
+    response["approval_state"] = topology_approval_state(ir)
+    return response

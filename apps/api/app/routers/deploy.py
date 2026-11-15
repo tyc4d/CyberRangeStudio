@@ -1,11 +1,13 @@
 """Module 7: controlled local Docker Compose lifecycle."""
+from typing import Any
+
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
 from app import store
 from app.deploy import manager
 from app.iac.generator import PlanError, validate_id
-from app.planner.topology import connections_digest
+from app.planner.approval import topology_approval_state
 
 router = APIRouter(prefix="/api/deploy", tags=["deploy"])
 
@@ -28,16 +30,24 @@ def _validate(scenario_id: str) -> str:
 
 
 def _require_topology_approval(scenario_id: str) -> None:
-    """Refuse deployment unless the current topology was human-approved (module 2/5 gate)."""
+    """Refuse deployment unless the topology approval still matches the current scenario."""
     ir = store.get(scenario_id)
-    plan = ir.get("environment_plan") if isinstance(ir, dict) else None
-    approval = plan.get("approval") if isinstance(plan, dict) else None
-    if not isinstance(approval, dict) or approval.get("approved") is not True:
+    state = topology_approval_state(ir)
+    if not state["approved"]:
         manager.record(scenario_id, "up", "rejected", {"reason": "topology not approved"})
         raise HTTPException(status_code=409, detail="topology approval required: POST /api/planning/{id}/topology/approve before deploying")
-    if approval.get("connections_digest") != connections_digest(plan):
-        manager.record(scenario_id, "up", "rejected", {"reason": "approval stale; topology changed since approval"})
-        raise HTTPException(status_code=409, detail="topology changed since approval; re-approve before deploying")
+    if not state["deployable"]:
+        manager.record(scenario_id, "up", "rejected", {"reason": state["message"], "approval": state})
+        raise HTTPException(status_code=409, detail={
+            "code": "approval_stale",
+            "message": state["message"],
+            "approval": state,
+        })
+
+
+def _with_approval_state(scenario_id: str, result: dict[str, Any]) -> dict[str, Any]:
+    """Expose the same approval verdict beside live status and preflight data."""
+    return {**result, "approval": topology_approval_state(store.get(scenario_id))}
 
 
 @router.post("/{scenario_id}/up")
@@ -65,13 +75,13 @@ def deployment_preflight(scenario_id: str):
     """Read-only pre-deployment check: IaC state, host isolation support, host capacity,
     and whether deploying now would rebuild an environment that is already running."""
     scenario_id = _validate(scenario_id)
-    return manager.deploy_preflight(scenario_id)
+    return _with_approval_state(scenario_id, manager.deploy_preflight(scenario_id))
 
 
 @router.get("/{scenario_id}/status")
 def deployment_status(scenario_id: str):
     scenario_id = _validate(scenario_id)
-    return manager.do_status(scenario_id)
+    return _with_approval_state(scenario_id, manager.do_status(scenario_id))
 
 
 @router.get("/{scenario_id}/health")

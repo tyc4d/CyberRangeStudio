@@ -626,6 +626,9 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
         "access_rules": rules,
         "approval": {"approved": False},
     }
+    ir_version = ir.get("ir_version")
+    if isinstance(ir_version, int) and not isinstance(ir_version, bool) and ir_version >= 1:
+        plan["based_on_ir_version"] = ir_version
     if verify_blocked:
         plan["verify_blocked"] = verify_blocked
     if notes:
