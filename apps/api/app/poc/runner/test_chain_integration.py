@@ -304,3 +304,47 @@ def test_cancel_flags_all_active_execute_jobs_without_touching_other_jobs(lab):
     for job_id in ("old-pending", "old-running"):
         runner.poc_store.set_job_state(job_id, "cancelled")
     assert runner.cancel_execution(SID) == {"cancelled": False}
+
+
+def test_idle_status_exposes_no_selected_or_active_job(lab):
+    status = runner.execution_status(SID)
+    assert status["job_id"] is None
+    assert status["job_state"] == status["selected_job_state"] == "idle"
+    assert status["jobs"] == status["active_jobs"] == status["per_action"] == []
+
+
+@pytest.mark.parametrize("older_state", ["pending", "running"])
+def test_status_tracks_cancelled_job_identity_through_its_own_terminal_transition(lab, older_state):
+    _, _, _, req, _ = lab
+    older_id = "0" * 32
+    runner.poc_store.create_job(older_id, SID, "execute")
+    runner.poc_store.set_job_state(older_id, older_state)
+    newer, = runner.run_job(SID, [req])
+    newer_id = execution_log(newer)["context"]["job_id"]
+    for job_id, scenario, kind in (("f" * 32, "unrelated", "execute"), ("d" * 32, SID, "discover")):
+        runner.poc_store.create_job(job_id, scenario, kind)
+        runner.poc_store.set_job_state(job_id, "running")
+
+    before = runner.execution_status(SID)
+    assert before["job_id"] == newer_id
+    assert before["selected_job_state"] == "done"
+    assert before["job_state"] == older_state
+    assert {entry["job_id"] for entry in before["jobs"]} == {older_id, newer_id}
+    assert before["active_jobs"] == [{"job_id": older_id, "state": older_state, "cancel_requested": False}]
+    assert before["per_action"] == [{"action_id": "a1", "stages": newer["stages"]}]
+
+    assert runner.cancel_execution(SID) == {"cancelled": True}
+    requested = runner.execution_status(SID)
+    assert requested["job_id"] == newer_id
+    assert requested["selected_job_state"] == "done"
+    assert requested["job_state"] == older_state
+    assert requested["active_jobs"] == [{"job_id": older_id, "state": older_state, "cancel_requested": True}]
+
+    runner.poc_store.set_job_state(older_id, "cancelled")
+    completed = runner.execution_status(SID)
+    assert completed["job_id"] == newer_id
+    assert completed["job_state"] == completed["selected_job_state"] == "done"
+    assert completed["active_jobs"] == []
+    states = {entry["job_id"]: entry for entry in completed["jobs"]}
+    assert states[older_id] == {"job_id": older_id, "state": "cancelled", "cancel_requested": True}
+    assert states[newer_id] == {"job_id": newer_id, "state": "done", "cancel_requested": False}
