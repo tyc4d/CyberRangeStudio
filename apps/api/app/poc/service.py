@@ -68,7 +68,12 @@ def _predecessors(action_id: str, ir: dict[str, Any]) -> list[str]:
 def _service_for(action: dict[str, Any], ir: dict[str, Any]) -> dict[str, Any] | None:
     host_ref = action.get("target_host_ref")
     services = [s for s in ir.get("services", []) or [] if isinstance(s, dict)]
-    scoped = [s for s in services if not host_ref or s.get("host_ref") == host_ref]
+    host = next((h for h in ir.get("hosts", []) or []
+                 if isinstance(h, dict) and h.get("id") == host_ref), None)
+    ref_ids = {str(r) for r in ((host or {}).get("service_refs") or [])}
+    # canonical resolution: the target host's service_refs, OR a service whose host_ref matches
+    scoped = [s for s in services
+              if not host_ref or s.get("host_ref") == host_ref or str(s.get("id")) in ref_ids]
     if not scoped:
         return None
     # Prefer a service that carries a CVE / is a substitute marker, else the first.

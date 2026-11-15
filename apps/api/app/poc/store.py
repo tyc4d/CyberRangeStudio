@@ -43,6 +43,13 @@ def _conn() -> sqlite3.Connection:
         )"""
     )
     c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_manifests (
+            scenario_id TEXT PRIMARY KEY,
+            generated_at TEXT,
+            ts REAL
+        )"""
+    )
+    c.execute(
         """CREATE TABLE IF NOT EXISTS poc_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             scenario_id TEXT NOT NULL,
@@ -134,6 +141,13 @@ def save_manifest(scenario_id: str, manifest: dict[str, Any]) -> None:
     with _LOCK:
         c = _conn()
         try:
+            # Record that a discovery completed for this scenario, even with 0 candidates,
+            # so export can distinguish "discovery ran, found nothing" from "never ran".
+            c.execute(
+                "INSERT INTO poc_manifests (scenario_id, generated_at, ts) VALUES (?,?,?) "
+                "ON CONFLICT(scenario_id) DO UPDATE SET generated_at=excluded.generated_at, ts=excluded.ts",
+                (scenario_id, manifest.get("generated_at"), time.time()),
+            )
             c.execute("DELETE FROM poc_candidates WHERE scenario_id=?", (scenario_id,))
             for cand in manifest.get("items", []):
                 c.execute(
@@ -163,9 +177,16 @@ def get_manifest(scenario_id: str) -> Optional[dict[str, Any]]:
                 "ORDER BY compatibility_score DESC",
                 (scenario_id,),
             ).fetchall()
+            marker = c.execute(
+                "SELECT generated_at FROM poc_manifests WHERE scenario_id=?",
+                (scenario_id,),
+            ).fetchone()
         finally:
             c.close()
     if not rows:
+        # A completed discovery with zero candidates is still a recorded manifest.
+        if marker is not None:
+            return {"scenario_id": scenario_id, "generated_at": marker["generated_at"], "items": []}
         return None
     return {
         "scenario_id": scenario_id,
