@@ -5,10 +5,49 @@ import re
 from typing import Any, Mapping
 
 WEIGHTS = {"version": .35, "env": .20, "code_available": .20, "source_trust": .15, "exec_cost": .10}
+_VERSION = r"\d+(?:\.\d+)+"
 
 
 def _norm(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
+
+
+def _release(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in value.split("."))
+
+
+def _compare(left: tuple[int, ...], right: tuple[int, ...]) -> int:
+    length = max(len(left), len(right))
+    left += (0,) * (length - len(left))
+    right += (0,) * (length - len(right))
+    return (left > right) - (left < right)
+
+
+def _in_version_range(target: tuple[int, ...], expression: str) -> bool | None:
+    """Evaluate supported release ranges; unknown syntax is not compatibility proof."""
+    expression = re.sub(r"^versions?\s+", "", expression.strip().casefold())
+    bounded = re.fullmatch(rf"({_VERSION})\s*(?:through|to|[-–])\s*({_VERSION})", expression)
+    if bounded:
+        lower, upper = map(_release, bounded.groups())
+        return _compare(lower, target) <= 0 and _compare(target, upper) <= 0
+    bound = re.fullmatch(rf"(before|prior to|earlier than|through|up to|after|at least|<=|>=|<|>)\s*({_VERSION})", expression)
+    if bound:
+        operator, version = bound.groups()
+        comparison = _compare(target, _release(version))
+        if operator in {"before", "prior to", "earlier than", "<"}:
+            return comparison < 0
+        if operator in {"through", "up to", "<="}:
+            return comparison <= 0
+        if operator in {"after", ">"}:
+            return comparison > 0
+        return comparison >= 0
+    family = re.fullmatch(r"(\d+(?:\.\d+)*)\.(?:x|\*)", expression)
+    if family:
+        prefix = _release(family.group(1))
+        return target[:len(prefix)] == prefix
+    if re.fullmatch(_VERSION, expression):
+        return _compare(target, _release(expression)) == 0
+    return None
 
 
 def _version_score(target: str | None, version_range: str, product_match: bool) -> float:
@@ -16,27 +55,21 @@ def _version_score(target: str | None, version_range: str, product_match: bool) 
         return 0.0
     if not target:
         return .45  # product/CVE evidence exists, but no target version to compare
-    target_norm = _norm(target)
     range_norm = _norm(version_range)
     if not version_range or any(x in range_norm for x in ("all versions", "version independent", "any version")):
         return .65
-    # Explicit ranges commonly include exact versions or family tokens (e.g. 2.3.x).
-    tokens = re.findall(r"\d+(?:\.\d+)+(?:\.x)?", version_range.casefold())
-    if not tokens:
-        return .45
-    target_tokens = re.findall(r"\d+(?:\.\d+)+", target.casefold())
-    if not target_tokens:
+    # Only a concrete numeric target release can prove range membership. Do not
+    # discard qualifiers (e.g. -rc1) or extract an arbitrary endpoint from prose.
+    target_release = re.fullmatch(rf"v?({_VERSION})", target.strip().casefold())
+    if not target_release:
         return .4
-    for token in tokens:
-        if token.endswith(".x"):
-            if target_tokens[0].startswith(token[:-1]):
-                return 1.0
-        elif target_tokens[0] == token:
-            return 1.0
-        elif target_tokens[0].startswith(token + "."):
-            return .85
-    # A known but nonmatching version is meaningful negative evidence.
-    return .05
+    # _version_hint emits semicolon-separated alternatives. Evaluate complete
+    # clauses, preserving exclusive/inclusive bounds instead of matching tokens.
+    matches = [_in_version_range(_release(target_release.group(1)), clause)
+               for clause in version_range.split(";")]
+    if any(match is True for match in matches):
+        return 1.0
+    return .45 if any(match is None for match in matches) else .05
 
 
 def score_candidate(candidate: Mapping[str, Any], target: Mapping[str, Any] | None = None) -> dict[str, float]:

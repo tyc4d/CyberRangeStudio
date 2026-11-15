@@ -32,8 +32,115 @@ class RankingTests(unittest.TestCase):
         scores = score_candidate(self.candidate(), {"product": "Apache Struts", "version": "2.14.1", "cves": ["CVE-2021-44228"]})
         self.assertEqual(scores["version"], 0)
 
+    def test_version_ranges_respect_numeric_order_and_boundaries(self):
+        cases = [
+            ("2.10.0", "before 2.15.0", 1),
+            ("2.15.0", "before 2.15.0", .05),
+            ("2.16.0", "before 2.15.0", .05),
+            ("2.15", "prior to 2.15.0", .05),
+            ("2.14.1", "versions prior to 2.15.0", 1),
+            ("2.0.0", "2.0.0 through 2.14.1", 1),
+            ("2.10.0", "2.0.0 through 2.14.1", 1),
+            ("2.14.1", "2.0.0 through 2.14.1", 1),
+            ("1.9.9", "2.0.0 through 2.14.1", .05),
+            ("2.15.0", "2.0.0 through 2.14.1", .05),
+            ("2.10.0", "2.0.0 to 2.14.1", 1),
+            ("2.10.0", "2.0.0 – 2.14.1", 1),
+            ("2.0.0", "2.14.1 through 2.0.0", .05),
+            ("2.15.0", "up to 2.15.0", 1),
+            ("2.15.1", "through 2.15.0", .05),
+            ("2.15.0", "<2.15.0", .05),
+            ("2.15.0", "<=2.15.0", 1),
+            ("2.15.0", ">=2.15.0", 1),
+            ("2.15.0", "after 2.15.0", .05),
+            ("2.15.1", "after 2.15.0", 1),
+            ("2.3.30", "2.3.x", 1),
+            ("2.30.0", "2.3.x", .05),
+            ("2.3", "2.3.0", 1),
+            ("2.3.1", "2.3.0", .05),
+            ("2.12.0", "before 2.3.0; 2.10.0 through 2.14.1", 1),
+            ("2.15.0", "before 2.3.0; 2.10.0 through 2.14.1", .05),
+        ]
+        for target, version_range, expected in cases:
+            with self.subTest(target=target, version_range=version_range):
+                score = score_candidate(self.candidate(version_range=version_range),
+                                        {"product": "Apache Log4j", "version": target})
+                self.assertEqual(score["version"], expected)
+
+    def test_unsupported_version_text_does_not_prove_compatibility(self):
+        for target, version_range in [("2.15.0-rc1", "before 2.15.0"),
+                                      ("2.15.0", "not 2.15.0"),
+                                      ("2.15.0", ">=2.0.0, <2.15.0"),
+                                      ("2.15.0", "unconfirmed")]:
+            with self.subTest(target=target, version_range=version_range):
+                score = score_candidate(self.candidate(version_range=version_range),
+                                        {"product": "Apache Log4j", "version": target})
+                self.assertLess(score["version"], .9)
+
 
 class DiscoveryTests(unittest.TestCase):
+    def linked_fixture(self):
+        client = Mock()
+        client.nvd_search.return_value = None
+        client.exploitdb_search.return_value = []
+        client.github_search.return_value = [{"source_url": "https://github.com/example/log4j-poc",
+            "description": "Apache Log4j CVE-2021-44228 exploit versions before 2.15.0", "language": "Python"}]
+        ir = {"services": [{"id": "svc1", "name": "Apache Log4j", "version": "2.10.0",
+                             "cve": ["CVE-2021-44228"]},
+                            {"id": "foreign", "name": "Unrelated service", "host_ref": "h2",
+                             "cve": ["CVE-2099-0001"]}],
+              "hosts": [{"id": "h1", "os": "Linux", "service_refs": ["svc1"]},
+                        {"id": "h2", "service_refs": ["foreign"]}],
+              "actions": [{"id": "a1", "target_host_ref": "h1", "name": "Exploit service"}]}
+        return client, ir
+
+    def test_target_host_resolves_services_using_either_ir_link(self):
+        for link in ("service_refs", "host_ref", "both"):
+            with self.subTest(link=link):
+                client, ir = self.linked_fixture()
+                if link != "service_refs":
+                    ir["services"][0]["host_ref"] = "h1"
+                if link == "host_ref":
+                    ir["hosts"][0].pop("service_refs")
+                manifest = DiscoveryEngine(client).discover("s", ir, "t")
+                self.assertEqual(iter_errors_shape("PocManifest", manifest), [])
+                self.assertEqual(len(manifest["items"]), 1)
+                item = manifest["items"][0]
+                self.assertEqual((item["action_id"], item["cve"]), ("a1", "CVE-2021-44228"))
+                self.assertEqual(item["score_breakdown"]["version"], 1)
+                client.nvd_search.assert_called_once_with("CVE-2021-44228")
+
+    def test_multiple_host_services_keep_cves_and_versions_separate(self):
+        client, ir = self.linked_fixture()
+        ir["services"].append({"id": "svc2", "name": "Apache Log4j", "version": "2.15.0",
+                               "cve": ["CVE-2021-45046"]})
+        ir["hosts"][0]["service_refs"].append("svc2")
+        client.github_search.side_effect = lambda query: [{
+            "source_url": "https://github.com/example/" + query.split('"')[1],
+            "description": "Apache Log4j " + query.split('"')[1] + " exploit before 2.15.0",
+            "language": "Python"}]
+        manifest = DiscoveryEngine(client).discover("s", ir, "t")
+        self.assertEqual({item["cve"]: item["score_breakdown"]["version"] for item in manifest["items"]},
+                         {"CVE-2021-44228": 1, "CVE-2021-45046": .05})
+        self.assertEqual(client.nvd_search.call_count, 2)
+
+    def test_explicit_service_ref_takes_precedence_over_host_services(self):
+        client, ir = self.linked_fixture()
+        ir["hosts"][0]["service_refs"].append("foreign")
+        ir["actions"][0]["service_ref"] = "svc1"
+        manifest = DiscoveryEngine(client).discover("s", ir, "t")
+        self.assertEqual(len(manifest["items"]), 1)
+        client.nvd_search.assert_called_once_with("CVE-2021-44228")
+
+    def test_unresolved_references_do_not_search_unrelated_services(self):
+        for updates in ({"target_host_ref": "missing"}, {"service_ref": "missing"}):
+            with self.subTest(updates=updates):
+                client, ir = self.linked_fixture()
+                ir["actions"][0].update(updates)
+                self.assertEqual(DiscoveryEngine(client).discover("s", ir, "t")["items"], [])
+                client.github_search.assert_not_called()
+                client.nvd_search.assert_not_called()
+
     def test_manifest_candidates_are_ranked_and_contract_valid(self):
         client = Mock()
         client.nvd_search.return_value = {"source_url": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228",

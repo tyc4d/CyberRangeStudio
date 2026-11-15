@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
-from typing import Any, Callable, Mapping
+from typing import Any, Iterator, Mapping
 
 from .ranking import rank_candidate
 from .sources import MetadataClient, cve_ids
@@ -19,6 +19,28 @@ def _method(language: str) -> str:
     if name in {"shell", "bash", "sh"}: return "bash"
     if name == "go": return "go"
     return "manual"
+
+
+def _action_contexts(actions: list[Mapping[str, Any]], services: Mapping[str, Mapping[str, Any]],
+                     hosts: Mapping[str, Mapping[str, Any]]) -> Iterator[tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]]:
+    """Resolve explicit service selection, else services linked to the target host.
+
+    The IR uses host.service_refs; existing enriched IR also uses service.host_ref.
+    Keep separate contexts for multiple services so CVEs and versions cannot mix.
+    """
+    for action in actions:
+        host_ref = str(action.get("target_host_ref") or "")
+        host = hosts.get(host_ref, {})
+        service_ref = action.get("service_ref")
+        if service_ref:
+            yield action, services.get(str(service_ref), {}), host
+            continue
+        linked_ids = set(host.get("service_refs") or [])
+        scoped = [service for service_id, service in services.items()
+                  if host_ref and (service_id in linked_ids or service.get("host_ref") == host_ref)]
+        # An unlinked action may still carry its own structured product/CVE evidence.
+        for service in scoped or [{}]:
+            yield action, service, host
 
 
 class DiscoveryEngine:
@@ -38,10 +60,8 @@ class DiscoveryEngine:
         service_by_id = {str(s.get("id")): s for s in services}
         host_by_id = {str(h.get("id")): h for h in hosts}
         output: list[dict[str, Any]] = []
-        for action in actions:
+        for action, service, host in _action_contexts(actions, service_by_id, host_by_id):
             action_id = str(action.get("id", ""))
-            service = service_by_id.get(str(action.get("service_ref", "")), {})
-            host = host_by_id.get(str(action.get("target_host_ref", "")), {})
             product = _text(service.get("product"), service.get("name"), action.get("product"))
             target = {"product": product, "version": _text(service.get("version"), action.get("version")),
                       "os": host.get("os", ""), "runtime": _text(service.get("runtime"), service.get("language")),
