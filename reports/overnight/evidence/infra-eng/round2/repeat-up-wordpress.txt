@@ -1,0 +1,20 @@
+## 1. before any IaC exists: status / health
+   {"status.state": "not_created", "status.iac": "not_generated", "status.error": null, "health.state": "not_created"}
+## 2. preflight before deploying
+   {"iac": "current", "current_state": "not_created", "isolation.ok": true, "isolation.vulnerable_hosts": [], "capacity": {"ok": true, "checked": true, "containers": 4, "required": {"memory_mib": 2176, "cpus": 3.5}, "available": {"memory_mib": 23878, "cpus": 32, "disk_free_gib": 66.5}, "images_to_download": [], "problems": [], "notes": []}}
+## 3a. first up
+   {"ok": true, "already_running": false, "published_ports": [{"host_id": "web", "container_port": 80, "host_ip": "127.0.0.1", "host_port": 42444}], "containers": {"attacker": "c99a78075dbf", "web": "6c71159e2dea 80/tcp", "cr-gateway": "50b5c45e87ea 127.0.0.1:42444->20000/tcp", "db": "6a7742740581 3306/tcp, 33060/tcp"}}
+## 3b. second up while running
+   {"ok": true, "already_running": true, "message": "環境已在執行且與目前的 IaC 相同；沒有重建任何容器，連接埠維持不變。", "published_ports": [{"host_id": "web", "container_port": 80, "host_ip": "127.0.0.1", "host_port": 42444}], "containers": {"attacker": "c99a78075dbf", "web": "6c71159e2dea 80/tcp", "cr-gateway": "50b5c45e87ea 127.0.0.1:42444->20000/tcp", "db": "6a7742740581 3306/tcp, 33060/tcp"}}
+## 3c. container IDs and ports identical after the second up
+   true
+## 3d. status now reports the same ports
+   [{"host_id": "web", "container_port": 80, "host_ip": "127.0.0.1", "host_port": 42444}]
+## 4a. plan edited after deployment: status still sees the running containers
+   {"iac": "stale", "state": "running", "containers": 4}
+## 4b. down with a stale IaC
+   {"http": 200, "state": "stopped", "removed_local_images": []}
+## 4c. docker afterwards
+   {"containers": {}, "networks": []}
+## audit records
+   [["down", "stopped", false], ["up", "running", true], ["up", "running", false]]

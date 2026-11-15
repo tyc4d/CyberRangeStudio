@@ -97,6 +97,57 @@ _GATEWAY_FORWARDER = (
 )
 
 
+# Platform component added only when a deployed catalogue image declares it needs one for
+# validation (e.g. the Log4Shell exercise target): a record-only TCP listener inside the
+# lab. It accepts a connection, notes who connected and the first bytes, and sends
+# NOTHING back, so a JNDI/LDAP lookup that reaches it can be observed but never completes
+# into class loading. It is not a scenario host: it is never published, never on the edge
+# network, and is reported under `platform_components`.
+LISTENER_SERVICE = "cr-listener"
+LISTENER_PORT = 1389
+_LISTENER_PROGRAM = (
+    "import json,os,socket,threading\n"
+    "from datetime import datetime,timezone\n"
+    "PORT=int(os.environ.get('LISTENER_PORT','1389'))\n"
+    "def handle(conn,addr):\n"
+    " with conn:\n"
+    "  conn.settimeout(2.0)\n"
+    "  try: data=conn.recv(256)\n"
+    "  except OSError: data=b''\n"
+    "  if addr[0].startswith('127.'): return\n"
+    "  print('CALLBACK '+json.dumps({'event':'callback','peer_ip':addr[0],'peer_port':addr[1],"
+    "'first_bytes_hex':data[:32].hex(),'ts':datetime.now(timezone.utc).isoformat()}),flush=True)\n"
+    "srv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)\n"
+    "srv.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)\n"
+    "srv.bind(('0.0.0.0',PORT)); srv.listen(16)\n"
+    "print('listener-ready port=%d'%PORT,flush=True)\n"
+    "while True:\n"
+    " try: conn,addr=srv.accept()\n"
+    " except OSError: continue\n"
+    " threading.Thread(target=handle,args=(conn,addr),daemon=True).start()\n"
+)
+
+
+def _listener_requirements(hosts: list[dict[str, Any]], resolved_by_host: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    """Which hosts need the callback listener, and which plan networks it must join."""
+    wanting, networks = [], []
+    for host in hosts:
+        resolved = resolved_by_host.get(host.get("id", ""), {})
+        catalogue = resolved.get("catalogue") if resolved.get("component_mode") == "real" else None
+        if any(item.get("kind") == "callback_listener" for item in (catalogue or {}).get("validation_support", [])):
+            wanting.append(host["id"])
+            for network in host.get("networks", []):
+                if network not in networks:
+                    networks.append(network)
+    if not wanting:
+        return None
+    return {"id": LISTENER_SERVICE, "kind": "callback_listener", "scenario_host": False, "host": LISTENER_SERVICE,
+            "port": LISTENER_PORT, "protocol": "tcp", "networks": networks, "for_hosts": wanting, "published": False,
+            "behavior": "records inbound TCP connections (peer address, first bytes); never sends a reply",
+            "evidence": "one line 'CALLBACK {json}' per connection on the container's stdout",
+            "description": "平台驗證元件（不是情境主機）：只在實驗網路內接收並記錄連線，不回傳任何內容、不對本機開埠。"}
+
+
 def hostport_env(index: int) -> str:
     return f"CR_HOSTPORT_{index}"
 
@@ -216,6 +267,16 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         report = {"scenario_id": scenario_id, "deployable": False, "components": components, "errors": errors}
         return {}, report
 
+    # Every refusal is also recorded as a structured blocker that names the host / service /
+    # port involved and says what the user can change. `errors` keeps the short English
+    # strings older clients match on; `blockers` is what a person should read.
+    blockers: list[dict[str, Any]] = []
+
+    def block(error: str, code: str, message: str, fix: str, **where: Any) -> None:
+        errors.append(error)
+        blockers.append({"code": code, "message": message, "fix": fix, "error": error,
+                         **{key: value for key, value in where.items() if value is not None}})
+
     hosts = plan.get("hosts", [])
     networks = plan.get("networks", [])
     network_by_id = {n.get("id"): n for n in networks if isinstance(n, dict)}
@@ -241,6 +302,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             errors.append(f"duplicate host id: {host_id}")
         if host_id == GATEWAY_SERVICE:
             errors.append(f"host id {GATEWAY_SERVICE!r} is reserved for the generated publishing gateway")
+        if host_id == LISTENER_SERVICE:
+            errors.append(f"host id {LISTENER_SERVICE!r} is reserved for the generated validation listener")
         host_ids.add(host_id)
         runtime = host.get("runtime")
         catalogue_hint = (host.get("image_hint") or "").strip().lower()
@@ -346,37 +409,74 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
 
         host_networks = host.get("networks", [])
         if not host_networks:
-            errors.append(f"host {host_id} must join at least one declared network")
+            block(f"host {host_id} must join at least one declared network", "host_without_network",
+                  f"主機 {host_id} 沒有接上任何網段。",
+                  "到拓樸頁為這台主機選擇網段（對外或內部），再重新核准。", host=host_id)
         for network_id in host_networks:
             if network_id not in network_ids:
-                errors.append(f"host {host_id} references unknown network {network_id}")
+                block(f"host {host_id} references unknown network {network_id}", "unknown_network",
+                      f"主機 {host_id} 指到計畫裡不存在的網段「{network_id}」。",
+                      "重新產生拓樸，或把主機改接到計畫中已有的網段。", host=host_id, network=network_id)
 
-        services = host.get("services", [])
         if resolved.get("component_mode") == "vm" or (runtime and runtime != "container"):
             # VM/external runtimes are described in the VM manifest and never fed to Compose.
             continue
+        # Several plan services can describe the same listening port (e.g. the product and
+        # the protocol it speaks). One container port is one endpoint: group by port so it
+        # is checked and published once, and keep every name for the messages.
+        services: list[dict[str, Any]] = []
+        for declared in host.get("services", []):
+            same = next((item for item in services if item.get("port") == declared.get("port")
+                         and item.get("protocol", "tcp") == declared.get("protocol", "tcp")), None)
+            if same is None:
+                services.append({**declared, "names": [str(declared.get("name", ""))]})
+            elif str(declared.get("name", "")) not in same["names"]:
+                same["names"].append(str(declared.get("name", "")))
+        host_report["service_ports"] = [{"port": item.get("port"), "protocol": item.get("protocol", "tcp"),
+                                         "names": item["names"]} for item in services]
         if component == "demo-api" and len(services) > 1:
-            errors.append(f"demo-api host {host_id} can expose only one service port")
+            block(f"demo-api host {host_id} can expose only one service port", "substitute_single_port",
+                  f"主機 {host_id} 使用無害替身，替身只能提供一個服務埠，但這台主機宣告了 "
+                  f"{'、'.join(str(item.get('port')) for item in services)}。",
+                  "把多出來的服務移到另一台主機，或在依賴頁移除不需要的服務。", host=host_id)
         for service in services:
             port = service.get("port")
+            label = "／".join(name for name in service["names"] if name) or "（未命名服務）"
             if not isinstance(port, int) or isinstance(port, bool) or not _PORT_MIN <= port <= _PORT_MAX:
-                errors.append(f"host {host_id} has invalid service port {port!r}")
+                block(f"host {host_id} has invalid service port {port!r}", "invalid_port",
+                      f"主機 {host_id} 的服務「{label}」埠號不合法（{port!r}）。",
+                      "在依賴頁或流程頁把這個服務的埠改成 1–65535 之間的數字。", host=host_id, service=label)
                 continue
             if service.get("protocol", "tcp") != "tcp":
-                errors.append(f"host {host_id} declares a non-TCP service, which is not supported")
+                block(f"host {host_id} declares a non-TCP service, which is not supported", "non_tcp_service",
+                      f"主機 {host_id} 的服務「{label}」（埠 {port}）使用 UDP；目前只支援 TCP 服務。",
+                      "移除這個服務，或改用 TCP 的對應服務。這是目前的能力限制。",
+                      host=host_id, service=label, port=port)
             if component == "demo-api" or component == "real":
                 if component == "real":
                     catalogue = resolved["catalogue"] or {}
-                    supported_ports = {p.get("port") for p in catalogue.get("default_ports", [])
-                                       if p.get("protocol", "tcp") == "tcp"}
+                    supported_ports = sorted(p.get("port") for p in catalogue.get("default_ports", [])
+                                             if p.get("protocol", "tcp") == "tcp")
                     if port not in supported_ports:
-                        errors.append(f"host {host_id} declares port {port}, unsupported by {catalogue.get('id')}")
+                        offered = "、".join(str(item) for item in supported_ports) or "（不提供任何服務埠）"
+                        block(f"host {host_id} declares port {port}, unsupported by {catalogue.get('id')}",
+                              "port_not_served_by_image",
+                              f"主機 {host_id} 的服務「{label}」宣告在埠 {port}，但這台主機選用的映像 "
+                              f"{catalogue.get('name', catalogue.get('id'))}（{catalogue.get('id')}）只在埠 {offered} 提供服務。"
+                              "一台主機只會跑一個映像，所以這個埠上不會有東西在聽。",
+                              f"擇一處理：(1) 若「{label}」其實不是另一套軟體（例如只是通訊協定或加密通道），"
+                              f"在依賴頁把它移除或併入主要服務；(2) 若它是另一套軟體，把它放到另一台主機；"
+                              f"(3) 若它就是同一個服務，把埠改成 {offered}。改完重新產生拓樸並核准。",
+                              host=host_id, service=label, port=port, image=catalogue.get("id"),
+                              supported_ports=supported_ports)
                 if not publish:
                     # Reachable only from containers on its declared internal networks.
                     continue
                 host_port = next_published_port
                 if host_port > _PUBLISHED_PORT_MAX:
-                    errors.append("plan needs more than 1000 host ports in the allowed 42000-42999 range")
+                    block("plan needs more than 1000 host ports in the allowed 42000-42999 range", "too_many_ports",
+                          "這個計畫要對外開的埠超過 1000 個，超出允許範圍 42000–42999。",
+                          "減少接在對外網段的主機或服務。")
                 else:
                     # host_port is only the default; the deploy runtime picks a free port in
                     # the same range and passes it through the named environment variable.
@@ -385,30 +485,54 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                     next_published_port += 1
                     host_report["published"] = True
             elif component == "demo-client":
-                errors.append(f"host {host_id} declares a listening service but its safe client image has no server")
+                block(f"host {host_id} declares a listening service but its safe client image has no server",
+                      "client_cannot_listen",
+                      f"主機 {host_id} 被當成用戶端（沒有伺服器程式），卻宣告了服務「{label}」（埠 {port}）。",
+                      "在依賴頁為這個服務選一個 catalogue 元件，或移除這個服務。",
+                      host=host_id, service=label, port=port)
 
     for connection in plan.get("connections", []):
         source, target = connection.get("from_host"), connection.get("to_host")
         if source not in host_ids or target not in host_ids:
-            errors.append(f"connection references unknown host: {source!r} -> {target!r}")
+            block(f"connection references unknown host: {source!r} -> {target!r}", "connection_unknown_host",
+                  f"連線 {source} → {target} 指到計畫裡不存在的主機。",
+                  "重新產生拓樸；若主機是手動刪除的，請一併移除這條連線。", from_host=source, to_host=target)
             continue
         if not set(next(h for h in hosts if h["id"] == source).get("networks", [])).intersection(
             next(h for h in hosts if h["id"] == target).get("networks", [])
         ):
-            errors.append(f"connection {source} -> {target} has no shared internal network")
+            block(f"connection {source} -> {target} has no shared internal network", "connection_no_shared_network",
+                  f"計畫要求 {source} 連到 {target}，但兩台主機沒有任何共同網段，實際上連不到。",
+                  f"在拓樸頁把 {source} 或 {target} 加到同一個網段，或移除這條連線。",
+                  from_host=source, to_host=target)
         port = connection.get("port")
         if port is not None and (not isinstance(port, int) or isinstance(port, bool) or not _PORT_MIN <= port <= _PORT_MAX):
-            errors.append(f"connection {source} -> {target} has invalid port {port!r}")
+            block(f"connection {source} -> {target} has invalid port {port!r}", "invalid_port",
+                  f"連線 {source} → {target} 的埠號不合法（{port!r}）。", "把連線的埠改成 1–65535 之間的數字。",
+                  from_host=source, to_host=target)
         if connection.get("protocol", "tcp") != "tcp":
-            errors.append(f"connection {source} -> {target} uses a non-TCP protocol, which is not supported")
+            block(f"connection {source} -> {target} uses a non-TCP protocol, which is not supported", "non_tcp_connection",
+                  f"連線 {source} → {target} 使用 UDP；目前只支援 TCP。", "移除這條連線，或改成 TCP。這是目前的能力限制。",
+                  from_host=source, to_host=target, port=port)
         if port is not None and connection.get("protocol", "tcp") == "tcp":
             target_services = next(h for h in hosts if h["id"] == target).get("services", [])
             if not any(s.get("port") == port and s.get("protocol", "tcp") == "tcp" for s in target_services):
-                errors.append(f"connection {source} -> {target}:{port} does not match a declared target service")
+                offered = "、".join(str(s.get("port")) for s in target_services) or "（沒有宣告任何服務）"
+                block(f"connection {source} -> {target}:{port} does not match a declared target service",
+                      "connection_port_not_declared",
+                      f"計畫要求 {source} 連到 {target} 的埠 {port}，但 {target} 宣告的服務埠是 {offered}。",
+                      f"把連線的埠改成 {target} 實際提供的埠，或在 {target} 上補上使用埠 {port} 的服務。",
+                      from_host=source, to_host=target, port=port)
 
+    vm_host_ids = {item["host_id"] for item in vm_definitions}
     for host_report in components:
-        if not host_report["deployable"]:
-            errors.append(f"host {host_report['host_id']} cannot be resolved to a safe local image")
+        if not host_report["deployable"] and host_report["host_id"] not in vm_host_ids:
+            hint = host_report.get("image_hint")
+            block(f"host {host_report['host_id']} cannot be resolved to a safe local image", "no_image_for_host",
+                  f"主機 {host_report['host_id']} 沒有可部署的映像"
+                  + (f"：「{hint}」不在 catalogue 中，或該元件沒有容器映像。" if hint else "：沒有指定任何 catalogue 元件。"),
+                  "在依賴頁為這台主機的服務選擇 catalogue 內的元件（或明確選擇教學替代）；"
+                  "若原軟體沒有可用映像，這台主機目前無法部署。", host=host_report["host_id"], image=hint)
     if _EDGE_NETWORK in network_ids:
         errors.append(f"network id {_EDGE_NETWORK!r} is reserved for the generated publishing network")
 
@@ -437,8 +561,12 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                 wiring[host["id"]]["environment"].update(environment)
                 wiring[host["id"]]["targets"].append(match)
             elif rule.get("required", False):
-                errors.append(f"host {host.get('id')} ({catalogue.get('id')}) needs a declared connection to a "
-                              f"{'/'.join(sorted(wanted))} host; without it the service cannot work")
+                block(f"host {host.get('id')} ({catalogue.get('id')}) needs a declared connection to a "
+                      f"{'/'.join(sorted(wanted))} host; without it the service cannot work", "missing_backing_service",
+                      f"主機 {host.get('id')} 的 {catalogue.get('name')} 必須連到一台 {'／'.join(sorted(wanted))} 資料庫主機才能運作，"
+                      "但計畫裡沒有這條連線。",
+                      f"在計畫中加入一台 {'／'.join(sorted(wanted))} 主機，並建立 {host.get('id')} → 該主機的連線。",
+                      host=host.get("id"), image=catalogue.get("id"))
     for host_report in components:
         if host_report["host_id"] in wiring:
             host_report["wired_to"] = wiring[host_report["host_id"]]["targets"]
@@ -446,10 +574,33 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         errors.append("at least one host is required")
 
     for vm in vm_definitions:
-        errors.append(f"host {vm['host_id']} runtime=vm is not supported by the configured deployment backend: {vm['reason']}")
+        block(f"host {vm['host_id']} runtime=vm is not supported by the configured deployment backend: {vm['reason']}",
+              "vm_host_not_deployable",
+              f"主機 {vm['host_id']} 需要虛擬機（例如 Windows），目前的情境部署只會建立容器，不會建立虛擬機。",
+              "這是目前的能力限制：含虛擬機主機的情境無法整體部署。可以把這台主機從情境中排除後部署其餘部分，"
+              "並把相關行為標為未驗證。", host=vm["host_id"])
+    # Anything refused above without a tailored explanation still gets a blocker entry.
+    explained = {item["error"] for item in blockers}
+    for error in errors:
+        if error not in explained:
+            blockers.append({"code": "invalid_plan", "message": error, "error": error,
+                             "fix": "重新產生拓樸；若問題仍在，請回報這段訊息。"})
+    # A host that is the subject of a blocker is not deployable, whatever its image is.
+    for host_report in components:
+        own = [item for item in blockers if item.get("host") == host_report["host_id"]
+               or host_report["host_id"] in (item.get("from_host"), item.get("to_host"))]
+        if own:
+            host_report["deployable"] = False
+            host_report["blockers"] = [item["code"] for item in own]
+            host_report["reason"] = own[0]["message"]
+    published_networks = {hosts_by["networks"][0] for hosts_by in hosts
+                          if any(m["host_id"] == hosts_by.get("id") for m in mappings) and hosts_by.get("networks")}
     report = {
         "scenario_id": scenario_id,
         "deployable": not errors,
+        "blockers": blockers,
+        "plan_notes": [str(note) for note in plan.get("notes", [])],
+        "platform_components": [item for item in [_listener_requirements(hosts, resolved_by_host)] if item],
         "components": components,
         "vms": vm_definitions,
         "host_port_mappings": mappings,
@@ -459,7 +610,15 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
         "networks": [
             {"id": n.get("id"), "name": f"cr-demo-{scenario_id}-{n.get('id')}",
-             "internal": True, "plan_internal": bool(n.get("internal", True))}
+             "internal": True, "plan_internal": bool(n.get("internal", True)),
+             # `internal` is what Docker enforces (always isolated). `plan_internal: false` means the
+             # plan treats this segment as the exposed side: only its non-vulnerable services may be
+             # published to the host through the forwarder; containers still cannot reach outside.
+             "role": "exposed_segment" if not n.get("internal", True) else "internal_segment",
+             "published_to_host": n.get("id") in published_networks,
+             "description": ("計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+                             if not n.get("internal", True) else
+                             "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。")}
             for n in networks
         ],
         "errors": errors,
@@ -578,6 +737,26 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             for network_id in sorted(network_names)
         },
     }
+    listener = _listener_requirements(normalized["hosts"], normalized["components"])
+    if listener:
+        service_doc[LISTENER_SERVICE] = {
+            "container_name": f"cr-demo-{scenario_id}-{LISTENER_SERVICE}",
+            "image": _DEMO_IMAGE,
+            "command": ["python", "-c", _LISTENER_PROGRAM],
+            "environment": {"LISTENER_PORT": str(LISTENER_PORT)},
+            "networks": list(listener["networks"]),
+            "read_only": True,
+            "tmpfs": ["/tmp:rw,noexec,nosuid,size=16m"],
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "restart": "no",
+            "user": "65532:65532",
+            # loopback connections are not recorded, so the healthcheck leaves no evidence lines
+            "healthcheck": {"test": ["CMD", "python", "-c",
+                                     f"import socket; socket.create_connection(('127.0.0.1',{LISTENER_PORT}),2).close()"],
+                            "interval": "5s", "timeout": "3s", "retries": 6},
+            **_DEMO_LIMITS,
+        }
     if normalized["mappings"]:
         hosts_by_id = {host["id"]: host for host in normalized["hosts"]}
         gateway_networks = [_EDGE_NETWORK]
@@ -669,6 +848,10 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
         if service_name == GATEWAY_SERVICE and (not on_edge or not service.get("ports")
                                                 or service.get("image") != _DEMO_IMAGE):
             raise PlanError([f"{GATEWAY_SERVICE} must be the pinned forwarder on the edge network"])
+        if service_name == LISTENER_SERVICE and (service.get("image") != _DEMO_IMAGE
+                                                 or service.get("command") != ["python", "-c", _LISTENER_PROGRAM]
+                                                 or service.get("read_only") is not True):
+            raise PlanError([f"{LISTENER_SERVICE} must be the pinned record-only listener"])
     for network_id, network in doc.get("networks", {}).items():
         name = network.get("name", "")
         if not name.startswith(f"cr-demo-{scenario_id}-"):

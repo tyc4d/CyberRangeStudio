@@ -32,6 +32,7 @@ VM_URI = "qemu:///system"
 # healthcheck). JVM-based exercise targets need the longer bound.
 _UP_WAIT_SECONDS = 240
 _UP_ATTEMPTS = 3
+_PROJECT_ONLY_OPERATIONS = {"ps", "down"}
 
 
 def project_name(scenario_id: str) -> str:
@@ -334,6 +335,11 @@ def _compose_command(scenario_id: str, operation: str, extra: list[str] | None =
     if error:
         return {"returncode": 127, "stdout": "", "stderr": error}
     assert docker
+    if operation in _PROJECT_ONLY_OPERATIONS:
+        # Looking at or removing a deployment must not depend on the generated file: it
+        # may never have existed, or the plan may have changed since. Compose finds the
+        # project's containers and networks by label.
+        return _run([docker, "compose", "-p", project_name(scenario_id), operation] + (extra or []), timeout=timeout)
     prefix, error = _compose_prefix(scenario_id, docker)
     if error:
         return {"returncode": 2, "stdout": "", "stderr": error}
@@ -509,8 +515,193 @@ def live_containers(scenario_id: str) -> dict[str, Any]:
         state = "partial"
     else:
         state = "stopped"
-    return {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
-            "state": state, "containers": containers, "error": result["stderr"] or None}
+    live = {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
+            "state": state, "containers": containers, "error": (result["stderr"] or None) if state == "error" else None}
+    live["iac"] = iac_state(scenario_id)
+    live["published_ports"] = published_ports(scenario_id, containers)
+    return live
+
+
+def iac_state(scenario_id: str) -> str:
+    """'current' (generated and matching the plan), 'stale' (plan changed since) or 'not_generated'."""
+    try:
+        get_generated(scenario_id)
+        return "current"
+    except FileNotFoundError:
+        return "not_generated"
+    except PlanError:
+        return "stale"
+
+
+def published_ports(scenario_id: str, containers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Host ports that are really bound right now, attributed to the lab host they forward to.
+
+    Read from the running gateway container, so every screen that shows a port can use
+    this one list instead of remembering what an earlier deploy call returned.
+    """
+    gateway = next((c for c in containers if c.get("service") == "cr-gateway"), None)
+    if not gateway or gateway.get("state") != "running":
+        return []
+    try:
+        mappings = get_generated(scenario_id)["report"].get("host_port_mappings", [])
+    except (FileNotFoundError, PlanError):
+        mappings = []
+    by_listen = {20000 + index: mapping for index, mapping in enumerate(mappings)}
+    seen: set[tuple[Any, Any]] = set()
+    ports = []
+    for item in gateway.get("ports", []):
+        key = (item.get("host_ip"), item.get("host_port"))
+        if key in seen:
+            continue
+        seen.add(key)
+        target = by_listen.get(item.get("container_port"), {})
+        ports.append({"host_id": target.get("host_id"), "container_port": target.get("container_port"),
+                      "host_ip": item.get("host_ip"), "host_port": item.get("host_port")})
+    return sorted(ports, key=lambda entry: (str(entry["host_id"]), entry["host_port"] or 0))
+
+
+def callback_listener(scenario_id: str) -> dict[str, Any] | None:
+    """The validation listener of this scenario as generated (name, port, networks), or None."""
+    try:
+        components = get_generated(scenario_id)["report"].get("platform_components", [])
+    except (FileNotFoundError, PlanError):
+        return None
+    return next((item for item in components if item.get("kind") == "callback_listener"), None)
+
+
+def callback_events(scenario_id: str, since: str | None = None) -> dict[str, Any]:
+    """Connections the in-lab listener has recorded, each attributed to the lab host that made it.
+
+    Evidence comes from the listener container's own output. ``since`` (an ISO timestamp
+    from a previous call, e.g. the last event's ``ts``) returns only later events, so a
+    caller can prove "this request produced this callback". ``peer_host`` is the service
+    whose address made the connection, or None when it is not one of this scenario's.
+    """
+    scenario_id = validate_id(scenario_id)
+    listener = callback_listener(scenario_id)
+    result: dict[str, Any] = {"listener": listener, "running": False, "events": []}
+    docker, error = _docker_context_preflight()
+    if not listener or error or not docker:
+        result["error"] = error if listener else "this scenario has no callback listener"
+        return result
+    container = f"{project_name(scenario_id)}-{listener['id']}"
+    state = _run([docker, "inspect", "-f", "{{.State.Running}}", container], timeout=15)
+    result["running"] = state["returncode"] == 0 and state["stdout"].strip() == "true"
+    if not result["running"]:
+        result["error"] = "listener container is not running"
+        return result
+    logs = _run([docker, "logs", container], timeout=20)
+    owners: dict[str, str] = {}
+    try:
+        hosts = [c["host_id"] for c in get_generated(scenario_id)["report"].get("components", [])]
+    except (FileNotFoundError, PlanError):
+        hosts = []
+    for host_id in hosts:
+        for address in container_ipv4_addresses(scenario_id, host_id):
+            owners[address["ip"]] = host_id
+    for line in (logs.get("stdout", "") + logs.get("stderr", "")).splitlines():
+        if not line.startswith("CALLBACK "):
+            continue
+        try:
+            event = json.loads(line[len("CALLBACK "):])
+        except json.JSONDecodeError:
+            continue
+        if since and str(event.get("ts", "")) <= since:
+            continue
+        event["peer_host"] = owners.get(event.get("peer_ip"))
+        result["events"].append(event)
+    return result
+
+
+def compose_fingerprint(scenario_id: str) -> str | None:
+    try:
+        import hashlib
+        return hashlib.sha256(get_generated(scenario_id)["compose"].encode("utf-8")).hexdigest()
+    except (FileNotFoundError, PlanError):
+        return None
+
+
+def _deployed_fingerprint(scenario_id: str) -> str | None:
+    """Fingerprint recorded by the last successful `up` that has not been taken down since."""
+    for entry in records(scenario_id, limit=50):
+        if entry["action"] == "down" and entry["state"] == "stopped":
+            return None
+        if entry["action"] == "up" and entry["state"] == "running":
+            return entry["details"].get("compose_sha256")
+    return None
+
+
+def capacity_preflight(scenario_id: str) -> dict[str, Any]:
+    """Compare what the generated environment may use with what this machine has free.
+
+    Requirements are the sum of the per-container limits in the generated file (the most
+    the environment is allowed to use). Memory is a hard check; CPU and disk are reported.
+    """
+    report: dict[str, Any] = {"ok": True, "checked": False}
+    try:
+        document = yaml.safe_load(get_generated(scenario_id)["compose"])
+    except (FileNotFoundError, PlanError, yaml.YAMLError):
+        return {**report, "reason": "IaC 尚未生成，無法估算需求"}
+
+    def to_mib(value: Any) -> float:
+        text = str(value).strip().lower()
+        units = {"k": 1 / 1024, "m": 1, "g": 1024}
+        return float(text[:-1]) * units[text[-1]] if text and text[-1] in units else float(text) / 1048576
+
+    services = document.get("services", {})
+    required_mem = sum(to_mib(service.get("mem_limit", 0)) for service in services.values())
+    required_cpus = sum(float(service.get("cpus", 0)) for service in services.values())
+    available_mem = None
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemAvailable:"):
+                available_mem = int(line.split()[1]) / 1024
+    except OSError:
+        pass
+    disk_free = None
+    docker, error = _docker_context_preflight()
+    missing_images: list[str] = []
+    if docker and not error:
+        root = _run([docker, "info", "--format", "{{.DockerRootDir}}"], timeout=10)["stdout"].strip()
+        for candidate in (root, str(Path(root).parent) if root else "", "/"):
+            try:
+                disk_free = shutil.disk_usage(candidate).free / 1073741824 if candidate else None
+                if disk_free is not None:
+                    break
+            except OSError:
+                continue
+        for image in sorted({service.get("image") for service in services.values()
+                             if service.get("image") and not service.get("build")}):
+            if _run([docker, "image", "inspect", image], timeout=15)["returncode"] != 0:
+                missing_images.append(image)
+    report.update(
+        checked=True, containers=len(services),
+        required={"memory_mib": round(required_mem), "cpus": round(required_cpus, 2)},
+        available={"memory_mib": round(available_mem) if available_mem is not None else None,
+                   "cpus": os.cpu_count(), "disk_free_gib": round(disk_free, 1) if disk_free is not None else None},
+        images_to_download=missing_images,
+    )
+    problems = []
+    if available_mem is not None and required_mem > available_mem:
+        problems.append(f"記憶體不足：此環境上限合計 {round(required_mem)} MiB，本機目前可用 {round(available_mem)} MiB")
+    if disk_free is not None and disk_free < 2 + 1.5 * len(missing_images):
+        problems.append(f"磁碟空間不足：可用 {round(disk_free, 1)} GiB，仍需下載 {len(missing_images)} 個映像")
+    notes = []
+    if os.cpu_count() and required_cpus > os.cpu_count():
+        notes.append(f"CPU 上限合計 {round(required_cpus, 2)} 核，超過本機 {os.cpu_count()} 核；可以執行但會變慢")
+    if missing_images:
+        notes.append(f"首次部署需下載 {len(missing_images)} 個映像")
+    report.update(ok=not problems, problems=problems, notes=notes)
+    return report
+
+
+def deploy_preflight(scenario_id: str) -> dict[str, Any]:
+    """Everything a person should see before pressing deploy. Read-only."""
+    live = live_containers(scenario_id)
+    return {"scenario_id": validate_id(scenario_id), "iac": live["iac"], "current_state": live["state"],
+            "isolation": isolation_preflight(scenario_id), "capacity": capacity_preflight(scenario_id),
+            "would_change_running_environment": (live["state"] != "not_created"
+                                                 and _deployed_fingerprint(scenario_id) != compose_fingerprint(scenario_id))}
 
 
 def detect_lan_ipv4() -> str:
@@ -554,6 +745,34 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
                 "command_result": {"returncode": 2, "stdout": "", "stderr": preflight.get("reason", "")},
                 "deployment_record": audit, "expose": expose, "lan_host": resolved_host,
                 "isolation_preflight": preflight}
+    fingerprint = compose_fingerprint(scenario_id)
+    before = live_containers(scenario_id)
+    if before["state"] == "running" and fingerprint and _deployed_fingerprint(scenario_id) == fingerprint:
+        current_ips = {entry["host_ip"] for entry in before["published_ports"]}
+        if current_ips and current_ips != {bind_ip}:
+            raise PlanError(["環境已在執行，且目前對外綁定在 " + "、".join(sorted(map(str, current_ips)))
+                             + f"；要改成綁定 {bind_ip}，請先清除環境再重新部署"])
+        healthy = all(c.get("health") in {"", "healthy"} for c in before["containers"])
+        if healthy:
+            # Same generated environment is already up and healthy: starting it again must
+            # not recreate the database or move published ports.
+            audit = record(scenario_id, "up", "running", {"already_running": True, "compose_sha256": fingerprint,
+                                                          "published_ports": before["published_ports"]})
+            return {**before, "ok": True, "already_running": True,
+                    "message": "環境已在執行且與目前的 IaC 相同；沒有重建任何容器，連接埠維持不變。",
+                    "command_result": {"returncode": 0, "stdout": "", "stderr": "already running; nothing changed"},
+                    "deployment_record": audit, "expose": expose, "lan_host": resolved_host, "attempts": [],
+                    "isolation_preflight": preflight, "host_isolation": host_isolation_report(scenario_id)}
+    replacing = before["state"] != "not_created"
+    capacity = capacity_preflight(scenario_id)
+    if not capacity["ok"] and not replacing:
+        audit = record(scenario_id, "up", "rejected", {"reason": "insufficient host capacity", "capacity": capacity})
+        message = "；".join(capacity["problems"])
+        return {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
+                "state": "not_created", "containers": [], "error": message, "ok": False,
+                "command_result": {"returncode": 2, "stdout": "", "stderr": message},
+                "deployment_record": audit, "expose": expose, "lan_host": resolved_host,
+                "isolation_preflight": preflight, "capacity": capacity}
     attempts: list[dict[str, Any]] = []
     cleanup = None
     diagnostics = None
@@ -612,7 +831,8 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
         live = {**live, "state": "error", "error": result["stderr"] or live.get("error")}
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
                "expose": expose, "password_set": password is not None, "attempts": attempts,
-               "published_ports": published, "host_isolation": isolation, **live}
+               "host_isolation": isolation, "compose_sha256": fingerprint if success else None,
+               "replaced_existing_environment": replacing, **live, "published_ports": published}
     if diagnostics is not None:
         details["diagnostics"] = diagnostics
     if cleanup is not None:
@@ -620,7 +840,11 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
     audit = record(scenario_id, "up", "running" if success else "failed", details)
     response = {**live, "ok": success, "command_result": result, "deployment_record": audit,
                 "expose": expose, "lan_host": resolved_host, "attempts": attempts,
-                "published_ports": published, "isolation_preflight": preflight}
+                "published_ports": published, "isolation_preflight": preflight, "capacity": capacity,
+                "already_running": False, "replaced_existing_environment": replacing}
+    if success and replacing:
+        response["message"] = ("部署前已有這個情境的容器，且 IaC 與上次部署不同（或環境不完整）；"
+                               "已依目前的 IaC 重建，資料庫等服務的資料已重設，對外連接埠可能改變。")
     if isolation is not None:
         response["host_isolation"] = isolation
     if diagnostics is not None:
