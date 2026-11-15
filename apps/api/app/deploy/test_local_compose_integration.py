@@ -463,3 +463,106 @@ class HostIsolationIntegrationTests(unittest.TestCase):
                     self.assertEqual(images["stdout"].strip(), "")
                     if output_dir.exists() and not output_dir.is_symlink():
                         shutil.rmtree(output_dir)
+
+
+class ProjectOnlyOperationTests(unittest.TestCase):
+    def test_status_and_teardown_do_not_need_the_generated_file(self):
+        calls = []
+
+        def fake_run(args, timeout=60, **kwargs):
+            calls.append(args)
+            return {"returncode": 0, "stdout": "", "stderr": ""}
+
+        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(manager, "_compose_prefix", side_effect=AssertionError("must not be consulted")), \
+                patch.object(manager, "_run", side_effect=fake_run):
+            for operation in ("ps", "down"):
+                self.assertEqual(manager._compose_command("nofile", operation, ["-v"])["returncode"], 0)
+        self.assertEqual(calls, [["docker", "compose", "-p", "cr-demo-nofile", "ps", "-v"],
+                                 ["docker", "compose", "-p", "cr-demo-nofile", "down", "-v"]])
+
+    def test_never_generated_scenario_is_not_created_not_error(self):
+        with patch.object(manager, "compose_ps_result", return_value={"returncode": 0, "stdout": "", "stderr": ""}), \
+                patch.object(manager, "get_generated", side_effect=FileNotFoundError("x")):
+            live = manager.live_containers("nofile")
+            health = manager.do_health("nofile")
+        self.assertEqual(live["state"], "not_created")
+        self.assertEqual(live["iac"], "not_generated")
+        self.assertIsNone(live["error"])
+        self.assertEqual(health["state"], "not_created")
+
+
+class IdempotentUpTests(unittest.TestCase):
+    RUNNING = {"scenario_id": "idem", "project_name": "cr-demo-idem", "state": "running", "error": None, "iac": "current",
+               "containers": [{"service": "db", "name": "cr-demo-idem-db", "state": "running", "health": "healthy"}],
+               "published_ports": [{"host_id": "web", "container_port": 80, "host_ip": "127.0.0.1", "host_port": 42111}]}
+
+    def _up(self, deployed_fingerprint, expose="internal", lan_host=None):
+        compose_calls = []
+        with patch.object(manager, "isolation_preflight", return_value={"ok": True, "vulnerable_hosts": []}), \
+                patch.object(manager, "compose_fingerprint", return_value="abc"), \
+                patch.object(manager, "_deployed_fingerprint", return_value=deployed_fingerprint), \
+                patch.object(manager, "live_containers", return_value=dict(self.RUNNING)), \
+                patch.object(manager, "host_isolation_report", return_value={"isolated": True, "networks": []}), \
+                patch.object(manager, "capacity_preflight", return_value={"ok": True, "problems": []}), \
+                patch.object(manager, "allocate_host_ports", return_value={}), \
+                patch.object(manager, "get_generated", side_effect=FileNotFoundError("x")), \
+                patch.object(manager, "_compose_command",
+                             side_effect=lambda *a, **k: compose_calls.append(a) or {"returncode": 0, "stdout": "", "stderr": ""}), \
+                patch.object(manager, "record", side_effect=lambda s, a, st, d: {"state": st, "details": d}):
+            return manager.do_up("idem", expose, lan_host), compose_calls
+
+    def test_second_up_of_the_same_environment_changes_nothing(self):
+        result, compose_calls = self._up("abc")
+        self.assertTrue(result["ok"] and result["already_running"])
+        self.assertEqual(compose_calls, [])                                  # nothing recreated
+        self.assertEqual(result["published_ports"][0]["host_port"], 42111)   # same port as before
+        self.assertTrue(result["deployment_record"]["details"]["already_running"])
+
+    def test_up_after_the_iac_changed_rebuilds_and_says_so(self):
+        result, compose_calls = self._up("older")
+        self.assertEqual([call[1] for call in compose_calls], ["up"])
+        self.assertFalse(result["already_running"])
+        self.assertTrue(result["replaced_existing_environment"])
+        self.assertIn("重建", result["message"])
+
+    def test_changing_the_bind_address_of_a_running_environment_is_refused(self):
+        with self.assertRaises(manager.PlanError):
+            self._up("abc", expose="lan", lan_host="192.168.1.50")
+
+
+class CapacityPreflightTests(unittest.TestCase):
+    COMPOSE = "services:\n  a:\n    image: x@sha256:1\n    mem_limit: 1g\n    cpus: 2.0\n  b:\n    image: y@sha256:2\n    mem_limit: 512m\n    cpus: 1.0\n"
+
+    def _check(self, available_mib):
+        meminfo = f"MemTotal: 99 kB\nMemAvailable: {available_mib * 1024} kB\n"
+        with patch.object(manager, "get_generated", return_value={"compose": self.COMPOSE}), \
+                patch.object(manager, "_docker_context_preflight", return_value=(None, "no docker")), \
+                patch.object(manager.Path, "read_text", return_value=meminfo):
+            return manager.capacity_preflight("cap")
+
+    def test_requirements_are_the_sum_of_container_limits(self):
+        report = self._check(8000)
+        self.assertTrue(report["ok"] and report["checked"])
+        self.assertEqual(report["required"], {"memory_mib": 1536, "cpus": 3.0})
+        self.assertEqual(report["available"]["memory_mib"], 8000)
+
+    def test_not_enough_memory_is_a_problem(self):
+        report = self._check(1000)
+        self.assertFalse(report["ok"])
+        self.assertIn("記憶體不足", report["problems"][0])
+
+    def test_up_is_refused_before_creating_anything_when_capacity_is_insufficient(self):
+        calls = []
+        empty = {"scenario_id": "cap", "project_name": "cr-demo-cap", "state": "not_created", "containers": [],
+                 "error": None, "iac": "current", "published_ports": []}
+        with patch.object(manager, "isolation_preflight", return_value={"ok": True, "vulnerable_hosts": []}), \
+                patch.object(manager, "compose_fingerprint", return_value="abc"), \
+                patch.object(manager, "live_containers", return_value=empty), \
+                patch.object(manager, "capacity_preflight", return_value={"ok": False, "problems": ["記憶體不足：…"]}), \
+                patch.object(manager, "_compose_command", side_effect=lambda *a, **k: calls.append(a)), \
+                patch.object(manager, "record", side_effect=lambda s, a, st, d: {"state": st}):
+            result = manager.do_up("cap")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["deployment_record"]["state"], "rejected")
+        self.assertEqual(calls, [])

@@ -56,6 +56,14 @@ def deploy_up(scenario_id: str, request: UpRequest):
     return result
 
 
+@router.get("/{scenario_id}/preflight")
+def deployment_preflight(scenario_id: str):
+    """Read-only pre-deployment check: IaC state, host isolation support, host capacity,
+    and whether deploying now would rebuild an environment that is already running."""
+    scenario_id = _validate(scenario_id)
+    return manager.deploy_preflight(scenario_id)
+
+
 @router.get("/{scenario_id}/status")
 def deployment_status(scenario_id: str):
     scenario_id = _validate(scenario_id)

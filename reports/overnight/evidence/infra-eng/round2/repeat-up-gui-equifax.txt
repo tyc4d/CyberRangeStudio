@@ -1,0 +1,20 @@
+## 1. before any IaC exists: status / health
+   {"status.state": "not_created", "status.iac": "not_generated", "status.error": null, "health.state": "not_created"}
+## 2. preflight before deploying
+   {"iac": "current", "current_state": "not_created", "isolation.ok": true, "isolation.vulnerable_hosts": ["h1"], "capacity": {"ok": true, "checked": true, "containers": 3, "required": {"memory_mib": 1792, "cpus": 4.0}, "available": {"memory_mib": 23901, "cpus": 32, "disk_free_gib": 66.4}, "images_to_download": [], "problems": [], "notes": []}}
+## 3a. first up
+   {"ok": true, "already_running": false, "published_ports": [], "containers": {"attacker": "beade249c2f5", "h1": "36de627d2cfb 8080/tcp", "h2": "b140709c348b 5432/tcp"}}
+## 3b. second up while running
+   {"ok": true, "already_running": true, "message": "環境已在執行且與目前的 IaC 相同；沒有重建任何容器，連接埠維持不變。", "published_ports": [], "containers": {"attacker": "beade249c2f5", "h1": "36de627d2cfb 8080/tcp", "h2": "b140709c348b 5432/tcp"}}
+## 3c. container IDs and ports identical after the second up
+   true
+## 3d. status now reports the same ports
+   []
+## 4a. plan edited after deployment: status still sees the running containers
+   {"iac": "stale", "state": "running", "containers": 3}
+## 4b. down with a stale IaC
+   {"http": 200, "state": "stopped", "removed_local_images": []}
+## 4c. docker afterwards
+   {"containers": {}, "networks": []}
+## audit records
+   [["down", "stopped", false], ["up", "running", true], ["up", "running", false]]
