@@ -370,3 +370,54 @@ class BlockerAndGroupingTests(unittest.TestCase):
         self.assertEqual(by_id["inside"]["role"], "internal_segment")
         self.assertFalse(by_id["inside"]["published_to_host"])
         self.assertTrue(all(n["description"] for n in report["networks"]))
+
+
+class ValidationListenerTests(unittest.TestCase):
+    PLAN = {"hosts": [
+                {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["dmz"]},
+                {"id": "solr", "role": "exposed web", "image_hint": "vuln-log4shell-solr", "component_mode": "real",
+                 "services": [{"name": "Apache Solr", "port": 8983}], "networks": ["dmz", "inside"]},
+                {"id": "web", "role": "exposed web", "image_hint": "oss-nginx", "component_mode": "real",
+                 "services": [{"name": "http", "port": 80}], "networks": ["dmz"]}],
+            "networks": [{"id": "dmz", "internal": False}, {"id": "inside", "internal": True}],
+            "connections": [{"from_host": "attacker", "to_host": "solr", "port": 8983}]}
+
+    def test_listener_is_added_only_for_images_that_declare_they_need_it(self):
+        _, report = inspect_plan(self.PLAN, "lst")
+        self.assertTrue(report["deployable"], report["errors"])
+        listener = report["platform_components"][0]
+        self.assertEqual((listener["id"], listener["port"], listener["for_hosts"]), ("cr-listener", 1389, ["solr"]))
+        self.assertFalse(listener["scenario_host"])
+        self.assertFalse(listener["published"])
+        self.assertEqual(listener["networks"], ["dmz", "inside"])
+        self.assertNotIn("cr-listener", [c["host_id"] for c in report["components"]])   # not a scenario host
+
+        _, other = inspect_plan(EXPOSED_PLAN, "lst")       # Struts / WordPress / MySQL: no listener
+        self.assertEqual(other["platform_components"], [])
+        self.assertNotIn("cr-listener", yaml.safe_load(compose_document(EXPOSED_PLAN, "lst"))["services"])
+
+    def test_listener_is_isolated_hardened_and_record_only(self):
+        from app.iac.generator import _LISTENER_PROGRAM
+        services = yaml.safe_load(compose_document(self.PLAN, "lst"))["services"]
+        listener = services["cr-listener"]
+        self.assertEqual(listener["networks"], ["dmz", "inside"])
+        self.assertNotIn("edge", listener["networks"])
+        self.assertNotIn("ports", listener)
+        self.assertTrue(listener["read_only"])
+        self.assertEqual(listener["cap_drop"], ["ALL"])
+        self.assertEqual(listener["user"], "65532:65532")
+        compile(_LISTENER_PROGRAM, "listener", "exec")
+        self.assertNotIn("send", _LISTENER_PROGRAM)       # it never answers a connection
+        self.assertIn("recv(256)", _LISTENER_PROGRAM)
+        # the gateway still serves only the non-vulnerable published host
+        self.assertEqual([a for a in services["cr-gateway"]["command"] if "=" in a and ":" in a][-1], "20000=web:80")
+
+    def test_listener_name_is_reserved_and_cannot_be_tampered_with(self):
+        from app.iac.generator import _assert_compose_safe, PlanError
+        plan = {**self.PLAN, "hosts": [*self.PLAN["hosts"], {"id": "cr-listener", "role": "x", "image_hint": "oss-attacker",
+                                                              "component_mode": "real", "networks": ["inside"]}]}
+        self.assertFalse(inspect_plan(plan, "lst")[1]["deployable"])
+        document = yaml.safe_load(compose_document(self.PLAN, "lst"))
+        document["services"]["cr-listener"]["command"] = ["python", "-c", "print(1)"]
+        with self.assertRaises(PlanError):
+            _assert_compose_safe(yaml.safe_dump(document), "lst")

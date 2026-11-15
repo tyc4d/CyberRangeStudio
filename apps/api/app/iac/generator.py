@@ -97,6 +97,57 @@ _GATEWAY_FORWARDER = (
 )
 
 
+# Platform component added only when a deployed catalogue image declares it needs one for
+# validation (e.g. the Log4Shell exercise target): a record-only TCP listener inside the
+# lab. It accepts a connection, notes who connected and the first bytes, and sends
+# NOTHING back, so a JNDI/LDAP lookup that reaches it can be observed but never completes
+# into class loading. It is not a scenario host: it is never published, never on the edge
+# network, and is reported under `platform_components`.
+LISTENER_SERVICE = "cr-listener"
+LISTENER_PORT = 1389
+_LISTENER_PROGRAM = (
+    "import json,os,socket,threading\n"
+    "from datetime import datetime,timezone\n"
+    "PORT=int(os.environ.get('LISTENER_PORT','1389'))\n"
+    "def handle(conn,addr):\n"
+    " with conn:\n"
+    "  conn.settimeout(2.0)\n"
+    "  try: data=conn.recv(256)\n"
+    "  except OSError: data=b''\n"
+    "  if addr[0].startswith('127.'): return\n"
+    "  print('CALLBACK '+json.dumps({'event':'callback','peer_ip':addr[0],'peer_port':addr[1],"
+    "'first_bytes_hex':data[:32].hex(),'ts':datetime.now(timezone.utc).isoformat()}),flush=True)\n"
+    "srv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)\n"
+    "srv.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)\n"
+    "srv.bind(('0.0.0.0',PORT)); srv.listen(16)\n"
+    "print('listener-ready port=%d'%PORT,flush=True)\n"
+    "while True:\n"
+    " try: conn,addr=srv.accept()\n"
+    " except OSError: continue\n"
+    " threading.Thread(target=handle,args=(conn,addr),daemon=True).start()\n"
+)
+
+
+def _listener_requirements(hosts: list[dict[str, Any]], resolved_by_host: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    """Which hosts need the callback listener, and which plan networks it must join."""
+    wanting, networks = [], []
+    for host in hosts:
+        resolved = resolved_by_host.get(host.get("id", ""), {})
+        catalogue = resolved.get("catalogue") if resolved.get("component_mode") == "real" else None
+        if any(item.get("kind") == "callback_listener" for item in (catalogue or {}).get("validation_support", [])):
+            wanting.append(host["id"])
+            for network in host.get("networks", []):
+                if network not in networks:
+                    networks.append(network)
+    if not wanting:
+        return None
+    return {"id": LISTENER_SERVICE, "kind": "callback_listener", "scenario_host": False, "host": LISTENER_SERVICE,
+            "port": LISTENER_PORT, "protocol": "tcp", "networks": networks, "for_hosts": wanting, "published": False,
+            "behavior": "records inbound TCP connections (peer address, first bytes); never sends a reply",
+            "evidence": "one line 'CALLBACK {json}' per connection on the container's stdout",
+            "description": "平台驗證元件（不是情境主機）：只在實驗網路內接收並記錄連線，不回傳任何內容、不對本機開埠。"}
+
+
 def hostport_env(index: int) -> str:
     return f"CR_HOSTPORT_{index}"
 
@@ -251,6 +302,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             errors.append(f"duplicate host id: {host_id}")
         if host_id == GATEWAY_SERVICE:
             errors.append(f"host id {GATEWAY_SERVICE!r} is reserved for the generated publishing gateway")
+        if host_id == LISTENER_SERVICE:
+            errors.append(f"host id {LISTENER_SERVICE!r} is reserved for the generated validation listener")
         host_ids.add(host_id)
         runtime = host.get("runtime")
         catalogue_hint = (host.get("image_hint") or "").strip().lower()
@@ -547,6 +600,7 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "deployable": not errors,
         "blockers": blockers,
         "plan_notes": [str(note) for note in plan.get("notes", [])],
+        "platform_components": [item for item in [_listener_requirements(hosts, resolved_by_host)] if item],
         "components": components,
         "vms": vm_definitions,
         "host_port_mappings": mappings,
@@ -683,6 +737,26 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             for network_id in sorted(network_names)
         },
     }
+    listener = _listener_requirements(normalized["hosts"], normalized["components"])
+    if listener:
+        service_doc[LISTENER_SERVICE] = {
+            "container_name": f"cr-demo-{scenario_id}-{LISTENER_SERVICE}",
+            "image": _DEMO_IMAGE,
+            "command": ["python", "-c", _LISTENER_PROGRAM],
+            "environment": {"LISTENER_PORT": str(LISTENER_PORT)},
+            "networks": list(listener["networks"]),
+            "read_only": True,
+            "tmpfs": ["/tmp:rw,noexec,nosuid,size=16m"],
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "restart": "no",
+            "user": "65532:65532",
+            # loopback connections are not recorded, so the healthcheck leaves no evidence lines
+            "healthcheck": {"test": ["CMD", "python", "-c",
+                                     f"import socket; socket.create_connection(('127.0.0.1',{LISTENER_PORT}),2).close()"],
+                            "interval": "5s", "timeout": "3s", "retries": 6},
+            **_DEMO_LIMITS,
+        }
     if normalized["mappings"]:
         hosts_by_id = {host["id"]: host for host in normalized["hosts"]}
         gateway_networks = [_EDGE_NETWORK]
@@ -774,6 +848,10 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
         if service_name == GATEWAY_SERVICE and (not on_edge or not service.get("ports")
                                                 or service.get("image") != _DEMO_IMAGE):
             raise PlanError([f"{GATEWAY_SERVICE} must be the pinned forwarder on the edge network"])
+        if service_name == LISTENER_SERVICE and (service.get("image") != _DEMO_IMAGE
+                                                 or service.get("command") != ["python", "-c", _LISTENER_PROGRAM]
+                                                 or service.get("read_only") is not True):
+            raise PlanError([f"{LISTENER_SERVICE} must be the pinned record-only listener"])
     for network_id, network in doc.get("networks", {}).items():
         name = network.get("name", "")
         if not name.startswith(f"cr-demo-{scenario_id}-"):
