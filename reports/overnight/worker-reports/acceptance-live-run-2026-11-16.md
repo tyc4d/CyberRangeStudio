@@ -46,6 +46,10 @@ The owner raised the hard worker cap from 2 to 5. The candidate sets both the wo
 
 The current 16384 MiB pool budget includes the 4096 MiB template, leaving 12288 MiB for workers. At 4096 MiB per worker, the current pool budget can hold at most **3 worker VMs** total; other node or storage checks can lower that further. Five workers require at least 24576 MiB of pool memory, plus sufficient node memory and storage. No resources were changed, and five-worker capacity was not tested. The cap is therefore the policy ceiling; it is not evidence that five VMs can run now.
 
+### Local QA API cutover
+
+Following the owner's earlier request to replace old services so the new limit is active, the legacy API processes on `8077` and `8283` were stopped before either candidate process started. The updated `agent/acceptance-lead` API now runs on both ports with the same data directory and reservation database; no old/new API versions are mixed. Both APIs returned HTTP 200 for read-only preflight and status, capacity `ready`, and V1 true. The approved test scenario remains `not_created`; pool members remain `[900000, 900100]`, and no PVE write was sent during cutover. The existing web UI on port `5286` still returns HTTP 200 and points to API `8283`; `5177` has no listener.
+
 ### Secret-pattern scan
 
 Scanned 91 deployment records for the two acceptance scenarios and the five persisted PVE acceptance artifacts/reports. The scan found zero PVE API-token, Authorization, generated database-password, or credential-like key/value patterns; values were not printed. No persistent API log file exists under `apps/api/data`; prior interactive terminal sessions were not part of this scan, so the broader console-log scan remains open.
@@ -69,4 +73,5 @@ Scanned 91 deployment records for the two acceptance scenarios and the five pers
 - P4 V1 lifecycle evidence: `evidence/pve-v1-lifecycle-20261116.json`.
 - Real down-cleanup failure-injection evidence: `evidence/pve-failure-down-cleanup-20261116.json`.
 - Owner-approved cap-5 and current capacity evidence: `evidence/pve-worker-cap-5-readiness-20261116.json`.
+- Local API cutover evidence: `evidence/pve-cap5-api-cutover-20261116.json`.
 - V2/V6 smoke evidence: `evidence/pve-v2-v6-smoke-20261116.json`.
