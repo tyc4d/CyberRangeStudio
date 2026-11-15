@@ -486,3 +486,10 @@ running 但 agent 沒回應不算健康；沒有對外的 console 連接埠。
   回覆為空；listener 連不到宿主機、宿主機也連不到它（`validation-listener-real.txt`）。
 
 仍然沒有的：停止（保留狀態）、真實的 runtime 故障注入介面、同網段逐埠管制——見 §7／§8。
+
+**不部署的主機（主線協調）。** 環境計畫把某台主機標為 `deployable: false`（或 `deploy: false`）並附原因時
+（例如「報告只說資料在資料庫，沒指出任何軟體」），IaC 不會為它產生任何容器，也不會拿替身頂替；
+報告在 `not_deployed_hosts` 列出主機、角色與原因，`skipped_connections` 列出因此不存在的連線，
+`deployed_host_ids` 是實際會部署的主機。沒有標記的無映像主機仍然會擋下整份計畫（並說明原因）；
+若標記後沒有任何目標主機可部署，同樣拒絕。真實驗證：Struts＋attacker 部署成功、h2 未部署並列出原因、
+涉及 h2 的隔離檢查為 NOT_TESTED（`round2/not-deployed-host.txt`）。

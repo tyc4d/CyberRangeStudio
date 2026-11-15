@@ -1,0 +1,9 @@
+generate: deployable = True
+  deployed_host_ids: ['h1', 'attacker']
+  not_deployed_hosts: [{"host_id": "h2", "role": "databases containing PII and credentials", "reason": "報告只說資料存放在資料庫，沒有指出資料庫產品；沒有可部署的服務", "image_hint": null, "runtime": "container", "services": []}]
+  skipped_connections: []
+  compose services: ['h1', 'attacker', 'external', 'scenario-internal']
+up_1: 200 [('attacker', 'running', ''), ('h1', 'running', 'healthy')]
+validate_1: HTTP 200 {'env_build': 'PASS', 'behavior_repro': 'PASS', 'full_chain': 'NOT_TESTED'}
+    segmentation-1 NOT_TESTED | 來源或目標容器未執行，因此未探測此路徑
+down_1: {'status': 200, 'state': 'stopped'} leftovers: {'containers': [''], 'networks': [''], 'volumes': ['']}
