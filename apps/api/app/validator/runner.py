@@ -300,6 +300,36 @@ def _probe_blocked_all_addresses(scenario_id: str, source: str, target: str, por
     return status, observed
 
 
+def _build_substitutes(components: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Build fidelity.substitutes_used, naming the ORIGINAL software the source meant.
+
+    Module 5 (scenario-eng) records `substitute_for` on a host when a real catalogue
+    image stands in for other software the source named (e.g. nginx for IIS). The
+    report must show "以 <substitute> 頂替 <real>" with that original name as `real`,
+    not the stand-in's own image id. Falls back to image_hint/component when no
+    original is recorded (the plain harmless-demo substitute case).
+    """
+    out: list[dict[str, Any]] = []
+    for component in components:
+        if not (component.get("substitute") or component.get("substitute_for")):
+            continue
+        real = component.get("substitute_for") or component.get("image_hint") or component["component"]
+        difference = component.get("fidelity_difference") or (
+            f"以 {component['component']} 頂替 {real}；不會重現原始軟體或其弱點"
+            if component.get("substitute_for") else
+            "harmless local demo behavior; it does not reproduce the original software or any vulnerability")
+        entry = {
+            "service_ref": component["host_id"],
+            "real": real,
+            "substitute": component["component"],
+            "difference": difference,
+        }
+        if component.get("substitute_basis"):
+            entry["difference"] = f"{difference}（依據：{component['substitute_basis']}）"
+        out.append(entry)
+    return out
+
+
 def _vm_guest_readonly(scenario_id: str, host_id: str) -> dict[str, Any]:
     """Read Windows identity/version through the libvirt guest agent, never run actions."""
     state = manager.vm_status(scenario_id, host_id)
@@ -625,16 +655,7 @@ def run(scenario_id: str) -> dict[str, Any]:
     if full_chain == "PASS":
         full_chain = "PARTIAL"
 
-    substitutes = []
-    for component in component_report["components"]:
-        if component.get("substitute"):
-            substitutes.append({
-                "service_ref": component["host_id"],
-                "real": component.get("image_hint") or component["component"],
-                "substitute": component["component"],
-                "difference": component.get("fidelity_difference") or
-                "harmless local demo behavior; it does not reproduce the original software or any vulnerability",
-            })
+    substitutes = _build_substitutes(component_report["components"])
 
     reproduced = [action_id for action_id, status in action_step_status.items() if status == "PASS"]
     partial = [action_id for action_id, status in action_step_status.items() if status == "PARTIAL"]
