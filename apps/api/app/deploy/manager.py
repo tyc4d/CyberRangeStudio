@@ -560,6 +560,59 @@ def published_ports(scenario_id: str, containers: list[dict[str, Any]]) -> list[
     return sorted(ports, key=lambda entry: (str(entry["host_id"]), entry["host_port"] or 0))
 
 
+def callback_listener(scenario_id: str) -> dict[str, Any] | None:
+    """The validation listener of this scenario as generated (name, port, networks), or None."""
+    try:
+        components = get_generated(scenario_id)["report"].get("platform_components", [])
+    except (FileNotFoundError, PlanError):
+        return None
+    return next((item for item in components if item.get("kind") == "callback_listener"), None)
+
+
+def callback_events(scenario_id: str, since: str | None = None) -> dict[str, Any]:
+    """Connections the in-lab listener has recorded, each attributed to the lab host that made it.
+
+    Evidence comes from the listener container's own output. ``since`` (an ISO timestamp
+    from a previous call, e.g. the last event's ``ts``) returns only later events, so a
+    caller can prove "this request produced this callback". ``peer_host`` is the service
+    whose address made the connection, or None when it is not one of this scenario's.
+    """
+    scenario_id = validate_id(scenario_id)
+    listener = callback_listener(scenario_id)
+    result: dict[str, Any] = {"listener": listener, "running": False, "events": []}
+    docker, error = _docker_context_preflight()
+    if not listener or error or not docker:
+        result["error"] = error if listener else "this scenario has no callback listener"
+        return result
+    container = f"{project_name(scenario_id)}-{listener['id']}"
+    state = _run([docker, "inspect", "-f", "{{.State.Running}}", container], timeout=15)
+    result["running"] = state["returncode"] == 0 and state["stdout"].strip() == "true"
+    if not result["running"]:
+        result["error"] = "listener container is not running"
+        return result
+    logs = _run([docker, "logs", container], timeout=20)
+    owners: dict[str, str] = {}
+    try:
+        hosts = [c["host_id"] for c in get_generated(scenario_id)["report"].get("components", [])]
+    except (FileNotFoundError, PlanError):
+        hosts = []
+    for host_id in hosts:
+        for address in container_ipv4_addresses(scenario_id, host_id):
+            owners[address["ip"]] = host_id
+    for line in (logs.get("stdout", "") + logs.get("stderr", "")).splitlines():
+        if not line.startswith("CALLBACK "):
+            continue
+        try:
+            event = json.loads(line[len("CALLBACK "):])
+        except json.JSONDecodeError:
+            continue
+        if since and str(event.get("ts", "")) <= since:
+            continue
+        event["peer_host"] = owners.get(event.get("peer_ip"))
+        result["events"].append(event)
+    return result
+
+
 def compose_fingerprint(scenario_id: str) -> str | None:
     try:
         import hashlib

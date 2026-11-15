@@ -1,0 +1,13 @@
+{
+  "hosts": [
+    {"id": "h1", "role": "server housing the online dispute portal", "image_hint": "vuln-struts2-s2-045", "component_mode": "real", "runtime": "container",
+     "networks": ["scenario-internal", "external"], "services": [{"name": "Apache Struts Web Framework", "port": 8080, "protocol": "tcp"}]},
+    {"id": "h2", "role": "databases containing PII and credentials", "runtime": "container", "networks": ["scenario-internal"], "services": [],
+     "deployable": false, "not_deployed_reason": "報告只說資料存放在資料庫，沒有指出資料庫產品；沒有可部署的服務"},
+    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["external"], "services": []}
+  ],
+  "networks": [{"id": "scenario-internal", "segment": "scenario", "internal": true}, {"id": "external", "segment": "external", "internal": false}],
+  "connections": [{"from_host": "attacker", "to_host": "h1", "port": 8080, "protocol": "tcp", "reason": "attacker reaches the portal"}],
+  "verify_blocked": [{"from_host": "attacker", "to_host": "h2", "port": 5432, "protocol": "tcp", "reason": "attacker has no direct path to the data host"}],
+  "approval": {"approved": false}
+}

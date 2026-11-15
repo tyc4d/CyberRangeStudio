@@ -457,3 +457,39 @@ running 但 agent 沒回應不算健康；沒有對外的 console 連接埠。
 | 健康檢查 | `vm_readiness` 需要 guest agent，但 XML 沒有 channel，永遠不會 ready。 |
 
 結論：**從未開機，現況下也不可能開機**。真實驗證結果見 §6。
+
+---
+
+# 附錄 B：Round 2 QA 後的追加修正（講師 45／管理者 54／UX 62 之後）
+
+對應 `reports/overnight/qa/round2/` 三份報告中屬於模組 6／7 的每一項。證據在 `evidence/infra-eng/round2/`。
+
+| QA 編號 | 問題 | 根因 | 修正 | 真實驗證 |
+|---|---|---|---|---|
+| AR2-06、AR2-05（二） | 執行中再按 up 會重建資料庫與 gateway、埠改變；新舊埠並存 | 每次 up 都重新產生密碼與主機埠，Compose 視為設定變更而重建 | 同一份 IaC 已在執行且健康 → 完全不動並回報 `already_running`；IaC 變了才重建，並明說資料會重設、埠可能改變；執行中要改綁定位址 → 拒絕 | 兩個計畫重複 up：容器 ID 與埠完全相同（`repeat-up-*.txt`） |
+| UXR2-07、QA-I-R2-06 | 沒部署卻在報告頁顯示 `error` | 查狀態要先讀生成檔，沒生成就回錯誤 | 狀態／健康／清除只靠專案名稱；沒生成＝`not_created`，另回 `iac: not_generated／stale／current` | 同上檔案第 1、4 段：拓樸改過後仍看得到容器、仍可清除 |
+| QA-I-R2-01、QA-I-R2-06 | IaC 失敗訊息只有一句英文；各主機卻都顯示「可部署」 | 錯誤是純字串；主機可部署只看有沒有映像 | 回應新增 `blockers[]`：哪台主機／哪個服務／哪個埠、原因、可以怎麼改；被點名的主機 `deployable=false` | 用管理者 QA 那份真實計畫：`blocked-plan-message.txt` |
+| UXR2-09 | 同一個 h1:80 被開了兩個轉發埠 | 同主機同埠的兩個服務名稱各配一個埠 | 同主機同埠視為同一個端點，只發布一次 | 單元測試＋QA 的 MOVEit 計畫重跑只剩一個埠 |
+| UXR2-06 | 拓樸說「可對外」，Compose 卻是 internal，表格同時列兩個值 | 報告沒解釋兩個欄位的差別 | 每個網路加上 `role`、`published_to_host`、中文 `description`（計畫角色 vs. 實際強制的隔離） | 單元測試 |
+| AR2-09 | 部署前看不到主機容量檢查 | 沒有這項檢查 | 新增容量預檢：記憶體不足直接拒絕；CPU、磁碟、待下載映像列出。唯讀端點 `GET /api/deploy/{id}/preflight` | `repeat-up-*.txt` 第 2 段（實際數字） |
+| 管理者表「跨場景主動 TCP 隔離 NOT_TESTED」 | QA 無法從 GUI 測 | — | 我補測：兩個情境同時部署，雙向對所有位址共 120 次連線嘗試 | 0 次連通，同情境內對照組可連（`cross-scenario-isolation.txt`） |
+| 主線：Equifax 經 GUI 的計畫要能部署 | — | — | 取 QA 在共用站台產生的兩份真實計畫當輸入 | 可部署的那份：Struts＋PostgreSQL＋attacker 生成、部署、重複 up、清除皆成功；被擋的那份：訊息指出確切位置與改法 |
+
+另外新增（Lead 協調，供模組 8 在產品內重現 Log4Shell 回呼）：**平台驗證元件 `cr-listener`**。
+- 只有當計畫中某台主機的 catalogue 元件宣告需要時才加入（目前只有 `vuln-log4shell-solr`）；不是情境主機，
+  列在報告的 `platform_components`。
+- 只接該主機所在的實驗網路；不開埠、不接 edge；非 root、唯讀、無 capability。
+- 行為：接受連線、記下來源位址與前 256 bytes、**不回任何內容**（JNDI 查詢到這裡就停住，不會載入任何類別）。
+- 介面：實驗網路內以 `cr-listener:1389` 連入；`manager.callback_events(scenario_id, since=None)` 回傳事件
+  （含 `peer_host`＝發起連線的情境主機）。
+- 真實驗證（只做一般 TCP 連線，我沒有送任何 exploit 請求）：solr／attacker／app 連入皆被記錄並正確歸屬、
+  回覆為空；listener 連不到宿主機、宿主機也連不到它（`validation-listener-real.txt`）。
+
+仍然沒有的：停止（保留狀態）、真實的 runtime 故障注入介面、同網段逐埠管制——見 §7／§8。
+
+**不部署的主機（主線協調）。** 環境計畫把某台主機標為 `deployable: false`（或 `deploy: false`）並附原因時
+（例如「報告只說資料在資料庫，沒指出任何軟體」），IaC 不會為它產生任何容器，也不會拿替身頂替；
+報告在 `not_deployed_hosts` 列出主機、角色與原因，`skipped_connections` 列出因此不存在的連線，
+`deployed_host_ids` 是實際會部署的主機。沒有標記的無映像主機仍然會擋下整份計畫（並說明原因）；
+若標記後沒有任何目標主機可部署，同樣拒絕。真實驗證：Struts＋attacker 部署成功、h2 未部署並列出原因、
+涉及 h2 的隔離檢查為 NOT_TESTED（`round2/not-deployed-host.txt`）。

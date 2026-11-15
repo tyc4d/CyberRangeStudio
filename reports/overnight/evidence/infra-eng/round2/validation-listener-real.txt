@@ -1,0 +1,19 @@
+# validation listener on a real deployment (cr-demo-infra-eng-7dce34a5). No exploit request is sent here: only plain TCP connections.
+up_1 200 48.2s attempts= [{'attempt': 1, 'exit_code': 0, 'host_ports': {}}] [('app', 'running', 'healthy', []), ('attacker', 'running', '', []), ('cache', 'running', 'healthy', []), ('cr-listener', 'running', 'healthy', []), ('legacy', 'running', 'healthy', []), ('solr', 'running', 'healthy', [])]
+## listener container
+image=python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704 user=65532:65532 readonly=true capdrop=[ALL] published=[] networks=cr-demo-infra-eng-7dce34a5-dmz cr-demo-infra-eng-7dce34a5-inside 
+## events before any connection
+   listener: {'host': 'cr-listener', 'port': 1389, 'networks': ['dmz', 'inside'], 'for_hosts': ['solr'], 'scenario_host': False}
+   running: True events: 0
+   solr -> cr-listener:1389 connected; reply = b''
+   attacker -> cr-listener:1389 connected; reply = b''
+   app -> cr-listener:1389 connected; reply = b''
+## events recorded and attributed
+   solr 192.168.48.2 b'hello-from-solr' 2026-11-15T03:20:34.278185+00:00
+   attacker 192.168.48.3 b'hello-from-attacker' 2026-11-15T03:20:34.460255+00:00
+   app 172.29.0.4 b'hello-from-app' 2026-11-15T03:20:34.649036+00:00
+   events after the last timestamp: 0
+## the listener cannot reach the host, and the host cannot reach the listener
+   RESULT HOST_UNREACHABLE
+   host -> 192.168.48.1:1389 unreachable
+   host -> 172.29.0.3:1389 unreachable

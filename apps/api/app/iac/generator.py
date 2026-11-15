@@ -97,6 +97,76 @@ _GATEWAY_FORWARDER = (
 )
 
 
+# Platform component added only when a deployed catalogue image declares it needs one for
+# validation (e.g. the Log4Shell exercise target): a record-only TCP listener inside the
+# lab. It accepts a connection, notes who connected and the first bytes, and sends
+# NOTHING back, so a JNDI/LDAP lookup that reaches it can be observed but never completes
+# into class loading. It is not a scenario host: it is never published, never on the edge
+# network, and is reported under `platform_components`.
+LISTENER_SERVICE = "cr-listener"
+LISTENER_PORT = 1389
+_LISTENER_PROGRAM = (
+    "import json,os,socket,threading\n"
+    "from datetime import datetime,timezone\n"
+    "PORT=int(os.environ.get('LISTENER_PORT','1389'))\n"
+    "def handle(conn,addr):\n"
+    " with conn:\n"
+    "  conn.settimeout(2.0)\n"
+    "  try: data=conn.recv(256)\n"
+    "  except OSError: data=b''\n"
+    "  if addr[0].startswith('127.'): return\n"
+    "  print('CALLBACK '+json.dumps({'event':'callback','peer_ip':addr[0],'peer_port':addr[1],"
+    "'first_bytes_hex':data[:32].hex(),'ts':datetime.now(timezone.utc).isoformat()}),flush=True)\n"
+    "srv=socket.socket(socket.AF_INET,socket.SOCK_STREAM)\n"
+    "srv.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)\n"
+    "srv.bind(('0.0.0.0',PORT)); srv.listen(16)\n"
+    "print('listener-ready port=%d'%PORT,flush=True)\n"
+    "while True:\n"
+    " try: conn,addr=srv.accept()\n"
+    " except OSError: continue\n"
+    " threading.Thread(target=handle,args=(conn,addr),daemon=True).start()\n"
+)
+
+
+def _listener_requirements(hosts: list[dict[str, Any]], resolved_by_host: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    """Which hosts need the callback listener, and which plan networks it must join."""
+    wanting, networks = [], []
+    for host in hosts:
+        resolved = resolved_by_host.get(host.get("id", ""), {})
+        catalogue = resolved.get("catalogue") if resolved.get("component_mode") == "real" else None
+        if any(item.get("kind") == "callback_listener" for item in (catalogue or {}).get("validation_support", [])):
+            wanting.append(host["id"])
+            for network in host.get("networks", []):
+                if network not in networks:
+                    networks.append(network)
+    if not wanting:
+        return None
+    return {"id": LISTENER_SERVICE, "kind": "callback_listener", "scenario_host": False, "host": LISTENER_SERVICE,
+            "port": LISTENER_PORT, "protocol": "tcp", "networks": networks, "for_hosts": wanting, "published": False,
+            "behavior": "records inbound TCP connections (peer address, first bytes); never sends a reply",
+            "evidence": "one line 'CALLBACK {json}' per connection on the container's stdout",
+            "description": "平台驗證元件（不是情境主機）：只在實驗網路內接收並記錄連線，不回傳任何內容、不對本機開埠。"}
+
+
+_NOT_DEPLOYED_REASON_KEYS = ("not_deployed_reason", "deploy_reason", "deployable_reason", "reason")
+
+
+def not_deployed_marker(host: dict[str, Any]) -> str | None:
+    """Reason text when the plan marks a host as one that must not be deployed, else None.
+
+    Module 5 marks such a host with ``deployable: false`` (or ``deploy: false``) and a
+    reason, e.g. a host that only describes where data lived and names no software, or one
+    whose software has no deployable image. Module 6 never invents a container for it: the
+    host is left out of the generated environment and listed with its reason.
+    """
+    if host.get("deployable") is False or host.get("deploy") is False:
+        for key in _NOT_DEPLOYED_REASON_KEYS:
+            if isinstance(host.get(key), str) and host[key].strip():
+                return host[key].strip()
+        return "環境計畫將這台主機標為不部署，但沒有附原因。"
+    return None
+
+
 def hostport_env(index: int) -> str:
     return f"CR_HOSTPORT_{index}"
 
@@ -243,14 +313,35 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
 
     next_published_port = _PUBLISHED_PORT_MIN
     resolved_by_host: dict[str, dict[str, Any]] = {}
+    not_deployed: list[dict[str, Any]] = []
     for host in hosts:
         host_id = host.get("id", "")
+        marker = not_deployed_marker(host)
+        if marker is not None and _ID_RE.fullmatch(host_id) and host_id not in host_ids:
+            # Left out on purpose by the plan: no image is resolved, nothing is generated.
+            host_ids.add(host_id)
+            not_deployed.append({"host_id": host_id, "role": host.get("role"), "reason": marker,
+                                 "image_hint": host.get("image_hint"), "runtime": host.get("runtime"),
+                                 "services": [str(item.get("name", "")) for item in host.get("services", [])]})
+            components.append({"host_id": host_id, "image_hint": host.get("image_hint"), "component": "not_deployed",
+                               "component_mode": "not_deployed", "runtime": host.get("runtime") or "none",
+                               "deployable": False, "skipped": True, "image": None, "version": None, "digest": None,
+                               "substitute": False, "published": False, "reason": marker})
+            # Other modules look hosts up by id; give them an explicit "not deployed" entry
+            # rather than a missing key.
+            resolved_by_host[host_id] = {"runtime_component": None, "component": "not_deployed",
+                                         "component_mode": "not_deployed", "image": None, "version": None,
+                                         "digest": None, "catalogue": None, "substitute": False,
+                                         "not_deployed_reason": marker}
+            continue
         if not _ID_RE.fullmatch(host_id):
             errors.append(f"invalid host id: {host_id!r}")
         if host_id in host_ids:
             errors.append(f"duplicate host id: {host_id}")
         if host_id == GATEWAY_SERVICE:
             errors.append(f"host id {GATEWAY_SERVICE!r} is reserved for the generated publishing gateway")
+        if host_id == LISTENER_SERVICE:
+            errors.append(f"host id {LISTENER_SERVICE!r} is reserved for the generated validation listener")
         host_ids.add(host_id)
         runtime = host.get("runtime")
         catalogue_hint = (host.get("image_hint") or "").strip().lower()
@@ -438,8 +529,16 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                       "在依賴頁為這個服務選一個 catalogue 元件，或移除這個服務。",
                       host=host_id, service=label, port=port)
 
+    skipped_ids = {item["host_id"] for item in not_deployed}
+    skipped_connections: list[dict[str, Any]] = []
     for connection in plan.get("connections", []):
         source, target = connection.get("from_host"), connection.get("to_host")
+        if source in skipped_ids or target in skipped_ids:
+            # A path to or from a host that is not deployed cannot exist; say so instead of
+            # failing the whole plan or pretending the path is there.
+            skipped_connections.append({"from_host": source, "to_host": target, "port": connection.get("port"),
+                                        "reason": f"主機 {source if source in skipped_ids else target} 不部署，這條連線不會建立"})
+            continue
         if source not in host_ids or target not in host_ids:
             block(f"connection references unknown host: {source!r} -> {target!r}", "connection_unknown_host",
                   f"連線 {source} → {target} 指到計畫裡不存在的主機。",
@@ -473,6 +572,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
 
     vm_host_ids = {item["host_id"] for item in vm_definitions}
     for host_report in components:
+        if host_report.get("skipped"):
+            continue
         if not host_report["deployable"] and host_report["host_id"] not in vm_host_ids:
             hint = host_report.get("image_hint")
             block(f"host {host_report['host_id']} cannot be resolved to a safe local image", "no_image_for_host",
@@ -519,6 +620,11 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
             host_report["wired_to"] = wiring[host_report["host_id"]]["targets"]
     if not hosts:
         errors.append("at least one host is required")
+    deployed_hosts = [host for host in hosts if host.get("id") not in skipped_ids]
+    if hosts and not any("attacker" not in str(host.get("role", "")).casefold() for host in deployed_hosts):
+        block("no deployable target host remains", "no_deployable_target",
+              "這個計畫沒有任何會被部署的目標主機" + ("（全部被標為不部署）。" if skipped_ids else "。"),
+              "至少要有一台目標主機對應到 catalogue 內可部署的元件；請回依賴頁為主要服務選擇元件或教學替代。")
 
     for vm in vm_definitions:
         block(f"host {vm['host_id']} runtime=vm is not supported by the configured deployment backend: {vm['reason']}",
@@ -534,6 +640,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
                              "fix": "重新產生拓樸；若問題仍在，請回報這段訊息。"})
     # A host that is the subject of a blocker is not deployable, whatever its image is.
     for host_report in components:
+        if host_report.get("skipped"):
+            continue
         own = [item for item in blockers if item.get("host") == host_report["host_id"]
                or host_report["host_id"] in (item.get("from_host"), item.get("to_host"))]
         if own:
@@ -547,6 +655,12 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         "deployable": not errors,
         "blockers": blockers,
         "plan_notes": [str(note) for note in plan.get("notes", [])],
+        "platform_components": [item for item in [_listener_requirements(deployed_hosts, resolved_by_host)] if item],
+        # Hosts the plan says not to deploy (with the plan's reason) and the paths that
+        # therefore do not exist. They are part of the scenario but not of the environment.
+        "not_deployed_hosts": not_deployed,
+        "skipped_connections": skipped_connections,
+        "deployed_host_ids": [host.get("id") for host in deployed_hosts],
         "components": components,
         "vms": vm_definitions,
         "host_port_mappings": mappings,
@@ -569,8 +683,8 @@ def inspect_plan(plan: Any, scenario_id: str) -> tuple[dict[str, Any], dict[str,
         ],
         "errors": errors,
     }
-    return {"hosts": hosts, "networks": networks, "components": resolved_by_host, "mappings": mappings,
-            "wiring": wiring}, report
+    return {"hosts": deployed_hosts, "networks": networks, "components": resolved_by_host, "mappings": mappings,
+            "wiring": wiring, "not_deployed": not_deployed, "skipped_connections": skipped_connections}, report
 
 
 def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
@@ -683,6 +797,26 @@ def compose_document(plan: dict[str, Any], scenario_id: str) -> str:
             for network_id in sorted(network_names)
         },
     }
+    listener = _listener_requirements(normalized["hosts"], normalized["components"])
+    if listener:
+        service_doc[LISTENER_SERVICE] = {
+            "container_name": f"cr-demo-{scenario_id}-{LISTENER_SERVICE}",
+            "image": _DEMO_IMAGE,
+            "command": ["python", "-c", _LISTENER_PROGRAM],
+            "environment": {"LISTENER_PORT": str(LISTENER_PORT)},
+            "networks": list(listener["networks"]),
+            "read_only": True,
+            "tmpfs": ["/tmp:rw,noexec,nosuid,size=16m"],
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "restart": "no",
+            "user": "65532:65532",
+            # loopback connections are not recorded, so the healthcheck leaves no evidence lines
+            "healthcheck": {"test": ["CMD", "python", "-c",
+                                     f"import socket; socket.create_connection(('127.0.0.1',{LISTENER_PORT}),2).close()"],
+                            "interval": "5s", "timeout": "3s", "retries": 6},
+            **_DEMO_LIMITS,
+        }
     if normalized["mappings"]:
         hosts_by_id = {host["id"]: host for host in normalized["hosts"]}
         gateway_networks = [_EDGE_NETWORK]
@@ -774,6 +908,10 @@ def _assert_compose_safe(content: str, scenario_id: str) -> None:
         if service_name == GATEWAY_SERVICE and (not on_edge or not service.get("ports")
                                                 or service.get("image") != _DEMO_IMAGE):
             raise PlanError([f"{GATEWAY_SERVICE} must be the pinned forwarder on the edge network"])
+        if service_name == LISTENER_SERVICE and (service.get("image") != _DEMO_IMAGE
+                                                 or service.get("command") != ["python", "-c", _LISTENER_PROGRAM]
+                                                 or service.get("read_only") is not True):
+            raise PlanError([f"{LISTENER_SERVICE} must be the pinned record-only listener"])
     for network_id, network in doc.get("networks", {}).items():
         name = network.get("name", "")
         if not name.startswith(f"cr-demo-{scenario_id}-"):

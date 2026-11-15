@@ -370,3 +370,105 @@ class BlockerAndGroupingTests(unittest.TestCase):
         self.assertEqual(by_id["inside"]["role"], "internal_segment")
         self.assertFalse(by_id["inside"]["published_to_host"])
         self.assertTrue(all(n["description"] for n in report["networks"]))
+
+
+class ValidationListenerTests(unittest.TestCase):
+    PLAN = {"hosts": [
+                {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["dmz"]},
+                {"id": "solr", "role": "exposed web", "image_hint": "vuln-log4shell-solr", "component_mode": "real",
+                 "services": [{"name": "Apache Solr", "port": 8983}], "networks": ["dmz", "inside"]},
+                {"id": "web", "role": "exposed web", "image_hint": "oss-nginx", "component_mode": "real",
+                 "services": [{"name": "http", "port": 80}], "networks": ["dmz"]}],
+            "networks": [{"id": "dmz", "internal": False}, {"id": "inside", "internal": True}],
+            "connections": [{"from_host": "attacker", "to_host": "solr", "port": 8983}]}
+
+    def test_listener_is_added_only_for_images_that_declare_they_need_it(self):
+        _, report = inspect_plan(self.PLAN, "lst")
+        self.assertTrue(report["deployable"], report["errors"])
+        listener = report["platform_components"][0]
+        self.assertEqual((listener["id"], listener["port"], listener["for_hosts"]), ("cr-listener", 1389, ["solr"]))
+        self.assertFalse(listener["scenario_host"])
+        self.assertFalse(listener["published"])
+        self.assertEqual(listener["networks"], ["dmz", "inside"])
+        self.assertNotIn("cr-listener", [c["host_id"] for c in report["components"]])   # not a scenario host
+
+        _, other = inspect_plan(EXPOSED_PLAN, "lst")       # Struts / WordPress / MySQL: no listener
+        self.assertEqual(other["platform_components"], [])
+        self.assertNotIn("cr-listener", yaml.safe_load(compose_document(EXPOSED_PLAN, "lst"))["services"])
+
+    def test_listener_is_isolated_hardened_and_record_only(self):
+        from app.iac.generator import _LISTENER_PROGRAM
+        services = yaml.safe_load(compose_document(self.PLAN, "lst"))["services"]
+        listener = services["cr-listener"]
+        self.assertEqual(listener["networks"], ["dmz", "inside"])
+        self.assertNotIn("edge", listener["networks"])
+        self.assertNotIn("ports", listener)
+        self.assertTrue(listener["read_only"])
+        self.assertEqual(listener["cap_drop"], ["ALL"])
+        self.assertEqual(listener["user"], "65532:65532")
+        compile(_LISTENER_PROGRAM, "listener", "exec")
+        self.assertNotIn("send", _LISTENER_PROGRAM)       # it never answers a connection
+        self.assertIn("recv(256)", _LISTENER_PROGRAM)
+        # the gateway still serves only the non-vulnerable published host
+        self.assertEqual([a for a in services["cr-gateway"]["command"] if "=" in a and ":" in a][-1], "20000=web:80")
+
+    def test_listener_name_is_reserved_and_cannot_be_tampered_with(self):
+        from app.iac.generator import _assert_compose_safe, PlanError
+        plan = {**self.PLAN, "hosts": [*self.PLAN["hosts"], {"id": "cr-listener", "role": "x", "image_hint": "oss-attacker",
+                                                              "component_mode": "real", "networks": ["inside"]}]}
+        self.assertFalse(inspect_plan(plan, "lst")[1]["deployable"])
+        document = yaml.safe_load(compose_document(self.PLAN, "lst"))
+        document["services"]["cr-listener"]["command"] = ["python", "-c", "print(1)"]
+        with self.assertRaises(PlanError):
+            _assert_compose_safe(yaml.safe_dump(document), "lst")
+
+
+class NotDeployedHostTests(unittest.TestCase):
+    """A host the plan marks as not deployable is left out and reported, never faked."""
+
+    def _plan(self, **marker):
+        return {"hosts": [
+                    {"id": "attacker", "role": "attacker", "image_hint": "oss-attacker", "component_mode": "real", "networks": ["external"]},
+                    {"id": "h1", "role": "online dispute portal", "image_hint": "vuln-struts2-s2-045", "component_mode": "real",
+                     "services": [{"name": "Apache Struts", "port": 8080}], "networks": ["scenario-internal", "external"]},
+                    {"id": "h2", "role": "databases containing PII", "networks": ["scenario-internal"], "services": [], **marker}],
+                "networks": [{"id": "scenario-internal", "internal": True}, {"id": "external", "internal": False}],
+                "connections": [{"from_host": "attacker", "to_host": "h1", "port": 8080},
+                                {"from_host": "h1", "to_host": "h2", "port": 5432}],
+                "verify_blocked": [{"from_host": "attacker", "to_host": "h2", "port": 5432}]}
+
+    def test_unmarked_host_without_software_still_blocks_the_plan(self):
+        _, report = inspect_plan(self._plan(), "nd")
+        self.assertFalse(report["deployable"])
+        self.assertIn("no_image_for_host", {b["code"] for b in report["blockers"]})
+
+    def test_marked_host_is_skipped_and_listed_with_the_plans_reason(self):
+        reason = "報告只說資料存放在資料庫，沒有指出任何可部署的軟體"
+        for marker in ({"deployable": False, "not_deployed_reason": reason}, {"deploy": False, "reason": reason}):
+            plan = self._plan(**marker)
+            normalized, report = inspect_plan(plan, "nd")
+            self.assertTrue(report["deployable"], report["errors"])
+            self.assertEqual(report["not_deployed_hosts"][0]["host_id"], "h2")
+            self.assertEqual(report["not_deployed_hosts"][0]["reason"], reason)
+            self.assertEqual(report["deployed_host_ids"], ["attacker", "h1"])
+            by_host = {c["host_id"]: c for c in report["components"]}
+            self.assertTrue(by_host["h2"]["skipped"])
+            self.assertFalse(by_host["h2"]["deployable"])
+            self.assertIsNone(by_host["h2"]["image"])
+            self.assertEqual(report["skipped_connections"][0]["to_host"], "h2")
+            services = yaml.safe_load(compose_document(plan, "nd"))["services"]
+            self.assertEqual(sorted(services), ["attacker", "h1"])       # no stand-in container for h2
+            self.assertNotIn("depends_on", services["h1"])
+            self.assertEqual([h["id"] for h in normalized["hosts"]], ["attacker", "h1"])
+
+    def test_marker_without_a_reason_says_so(self):
+        _, report = inspect_plan(self._plan(deployable=False), "nd")
+        self.assertIn("沒有附原因", report["not_deployed_hosts"][0]["reason"])
+
+    def test_plan_with_no_deployable_target_is_refused(self):
+        plan = self._plan(deployable=False, not_deployed_reason="x")
+        plan["hosts"][1].update({"deployable": False, "not_deployed_reason": "no image"})
+        plan["hosts"][1].pop("image_hint")
+        _, report = inspect_plan(plan, "nd")
+        self.assertFalse(report["deployable"])
+        self.assertIn("no_deployable_target", {b["code"] for b in report["blockers"]})
