@@ -10,10 +10,72 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 
 from app import store  # noqa: E402
 from app.cti import analysis  # noqa: E402
+from app.cti.citations import evidence_record  # noqa: E402
+from app.cti.parser import parse_source  # noqa: E402
 from app.main import app  # noqa: E402
 
 
 class IngestEndpointTests(unittest.TestCase):
+  def test_equifax_pdf_extract_preserves_query_quote_without_verifying_rewrites(self):
+    fixture = Path(__file__).resolve().parents[2] / "fixtures" / "cti-candidates" / "equifax-2017-struts-db" / "evidence-brief.pdf"
+    with patch.object(store, "set_pending_file", lambda *args: None):
+      response = TestClient(app).post(
+          "/api/ingest/extract",
+          files={"file": (fixture.name, fixture.read_bytes(), "application/pdf")},
+      )
+
+    self.assertEqual(response.status_code, 200, response.text)
+    self.assertEqual(response.json()["input_kind"], "text")
+    extracted = response.json()["content"]
+    units, parsed = parse_source("text", extracted)
+    self.assertGreater(len(units), 1, "PDF extraction should preserve paragraph locators")
+    source_ref = next(unit.id for unit in units if "9,000" in unit.text)
+    exact_quote = (
+        "The credentials enabled access to 48 unrelated databases. Investigators reported roughly 9,000 "
+        "queries; the House report says 265 located unencrypted personal data."
+    )
+    exact = evidence_record("pdf-exact", exact_quote, source_ref, units, parsed)
+    self.assertTrue(exact["quote_verified"])
+    self.assertEqual(exact["quote_match"], "exact")
+
+    # Preserve the captured model rewrites as partial evidence, never verified quotes.
+    rewrites = {
+        "evidence-15": (
+            "Foothold to broader access: those credentials enabled access to databases outside the normal ACIS set.",
+            "normal ACIS set",
+        ),
+        "evidence-16": (
+            "The application needed three databases for its business function but could reach unrelated databases "
+            "because segmentation was insufficient.",
+            "application needed three databases",
+        ),
+    }
+    for evidence_id, (quote, anchor) in rewrites.items():
+      with self.subTest(evidence_id=evidence_id):
+        rewrite_ref = next(unit.id for unit in units if anchor in unit.text)
+        record = evidence_record(evidence_id, quote, rewrite_ref, units, parsed)
+        self.assertEqual(record["quote_match"], "partial")
+        self.assertFalse(record["quote_verified"])
+
+  def test_pdf_extract_preserves_hyphenated_citation_across_line_wrap(self):
+    fixture = Path(__file__).resolve().parents[2] / "fixtures" / "cti-candidates" / "aa23-289a-confluence-cve-2023-22515" / "source.pdf"
+    with patch.object(store, "set_pending_file", lambda *args: None):
+      response = TestClient(app).post(
+          "/api/ingest/extract",
+          files={"file": (fixture.name, fixture.read_bytes(), "application/pdf")},
+      )
+
+    self.assertEqual(response.status_code, 200, response.text)
+    units, parsed = parse_source("text", response.json()["content"])
+    quote = (
+        "Threat actors exploited CVE-2023-22515 as a zero-day to obtain access to victim systems and "
+        "continue active exploitation post-patch."
+    )
+    source_ref = next(unit.id for unit in units if "Threat actors exploited CVE-2023-22515" in unit.text)
+    record = evidence_record("confluence-hyphen", quote, source_ref, units, parsed)
+    self.assertTrue(record["quote_verified"])
+    self.assertEqual(record["quote_match"], "exact")
+
   def test_analyze_returns_valid_full_ir_with_program_checked_citation(self):
     model_result = {
         "actions": [{

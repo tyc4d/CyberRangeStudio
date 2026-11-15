@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import uuid
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Literal
 
@@ -108,7 +109,9 @@ def _extract_pdf_text(data: bytes) -> str:
         src.write_bytes(data)
         try:
             proc = subprocess.run(
-                ["pdftotext", "-layout", str(src), "-"],
+                # Preserve Poppler's text flows and blocks so adjacent PDF columns
+                # do not get interleaved, while retaining wrapped word punctuation.
+                ["pdftotext", "-bbox-layout", str(src), "-"],
                 capture_output=True, timeout=60, check=False,
             )
         except subprocess.TimeoutExpired as exc:
@@ -116,7 +119,39 @@ def _extract_pdf_text(data: bytes) -> str:
     if proc.returncode != 0:
         detail = proc.stderr.decode("utf-8", "replace")[:300] or "pdftotext 解析失敗。"
         raise HTTPException(status_code=422, detail=f"無法解析這個 PDF：{detail}")
-    return proc.stdout.decode("utf-8", "replace")
+
+    try:
+        document = ET.fromstring(proc.stdout)
+    except ET.ParseError as exc:
+        raise HTTPException(status_code=422, detail="無法解析這個 PDF：Poppler 回傳的版面文字無效。") from exc
+
+    def local_name(element: ET.Element) -> str:
+        return element.tag.rsplit("}", 1)[-1]
+
+    def children(element: ET.Element, name: str) -> list[ET.Element]:
+        return [child for child in element if local_name(child) == name]
+
+    # -bbox-layout returns text in flows and blocks. Keep lines in each block
+    # together, and separate flows so adjacent table columns stay in reading
+    # order instead of being interleaved by their shared y positions.
+    pages: list[str] = []
+    for page in (element for element in document.iter() if local_name(element) == "page"):
+        flows: list[str] = []
+        for flow in children(page, "flow"):
+            blocks: list[str] = []
+            for block in children(flow, "block"):
+                lines: list[str] = []
+                for line in children(block, "line"):
+                    words = ["".join(word.itertext()) for word in children(line, "word")]
+                    if words:
+                        lines.append(" ".join(words))
+                if lines:
+                    blocks.append(" ".join(lines))
+            if blocks:
+                flows.append("\n".join(blocks))
+        if flows:
+            pages.append("\n\n".join(flows))
+    return "\n\n".join(pages)
 
 
 @router.post("/extract")
