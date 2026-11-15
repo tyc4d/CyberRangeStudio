@@ -1,25 +1,25 @@
-# m9-runner integration request
+# m9-runner integration note
 
-The required real-payload execution path cannot currently run against a vulnerable
-target without changing shared deployment code owned by Lead:
+Lead ruling accepted: local-docker intentionally returns `BLOCKED` for vulnerable
+targets under D6; the Runner preserves that result. Real exploitation is only attempted
+through `manager.probe_in_service` on a scenario-owned Proxmox worker after its isolation
+evidence passes. No shared deployment code was changed.
 
-1. `deploy.manager.isolation_preflight()` rejects plans containing vulnerable hosts,
-   so the current `manager.up()` cannot deploy the required Struts / Log4Shell target.
-2. `deploy.manager.probe_in_service()` delegates to `local_docker.probe_in_service()`,
-   which calls `vulnerable_hosts()` and returns code 2 for every deliberately vulnerable
-   target. Consequently the runner cannot deliver a payload to a successfully deployed
-   vulnerable target through the mandated API.
-3. `probe_in_service()` uses `docker run --rm`, but does not expose a container name or
-   cancellation handle for an explicit finally-kill if its client times out.
+Nice-to-have Lead follow-up: expose a deterministic ephemeral helper-container handle
+from `manager.probe_in_service` so runner-level timeout/cancel cleanup can target that
+exact helper without best-effort container discovery. Runner currently applies a bounded
+wrapper and removes a uniquely matched helper when it can prove its identity.
 
-Please provide a Lead-owned, guard-authorized vulnerable-target deployment/probe path.
-The narrow option is a separate method that accepts verified scenario/service identity
-from `poc.runner.guard.assert_target_owned`, retains the pinned helper image and
-non-root/read-only/cap-drop/no-host-mount restrictions, assigns a deterministic
-ephemeral container name, and guarantees kill/remove on timeout/cancel. It must not
-weaken the existing module-8/D6 behavior for ordinary callers. Then m9-runner can call
-that method only after its guard passes and the real Struts/Log4Shell e2e can use the
-normal deployment record flow.
+`routers/poc.py` is outside m9-runner's owned file set, so please wire these two routes
+to the implemented runner functions (`from app.poc.runner import runner`):
 
-No alternate Docker invocation was added here because the task explicitly requires
-reuse of `manager.probe_in_service` and forbids edits to manager.py.
+```python
+@router.get("/{scenario_id}/execute/status")
+def poc_execute_status(scenario_id: str): return runner.execution_status(scenario_id)
+@router.post("/{scenario_id}/execute/cancel")
+def poc_execute_cancel(scenario_id: str): return runner.cancel_execution(scenario_id)
+```
+
+Frozen response shapes: status returns `{job_state, per_action:[{action_id,stages}], logs_tail?}`;
+cancel returns `{cancelled: bool}`. `run_job()` creates and updates the existing `poc_jobs`
+row, persists `poc_runs`, publishes live stages, and polls the job's cooperative cancel flag.

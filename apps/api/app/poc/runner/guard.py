@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 from typing import Any
+
+import yaml
 
 from app.deploy import manager
 from app.iac.generator import PlanError, get_generated, validate_id
@@ -42,10 +43,8 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
         raise TargetBlocked("invalid scenario id") from exc
     data = target if isinstance(target, dict) else {"service_ref": target}
     vmid = str(data.get("vmid", ""))
-    if vmid:
-        if vmid in PROTECTED_VMIDS:
-            raise TargetBlocked("protected VMID is never an allowed PoC target")
-        raise TargetBlocked("Proxmox VM targets are not wired for PoC execution")
+    if vmid in PROTECTED_VMIDS:
+        raise TargetBlocked("protected VMID is never an allowed PoC target")
     service = data.get("service_ref") or data.get("service_id") or data.get("target_host_ref")
     if not isinstance(service, str) or not _SERVICE_ID.fullmatch(service):
         raise TargetBlocked("target does not resolve to a valid deployed service")
@@ -54,22 +53,7 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
 
     try:
         generated = get_generated(scenario_id)
-        project = manager.project_name(scenario_id)
-        up_records = [row for row in manager.records(scenario_id, limit=500) if row.get("action") == "up"]
-    except Exception as exc:
-        raise TargetBlocked("scenario deployment record or generated plan is unavailable") from exc
-    if not up_records or up_records[0].get("state") != "running":
-        raise TargetBlocked("latest deployment record does not prove a running owned deployment")
-    record = up_records[0]
-    details = record.get("details") or {}
-    if details.get("backend") != "local-docker":
-        raise TargetBlocked("PoC runner currently supports only local Docker deployments")
-    isolation = details.get("host_isolation")
-    if not isinstance(isolation, dict) or isolation.get("isolated") is not True:
-        raise TargetBlocked("deployment record does not prove host isolation")
-
-    try:
-        document = __import__("yaml").safe_load(generated["compose"])
+        document = yaml.safe_load(generated["compose"])
         services = document.get("services", {})
         service_doc = services.get(service)
         if not isinstance(service_doc, dict):
@@ -77,6 +61,44 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
         expected_name = f"cr-demo-{scenario_id}-{service}"
         if service_doc.get("container_name") != expected_name:
             raise TargetBlocked("generated service container name does not match scenario ownership")
+        project = manager.project_name(scenario_id)
+        backend = manager.deploy_backend()
+        if backend == "proxmox":
+            deployment = manager._active_proxmox_deployment(scenario_id)
+            if not deployment or deployment.get("orphan"):
+                raise TargetBlocked("no active, healthy scenario-owned Proxmox worker deployment")
+            vmid = int(deployment.get("vmid", 0))
+            if vmid in {int(value) for value in PROTECTED_VMIDS} or not 900100 <= vmid <= 900999:
+                raise TargetBlocked("Proxmox worker VMID is protected or outside the owned cr-range")
+            if data.get("vmid") is not None and str(data.get("vmid")) != str(vmid):
+                raise TargetBlocked("requested VMID does not match this scenario's deployment record")
+            details = deployment.get("details") or {}
+            isolation = details.get("isolation")
+            if not manager._pve_isolation_confirmed(isolation):
+                raise TargetBlocked("Proxmox deployment lacks confirmed isolation evidence")
+            status = manager.compose_ps_result(scenario_id)
+            if status.get("returncode") != 0 or status.get("vm_state") != "running":
+                raise TargetBlocked("owned Proxmox worker is not verifiably running")
+            containers = manager._parse_compose_ps(status.get("stdout", ""))
+            if not any(row.get("name") == expected_name and row.get("state") == "running" for row in containers):
+                raise TargetBlocked("target service container is not running in the owned Proxmox worker")
+            return {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
+                    "vmid": vmid, "networks": list(service_doc.get("networks") or []),
+                    "deployment_record_id": None}
+
+        if vmid:
+            raise TargetBlocked("VM targets are unsupported by the selected local Docker backend")
+
+        up_records = [row for row in manager.records(scenario_id, limit=500) if row.get("action") == "up"]
+        if not up_records or up_records[0].get("state") != "running":
+            raise TargetBlocked("latest deployment record does not prove a running owned deployment")
+        record = up_records[0]
+        details = record.get("details") or {}
+        if details.get("backend") != "local-docker":
+            raise TargetBlocked("deployment record backend does not match selected runtime")
+        isolation = details.get("host_isolation")
+        if not isinstance(isolation, dict) or isolation.get("isolated") is not True:
+            raise TargetBlocked("deployment record does not prove host isolation")
         container = _docker_json(["inspect", expected_name])
         if not isinstance(container, list) or len(container) != 1:
             raise TargetBlocked("owned target container is not uniquely inspectable")
@@ -92,7 +114,7 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
         if not networks or not declared:
             raise TargetBlocked("target has no declared lab network")
         verified_networks: list[str] = []
-        for network_name, network_state in networks.items():
+        for network_name in networks:
             if network_name == f"{project}-edge" or network_name not in {f"{project}-{n}" for n in declared}:
                 continue
             network = _docker_json(["network", "inspect", network_name])

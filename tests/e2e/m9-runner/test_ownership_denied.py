@@ -22,10 +22,12 @@ def test_unowned_target_is_blocked_without_calling_sandbox() -> None:
         expected_marker="must-not-run",
     )
     with patch("app.poc.runner.runner.assert_target_owned", side_effect=TargetBlocked("not owned")), \
-         patch("app.poc.runner.runner.manager.probe_in_service") as probe:
+         patch("app.poc.runner.runner.manager.probe_in_service") as probe, \
+         patch("app.poc.runner.runner._cleanup_probe") as cleanup:
         result = SandboxRunner().execute(request)
     assert result.status == "BLOCKED"
     assert result.target_ownership_verified is False
     assert result.stages.started is False
     assert result.stages.delivered is False
     probe.assert_not_called()
+    cleanup.assert_not_called()

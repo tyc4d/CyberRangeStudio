@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,8 @@ class ExecutionRequest:
     target_host_ref: str | None = None
     timeout: int = 30
     cancel: Any = None
+    on_progress: Callable[[dict[str, Any]], None] | None = None
+    proof_id: str | None = None
 
 
 @dataclass(frozen=True)
