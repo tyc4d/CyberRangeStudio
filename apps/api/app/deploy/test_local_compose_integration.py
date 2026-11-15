@@ -92,11 +92,14 @@ class LocalComposeIntegrationTests(unittest.TestCase):
                 validation = client.post(f"/api/validate/{scenario_id}/run")
                 self.assertEqual(validation.status_code, 200, validation.text)
                 report = validation.json()
-                # This scenario declares no attack actions (actions: []), so the full
-                # attack chain cannot be claimed reproduced: env/behavior plumbing must
-                # not be promoted to a full_chain PASS (see validator R1 fix).
+                # This scenario declares no attack actions (actions: []). env_build PASSes
+                # (services up + liveness). behavior_repro is NOT_TESTED because it now
+                # reflects ONLY action-specific attack probes, never benign HTTP 200 /
+                # pg_isready liveness (AR2-04 / UXR2-03). full_chain stays NOT_TESTED.
                 self.assertEqual(report["levels"],
-                                 {"env_build": "PASS", "behavior_repro": "PASS", "full_chain": "NOT_TESTED"})
+                                 {"env_build": "PASS", "behavior_repro": "NOT_TESTED", "full_chain": "NOT_TESTED"})
+                # Every executed check still PASSes; no attack checks exist for a no-action
+                # scenario, so nothing is spuriously NOT_TESTED among them.
                 self.assertTrue(all(check["status"] == "PASS" for check in report["checks"]))
                 latest = client.get(f"/api/validate/{scenario_id}/report")
                 self.assertEqual(latest.status_code, 200)
