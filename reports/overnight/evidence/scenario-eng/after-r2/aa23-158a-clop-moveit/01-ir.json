@@ -1,0 +1,787 @@
+{
+ "schema_version": "1.0",
+ "name": "moveit transfer databases",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "d5a5649f5adeabaeaecc1f6e55abb16161452e210cf1118be098b70042a30f78",
+  "source_name": "aa23-158a-clop-moveit"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploited CVE-2023-34362 MOVEit Transfer vulnerability",
+   "source": "llm",
+   "description": "Beginning on May 27, 2023, CL0P Ransomware Gang (TA505) exploited a previously unknown SQL injection vulnerability (CVE-2023-34362) in MOVEit Transfer to install a web shell named LEMURLOOT on internet-facing MOVEit Transfer web applications.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+   "source": "llm",
+   "description": "The LEMURLOOT web shell was used to steal data from underlying MOVEit Transfer databases by executing commands on the infected server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "LEMURLOOT web shell authenticates incoming HTTP requests via hard-coded password",
+   "source": "llm",
+   "description": "The LEMURLOOT web shell authenticates incoming HTTP requests via a hard-coded password and can run commands to interact with the MOVEit Transfer system.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a4",
+   "name": "LEMURLOOT web shell retrieves Microsoft Azure system settings and enumerates underlying SQL database",
+   "source": "llm",
+   "description": "The web shell can retrieve Microsoft Azure system settings and enumerate the underlying SQL database of MOVEit Transfer.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a5",
+   "name": "LEMURLOOT web shell stores a string and retrieves a file matching the string from MOVEit Transfer system",
+   "source": "llm",
+   "description": "The web shell can store a string sent by the operator and then retrieve a file with a name matching the string from the MOVEit Transfer system.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a6",
+   "name": "LEMURLOOT web shell creates a new administrator privileged account",
+   "source": "llm",
+   "description": "The web shell can create a new administrator privileged account with randomly generated username and LoginName and RealName values set to 'Health Check Service.'",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a7",
+   "name": "LEMURLOOT web shell deletes an account with LoginName and RealName values set to 'Health Check Service'",
+   "source": "llm",
+   "description": "The web shell can delete an account with LoginName and RealName values set to 'Health Check Service.'",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "LEMURLOOT web shell installed by exploiting CVE-2023-34362 was then used to steal data",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "LEMURLOOT web shell authenticates incoming HTTP requests via hard-coded password to run commands used to steal data",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Retrieving Azure system settings and enumerating SQL database are commands run by LEMURLOOT to steal data",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Storing a string and retrieving a matching file from MOVEit system are commands run by LEMURLOOT to steal data",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Creating a new administrator privileged account is a command run by LEMURLOOT web shell used during data theft operations",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Deleting an account with LoginName and RealName values set to 'Health Check Service' is a command run by LEMURLOOT web shell used during data theft operations",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing MOVEit Transfer web applications",
+   "source": "llm",
+   "name": "MOVEit Transfer web applications",
+   "network_placement": "internet-facing",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "MOVEit Transfer",
+   "source": "llm",
+   "cve": [
+    "CVE-2023-34362"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s2",
+   "name": "MOVEit Transfer databases",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "LEMURLOOT",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Health Check Service",
+   "type": "account",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-34362",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-17",
+    "evidence-18",
+    "evidence-19"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "stopransomware.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2023-0669",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "human2.aspx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "human.aspx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "According to open source information, beginning on May 27, 2023, CL0P Ransomware Gang, also known as TA505, began exploiting a previously unknown SQL injection vulnerability (CVE-2023-34362) in Progress Software's managed file transfer (MFT) solution known as MOVEit Transfer. Internet-facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "According to open source information, beginning on May 27, 2023, CL0P Ransomware Gang, also known as TA505, began exploiting a previously unknown SQL injection "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "In May 2023, the CL0P ransomware group exploited a SQL injection zero-day vulnerability CVE-2023-34362 to install a web shell named LEMURLOOT on MOVEit Transfer web applications",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In May 2023, the CL0P ransomware group exploited a SQL injection zero day vulnerability CVE 2023 34362 to install a web shell named LEMURLOOT on MOVEit Transfer"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Internet-facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT, which was then used to steal data from underlying MOVEit Transfer databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Internet facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT, which was then used to steal data from underlying MOVEit Transf"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Similarly, the recent exploitation of MOVEit Transfer, a SQL injection vulnerability was used to install the web shell, which enabled TA505 to execute operating system commands on the infected server and steal data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Similarly, the recent exploitation of MOVEit Transfer, a SQL injection vulnerability was used to install the web shell, which enabled TA505 to execute operating"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The web shell authenticates incoming http requests via a hard-coded password and can run commands that will download files from the MOVEit Transfer system, extract its Azure system settings, retrieve detailed record information, create, insert,, or delete a particular user.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The web shell authenticates incoming http requests via a hard coded password and can run commands that will download files from the MOVEit Transfer system, extr"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "- Retrieve Microsoft Azure system settings and enumerate the underlying SQL database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "- Retrieve Microsoft Azure system settings and enumerate the underlying SQL database."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "- Store a string sent by the operator and then retrieve a file with a name matching the string from the MOVEit Transfer system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "- Store a string sent by the operator and then retrieve a file with a name matching the string from the MOVEit Transfer system."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "- Create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to “Health Check Service.”",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "- Create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to “Health Check Service.”"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "- Delete an account with LoginName and RealName values set to ‘Health Check Service.’",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "- Delete an account with LoginName and RealName values set to ‘Health Check Service.’"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Internet-facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Internet facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "LEMURLOOT web shell was used to steal data from underlying MOVEit Transfer databases",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " used to steal data from underlying MOVEit Transfer databases"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "create a new administrator privileged account with randomly generated username and LoginName and RealName values set to 'Health Check Service.'",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " randomly generated username and LoginName and RealName values set to "
+  },
+  {
+   "id": "evidence-14",
+   "quote": "delete an account with LoginName and RealName values set to ‘Health Check Service.’",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "elete an account with LoginName and RealName values set to ‘Health Check Service.’"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "stopransomware.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "stopransomware.gov"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "CVE-2023-0669",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 0669"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "human2.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "human2.aspx"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "human.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "human.aspx"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "MOVEit Transfer web applications — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer web applications 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer web applications",
+    "action:a1 — exploited CVE-2023-34362 MOVEit Transfer vulnerability",
+    "action:a2 — used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+    "action:a3 — LEMURLOOT web shell authenticates incoming HTTP requests via hard-coded password",
+    "action:a4 — LEMURLOOT web shell retrieves Microsoft Azure system settings and enumerates underlying SQL database",
+    "action:a5 — LEMURLOOT web shell stores a string and retrieves a file matching the string from MOVEit Transfer system",
+    "action:a6 — LEMURLOOT web shell creates a new administrator privileged account",
+    "action:a7 — LEMURLOOT web shell deletes an account with LoginName and RealName values set to 'Health Check Service'"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer web applications",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "MOVEit Transfer web applications — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer web applications 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer web applications",
+    "action:a1 — exploited CVE-2023-34362 MOVEit Transfer vulnerability",
+    "action:a2 — used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+    "action:a3 — LEMURLOOT web shell authenticates incoming HTTP requests via hard-coded password",
+    "action:a4 — LEMURLOOT web shell retrieves Microsoft Azure system settings and enumerates underlying SQL database",
+    "action:a5 — LEMURLOOT web shell stores a string and retrieves a file matching the string from MOVEit Transfer system",
+    "action:a6 — LEMURLOOT web shell creates a new administrator privileged account",
+    "action:a7 — LEMURLOOT web shell deletes an account with LoginName and RealName values set to 'Health Check Service'"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer web applications",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "MOVEit Transfer — 版本",
+   "category": "version",
+   "reason": "IR 指出 MOVEit Transfer（CVE-2023-34362），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 MOVEit Transfer 的哪個版本？請選受 CVE-2023-34362 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — MOVEit Transfer",
+    "action:a1 — exploited CVE-2023-34362 MOVEit Transfer vulnerability",
+    "action:a2 — used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+    "action:a3 — LEMURLOOT web shell authenticates incoming HTTP requests via hard-coded password",
+    "action:a4 — LEMURLOOT web shell retrieves Microsoft Azure system settings and enumerates underlying SQL database",
+    "action:a5 — LEMURLOOT web shell stores a string and retrieves a file matching the string from MOVEit Transfer system"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "MOVEit Transfer",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient"
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-34362",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a2 — used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+    "host:h1 — MOVEit Transfer web applications"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "used LEMURLOOT web shell to steal data from MOVEit Transfer databases",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8696,
+  "unsupported_claim_count": 4,
+  "inferred_count": 5,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 5,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

@@ -164,6 +164,79 @@ class HedgedSourceStatements(unittest.TestCase):
         self.assertEqual(ir["quality"]["hedged_action_count"], 1)
 
 
+class CapabilitiesAndTrafficDescriptions(unittest.TestCase):
+    SOURCE = ("The group installed a web shell on the portal server.\n\n"
+              "The web shell can run commands that create a new administrator account with a randomly generated username.\n\n"
+              "The attackers leveraged existing encrypted communication channels connected to the portal.")
+
+    def test_capability_is_kept_but_never_presented_as_an_event(self):
+        ir = run(self.SOURCE, {
+            "actions": [
+                {"id": "a1", "name": "installed a web shell", "occurrence": "performed", "epistemic_status": "supported",
+                 "evidence": [{"quote": "The group installed a web shell on the portal server.", "source_ref": "p1"}]},
+                {"id": "a2", "name": "create a new administrator account", "occurrence": "capability", "outcome": "succeeded",
+                 "epistemic_status": "supported",
+                 "evidence": [{"quote": "create a new administrator account with a randomly generated username", "source_ref": "p2"}]},
+            ], "relations": [], "artifacts": [],
+            "target_context": {"hosts": [], "services": [
+                {"id": "s1", "name": "existing encrypted communication channels", "epistemic_status": "supported",
+                 "evidence": [{"quote": "existing encrypted communication channels", "source_ref": "p3"}]}]}}, "text")
+        a1, a2 = ir["actions"]
+        self.assertNotIn("occurrence", a1)
+        self.assertEqual((a2["occurrence"], a2["source_certainty"], a2["epistemic_status"]), ("capability", "capability", "supported"))
+        self.assertIn("epistemic_reason", a2)
+        self.assertNotIn("outcome", a2)
+        self.assertEqual(ir["quality"]["capability_action_count"], 1)
+        self.assertEqual(ir["quality"]["dropped_non_software_services"], ["existing encrypted communication channels"])
+        self.assertEqual([service["id"] for service in ir["services"]], ["service-unspecified"])
+
+
+class SameSentenceVerifiesTheSameEverywhere(unittest.TestCase):
+    """QA round 2 (QA-I-R2-03): a relation quote without a locator must still be found in the source."""
+
+    SOURCE = "The actor downloaded file.zip.\n\nfile.zip contained XMRig. The actor then executed the miner."
+
+    def model(self, source_ref):
+        return {"actions": [
+            {"id": "a1", "name": "downloaded file.zip", "epistemic_status": "supported",
+             "evidence": [{"quote": "The actor downloaded file.zip.", "source_ref": "p1"}]},
+            {"id": "a2", "name": "executed the miner", "epistemic_status": "supported",
+             "evidence": [{"quote": "The actor then executed the miner.", "source_ref": "p2"}]}],
+            "relations": [{"id": "r1", "from_action": "a1", "to_action": "a2", "kind": "temporal", "epistemic_status": "supported",
+                           "evidence": [{"quote": "The actor then executed the miner.", **source_ref}]}],
+            "target_context": {"hosts": [], "services": []}, "artifacts": []}
+
+    def test_missing_empty_or_wrong_locator_is_resolved_from_the_text(self):
+        for source_ref in ({}, {"source_ref": ""}, {"source_ref": "p1"}, {"source_ref": "paragraph 9"}):
+            ir = run(self.SOURCE, self.model(source_ref), "text")
+            relation = ir["relations"][0]
+            record = next(e for e in ir["evidence"] if e["id"] == relation["evidence_refs"][0])
+            self.assertEqual((record["quote_match"], record["locator"]), ("exact", {"kind": "paragraph", "ref": "2"}), source_ref)
+            self.assertEqual(relation["epistemic_status"], "supported", source_ref)
+            # the action citing the same sentence shares the same evidence record
+            self.assertEqual(ir["actions"][1]["evidence_refs"], relation["evidence_refs"], source_ref)
+
+    def test_a_quote_that_is_nowhere_in_the_source_still_fails(self):
+        model = self.model({})
+        model["relations"][0]["evidence"][0]["quote"] = "The actor then wiped every server in the domain."
+        relation = run(self.SOURCE, model, "text")["relations"][0]
+        self.assertEqual(relation["epistemic_status"], "insufficient")
+
+
+class CveBelongsToTheProductNamedWithIt(unittest.TestCase):
+    """QA round 2 (UXR2-05): a CVE the source states with a product is that product's CVE."""
+
+    def test_cve_in_the_same_sentence_as_the_service_name_is_attached(self):
+        source = ("The group exploited a SQL injection vulnerability CVE-2023-34362 in MOVEit Transfer web applications.\n\n"
+                  "Separately, CVE-2023-0669 affected a different product.")
+        ir = run(source, {"actions": [], "relations": [], "artifacts": [], "target_context": {"hosts": [], "services": [
+            {"id": "s1", "name": "MOVEit Transfer", "epistemic_status": "supported",
+             "evidence": [{"quote": "MOVEit Transfer web applications", "source_ref": "p1"}]}]}}, "text")
+        service = ir["services"][0]
+        self.assertEqual(service["cve"], ["CVE-2023-34362"])
+        self.assertEqual(service["field_sources"], {"cve": "source_quote"})
+
+
 class ActorFilter(unittest.TestCase):
     def test_defender_actions_and_their_edges_stay_out_of_the_attack_flow(self):
         source = "The actor exploited the portal.\n\nThen the company blocked the addresses and notified the FBI."

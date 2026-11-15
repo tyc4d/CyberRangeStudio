@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from app.cti.missing import refresh_missing_items
+from app.cti.missing import is_attacker_role, is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
 from app.planner.reproducibility import annotate_reproducibility
 
@@ -51,8 +51,7 @@ def _mentions(text: str, phrase: str) -> bool:
 
 
 def _is_attacker_role(role: str) -> bool:
-    return (_mentions(role, "attacker") or _mentions(role, "red team") or _mentions(role, "red-team")
-            or _mentions(role, "operator"))
+    return is_attacker_role(role)
 
 
 def _role_terms(role: str) -> set[str]:
@@ -333,6 +332,25 @@ def _stated_host_ports(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) -> 
     return {hid: next(iter(ports)) for hid, ports in found.items() if len(ports) == 1}
 
 
+_LIMITATION_RE = re.compile(
+    r"不等於|不是|並非|無法|不能|不可|僅可|只能|只可|不代表|不重現|未重現|≠|"
+    r"\b(?:not|cannot|can't|doesn't|don't|won't|never|only|instead\s+of|rather\s+than|without|unlike|except)\b",
+    re.IGNORECASE)
+
+
+def _assertive_clauses(text: str) -> str:
+    """The part of a free-text supplement that states what the lab has.
+
+    A clause saying what something is *not*, or is *only* a stand-in for ("Solr can only stand
+    in for the entry point, it is not Horizon"), explains a limitation. Reading product names
+    out of it would turn the user's caveat into services that the user never asked for.
+    """
+    # Sentence-level pieces only: "map X to host web, nginx 1.31.8 on TCP/80" must stay together
+    # so the product keeps the host named earlier in the same sentence.
+    return "\n".join(clause for clause in re.split(r"(?<=[.;!?])\s+|(?<=[。；！？])\s*|\n+", text)
+                     if clause.strip() and not _LIMITATION_RE.search(clause))
+
+
 def _is_os_image(component: dict[str, Any] | None) -> bool:
     """A catalogue entry that is an operating-system image rather than an application."""
     return bool(component) and component.get("runtime") == "vm" and "os_release" in component
@@ -390,11 +408,18 @@ def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None
     return None
 
 
+def _user_edited(service: dict[str, Any]) -> bool:
+    return "user" in (service.get("field_sources") or {}).values()
+
+
 def _is_recorded_service(service: dict[str, Any]) -> bool:
     """A service stated by the analysis or the user (not a placeholder, not module-4 output)."""
     return (bool(str(service.get("name") or "").strip())
             and service.get("id") not in _PLACEHOLDER_SERVICE_IDS
-            and service.get("source") != "program"
+            # a description of traffic ("encrypted communication channels") is not software to plan
+            and not is_communication_description(service.get("name"))
+            # planner output is rebuilt each run, unless the user has since edited it (then it is theirs)
+            and (service.get("source") != "program" or _user_edited(service))
             # services derived from a supplement are rebuilt from that supplement on every run
             and not service.get("supplement_ref"))
 
@@ -420,6 +445,19 @@ def _match_component(name: str) -> tuple[dict[str, Any] | None, bool]:
     extra = [word for word in re.findall(r"[A-Za-z][\w-]*", remainder)
              if word.casefold() not in _GENERIC_AFTER_PRODUCT and word.casefold() not in {"unpatched", "vulnerable", "exposed"}]
     return next(iter(found.values())) if len(found) == 1 and not extra else (None, False)
+
+
+def _substitute_suggestions(text: str) -> list[str]:
+    """Deployable catalogue components whose function words appear in an unsupported service's name."""
+    lowered = text.casefold()
+    found = []
+    for component in load_components():
+        if component.get("id") == "oss-attacker" or component.get("runtime") != "container" or not component.get("image"):
+            continue
+        keywords = [keyword.casefold() for keyword in component.get("role_keywords", [])]
+        if any(re.search(rf"(?<![a-z0-9]){re.escape(keyword)}s?(?![a-z0-9])", lowered) for keyword in keywords):
+            found.append(f"{component['name']}（替代品，不等於原軟體）")
+    return found[:4]
 
 
 def _generic_function_component(name: str) -> dict[str, Any] | None:
@@ -483,6 +521,11 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     for supplement in ir.get("supplements", []) or []:
         if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
             continue
+        if supplement.get("planned") and not any(
+                service.get("supplement_ref") == supplement.get("id") or service.get("from_supplement") == supplement.get("id")
+                for service in ir.get("services", []) or [] if isinstance(service, dict)):
+            # Planned before, and nothing of it is left in the IR: the user removed what it produced.
+            continue
         item = _answered_item(ir, supplement)
         applied_as_substitute = any(service.get("substitute_supplement_ref") == supplement.get("id")
                                     for service in ir.get("services", []) or [] if isinstance(service, dict))
@@ -490,12 +533,15 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
             continue  # a substitute chosen for one service is applied to that service, not added as another
         where = (item or {}).get("applied_to") or (item or {}).get("target") or {}
         answers_os = isinstance(where, dict) and where.get("field") in {"os", "os_version"}
-        for mention in _mentions_bound_to_hosts(supplement["text"], hosts, _answered_host(ir, supplement)):
+        for mention in _mentions_bound_to_hosts(_assertive_clauses(supplement["text"]), hosts, _answered_host(ir, supplement)):
             if answers_os and _is_os_image(match_software(mention["name"])[0]):
                 # "Windows Server 2019" answering an OS question is the host's OS (already written
                 # to the host record), not a file-sharing service to expose on that host.
                 continue
             mention["from_supplement"] = str(supplement.get("id") or "supplement")
+            # A release the user names is what the lab will run, never what the source stated.
+            mention["lab_version"], mention["version"] = mention.get("version"), None
+            mention["host_explicit"] = bool(mention.get("host_explicit") or (item and mention.get("host_ref")))
             candidates.append(mention)
 
     candidates.extend(_context_text_candidates(context))
@@ -509,7 +555,7 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     candidates = recorded + candidates
 
     # Bind an unscoped service to the only known target when the IR has one.
-    target_hosts = [hid for hid, host in hosts.items() if "attacker" not in host.get("role", "").casefold()]
+    target_hosts = [hid for hid, host in hosts.items() if not is_attacker_role(host.get("role", ""))]
     if candidates and not target_hosts:
         hosts.setdefault("target", {"id": "target", "role": "target", "epistemic_status": "inferred", "source": "program"})
         target_hosts = ["target"]
@@ -533,6 +579,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         if not matches and candidate.get("from_mention") and not candidate.get("host_explicit") and len(same_product) == 1:
             # The text does not say where this product runs; it is the one already known.
             matches = same_product
+        if not matches and candidate.get("from_supplement") and not candidate.get("host_explicit"):
+            # A free-text remark that names a product without saying which host runs it adds no
+            # service: there is nowhere to put it, and it may only be commentary.
+            continue
         elif not matches and candidate.get("host_explicit"):
             # The text pins the product to a host: correct an earlier guess for the same product.
             guesses = [item for item in same_product if item.get("from_mention") and not item.get("host_explicit")]
@@ -559,8 +609,8 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
             target["port"] = target.get("port") or candidate.get("port")
             if candidate.get("from_supplement"):
                 target.setdefault("from_supplement", candidate["from_supplement"])
-                if candidate.get("version"):
-                    target["version"] = candidate["version"]  # the user's statement wins
+                if candidate.get("lab_version"):
+                    target["lab_version"] = candidate["lab_version"]
     return unique
 
 
@@ -625,6 +675,9 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             entry["resolution"] = resolution
         if service_ref:
             entry["service_ref"] = service_ref  # the service a chosen substitute is applied to
+            entry["question"] = (f"{field.removeprefix('software dependency: ')} 在元件目錄中沒有可部署的對應。"
+                                 "要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。")
+            entry["suggestions"] = _substitute_suggestions(field) + ["不部署；此軟體相關步驟標記為未重現"]
         earlier = previous_planner_items.get(ident)
         if earlier and earlier.get("resolution_source") == "user":
             # Re-planning must not discard a decision the user already made on this question.
@@ -677,6 +730,11 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 service.setdefault("epistemic_status", "inferred")
                 service.setdefault("source", "user")
                 service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
+                if candidate.get("lab_version"):
+                    # What the user says the lab runs; the service's own `version` stays the source's.
+                    service["lab_version"] = candidate["lab_version"]
+                    service["from_supplement"] = candidate.get("from_supplement")
+                    service.setdefault("field_sources", {})["lab_version"] = "user"
                 for key in ("version", "port"):
                     if candidate.get(key) and service.get(key) != candidate[key]:
                         # Filled from a supplement or a verified source quote, not by the analysis record.
@@ -737,8 +795,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         }
         if candidate.get("from_supplement"):
             # Stated by the user in a supplement, not derived by the planner.
-            service.update({"source": "user", "epistemic_status": "supported",
+            # "absent": the source does not provide it; the user did (USER_SUPPLIED).
+            service.update({"source": "user", "epistemic_status": "absent", "provenance_class": "USER_SUPPLIED",
                             "supplement_ref": candidate["from_supplement"]})
+            if candidate.get("lab_version"):
+                service["lab_version"] = candidate["lab_version"]
+                service.setdefault("field_sources", {})["lab_version"] = "user"
         if candidate.get("version"):
             service["version"] = candidate["version"]
         if candidate.get("port"):
@@ -829,8 +891,15 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if not pinned or service.get("is_substitute") or not component.get("image"):
             continue
         stated = str(service.get("version") or "").strip()
-        if stated and (stated == pinned or pinned.startswith(stated + ".") or stated.startswith(pinned + ".")):
-            service["version_basis"] = "stated"
+        same = lambda value: bool(value) and (value == pinned or pinned.startswith(value + ".") or value.startswith(pinned + "."))
+        if same(stated):
+            by_user = (service.get("field_sources") or {}).get("version") == "user" or service.get("source") == "user"
+            service["version_basis"] = "user_supplied" if by_user else "stated"
+            continue
+        if not stated and same(str(service.get("lab_version") or "").strip()):
+            # The user picked this release for the lab; the source still states none.
+            service["version_basis"] = "user_supplied"
+            service["deployed_version"] = pinned
             continue
         service["version_basis"] = "substituted" if stated else "assumed"
         service["deployed_version"] = pinned
@@ -874,13 +943,45 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     # Planning may add catalogue services, but may never erase analysis entities.
     present = {item.get("id") for item in services}
     for original in original_services:
-        if original.get("source") == "program" and str(original.get("id", "")).startswith("svc-"):
+        if original.get("source") == "program" and str(original.get("id", "")).startswith("svc-") and not _user_edited(original):
             continue  # module-4 output of an earlier run; it is rebuilt above, not carried over
         if original.get("supplement_ref") and str(original.get("id", "")).startswith("svc-"):
             continue
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    # One host is one image. When its services map to different catalogue components only one
+    # can be deployed there; say which, and raise it here rather than letting IaC fail later.
+    by_host: dict[str, list[dict[str, Any]]] = {}
+    for service in services:
+        service.pop("placement", None)
+        service.pop("placement_reason", None)
+        component = component_by_id(service.get("catalogue_component"))
+        # A service belongs to a host by its own host_ref or by being listed in the host's service_refs.
+        owner = service.get("host_ref") or next(
+            (host.get("id") for host in result["hosts"] if service.get("id") in (host.get("service_refs") or [])), None)
+        if owner and component and component.get("runtime") in (None, "container", "vm"):
+            by_host.setdefault(owner, []).append(service)
+    for hid, hosted in by_host.items():
+        components = list(dict.fromkeys(service["catalogue_component"] for service in hosted))
+        if len(components) < 2:
+            continue
+        # Software the source names outranks a stand-in; otherwise the first one found.
+        primary = next((service for service in hosted if not service.get("is_substitute")), hosted[0])
+        kept = primary["catalogue_component"]
+        others = [service for service in hosted if service["catalogue_component"] != kept]
+        for service in others:
+            service["placement"] = "conflict"
+            service["placement_reason"] = (
+                f"主機 {hid} 已由 {primary.get('name')}（{kept}）決定映像；一台主機只能部署一個元件，"
+                f"{service.get('name')}（{service['catalogue_component']}）不會被部署在這台主機上。")
+        add_missing(
+            f"host-component-conflict-{hid}", f"主機 {hid} 的元件衝突", category="dependency", severity="blocker",
+            reason=(f"主機 {hid} 的服務對應到多個元件（{', '.join(components)}），但一台主機只能部署一個映像。"
+                    f"目前只會部署 {primary.get('name')}（{kept}）；"
+                    f"{', '.join(str(service.get('name')) for service in others)} 不會被部署。"
+                    "請把它們移到另一台主機、改成同一個元件，或確認不部署。"))
+
     if actions and not any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         # Nothing to build: say so as a blocker instead of letting an empty plan look deployable.
         add_missing("no-target-software", "目標軟體／服務",
@@ -890,8 +991,17 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]
     result["services"] = services
+    regenerated = {str(item.get("id")) for item in missing}
+    for ident, earlier in previous_planner_items.items():
+        if ident not in regenerated and earlier.get("resolution_source") == "user":
+            # The question no longer arises because the user answered it; keep it so the
+            # supplement that answered it still points at something.
+            missing.append({**earlier, "superseded": True})
     result["missing_items"] = missing
     # Planning may have filled in what an analysis-stage question asked (a version read from
     # a quote or a supplement); recompute those questions so they do not stay open.
     result["missing_items"] = refresh_missing_items(result, add_new=False)
+    for supplement in result.get("supplements", []) or []:
+        if isinstance(supplement, dict):
+            supplement["planned"] = True
     return annotate_reproducibility(result)

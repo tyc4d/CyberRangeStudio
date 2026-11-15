@@ -1,0 +1,436 @@
+{
+ "schema_version": "1.0",
+ "name": "postgres",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "b51ad8a06ce5fd3eaac128b04a9f08bae4005b2716c58dbb5970536696a3a4e9",
+  "source_name": "admin-lifecycle-fixture"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "sends an HTTP GET request to NGINX on host `web` TCP/80",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0043",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "identifies the PostgreSQL database server `db` from the web host",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "attack_tactic": "TA0007",
+   "evidence_refs": [
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a3",
+   "name": "connects to PostgreSQL on `db` TCP/5432 from `web`",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "attack_tactic": "TA0007",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a2 happens after a1 as stated by 'This precedes the internal discovery step.'",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a3 depends on the discovery of db from a2 and on the supplied web foothold",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "NGINX web server",
+   "source": "llm",
+   "name": "web",
+   "os": "Linux",
+   "network_placement": "external and internal segments",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "PostgreSQL database server",
+   "source": "llm",
+   "name": "db",
+   "os": "Linux",
+   "network_placement": "internal only",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "nginx",
+   "source": "llm",
+   "version": "1.31.8",
+   "cve": [],
+   "host_ref": "h1",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "postgres",
+   "source": "llm",
+   "version": "16.16",
+   "cve": [],
+   "host_ref": "h2",
+   "port": 5432,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "oss-attacker",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "2. Internal discovery: from the web host, the operator identifies the PostgreSQL database server `db`.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2. Internal discovery: from the web host, the operator identifies the PostgreSQL database server `db`."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "This requires the web foothold, which is a supplied lab precondition and is not an exploit result.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This requires the web foothold, which is a supplied lab precondition and is not an exploit result."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "It depends on the discovery of db and on the supplied web foothold.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "It depends on the discovery of db and on the supplied web foothold."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The result only establishes connectivity; database record collection and command execution remain NOT_TESTED.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The result only establishes connectivity; database record collection and command execution remain NOT_TESTED."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80. This precedes the internal discovery step.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1. Reconnaissance: the attacker sends an HTTP GET request to NGINX on host `web` TCP/80. This precedes the internal discovery step."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432. It depends on the discovery of db and on the supplied web foothold.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3. Database collection probe: from `web`, the operator connects to PostgreSQL on `db` TCP/5432. It depends on the discovery of db and on the supplied web footho"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The host `web` has role `NGINX web server`, Linux OS, and runs nginx version 1.31.8 on TCP/80 using catalogue component oss-nginx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The host `web` has role `NGINX web server`, Linux OS, and runs nginx version 1.31.8 on TCP/80 using catalogue component oss nginx."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "web is on external and internal segments",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "web is on external and internal segments"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The host `db` has role `PostgreSQL database server`, Linux OS, and runs PostgreSQL version 16.16 on TCP/5432 using catalogue component oss-postgres.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The host `db` has role `PostgreSQL database server`, Linux OS, and runs PostgreSQL version 16.16 on TCP/5432 using catalogue component oss postgres."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "db is on internal only",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "db is on internal only"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The local attacker host uses the Alpine attacker toolbox component oss-attacker.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The local attacker host uses the Alpine attacker toolbox component oss attacker."
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "web — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "web 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — web",
+    "action:a1 — sends an HTTP GET request to NGINX on host `web` TCP/80"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "web",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-10",
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "db — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "db 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — db",
+    "action:a2 — identifies the PostgreSQL database server `db` from the web host",
+    "action:a3 — connects to PostgreSQL on `db` TCP/5432 from `web`"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "db",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "sends an HTTP GET request to NGINX on host `web` TCP/80 — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「sends an HTTP GET request to NGINX on host `web` TCP/80」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — sends an HTTP GET request to NGINX on host `web` TCP/80"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "sends an HTTP GET request to NGINX on host `web` TCP/80",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 2,
+  "inferred_count": 0,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

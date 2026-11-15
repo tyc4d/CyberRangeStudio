@@ -219,8 +219,13 @@ class HostBindingFromText(unittest.TestCase):
         self.assertEqual({host["id"] for host in planned["hosts"]}, {"victim-web", "db"})
         by_component = {service["catalogue_component"]: service for service in planned["services"]}
         nginx, postgres = by_component["oss-nginx"], by_component["oss-postgres"]
-        self.assertEqual((nginx["host_ref"], nginx["version"], nginx["port"], nginx["source"]), ("victim-web", "1.31.8", 80, "user"))
-        self.assertEqual((postgres["host_ref"], postgres["version"], postgres["port"]), ("db", "16.16", 5432))
+        self.assertEqual((nginx["host_ref"], nginx["lab_version"], nginx["port"], nginx["source"]), ("victim-web", "1.31.8", 80, "user"))
+        self.assertEqual((postgres["host_ref"], postgres["lab_version"], postgres["port"]), ("db", "16.16", 5432))
+        # USER_SUPPLIED: never a source-stated version, never "supported by the source".
+        for service in (nginx, postgres):
+            self.assertNotIn("version", service)
+            self.assertEqual((service["epistemic_status"], service["provenance_class"], service["version_basis"]),
+                             ("absent", "USER_SUPPLIED", "user_supplied"))
         self.assertEqual(nginx["supplement_ref"], "supplement-1")
         # Planning twice gives the same services: nothing stale, nothing duplicated.
         again = plan_dependencies(planned)
@@ -303,7 +308,8 @@ class SupplementAnswersBindToTheAskedHost(unittest.TestCase):
                           "text": "Linux running PostgreSQL 16.16"}])
         planned = plan_dependencies(ir)
         postgres = next(s for s in planned["services"] if s.get("catalogue_component") == "oss-postgres")
-        self.assertEqual((postgres["host_ref"], postgres["version"], postgres["source"]), ("h2", "16.16", "user"))
+        self.assertEqual((postgres["host_ref"], postgres["lab_version"], postgres["source"]), ("h2", "16.16", "user"))
+        self.assertNotIn("version", postgres)
         self.assertIn(postgres["id"], next(h for h in planned["hosts"] if h["id"] == "h2")["service_refs"])
 
 
@@ -539,6 +545,119 @@ class UserChosenSubstitute(unittest.TestCase):
             planned = self.answer(self.first(), text)
             self.assertEqual([service["id"] for service in planned["services"]], ["s1"], text)
             self.assertTrue(planned["services"][0].get("no_component"), text)
+
+
+class TrafficDescriptionsAreNotSoftware(unittest.TestCase):
+    """QA round 2 (Equifax): 'encrypted communication channels' must not become a dependency."""
+
+    def test_classifier_separates_descriptions_from_named_services(self):
+        from app.cti.missing import is_communication_description as check
+        for name in ("existing encrypted communication channels", "standard encrypted web protocols",
+                     "encrypted channels", "normal network traffic", "Encrypted Communication Channel"):
+            self.assertTrue(check(name), name)
+        for name in ("RDP", "HTTPS", "SMB protocol service", "Apache Struts", "web service", "database service",
+                     "OpenVPN tunnel", "Remote Desktop Protocol", "File Transfer Protocol server", ""):
+            self.assertFalse(check(name), name)
+
+    def test_planner_raises_no_question_and_no_substitute_for_a_traffic_description(self):
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s2", "name": "existing encrypted communication channels", "host_ref": "h1",
+                       "epistemic_status": "supported", "source": "llm"}]))
+        self.assertFalse(any("communication channels" in item["field"] for item in planned["missing_items"]))
+        s2 = next(service for service in planned["services"] if service["id"] == "s2")
+        self.assertNotIn("catalogue_component", s2)
+        host = next(h for h in build_environment_plan(planned)["hosts"] if h["id"] == "h1")
+        self.assertEqual([entry["name"] for entry in host["services"]], ["Apache Struts"])
+
+
+class OneHostOneComponent(unittest.TestCase):
+    """QA round 2: Struts:8080 plus an nginx stand-in on the same host must not reach IaC as deployable."""
+
+    def planned(self):
+        return plan_dependencies(base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s2", "name": "front proxy", "host_ref": "h1", "catalogue_component": "oss-nginx",
+                       "is_substitute": True, "substitute_basis": "user_chosen", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
+
+    def test_dependencies_report_the_conflict_as_a_blocker(self):
+        planned = self.planned()
+        conflict = next(i for i in planned["missing_items"] if i["id"] == "planner_dep_host-component-conflict-h1")
+        self.assertEqual((conflict["severity"], conflict["status"]), ("blocker", "open"))
+        services = {service["id"]: service for service in planned["services"]}
+        self.assertEqual(services["s2"]["placement"], "conflict")   # the stand-in yields to the named software
+        self.assertNotIn("placement", services["s1"])
+
+    def test_plan_deploys_one_component_declares_only_its_ports_and_passes_iac(self):
+        from app.iac.generator import inspect_plan
+        plan = build_environment_plan(self.planned())
+        host = next(h for h in plan["hosts"] if h["id"] == "h1")
+        self.assertEqual(host["image_hint"], "vuln-struts2-s2-045")
+        self.assertEqual([entry["name"] for entry in host["services"]], ["Apache Struts"])
+        self.assertEqual([entry["name"] for entry in host["unplaced_services"]], ["front proxy"])
+        self.assertNotIn("substitute_for", host)
+        self.assertTrue(any("not deployed there" in note for note in plan["notes"]))
+        self.assertEqual(inspect_plan(plan, "scn_t")[1].get("errors"), [])
+
+    def test_conflict_clears_when_the_extra_service_moves_to_another_host(self):
+        ir = self.planned()
+        ir["hosts"].append({"id": "h2", "role": "proxy host", "epistemic_status": "supported", "source": "user"})
+        next(service for service in ir["services"] if service["id"] == "s2")["host_ref"] = "h2"
+        again = plan_dependencies(ir)
+        self.assertFalse(any("conflict" in item["id"] for item in again["missing_items"]))
+        self.assertFalse(any(service.get("placement") for service in again["services"]))
+
+
+class UserTextIsNeverSourceFact(unittest.TestCase):
+    """QA round 2 (AR2-01, QA-I-R2-02, UXR2-02): caveats and lab choices in free text stay the user's."""
+
+    def ir(self, text):
+        return base_ir(
+            actions=[action("a1", "exploited Apache Struts on the portal", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "role": "records store", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}],
+            supplements=[{"id": "supplement-1", "source": "user", "text": text}])
+
+    def test_limitation_statement_creates_no_service(self):
+        for text in ("Linux/Solr 只能作入口漏洞教學替代，不等於 Horizon、Windows Defender、RDP 或 AD 完整重現",
+                     "Solr is only a teaching stand-in; it is not VMware Horizon and does not reproduce Active Directory.",
+                     "不能重現加密通道；postgres 不代表原本的資料庫"):
+            planned = plan_dependencies(self.ir(text))
+            self.assertEqual([service["id"] for service in planned["services"]], ["s1"], text)
+
+    def test_product_named_without_a_host_creates_no_orphan_service(self):
+        planned = plan_dependencies(self.ir("the lab will also have redis somewhere"))
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])
+        self.assertFalse(any(not service.get("host_ref") for service in planned["services"]))
+
+    def test_lab_release_named_by_the_user_is_not_recorded_as_the_source_version(self):
+        planned = plan_dependencies(self.ir(
+            "struts2 2.3.30 與 postgres 是本機隔離教學替代元件；不能重現加密通道；OS 與原始版本仍未知。"))
+        struts = next(service for service in planned["services"] if service["id"] == "s1")
+        self.assertNotIn("version", struts)
+        self.assertEqual((struts["lab_version"], struts["field_sources"]["lab_version"], struts["version_basis"]),
+                         ("2.3.30", "user", "user_supplied"))
+        self.assertEqual((struts["source"], struts["epistemic_status"]), ("llm", "supported"))
+        self.assertEqual([service["id"] for service in planned["services"]], ["s1"])  # no host-less postgres
+
+    def test_answered_planner_question_survives_as_history(self):
+        first = plan_dependencies(base_ir(
+            actions=[action("a1", "SQL injection against Progress MOVEit Transfer", "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "internet-facing file transfer server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Progress MOVEit Transfer", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}]))
+        question = next(i for i in first["missing_items"] if i["id"].startswith("planner_dep_software"))
+        question.update({"status": "substitute_chosen", "resolution": "nginx", "resolution_source": "user"})
+        first["supplements"] = [{"id": "supplement-9", "source": "user", "text": "nginx", "targets_missing_item": question["id"]}]
+        second = plan_dependencies(first)
+        kept = next(i for i in second["missing_items"] if i["id"] == question["id"])
+        self.assertEqual((kept["status"], kept["resolution"], kept["superseded"]), ("substitute_chosen", "nginx", True))
+        third = plan_dependencies(second)
+        self.assertEqual(len([i for i in third["missing_items"] if i["id"] == question["id"]]), 1)
 
 
 class UnsupportedComponents(unittest.TestCase):

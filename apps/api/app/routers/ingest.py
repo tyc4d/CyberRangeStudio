@@ -169,7 +169,11 @@ async def extract(file: UploadFile = File(...)):
 
 
 _HOST_FIELDS = {"name", "role", "os", "os_version", "network_placement"}
-_SERVICE_FIELDS = {"name", "version", "port", "os", "os_version"}
+_SERVICE_FIELDS = {"name", "version", "port", "os", "os_version", "configuration"}
+# An answer that the lab will not run this service at all.
+_NOT_ENABLED_RE = re.compile(
+    r"不啟用|不要啟用|不部署|不開啟|停用|關閉|不重現|未重現|"
+    r"\b(?:do\s+not|don'?t|will\s+not|won'?t|not)\s+(?:enable|deploy|run|start|reproduce)\b|\bdisabled?\b", re.IGNORECASE)
 # A free-text answer longer than this is an explanation, not a field value.
 _MAX_FIELD_VALUE_CHARS = 120
 # Statements of not knowing, and hedged guesses. Neither is a value to build a lab from.
@@ -204,6 +208,16 @@ def _write_back(ir: dict, collection: str, entity_id: str, field: str, value, *,
         return fail(422, "Unsupported service field." if collection == "services" else "Unsupported host field.")
     if isinstance(value, str):
         value = value.strip()
+        if field == "configuration":
+            # Free text by nature. What matters to planning is whether the service runs at all.
+            entity["configuration"] = value
+            entity.setdefault("field_sources", {})["configuration"] = "user"
+            if _NOT_ENABLED_RE.search(value):
+                entity["lab_enabled"] = False
+                entity["field_sources"]["lab_enabled"] = "user"
+            else:
+                entity.pop("lab_enabled", None)
+            return True, ""
         if not strict and (len(value) > _MAX_FIELD_VALUE_CHARS or "\n" in value):
             return False, "回答是一段說明而不是單一欄位值，已保留為補充文字，未寫入欄位。"
         if not strict and _NON_ANSWER_RE.search(value):

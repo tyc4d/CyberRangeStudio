@@ -1,0 +1,1194 @@
+{
+ "schema_version": "1.0",
+ "name": "common internet file service (cifs)",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "598b44f23dfd3d2f4e2df98a3015346cde3ad359557cadd9c038246323655f50",
+  "source_name": "aa24-046a-former-employee-account"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "compromised account of former employee used for initial access",
+   "source": "llm",
+   "description": "The threat actor gained initial access through the compromised account of a former employee with administrative privileges (USER1) to conduct reconnaissance and discovery activities.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "authenticated to internal VPN access point",
+   "source": "llm",
+   "description": "The threat actor successfully authenticated to an internal virtual private network (VPN) access point using the compromised account.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "authenticated to multiple services using compromised accounts",
+   "source": "llm",
+   "description": "The threat actor authenticated to multiple services via the USER1 account and an additional compromised global domain administrator account (USER2).",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "executed LDAP queries against domain controller",
+   "source": "llm",
+   "description": "The threat actor conducted LDAP queries of the Active Directory, likely using the open source tool AdFind.exe, to collect user, host, and trust relationship information.",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a5",
+   "name": "authenticated to Common Internet File Service (CIFS) on various endpoints",
+   "source": "llm",
+   "description": "The threat actor authenticated to the CIFS protocol on various endpoints using USER1 and USER2 accounts, likely for file, folder, and directory discovery.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "VPN authentication used the compromised account for initial access",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Authenticated to multiple services using the VM connection established via VPN",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "LDAP queries executed through the VM connection authenticated with compromised accounts",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Authenticated to CIFS on various endpoints using the compromised accounts via the VM connection",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim organization’s on-premises environment",
+   "source": "llm",
+   "name": "on-premises environment",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "virtualized server managed by USER1",
+   "source": "llm",
+   "name": "virtualized SharePoint server",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h3",
+   "role": "virtualized workstation of the former employee",
+   "source": "llm",
+   "name": "virtualized workstation",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h4",
+   "role": "Active Directory domain controller",
+   "source": "llm",
+   "name": "domain controller",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18",
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "internal virtual private network (VPN) access point",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-20",
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "Active Directory",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Common Internet File Service (CIFS)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "USER1",
+   "type": "account",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "USER2",
+   "type": "account",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "AdFind.exe",
+   "type": "tool",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The threat actor gained initial access through the compromised account of a former employee with administrative privileges (USER1) to conduct reconnaissance and discovery activities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actor gained initial access through the compromised account of a former employee with administrative privileges (USER1) to conduct reconnaissance and"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "to successfully authenticate to an internal virtual private network (VPN) access point",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "to successfully authenticate to an internal virtual private network (VPN) access point"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The logs revealed the threat actor first connected from an unknown virtual machine (VM) to the victim’s on-premises environment via internet protocol (IP) addresses within their internal VPN range.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The logs revealed the threat actor first connected from an unknown virtual machine (VM) to the victim’s on premises environment via internet protocol (IP) addre"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Through connection from the VM, the threat actor authenticated to multiple services via the USER1 account, as well as from an additional compromised global domain administrator account (USER2).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "- Through connection from the VM, the threat actor authenticated to multiple services [T1021] via the USER1 account, as well as from an additional compromised g"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Through connection from the VM, the threat actor conducted LDAP queries of the AD, likely using the open source tool AdFind.exe, based on the format of the output.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through connection from the VM, the threat actor conducted LDAP queries of the AD, likely using the open source tool AdFind.exe, based on the format of the outp"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "CISA and MS-ISAC assess the threat actor executed the LDAP queries to collect user, host, and trust relationship information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA and MS ISAC assess the threat actor executed the LDAP queries to collect user, host, and trust relationship information."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Through the VM connection, the threat actor was observed authenticating to various services on the victim organization’s network from the USER1 and USER2 administrative accounts. In all instances, the threat actor authenticated to the Common Internet File Service (CIFS) on various endpoints,—a protocol used for providing shared access to files and printers between machines on the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through the VM connection, the threat actor was observed authenticating to various services on the victim organization’s network from the USER1 and USER2 admini"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "This was likely used for file, folder, and directory discovery, and assessed to be executed in an automated manner.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This was likely used for file, folder, and directory discovery, and assessed to be executed in an automated manner."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The threat actor compromised account of a former employee with administrative privileges (USER1) to conduct reconnaissance and discovery activities. The victim organization confirmed that this account was not disabled immediately following the employee’s departure. ... to successfully authenticate to an internal virtual private network (VPN) access point",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:p14,p4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Through the VM connection, the threat actor was observed authenticating to various services on the victim organization’s network from the USER1 and USER2 administrative accounts. In all instances, the threat actor authenticated to the Common Internet File Service (CIFS) on various endpoints,",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through the VM connection, the threat actor was observed authenticating to various services on the victim organization’s network from the USER1 and USER2 admini"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "successfully authenticate to an internal virtual private network (VPN) access point, further navigate the victim’s on-premises environment",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "successfully authenticate to an internal virtual private network (VPN) access point, further navigate the victim’s on premises environment"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "the compromised on- premises environment",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the compromised on premises environment"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "the victim organization’s on-premises environment",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the victim organization’s on premises environment"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "USER1 had access to two virtualized servers including SharePoint",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "USER1 had access to two virtualized servers including SharePoint"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "the virtualized SharePoint server managed by USER1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the virtualized SharePoint server managed by USER1"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "the workstation of the former employee. The workstation was virtualized from a physical workstation using the Veeam Physical to Virtual (P2V) function",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the workstation of the former employee. The workstation was virtualized from a physical workstation using the Veeam Physical to Virtual (P2V) function"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "execute various lightweight directory access protocol (LDAP) queries against a domain controller",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "execute various lightweight directory access protocol (LDAP) queries against a domain controller"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "conducted LDAP queries of the Active Directory",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "ed "
+  },
+  {
+   "id": "evidence-19",
+   "quote": "the threat actor conducted LDAP queries of the AD",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the threat actor conducted LDAP queries of the AD"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "successfully authenticate to an internal virtual private network (VPN) access point",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "successfully authenticate to an internal virtual private network (VPN) access point"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "the threat actor connected to the VM through the victim’s VPN",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the threat actor connected to the VM through the victim’s VPN"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "authenticated to the Common Internet File Service (CIFS) on various endpoints",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "authenticated to the Common Internet File Service (CIFS) on various endpoints"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "compromised account of a former employee with administrative privileges (USER1)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "compromised account of a former employee with administrative privileges (USER1)"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "an additional compromised global domain administrator account (USER2)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "an additional compromised global domain administrator account (USER2)"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "likely using the open source tool AdFind.exe, based on the format of the output",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "likely using the open source tool AdFind.exe, based on the format of the output"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "on-premises environment — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "on-premises environment 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — on-premises environment",
+    "action:a1 — compromised account of former employee used for initial access",
+    "action:a2 — authenticated to internal VPN access point",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a5 — authenticated to Common Internet File Service (CIFS) on various endpoints"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "on-premises environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "on-premises environment — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "on-premises environment 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — on-premises environment",
+    "action:a1 — compromised account of former employee used for initial access",
+    "action:a2 — authenticated to internal VPN access point",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a5 — authenticated to Common Internet File Service (CIFS) on various endpoints"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "on-premises environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "on-premises environment — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "on-premises environment 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — on-premises environment",
+    "action:a1 — compromised account of former employee used for initial access",
+    "action:a2 — authenticated to internal VPN access point",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a5 — authenticated to Common Internet File Service (CIFS) on various endpoints"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "on-premises environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "virtualized SharePoint server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized SharePoint server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — virtualized SharePoint server"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized SharePoint server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "virtualized SharePoint server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized SharePoint server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — virtualized SharePoint server"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized SharePoint server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "virtualized SharePoint server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized SharePoint server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — virtualized SharePoint server"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized SharePoint server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "virtualized workstation — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized workstation 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — virtualized workstation"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized workstation",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "virtualized workstation — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized workstation 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — virtualized workstation"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized workstation",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "virtualized workstation — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "virtualized workstation 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — virtualized workstation"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "virtualized workstation",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "domain controller — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — domain controller",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a4 — executed LDAP queries against domain controller"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "domain controller — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — domain controller",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a4 — executed LDAP queries against domain controller"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "domain controller — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — domain controller",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a4 — executed LDAP queries against domain controller"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3, a4 涉及 Active Directory（h4 (domain controller)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h4 — domain controller",
+    "action:a3 — authenticated to multiple services using compromised accounts",
+    "action:a4 — executed LDAP queries against domain controller"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "authenticated to multiple services using compromised accounts",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "executed LDAP queries against domain controller",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-account-a3",
+   "field": "新增網域管理員帳號的安全靶場映射",
+   "category": "account",
+   "reason": "a3 說明建立 rogue domain administrator account，但未提供帳號名稱或所屬群組。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 描述建立 rogue domain administrator account。靶場使用哪個專用帳號名稱/群組來表示這個步驟？不要提供真實密碼。",
+   "affects": [
+    "action:a3 — authenticated to multiple services using compromised accounts"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "沿用報告明確提及的帳號名稱並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "帳號線索",
+     "value": "rogue domain administrator account",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a4 — executed LDAP queries against domain controller",
+    "host:h4 — domain controller"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "executed LDAP queries against domain controller",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.92,
+  "unsupported_claim_count": 3,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a6",
+    "name": "disabled USER1 account and took virtualized servers offline",
+    "actor": "defender"
+   },
+   {
+    "id": "a7",
+    "name": "changed password and removed administrator privileges for USER2 account",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

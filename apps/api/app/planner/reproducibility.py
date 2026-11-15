@@ -10,6 +10,10 @@ _HORIZON = re.compile(r"\b(vmware horizon|horizon (?:connection|agent|desktop|po
 _LOG4J = re.compile(r"\b(log4j|log4shell|cve-2021-44228)\b", re.I)
 _VERSION = re.compile(r"\b(?:windows server|windows|log4j|horizon)\s*(?:version\s*)?([0-9]+(?:\.[0-9A-Za-z_-]+){0,3})\b", re.I)
 
+_EXPLOIT_TECHNIQUES = ("T1190", "T1203", "T1210", "T1068", "T1212", "T1211")
+_EXPLOIT_WORDS = re.compile(r"\b(?:exploit\w*|vulnerab\w*|zero-day|injection)\b", re.I)
+
+
 def _all_text(action: dict[str, Any]) -> str:
     return " ".join(str(action.get(key, "")) for key in ("name", "description", "attack_technique", "attack_tactic"))
 
@@ -40,17 +44,58 @@ def classify_action(action: dict[str, Any], ir: dict[str, Any]) -> tuple[str, st
             return "needs_vm", "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
         return "needs_vm", "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
 
-    # Catalogue service matches are exact only when version and runtime/image are pinned.
+    # A deployable image makes the environment buildable. It makes an action reproducible only
+    # when the action is about that software: using it, or exploiting a weakness it carries.
+    from app.planner.catalogue import component_by_id
+    # What the step says, including the verified source wording it cites: a report often names
+    # the product in one sentence and describes its exploitation in the next.
+    verified = {str(e.get("id")): str(e.get("quote") or "") for e in ir.get("evidence", []) or []
+                if isinstance(e, dict) and e.get("quote_verified") is True}
+    lowered = " ".join([text, *(verified.get(str(ref), "") for ref in action.get("evidence_refs", []) or [])]).casefold()
+    exploiting = (str(action.get("attack_technique") or "").upper().startswith(_EXPLOIT_TECHNIQUES)
+                  or bool(_EXPLOIT_WORDS.search(lowered)))
+    weak_spots = [s for s in services if s.get("lab_enabled") is not False and s.get("placement") != "conflict"
+                  and (s.get("cve") or (component_by_id(s.get("catalogue_component")) or {}).get("vulnerable"))]
+
+    def concerns(service: dict[str, Any], component: dict[str, Any]) -> bool:
+        labels = [str(service.get("name") or ""), str(service.get("matched_text") or ""), *component.get("aliases", [])]
+        if any(label and re.search(rf"(?<![a-z0-9]){re.escape(label.casefold())}(?![a-z0-9])", lowered) for label in labels):
+            return True
+        cves = [*component.get("cves", []), *service.get("cve", [])]
+        if any(str(cve).casefold() in lowered for cve in cves):
+            return True
+        # An exploitation step against a host whose only vulnerable service is this one.
+        return exploiting and len(weak_spots) == 1 and weak_spots[0] is service
+
+    disabled = [s for s in services if s.get("lab_enabled") is False and concerns(s, component_by_id(s.get("catalogue_component")) or {})]
+    if disabled:
+        return "not_reproducible", f"{disabled[0].get('name')} is not enabled in the lab by the user's choice; this step is not reproduced."
+
+    buildable: list[str] = []
     for service in services:
         component_id = service.get("catalogue_component")
-        from app.planner.catalogue import component_by_id
         component = component_by_id(component_id)
-        if not component:
+        if not component or service.get("placement") == "conflict" or service.get("lab_enabled") is False:
+            continue
+        if not concerns(service, component):
+            if component.get("runtime") == "container":
+                buildable.append(str(component.get("name", component_id)))
             continue
         if service.get("is_substitute"):
             return "substitute_only", f"Uses {component.get('name', component_id)} as a substitute; only limited service/protocol behavior is represented."
         if component.get("runtime") == "container" and (service.get("version") or component.get("digest")):
-            return "reproducible", f"Pinned catalogue component {component_id} is available for this service-level check; this does not mean the attack action is executed."
+            basis = service.get("version_basis")
+            caveat = (" The deployed release is assumed, not stated by the source." if basis == "assumed" else
+                      " The deployed release differs from the one the source states." if basis == "substituted" else
+                      " The deployed release was chosen by the user." if basis == "user_supplied" else "")
+            return "reproducible", (f"Pinned catalogue component {component_id} provides the software this step acts on, "
+                                    f"so a step-specific check can be run against it; this does not mean the step was executed.{caveat}")
+    if target and not [s for s in services if s.get("catalogue_component") and s.get("lab_enabled") is not False]:
+        return "not_reproducible", ("The target host has no deployable service, so it is left out of deployment; "
+                                    "this step is not reproduced until a service or substitute is supplied for that host.")
+    if buildable:
+        return "not_reproducible", (f"The environment can be built ({', '.join(dict.fromkeys(buildable))}), but this step is not about that "
+                                    "software and has no step-specific reproduction or validation; it remains untested.")
     if services:
         return "not_reproducible", "No pinned catalogue component and safe step-specific validation mapping is available. Supply the exact component/version and expected harmless evidence."
     return "not_reproducible", "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."

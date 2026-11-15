@@ -210,3 +210,48 @@ cd apps/web && CR_E2E_API_PORT=8101 CR_E2E_WEB_PORT=8102 CR_VENV=/home/tyc4d/cr-
 
 - 推論出的入口主機要不要自動放上對外網段（目前會放並標示需確認）。
 - 原文語氣不確定的行為，要不要擋住後續部署（目前只標記）。
+
+## 7. 第二輪 QA（qa-round2）修復 — 依 `reports/overnight/qa/round2/TRIAGE.md` 的 scenario-eng 一節
+
+全部為規則層級修正，沒有針對任何情資的字串特判。測試：`tests/unit/test_round2_rules.py`（新檔）與既有三個測試檔的新增類別。
+
+| TRIAGE 項目 | 根因 | 作法 | 測試 |
+|---|---|---|---|
+| 協定／加密通道被當成軟體（AR2-02、QA-I-R2-01） | 環境提問把「protocol service」放進服務定義 | 只描述流量的詞（encrypted communication channels 等）不列為服務，記在 `quality.dropped_non_software_services`；模組 4 對舊資料也不為它出題。具名協定（RDP、HTTPS）不受影響 | `TrafficDescriptionsAreNotSoftware`、`CapabilitiesAndTrafficDescriptions` |
+| 同主機多元件，IaC 被擋 | 一台主機只能一個映像，但規劃沒檢查 | 模組 4 出 blocker 題目 `planner_dep_host-component-conflict-<主機>`，被擠掉的服務標 `placement=conflict`；歸屬判斷同時看 `service.host_ref` 與 `host.service_refs`；拓樸只宣告被部署元件的埠，其餘列 `unplaced_services` | `OneHostOneComponent`、`ConflictThroughServiceRefs` |
+| 自由補充被標成原文、產生無主機服務（AR2-01、QA-I-R2-02、UXR2-02） | 模組 4 掃描所有補充文字找產品名，並把版本寫進 `version`、狀態標 `supported` | (a) 說明限制的句子（不等於／只能／not／only…）不抽服務；(b) 沒點名主機、也不是回答某主機題目的產品不建立服務；(c) 補充給的版本寫進 `lab_version`（`field_sources.lab_version=user`），`version` 只留原文的值；(d) 由補充建立的服務為 `source=user`、`epistemic_status=absent`、`provenance_class=USER_SUPPLIED`；(e) `version_basis` 新增 `user_supplied` | `UserTextIsNeverSourceFact`（4 個） |
+| 同一句在行為成立、在關係失配；CISA 15 條 unresolved:empty（QA-I-R2-03） | 關係專用提問的模型常不填 `source_ref`，程式就找不到段落 | 引句在哪一段由程式決定：模型沒給或給錯段落時，在全文定位；找不到才算失配 | `SameSentenceVerifiesTheSameEverywhere`（2 個） |
+| 「可重現」只看映像存在（QA-I-R2-04） | 主機上有映像就把該主機所有行為標可重現 | 只有「作用在該軟體上」的行為才可重現：行為或其已驗證引句提到該軟體／其 CVE，或是利用類步驟且主機只有一個有弱點的服務。其他行為標無法重現並說明「環境可建、此步驟未驗證」。版本為假設／替代／使用者指定時在理由中寫明 | `ReproducibilityIsAboutTheBehaviour`、`ExploitStepWithoutTheProductName` |
+| 引文成立但主張語意錯；能力被寫成事件（UXR2-01） | 模型把「工具能做什麼」寫成已發生 | 行為新增 `occurrence=capability`（標 `source_certainty=capability`、不給 outcome）；提示詞要求能力逐項列出、屬性與值不得錯置 | `test_capability_is_kept_but_never_presented_as_an_event` |
+| 行為缺結果欄 | 無欄位 | 行為新增 `outcome`（succeeded／failed／partial）；原句寫「被阻擋／未成功」時由程式定為 failed，「a portion of which successfully」定為 partial | `Outcomes` |
+| RDP 回答只記錄不套用（QA-I-R2-05） | 服務設定題沒有回寫目標 | 設定題帶 `target=services.<id>.configuration`；回答「不啟用／不部署」時服務標 `lab_enabled=false`，拓樸不開該埠與路徑，相關行為標無法重現 | `SwitchedOffService`（3 個） |
+| CVE→產品未帶入（UXR2-05） | 服務的 `cve` 只靠模型填 | 原文同一句同時出現服務名稱與 CVE 時，程式把 CVE 掛到該服務（`field_sources.cve=source_quote`） | `CveBelongsToTheProductNamedWithIt` |
+| 缺失清單不足 | 只有主機與固定產品的題目 | 新增通用題目（IR 沒有答案才出）：被利用的弱點、未指名的工具、憑證位置與測試帳號、資料庫產品與所在主機、資料外傳通道 | `GapQuestions`（3 個） |
+| 重新分析後替代補件失去原問題（UXR2-10） | 題目不再成立就被移除 | 使用者回答過的模組 4 題目保留為歷史（`superseded=true`） | `test_answered_planner_question_survives_as_history` |
+| XMRig 的 ATT&CK 配對 | 模型把別處的 id 配到這個行為 | technique 必須出現在該行為引用的段落，或出現在與該行為用語高度重疊的段落（如 ATT&CK 表格列）；否則移除並記在 `quality.dropped_misplaced_techniques` | `TechniquePlacement` |
+| 受害主機被當成攻擊機 | 角色文字只要含 attacker 就算 | 角色整句是攻擊者機器（attacker、local attacker host…）才算 | `AttackerRole` |
+| 無服務主機擋住 IaC（Lead 主線決定） | 沒有映像的主機仍進部署計畫 | 這類主機標 `deployable=false`＋`not_deployed_reason`（與 infra-eng@ede047e 對齊）；Horizon、未備妥 VM 的主機同樣有原因；補上服務後自動納入 | `HostsWithoutDeployableService`（3 個）、`UndeployableHostsSayWhy` |
+| 補充產生的服務移除不掉 | 每次重析都重新產生 | supplement 規劃過即標 `planned`；它產生的服務若已被使用者移除，不再重建 | `SupplementServicesCanBeRemoved`（2 個） |
+| 情境編輯的 host_ref 沒記成使用者 | 存檔時只處理行為與關係 | 存檔時比對主機／服務，被改的欄位記 `field_sources=user`；使用者指定主機的規劃服務重析後保留 | `EditedFieldsAreTheUsers`、`UserHostAssignmentSurvivesReplanning` |
+| 無對應元件的題目看不懂、沒建議 | 題目只有英文欄位 | 題目加中文問句與依服務功能找出的替代建議（例如資料庫→PostgreSQL／MySQL） | `UnsupportedSoftwareQuestion` |
+
+### 真 LLM 重跑（最終程式，`evidence/scenario-eng/after-r2/`）
+
+| 情資 | 對照標準答案 |
+|---|---|
+| CISA AA22（sample） | 16 條關係：9 條附陳述連結的原句、6 條如實標推論、1 條不足（修復前 QA 看到 15 條全失配）。XMRig 安裝沒有被配上 technique。h1→h2:3389、h2→h4:3389 開通 |
+| Clop MOVEit（cti-candidates） | B1（利用）、B8（竊取資料）為已發生；B3–B7 五項標 capability 且無 outcome；行為名稱不再寫 username 是 Health Check Service；CVE-2023-34362 掛在 MOVEit 服務上。**仍缺**：B2「安裝 web shell（human2.aspx）」沒有獨立成一個行為；a1 沒帶出原文標的 T1190 |
+| Equifax（cti-candidates） | 入口網站、入口相關資料庫、另外 48 個資料庫為三台主機；資料庫列為服務；a1–a3（掃描、發現、利用）可重現（版本為假設），其餘標無法重現並說明；h2／h3 標不部署並附原因；題目含弱點、利用工具、憑證、外傳 |
+| 負向 | 5 個行為皆 hedged、皆無法重現；題目含弱點（blocker）、工具、外傳；`planner_dep_no-target-software` blocker |
+
+### 未完成／限制
+- Clop 的兩項缺口如上（模型抽取，沒有再調）。
+- 主機、服務的引句常被模型拼接，因此不少標「不足」（如 Equifax 三台主機）；程式如實標示，沒有放寬。
+- 新欄位（`occurrence`、`outcome`、`lab_version`、`provenance_class`、`placement`、`unplaced_services`、`lab_enabled`、`superseded`、`not_deployed_reason`）前端需接上才會顯示。
+- `missing.py` 舊的固定產品清單仍在；STIX 的 `extract_stix_candidates` 仍未接入；一個行為只能存一個 technique。
+
+### 第二輪修復後的測試
+
+- 後端完整套件（合併 main 後）：`PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests -q` → **235 passed**；之後只加了一個可重現性規則與其測試，再跑 `tests/unit` 與 planner／cti／iac／scenario 模組測試為 163 passed（完整套件未再重跑）。
+- apps/web full-flow e2e（真瀏覽器、真 LLM、真 Docker，自己的埠 8101／8102）：**2 passed**，14 個步驟全部通過，含部署 4 個容器、驗證、報告、清理。
+  驗證層級 `env_build=PASS, behavior_repro=NOT_TESTED, full_chain=PARTIAL`。步驟紀錄 `evidence/scenario-eng/full-e2e/run-log-round2.json`。事後無殘留容器或程序。

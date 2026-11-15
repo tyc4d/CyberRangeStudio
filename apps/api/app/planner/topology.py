@@ -9,6 +9,7 @@ from typing import Any
 
 from cr_contracts import iter_errors
 
+from app.cti.missing import is_attacker_role
 from app.planner.catalogue import component_by_id
 
 
@@ -31,8 +32,7 @@ def _host_id(value: Any) -> str:
 
 
 def _is_attacker(host: dict[str, Any]) -> bool:
-    role = str(host.get("role", "")).casefold()
-    return any(label in role for label in ("attacker", "red-team", "red team", "operator"))
+    return is_attacker_role(host.get("role", ""))
 
 
 def _role_contains(role: str, term: str) -> bool:
@@ -238,6 +238,20 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             continue
         _emitted.add(hid)
         entries = []
+        switched_off = [service for service in assigned.get(hid, []) if service.get("lab_enabled") is False]
+        if switched_off:
+            # The user answered that the lab will not run these; no port, no path, not reproduced.
+            assigned[hid] = [service for service in assigned[hid] if service.get("lab_enabled") is not False]
+            notes.append(f"Host {hid}: not enabled in the lab by the user's choice: "
+                         + ", ".join(str(service.get("name")) for service in switched_off)
+                         + ". Steps that rely on them are not reproduced.")
+        unplaced = [service for service in assigned.get(hid, []) if service.get("placement") == "conflict"]
+        if unplaced:
+            # Module 4 found that these cannot share this host's single image.
+            assigned[hid] = [service for service in assigned[hid] if service.get("placement") != "conflict"]
+            notes.append(f"Host {hid} deploys one component; not deployed there: "
+                         + ", ".join(f"{service.get('name')} ({service.get('catalogue_component')})" for service in unplaced)
+                         + ". Move them to another host or remove them.")
         if hid in assigned:
             for service in assigned[hid]:
                 port_proto = _port_for(service)
@@ -271,6 +285,10 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             "networks": network_refs,
             "services": entries,
         }
+        if unplaced:
+            env_host["unplaced_services"] = [
+                {"name": str(service.get("name", service["id"])), "component": service.get("catalogue_component"),
+                 "reason": "host already uses another component"} for service in unplaced]
         if host.get("_inferred_entry"):
             env_host["exposure_basis"] = "inferred_entry_point"
         elif not _is_attacker(host) and _stated_exposure(host) is not None:
@@ -303,6 +321,9 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 # presenting it as a real or substitute component.
                 env_host["runtime"] = str(component.get("runtime") or "unsupported")
                 env_host["deployable"] = False
+                env_host["not_deployed_reason"] = (
+                    f"{component.get('name', component['id'])} 無法由元件目錄部署"
+                    f"（{component.get('fidelity') or '沒有可部署的環境'}）；這台主機不會被部署，也不以替身頂替。")
                 notes.append(f"Host {hid} needs {component.get('name', component['id'])}, which the catalogue cannot "
                              f"deploy ({component.get('fidelity') or 'no deployable fixture'}). It is not replaced by a stand-in.")
             elif component and component.get("runtime") == "vm":
@@ -316,6 +337,9 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 if component.get("deployable") is False:
                     # A VM the catalogue cannot build yet is neither "real" nor a substitute.
                     env_host["deployable"] = False
+                    env_host["not_deployed_reason"] = (
+                        f"{component.get('name', component['id'])} 需要尚未備妥的 VM 映像"
+                        f"（{component.get('fidelity') or '沒有驗證過的映像'}）；這台主機不會被部署。")
                     notes.append(f"Host {hid} needs {component.get('name', component['id'])} as a VM, which is not "
                                  f"deployable yet ({component.get('fidelity') or 'no validated image'}).")
                 else:
@@ -323,6 +347,17 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             else:
                 env_host["runtime"] = "container"
                 env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
+                if not component:
+                    # Nothing deployable is known for this machine. It stays in the plan as a
+                    # described asset and is left out of deployment until a service is supplied.
+                    named = [str(service.get("name")) for service in assigned.get(hid, [])]
+                    env_host["deployable"] = False
+                    env_host["not_deployed_reason"] = (
+                        ("服務 " + "、".join(named) + " 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。") if named else
+                        "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。")
+                    env_host.pop("component_mode", None)
+                    notes.append(f"Host {hid} is not deployed: no deployable service is known for it. "
+                                 "Steps that act on it are not reproduced.")
         environment_hosts.append(env_host)
 
     if unassigned:

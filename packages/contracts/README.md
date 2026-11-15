@@ -53,3 +53,22 @@ Schema JSON 本身未改；下列欄位已加進 `src/types.ts`，由模組 1/2/
 | environment_plan.hosts[] | `version_basis`、`deployed_version` | 同上，僅在 `assumed`／`substituted` 時出現 |
 | environment_plan.hosts[] | `substitute_for`、`substitute_basis` | 這台主機的映像是替代品：被頂替的原服務名稱；`user_chosen` 或 `catalogue_substitute` |
 | environment_plan.hosts[].services[] | `stated_port`、`port_basis` | 替代品不支援原埠時：原文的埠；`substitute_default` 表示 `port` 是替代元件的埠 |
+
+## 2026-11-16 Round-2 新增的選用欄位
+
+| 位置 | 欄位 | 意義 |
+|---|---|---|
+| action | `occurrence` | `capability`：原文只說工具能做，沒說在本事件發生（此時 `source_certainty=capability`，沒有 `outcome`） |
+| action | `outcome` | `succeeded`／`failed`／`partial`（原文有說才有） |
+| action | `source_certainty` | `hedged`（原文語氣不確定）或 `capability` |
+| service | `lab_version` | 使用者指定靶場要跑的版本；`version` 只放原文或針對版本題目的回答 |
+| service | `provenance_class` | `USER_SUPPLIED`：由補充建立，`source=user`、`epistemic_status=absent` |
+| service | `version_basis` | 另增 `user_supplied` |
+| service | `lab_enabled` | `false`：使用者選擇靶場不啟用；拓樸不開埠 |
+| service | `configuration` | 使用者對服務設定題的回答文字 |
+| service | `placement`、`placement_reason` | `conflict`：所在主機已由另一元件決定映像，這個服務不會部署在那裡 |
+| missing_item | `superseded` | 題目已因使用者的回答而不再成立，保留為歷史 |
+| supplement | `planned` | 模組 4 已處理過；其產生的服務被移除後不再重建 |
+| environment_plan.hosts[] | `deployable: false`、`not_deployed_reason` | 不納入部署的主機與白話原因（無服務、服務無對應元件、外部平台、VM 未備妥） |
+| environment_plan.hosts[] | `unplaced_services` | 因元件衝突沒有部署在這台主機的服務 |
+| quality | `capability_action_count`、`dropped_non_software_services`、`dropped_misplaced_techniques` | 對應上述規則的統計 |

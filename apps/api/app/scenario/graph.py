@@ -61,3 +61,31 @@ def reconcile_graph_sources(ir: dict[str, Any], current: dict[str, Any]) -> None
         ir[field] = [mark_user_change(old.get(item.get("id")), item) for item in ir.get(field, [])]
     for relation in ir.get("relations", []):
         relation.setdefault("confirmed", False)
+
+
+_ENTITY_BOOKKEEPING = {"id", "source", "epistemic_status", "field_sources", "evidence_refs", "service_refs"}
+
+
+def mark_entity_field_edits(ir: dict[str, Any], current: dict[str, Any]) -> None:
+    """Record which host/service fields a scenario edit changed as the user's.
+
+    A value the user set by editing (for example which host a service runs on) must be
+    distinguishable from what the analysis or the planner produced. Only the changed fields
+    are marked; the record's own source and epistemic status are left alone. A host or
+    service that did not exist before is the user's.
+    """
+    for collection in ("hosts", "services"):
+        before = {item.get("id"): item for item in current.get(collection, []) or [] if isinstance(item, dict)}
+        for item in ir.get(collection, []) or []:
+            if not isinstance(item, dict):
+                continue
+            previous = before.get(item.get("id"))
+            if previous is None:
+                item.setdefault("source", "user")
+                continue
+            for key in set(item) | set(previous):
+                if key in _ENTITY_BOOKKEEPING:
+                    continue
+                old, new = previous.get(key), item.get(key)
+                if old != new and not (old in _EMPTY and new in _EMPTY):
+                    item.setdefault("field_sources", {})[key] = "user"

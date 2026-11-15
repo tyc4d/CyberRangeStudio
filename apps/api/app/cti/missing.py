@@ -9,6 +9,46 @@ _UNKNOWN = {"unknown", "unspecified", "absent", "n/a", "none", "null"}
 _SUPPORTED_STATUSES = {"supported", "user_supplied"}
 
 
+_COMMUNICATION_WORDS = frozenset({
+    "channel", "channels", "protocol", "protocols", "traffic", "communication", "communications", "connection",
+    "connections", "session", "sessions", "tunnel", "tunnels", "exchange", "exchanges",
+})
+_COMMUNICATION_MODIFIERS = frozenset({
+    "encrypted", "unencrypted", "standard", "existing", "normal", "legitimate", "secure", "web", "network",
+    "internet", "outbound", "inbound", "internal", "external", "remote", "data", "command", "control", "and", "of",
+    "the", "a", "an", "c2", "covert", "trusted", "regular", "common", "application", "layer",
+})
+
+
+def is_communication_description(name: Any) -> bool:
+    """True for a phrase that describes how traffic flowed rather than naming software.
+
+    "existing encrypted communication channels" or "standard encrypted web protocols" say
+    something about the attacker's traffic. They are not a product or a named protocol service
+    (RDP, SMB, HTTPS) that could be installed on a host, mapped to a component or substituted.
+    """
+    words = re.findall(r"[a-z0-9]+", str(name or "").casefold())
+    return (bool(words) and any(word in _COMMUNICATION_WORDS for word in words)
+            and all(word in _COMMUNICATION_WORDS or word in _COMMUNICATION_MODIFIERS for word in words))
+
+
+_ATTACKER_ROLE_RE = re.compile(
+    r"^\W*(?:the\s+)?(?:(?:local|lab|external|remote|isolated|simulated)\s+)*"
+    r"(?:(?:attacker|adversary|threat[\s-]actor|red[\s-]?team|operator)(?:'s|s'|s)?[\s-]*)+"
+    r"(?:(?:controlled|owned|side|origin)[\s-]*)?"
+    r"(?:(?:host|machine|box|system|workstation|server|infrastructure|toolbox|vm|container|c2|node|endpoint|"
+    r"network|segment|address|addresses|ip|internet)[\s-]*)*\W*$", re.IGNORECASE)
+
+
+def is_attacker_role(role: Any) -> bool:
+    """True when a host's role says the machine is the attacker's own.
+
+    "attacker", "local attacker host" or "red-team operator workstation" are; "databases the
+    attackers queried" is a victim system that merely mentions them.
+    """
+    return bool(_ATTACKER_ROLE_RE.match(str(role or "")))
+
+
 def _present(value: Any) -> bool:
     if isinstance(value, str):
         return bool(value.strip()) and value.strip().casefold() not in _UNKNOWN
@@ -277,7 +317,7 @@ def _host_questions(ir: dict[str, Any], subjects: list[tuple[dict[str, Any], str
                     all_text: str, items: list[dict[str, Any]]) -> None:
     actions_by_id = {str(action.get("id")): action for action in actions if action.get("id")}
     for host, source_kind in subjects:
-        if re.search(r"\b(?:attacker|red[\s-]team|operator)\b", str(host.get("role") or ""), re.IGNORECASE):
+        if is_attacker_role(host.get("role")):
             continue  # the lab's own attacker machine is scaffolding, not a target to reconstruct
         host_id = str(host.get("id") or "target")
         label = _name(host, host_id)
@@ -611,7 +651,97 @@ def _service_dependency_questions(ir: dict[str, Any], services: list[dict[str, A
             suggestions=suggestions,
             evidence_refs=refs,
             anchor_terms=[label],
+            target={"collection": "services", "id": str(service.get("id")), "field": "configuration"},
         )
+
+
+_GENERIC_TOOL_WORDS = frozenset({
+    "legitimate", "administrative", "administration", "admin", "tools", "tool", "software", "utilities", "utility",
+    "remote", "access", "custom", "malware", "malicious", "script", "scripts", "unknown", "designed", "exploit",
+    "the", "to", "a", "an", "of", "from", "source", "obtained", "they", "that", "and", "was", "vulnerability", "program",
+    "programs", "code", "payload", "payloads", "hacking", "open", "publicly", "available", "commodity", "various",
+})
+
+
+def _generic_gap_questions(ir: dict[str, Any], services: list[dict[str, Any]], actions: list[dict[str, Any]],
+                           items: list[dict[str, Any]]) -> None:
+    """Questions a reproduction always needs when the IR leaves them open, whatever the incident.
+
+    Each is raised from what the actions say (an exploited weakness, an unnamed tool, credentials,
+    a database, data leaving) and only when the IR does not already hold the answer.
+    """
+    artifacts = [item for item in (ir.get("artifacts") or []) if isinstance(item, dict)]
+    real_services = [service for service in services
+                     if service.get("id") not in _PLACEHOLDER_SERVICE_IDS and not is_communication_description(service.get("name"))]
+
+    def matching(pattern: str) -> list[dict[str, Any]]:
+        return [action for action in actions if re.search(pattern, _text(action), re.IGNORECASE)]
+
+    def ask(code: str, field: str, category: str, reason: str, question: str, related: list[dict[str, Any]],
+            suggestions: list[str], severity: str = "major") -> None:
+        _add_item(
+            items, ir, item_id=f"missing-gap-{code}", field=field, category=category, reason=reason, question=question,
+            affects=[f"action:{action.get('id')} — {_name(action)}" for action in related] + [
+                f"host:{host.get('id')} — {_name(host)}" for host in (ir.get("hosts") or [])
+                if isinstance(host, dict) and any(action.get("target_host_ref") == host.get("id") for action in related)],
+            known=[fact for fact in (_known_fact("相關步驟", _name(action), f"actions:{action.get('id')}.name", action)
+                                     for action in related) if fact],
+            suggestions=suggestions,
+            evidence_refs=[ref for action in related for ref in (action.get("evidence_refs") or [])],
+            severity=severity,
+        )
+
+    exploiting = [action for action in matching(r"\b(?:exploit\w*|vulnerab\w*|weakness\w*|zero-day|injection)\b")
+                  ] + [action for action in actions if str(action.get("attack_technique") or "").upper().startswith(_EXPLOIT_TECHNIQUES)]
+    exploiting = list({id(action): action for action in exploiting}.values())
+    known_cve = any(service.get("cve") for service in real_services) or any(
+        re.search(r"CVE-\d{4}-\d+", _text(action), re.IGNORECASE) for action in exploiting)
+    if exploiting and not known_cve:
+        named = ", ".join(str(service.get("name")) for service in real_services) or "（IR 沒有任何目標軟體）"
+        ask("exploited-weakness", "被利用的弱點（CVE／弱點類型）", "software",
+            "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+            f"這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：{named}。請提供 CVE 編號或弱點類型；"
+            "若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+            exploiting, ["填入來源或其他公開資料記載的 CVE（請註明出處）", "選用靶場已有的漏洞練習標的並標記為假設", "無法確認；保留為未知"],
+            severity="blocker" if not real_services else "major")
+
+    vague_tools = [artifact for artifact in artifacts
+                   if str(artifact.get("type") or "").casefold() in {"tool", "malware", "script", "other", "artifact", ""}
+                   and (words := re.findall(r"[a-z]+", str(artifact.get("name") or "").casefold()))
+                   and all(word in _GENERIC_TOOL_WORDS for word in words)]
+    if vague_tools:
+        names = "、".join(f"「{artifact.get('name')}」" for artifact in vague_tools)
+        related = [action for action in actions
+                   if any(str(artifact.get("name") or "").casefold() in _text(action).casefold() for artifact in vague_tools)
+                   or set(action.get("evidence_refs") or []) & {ref for artifact in vague_tools for ref in (artifact.get("evidence_refs") or [])}]
+        ask("unnamed-tools", "未指名的工具", "software",
+            f"來源只以概括用語提到工具（{names}），沒有說是哪些工具。",
+            f"{names} 實際是哪些工具？靶場要用哪些工具來表示這些步驟？來源沒寫的話請選擇替代工具並標記，或保留未知。",
+            related or actions[:1], ["填入來源記載的工具名稱", "選用靶場核准的替代工具並標記為替代", "無法確認；保留為未知"])
+
+    credential_actions = matching(r"\b(?:credential\w*|passwords?|usernames?)\b|帳密|憑證")
+    has_account = any(str(artifact.get("type") or "").casefold() == "account" for artifact in artifacts)
+    if credential_actions and not has_account:
+        ask("credential-material", "憑證的存放位置與靶場測試帳號", "account",
+            "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+            "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+            credential_actions, ["使用專用測試帳號（不提供真實密碼）", "填入來源記載的存放位置並指定安全替身", "無法確認；保留為未知"])
+
+    database_actions = matching(r"\b(?:databases?|sql|queries|query|queried)\b|資料庫")
+    has_database = any(re.search(r"\b(?:databases?|sql|dbs?|postgres\w*|mysql|mariadb|oracle|mongo\w*|redis|data\s+(?:store|repository))\b",
+                                 str(service.get("name") or ""), re.IGNORECASE) for service in real_services)
+    if database_actions and not has_database:
+        ask("database-product", "資料庫產品、版本與所在主機", "software",
+            "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+            "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+            database_actions, ["填入來源或資產清單記載的資料庫產品與版本", "選用靶場可取得的替代資料庫並標記為替代", "無法確認；保留為未知"])
+
+    exfil_actions = matching(r"\b(?:exfiltrat\w*|removed\s+the\s+data|stole|steal\w*|data\s+theft|copied|upload\w*)\b|外傳|外洩")
+    if exfil_actions and not any(item.get("id") == "missing-network-outbound-policy" for item in items):
+        ask("exfiltration-path", "資料外傳的通道與靶場接收端", "network",
+            "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+            "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+            exfil_actions, ["只傳到隔離靶場內的模擬接收端", "封鎖外連並將此步驟標記未重現", "無法確認；保留為未知"])
 
 
 def _ad_domain_question(ir: dict[str, Any], hosts: list[dict[str, Any]], actions: list[dict[str, Any]],
@@ -1010,6 +1140,7 @@ def calculate_missing_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
     _egress_questions(ir, actions, items, all_text)
     _phishing_domain_questions(ir, actions, items, all_text)
     _generic_entry_questions(ir, actions, items)
+    _generic_gap_questions(ir, services, actions, items)
     return items
 
 
