@@ -22,6 +22,7 @@ class ExecutionRequest:
     on_progress: Callable[[dict[str, Any]], None] | None = None
     proof_id: str | None = None
     job_id: str | None = None
+    required_predecessors: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

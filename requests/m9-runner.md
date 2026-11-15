@@ -47,16 +47,19 @@ has agreed to make this change in the shared deploy layer.
 
 ## #9: artifact identity integration (m9-chain)
 
-Runner now uses an unpredictable per-attempt directory below `poc-runs/<scenario hash>/<action hash>/`
-and writes a `context` object in the hashed JSON `output.log` beside `effect.txt`. The identity
-contains run_id, job_id (when run through run_job), scenario_id, action_id, scenario_sha256, payload_sha256, started_at,
-deployment_record_id, and exact ownership metadata;
-the existing ExecutionResult schema stays unchanged. Please validate artifacts under DATA_DIR,
-their hashes, the registered source/SHA, and the current deployment association. Do not reuse a
-last-row action result across deployments/jobs.
+Updated by the runner/chain alignment follow-up: immutable paths are now
+`poc-runs/<sha256(scenario_id)[:16]>/<run_id>/...` (no action directory).
+The hashed JSON log emits action_id, status, started_at, ended_at, payload_sha256, proof_id,
+context, ownership, and the effects' exact evidence records. Context holds run_id, job_id (when
+run through run_job), scenario_id, scenario_sha256, and a real deployment_record_id when available.
+The log itself is attached to ExecutionResult.evidence with its real SHA after the log is written.
+No ExecutionResult schema change is needed; no evidence can be copied between attempts/jobs.
 
-Canonical scenario hash: SHA256 of UTF-8 `json.dumps(ir, sort_keys=True,
-separators=(",", ":"), ensure_ascii=False)`. An absent scenario or deployment identity stays
+The runner imports `app.poc.chain.evidence.scenario_digest(ir)` directly. An absent scenario or deployment identity stays
 absent/unverified in context; it is never synthesized. `_active_proxmox_deployment` currently
 discards the lifecycle row's `id`; please retain it in the returned mapping so guard can emit
 `deployment_record_id` without guessing which deployment it was.
+
+The strict verifier now accepts real runner-written artifacts under mock transport; positive
+and mutation tests are in `app/poc/runner/test_chain_integration.py`. See
+`requests/m9-runner-alignment-results.md` for the authorized read-only import-overlay check.
