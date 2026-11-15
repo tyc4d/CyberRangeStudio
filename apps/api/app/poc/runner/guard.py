@@ -126,9 +126,11 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
                 raise TargetBlocked("target service container is not running in the owned Proxmox worker")
             container = _owned_container(service, service_doc, project, expected_name,
                                          lambda args: _pve_docker_json(scenario_id, args))
-            return {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
-                    "vmid": vmid, "host_id": deployment.get("host_id"), **container,
-                    "deployment_record_id": deployment.get("id")}
+            owned = {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
+                     "vmid": vmid, "host_id": deployment.get("host_id"), **container}
+            if type(deployment.get("id")) is int and deployment["id"] > 0:
+                owned["deployment_record_id"] = deployment["id"]
+            return owned
 
         if vmid:
             raise TargetBlocked("VM targets are unsupported by the selected local Docker backend")
@@ -148,5 +150,7 @@ def assert_target_owned(scenario_id: str, target: str | dict[str, Any]) -> dict[
         raise
     except Exception as exc:
         raise TargetBlocked("target ownership or network isolation could not be verified") from exc
-    return {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name,
-            **container, "deployment_record_id": record.get("id")}
+    owned = {"scenario_id": scenario_id, "service_ref": service, "container_name": expected_name, **container}
+    if type(record.get("id")) is int and record["id"] > 0:
+        owned["deployment_record_id"] = record["id"]
+    return owned

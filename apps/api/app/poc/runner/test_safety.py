@@ -104,9 +104,9 @@ def test_reruns_keep_evidence_and_bind_hashed_context(monkeypatch):
     monkeypatch.setattr(runner, "assert_target_owned", lambda *args: owned)
     monkeypatch.setattr(runner, "_probe_with_cancel", lambda *args: (
         {"returncode": 0, "stdout": payloads.STRUTS_S2045_MARKER, "stderr": ""}, None))
-    first = runner.SandboxRunner().execute(request(job_id="job-one"))
+    first = runner.SandboxRunner().execute(request(job_id="1" * 32))
     original = {item.path: (config.DATA_DIR / item.path).read_bytes() for item in first.evidence}
-    second = runner.SandboxRunner().execute(request(job_id="job-two"))
+    second = runner.SandboxRunner().execute(request(job_id="2" * 32))
     assert first.status == second.status == "PASS"
     assert {item.path for item in first.evidence}.isdisjoint(item.path for item in second.evidence)
     for item in first.evidence:
@@ -120,9 +120,9 @@ def test_reruns_keep_evidence_and_bind_hashed_context(monkeypatch):
                                              ensure_ascii=False).encode()).hexdigest()
     assert context["scenario_sha256"] == expected_hash
     assert context["deployment_record_id"] == 17
-    assert context["job_id"] == "job-one"
-    assert context["action_id"] == first.action_id
-    assert context["payload_sha256"] == first.payload_sha256
+    assert context["job_id"] == "1" * 32
+    assert log["action_id"] == first.action_id
+    assert log["payload_sha256"] == first.payload_sha256
     assert context["run_id"] in first.logs_path
 
 
