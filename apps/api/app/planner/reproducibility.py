@@ -75,6 +75,9 @@ def classify_action(action: dict[str, Any], ir: dict[str, Any]) -> tuple[str, st
                       " The deployed release was chosen by the user." if basis == "user_supplied" else "")
             return "reproducible", (f"Pinned catalogue component {component_id} provides the software this step acts on, "
                                     f"so a step-specific check can be run against it; this does not mean the step was executed.{caveat}")
+    if target and not [s for s in services if s.get("catalogue_component") and s.get("lab_enabled") is not False]:
+        return "not_reproducible", ("The target host has no deployable service, so it is left out of deployment; "
+                                    "this step is not reproduced until a service or substitute is supplied for that host.")
     if buildable:
         return "not_reproducible", (f"The environment can be built ({', '.join(dict.fromkeys(buildable))}), but this step is not about that "
                                     "software and has no step-specific reproduction or validation; it remains untested.")

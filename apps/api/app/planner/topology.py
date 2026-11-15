@@ -321,6 +321,9 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 # presenting it as a real or substitute component.
                 env_host["runtime"] = str(component.get("runtime") or "unsupported")
                 env_host["deployable"] = False
+                env_host["not_deployed_reason"] = (
+                    f"{component.get('name', component['id'])} 無法由元件目錄部署"
+                    f"（{component.get('fidelity') or '沒有可部署的環境'}）；這台主機不會被部署，也不以替身頂替。")
                 notes.append(f"Host {hid} needs {component.get('name', component['id'])}, which the catalogue cannot "
                              f"deploy ({component.get('fidelity') or 'no deployable fixture'}). It is not replaced by a stand-in.")
             elif component and component.get("runtime") == "vm":
@@ -334,6 +337,9 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
                 if component.get("deployable") is False:
                     # A VM the catalogue cannot build yet is neither "real" nor a substitute.
                     env_host["deployable"] = False
+                    env_host["not_deployed_reason"] = (
+                        f"{component.get('name', component['id'])} 需要尚未備妥的 VM 映像"
+                        f"（{component.get('fidelity') or '沒有驗證過的映像'}）；這台主機不會被部署。")
                     notes.append(f"Host {hid} needs {component.get('name', component['id'])} as a VM, which is not "
                                  f"deployable yet ({component.get('fidelity') or 'no validated image'}).")
                 else:
@@ -341,6 +347,17 @@ def build_environment_plan(ir: dict[str, Any]) -> dict[str, Any]:
             else:
                 env_host["runtime"] = "container"
                 env_host["component_mode"] = "real" if component and component.get("image") else "substitute"
+                if not component:
+                    # Nothing deployable is known for this machine. It stays in the plan as a
+                    # described asset and is left out of deployment until a service is supplied.
+                    named = [str(service.get("name")) for service in assigned.get(hid, [])]
+                    env_host["deployable"] = False
+                    env_host["not_deployed_reason"] = (
+                        ("服務 " + "、".join(named) + " 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。") if named else
+                        "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。")
+                    env_host.pop("component_mode", None)
+                    notes.append(f"Host {hid} is not deployed: no deployable service is known for it. "
+                                 "Steps that act on it are not reproduced.")
         environment_hosts.append(env_host)
 
     if unassigned:

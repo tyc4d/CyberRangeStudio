@@ -13,7 +13,7 @@ from app import store
 from app.cti.citations import GRADER_VERSION, grade_evidence_against_units
 from app.cti.missing import refresh_missing_items
 from app.cti.parser import parse_source
-from app.scenario.graph import mark_user_change, reconcile_graph_sources, validate_ir
+from app.scenario.graph import mark_entity_field_edits, mark_user_change, reconcile_graph_sources, validate_ir
 
 router = APIRouter(prefix="/api/scenario", tags=["scenario"])
 
@@ -117,6 +117,7 @@ def put_scenario(scenario_id: str, payload: dict[str, Any]):
     ir.update(copy.deepcopy(edited))
     ir["id"] = scenario_id
     reconcile_graph_sources(ir, current)
+    mark_entity_field_edits(ir, current)
     note = payload.get("note", "scenario edit")
     if not isinstance(note, str):
         raise HTTPException(status_code=422, detail="note must be a string")

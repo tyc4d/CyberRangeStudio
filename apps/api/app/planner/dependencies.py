@@ -408,13 +408,18 @@ def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None
     return None
 
 
+def _user_edited(service: dict[str, Any]) -> bool:
+    return "user" in (service.get("field_sources") or {}).values()
+
+
 def _is_recorded_service(service: dict[str, Any]) -> bool:
     """A service stated by the analysis or the user (not a placeholder, not module-4 output)."""
     return (bool(str(service.get("name") or "").strip())
             and service.get("id") not in _PLACEHOLDER_SERVICE_IDS
             # a description of traffic ("encrypted communication channels") is not software to plan
             and not is_communication_description(service.get("name"))
-            and service.get("source") != "program"
+            # planner output is rebuilt each run, unless the user has since edited it (then it is theirs)
+            and (service.get("source") != "program" or _user_edited(service))
             # services derived from a supplement are rebuilt from that supplement on every run
             and not service.get("supplement_ref"))
 
@@ -515,6 +520,11 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     # associations it names are planned like any other, and marked as the user's.
     for supplement in ir.get("supplements", []) or []:
         if not isinstance(supplement, dict) or not isinstance(supplement.get("text"), str):
+            continue
+        if supplement.get("planned") and not any(
+                service.get("supplement_ref") == supplement.get("id") or service.get("from_supplement") == supplement.get("id")
+                for service in ir.get("services", []) or [] if isinstance(service, dict)):
+            # Planned before, and nothing of it is left in the IR: the user removed what it produced.
             continue
         item = _answered_item(ir, supplement)
         applied_as_substitute = any(service.get("substitute_supplement_ref") == supplement.get("id")
@@ -723,6 +733,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 if candidate.get("lab_version"):
                     # What the user says the lab runs; the service's own `version` stays the source's.
                     service["lab_version"] = candidate["lab_version"]
+                    service["from_supplement"] = candidate.get("from_supplement")
                     service.setdefault("field_sources", {})["lab_version"] = "user"
                 for key in ("version", "port"):
                     if candidate.get(key) and service.get(key) != candidate[key]:
@@ -932,7 +943,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     # Planning may add catalogue services, but may never erase analysis entities.
     present = {item.get("id") for item in services}
     for original in original_services:
-        if original.get("source") == "program" and str(original.get("id", "")).startswith("svc-"):
+        if original.get("source") == "program" and str(original.get("id", "")).startswith("svc-") and not _user_edited(original):
             continue  # module-4 output of an earlier run; it is rebuilt above, not carried over
         if original.get("supplement_ref") and str(original.get("id", "")).startswith("svc-"):
             continue
@@ -946,8 +957,11 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         service.pop("placement", None)
         service.pop("placement_reason", None)
         component = component_by_id(service.get("catalogue_component"))
-        if service.get("host_ref") and component and component.get("runtime") in (None, "container", "vm"):
-            by_host.setdefault(service["host_ref"], []).append(service)
+        # A service belongs to a host by its own host_ref or by being listed in the host's service_refs.
+        owner = service.get("host_ref") or next(
+            (host.get("id") for host in result["hosts"] if service.get("id") in (host.get("service_refs") or [])), None)
+        if owner and component and component.get("runtime") in (None, "container", "vm"):
+            by_host.setdefault(owner, []).append(service)
     for hid, hosted in by_host.items():
         components = list(dict.fromkeys(service["catalogue_component"] for service in hosted))
         if len(components) < 2:
@@ -987,4 +1001,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     # Planning may have filled in what an analysis-stage question asked (a version read from
     # a quote or a supplement); recompute those questions so they do not stay open.
     result["missing_items"] = refresh_missing_items(result, add_new=False)
+    for supplement in result.get("supplements", []) or []:
+        if isinstance(supplement, dict):
+            supplement["planned"] = True
     return annotate_reproducibility(result)

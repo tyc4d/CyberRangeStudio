@@ -228,5 +228,136 @@ class UnsupportedSoftwareQuestion(unittest.TestCase):
         self.assertFalse(any("NGINX" in s for s in question["suggestions"]))
 
 
+class HostsWithoutDeployableService(unittest.TestCase):
+    """Main-line blocker: a described asset with no deployable service stays out of deployment."""
+
+    def planned(self, extra_services=()):
+        return plan_dependencies(ir_with(
+            [step("a1", "exploited a vulnerability in Apache Struts", "h1", attack_technique="T1190"),
+             step("a2", "searched information systems containing PII", "h2", source_host_ref="h1")],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"},
+                      *extra_services],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "role": "information systems containing PII", "epistemic_status": "supported", "source": "llm"}]))
+
+    def test_host_is_marked_not_deployed_with_a_readable_reason(self):
+        planned = self.planned()
+        plan = build_environment_plan(planned)
+        hosts = {h["id"]: h for h in plan["hosts"]}
+        self.assertIs(hosts["h2"]["deployable"], False)
+        self.assertIn("沒有描述可部署的服務", hosts["h2"]["not_deployed_reason"])
+        self.assertNotIn("component_mode", hosts["h2"])
+        self.assertNotIn("deployable", hosts["h1"])
+        self.assertNotIn("not_deployed_reason", hosts["h1"])
+        self.assertTrue(any("Host h2 is not deployed" in note for note in plan["notes"]))
+        a2 = next(a for a in planned["actions"] if a["id"] == "a2")
+        self.assertEqual(a2["reproducibility"], "not_reproducible")
+        self.assertIn("left out of deployment", a2["reproducibility_reason"])
+
+    def test_unsupported_software_gives_the_reason_that_names_it(self):
+        plan = build_environment_plan(self.planned([
+            {"id": "s2", "name": "Oracle Database", "host_ref": "h2", "epistemic_status": "supported", "source": "llm"}]))
+        h2 = next(h for h in plan["hosts"] if h["id"] == "h2")
+        self.assertIs(h2["deployable"], False)
+        self.assertIn("Oracle Database", h2["not_deployed_reason"])
+
+    def test_supplying_a_service_brings_the_host_into_deployment(self):
+        plan = build_environment_plan(self.planned([
+            {"id": "s2", "name": "PostgreSQL", "host_ref": "h2", "epistemic_status": "absent", "source": "user"}]))
+        h2 = next(h for h in plan["hosts"] if h["id"] == "h2")
+        self.assertNotIn("deployable", h2)
+        self.assertEqual(h2["image_hint"], "oss-postgres")
+        self.assertIn(("h1", "h2", 5432), {(c["from_host"], c["to_host"], c["port"]) for c in plan["connections"]})
+
+
+class ConflictThroughServiceRefs(unittest.TestCase):
+    def test_service_attached_only_by_the_hosts_service_refs_is_seen(self):
+        planned = plan_dependencies(ir_with(
+            [step("a1", "exploited a vulnerability in Apache Struts", "h1", attack_technique="T1190")],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"},
+                      {"id": "s2", "name": "nginx", "epistemic_status": "absent", "source": "user"}],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm", "service_refs": ["s2"]}]))
+        self.assertTrue(any(i["id"] == "planner_dep_host-component-conflict-h1" for i in planned["missing_items"]))
+        self.assertEqual(sorted(s["id"] for s in planned["services"] if s.get("placement") == "conflict"), ["s2"])
+
+
+class SupplementServicesCanBeRemoved(unittest.TestCase):
+    def test_service_removed_by_the_user_is_not_recreated_on_replanning(self):
+        ir = ir_with([step("a1", "exploited the web application", "h1", attack_technique="T1190")],
+                     hosts=[{"id": "h1", "name": "web", "role": "portal", "epistemic_status": "supported", "source": "llm"}])
+        ir["supplements"] = [{"id": "supplement-1", "source": "user", "text": "host web runs redis on TCP/6379"}]
+        first = plan_dependencies(ir)
+        created = [s for s in first["services"] if s.get("supplement_ref") == "supplement-1"]
+        self.assertEqual([s["catalogue_component"] for s in created], ["oss-redis"])
+        self.assertTrue(first["supplements"][0]["planned"])
+        self.assertEqual(len([s for s in plan_dependencies(first)["services"] if s.get("supplement_ref")]), 1)  # stable
+        first["services"] = [s for s in first["services"] if s.get("supplement_ref") != "supplement-1"]
+        for host in first["hosts"]:
+            host["service_refs"] = []
+        again = plan_dependencies(first)
+        self.assertFalse([s for s in again["services"] if s.get("supplement_ref") == "supplement-1"])
+
+    def test_a_new_supplement_is_still_planned(self):
+        ir = ir_with([step("a1", "exploited the web application", "h1", attack_technique="T1190")],
+                     hosts=[{"id": "h1", "name": "web", "role": "portal", "epistemic_status": "supported", "source": "llm"}])
+        ir["supplements"] = [{"id": "supplement-1", "source": "user", "text": "host web runs redis", "planned": True},
+                             {"id": "supplement-2", "source": "user", "text": "host web runs nginx on TCP/80"}]
+        planned = plan_dependencies(ir)
+        self.assertEqual([s["supplement_ref"] for s in planned["services"] if s.get("supplement_ref")], ["supplement-2"])
+
+
+class EditedFieldsAreTheUsers(unittest.TestCase):
+    def test_changed_host_ref_is_recorded_per_field_and_nothing_else_is(self):
+        from app.scenario.graph import mark_entity_field_edits
+        current = {"hosts": [{"id": "h1", "role": "portal", "source": "llm", "epistemic_status": "supported"}],
+                   "services": [{"id": "s1", "name": "nginx", "source": "program", "epistemic_status": "inferred"},
+                                {"id": "s2", "name": "redis", "host_ref": "h1", "source": "llm", "epistemic_status": "supported"}]}
+        edited = copy.deepcopy(current)
+        edited["services"][0]["host_ref"] = "h1"
+        edited["services"].append({"id": "s9", "name": "tomcat", "host_ref": "h1"})
+        edited["hosts"][0]["evidence_refs"] = []
+        mark_entity_field_edits(edited, current)
+        s1, s2, s9 = edited["services"]
+        self.assertEqual(s1["field_sources"], {"host_ref": "user"})
+        self.assertEqual((s1["source"], s1["epistemic_status"]), ("program", "inferred"))
+        self.assertNotIn("field_sources", s2)
+        self.assertEqual(s9["source"], "user")
+        self.assertNotIn("field_sources", edited["hosts"][0])
+
+
+class UserHostAssignmentSurvivesReplanning(unittest.TestCase):
+    def test_host_chosen_by_the_user_for_a_planner_service_is_kept(self):
+        first = plan_dependencies(ir_with(
+            [step("a1", "connected to PostgreSQL on the records host to read records", "h2")],
+            hosts=[{"id": "h1", "role": "portal", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h2", "role": "records host", "epistemic_status": "supported", "source": "llm"}]))
+        service = next(s for s in first["services"] if s.get("catalogue_component") == "oss-postgres")
+        self.assertEqual((service["source"], service["host_ref"]), ("program", "h2"))
+        service["host_ref"] = "h1"                      # what a scenario edit does
+        service["field_sources"] = {"host_ref": "user"}
+        again = plan_dependencies(first)
+        postgres = [s for s in again["services"] if s.get("catalogue_component") == "oss-postgres"]
+        self.assertEqual([(s["id"], s["host_ref"]) for s in postgres], [(service["id"], "h1")])
+        self.assertIn(service["id"], next(h for h in again["hosts"] if h["id"] == "h1")["service_refs"])
+        self.assertNotIn(service["id"], next(h for h in again["hosts"] if h["id"] == "h2")["service_refs"])
+
+
+class UndeployableHostsSayWhy(unittest.TestCase):
+    """Every host left out of deployment carries a reason, and its steps are not called reproducible."""
+
+    def test_external_platform_and_unbuilt_vm_hosts_have_reasons(self):
+        planned = plan_dependencies(ir_with(
+            [step("a1", "exploited VMware Horizon", "h1", attack_technique="T1190"),
+             step("a2", "queried Active Directory for all machines", "h3")],
+            hosts=[{"id": "h1", "role": "VMware Horizon server", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h3", "role": "domain controller", "epistemic_status": "supported", "source": "llm"}]))
+        plan = build_environment_plan(planned)
+        for hid in ("h1", "h3"):
+            host = next(h for h in plan["hosts"] if h["id"] == hid)
+            self.assertIs(host["deployable"], False, hid)
+            self.assertTrue(host["not_deployed_reason"], hid)
+        self.assertTrue(all(a["reproducibility"] != "reproducible" for a in planned["actions"]))
+
+
 if __name__ == "__main__":
     unittest.main()
