@@ -36,3 +36,9 @@ After independent QA (CHANGES REQUESTED, 15 findings / 26 repro tests), fix roun
 - The sole remaining failure is #5 (guaranteed-cancel transport handle) — genuinely needs the shared deploy
   layer's cancellable execute API; runner is fail-closed BLOCKED (honest). #14 caps are now DONE.
 - Pending: reviewer round 3; then owner decisions (PVE real run; deploy-layer #5 coordination); then demo video.
+
+## Fix round 3 complete (9bf2b7d)
+- R3-01 (P1) export fail-closed secret scan, R3-02 GUI stale-chain, R3-03 overlapping-job status/cancel,
+  R3-04 live stage render — all fixed. Prior rounds hold.
+- Full backend suite: **268 passed**. review1 **57/1**, review2 **89/0**, review3 **34/0**.
+- Sole remaining failure: #5 deploy-layer guaranteed-cancel handle (honest fail-closed). Round-4 check pending.
