@@ -1,5 +1,6 @@
 // PDF viewer for the original uploaded report (pdf.js). Renders pages lazily with a text
 // layer, and can locate a passage: search the PDF text, highlight the match and scroll to it.
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { api } from "../lib/api";
@@ -353,18 +354,18 @@ export function PdfViewer({ data, filename, anchor, onLocated }: {
   return (
     <div className="pdfv" data-testid="pdf-viewer">
       <div className="pdfv-bar">
-        <span className="name" title={filename}>{filename || "PDF 原檔"}</span>
+        <span className="name" title={filename}>{filename || t("pdf.original")}</span>
         <span className="spacer" />
-        {model && <span className="pageno">第 {cur} / {model.pages.length} 頁</span>}
-        <button onClick={() => setZoom(ZOOMS[Math.max(0, zi - 1)])} disabled={!model || zi <= 0} aria-label="縮小">−</button>
+        {model && <span className="pageno">{t("pdf.page", { cur, total: model.pages.length })}</span>}
+        <button onClick={() => setZoom(ZOOMS[Math.max(0, zi - 1)])} disabled={!model || zi <= 0} aria-label={t("pdf.zoomOut")}>−</button>
         <span className="pageno">{Math.round(zoom * 100)}%</span>
-        <button onClick={() => setZoom(ZOOMS[Math.min(ZOOMS.length - 1, zi + 1)])} disabled={!model || zi >= ZOOMS.length - 1} aria-label="放大">＋</button>
+        <button onClick={() => setZoom(ZOOMS[Math.min(ZOOMS.length - 1, zi + 1)])} disabled={!model || zi >= ZOOMS.length - 1} aria-label={t("pdf.zoomIn")}>＋</button>
       </div>
       <div className="pdfv-scroll" ref={scrollRef}>
         {error ? (
-          <div className="pdfv-status">無法開啟這份 PDF：{error}</div>
+          <div className="pdfv-status">{t("pdf.error", { error })}</div>
         ) : !model ? (
-          <div className="pdfv-status"><span className="spinner" /> 載入 PDF…</div>
+          <div className="pdfv-status"><span className="spinner" /> {t("pdf.loading")}</div>
         ) : null}
         <div ref={pagesRef} />
       </div>

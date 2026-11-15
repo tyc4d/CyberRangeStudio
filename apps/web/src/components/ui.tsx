@@ -4,16 +4,18 @@ import { Link } from "react-router-dom";
 import type { CheckStatus, EpistemicStatus, Evidence, Source } from "@contracts";
 import type { ApiError } from "../lib/api";
 import { useScenario } from "../lib/scenario";
+import { getLocale, live, t, useT, type MsgKey } from "../i18n";
+import { knownErrorKey } from "../lib/errors";
 
-export const EPISTEMIC: Record<EpistemicStatus, { label: string; glyph: string; hint: string }> = {
-  supported: { label: "原文", glyph: "✓", hint: "原文明確寫出" },
-  inferred: { label: "推論補全", glyph: "＋", hint: "原文未寫，依攻擊鏈推論補上，讓流程能接起來" },
-  absent: { label: "原文未提", glyph: "○", hint: "原文沒給，待你補充" },
+export const EPISTEMIC: Record<EpistemicStatus, { label: string; glyph: string; hint: string }> = live(() => ({
+  supported: { label: t("epi.supported"), glyph: "✓", hint: t("epi.supported.hint") },
+  inferred: { label: t("epi.inferred"), glyph: "＋", hint: t("epi.inferred.hint") },
+  absent: { label: t("epi.absent"), glyph: "○", hint: t("epi.absent.hint") },
   // The backend sets this when the cited quotes could not be matched to the source — not when the source is silent.
-  insufficient: { label: "證據不足", glyph: "?", hint: "附的引文沒有對上原文，需要人工對照原文確認" },
-};
+  insufficient: { label: t("epi.insufficient"), glyph: "?", hint: t("epi.insufficient.hint") },
+}));
 /** Content taken from an imported STIX / Attack Flow file was never checked against a report text, so it must not read as "原文". */
-export const IMPORTED = { label: "來自匯入檔", glyph: "⇩", hint: "內容取自匯入的 STIX／Attack Flow 檔，沒有可對照的原文引文" };
+export const IMPORTED = live(() => ({ label: t("epi.imported"), glyph: "⇩", hint: t("epi.imported.hint") }));
 export const isImported = (source?: Source | string) => source === "stix";
 /** Badge text for a claim: its epistemic status, except that imported items say where they came from instead of "原文". */
 export const claimLabel = (status?: EpistemicStatus | string, source?: Source | string) =>
@@ -23,7 +25,7 @@ export const EPISTEMIC_ORDER: EpistemicStatus[] = ["supported", "inferred", "abs
 export function EpistemicBadge({ status, source }: { status?: EpistemicStatus; source?: Source }) {
   if (isImported(source) && status === "supported")
     return <span className="badge validated" title={IMPORTED.hint}><span aria-hidden>{IMPORTED.glyph}</span> {IMPORTED.label}</span>;
-  if (!status) return <span className="badge" title="後端未提供 epistemic_status">—</span>;
+  if (!status) return <span className="badge" title={t("epi.noStatus")}>—</span>;
   const e = EPISTEMIC[status];
   if (!e) return <span className="badge">{String(status)}</span>;
   return <span className={`badge ${status}`} title={e.hint}><span aria-hidden>{e.glyph}</span> {e.label}</span>;
@@ -31,12 +33,12 @@ export function EpistemicBadge({ status, source }: { status?: EpistemicStatus; s
 
 // ---- citation quality: how well the quotes behind a claim match the source. Independent of the claim's own status. ----
 export type QuoteLevel = "exact" | "strong" | "partial" | "none";
-export const QUOTE_LEVEL: Record<QuoteLevel, { cls: string; mark: string; word: string; desc: string }> = {
-  exact: { cls: "status-PASS", mark: "✓", word: "逐字", desc: "與原文逐字相符（比對時忽略空白、換行與破折號寫法，並忽略 ATT&CK 編號標記，例如 [T1190]）" },
-  strong: { cls: "status-PASS", mark: "✓", word: "相符", desc: "與原文高度相符" },
-  partial: { cls: "status-PARTIAL", mark: "～", word: "片段", desc: "僅關鍵字／片段相符，非原文原句（常見於把兩句接成一句，或中間省略）" },
-  none: { cls: "status-FAIL", mark: "✗", word: "沒對上", desc: "原文中找不到此引文" },
-};
+export const QUOTE_LEVEL: Record<QuoteLevel, { cls: string; mark: string; word: string; desc: string }> = live(() => ({
+  exact: { cls: "status-PASS", mark: "✓", word: t("quote.exact"), desc: t("quote.exact.desc") },
+  strong: { cls: "status-PASS", mark: "✓", word: t("quote.strong"), desc: t("quote.strong.desc") },
+  partial: { cls: "status-PARTIAL", mark: "～", word: t("quote.partial"), desc: t("quote.partial.desc") },
+  none: { cls: "status-FAIL", mark: "✗", word: t("quote.none"), desc: t("quote.none.desc") },
+}));
 /** Reads the graded match level; falls back to the older boolean. undefined = the backend did not grade this quote. */
 export function quoteLevel(e?: Evidence | null): QuoteLevel | undefined {
   const raw = (e as any)?.quote_match ?? (e as any)?.match_level;
@@ -74,13 +76,13 @@ export function summarizeCitations(refs: string[] | undefined | null, byId: Map<
   const worst = order.find((l) => graded.includes(l));
   return { state: bad === 0 ? "all" : missing === graded.length ? "none" : "some", total: ids.length, ok, bad, worst, partial, missing };
 }
-export const CITATION: Record<CitationState, { label: string; cls: string; hint: string }> = {
-  all: { label: "引文全部成立", cls: "approved", hint: "附的每一句引文都能在原文找到" },
-  some: { label: "引文未完全對上", cls: "pending", hint: "有引文只對上片段（關鍵字或片段在原文裡，但不是原文原句），或有引文在原文找不到；請對照原文" },
-  none: { label: "引文都沒對上", cls: "insufficient", hint: "附的引文沒有一句能在原文找到，需要人工對照原文" },
-  empty: { label: "沒有附引文", cls: "absent", hint: "這個項目沒有附任何原文引文" },
-  ungraded: { label: "引文未核對", cls: "", hint: "後端沒有提供這些引文的核對結果" },
-};
+export const CITATION: Record<CitationState, { label: string; cls: string; hint: string }> = live(() => ({
+  all: { label: t("cite.all"), cls: "approved", hint: t("cite.all.hint") },
+  some: { label: t("cite.some"), cls: "pending", hint: t("cite.some.hint") },
+  none: { label: t("cite.none"), cls: "insufficient", hint: t("cite.none.hint") },
+  empty: { label: t("cite.empty"), cls: "absent", hint: t("cite.empty.hint") },
+  ungraded: { label: t("cite.ungraded"), cls: "", hint: t("cite.ungraded.hint") },
+}));
 /** Says exactly what was found, e.g. "2 句都只對上片段" — a fragment match is never worded as "沒對上". */
 export function citationText(s: CitationSummary): string {
   if (s.state !== "some" && s.state !== "none") return CITATION[s.state].label;
@@ -88,30 +90,27 @@ export function citationText(s: CitationSummary): string {
   const missing = s.missing ?? 0;
   const ungraded = Math.max(0, s.total - s.ok - partial - missing);
   if (s.ok === 0 && ungraded === 0) {
-    if (missing === 0) return s.total === 1 ? "這句引文只對上片段" : `${partial} 句都只對上片段`;
-    if (partial === 0) return s.total === 1 ? "這句引文沒對上" : `${missing} 句引文都沒對上`;
+    if (missing === 0) return s.total === 1 ? t("cite.oneFragment") : t("cite.allFragments", { n: partial });
+    if (partial === 0) return s.total === 1 ? t("cite.oneMissing") : t("cite.allMissing", { n: missing });
   }
   const bits = [
-    s.ok > 0 && `${s.ok} 句成立`,
-    partial > 0 && `${partial} 句只對上片段`,
-    missing > 0 && `${missing} 句沒對上`,
-    ungraded > 0 && `${ungraded} 句未核對`,
-  ].filter(Boolean);
-  return bits.length ? `${s.total} 句中 ${bits.join("、")}` : CITATION[s.state].label;
+    s.ok > 0 && t("cite.bitOk", { n: s.ok }),
+    partial > 0 && t("cite.bitPartial", { n: partial }),
+    missing > 0 && t("cite.bitMissing", { n: missing }),
+    ungraded > 0 && t("cite.bitUngraded", { n: ungraded }),
+  ].filter((x): x is string => !!x);
+  return bits.length ? t("cite.summary", { total: s.total, bits: bits.join(getLocale() === "en" ? ", " : "、") }) : CITATION[s.state].label;
 }
-export const INFERRED_BASIS = {
-  label: "推論依據（非直接證據）",
-  hint: "這個項目是推論補全：原文沒有直接寫出。這裡列的句子是推論時參考的上下文，不是直接證據，所以不套用「成立／沒對上」的判定。",
-};
+export const INFERRED_BASIS = live(() => ({ label: t("basis.label"), hint: t("basis.hint") }));
 /** The worst-case quality of the quotes behind one claim. Shown NEXT TO the claim status, never merged into it.
  *  `basis` = the claim is inferred: its quotes are context for the inference, not proof, so no verdict is shown. */
 export function CitationBadge({ summary, source, basis }: { summary: CitationSummary; source?: Source; basis?: boolean }) {
   if (basis)
-    return <span className="badge absent" title={INFERRED_BASIS.hint}>{summary.total > 0 ? INFERRED_BASIS.label : "推論補全，未附推論依據"}</span>;
-  if (summary.state === "empty" && isImported(source)) return <span className="muted" style={{ fontSize: 11 }} title={IMPORTED.hint}>匯入檔無引文</span>;
+    return <span className="badge absent" title={INFERRED_BASIS.hint}>{summary.total > 0 ? INFERRED_BASIS.label : t("basis.none")}</span>;
+  if (summary.state === "empty" && isImported(source)) return <span className="muted" style={{ fontSize: 11 }} title={IMPORTED.hint}>{t("cite.importNoQuotes")}</span>;
   const c = CITATION[summary.state];
   const onlyFragments = summary.state === "some" && summary.ok === 0 && (summary.missing ?? 0) === 0;
-  const hint = onlyFragments ? "每一句引文的關鍵字或片段都在原文裡，但都不是原文原句（常見於把兩句接成一句，或中間省略）；沒有找不到的引文。建議對照原文確認。" : c.hint;
+  const hint = onlyFragments ? t("cite.onlyFragments.hint") : c.hint;
   return <span className={`badge ${c.cls}`} title={hint}>{citationText(summary)}</span>;
 }
 /** Human-readable position of a quote: "第 7 段" instead of "paragraph 7". Null when the backend gave none. */
@@ -119,40 +118,40 @@ export function locatorText(locator?: { kind?: string; ref?: unknown } | null): 
   const ref = locator?.ref === undefined || locator?.ref === null ? "" : String(locator.ref).trim();
   if (!ref) return null;
   const num = /^\d+$/.test(ref);
-  if (locator?.kind === "page") return num ? `第 ${ref} 頁` : `頁 ${ref}`;
-  if (locator?.kind === "paragraph") return num ? `第 ${ref} 段` : `段落 ${ref}`;
-  if (locator?.kind === "stix_path") return `匯入檔位置 ${ref}`;
-  return `位置 ${ref}`;
+  if (locator?.kind === "page") return t(num ? "loc.page" : "loc.pageRaw", { ref });
+  if (locator?.kind === "paragraph") return t(num ? "loc.para" : "loc.paraRaw", { ref });
+  if (locator?.kind === "stix_path") return t("loc.stix", { ref });
+  return t("loc.other", { ref });
 }
 /** One quote, shown as its match mark plus its first words — never as a bare "evidence-1" code. */
 export function QuoteSnippet({ evidence, id, max = 26, basis }: { evidence?: Evidence | null; id: string; max?: number; basis?: boolean }) {
-  if (!evidence) return <span className="status-FAIL" title={`找不到這筆證據（${id}）`}>✗ 找不到引文</span>;
+  if (!evidence) return <span className="status-FAIL" title={t("quote.notFound.title", { id })}>✗ {t("quote.notFound")}</span>;
   const level = quoteLevel(evidence);
   const m = level ? QUOTE_LEVEL[level] : undefined;
   const text = (evidence.quote ?? "").replace(/\s+/g, " ").trim();
   // Basis for an inference: context, not proof — no match mark, so it cannot read as a pass/fail verdict.
   if (basis)
     return (
-      <span title={`${INFERRED_BASIS.label}\n${text}\n（${id}）`}>
-        <span className="muted" aria-label="推論依據">·</span>{" "}
+      <span title={`${INFERRED_BASIS.label}\n${text}\n(${id})`}>
+        <span className="muted" aria-label={t("basis.aria")}>·</span>{" "}
         {text.length > max ? `${text.slice(0, max)}…` : text || id}
       </span>
     );
   return (
-    <span title={`${m ? `${m.desc}\n` : ""}${text}\n（${id}）`}>
-      <span className={m?.cls ?? "muted"} aria-label={m?.word ?? "未核對"}>{m?.mark ?? "·"}</span>{" "}
+    <span title={`${m ? `${m.desc}\n` : ""}${text}\n(${id})`}>
+      <span className={m?.cls ?? "muted"} aria-label={m?.word ?? t("quote.unchecked")}>{m?.mark ?? "·"}</span>{" "}
       {text.length > max ? `${text.slice(0, max)}…` : text || id}
     </span>
   );
 }
 
-const SOURCE_LABEL: Record<Source, string> = { llm: "LLM", user: "使用者", stix: "匯入檔", program: "程式" };
+const SOURCE_LABEL: Record<Source, string> = live(() => ({ llm: t("source.llm"), user: t("source.user"), stix: t("source.stix"), program: t("source.program") }));
 export function SourceTag({ source }: { source?: Source }) {
   if (!source) return null;
-  return <span className={`tag ${source === "user" ? "user" : ""}`} title={`來源：${source}`}>{SOURCE_LABEL[source] ?? source}</span>;
+  return <span className={`tag ${source === "user" ? "user" : ""}`} title={t("source.title", { source })}>{SOURCE_LABEL[source] ?? source}</span>;
 }
 
-const CHECK_LABEL: Record<CheckStatus, string> = { PASS: "通過", FAIL: "失敗", PARTIAL: "部分", NOT_TESTED: "未測" };
+const CHECK_LABEL: Record<CheckStatus, string> = live(() => ({ PASS: t("check.PASS"), FAIL: t("check.FAIL"), PARTIAL: t("check.PARTIAL"), NOT_TESTED: t("check.NOT_TESTED") }));
 export function StatusPill({ status }: { status?: CheckStatus | string }) {
   const s = status ?? "NOT_TESTED";
   return <span className={`pill status-${s}`}>{CHECK_LABEL[s as CheckStatus] ?? s}</span>;
@@ -183,8 +182,8 @@ export function Notice({ kind = "info", title, children, action }: { kind?: "inf
 }
 
 /** FastAPI request-validation errors ([{type, loc, msg}]) in plain language; null when the payload is something else. */
-const FIELD_ZH: Record<string, string> = { text: "內容", name: "名稱", content: "情資內容", input_kind: "輸入格式", note: "備註" };
-const TYPE_ZH: Record<string, string> = { string_too_short: "不能留白", missing: "必填，但沒有送出", string_too_long: "太長", int_parsing: "必須是整數", literal_error: "不是可接受的選項" };
+const FIELDS = ["text", "name", "content", "input_kind", "note"];
+const FIELD_ERRORS = ["string_too_short", "missing", "string_too_long", "int_parsing", "literal_error"];
 export function validationMessages(data: unknown): string[] | null {
   if (!Array.isArray(data) || data.length === 0) return null;
   const out: string[] = [];
@@ -192,33 +191,52 @@ export function validationMessages(data: unknown): string[] | null {
     if (!e || typeof e !== "object" || typeof (e as any).type !== "string" || !Array.isArray((e as any).loc)) return null;
     const loc = ((e as any).loc as unknown[]).filter((x) => x !== "body").map(String);
     const field = loc[loc.length - 1] ?? "";
-    const why = TYPE_ZH[(e as any).type] ?? (typeof (e as any).msg === "string" ? (e as any).msg : (e as any).type);
-    out.push(`「${FIELD_ZH[field] ?? field ?? "欄位"}」${why}`);
+    const type = (e as any).type as string;
+    const why = FIELD_ERRORS.includes(type) ? t(`fieldErr.${type}` as MsgKey) : t("fieldErr.literal_error");
+    const name = FIELDS.includes(field) ? t(`field.${field}` as MsgKey) : field || t("field.generic");
+    out.push(t("fieldErr.line", { field: name, why }));
   }
   return out;
 }
 
-/** Turns an API failure into a plain-language notice. `what` names the feature, e.g. "依賴分析". */
+/** Raw request facts for an operator. Collapsed, so the page body keeps only the plain message. */
+function TechDetails({ error }: { error: ApiError }) {
+  const tr = useT();
+  const raw = error.data !== undefined ? error.data : error.detail;
+  if (!error.path && (raw === undefined || raw === "")) return null;
+  return (
+    <details className="tech-details">
+      <summary>{tr("notice.techDetails")}</summary>
+      {error.path && <div className="mono muted">{error.method} {error.path}{error.status ? ` · ${error.status}` : ""}</div>}
+      {raw !== undefined && raw !== "" && <div style={{ marginTop: 4 }}><DataView data={raw} /></div>}
+    </details>
+  );
+}
+
+/** Turns an API failure into a plain-language notice. `what` names the feature. Known server messages are shown in the
+ *  current language. Anything else gets a short generic line, and the raw text stays in the collapsed details. */
 export function ApiNotice({ error, what, onRetry }: { error: ApiError | null; what: string; onRetry?: () => void }) {
+  const tr = useT();
   if (!error) return null;
-  const where = error.path ? <span className="mono muted"> {error.method} {error.path}</span> : null;
-  const retry = onRetry ? <button className="small" onClick={onRetry}>重試</button> : undefined;
+  const retry = onRetry ? <button className="small" onClick={onRetry}>{tr("notice.retry")}</button> : undefined;
+  const details = <TechDetails error={error} />;
   if (error.kind === "unimplemented")
-    return <Notice kind="info" title={`${what}：後端尚未提供`} action={retry}>這個功能的後端端點還沒上線，完成後這裡會顯示真實資料。{where}</Notice>;
+    return <Notice kind="info" title={tr("notice.unimpl.title", { what })} action={retry}>{tr("notice.unimpl.body")}{details}</Notice>;
   if (error.kind === "offline")
-    return <Notice kind="warn" title={`${what}：無法連線到後端`} action={retry}>請確認 API 服務已啟動（預設 127.0.0.1:8077）。{where}</Notice>;
+    return <Notice kind="warn" title={tr("notice.offline.title", { what })} action={retry}>{tr("notice.offline.body")}{details}</Notice>;
   const invalid = error.status === 422 ? validationMessages(error.data) : null;
   if (invalid)
     return (
-      <Notice kind="err" title={`${what}沒有送出：欄位不符合要求`} action={retry}>
+      <Notice kind="err" title={tr("notice.invalid.title", { what })} action={retry}>
         <ul style={{ margin: "4px 0", paddingLeft: 18 }}>{invalid.map((m, i) => <li key={i}>{m}</li>)}</ul>
-        資料沒有被儲存，請修正後再送出。{where}
+        {tr("notice.invalid.body")}{details}
       </Notice>
     );
+  const known = knownErrorKey(error);
   return (
-    <Notice kind="err" title={`${what}失敗`} action={retry}>
-      {error.data !== undefined ? <div style={{ margin: "4px 0" }}><DataView data={error.data} /></div> : error.detail}
-      {where}
+    <Notice kind="err" title={tr("notice.failed", { what })} action={retry}>
+      <div>{known ? tr(known) : tr("notice.generic")}</div>
+      {details}
     </Notice>
   );
 }
@@ -228,7 +246,7 @@ export function Busy({ label, elapsed }: { label: string; elapsed?: number }) {
     <div role="status" aria-live="polite">
       <div className="row" style={{ marginBottom: 8, fontSize: 13 }}>
         <span className="spinner" /> <span>{label}</span>
-        {elapsed !== undefined && <span className="muted mono">已 {elapsed} 秒</span>}
+        {elapsed !== undefined && <span className="muted mono">{t("busy.elapsed", { n: elapsed })}</span>}
       </div>
       <div className="progress" />
     </div>
@@ -253,7 +271,7 @@ export function NextStep({ prev, next }: { prev?: { to: string; label: string };
   return (
     <div className="footer-nav">
       {prev ? <Link to={prev.to}>← {prev.label}</Link> : <span />}
-      {next && <Link to={next.to}><button className="primary">下一步：{next.label} →</button></Link>}
+      {next && <Link to={next.to}><button className="primary">{t("next.step", { label: next.label })} →</button></Link>}
     </div>
   );
 }
@@ -265,8 +283,8 @@ export function ScenarioGate({ title, children }: { title: string; children: Rea
     return (
       <div className="page">
         <PageHead title={title} />
-        <Notice title="尚未選擇情境" action={<Link to="/import"><button className="primary small">匯入情資</button></Link>}>
-          先到<Link to="/">專案首頁</Link>開啟既有情境，或匯入一份情資報告建立新情境。
+        <Notice title={t("gate.noScenario")} action={<Link to="/import"><button className="primary small">{t("gate.importBtn")}</button></Link>}>
+          {t("gate.noScenario.body1")} <Link to="/">{t("gate.noScenario.home")}</Link>{t("gate.noScenario.body2")}
         </Notice>
       </div>
     );
@@ -274,7 +292,7 @@ export function ScenarioGate({ title, children }: { title: string; children: Rea
     return (
       <div className="page">
         <PageHead title={title} />
-        {loading ? <div className="card"><Busy label="載入情境中…" /></div> : <ApiNotice error={error} what="載入情境" onRetry={reload} />}
+        {loading ? <div className="card"><Busy label={t("gate.loading")} /></div> : <ApiNotice error={error} what={t("gate.loadWhat")} onRetry={reload} />}
       </div>
     );
   return <>{children}</>;
@@ -283,14 +301,14 @@ export function ScenarioGate({ title, children }: { title: string; children: Rea
 /** Renders JSON of unknown shape (backend reports/status) as readable key-value tables instead of guessing fields. */
 export function DataView({ data, depth = 0 }: { data: unknown; depth?: number }) {
   if (data === null || data === undefined) return <span className="muted">—</span>;
-  if (typeof data === "boolean") return <span className={data ? "status-PASS" : "status-FAIL"}>{data ? "是" : "否"}</span>;
+  if (typeof data === "boolean") return <span className={data ? "status-PASS" : "status-FAIL"}>{data ? t("data.yes") : t("data.no")}</span>;
   if (typeof data !== "object") {
     const s = String(data);
     return s.includes("\n") ? <pre className="mono" style={{ margin: 0, maxHeight: 260 }}>{s}</pre> : <span>{s}</span>;
   }
   if (depth > 4) return <span className="mono">{JSON.stringify(data)}</span>;
   if (Array.isArray(data)) {
-    if (data.length === 0) return <span className="muted">（空）</span>;
+    if (data.length === 0) return <span className="muted">{t("data.empty")}</span>;
     const objs = data.every((x) => x && typeof x === "object" && !Array.isArray(x));
     if (objs) {
       const cols = Array.from(new Set(data.flatMap((x) => Object.keys(x as object)))).slice(0, 8);
@@ -310,7 +328,7 @@ export function DataView({ data, depth = 0 }: { data: unknown; depth?: number })
     return <ul style={{ margin: 0, paddingLeft: 18 }}>{data.map((x, i) => <li key={i}><DataView data={x} depth={depth + 1} /></li>)}</ul>;
   }
   const entries = Object.entries(data as object);
-  if (entries.length === 0) return <span className="muted">（空）</span>;
+  if (entries.length === 0) return <span className="muted">{t("data.empty")}</span>;
   return (
     <dl className="kv">
       {entries.map(([k, v]) => (
@@ -326,6 +344,6 @@ export function DataView({ data, depth = 0 }: { data: unknown; depth?: number })
 export const fmtTime = (iso?: string) => {
   if (!iso) return "—";
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString("zh-TW", { hour12: false });
+  return isNaN(d.getTime()) ? iso : d.toLocaleString(getLocale(), { hour12: false });
 };
 export const pct = (x?: number) => (typeof x === "number" ? `${Math.round(x * 100)}%` : undefined);

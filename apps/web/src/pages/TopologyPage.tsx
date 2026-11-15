@@ -1,4 +1,5 @@
 import { BasisTag, SUBSTITUTE_BASIS, type Versioned } from "../components/VersionBasis";
+import { t, useI18n } from "../i18n";
 import { RefIssuesNotice } from "../components/RefIssues";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,7 +19,7 @@ function NetworkNode({ data }: NodeProps<{ net: EnvNetwork }>) {
   return (
     <div className={`gnode net ${n.internal ? "internal" : ""}`}>
       <div className="t" style={{ marginBottom: 2 }}>{n.id}</div>
-      <div className="muted">{n.segment ?? "未指定網段"} · {n.internal ? "隔離" : "可對外"}</div>
+      <div className="muted">{n.segment ?? t("tp.noSeg")} · {n.internal ? t("tp.isolated") : t("tp.external")}</div>
       <Handle type="source" position={Position.Bottom} id="b" style={{ opacity: 0 }} isConnectable={false} />
     </div>
   );
@@ -40,16 +41,16 @@ function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
         {h.services?.map((s, i) => {
           const sx = s as { stated_port?: number; port_basis?: string };
           const moved = sx.port_basis === "substitute_default" && typeof sx.stated_port === "number";
-          return <span key={i} className={`tag ${moved ? "sub" : ""}`} title={moved ? `替代品不支援原文的 ${sx.stated_port} 埠，改用它自己的 ${s.port}` : s.protocol ?? "tcp"}>{s.name}:{s.port}{moved && `（原文 ${sx.stated_port}）`}</span>;
+          return <span key={i} className={`tag ${moved ? "sub" : ""}`} title={moved ? t("tp.portMoved", { stated: sx.stated_port, port: s.port }) : s.protocol ?? "tcp"}>{s.name}:{s.port}{moved && t("tp.portWas", { stated: sx.stated_port })}</span>;
         })}
         {(h as HostX).substitute_for && (
-          <span className="tag sub" data-testid="host-substitute" title={`${SUBSTITUTE_BASIS[(h as HostX).substitute_basis ?? ""]?.explain ?? ""} 被代替的是：${(h as HostX).substitute_for}`}>
-            替代品・代替 {(h as HostX).substitute_for}
+          <span className="tag sub" data-testid="host-substitute" title={t("tp.subTitle", { explain: SUBSTITUTE_BASIS[(h as HostX).substitute_basis ?? ""]?.explain ?? "", orig: (h as HostX).substitute_for })}>
+            {t("tp.sub", { orig: (h as HostX).substitute_for })}
           </span>
         )}
         {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
-        {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title="原文沒有寫這台主機的網路位置；規劃把它推定為對外的入侵入口，核准前請確認">推定入口・待確認</span>}
-        {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title="元件目錄無法部署這台主機需要的軟體，也沒有用其他軟體頂替">不可部署</span>}
+        {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title={t("tp.entry.hint")}>{t("tp.entry")}</span>}
+        {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title={t("tp.notDeployable.hint")}>{t("tp.notDeployable")}</span>}
       </div>
       </article>
       <Handle type="source" position={Position.Right} id="r" isConnectable={false} />
@@ -114,7 +115,7 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
     if (!hostIds.has(b.from_host) || !hostIds.has(b.to_host)) return;
     edges.push({
       id: `b:${i}`, source: `host:${b.from_host}`, sourceHandle: "r", target: `host:${b.to_host}`, targetHandle: "l",
-      label: `✕ 阻擋${b.port ? ` ${b.protocol ?? "tcp"}/${b.port}` : ""}`,
+      label: `${t("tp.blocked")}${b.port ? ` ${b.protocol ?? "tcp"}/${b.port}` : ""}`,
       style: { stroke: BARRIER, strokeWidth: 1.5, strokeDasharray: "3 5" },
       labelStyle: { fill: BARRIER, fontSize: 10, fontWeight: 600 }, labelBgStyle: { fill: CANVAS },
     });
@@ -124,22 +125,22 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
 
 /** Chinese rendering of the planner's known note shapes; the original stays underneath. Unknown notes are shown unchanged. */
 const NOTE_RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
-  [/^An attacker host was added as a lab scaffold because the IR did not define one\.$/, () => "情境沒有定義攻擊者主機，規劃自動加入一台作為實驗用的攻擊者（不是原文內容）。"],
-  [/^No port is known for service (.+) \((.+)\); it remains unreachable by default\.$/, (m) => `服務 ${m[1]}（${m[2]}）的埠號未知，預設保持不通。可在「缺失補充」補上埠號後重新分析、重新規劃。`],
-  [/^Host (.+) has services from multiple catalogue components; .*$/, (m) => `主機 ${m[1]} 的服務對應到多個不同元件，但一台主機只能選一個映像，請檢查它的映像選擇。`],
-  [/^Services without a resolved host association were left out of host service lists: (.+)\.$/, (m) => `這些服務沒有歸屬主機，未放進任何主機：${m[1]}。詳見上方「主機參照不一致」的說明。`],
-  [/^Connection (.+) to (.+) has no known destination port and was not allowed\.$/, (m) => `${m[1]} 到 ${m[2]} 的連線不知道目的埠號，未開通。`],
-  [/^Actions for host (.+) do not identify one of its multiple services; no inbound service port was opened\.$/, (m) => `針對主機 ${m[1]} 的行為沒有指明是它的哪一個服務，未開通任何連入埠。`],
-  [/^Confirmed dependency (.+) has no uniquely identified destination service port; default deny remains in effect\.$/, (m) => `已確認的依賴 ${m[1]} 無法唯一對應到目的服務埠，維持預設拒絕。`],
+  [/^An attacker host was added as a lab scaffold because the IR did not define one\.$/, () => t("tp.n.attacker")],
+  [/^No port is known for service (.+) \((.+)\); it remains unreachable by default\.$/, (m) => t("tp.n.noPort", { svc: m[1], host: m[2] })],
+  [/^Host (.+) has services from multiple catalogue components; .*$/, (m) => t("tp.n.multi", { host: m[1] })],
+  [/^Services without a resolved host association were left out of host service lists: (.+)\.$/, (m) => t("tp.n.unplaced", { list: m[1] })],
+  [/^Connection (.+) to (.+) has no known destination port and was not allowed\.$/, (m) => t("tp.n.connNoPort", { from: m[1], to: m[2] })],
+  [/^Actions for host (.+) do not identify one of its multiple services; no inbound service port was opened\.$/, (m) => t("tp.n.multiSvc", { host: m[1] })],
+  [/^Confirmed dependency (.+) has no uniquely identified destination service port; default deny remains in effect\.$/, (m) => t("tp.n.depNoPort", { dep: m[1] })],
 ];
 NOTE_RULES.push(
-  [/^Host (.+) was placed on the external network as the inferred entry point \(basis: (.+)\); the source does not state its network placement\. Confirm or correct it\.$/, (m) => `主機 ${m[1]} 被放在對外網路，當作推定的入侵入口（依據：${m[2]}）。原文沒有寫它的網路位置，請確認或在「缺失補充」更正。`],
-  [/^No target host is stated or inferable as reachable from outside; .*$/, () => "沒有任何目標主機被寫明或可推定為外部可達；在補上某台主機的網路位置之前，攻擊者到不了任何目標。"],
-  [/^Host (.+) needs (.+), which the catalogue cannot deploy \((.+)\)\. It is not replaced by a stand-in\.$/, (m) => `主機 ${m[1]} 需要 ${m[2]}，元件目錄無法部署它（${m[3]}）；系統沒有用其他軟體頂替。`],
-  [/^Host (.+) needs (.+) as a VM, which is not deployable yet \((.+)\)\.$/, (m) => `主機 ${m[1]} 需要以虛擬機執行 ${m[2]}，目前還不能部署（${m[3]}）。`],
-  [/^Action (.+) is stated to run from (.+) against (.+), but no destination service port is identified; the path stays denied\.$/, (m) => `行為 ${m[1]} 寫明由 ${m[2]} 對 ${m[3]} 發動，但找不到目的服務埠，這條路徑維持不通。`],
+  [/^Host (.+) was placed on the external network as the inferred entry point \(basis: (.+)\); the source does not state its network placement\. Confirm or correct it\.$/, (m) => t("tp.n.entry", { host: m[1], basis: m[2] })],
+  [/^No target host is stated or inferable as reachable from outside; .*$/, () => t("tp.n.noEntry")],
+  [/^Host (.+) needs (.+), which the catalogue cannot deploy \((.+)\)\. It is not replaced by a stand-in\.$/, (m) => t("tp.n.cannotDeploy", { host: m[1], sw: m[2], why: m[3] })],
+  [/^Host (.+) needs (.+) as a VM, which is not deployable yet \((.+)\)\.$/, (m) => t("tp.n.vm", { host: m[1], sw: m[2], why: m[3] })],
+  [/^Action (.+) is stated to run from (.+) against (.+), but no destination service port is identified; the path stays denied\.$/, (m) => t("tp.n.actionNoPort", { action: m[1], from: m[2], to: m[3] })],
 );
-const noteZh = (n: string): string | null => { for (const [re, f] of NOTE_RULES) { const m = n.match(re); if (m) return f(m); } return null; };
+const noteText = (n: string): string | null => { for (const [re, f] of NOTE_RULES) { const m = n.match(re); if (m) return f(m); } return null; };
 
 function Body({ ir }: { ir: ScenarioIR }) {
   const { absorb, reload } = useScenario();
@@ -163,45 +164,47 @@ function Body({ ir }: { ir: ScenarioIR }) {
   });
   const [ranOk, setRanOk] = useState(false);
   const run = useAction(async () => { setRanOk(false); await absorb(await api.planTopology(ir.id)); setRanOk(true); });
-  const graph = useMemo(() => (plan ? buildGraph(plan, ranOk) : null), [plan, ranOk]);
+  const { locale } = useI18n();
+  // Edge labels are translated, so the graph is rebuilt when the language changes.
+  const graph = useMemo(() => (plan ? buildGraph(plan, ranOk) : null), [plan, ranOk, locale]); // eslint-disable-line react-hooks/exhaustive-deps
   const [stamp, setStamp] = useState(0);
   const hostRole = useMemo(() => new Map((plan?.hosts ?? []).map((h) => [h.id, h.role])), [plan]);
-  const name = (id?: string) => (id ? hostRole.get(id) ?? id : "任意");
+  const name = (id?: string) => (id ? hostRole.get(id) ?? id : t("tp.any"));
   const danglingConn = plan ? (plan.connections ?? []).filter((c) => !hostRole.has(c.from_host) || !hostRole.has(c.to_host)).length : 0;
 
   return (
     <div className="page">
-      <PageHead title="拓樸" desc="依攻擊流程與軟體依賴規劃出的環境：有哪些網路、主機放在哪、彼此需要哪些連線。這份規劃是下一步產生 IaC 的輸入。">
-        <button className={plan ? "" : "primary"} disabled={run.busy || approve.busy} onClick={() => run.run()}>{plan ? "重新規劃拓樸" : "產生拓樸規劃"}</button>
+      <PageHead title={t("tp.title")} desc={t("tp.desc")}>
+        <button className={plan ? "" : "primary"} disabled={run.busy || approve.busy} onClick={() => run.run()}>{plan ? t("tp.replan") : t("tp.plan")}</button>
       </PageHead>
 
-      {run.busy && <div className="card"><Busy label="規劃拓樸中…" elapsed={run.elapsed} /></div>}
-      <ApiNotice error={run.error} what="拓樸規劃" />
+      {run.busy && <div className="card"><Busy label={t("tp.busy")} elapsed={run.elapsed} /></div>}
+      <ApiNotice error={run.error} what={t("tp.what")} />
       {ranOk && !run.busy && (plan
-        ? <Notice kind="info">拓樸規劃完成，結果已更新。重新規劃後需要重新核准。</Notice>
-        : <Notice kind="warn" title="規劃完成，但沒有結果">後端沒有回傳環境規劃。請確認「軟體依賴」已有主機與服務。</Notice>)}
+        ? <Notice kind="info">{t("tp.done")}</Notice>
+        : <Notice kind="warn" title={t("tp.empty.title")}>{t("tp.empty.body")}</Notice>)}
 
       {plan && <RefIssuesNotice ir={ir} context="topology" />}
       {plan && !(plan.connections?.length) && (
-        <Notice kind="warn" title="這份規劃沒有任何會開通的連線">
-          依這份規劃部署後，主機之間彼此都連不上，攻擊流程無法在環境中進行。常見原因：服務沒有歸屬主機、服務的埠號未知，或流程中的前置依賴尚未確認。
-          請查看頁面下方的「規劃備註」逐條原因；補正後回到本頁重新規劃。核准這份規劃只代表同意「全部不通」，不代表環境可用。
+        <Notice kind="warn" title={t("tp.noConn.title")}>
+          <div>{t("tp.noConn.body")}</div>
+          <div>{t("tp.noConn.approve")}</div>
         </Notice>
       )}
 
       {!plan || !graph ? (
-        <div className="card"><Empty>這個情境還沒有環境規劃。{!(ir.hosts?.length) && "建議先完成「軟體依賴」，再"}按右上角「產生拓樸規劃」。</Empty></div>
+        <div className="card"><Empty>{t("tp.noPlan")}{!(ir.hosts?.length) && ` ${t("tp.noPlanDeps")}`}</Empty></div>
       ) : (
         <>
           <div className="legend">
-            <span><span className="line" />主機間連線（箭頭為連線方向）</span>
-            <span><span className="line" style={{ borderTop: `2px dashed ${BARRIER}` }} />必須保持阻擋的路徑</span>
-            <span><span className="line" style={{ borderTop: `1px solid ${MEMBER}` }} />主機所屬網路</span>
-            <span>實線外框網路＝隔離（internal），虛線＝可對外</span>
-            <button className="small" style={{ marginLeft: "auto" }} onClick={() => setStamp((s) => s + 1)}>重設版面</button>
+            <span><span className="line" />{t("tp.lg.conn")}</span>
+            <span><span className="line" style={{ borderTop: `2px dashed ${BARRIER}` }} />{t("tp.lg.blocked")}</span>
+            <span><span className="line" style={{ borderTop: `1px solid ${MEMBER}` }} />{t("tp.lg.member")}</span>
+            <span>{t("tp.lg.border")}</span>
+            <button className="small" style={{ marginLeft: "auto" }} onClick={() => setStamp((s) => s + 1)}>{t("tp.resetLayout")}</button>
           </div>
           <div className="canvas card-canvas" style={{ flex: "none" }}>
-            {plan.hosts.length === 0 && plan.networks.length === 0 ? <Empty>環境規劃裡沒有主機或網路。</Empty> : (
+            {plan.hosts.length === 0 && plan.networks.length === 0 ? <Empty>{t("tp.emptyPlan")}</Empty> : (
               <ReactFlow
                 key={`${stamp}:${ir.updated_at ?? ""}:${ir.ir_version ?? ""}`}
                 defaultNodes={graph.nodes} defaultEdges={graph.edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
@@ -214,94 +217,98 @@ function Body({ ir }: { ir: ScenarioIR }) {
               </ReactFlow>
             )}
           </div>
-          {danglingConn > 0 && <div className="status-PARTIAL" style={{ fontSize: 12 }}>有 {danglingConn} 條連線指向規劃中不存在的主機，圖上未畫出，詳見下表。</div>}
+          {danglingConn > 0 && <div className="status-PARTIAL" style={{ fontSize: 12 }}>{t("tp.dangling", { n: danglingConn })}</div>}
 
-          <section className={`gate ${approved ? "approved" : "pending"} ${justApproved ? "just-approved" : ""}`} data-testid="topology-approval" aria-label="拓樸人工核准">
+          <section className={`gate ${approved ? "approved" : "pending"} ${justApproved ? "just-approved" : ""}`} data-testid="topology-approval" aria-label={t("tp.gate.aria")}>
             <div className="gate-head">
-              <h2>部署前，由你確認這份拓樸</h2>
-              <span className={`badge ${approved ? "approved" : "pending"}`} data-testid="approval-state">{approved ? "已核准" : "尚未核准"}</span>
+              <h2>{t("tp.gate.title")}</h2>
+              <span className={`badge ${approved ? "approved" : "pending"}`} data-testid="approval-state">{approved ? t("tp.approved") : t("tp.notApproved")}</span>
             </div>
             <div className="gate-cols">
               <div className="gate-col open" data-testid="open-paths">
-                <h3>會開通的連線（{plan.connections?.length ?? 0}）</h3>
+                <h3>{t("tp.open", { n: plan.connections?.length ?? 0 })}</h3>
                 {plan.connections?.length ? plan.connections.map((c, i) => (
                   <div className="path" key={i}>
                     <span>{name(c.from_host)}</span>
-                    <span className="wire">{c.port ? `${c.protocol ?? "tcp"}/${c.port}` : "任意埠"}</span>
+                    <span className="wire">{c.port ? `${c.protocol ?? "tcp"}/${c.port}` : t("tp.anyPort")}</span>
                     <span className="to">{name(c.to_host)}</span>
                     {c.reason && <span className="why">{c.reason}</span>}
                   </div>
-                )) : <div className="muted" style={{ fontSize: 13 }}>沒有要開通的主機間連線。</div>}
+                )) : <div className="muted" style={{ fontSize: 13 }}>{t("tp.noOpen")}</div>}
               </div>
               <div className="gate-col shut" data-testid="blocked-paths">
-                <h3>必須保持阻擋的路徑（{blocked.length}）</h3>
+                <h3>{t("tp.shut", { n: blocked.length })}</h3>
                 {blocked.length ? blocked.map((b, i) => (
                   <div className="path shut" key={i}>
                     <span>{name(b.from_host)}</span>
-                    <span className="wire">{b.port ? `${b.protocol ?? "tcp"}/${b.port}` : "任意埠"}</span>
+                    <span className="wire">{b.port ? `${b.protocol ?? "tcp"}/${b.port}` : t("tp.anyPort")}</span>
                     <span className="to">{name(b.to_host)}</span>
                     {b.reason && <span className="why">{b.reason}</span>}
                   </div>
-                )) : <div className="muted" style={{ fontSize: 13 }}>規劃沒有列出必須阻擋的路徑。</div>}
-                <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>部署後，驗證會逐條探測這些路徑；只要有一條連得上，驗證就判定失敗。</div>
+                )) : <div className="muted" style={{ fontSize: 13 }}>{t("tp.noShut")}</div>}
+                <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>{t("tp.shutNote")}</div>
               </div>
             </div>
             <div className="gate-foot">
               {approved ? (
                 <>
                   <div style={{ fontSize: 13 }}>
-                    由 <span className="mono">{approval?.approved_by ?? "—"}</span> 於 {fmtTime(approval?.approved_at)} 核准
-                    {approval?.note ? <>，備註：{approval.note}</> : null}。核准只對目前這組連線有效；重新規劃拓樸後需要重新核准。
+                    {t("tp.approvedBy", { who: approval?.approved_by ?? "—", when: fmtTime(approval?.approved_at) })}
+                    {approval?.note ? <> {t("tp.approvedNote", { note: approval.note })}</> : null} {t("tp.approvedScope")}
                   </div>
                   <div className="row">
-                    <Link to="/iac"><button className="small">前往 IaC 預覽</button></Link>
-                    <Link to="/deploy"><button className="small">前往部署管理</button></Link>
+                    <Link to="/iac"><button className="small">{t("tp.toIac")}</button></Link>
+                    <Link to="/deploy"><button className="small">{t("tp.toDeploy")}</button></Link>
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 13 }}>核准前，部署會被拒絕。請確認左欄的連線都是這個情境需要的，右欄的路徑確實不該連通。</div>
-                  <div className="row" style={{ flexWrap: "nowrap" }}>
-                    <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="核准備註（選填）" disabled={approve.busy} aria-label="核准備註" style={{ maxWidth: 420 }} />
+                  <div style={{ fontSize: 13 }}>{t("tp.beforeApprove")}</div>
+                  <div className="row approve-row">
+                    <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("tp.notePh")} disabled={approve.busy} aria-label={t("tp.note")} style={{ maxWidth: 420 }} />
                     <button className="primary" style={{ flex: "none" }} disabled={approve.busy || run.busy} onClick={() => approve.run()}>
-                      {approve.busy ? <><span className="spinner" /> 核准中…</> : "核准並繼續"}
+                      {approve.busy ? <><span className="spinner" /> {t("tp.approving")}</> : t("tp.approve")}
                     </button>
                   </div>
                 </>
               )}
-              <ApiNotice error={approve.error} what="拓樸核准" />
+              <ApiNotice error={approve.error} what={t("tp.approveWhat")} />
             </div>
           </section>
 
-          <div className="card flush" style={{ overflowX: "auto" }}>
-              <div className="card-head"><h2>存取規則</h2><span className="muted" style={{ fontSize: 12 }}>{plan.access_rules?.length ?? 0}</span></div>
+          <details className="card flush deploy-more" style={{ overflowX: "auto" }}>
+              <summary>{t("tp.rules")} <span className="muted" style={{ fontSize: 12 }}>{plan.access_rules?.length ?? 0}</span></summary>
               {plan.access_rules?.length ? (
                 <table className="tbl">
-                  <thead><tr><th>動作</th><th>從</th><th>到</th><th>埠</th></tr></thead>
+                  <thead><tr><th>{t("tp.col.action")}</th><th>{t("tp.col.from")}</th><th>{t("tp.col.to")}</th><th>{t("tp.col.port")}</th></tr></thead>
                   <tbody>
                     {plan.access_rules.map((r, i) => (
                       <tr key={i}>
-                        <td className={r.action === "deny" ? "status-FAIL" : "status-PASS"}>{r.action === "deny" ? "拒絕" : r.action === "allow" ? "允許" : "—"}</td>
-                        <td>{name(r.from)}</td><td>{name(r.to)}</td><td className="mono">{r.port ?? "任意"}</td>
+                        <td className={r.action === "deny" ? "status-FAIL" : "status-PASS"}>{r.action === "deny" ? t("tp.deny") : r.action === "allow" ? t("tp.allow") : "—"}</td>
+                        <td>{name(r.from)}</td><td>{name(r.to)}</td><td className="mono">{r.port ?? t("tp.any")}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              ) : <Empty>沒有定義存取規則。</Empty>}
-            </div>
+              ) : <Empty>{t("tp.noRules")}</Empty>}
+            </details>
 
           {plan.notes?.length ? (
-            <div className="card"><h2>規劃備註</h2><ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>{plan.notes.map((n, i) => { const z = noteZh(n); return <li key={i}>{z ? <>{z}<div className="muted" lang="en" style={{ fontSize: 11 }}>{n}</div></> : n}</li>; })}</ul></div>
+            <details className="card deploy-more" open={!(plan.connections?.length)}>
+              <summary>{t("tp.notes")} <span className="muted" style={{ fontSize: 12 }}>{plan.notes.length}</span></summary>
+              {/* Known planner notes are shown in the UI language. An unknown note is kept as the planner wrote it, because it may explain a closed path. */}
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14 }}>{plan.notes.map((n, i) => <li key={i} lang={noteText(n) ? undefined : "en"}>{noteText(n) ?? n}</li>)}</ul>
+            </details>
           ) : null}
         </>
       )}
 
-      <NextStep prev={{ to: "/deps", label: "軟體依賴" }} next={{ to: "/iac", label: "IaC 預覽" }} />
+      <NextStep prev={{ to: "/deps", label: t("stage.deps") }} next={{ to: "/iac", label: t("stage.iac") }} />
     </div>
   );
 }
 
 export function TopologyPage() {
   const { ir } = useScenario();
-  return <ScenarioGate title="拓樸">{ir && <Body ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("tp.title")}>{ir && <Body ir={ir} />}</ScenarioGate>;
 }

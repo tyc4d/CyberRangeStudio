@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { joinList, live, t, t as tr, type MsgKey } from "../i18n";
 import type { MissingItem, ScenarioIR } from "@contracts";
 import { api, ApiError } from "../lib/api";
 import { useAction } from "../lib/hooks";
@@ -136,11 +137,11 @@ export function SourceTextViewer({ text, title, mono, target, onLocated }: {
   return (
     <div className="pdfv" data-testid="source-text-viewer">
       <div className="pdfv-bar">
-        <span className="name" title={title}>{title || "匯入的原文"}</span>
+        <span className="name" title={title}>{title || t("imp.sourceTitle")}</span>
         <span className="spacer" />
-        <span className="pageno">{text.length.toLocaleString()} 字元</span>
+        <span className="pageno">{t("ms.chars", { n: text.length.toLocaleString() })}</span>
       </div>
-      <div className="pdfv-scroll" ref={scrollRef} tabIndex={0} aria-label="匯入的原文">
+      <div className="pdfv-scroll" ref={scrollRef} tabIndex={0} aria-label={t("imp.sourceTitle")}>
         <pre className={mono ? "mono" : undefined} style={{ margin: 0, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: mono ? undefined : "inherit", fontSize: 13, lineHeight: 1.7, color: "var(--text)", background: "none", border: 0, padding: 0 }}>
           {range ? (
             <>
@@ -181,10 +182,13 @@ export function useSourceText(scenarioId: string | null | undefined, enabled: bo
 
 type Named = { id?: string; name?: string; role?: string; evidence_refs?: unknown };
 const list = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
-const AFFECT_KIND: Record<string, string> = { host: "主機", hosts: "主機", service: "服務", services: "服務", action: "步驟", actions: "步驟", step: "步驟", steps: "步驟" };
+/** Internal kind codes. Labels come from the locale (kind.host / kind.service / kind.step). */
+type Kind = "host" | "service" | "step";
+const AFFECT_KIND: Record<string, Kind> = { host: "host", hosts: "host", service: "service", services: "service", action: "step", actions: "step", step: "step", steps: "step" };
+const kindLabel = (k: string) => (k === "host" || k === "service" || k === "step" ? t(`kind.${k}`) : k);
 const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** The analysis sometimes names a host literally "unknown"; never show that word as if it were a name. */
-const hostName = (n: string) => (/^unknown$/i.test(n) ? "未指明的主機" : n);
+const hostName = (n: string) => (/^unknown$/i.test(n) ? t("ms.unknownHost") : n);
 
 /**
  * Turns internal ids into words the user can recognise. Steps are numbered by their order in
@@ -209,16 +213,21 @@ function makeNamer(ir: ScenarioIR): Namer {
   const runSrc = alt ? `(?<![\\w:.\\-/])(?:${alt})(?:\\s*[,、，]\\s*(?:${alt}))*(?![\\w\\-])` : "";
   const runs = () => new RegExp(runSrc, "g");
   const splitRun = (run: string) => run.split(/\s*[,、，]\s*/).filter(Boolean);
-  const steps = (ids: string[]) => `步驟 ${[...new Set(ids)].map((id) => no.get(id)).filter((n) => n !== undefined).sort((a, b) => a! - b!).join("、")}`;
+  const steps = (ids: string[]) => {
+    const nums = [...new Set(ids)].map((id) => no.get(id)).filter((n) => n !== undefined).sort((a, b) => a! - b!);
+    return t("ms.steps", { list: joinList(nums.map(String)), n: nums.length });
+  };
   const text = (t: string) => {
     let out = t.replace(/\b(hosts?|actions?|services?)\s*:\s*([\w-]+)(?:\.\w+)?(?:\s+[—–]\s+)?/gi, (m, kind: string, id: string) => {
       const k = AFFECT_KIND[kind.toLowerCase()];
-      if (k === "步驟") return no.has(id) ? `${steps([id])} ` : m;
-      const hit = (k === "主機" ? hosts : services).find((e) => e?.id === id);
+      if (k === "step") return no.has(id) ? `${steps([id])} ` : m;
+      const hit = (k === "host" ? hosts : services).find((e) => e?.id === id);
       return hit ? `${hostName(str(hit.name) || str(hit.role) || id)} ` : m;
     });
     if (runSrc) out = out.replace(runs(), (run) => steps(splitRun(run)));
-    return out.replace(/^unknown(?=\s)/i, "未指明的主機").replace(/\bIR\b/g, "分析結果").replace(/替身/g, "替代方案").trim();
+    // Wording fixes inside backend sentences (data stays as written apart from these terms).
+    out = out.replace(/^unknown(?=\s)/i, tr("ms.unknownHost")).replace(/\bIR\b/g, tr("an.title"));
+    return out.replace(/替身/g, "替代方案").trim(); // i18n-ignore: rewrites a term inside Chinese backend text
   };
   return {
     stepNo: (id) => no.get(id),
@@ -231,7 +240,7 @@ function makeNamer(ir: ScenarioIR): Namer {
 interface KnownFact { field: string; value: string; /** False when the backend marks the fact as not backed by the source (a program placeholder, an inference). */ fromSource: boolean; /** Evidence quote behind this fact, when the backend cited one. */ anchor?: Anchor }
 const showValue = (v: unknown): string =>
   Array.isArray(v) ? v.map(showValue).filter(Boolean).join("、")
-  : typeof v === "boolean" ? (v ? "是" : "否")
+  : typeof v === "boolean" ? (v ? t("data.yes") : t("data.no"))
   : obj(v) ? pick(obj(v)!, "name", "label", "value", "id") || JSON.stringify(v)
   : str(v);
 /** Evidence ids behind a known fact: its own `evidence_refs`, else those of the IR entity `source_ref` points at. */
@@ -269,19 +278,19 @@ function readKnown(raw: unknown, ir: ScenarioIR): KnownFact[] {
 interface Affect { kind: string; text: string; step?: number }
 /** Resolve `affects` entries (ids, names, "action:a7 — name" strings or {kind,id,name} objects) to hosts / steps from the IR. */
 function readAffects(raw: unknown, ir: ScenarioIR, namer: Namer): Affect[] {
-  const pools: [string, Named[]][] = [["主機", list<Named>(ir.hosts)], ["服務", list<Named>(ir.services)], ["步驟", list<Named>(ir.actions)]];
+  const pools: [Kind, Named[]][] = [["host", list<Named>(ir.hosts)], ["service", list<Named>(ir.services)], ["step", list<Named>(ir.actions)]];
   const lookup = (key: string, kindHint?: string): Affect | null => {
     for (const [kind, pool] of pools) {
       if (kindHint && kind !== kindHint) continue;
       const hit = pool.find((e) => e?.id === key || e?.name === key);
-      if (hit) return { kind, text: str(hit.name) || str(hit.role) || str(hit.id) || key, step: kind === "步驟" ? namer.stepNo(str(hit.id)) : undefined };
+      if (hit) return { kind, text: str(hit.name) || str(hit.role) || str(hit.id) || key, step: kind === "step" ? namer.stepNo(str(hit.id)) : undefined };
     }
     return null;
   };
   const out: Affect[] = [];
   const seen = new Set<string>();
   const push = (a: Affect) => {
-    const fixed = a.kind === "主機" ? { ...a, text: hostName(a.text) } : a;
+    const fixed = a.kind === "host" ? { ...a, text: hostName(a.text) } : a;
     const key = `${fixed.kind}\u0000${fixed.step ?? ""}\u0000${fixed.text}`;
     if (!seen.has(key)) { seen.add(key); out.push(fixed); }
   };
@@ -306,13 +315,13 @@ function readAffects(raw: unknown, ir: ScenarioIR, namer: Namer): Affect[] {
   }
   return out;
 }
-const AFFECT_UNIT: Record<string, string> = { 主機: "台主機", 服務: "個服務", 步驟: "個步驟" };
-/** "影響 1 台主機、6 個步驟" */
+const KINDS: Kind[] = ["host", "service", "step"];
+/** "Affects 1 host, 6 steps" */
 function affectSummary(affects: Affect[]): string {
-  const parts = ["主機", "服務", "步驟"].map((k) => [affects.filter((a) => a.kind === k).length, AFFECT_UNIT[k]] as const).filter(([n]) => n > 0).map(([n, u]) => `${n} ${u}`);
-  const other = affects.filter((a) => !AFFECT_UNIT[a.kind]).length;
-  if (other) parts.push(`${other} 個其他項目`);
-  return `影響 ${parts.join("、")}`;
+  const parts = KINDS.map((k) => [k, affects.filter((a) => a.kind === k).length] as const).filter(([, n]) => n > 0).map(([k, n]) => t(`ms.unit.${k}`, { n }));
+  const other = affects.filter((a) => !KINDS.includes(a.kind as Kind)).length;
+  if (other) parts.push(t("ms.unit.other", { n: other }));
+  return t("ms.affects", { list: joinList(parts) });
 }
 
 /**
@@ -328,10 +337,10 @@ interface Choice {
   note?: string;
 }
 /** A parenthetical that instructs the user rather than being part of the answer. */
-const NOTE_RE = /請|待確認|候選|才選|核對|例如/;
+const NOTE_RE = /請|待確認|候選|才選|核對|例如/; // i18n-ignore: parses backend text
 /** An option that is only a prompt ("請填確切版本"); adopting it would save the prompt as the answer. */
-const HINT_RE = /^(請|其他|其它)|請填|請依|請補|補上具體值|^從.*填/;
-const UNKNOWN_RE = /保留為未知|保留未知|接受未知|標記為?未知/;
+const HINT_RE = /^(請|其他|其它)|請填|請依|請補|補上具體值|^從.*填/; // i18n-ignore: parses backend text
+const UNKNOWN_RE = /保留為未知|保留未知|接受未知|標記為?未知/; // i18n-ignore: parses backend text
 function readChoices(item: MissingItem): { choices: Choice[]; hints: string[]; ranked: boolean } {
   const sugg: unknown[] = Array.isArray(item.suggestions) && item.suggestions.length ? item.suggestions : item.suggestion ? [item.suggestion] : [];
   const choices: Choice[] = [], hints: string[] = [];
@@ -345,7 +354,7 @@ function readChoices(item: MissingItem): { choices: Choice[]; hints: string[]; r
     const m = /^(.*?)\s*[（(]([^（()）]*)[)）]$/.exec(raw);
     const split = m && m[1].trim() && NOTE_RE.test(m[2]);
     const value = split ? m![1].trim() : raw;
-    const caveat = split ? m![2].replace(/^候選[；;，,\s]*/, "").trim() : "";
+    const caveat = split ? m![2].replace(/^候選[；;，,\s]*/, "").trim() : ""; // i18n-ignore: parses backend text
     if (UNKNOWN_RE.test(raw)) {
       if (!seen.has("\u0000unknown")) { seen.add("\u0000unknown"); choices.push({ label: raw, value: "", mode: "accepted_unknown" }); }
       return;
@@ -354,7 +363,7 @@ function readChoices(item: MissingItem): { choices: Choice[]; hints: string[]; r
     if (seen.has(value)) return;
     seen.add(value);
     if (basis && hasCJK(basis)) ranked = true;
-    choices.push({ label: value, value, mode, note: [caveat, basis && hasCJK(basis) ? `線索：${basis}` : ""].filter(Boolean).join("；") || undefined });
+    choices.push({ label: value, value, mode, note: [caveat, basis && hasCJK(basis) ? t("ms.clue", { basis }) : ""].filter(Boolean).join(" · ") || undefined });
   };
   for (const s of sugg) add(s, "substitute_chosen");
   for (const e of list<unknown>(item.examples)) add(e, "user_supplied");
@@ -363,10 +372,10 @@ function readChoices(item: MissingItem): { choices: Choice[]; hints: string[]; r
   return { choices, hints, ranked };
 }
 
-const FIELD_ZH: Record<string, string> = {
-  "target host identity": "受害主機的身分或角色", "target host operating system": "受害主機的作業系統", "target host os version": "作業系統版本",
-  "target network placement": "主機的網路位置", "target service name": "被攻擊的服務", "target service version": "服務版本",
-  "attacker access precondition": "攻擊者的初始存取條件",
+const FIELD_TITLE: Record<string, MsgKey> = {
+  "target host identity": "ms.f.identity", "target host operating system": "ms.f.os", "target host os version": "ms.f.osVersion",
+  "target network placement": "ms.f.placement", "target service name": "ms.f.service", "target service version": "ms.f.serviceVersion",
+  "attacker access precondition": "ms.f.access",
 };
 /** Chinese title for an item. When the backend gave neither a question nor a known field, its original field name is shown, labelled as such, so the user can still tell what is being asked. */
 function itemTitle(item: MissingItem): string {
@@ -374,25 +383,29 @@ function itemTitle(item: MissingItem): string {
   if (q) return q;
   const f = str(item.field);
   if (hasCJK(f)) return f;
-  return FIELD_ZH[f.toLowerCase()] ?? `${CATEGORY[item.category] ?? "其他"}相關資訊${f ? `：${f}` : ""}（後端未提供中文問題${f ? "，冒號後為原始欄位名" : ""}）`;
+  const known = FIELD_TITLE[f.toLowerCase()];
+  if (known) return t(known);
+  const cat = CATEGORY[item.category] ?? CATEGORY.other;
+  return f ? t("ms.fieldFallbackRaw", { cat, f }) : t("ms.fieldFallback", { cat });
 }
 
-const CATEGORY: Record<MissingItem["category"], string> = {
-  host: "主機", software: "軟體", version: "版本", network: "網路", account: "帳號",
-  dependency: "依賴", precondition: "前置條件", proprietary: "專有元件", other: "其他",
-};
-const STATUS: Record<MissingItem["status"], string> = {
-  open: "待補充", user_supplied: "使用者已補充", llm_suggested: "LLM 建議", substitute_chosen: "已選替代方案", accepted_unknown: "接受未知",
-};
-const SEVERITY: Record<string, string> = { blocker: "阻擋部署", major: "重要", minor: "次要" };
+const CATEGORY: Record<MissingItem["category"], string> = live(() => ({
+  host: t("ms.cat.host"), software: t("ms.cat.software"), version: t("ms.cat.version"), network: t("ms.cat.network"), account: t("ms.cat.account"),
+  dependency: t("ms.cat.dependency"), precondition: t("ms.cat.precondition"), proprietary: t("ms.cat.proprietary"), other: t("ms.cat.other"),
+}));
+const STATUS: Record<MissingItem["status"], string> = live(() => ({
+  open: t("ms.st.open"), user_supplied: t("ms.st.user"), llm_suggested: t("ms.st.llm"), substitute_chosen: t("ms.st.sub"), accepted_unknown: t("ms.st.unknown"),
+}));
+const SEVERITY: Record<string, string> = live(() => ({ blocker: t("ms.sev.blocker"), major: t("ms.sev.major"), minor: t("ms.sev.minor") }));
 type Resolution = "user_supplied" | "substitute_chosen" | "accepted_unknown";
-const RESOLUTIONS: { v: Resolution; label: string; needText: boolean; placeholder: string }[] = [
-  { v: "user_supplied", label: "我知道答案", needText: true, placeholder: "填入實際資訊，例如：Windows Server 2019、Exchange 2016 CU19" },
-  { v: "substitute_chosen", label: "用替代方案", needText: true, placeholder: "說明要用什麼替代，以及與原本的差異" },
-  { v: "accepted_unknown", label: "接受未知", needText: false, placeholder: "（選填）備註為何可以不補" },
-];
+const RESOLUTIONS: { v: Resolution; label: string; needText: boolean; placeholder: string }[] = live(() => [
+  { v: "user_supplied", label: t("ms.res.user"), needText: true, placeholder: t("ms.res.user.ph") },
+  { v: "substitute_chosen", label: t("ms.res.sub"), needText: true, placeholder: t("ms.res.sub.ph") },
+  { v: "accepted_unknown", label: t("ms.res.unknown"), needText: false, placeholder: t("ms.res.unknown.ph") },
+]);
 /** The API stores a non-empty resolution text for every answer. When the optional note is left blank we record that fact, not an invented reason. */
-const UNKNOWN_DEFAULT_NOTE = "接受未知（使用者未填寫備註）";
+// Stored in the scenario data, so it stays the same in every UI language (API data is not localized).
+const UNKNOWN_DEFAULT_NOTE = "接受未知（使用者未填寫備註）"; // i18n-ignore: stored value
 
 /** Priority shown on a card. `rank` orders the list (lower first). */
 interface Tier { rank: number; label: string; cls: string; why?: string }
@@ -408,11 +421,11 @@ function tierOf(items: MissingItem[], steps: number, backendDistinguishes: boole
     const sev = sevs.includes("major") ? "major" : sevs.find(Boolean) ?? "";
     return sev ? { rank: sev === "major" ? 1 : sev === "minor" ? 3 : 2, label: SEVERITY[sev] ?? sev, cls: sev } : { rank: 3, label: "", cls: "" };
   }
-  const why = `依影響的步驟數排序（${steps} 個步驟）；分析沒有為各項區分嚴重度。`;
+  const why = t("ms.tier.why", { n: steps });
   // Every item carries the same backend severity: keep the backend's word on the label, use the step count only for ordering.
   const same = sevs.find(Boolean);
-  if (same && SEVERITY[same]) return { rank: steps >= 5 ? 1 : steps >= 2 ? 2 : 3, label: SEVERITY[same], cls: same, why: `嚴重度來自分析（${same}）；所有項目嚴重度相同，排序改依影響的步驟數（${steps} 個步驟）。` };
-  return steps >= 5 ? { rank: 1, label: "優先處理", cls: "major", why } : steps >= 2 ? { rank: 2, label: "重要", cls: "", why } : { rank: 3, label: "次要", cls: "", why };
+  if (same && SEVERITY[same]) return { rank: steps >= 5 ? 1 : steps >= 2 ? 2 : 3, label: SEVERITY[same], cls: same, why: t("ms.tier.whySame", { sev: same, n: steps }) };
+  return steps >= 5 ? { rank: 1, label: t("ms.sev.first"), cls: "major", why } : steps >= 2 ? { rank: 2, label: t("ms.sev.major"), cls: "", why } : { rank: 3, label: t("ms.sev.minor"), cls: "", why };
 }
 
 /** One card. Usually one missing item; several when the backend asked the very same question more than once. */
@@ -438,17 +451,17 @@ function buildGroups(ir: ScenarioIR, namer: Namer): Group[] {
   const distinct = new Set(all.map((m) => str(m.severity))).size > 1;
   const groups = [...buckets.values()].map((items): Group => {
     const affects = readAffects(items.flatMap((m) => list<unknown>(m.affects)), ir, namer);
-    const steps = affects.filter((a) => a.kind === "步驟").length;
+    const steps = affects.filter((a) => a.kind === "step").length;
     const reason = merged(items.map((m) => str(m.reason)));
     return {
       id: items[0].id, items, affects,
       title: namer.text(merged(items.map(itemTitle))),
       // An English-only rationale is still shown, labelled as the backend's original, so the card never hides what is being asked.
-      reason: hasCJK(reason) ? namer.text(reason) : reason ? `後端說明（英文原文）：${reason}` : "",
+      reason: hasCJK(reason) ? namer.text(reason) : reason ? t("ms.reasonEn", { reason }) : "",
       tier: tierOf(items, steps, distinct),
     };
   });
-  const stepCount = (g: Group) => g.affects.filter((a) => a.kind === "步驟").length;
+  const stepCount = (g: Group) => g.affects.filter((a) => a.kind === "step").length;
   // Stable: ties keep the backend's order.
   return groups.sort((a, b) => a.tier.rank - b.tier.rank || stepCount(b) - stepCount(a));
 }
@@ -461,14 +474,15 @@ export function openCardCount(ir: ScenarioIR): number {
 /** Fields the backend added to missing items that the shared TS type may not list yet. */
 type Where = { collection?: string; id?: string; field?: string };
 const itemX = (m: MissingItem) => m as MissingItem & { target?: Where; applied_to?: Where; write_back?: string };
-const WHERE_FIELD: Record<string, string> = { os: "作業系統", os_version: "作業系統版本", network_placement: "網路位置", version: "版本", port: "埠號", name: "名稱", role: "角色" };
+const WHERE_FIELDS = ["os", "os_version", "network_placement", "version", "port", "name", "role"];
 /** "主機 victim-web 的作業系統" for a write-back location; empty when there is none. */
 function whereText(w: Where | undefined, ir: ScenarioIR): string {
   if (!w || !w.id) return "";
   const isHost = w.collection === "hosts";
   const rec: any = (isHost ? ir.hosts : ir.services)?.find((x) => x.id === w.id);
   const label = rec ? (isHost ? rec.name || rec.role : rec.name) || w.id : w.id;
-  return `${isHost ? "主機" : "服務"} ${label} 的${WHERE_FIELD[w.field ?? ""] ?? w.field ?? "欄位"}`;
+  const field = WHERE_FIELDS.includes(w.field ?? "") ? t(`ms.wf.${w.field}` as MsgKey) : w.field ?? t("ms.wf.field");
+  return t("ms.where", { kind: isHost ? t("kind.host") : t("kind.service"), label, field });
 }
 
 const clip = (q: string, n = 160) => (q.length > n ? `${q.slice(0, n)}…` : q);
@@ -524,21 +538,21 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
       <div className="row" style={{ gap: 8 }}>
         {/* Lead with a plain-language question so the user need not read the whole report. */}
         <span style={{ fontWeight: 600 }}>{group.title}</span>
-        <span className="tag">{CATEGORY[item.category] ?? "其他"}</span>
+        <span className="tag">{CATEGORY[item.category] ?? CATEGORY.other}</span>
         {group.tier.label && <span className={`tag ${group.tier.cls}`} title={group.tier.why} data-testid="item-priority">{group.tier.label}</span>}
         <span style={{ marginLeft: "auto", fontSize: 12 }} className={isOpen ? "status-PARTIAL" : item.status === "llm_suggested" ? "muted" : "status-PASS"}>
           {STATUS[item.status] ?? item.status}
         </span>
       </div>
 
-      {reason && <div className="muted" style={{ fontSize: 12 }}>為何需要：{reason}</div>}
+      {reason && <div className="muted" style={{ fontSize: 12 }}>{t("ms.why", { reason })}</div>}
 
       {affects.length > 0 && (
         <details style={{ fontSize: 12 }} data-testid="item-affects">
           <summary className="muted" style={{ cursor: "pointer", width: "fit-content" }}>{affectSummary(affects)}</summary>
           <ul style={{ margin: "6px 0 0", paddingLeft: 18, display: "flex", flexDirection: "column", gap: 2 }}>
             {affects.map((a, i) => (
-              <li key={i}><span className="muted">{a.kind === "步驟" && a.step ? `步驟 ${a.step}` : a.kind}{a.kind ? "　" : ""}</span>{a.text}</li>
+              <li key={i}><span className="muted">{a.kind === "step" && a.step ? t("ms.steps", { list: a.step, n: 1 }) : kindLabel(a.kind)}{a.kind ? " · " : ""}</span>{a.text}</li>
             ))}
           </ul>
         </details>
@@ -550,24 +564,24 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
             <div style={{ borderLeft: "2px solid var(--ok, var(--accent))", paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-start" }}>
               {known.map((k, i) => {
                 const a = usable(k.anchor);
-                const body = <><span className="muted" title={k.fromSource ? undefined : "這一項是系統為了規劃先放的佔位或推定，後端沒有標示為原文支持"}>{k.fromSource ? "原文已知：" : "系統推定（原文未證實）："}</span>{hasCJK(k.field) ? `${k.field}　` : ""}{k.value}</>;
+                const body = <><span className="muted" title={k.fromSource ? undefined : t("ms.guess.hint")}>{k.fromSource ? t("ms.known") : t("ms.guess")}</span> {hasCJK(k.field) ? `${k.field} · ` : ""}{k.value}</>;
                 // The row itself is the locate control when the backend cited a quote for this fact.
                 return a ? (
                   <button key={i} className="link" data-testid="known-locate" onClick={() => locate!(a)}
-                    title={`在右側原文中標示這段引文：「${clip(a.quote ?? "", 200)}」`}
+                    title={t("ms.locateTitle", { q: clip(a.quote ?? "", 200) })}
                     style={{ textAlign: "left", whiteSpace: "normal", height: "auto", color: "inherit", fontWeight: "inherit" }}>
-                    {body}<span style={{ color: "var(--accent)", marginLeft: 8, fontSize: 12, whiteSpace: "nowrap" }}>在原文中定位 ›</span>
+                    {body}<span style={{ color: "var(--accent)", marginLeft: 8, fontSize: 12, whiteSpace: "nowrap" }}>{t("ms.locate")} ›</span>
                   </button>
                 ) : (
-                  <div key={i} title={k.anchor?.quote ? `原文：「${k.anchor.quote}」` : undefined}>{body}</div>
+                  <div key={i} title={k.anchor?.quote ? t("ms.srcQuote", { q: k.anchor.quote }) : undefined}>{body}</div>
                 );
               })}
             </div>
           )}
           {needsDecision && (
             <div style={{ borderLeft: "2px solid var(--warn)", paddingLeft: 10 }}>
-              <span className="tag" style={{ marginRight: 8 }} data-testid="needs-decision">需你決定</span>
-              <span className="muted">報告沒有寫，這項要由你選定。</span>
+              <span className="tag" style={{ marginRight: 8 }} data-testid="needs-decision">{t("ms.decide")}</span>
+              <span className="muted">{t("ms.decide.body")}</span>
             </div>
           )}
         </div>
@@ -575,33 +589,33 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
 
       {item.resolution && (
         <div style={{ fontSize: 13 }}>
-          <span className="muted">處理內容：</span>{item.resolution} <SourceTag source={item.resolution_source} />
-          {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 12 }}>（LLM 的建議，尚未經你確認）</span>}
-          {whereText(itemX(item).applied_to, ir) && <div className="muted" style={{ fontSize: 12 }} data-testid="applied-to">已寫入情境資料：{whereText(itemX(item).applied_to, ir)}（標示為使用者來源）。</div>}
-          {!itemX(item).applied_to && itemX(item).write_back && <div className="muted" style={{ fontSize: 12 }} data-testid="write-back">只保留為文字，沒有寫入主機／服務欄位：{itemX(item).write_back}</div>}
-          {!itemX(item).applied_to && !itemX(item).write_back && item.status !== "open" && item.status !== "accepted_unknown" && <div className="muted" style={{ fontSize: 12 }}>這個回答只保留為文字紀錄；後續的依賴分析與拓樸規劃不一定會採用。</div>}
+          <span className="muted">{t("ms.resolution")}</span> {item.resolution} <SourceTag source={item.resolution_source} />
+          {item.status === "llm_suggested" && <span className="muted" style={{ fontSize: 12 }}>{t("ms.llmPending")}</span>}
+          {whereText(itemX(item).applied_to, ir) && <div className="muted" style={{ fontSize: 12 }} data-testid="applied-to">{t("ms.applied", { where: whereText(itemX(item).applied_to, ir) })}</div>}
+          {!itemX(item).applied_to && itemX(item).write_back && <div className="muted" style={{ fontSize: 12 }} data-testid="write-back">{t("ms.textOnly", { text: itemX(item).write_back })}</div>}
+          {!itemX(item).applied_to && !itemX(item).write_back && item.status !== "open" && item.status !== "accepted_unknown" && <div className="muted" style={{ fontSize: 12 }}>{t("ms.textOnlyNote")}</div>}
         </div>
       )}
 
       {/* Grounding: say plainly whether the report has a passage for this item. */}
       <div className="pdf-hint" data-testid="item-anchor">
         {quote ? (
-          <>{anchor?.via === "known" ? "「原文已知」的原文引文" : "原文引文"}{anchor?.page ? `（第 ${anchor.page} 頁）` : ""}：「{clip(quote)}」</>
+          <>{anchor?.via === "known" ? t("ms.anchorKnown") : t("ms.anchor")}{anchor?.page ? t("ms.anchorPage", { page: anchor.page }) : ""}: 「{clip(quote)}」</>
         ) : anchor?.page ? (
-          <>後端指出相關內容在第 {anchor.page} 頁，但沒有附上原文引文。</>
+          <>{t("ms.pageOnly", { page: anchor.page })}</>
         ) : (
-          <>此項沒有原文引文：報告沒有寫到這項資訊，所以不在原文中標示。</>
+          <>{t("ms.noAnchor")}</>
         )}
       </div>
 
       {located && (
         <div className="pdf-hint" role="status" data-testid="item-located">
-          {located.state === "searching" ? "在原文中尋找引文…"
+          {located.state === "searching" ? t("ms.searching")
             : located.state === "found"
-              ? <>已在{located.where}標示這段引文{located.partial ? "（僅部分文字相符）" : ""}。{located.mismatch}</>
+              ? <>{t(located.partial ? "ms.foundPartial" : "ms.found", { where: located.where })} {located.mismatch}</>
               : located.state === "page-only"
-                ? <>已跳到第 {located.page} 頁（後端指出的頁碼），但在該份 PDF 中找不到這段引文的文字，未標示。</>
-                : "在原文中找不到這段引文，未跳轉也未標示。"}
+                ? <>{t("ms.pageNoText", { page: located.page })}</>
+                : t("ms.notFound")}
         </div>
       )}
 
@@ -610,21 +624,21 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
         <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12 }} data-testid="item-choices">
           {choices.length > 0 && (
             <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-              <span className="muted">可帶入的選項{ranked ? "（最相符的在前）" : ""}：</span>
+              <span className="muted">{ranked ? t("ms.optionsRanked") : t("ms.options")}:</span>
               {choices.map((c) => (
                 <button key={`${c.mode}:${c.label}`} className="small" disabled={submit.busy} onClick={() => choose(c)}
-                  title={`帶入輸入框，確認後再送出${c.note ? `（${c.note}）` : ""}`}>{c.label}</button>
+                  title={`${t("ms.optionTitle")}${c.note ? ` (${c.note})` : ""}`}>{c.label}</button>
               ))}
             </div>
           )}
-          {hints.length > 0 && <div className="muted">填寫提示：{hints.join("；")}</div>}
+          {hints.length > 0 && <div className="muted">{t("ms.hints", { hints: hints.join(" · ") })}</div>}
         </div>
       )}
 
       {!open ? (
         <div className="row" style={{ gap: 6 }}>
-          <button className="small" onClick={() => setOpen(true)}>{isOpen ? "補充" : "修改"}</button>
-          {canLocate && <button className="small" onClick={() => locate!(canLocate)} title="在右側原文中標示上面的原文引文並跳過去">在原文中定位</button>}
+          <button className="small" onClick={() => setOpen(true)}>{isOpen ? t("ms.answer") : t("ms.edit")}</button>
+          {canLocate && <button className="small" onClick={() => locate!(canLocate)} title={t("ms.locate.hint")}>{t("ms.locate")}</button>}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
@@ -632,27 +646,27 @@ function ItemCard({ group, ir, scenarioId, onDone, hasPdf, locate, located }: {
             {RESOLUTIONS.map((r) => <button key={r.v} className={mode === r.v ? "on" : ""} onClick={() => setMode(r.v)} disabled={submit.busy}>{r.label}</button>)}
           </div>
           <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={res.placeholder} disabled={submit.busy}
-            aria-label={res.needText ? `${res.label}（必填）` : `${res.label}備註（選填）`} aria-required={res.needText} />
+            aria-label={res.needText ? t("ms.required", { label: res.label }) : t("ms.optional", { label: res.label })} aria-required={res.needText} />
           {mode !== "accepted_unknown" && whereText(itemX(item).target, ir) && (
             <div className="muted" style={{ fontSize: 12 }} data-testid="write-target">
-              送出後，你填的內容會原樣寫入「{whereText(itemX(item).target, ir)}」。請只填這個欄位的值（例如作業系統就填作業系統名稱），其他說明請用頁面下方的自由補充。
+              {t("ms.writeTarget", { where: whereText(itemX(item).target, ir) })}
             </div>
           )}
           <div className="muted" style={{ fontSize: 12 }} data-testid="resolution-hint">
             {res.needText
-              ? (text.trim() ? "送出後會標示為使用者來源，不會當成原文證據。" : "必填：請先填寫內容，「送出」才會啟用。")
-              : "備註選填。留白送出會記錄為「接受未知（使用者未填寫備註）」，此項目維持未知，不會被當成已知事實。"}
+              ? (text.trim() ? t("ms.userSource") : t("ms.needText"))
+              : t("ms.unknownNote")}
           </div>
-          {note && <div className="muted" style={{ fontSize: 12 }}>提醒：{note}</div>}
-          {group.items.length > 1 && <div className="muted" style={{ fontSize: 12 }}>這張卡片合併了 {group.items.length} 個內容相同的問題，送出後會一併套用。</div>}
+          {note && <div className="muted" style={{ fontSize: 12 }}>{t("ms.note", { note })}</div>}
+          {group.items.length > 1 && <div className="muted" style={{ fontSize: 12 }}>{t("ms.merged", { n: group.items.length })}</div>}
           <div className="row">
             <button className="primary small" disabled={submit.busy || (res.needText && !text.trim())} onClick={() => submit.run()}>
-              {submit.busy ? <><span className="spinner" /> 送出中…</> : "送出"}
+              {submit.busy ? <><span className="spinner" /> {t("ms.sending")}</> : t("ms.send")}
             </button>
-            <button className="small" onClick={() => { setOpen(false); submit.clearError(); }} disabled={submit.busy}>取消</button>
-            {canLocate && <button className="small" onClick={() => locate!(canLocate)} title="在右側原文中標示上面的原文引文並跳過去">在原文中定位</button>}
+            <button className="small" onClick={() => { setOpen(false); submit.clearError(); }} disabled={submit.busy}>{t("ms.cancel")}</button>
+            {canLocate && <button className="small" onClick={() => locate!(canLocate)} title={t("ms.locate.hint")}>{t("ms.locate")}</button>}
           </div>
-          <ApiNotice error={submit.error} what="補充" />
+          <ApiNotice error={submit.error} what={t("ms.what")} />
         </div>
       )}
     </div>
@@ -718,8 +732,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
     if (!p || p.seq !== r.seq) return;
     if (r.found) {
       setLocated({
-        itemId: p.itemId, state: "found", where: ` PDF 第 ${r.page} 頁`, partial: r.partial,
-        mismatch: p.page && p.page !== r.page ? `後端標示的是第 ${p.page} 頁，實際文字在第 ${r.page} 頁找到。` : undefined,
+        itemId: p.itemId, state: "found", where: t("ms.pdfWhere", { page: r.page }), partial: r.partial,
+        mismatch: p.page && p.page !== r.page ? t("ms.pageMismatch", { p: p.page, r: r.page }) : undefined,
       });
     } else {
       setLocated(p.page && jumpToPage(p.page) ? { itemId: p.itemId, state: "page-only", page: p.page } : { itemId: p.itemId, state: "notfound" });
@@ -728,7 +742,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const onTextLocated = useCallback((r: TextLocateResult) => {
     const p = pending.current;
     if (!p || p.seq !== r.seq) return;
-    setLocated(r.found ? { itemId: p.itemId, state: "found", where: `原文${r.line ? `第 ${r.line} 行` : ""}`, partial: false } : { itemId: p.itemId, state: "notfound" });
+    setLocated(r.found ? { itemId: p.itemId, state: "found", where: r.line ? t("ms.srcWhereLine", { line: r.line }) : t("ms.srcWhere"), partial: false } : { itemId: p.itemId, state: "notfound" });
   }, []);
 
   const addFree = useAction(async () => {
@@ -737,46 +751,46 @@ function Body({ ir }: { ir: ScenarioIR }) {
     setFree("");
   });
 
-  const paneHint = "點左側卡片上的「原文已知」那一行，或「在原文中定位」按鈕，會在這裡標示對應的原文引文。寫著「此項沒有原文引文」的項目不會標示，也不會跳頁。";
+  const paneHint = t("ms.paneHint");
   const pane = hasPdf ? (
     <div className="pdf-pane" ref={paneRef}>
       <span className="pdf-hint">{paneHint}</span>
-      <PdfViewer data={pdf.data!} filename="PDF 原檔" anchor={pdfAnchor} onLocated={onPdfLocated} />
+      <PdfViewer data={pdf.data!} filename={t("pdf.original")} anchor={pdfAnchor} onLocated={onPdfLocated} />
     </div>
   ) : hasText ? (
     <div className="pdf-pane" ref={paneRef}>
-      <span className="pdf-hint">此情境以文字匯入，沒有 PDF；右側是匯入的原文。{paneHint}</span>
-      <SourceTextViewer text={src.doc!.content} title={src.doc!.source_name || "匯入的原文"} mono={src.doc!.input_kind === "stix2.1"} target={textTarget} onLocated={onTextLocated} />
+      <span className="pdf-hint">{t("ms.textImport")} {paneHint}</span>
+      <SourceTextViewer text={src.doc!.content} title={src.doc!.source_name || t("imp.sourceTitle")} mono={src.doc!.input_kind === "stix2.1"} target={textTarget} onLocated={onTextLocated} />
     </div>
   ) : null;
 
   return (
     <div className="page" style={{ maxWidth: hasOriginal ? 1640 : 980 }}>
-      <PageHead title="缺失補充" desc="報告沒寫清楚、但重建環境需要的資訊。每一項都標出原文已知的部分、需要你決定的部分與影響的步驟；你可以直接填答案、點選項帶入輸入框後送出，或明確接受未知。補充內容一律標示為使用者來源，不會與原文證據混淆。" />
-      {!hasOriginal && src.state === "loading" && <div className="pdf-hint"><span className="spinner" /> 載入原文…</div>}
-      {!hasOriginal && src.state === "none" && <div className="pdf-hint">此情境沒有保存原文（PDF 或文字），無法在旁對照。</div>}
+      <PageHead title={t("ms.title")} desc={t("ms.desc")} />
+      {!hasOriginal && src.state === "loading" && <div className="pdf-hint"><span className="spinner" /> {t("ms.srcLoading")}</div>}
+      {!hasOriginal && src.state === "none" && <div className="pdf-hint">{t("ms.noSrc")}</div>}
       {(ir as { fidelity?: unknown }).fidelity === undefined && (
-        <Notice kind="info" title="這份清單可能還不完整">
-          目前列出的是情資分析階段找到的缺失。到「軟體依賴」執行依賴分析後，可能會再新增軟體、版本相關的項目，屆時請回到這裡補充。
+        <Notice kind="info" title={t("ms.incomplete")}>
+          {t("ms.incomplete.body")}
         </Notice>
       )}
-      {!hasOriginal && src.state === "error" && <div className="pdf-hint">無法載入此情境的原文（後端未回應）。</div>}
+      {!hasOriginal && src.state === "error" && <div className="pdf-hint">{t("ms.srcError")}</div>}
 
       <div className={hasOriginal ? "pdf-split" : undefined} style={hasOriginal ? undefined : { display: "contents" }}>
       <div className={hasOriginal ? "pdf-col" : undefined} style={hasOriginal ? undefined : { display: "contents" }}>
 
       <div className="row">
         <div className="seg">
-          <button className={show === "open" ? "on" : ""} onClick={() => setShow("open")}>待補充 {openGroups.length}</button>
-          <button className={show === "all" ? "on" : ""} onClick={() => setShow("all")}>全部 {groups.length}</button>
+          <button className={show === "open" ? "on" : ""} onClick={() => setShow("open")}>{t("ms.tab.open", { n: openGroups.length })}</button>
+          <button className={show === "all" ? "on" : ""} onClick={() => setShow("all")}>{t("ms.tab.all", { n: groups.length })}</button>
         </div>
-        {blockers > 0 && <span className="status-FAIL" style={{ fontSize: 13 }}>{blockers} 項會阻擋部署</span>}
+        {blockers > 0 && <span className="status-FAIL" style={{ fontSize: 13 }}>{t("ms.blockers", { n: blockers })}</span>}
       </div>
 
       {groups.length === 0 ? (
-        <div className="card"><Empty>分析沒有列出缺失項目。若你知道報告以外的背景資訊，仍可在下方自由補充。</Empty></div>
+        <div className="card"><Empty>{t("ms.none")}</Empty></div>
       ) : shown.length === 0 ? (
-        <div className="card"><Empty>所有缺失項目都已處理。</Empty></div>
+        <div className="card"><Empty>{t("ms.allDone")}</Empty></div>
       ) : (
         shown.map((g) => (
           <ItemCard key={g.id} group={g} ir={ir} scenarioId={ir.id} onDone={absorb} hasPdf={hasPdf}
@@ -786,25 +800,25 @@ function Body({ ir }: { ir: ScenarioIR }) {
       )}
 
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <h2 style={{ margin: 0 }}>自由補充</h2>
-        <div className="muted" style={{ fontSize: 13 }}>不針對特定缺失項目的背景資訊，例如受害環境的已知配置。</div>
-        <textarea rows={3} value={free} onChange={(e) => setFree(e.target.value)} placeholder="輸入補充說明" disabled={addFree.busy} />
+        <h2 style={{ margin: 0 }}>{t("ms.free")}</h2>
+        <div className="muted" style={{ fontSize: 13 }}>{t("ms.free.desc")}</div>
+        <textarea rows={3} value={free} onChange={(e) => setFree(e.target.value)} placeholder={t("ms.free.ph")} disabled={addFree.busy} />
         <div><button className="primary small" disabled={!free.trim() || addFree.busy} onClick={() => addFree.run()}>
-          {addFree.busy ? <><span className="spinner" /> 送出中…</> : "加入補充"}
+          {addFree.busy ? <><span className="spinner" /> {t("ms.sending")}</> : t("ms.free.add")}
         </button></div>
-        <ApiNotice error={addFree.error} what="補充" />
+        <ApiNotice error={addFree.error} what={t("ms.what")} />
       </div>
 
       {supplements.length > 0 && (
         <div className="card flush">
-          <div className="card-head"><h2>已加入的補充</h2><span className="muted" style={{ fontSize: 12 }}>{supplements.length}</span></div>
+          <div className="card-head"><h2>{t("ms.added")}</h2><span className="muted" style={{ fontSize: 12 }}>{supplements.length}</span></div>
           <table className="tbl">
-            <thead><tr><th>內容</th><th>對應缺失項目</th><th>來源</th></tr></thead>
+            <thead><tr><th>{t("ms.col.text")}</th><th>{t("ms.col.item")}</th><th>{t("ms.col.source")}</th></tr></thead>
             <tbody>
               {supplements.map((s) => (
                 <tr key={s.id}>
                   <td style={{ whiteSpace: "pre-wrap" }}>{s.text}</td>
-                  <td className="muted">{s.targets_missing_item ? titleOf.get(s.targets_missing_item) ?? "（該缺失項目已不存在）" : "—"}</td>
+                  <td className="muted">{s.targets_missing_item ? titleOf.get(s.targets_missing_item) ?? t("ms.itemGone") : "—"}</td>
                   <td><SourceTag source={s.source} /></td>
                 </tr>
               ))}
@@ -817,12 +831,12 @@ function Body({ ir }: { ir: ScenarioIR }) {
       {pane}
       </div>
 
-      <NextStep prev={{ to: "/analysis", label: "分析結果" }} next={{ to: "/flow", label: "攻擊流程" }} />
+      <NextStep prev={{ to: "/analysis", label: t("stage.analysis") }} next={{ to: "/flow", label: t("stage.flow") }} />
     </div>
   );
 }
 
 export function MissingPage() {
   const { ir } = useScenario();
-  return <ScenarioGate title="缺失補充">{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
+  return <ScenarioGate title={t("ms.title")}>{ir && <Body key={ir.id} ir={ir} />}</ScenarioGate>;
 }

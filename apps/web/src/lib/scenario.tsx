@@ -1,6 +1,7 @@
 // Current-scenario state shared by all workflow pages.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { ScenarioIR } from "@contracts";
+import { t } from "../i18n";
 import { api, ApiError, extractIr, toApiError } from "./api";
 
 const KEY = "cr.scenario";
@@ -52,7 +53,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
       if (n !== seq.current) return;
       const got = extractIr(resp);
       if (got) { setIr(got); void refreshRuntime(sid); }
-      else { setIr(null); setError(new ApiError(0, "後端回傳的內容不是 Scenario IR", "GET", `/api/scenario/${sid}`, "error")); }
+      else { setIr(null); setError(new ApiError(0, t("api.notIr"), "GET", `/api/scenario/${sid}`, "error")); }
     } catch (e) {
       if (n !== seq.current) return;
       setIr(null);
