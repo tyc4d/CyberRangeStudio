@@ -1,0 +1,12 @@
+# cross-scenario isolation: two scenarios deployed at the same time
+A=cr-demo-infra-eng-d803436e (nginx+postgres+attacker, published)  B=cr-demo-infra-eng-c1c23098 (Struts+postgres+attacker)
+## from every container of A to every address of every container of B (ports 80, 8080, 5432, 20000)
+   cr-demo-infra-eng-d803436e-attacker -> all of B : 16 attempts, 0 connected
+   cr-demo-infra-eng-d803436e-web -> all of B : 16 attempts, 0 connected
+   cr-demo-infra-eng-d803436e-db -> all of B : 16 attempts, 0 connected
+## from every container of B to every address of every container of A
+   cr-demo-infra-eng-c1c23098-attacker -> all of A : 24 attempts, 0 connected
+   cr-demo-infra-eng-c1c23098-h1 -> all of A : 24 attempts, 0 connected
+   cr-demo-infra-eng-c1c23098-h2 -> all of A : 24 attempts, 0 connected
+## control: inside A, attacker -> web:80 (allowed by the plan)
+   CONNECTED web 80

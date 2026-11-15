@@ -301,3 +301,72 @@ class ComposeGeneratorTests(unittest.TestCase):
         _, report = inspect_plan(plan, "unknown-real")
         self.assertFalse(report["deployable"])
         self.assertTrue(any("safe local image" in error for error in report["errors"]))
+
+
+class BlockerAndGroupingTests(unittest.TestCase):
+    """Refusals must say which host/service/port is wrong and what the user can change."""
+
+    def _plan(self, services, image="vuln-struts2-s2-045"):
+        return {"hosts": [{"id": "h1", "role": "portal", "image_hint": image, "component_mode": "real",
+                           "services": services, "networks": ["inside"]},
+                          {"id": "h2", "role": "db", "image_hint": "oss-postgres", "component_mode": "real",
+                           "services": [{"name": "postgres", "port": 5432}], "networks": ["inside"]}],
+                "networks": [{"id": "inside", "internal": True}],
+                "connections": [{"from_host": "h1", "to_host": "h2", "port": 5432}]}
+
+    def test_port_not_served_by_the_host_image_is_explained_with_a_fix(self):
+        plan = self._plan([{"name": "Apache Struts", "port": 8080}, {"name": "encrypted channel", "port": 80}])
+        _, report = inspect_plan(plan, "blk")
+        self.assertFalse(report["deployable"])
+        blocker = next(b for b in report["blockers"] if b["code"] == "port_not_served_by_image")
+        self.assertEqual((blocker["host"], blocker["service"], blocker["port"]), ("h1", "encrypted channel", 80))
+        self.assertEqual(blocker["supported_ports"], [8080])
+        self.assertIn("h1", blocker["message"])
+        self.assertIn("encrypted channel", blocker["message"])
+        self.assertIn("8080", blocker["fix"])
+        # the short English string older clients match on is still there
+        self.assertIn("host h1 declares port 80, unsupported by vuln-struts2-s2-045", report["errors"])
+        by_host = {c["host_id"]: c for c in report["components"]}
+        self.assertFalse(by_host["h1"]["deployable"])   # not "deployable: yes" next to a failed generation
+        self.assertEqual(by_host["h1"]["blockers"], ["port_not_served_by_image"])
+        self.assertTrue(by_host["h2"]["deployable"])     # the host that is fine stays fine
+
+    def test_every_error_has_a_blocker_with_message_and_fix(self):
+        plan = {"hosts": [{"id": "a", "role": "x", "image_hint": "oss-nginx", "component_mode": "real",
+                           "services": [{"name": "dns", "port": 53, "protocol": "udp"}], "networks": ["n1"]},
+                          {"id": "b", "role": "y", "image_hint": "not-in-catalogue", "component_mode": "real",
+                           "networks": ["n2"]}],
+                "networks": [{"id": "n1", "internal": True}, {"id": "n2", "internal": True}],
+                "connections": [{"from_host": "a", "to_host": "b", "port": 9}]}
+        _, report = inspect_plan(plan, "blk")
+        self.assertEqual({b["error"] for b in report["blockers"]}, set(report["errors"]))
+        for blocker in report["blockers"]:
+            self.assertTrue(blocker["message"] and blocker["fix"], blocker)
+        codes = {b["code"] for b in report["blockers"]}
+        self.assertLessEqual({"non_tcp_service", "no_image_for_host", "connection_no_shared_network"}, codes)
+
+    def test_services_on_the_same_port_are_one_endpoint(self):
+        # the product and the protocol it speaks, both on 80: one check, one published port
+        plan = {"hosts": [{"id": "h1", "role": "exposed web", "image_hint": "oss-nginx", "component_mode": "real",
+                           "services": [{"name": "MOVEit Transfer", "port": 80}, {"name": "nginx", "port": 80}],
+                           "networks": ["external"]}],
+                "networks": [{"id": "external", "internal": False}]}
+        _, report = inspect_plan(plan, "grp")
+        self.assertTrue(report["deployable"], report["errors"])
+        self.assertEqual(len(report["host_port_mappings"]), 1)
+        self.assertEqual(report["components"][0]["service_ports"],
+                         [{"port": 80, "protocol": "tcp", "names": ["MOVEit Transfer", "nginx"]}])
+        gateway = yaml.safe_load(compose_document(plan, "grp"))["services"]["cr-gateway"]
+        self.assertEqual(len(gateway["ports"]), 1)
+        self.assertEqual([arg for arg in gateway["command"] if "=h1:" in arg], ["20000=h1:80"])
+
+    def test_network_report_separates_plan_role_from_what_docker_enforces(self):
+        _, report = inspect_plan(EXPOSED_PLAN, "exposure")
+        by_id = {n["id"]: n for n in report["networks"]}
+        self.assertTrue(by_id["external"]["internal"])            # enforced: always isolated
+        self.assertFalse(by_id["external"]["plan_internal"])      # plan: this is the exposed side
+        self.assertEqual(by_id["external"]["role"], "exposed_segment")
+        self.assertTrue(by_id["external"]["published_to_host"])
+        self.assertEqual(by_id["inside"]["role"], "internal_segment")
+        self.assertFalse(by_id["inside"]["published_to_host"])
+        self.assertTrue(all(n["description"] for n in report["networks"]))
