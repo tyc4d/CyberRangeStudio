@@ -27,6 +27,7 @@ _ISOLATED_BRIDGE_OPT = "com.docker.network.bridge.gateway_mode_ipv4"
 _ISOLATED_BRIDGE_OPTIONS = {_ISOLATED_BRIDGE_OPT: "isolated"}
 _DEMO_APP_SOURCE = Path(__file__).resolve().parents[5] / "infra" / "templates" / "demo-app"
 _DEMO_APP_GUEST = "/opt/cr-runtime/demo-app"
+_COMPOSE_ENV_GUEST = "/opt/cr-runtime/compose.env"
 
 
 class ProxmoxBackendError(RuntimeError):
@@ -41,6 +42,20 @@ def _safe_id(value: str, label: str) -> str:
 
 def _project_name(scenario_id: str) -> str:
     return f"cr-demo-{scenario_id}"
+
+
+def _compose_command(scenario_id: str, *args: str) -> list[str]:
+    return ["/usr/bin/docker", "compose", "--env-file", _COMPOSE_ENV_GUEST,
+            "--project-name", _project_name(scenario_id),
+            "--file", "/opt/cr-runtime/docker-compose.yml", *args]
+
+
+def _safe_guest_diagnostic(value: Any, secrets_to_redact: tuple[str, ...] = ()) -> str:
+    text = str(redact(str(value or "")))
+    for secret in secrets_to_redact:
+        if secret:
+            text = text.replace(secret, "[REDACTED]")
+    return text[:1500]
 
 
 def _pve_vm_name_id(scenario_id: str) -> str:
@@ -343,10 +358,10 @@ class ProxmoxBackend:
                     {"method": "GET", "path": "/cluster/nextid?vmid=<candidate>", "purpose": "collision check"},
                     {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{self.settings.template_vmid}/clone", "newid": candidate},
                     {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/status/start"},
-                    {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/agent/file-write", "purpose": "write compose into guest"},
+                    {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/agent/file-write", "purpose": "write compose and ephemeral environment into guest"},
                     {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/agent/exec", "purpose": "docker compose up --wait inside guest"},
                 ] + ([{"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/<candidate>/agent/file-write",
-                       "guest_file": path} for path in sorted(demo_files)]),
+                       "guest_file": path} for path in sorted({*demo_files, _COMPOSE_ENV_GUEST})]),
                 "attach_lab_network": False, "writes_sent": False}
 
     def up(self, scenario_id: str, compose_yaml: str, *, host_id: str = "worker",
@@ -412,14 +427,28 @@ class ProxmoxBackend:
                               scenario_id, host_id, "start owned worker VM")
             self._wait_qga(vmid, scenario_id, host_id)
             self._guest_write(vmid, "/opt/cr-runtime/docker-compose.yml", compose_yaml, scenario_id, host_id)
+            generated_secret = secrets.token_urlsafe(24)
+            compose_env = ("CR_BIND_IP=127.0.0.1\nCR_PG_AUTH_METHOD=trust\n"
+                           f"CR_PG_PASSWORD={generated_secret}\nCR_DB_PASSWORD={generated_secret}\n")
+            self._guest_write(vmid, _COMPOSE_ENV_GUEST, compose_env, scenario_id, host_id)
+            chmod_result = self._guest_exec(
+                vmid, ["/usr/bin/chmod", "0600", _COMPOSE_ENV_GUEST],
+                scenario_id=scenario_id, host_id=host_id, timeout=20)
+            if int(chmod_result.get("exitcode", 1)) != 0:
+                raise ProxmoxBackendError("could not restrict permissions on the worker Compose environment file")
             for guest_path, content in demo_files.items():
                 self._guest_write(vmid, guest_path, content, scenario_id, host_id)
-            command = ["/usr/bin/docker", "compose", "--project-name", _project_name(scenario_id),
-                       "--file", "/opt/cr-runtime/docker-compose.yml", "up", "--detach", "--pull", "never",
-                       "--wait", "--wait-timeout", "240"]
+            command = _compose_command(scenario_id, "up", "--detach", "--pull", "never",
+                                       "--wait", "--wait-timeout", "240")
             exec_result = self._guest_exec(vmid, command, scenario_id=scenario_id, host_id=host_id, timeout=900)
             if int(exec_result.get("exitcode", 1)) != 0:
-                raise ProxmoxBackendError("guest docker compose up failed")
+                code = _safe_guest_diagnostic(exec_result.get("exitcode", 1), (generated_secret,))
+                detail = _safe_guest_diagnostic(exec_result.get("stderr") or exec_result.get("stdout"),
+                                                 (generated_secret,))
+                message = f"guest docker compose up failed (exit code {code})"
+                if detail:
+                    message += f": {detail}"
+                raise ProxmoxBackendError(message)
             isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
             if not isolation.get("checked") or not isolation.get("isolated"):
                 raise ProxmoxBackendError("worker isolation verification failed; deployment rejected")
@@ -492,8 +521,7 @@ class ProxmoxBackend:
                     "state": status.get("status", "unknown"), "qmpstatus": status.get("qmpstatus"),
                     "compose": {"returncode": 127, "exitcode": 127, "stdout": "",
                                 "stderr": "worker VM is not running; guest Compose status unavailable"}}
-        qga = self._guest_exec(vmid, ["/usr/bin/docker", "compose", "--project-name", _project_name(scenario_id),
-                                     "--file", "/opt/cr-runtime/docker-compose.yml", "ps", "--format", "json"],
+        qga = self._guest_exec(vmid, _compose_command(scenario_id, "ps", "--format", "json"),
                                scenario_id=scenario_id, host_id=host_id, timeout=60)
         return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid,
                 "state": status.get("status", "unknown"), "qmpstatus": status.get("qmpstatus"),
@@ -520,8 +548,7 @@ class ProxmoxBackend:
                 report["details"].append("guest Docker network isolation could not be checked while VM is stopped")
                 return report
             compose_config = self._guest_exec(
-                vmid, ["/usr/bin/docker", "compose", "--project-name", _project_name(scenario_id),
-                       "--file", "/opt/cr-runtime/docker-compose.yml", "config", "--format", "json"],
+                vmid, _compose_command(scenario_id, "config", "--format", "json"),
                 scenario_id=scenario_id, host_id=host_id, timeout=60)
             if int(compose_config.get("exitcode", 1)) != 0:
                 report["details"].append("guest Compose network configuration could not be read")
@@ -606,8 +633,7 @@ class ProxmoxBackend:
         compose_cleanup: dict[str, Any]
         try:
             compose_cleanup = self._guest_exec(
-                vmid, ["/usr/bin/docker", "compose", "--project-name", _project_name(scenario_id),
-                       "--file", "/opt/cr-runtime/docker-compose.yml", "down", "--volumes", "--remove-orphans"],
+                vmid, _compose_command(scenario_id, "down", "--volumes", "--remove-orphans"),
                 scenario_id=scenario_id, host_id=host_id, timeout=240)
             if int(compose_cleanup.get("exitcode", 1)) != 0:
                 compose_cleanup["cleanup_error"] = "guest Compose down returned a nonzero exit code"
@@ -728,7 +754,7 @@ class ProxmoxBackend:
         raise ProxmoxBackendError("guest process exceeded timeout")
 
     def _guest_write(self, vmid: int, path: str, content: str, scenario_id: str, host_id: str) -> None:
-        allowed_paths = {"/opt/cr-runtime/docker-compose.yml",
+        allowed_paths = {"/opt/cr-runtime/docker-compose.yml", _COMPOSE_ENV_GUEST,
                          f"{_DEMO_APP_GUEST}/Dockerfile", f"{_DEMO_APP_GUEST}/server.py"}
         if path not in allowed_paths or len(content.encode()) > 60_000:
             raise ProxmoxBackendError("guest file path or size is not allowed")
@@ -742,8 +768,7 @@ class ProxmoxBackend:
                                   purpose="write compose file inside owned guest via QGA")
 
     def _compose_ps(self, vmid: int, scenario_id: str, host_id: str) -> dict[str, Any]:
-        return self._guest_exec(vmid, ["/usr/bin/docker", "compose", "--project-name", _project_name(scenario_id),
-                                       "--file", "/opt/cr-runtime/docker-compose.yml", "ps", "--format", "json"],
+        return self._guest_exec(vmid, _compose_command(scenario_id, "ps", "--format", "json"),
                                 scenario_id=scenario_id, host_id=host_id, timeout=60)
 
     def _wait_stopped(self, vmid: int) -> None:

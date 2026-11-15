@@ -273,6 +273,7 @@ class PveClient:
         if suffix == "agent/file-write":
             allowed_guest_files = {
                 "/opt/cr-runtime/docker-compose.yml",
+                "/opt/cr-runtime/compose.env",
                 "/opt/cr-runtime/demo-app/Dockerfile",
                 "/opt/cr-runtime/demo-app/server.py",
             }

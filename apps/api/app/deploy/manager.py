@@ -366,7 +366,8 @@ def exec_in_service(scenario_id: str, service_id: str, command: list[str], timeo
     if selected == "local-docker":
         return _local_exec_in_service(scenario_id, service_id, command, timeout)
     project = project_name(scenario_id)
-    return _pve_guest_exec(scenario_id, ["/usr/bin/docker", "compose", "--project-name", project,
+    return _pve_guest_exec(scenario_id, ["/usr/bin/docker", "compose", "--env-file",
+                                        "/opt/cr-runtime/compose.env", "--project-name", project,
                                         "--file", "/opt/cr-runtime/docker-compose.yml", "exec", "-T",
                                         service_id, *command], timeout, require_isolation=True)
 
