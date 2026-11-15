@@ -87,7 +87,8 @@ function recordOutput(d: any): string | undefined {
 const REASON_ZH: Record<string, string> = {
   "topology not approved": "拓樸尚未核准",
   "approval stale; topology changed since approval": "核准後拓樸已變更，需重新核准",
-  "explicit local PoC approval required": "未取得本機執行的明確同意",
+  "explicit local PoC approval required": "未取得部署測試的明確同意",
+  "explicit deployment test approval required": "未取得部署測試的明確同意",
   "compose file has not been generated": "尚未生成 IaC（沒有 compose 檔）",
 };
 
@@ -123,11 +124,14 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const upBlock = !approved ? "需先在「拓樸」頁核准拓樸" : iacMissing ? "需先在「IaC 預覽」頁生成 IaC" : iacBlocked ? "IaC 檢查報告判定目前不可部署" : undefined;
 
   const s = status.data;
+  const backend = s && typeof s === "object" ? s.backend : undefined;
+  const isProxmox = backend === "proxmox";
+  const targetName = isProxmox ? "Proxmox worker VM" : backend === "local-docker" ? "本機 Docker" : "隔離執行環境";
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
   const state = typeof stateRaw === "string" ? stateRaw : undefined;
   const containers: unknown = s && typeof s === "object" ? s.containers ?? s.services : undefined;
   const rest = s && typeof s === "object" && !Array.isArray(s)
-    ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services"].includes(k)))
+    ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services", "backend"].includes(k)))
     : null;
   // The status endpoint answers state=error with this text when no compose file exists. That is "nothing to deploy yet", not a fault.
   const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
@@ -148,8 +152,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   return (
     <div className="page">
-      <PageHead title="部署管理" desc="在本機隔離環境啟動或關閉這個情境。狀態每 5 秒自動更新。">
-        <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm("確定要在本機隔離環境啟動這個情境的容器？")) void up.run(); }}>啟動（up）</button>
+      <PageHead title="部署管理" desc={`部署目標：${targetName}。狀態每 5 秒自動更新。`}>
+        <button className="primary" disabled={busy || !!upBlock} title={upBlock} onClick={() => { if (window.confirm(`確定要在${targetName}啟動這個情境的容器？`)) void up.run(); }}>啟動（up）</button>
         <button className="danger" disabled={busy || !!downBlock} title={downBlock} onClick={() => { if (window.confirm("確定要關閉並移除這個情境的部署？")) void down.run(); }}>關閉（down）</button>
       </PageHead>
 
@@ -298,7 +302,11 @@ function Body({ ir }: { ir: ScenarioIR }) {
         )}
       </div>
 
-      <Notice kind="info">部署只在本機隔離網路中進行，容器名稱以 <span className="mono">cr-demo-</span> 開頭。</Notice>
+      <Notice kind="info">
+        {isProxmox
+          ? "PVE 部署預期在零網卡 worker VM 內執行；啟動時會檢查隔離設定，且不發布本機或 LAN 連接埠。"
+          : "部署在本機隔離網路中進行。"} 容器名稱以 <span className="mono">cr-demo-</span> 開頭。
+      </Notice>
       <NextStep prev={{ to: "/iac", label: "IaC 預覽" }} next={{ to: "/report", label: "驗證報告" }} />
     </div>
   );

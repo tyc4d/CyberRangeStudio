@@ -1092,7 +1092,7 @@ def _cleanup_failed_up(scenario_id: str) -> dict[str, Any]:
 
 def do_status(scenario_id: str) -> dict[str, Any]:
     # Read-only poll: must NOT write an audit record (GUI polls this often).
-    return live_containers(scenario_id)
+    return {**live_containers(scenario_id), "backend": deploy_backend()}
 
 
 def do_health(scenario_id: str) -> dict[str, Any]:

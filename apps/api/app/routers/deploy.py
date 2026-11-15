@@ -40,8 +40,8 @@ def _require_topology_approval(scenario_id: str) -> None:
 def deploy_up(scenario_id: str, request: UpRequest):
     scenario_id = _validate(scenario_id)
     if request.test_approved is not True:
-        manager.record(scenario_id, "up", "rejected", {"reason": "explicit local PoC approval required"})
-        raise HTTPException(status_code=400, detail="explicit local PoC approval required: send test_approved=true")
+        manager.record(scenario_id, "up", "rejected", {"reason": "explicit deployment test approval required"})
+        raise HTTPException(status_code=400, detail="explicit deployment test approval required: send test_approved=true")
     if request.expose not in {"internal", "lan"}:
         raise HTTPException(status_code=400, detail="expose must be 'internal' or 'lan'")
     if request.lan_host is not None and request.expose != "lan":
