@@ -4,6 +4,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from app.poc.chain.evidence import artifact_bytes, execution_log
+from app.poc.chain.validation import _select_runs
+
 _VALID_LEVELS = {"PASS", "FAIL", "PARTIAL", "NOT_TESTED"}
 
 
@@ -57,24 +60,40 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
     base_fidelity = base.get("fidelity") if isinstance(base.get("fidelity"), dict) else {}
     substitutes = list(base_fidelity.get("substitutes_used") or [])
     chain_ok = bool(chain.get("passes")) and bool(chain.get("objective_reached"))
+    chain_status = "PASS" if chain_ok else "NOT_TESTED"
+    if not chain_ok and any(status == "FAIL" for status in statuses.values()):
+        chain_status = "FAIL"
+    elif not chain_ok and any(status in {"PASS", "PARTIAL"} for status in statuses.values()):
+        chain_status = "PARTIAL"
     full_chain = "PASS" if env_build == behavior_repro == "PASS" and chain_ok else "NOT_TESTED"
     if not chain_ok and any(status == "FAIL" for status in statuses.values()):
         full_chain = "FAIL"
-    elif not chain_ok and any(status == "PARTIAL" for status in statuses.values()):
+    elif not chain_ok and chain_status == "PARTIAL":
         full_chain = "PARTIAL"
     elif env_build == "FAIL" or behavior_repro == "FAIL":
         full_chain = "FAIL"
 
     checks = list(base.get("checks") or [])
-    checks.extend({"id": f"poc-{aid}", "name": _action_name(action_by_id[aid]), "category": "behavior",
-                   "status": _level(statuses.get(aid)), "action_ref": aid,
-                   "expected": items.get(aid, {}).get("expected_evidence", ""),
-                   "observed": next((str(r.get("failure_reason") or r.get("status") or "") for r in executions
-                                     if r.get("action_id") == aid), "Not executed"),
-                   **({"evidence": next((str(e.get("path")) for r in executions if r.get("action_id") == aid
-                                          for e in r.get("evidence", []) if e.get("path")), "")}
-                      if any(r.get("action_id") == aid and r.get("evidence") for r in executions) else {})}
-                  for aid in action_by_id)
+    runs, ambiguous = _select_runs(executions)
+    for aid in action_by_id:
+        run = runs.get(aid, {}) if aid not in ambiguous else {}
+        check = {"id": f"poc-{aid}", "name": _action_name(action_by_id[aid]), "category": "behavior",
+                 "status": _level(statuses.get(aid)), "action_ref": aid,
+                 "expected": items.get(aid, {}).get("expected_evidence", ""),
+                 "observed": str(run.get("failure_reason") or statuses.get(aid) or "Not executed")}
+        if execution_log(run):
+            evidence = next((e.get("path") for e in run.get("evidence", []) if artifact_bytes(e) is not None), None)
+            if evidence:
+                check["evidence"] = evidence
+        checks.append(check)
+    checks.append({"id": "poc-full-chain", "name": "End-to-end attack chain", "category": "chain",
+                   "status": chain_status,
+                   "expected": "All required actions, cited dependencies, actual order and consumed-state transfers verified.",
+                   "observed": (f"passes={str(bool(chain.get('passes'))).lower()}; "
+                                f"objective_reached={str(bool(chain.get('objective_reached'))).lower()}; "
+                                f"order_ok={str(bool(chain.get('order_ok'))).lower()}; "
+                                f"verified_transfers={sum(t.get('verified') is True for t in chain.get('transfers', []))}/"
+                                f"{len(chain.get('transfers', []))}")})
     return {
         "scenario_id": scenario_id,
         "run_at": datetime.now(timezone.utc).isoformat(),
