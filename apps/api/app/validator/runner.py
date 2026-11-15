@@ -423,6 +423,14 @@ _ATTACK_PROBES = {
     "vuln-log4shell-solr": _log4shell_solr_probe,
 }
 
+# The ATT&CK technique each probe actually reproduces. A probe PASS reproduces ONLY an
+# action whose technique matches this (both are Exploit Public-Facing Application,
+# T1190). Other actions that merely share the target host are NOT individually verified.
+_ATTACK_PROBE_TECHNIQUE = {
+    "vuln-struts2-s2-045": "T1190",
+    "vuln-log4shell-solr": "T1190",
+}
+
 # Vulnerable images whose faithful probe needs infra not present in a plain product
 # plan. The probe itself returns NOT_TESTED (never a false PASS) when that infra is
 # absent, so nothing is listed here unconditionally now.
@@ -623,6 +631,7 @@ def run(scenario_id: str) -> dict[str, Any]:
     behavior_checks: list[dict[str, Any]] = []  # attack-behavior checks only (see above)
     declared_chain_checks: list[dict[str, Any]] = []
     isolation_cache: dict[str, tuple[bool, str]] = {}
+    explicit_refs_by_index: dict[int, list[str]] = {}
     actions_by_host: dict[str, list[str]] = {}
     for action in actions:
         tref = action.get("target_host_ref")
@@ -744,7 +753,9 @@ def run(scenario_id: str) -> dict[str, Any]:
             service_behavior_by_index[index] = live
 
         # (2) ATTACK-behavior probe: the only thing that drives behavior_repro.
-        mapped_actions = _explicit_action_refs(connection, actions) or actions_by_host.get(target, [])
+        explicit_refs = _explicit_action_refs(connection, actions)
+        explicit_refs_by_index[index] = explicit_refs
+        mapped_actions = explicit_refs or actions_by_host.get(target, [])
         attack = None
         if target_component in _ATTACK_PROBES and source_running and target_running and connectivity_status == "PASS":
             if source not in isolation_cache:
@@ -757,6 +768,7 @@ def run(scenario_id: str) -> dict[str, Any]:
                 st, exp, obs, _repro = _ATTACK_PROBES[target_component](scenario_id, source, target, int(port))
                 attack = _check(f"attack-{index}", f"{target} 攻擊行為專屬驗證（{target_component}）", "behavior",
                                 st, exp, obs, action_ref)
+                attack["technique"] = _ATTACK_PROBE_TECHNIQUE.get(target_component)
         elif target_component in _ATTACK_PROBES_NEEDING_INFRA:
             attack = _check(f"attack-{index}", f"{target} 攻擊行為（需額外實驗設施，未執行）", "behavior",
                             "NOT_TESTED", "action-specific attack probe",
@@ -839,10 +851,42 @@ def run(scenario_id: str) -> dict[str, Any]:
         checks.append(check)
         blocked_checks.append(check)
 
+    # Attribute each PASSed attack probe to the ONE action it actually reproduces, by
+    # ATT&CK technique. A probe reproduces only an action whose technique matches it
+    # (both probes are T1190 Exploit Public-Facing Application); other actions that
+    # merely share the target host are NOT individually verified and must not count as
+    # reproduced (frontend-eng honesty finding: one Struts probe was marking scan/
+    # discover/exploit/hide all reproduced). When exactly one action maps and technique
+    # data is absent, the mapping is unambiguous and attributed to that single action.
+    action_by_id = {a["id"]: a for a in actions}
+
+    def _action_tech(a: dict[str, Any]) -> str:
+        return str(a.get("attack_technique") or a.get("technique_id") or "").strip()
+
+    def _tech_match(atech: str, ptech: str | None) -> bool:
+        return bool(atech) and bool(ptech) and (atech == ptech or atech.startswith(str(ptech) + "."))
+
+    probe_reproduced: set[str] = set()
+    indirect_cover: dict[str, str] = {}
+    for index, check in attack_behavior_by_index.items():
+        if check.get("status") != "PASS":
+            continue
+        ptech = check.get("technique")
+        candidates = explicit_refs_by_index.get(index, [])
+        matched = [aid for aid in candidates if _tech_match(_action_tech(action_by_id.get(aid, {})), ptech)]
+        if not matched and len(candidates) == 1:
+            matched = list(candidates)
+        probe_reproduced |= set(matched)
+        covering = sorted(matched)[0] if matched else None
+        if covering:
+            for aid in candidates:
+                if aid not in matched:
+                    indirect_cover.setdefault(aid, covering)
+
     # An action is reproduced (PASS) only when a real action-specific attack probe
-    # against the mapped target PASSed. A proven connectivity prerequisite alone is
-    # PARTIAL; a failed probe is FAIL; otherwise NOT_TESTED. A benign liveness check
-    # (HTTP 200 / pg_isready) never raises an action above PARTIAL (AR2-04 / UXR2-03).
+    # attributed to IT PASSed. A proven connectivity prerequisite alone is PARTIAL; a
+    # failed probe is FAIL; otherwise NOT_TESTED. A benign liveness check (HTTP 200 /
+    # pg_isready) never raises an action above PARTIAL (AR2-04 / UXR2-03).
     action_step_checks: list[dict[str, Any]] = []
     action_step_status: dict[str, str] = {}
     for action in actions:
@@ -859,9 +903,13 @@ def run(scenario_id: str) -> dict[str, Any]:
             status = "NOT_TESTED"
             observed = (f"目標主機 {target_nd.get('host_id')} 未部署（not deployed）：{target_nd.get('reason')}；"
                         "此動作無法驗證。")
-        elif "PASS" in attack_statuses:
+        elif action_id in probe_reproduced:
             status = "PASS"
-            observed = "An action-specific attack probe reproduced this behavior against the real target."
+            observed = "An action-specific attack probe for this technique reproduced this behavior against the real target."
+        elif action_id in indirect_cover:
+            status = "NOT_TESTED"
+            observed = (f"由同目標行為 {indirect_cover[action_id]} 的攻擊探針間接涵蓋，未單獨驗證"
+                        "（indirectly covered, not individually verified）；不計入已重現。")
         elif "FAIL" in attack_statuses:
             status = "FAIL"
             observed = "An action-specific attack probe ran but the expected effect was not observed."
