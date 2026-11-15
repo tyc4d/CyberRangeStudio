@@ -96,7 +96,7 @@ class ValidationRunnerTests(unittest.TestCase):
                          and check["id"].startswith("action-")}
         self.assertEqual(action_checks["a1"]["status"], "PARTIAL")
         self.assertEqual(action_checks["a2"]["status"], "NOT_TESTED")
-        self.assertIn("not executed", action_checks["a1"]["observed"])
+        self.assertIn("not reproduced", action_checks["a1"]["observed"])
         self.assertTrue(all("action_ref" in check for check in action_checks.values()))
         self.assertIn("every Scenario IR action", report["level_criteria"]["full_chain"])
 
