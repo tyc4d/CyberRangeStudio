@@ -152,22 +152,116 @@ def plan(scenario_id: str) -> dict[str, Any]:
     return plan_obj
 
 
-# --- stubs owned by other workers ------------------------------------------
+# --- orchestration wiring (Lead integration glue; subpackage logic is owned) -------
+def _load_ir(scenario_id: str) -> dict[str, Any]:
+    ir = store.get(scenario_id)
+    if not isinstance(ir, dict):
+        raise KeyError(scenario_id)
+    return ir
+
+
+def _service_by_id(ir: dict[str, Any], service_ref: str | None) -> dict[str, Any] | None:
+    if not service_ref:
+        return None
+    for s in ir.get("services", []) or []:
+        if isinstance(s, dict) and s.get("id") == service_ref:
+            return s
+    return None
+
+
+def _proof_for_service(service: dict[str, Any] | None) -> str | None:
+    """Map a deployed service to a runner-owned, SHA-pinned exploit verifier.
+
+    Returns a proof_id only for a service we have a *vetted* evidence verifier for.
+    No match -> None -> the action is not executed (never a fabricated/blind run).
+    """
+    if not isinstance(service, dict):
+        return None
+    from app.poc.runner import payloads
+
+    component = str(service.get("catalogue_component") or "")
+    cves = [str(c).upper() for c in (service.get("cve") or []) if c]
+    if component == "vuln-struts2-s2-045" or "CVE-2017-5638" in cves:
+        return payloads.STRUTS_S2045_PROOF_ID
+    return None
+
+
 def discover(scenario_id: str) -> dict[str, Any]:  # m9-discovery
-    raise NotImplementedError("poc.discovery owns discover()")
+    ir = _load_ir(scenario_id)
+    from app.poc import discovery
+    return discovery.discover(scenario_id, ir)
 
 
 def execute(scenario_id: str, action_ids: list[str] | None = None) -> list[dict[str, Any]]:  # m9-runner
-    raise NotImplementedError("poc.runner owns execute()")
+    """Build ExecutionRequests for poc_exec plan items that have a vetted verifier, then run them.
+
+    An action without a registered runner-owned verifier is skipped here (the plan keeps it;
+    it is never fabricated as executed). Ownership/isolation/D6 are enforced inside run_job.
+    """
+    ir = _load_ir(scenario_id)
+    plan_obj = plan(scenario_id)
+    from app.poc.runner import payloads
+    from app.poc.runner.models import ExecutionRequest
+    from app.poc.runner.runner import run_job
+
+    wanted = set(action_ids) if action_ids else None
+    requests: list[ExecutionRequest] = []
+    for item in plan_obj.get("items", []):
+        if item.get("strategy") != "poc_exec":
+            continue
+        if wanted is not None and item.get("action_id") not in wanted:
+            continue
+        service = _service_by_id(ir, item.get("service_ref"))
+        proof_id = _proof_for_service(service)
+        if not proof_id:
+            continue
+        proof = payloads.KNOWN_POC_PROOFS[proof_id]
+        requests.append(ExecutionRequest(
+            action_id=str(item.get("action_id")),
+            scenario_id=scenario_id,
+            service_ref=str(item.get("service_ref") or ""),
+            target_host_ref=item.get("target_host_ref"),
+            source_url=proof["source_url"],
+            ref={},
+            sha256=proof["sha256"],
+            exec_method=proof["exec_method"],
+            payload=proof["payload"],
+            expected_marker=proof["expected_marker"],
+            proof_id=proof_id,
+        ))
+    if not requests:
+        return []
+    return run_job(scenario_id, requests)
+
+
+def _executions(scenario_id: str) -> list[dict[str, Any]]:
+    from app.poc import store as poc_store
+    return poc_store.get_runs(scenario_id)
 
 
 def chain(scenario_id: str) -> dict[str, Any]:  # m9-chain
-    raise NotImplementedError("poc.chain owns chain()")
+    ir = _load_ir(scenario_id)
+    from app.poc import chain as chain_mod
+    return chain_mod.validate_chain(scenario_id, ir, plan(scenario_id), _executions(scenario_id))
 
 
 def report(scenario_id: str) -> dict[str, Any]:  # m9-chain
-    raise NotImplementedError("poc.chain owns report()")
+    ir = _load_ir(scenario_id)
+    from app.poc import chain as chain_mod
+    plan_obj = plan(scenario_id)
+    executions = _executions(scenario_id)
+    chain_obj = chain_mod.validate_chain(scenario_id, ir, plan_obj, executions)
+    validation_report = None
+    try:
+        from app.validator import runner as v_runner
+        validation_report = v_runner.get_latest_report(scenario_id)
+    except Exception:
+        validation_report = None
+    return chain_mod.build_fidelity_report(
+        scenario_id, ir, plan_obj, executions, chain_obj, validation_report=validation_report)
 
 
-def export(scenario_id: str) -> dict[str, Any]:  # m9-export
-    raise NotImplementedError("poc.export owns export()")
+def export(scenario_id: str, fmt: str | None = "full") -> dict[str, Any]:  # m9-export
+    _load_ir(scenario_id)  # 404 if unknown
+    from app.poc import export as export_mod
+    return export_mod.export(scenario_id, fmt)
