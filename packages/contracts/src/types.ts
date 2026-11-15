@@ -249,3 +249,134 @@ export interface ScenarioIR {
   deployments?: unknown[];
   validation?: ValidationReport;
 }
+
+// --- Module 9: PoC discovery, exploit validation & environment export ---
+// Mirrors packages/contracts/schemas/poc-validation.schema.json.
+// PocCheckStatus is CheckStatus plus BLOCKED (ownership/safety hard-stop); kept as a distinct
+// name so module 8's CheckStatus and Evidence are untouched.
+export type PocCheckStatus = "PASS" | "FAIL" | "PARTIAL" | "BLOCKED" | "NOT_TESTED";
+
+export type PocStrategy = "poc_exec" | "config_check" | "log_check" | "not_executable";
+
+export interface ValidationItem {
+  action_id: string;
+  target_host_ref?: string;
+  service_ref?: string;
+  cve?: string;
+  attack_technique?: string;
+  strategy: PocStrategy;
+  poc_required: boolean;
+  required_predecessors: string[];
+  preconditions: string[];
+  expected_evidence: string;
+  /** Required when strategy === "not_executable". Such items never become PASS. */
+  not_executable_reason?: string;
+}
+
+export interface ValidationPlan {
+  scenario_id: string;
+  generated_at: string;
+  items: ValidationItem[];
+}
+
+export interface PocRef { commit_sha?: string; release?: string; }
+
+export interface ScoreBreakdown {
+  version: number;
+  env: number;
+  code_available: number;
+  source_trust: number;
+  exec_cost: number;
+}
+
+export interface PocCandidate {
+  action_id: string;
+  cve?: string;
+  source: "github" | "exploitdb" | "nvd" | "vendor";
+  source_url: string;
+  ref: PocRef;
+  product: string;
+  version_range: string;
+  language: string;
+  dependencies: string[];
+  preconditions: string[];
+  exec_method: "python" | "bash" | "go" | "metasploit" | "http_seq" | "manual";
+  license?: string;
+  trust: "high" | "medium" | "low" | "unknown";
+  last_updated?: string;
+  compatibility_score: number;
+  score_breakdown: ScoreBreakdown;
+}
+
+/** Ranked desc by compatibility_score. */
+export interface PocManifest {
+  scenario_id: string;
+  generated_at: string;
+  items: PocCandidate[];
+}
+
+export type PocEvidenceKind =
+  | "exploit_effect" | "callback" | "file_written" | "shell_output"
+  | "state_change" | "log" | "request" | "response";
+
+export interface PocEvidence {
+  kind: PocEvidenceKind;
+  path: string;
+  sha256: string;
+  redacted: boolean;
+  note?: string;
+}
+
+export interface ExecStages {
+  started: boolean;
+  delivered: boolean;
+  responded: boolean;
+  vuln_behavior: boolean;
+  state_change: boolean;
+  action_complete: boolean;
+}
+
+export interface ExecutionResult {
+  action_id: string;
+  poc: { source_url: string; ref: PocRef; sha256: string };
+  status: PocCheckStatus;
+  stages: ExecStages;
+  evidence: PocEvidence[];
+  exit_code?: number;
+  logs_path: string;
+  failure_reason?: string;
+  confidence: number;
+  target_ownership_verified: boolean;
+  payload_sha256: string;
+  started_at: string;
+  ended_at: string;
+}
+
+export interface ChainTransfer {
+  from_action: string;
+  to_action: string;
+  carried: "cred" | "session" | "network" | "token" | "artifact";
+  verified: boolean;
+  evidence_ref?: string;
+}
+
+export interface ChainValidation {
+  scenario_id: string;
+  objective_reached: boolean;
+  passes: boolean;
+  transfers: ChainTransfer[];
+  order_ok: boolean;
+  per_action: { action_id: string; status: PocCheckStatus }[];
+}
+
+export interface ExportFile { path: string; sha256: string; generated_by: string; }
+
+export interface ExportManifest {
+  scenario_id: string;
+  scenario_version: string | number;
+  created_at: string;
+  files: ExportFile[];
+  rebuildable: boolean;
+  missing_for_rebuild: string[];
+  contains_secrets: false;
+}

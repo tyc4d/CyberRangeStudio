@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cyberrange/contracts/poc-validation.schema.json",
+  "title": "PocValidation",
+  "description": "Module 9 shapes (PoC discovery, exploit validation, environment export). The root validates a ValidationPlan; the other shapes live under definitions and are validated via cr_contracts.iter_errors_shape(shape, obj). Statuses reuse CheckStatus. Success requires concrete exploit evidence; never a 200/health/LLM opinion. See reports/overnight/m9/CONTRACT.md.",
+  "allOf": [{ "$ref": "#/definitions/ValidationPlan" }],
+  "definitions": {
+    "CheckStatus": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "PARTIAL", "BLOCKED", "NOT_TESTED"]
+    },
+
+    "ValidationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "generated_at", "items"],
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "generated_at": { "type": "string", "description": "ISO-8601 timestamp." },
+        "items": { "type": "array", "items": { "$ref": "#/definitions/ValidationItem" } }
+      }
+    },
+
+    "ValidationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "strategy", "poc_required", "required_predecessors", "preconditions", "expected_evidence"],
+      "properties": {
+        "action_id": { "type": "string" },
+        "target_host_ref": { "type": "string" },
+        "service_ref": { "type": "string" },
+        "cve": { "type": "string" },
+        "attack_technique": { "type": "string" },
+        "strategy": {
+          "type": "string",
+          "enum": ["poc_exec", "config_check", "log_check", "not_executable"]
+        },
+        "poc_required": { "type": "boolean" },
+        "required_predecessors": { "type": "array", "items": { "type": "string" } },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "expected_evidence": { "type": "string" },
+        "not_executable_reason": {
+          "type": "string",
+          "description": "Required when strategy == not_executable: closed-source/appliance with no image, needs-VM image we lack, no compatible PoC, or reproducibility == not_reproducible. not_executable items NEVER later become PASS."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "strategy": { "const": "not_executable" } } },
+          "then": { "required": ["not_executable_reason"] }
+        }
+      ]
+    },
+
+    "ScoreBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "env", "code_available", "source_trust", "exec_cost"],
+      "properties": {
+        "version": { "type": "number" },
+        "env": { "type": "number" },
+        "code_available": { "type": "number" },
+        "source_trust": { "type": "number" },
+        "exec_cost": { "type": "number" }
+      }
+    },
+
+    "PocRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit_sha": { "type": "string" },
+        "release": { "type": "string" }
+      }
+    },
+
+    "PocCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "source", "source_url", "ref", "product", "version_range", "language", "dependencies", "preconditions", "exec_method", "trust", "compatibility_score", "score_breakdown"],
+      "properties": {
+        "action_id": { "type": "string" },
+        "cve": { "type": "string" },
+        "source": { "type": "string", "enum": ["github", "exploitdb", "nvd", "vendor"] },
+        "source_url": { "type": "string" },
+        "ref": { "$ref": "#/definitions/PocRef" },
+        "product": { "type": "string" },
+        "version_range": { "type": "string" },
+        "language": { "type": "string" },
+        "dependencies": { "type": "array", "items": { "type": "string" } },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "exec_method": { "type": "string", "enum": ["python", "bash", "go", "metasploit", "http_seq", "manual"] },
+        "license": { "type": "string" },
+        "trust": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+        "last_updated": { "type": "string" },
+        "compatibility_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score_breakdown": { "$ref": "#/definitions/ScoreBreakdown" }
+      }
+    },
+
+    "PocManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "generated_at", "items"],
+      "description": "Ranked desc by compatibility_score. Name-contains-CVE is NOT sufficient.",
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "generated_at": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/definitions/PocCandidate" } }
+      }
+    },
+
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "redacted"],
+      "description": "Raw artifacts stored under DATA_DIR; secrets/creds redacted, never in DB text.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["exploit_effect", "callback", "file_written", "shell_output", "state_change", "log", "request", "response"]
+        },
+        "path": { "type": "string" },
+        "sha256": { "type": "string" },
+        "redacted": { "type": "boolean" },
+        "note": { "type": "string" }
+      }
+    },
+
+    "ExecStages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["started", "delivered", "responded", "vuln_behavior", "state_change", "action_complete"],
+      "properties": {
+        "started": { "type": "boolean" },
+        "delivered": { "type": "boolean" },
+        "responded": { "type": "boolean" },
+        "vuln_behavior": { "type": "boolean" },
+        "state_change": { "type": "boolean" },
+        "action_complete": { "type": "boolean" }
+      }
+    },
+
+    "PocExecRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_url", "ref", "sha256"],
+      "properties": {
+        "source_url": { "type": "string" },
+        "ref": { "$ref": "#/definitions/PocRef" },
+        "sha256": { "type": "string" }
+      }
+    },
+
+    "ExecutionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "poc", "status", "stages", "evidence", "logs_path", "confidence", "target_ownership_verified", "payload_sha256", "started_at", "ended_at"],
+      "description": "status=PASS iff stages.vuln_behavior==true backed by >=1 Evidence proving the exploit effect. delivered&&responded but no vuln_behavior => FAIL. Ownership not verified => BLOCKED (no execution).",
+      "properties": {
+        "action_id": { "type": "string" },
+        "poc": { "$ref": "#/definitions/PocExecRef" },
+        "status": { "$ref": "#/definitions/CheckStatus" },
+        "stages": { "$ref": "#/definitions/ExecStages" },
+        "evidence": { "type": "array", "items": { "$ref": "#/definitions/Evidence" } },
+        "exit_code": { "type": "integer" },
+        "logs_path": { "type": "string" },
+        "failure_reason": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "target_ownership_verified": { "type": "boolean" },
+        "payload_sha256": { "type": "string" },
+        "started_at": { "type": "string" },
+        "ended_at": { "type": "string" }
+      }
+    },
+
+    "ChainTransfer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_action", "to_action", "carried", "verified"],
+      "properties": {
+        "from_action": { "type": "string" },
+        "to_action": { "type": "string" },
+        "carried": { "type": "string", "enum": ["cred", "session", "network", "token", "artifact"] },
+        "verified": { "type": "boolean" },
+        "evidence_ref": { "type": "string" }
+      }
+    },
+
+    "ChainPerAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "status"],
+      "properties": {
+        "action_id": { "type": "string" },
+        "status": { "$ref": "#/definitions/CheckStatus" }
+      }
+    },
+
+    "ChainValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "objective_reached", "passes", "transfers", "order_ok", "per_action"],
+      "description": "Chain PASS iff every required action PASS AND every required transfer verified AND order follows relations[]. Never PASS from independent per-action PASSes alone.",
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "objective_reached": { "type": "boolean" },
+        "passes": { "type": "boolean" },
+        "transfers": { "type": "array", "items": { "$ref": "#/definitions/ChainTransfer" } },
+        "order_ok": { "type": "boolean" },
+        "per_action": { "type": "array", "items": { "$ref": "#/definitions/ChainPerAction" } }
+      }
+    },
+
+    "ExportFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "generated_by"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string" },
+        "generated_by": { "type": "string" }
+      }
+    },
+
+    "ExportManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "scenario_version", "created_at", "files", "rebuildable", "missing_for_rebuild", "contains_secrets"],
+      "description": "Only REAL generated IaC included; absent images/licensed material listed in missing_for_rebuild; rebuildable=false if any missing. Never writes real secrets.",
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "scenario_version": { "type": ["string", "integer"] },
+        "created_at": { "type": "string" },
+        "files": { "type": "array", "items": { "$ref": "#/definitions/ExportFile" } },
+        "rebuildable": { "type": "boolean" },
+        "missing_for_rebuild": { "type": "array", "items": { "type": "string" } },
+        "contains_secrets": { "const": false }
+      }
+    }
+  }
+}

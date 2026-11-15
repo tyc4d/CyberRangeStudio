@@ -1,0 +1,325 @@
+"""Module 9 persistence (SQLite). Separate DB file under DATA_DIR, like deployments/validation.
+
+Five tables (per CONTRACT.md): poc_plans, poc_candidates, poc_runs, poc_chains, poc_exports.
+Each stores the contract JSON verbatim plus index columns. A `job` row tracks long synchronous
+runs (state/cancel/timeout) so the GUI can poll. Raw evidence bytes are NEVER stored here — only
+paths under DATA_DIR artifacts (CONTRACT §Evidence); DB text must stay secret-free.
+"""
+from __future__ import annotations
+
+import json
+import sqlite3
+import threading
+import time
+from typing import Any, Optional
+
+from app import config
+
+_LOCK = threading.Lock()
+_DB = config.DATA_DIR / "poc.db"
+
+
+def _conn() -> sqlite3.Connection:
+    c = sqlite3.connect(_DB, timeout=30)
+    c.row_factory = sqlite3.Row
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_plans (
+            scenario_id TEXT PRIMARY KEY,
+            plan TEXT NOT NULL,
+            generated_at TEXT,
+            updated_at REAL
+        )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_candidates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id TEXT NOT NULL,
+            action_id TEXT,
+            cve TEXT,
+            compatibility_score REAL,
+            candidate TEXT NOT NULL,
+            generated_at TEXT,
+            ts REAL
+        )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id TEXT NOT NULL,
+            action_id TEXT,
+            status TEXT,
+            payload_sha256 TEXT,
+            target_ownership_verified INTEGER,
+            result TEXT NOT NULL,
+            started_at TEXT,
+            ended_at TEXT,
+            ts REAL
+        )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_chains (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id TEXT NOT NULL,
+            passes INTEGER,
+            objective_reached INTEGER,
+            chain TEXT NOT NULL,
+            ts REAL
+        )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_exports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario_id TEXT NOT NULL,
+            scenario_version TEXT,
+            bundle_path TEXT,
+            rebuildable INTEGER,
+            manifest TEXT NOT NULL,
+            ts REAL
+        )"""
+    )
+    # Job tracking for long synchronous runs: state machine the GUI polls.
+    # state in {pending, running, done, error, cancelled}; cancel is a cooperative flag.
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS poc_jobs (
+            id TEXT PRIMARY KEY,
+            scenario_id TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            state TEXT NOT NULL,
+            cancel INTEGER NOT NULL DEFAULT 0,
+            timeout_s REAL,
+            detail TEXT,
+            created_at REAL,
+            updated_at REAL
+        )"""
+    )
+    return c
+
+
+def init() -> None:
+    """Create all tables (idempotent)."""
+    with _LOCK:
+        _conn().close()
+
+
+# --- plans ------------------------------------------------------------------
+def save_plan(scenario_id: str, plan: dict[str, Any]) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "INSERT INTO poc_plans (scenario_id, plan, generated_at, updated_at) "
+                "VALUES (?,?,?,?) ON CONFLICT(scenario_id) DO UPDATE SET "
+                "plan=excluded.plan, generated_at=excluded.generated_at, updated_at=excluded.updated_at",
+                (scenario_id, json.dumps(plan), plan.get("generated_at"), time.time()),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def get_plan(scenario_id: str) -> Optional[dict[str, Any]]:
+    with _LOCK:
+        c = _conn()
+        try:
+            row = c.execute(
+                "SELECT plan FROM poc_plans WHERE scenario_id=?", (scenario_id,)
+            ).fetchone()
+        finally:
+            c.close()
+    return json.loads(row["plan"]) if row else None
+
+
+# --- candidates -------------------------------------------------------------
+def save_manifest(scenario_id: str, manifest: dict[str, Any]) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute("DELETE FROM poc_candidates WHERE scenario_id=?", (scenario_id,))
+            for cand in manifest.get("items", []):
+                c.execute(
+                    "INSERT INTO poc_candidates (scenario_id, action_id, cve, "
+                    "compatibility_score, candidate, generated_at, ts) VALUES (?,?,?,?,?,?,?)",
+                    (
+                        scenario_id,
+                        cand.get("action_id"),
+                        cand.get("cve"),
+                        cand.get("compatibility_score"),
+                        json.dumps(cand),
+                        manifest.get("generated_at"),
+                        time.time(),
+                    ),
+                )
+            c.commit()
+        finally:
+            c.close()
+
+
+def get_manifest(scenario_id: str) -> Optional[dict[str, Any]]:
+    with _LOCK:
+        c = _conn()
+        try:
+            rows = c.execute(
+                "SELECT candidate, generated_at FROM poc_candidates WHERE scenario_id=? "
+                "ORDER BY compatibility_score DESC",
+                (scenario_id,),
+            ).fetchall()
+        finally:
+            c.close()
+    if not rows:
+        return None
+    return {
+        "scenario_id": scenario_id,
+        "generated_at": rows[0]["generated_at"],
+        "items": [json.loads(r["candidate"]) for r in rows],
+    }
+
+
+# --- runs -------------------------------------------------------------------
+def save_run(scenario_id: str, result: dict[str, Any]) -> int:
+    with _LOCK:
+        c = _conn()
+        try:
+            cur = c.execute(
+                "INSERT INTO poc_runs (scenario_id, action_id, status, payload_sha256, "
+                "target_ownership_verified, result, started_at, ended_at, ts) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (
+                    scenario_id,
+                    result.get("action_id"),
+                    result.get("status"),
+                    result.get("payload_sha256"),
+                    1 if result.get("target_ownership_verified") else 0,
+                    json.dumps(result),
+                    result.get("started_at"),
+                    result.get("ended_at"),
+                    time.time(),
+                ),
+            )
+            c.commit()
+            return int(cur.lastrowid)
+        finally:
+            c.close()
+
+
+def get_runs(scenario_id: str) -> list[dict[str, Any]]:
+    with _LOCK:
+        c = _conn()
+        try:
+            rows = c.execute(
+                "SELECT result FROM poc_runs WHERE scenario_id=? ORDER BY id", (scenario_id,)
+            ).fetchall()
+        finally:
+            c.close()
+    return [json.loads(r["result"]) for r in rows]
+
+
+# --- chains -----------------------------------------------------------------
+def save_chain(scenario_id: str, chain: dict[str, Any]) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "INSERT INTO poc_chains (scenario_id, passes, objective_reached, chain, ts) "
+                "VALUES (?,?,?,?,?)",
+                (
+                    scenario_id,
+                    1 if chain.get("passes") else 0,
+                    1 if chain.get("objective_reached") else 0,
+                    json.dumps(chain),
+                    time.time(),
+                ),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def get_chain(scenario_id: str) -> Optional[dict[str, Any]]:
+    with _LOCK:
+        c = _conn()
+        try:
+            row = c.execute(
+                "SELECT chain FROM poc_chains WHERE scenario_id=? ORDER BY id DESC LIMIT 1",
+                (scenario_id,),
+            ).fetchone()
+        finally:
+            c.close()
+    return json.loads(row["chain"]) if row else None
+
+
+# --- exports ----------------------------------------------------------------
+def save_export(scenario_id: str, bundle_path: str, manifest: dict[str, Any]) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "INSERT INTO poc_exports (scenario_id, scenario_version, bundle_path, "
+                "rebuildable, manifest, ts) VALUES (?,?,?,?,?,?)",
+                (
+                    scenario_id,
+                    str(manifest.get("scenario_version", "")),
+                    bundle_path,
+                    1 if manifest.get("rebuildable") else 0,
+                    json.dumps(manifest),
+                    time.time(),
+                ),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+# --- jobs (poll state for the GUI) -----------------------------------------
+def create_job(job_id: str, scenario_id: str, kind: str, timeout_s: float | None = None) -> None:
+    now = time.time()
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "INSERT INTO poc_jobs (id, scenario_id, kind, state, cancel, timeout_s, "
+                "created_at, updated_at) VALUES (?,?,?,?,0,?,?,?)",
+                (job_id, scenario_id, kind, "pending", timeout_s, now, now),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def set_job_state(job_id: str, state: str, detail: str | None = None) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "UPDATE poc_jobs SET state=?, detail=?, updated_at=? WHERE id=?",
+                (state, detail, time.time(), job_id),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def request_cancel(job_id: str) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "UPDATE poc_jobs SET cancel=1, updated_at=? WHERE id=?", (time.time(), job_id)
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def get_job(job_id: str) -> Optional[dict[str, Any]]:
+    with _LOCK:
+        c = _conn()
+        try:
+            row = c.execute("SELECT * FROM poc_jobs WHERE id=?", (job_id,)).fetchone()
+        finally:
+            c.close()
+    return dict(row) if row else None
+
+
+def is_cancelled(job_id: str) -> bool:
+    job = get_job(job_id)
+    return bool(job and job["cancel"])
