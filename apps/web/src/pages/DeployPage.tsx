@@ -94,6 +94,28 @@ const REASON_ZH: Record<string, string> = {
   "compose file has not been generated": "尚未生成 IaC（沒有 compose 檔）",
 };
 
+// Known Proxmox preflight refusals (apps/api/app/deploy/backends/proxmox.py). Anything else is shown verbatim.
+const PVE_REASON: [RegExp, string][] = [
+  [/runtime VM quota is exhausted/, "cr-range 執行中 VM 配額已用完（已有 worker VM 或執行中 VM 達上限）"],
+  [/memory budget is exhausted/, "cr-range 記憶體預算已用完，請通知產品負責人"],
+  [/insufficient node memory/, "PVE 節點可用記憶體不足，請通知產品負責人（不會停止既有 VM）"],
+  [/insufficient local-lvm space/, "local-lvm 儲存空間不足，請通知產品負責人"],
+  [/worker template 900000 failed/, "worker 範本 900000 驗證未通過"],
+  [/not the approved 9\.2\.x/, "PVE 版本不是核准的 9.2.x"],
+  [/outside the approved product VMID range/, "cr-range 內有不在核准 VMID 範圍的 VM"],
+  [/active \S+ deployment/, "此情境在另一個部署後端仍有執行中的部署，需先切換到該後端關閉"],
+];
+
+/** Reason the loaded Proxmox preflight refuses deployment, or undefined when it reports ready. */
+function pveBlockReason(pf: any): { label: string; raw?: string } | undefined {
+  const parts = [pf, pf?.capacity, pf?.isolation].filter((x) => x && typeof x === "object");
+  const refused = parts.some((x) => x.ok === false || x.state === "unavailable");
+  if (!refused) return undefined;
+  const raw = parts.map((x) => x.error ?? x.reason).find((v) => typeof v === "string" && v.trim()) as string | undefined;
+  const hit = raw ? PVE_REASON.find(([re]) => re.test(raw)) : undefined;
+  return { label: hit ? hit[1] : raw ?? "PVE 回報未就緒（未提供原因）", raw };
+}
+
 function Body({ ir }: { ir: ScenarioIR }) {
   const { reload: reloadIr } = useScenario();
   const status = useLoad(() => api.deployStatus(ir.id), [ir.id]);
@@ -124,11 +146,16 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const iacMissing = !!iac.error && iac.error.status === 404 && iac.error.kind === "error";
   // 409 = the stored plan no longer passes the IaC checks (the API answers with the failing report).
   const iacBlocked = iac.data?.report?.deployable === false || iac.error?.status === 409;
-  const upBlock = !approved ? "需先在「拓樸」頁核准拓樸" : iacMissing ? "需先在「IaC 預覽」頁生成 IaC" : iacBlocked ? "IaC 檢查報告判定目前不可部署" : undefined;
 
   const s = status.data;
-  const backend = s && typeof s === "object" ? s.backend : undefined;
-  const isProxmox = backend === "proxmox";
+  const pf = preflight.data && typeof preflight.data === "object" ? preflight.data : null;
+  const backend = s && typeof s === "object" ? s.backend : pf?.backend;
+  const isProxmox = backend === "proxmox" || pf?.backend === "proxmox";
+  // Proxmox only: a preflight that loaded (no request error) and explicitly reports not-ready. A failed or pending request
+  // is NOT a confirmed refusal and must not be shown as one; the backend still re-checks capacity on "up".
+  const pveUnavailable = isProxmox && !!pf && !preflight.error ? pveBlockReason(pf) : undefined;
+  const upBlock = !approved ? "需先在「拓樸」頁核准拓樸" : iacMissing ? "需先在「IaC 預覽」頁生成 IaC" : iacBlocked ? "IaC 檢查報告判定目前不可部署"
+    : pveUnavailable ? `PVE 部署前檢查判定目前不可部署：${pveUnavailable.label}` : undefined;
   const targetName = isProxmox ? "Proxmox worker VM" : backend === "local-docker" ? "本機 Docker" : "隔離執行環境";
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
   const state = typeof stateRaw === "string" ? stateRaw : undefined;
@@ -180,6 +207,18 @@ function Body({ ir }: { ir: ScenarioIR }) {
           action={<Link to="/iac"><button className="small">查看 IaC 報告</button></Link>}>
           已生成的設定沒有通過可部署檢查，因此「啟動」停用。請依「IaC 預覽」頁的報告修正後重新生成。
         </Notice>
+      )}
+      {isProxmox && pveUnavailable && (
+        <Notice kind="err" title="PVE 部署前檢查：目前不可部署" >
+          <span data-testid="pve-preflight-block">{pveUnavailable.label}</span>
+          {pveUnavailable.raw && pveUnavailable.raw !== pveUnavailable.label && <> <span className="mono muted" style={{ fontSize: 12, overflowWrap: "anywhere" }}>（{pveUnavailable.raw}）</span></>}
+          <div className="muted" style={{ marginTop: 6 }}>因此「啟動」停用。這是 PVE 回報的實際檢查結果；系統不會為騰出空間而停止或刪除既有機器。</div>
+          <div style={{ marginTop: 8 }}><button className="small" onClick={() => preflight.reload()} disabled={preflight.loading}>重新檢查</button></div>
+        </Notice>
+      )}
+      {isProxmox && !pf && preflight.loading && <Notice kind="info">正在向 PVE 檢查容量與隔離設定…</Notice>}
+      {isProxmox && preflight.error && (
+        <ApiNotice error={preflight.error} what="PVE 部署前檢查（無法取得結果，未確認容量；啟動時後端仍會再檢查）" onRetry={() => preflight.reload()} />
       )}
       {up.busy && <div className="card"><Busy label="啟動中，正在建立網路與容器…" elapsed={up.elapsed} /></div>}
       {down.busy && <div className="card"><Busy label="關閉中，正在移除容器…" elapsed={down.elapsed} /></div>}
