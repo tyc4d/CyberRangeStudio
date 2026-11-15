@@ -327,7 +327,9 @@ function ExportManifestView({ manifest, bundlePath }: { manifest: ExportManifest
 
 /* ---------- page body ---------- */
 
-function Body({ ir }: { ir: ScenarioIR }) {
+// __pocGen is a per-scenario response-generation counter kept on the IR object (the only handle shared by the
+// execute/chain/report callbacks). It is non-enumerable, so it is never serialized back to the backend.
+function Body({ ir }: { ir: ScenarioIR & { __pocGen?: number } }) {
   const actionName = useMemo(() => new Map(ir.actions.map((a) => [a.id, a.name])), [ir.actions]);
 
   const [plan, setPlan] = useState<ValidationPlan | null>(null);
@@ -349,9 +351,20 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   const planAct = useAction(async () => { const d = await api.poc.plan(ir.id); setPlan(d); return d; });
   const discoverAct = useAction(async () => { const d = await api.poc.discover(ir.id); setCandidates(d.items ?? []); return d; });
-  const reportAct = useAction(async () => { const d = await api.poc.report(ir.id); setReport(d); return d; });
+  const reportAct = useAction(async () => {
+    const g = (ir.__pocGen || 0) + 1;
+    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
+    const d = await api.poc.report(ir.id);
+    // Drop a late response: a newer execute/chain/report has already superseded this one. R4-02.
+    if (ir.__pocGen === g) setReport(d);
+    return d;
+  });
   const chainAct = useAction(async () => {
-    const d = await api.poc.chain(ir.id); setChain(d); void reportAct.run(); return d;
+    const g = (ir.__pocGen || 0) + 1;
+    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
+    const d = await api.poc.chain(ir.id);
+    if (ir.__pocGen !== g) return d;
+    setChain(d); void reportAct.run(); return d;
   });
   const execAct = useAction(async () => {
     const ctrl = new AbortController();
@@ -359,14 +372,17 @@ function Body({ ir }: { ir: ScenarioIR }) {
     setStopped(false);
     setCancelling(false);
     setLive(null);
-    // A new run invalidates the previous verification snapshot: the old chain roll-up and fidelity report are
-    // stale the moment we re-execute, so clear them before the run. An action must never keep a PASS badge or be
-    // counted verified from a prior run until THIS run re-verifies it (owner rule: no stale manufactured pass). R3-02.
+    const g = (ir.__pocGen || 0) + 1;
+    Object.defineProperty(ir, "__pocGen", { value: g, writable: true, enumerable: false, configurable: true });
+    // A new run invalidates the previous verification snapshot — raw results, chain roll-up AND fidelity report —
+    // BEFORE the request goes out, so a pending or rejected/aborted rerun cannot leave a stale PASS badge or a wrong
+    // unverified count. The generation guard (g) then stops a late OLD execute/chain/report response from
+    // overwriting newer state. No action stays counted verified from a prior run. R4-02 / R3-02.
+    setResults(null);
     setChain(null);
     setReport(null);
     const d = await api.poc.execute(ir.id, Array.from(selected), ctrl.signal);
-    setResults(d);
-    void reportAct.run();
+    if (ir.__pocGen === g) { setResults(d); void reportAct.run(); }
     return d;
   });
   const exportAct = useAction(async () => { const d = await api.poc.export(ir.id, format); setBundle(d); setDlUnavail(false); return d; });
@@ -420,12 +436,35 @@ function Body({ ir }: { ir: ScenarioIR }) {
     abortRef.current?.abort();
     if (!accepted) { setCancelling(false); return; }
     const TERMINAL = ["cancelled", "canceled", "stopped", "terminated", "done", "complete", "completed", "failed", "error", "timeout"];
+    // Confirm "stopped" only when the SPECIFIC job(s) this cancel targeted reach a terminal state — identified by
+    // the cancel_requested flag the runner sets on them — not when a newer job finishes. Those jobs are done when
+    // they are terminal in jobs[] and no longer appear in active_jobs. If the backend exposes no per-job identity
+    // (older/compat shape), fall back to the scenario-summary job_state (running while ANY job is active). R4-03.
+    let cancelledIds = [];
     if (typeof api.poc.executeStatus === "function") {
       for (let i = 0; i < 40; i++) {
         let s;
         try { s = await api.poc.executeStatus(ir.id); } catch { break; }
-        const state = s && (s.job_state || s.state);
-        if (typeof state === "string" && TERMINAL.includes(state.toLowerCase())) { setStopped(true); break; }
+        const jobs = (s && s.jobs) || [];
+        if (cancelledIds.length === 0) {
+          for (const j of jobs) { if (j && j.cancel_requested) { const id = j.job_id || j.id; if (id != null) cancelledIds.push(id); } }
+        }
+        let done = false;
+        if (cancelledIds.length > 0) {
+          const active = (s && s.active_jobs) || [];
+          done = true;
+          for (const id of cancelledIds) {
+            let stillActive = false;
+            for (const a of active) { if (a && (a.job_id || a.id) === id) { stillActive = true; break; } }
+            let terminal = false;
+            for (const j of jobs) { if (j && (j.job_id || j.id) === id) { const st = j.state; terminal = typeof st === "string" && TERMINAL.includes(st.toLowerCase()); break; } }
+            if (stillActive || !terminal) { done = false; break; }
+          }
+        } else {
+          const st = s && (s.job_state || s.selected_job_state || s.state);
+          done = typeof st === "string" && TERMINAL.includes(st.toLowerCase());
+        }
+        if (done) { setStopped(true); break; }
         await new Promise((res) => setTimeout(res, 1000));
       }
     }
@@ -479,30 +518,28 @@ function Body({ ir }: { ir: ScenarioIR }) {
     const chainActions = chain?.per_action ?? [];
 
     const f = report?.fidelity;
-    const scenarioRepro = Array.isArray(f?.reproduced) ? f.reproduced.length : vulnPassed;
-    const scenarioTotal = f
-      ? (f.reproduced?.length ?? 0) + (f.partial?.length ?? 0) + (f.not_reproduced?.length ?? 0) + (f.not_tested?.length ?? 0)
-      : planTotal;
 
-    // Unverified = every action in scope that is NOT confirmed by CURRENT valid verification. "Verified" is decided
-    // by the chain roll-up first (its per-action verdict is the most current signal): an action the chain covers is
-    // verified ONLY if that entry is PASS, so a current BLOCKED/FAIL/PARTIAL overrides a stale report that still
-    // lists the action as reproduced. Only when the chain does not cover an action does the fidelity report decide.
-    // A raw runner status=='PASS' never counts on its own (it can be invalidated by a later IR change / redeploy /
-    // altered artifact), so not-yet-executed, skipped, not_executable, BLOCKED and invalidated actions all stay
-    // counted as unverified (owner rule: never a manufactured pass). review2 R2-08 + review3 R3-02.
+    // One verification rule shared by the scenario-fidelity and unverified metrics. An action is "verified" only by
+    // CURRENT valid verification, decided by the chain roll-up first (its per-action verdict is the most current
+    // signal): an action the chain covers is verified ONLY if that entry is PASS, so a current BLOCKED/FAIL/PARTIAL
+    // overrides a stale report that still lists the action as reproduced. Only when the chain does not cover an
+    // action does the fidelity report decide. A raw runner status=='PASS' never counts on its own (it can be
+    // invalidated by a later IR change / redeploy / altered artifact), so not-yet-executed, skipped, not_executable,
+    // BLOCKED and invalidated actions all stay counted as unverified (owner rule: no manufactured pass).
+    // review2 R2-08 + review3 R3-02 + review4 R4-02.
     const reproducedIds = new Set(Array.isArray(f?.reproduced) ? f.reproduced : []);
     const chainStatus = new Map();
     (chain?.per_action ?? []).forEach((p) => chainStatus.set(p.action_id, p.status));
     const universe = planTotal ? items.map((it) => it.action_id) : res.map((r) => r.action_id);
-    const unverifiedCount = universe.filter((id) => !(chainStatus.has(id) ? chainStatus.get(id) === "PASS" : reproducedIds.has(id))).length;
+    const verifiedCount = universe.filter((id) => (chainStatus.has(id) ? chainStatus.get(id) === "PASS" : reproducedIds.has(id))).length;
+    const unverifiedCount = universe.length - verifiedCount;
 
     return {
       any: planTotal > 0 || res.length > 0 || chainActions.length > 0,
       deploy: planTotal ? { n: deployReady, total: planTotal } : undefined,
       vuln: res.length ? { n: vulnPassed, total: res.length } : undefined,
       chain: chain ? { n: chainReached ? 1 : 0, total: 1 } : undefined,
-      scenario: scenarioTotal ? { n: scenarioRepro, total: scenarioTotal } : undefined,
+      scenario: universe.length ? { n: verifiedCount, total: universe.length } : undefined,
       unverified: universe.length ? { n: unverifiedCount, total: universe.length } : undefined,
     };
   }, [plan, results, chain, report]);
