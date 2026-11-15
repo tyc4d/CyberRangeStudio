@@ -129,3 +129,10 @@ Lead 於 infra 宿主機隔離修復（a7fd8c6）併入 main 後授權開跑。�
 - **其餘 AA22-320A 步驟**：Horizon 真實 RCE（B1）與 Windows/AD 專屬步驟（B3/B8/B10–B17）如實標 BLOCKED（無映像／需 Windows VM，本輪未建）。
 - 結果草稿寫入 `reports/overnight/E2E-RESULTS.md`（PoC 章節）。
 - 新檔：`tests/e2e/phase3-real-poc/`（guard.py、compose.struts.yml、compose.log4shell.yml、run_struts_s2045.py、run_log4shell_solr.py、poc_common.py、expected.md、run_real_vuln.md 已不需要可留存、test_guard.py〔6 passed〕、app/listener.py）。
+
+## 里程碑 7：驗證報告顯示原軟體名稱（substitute_for，「以 X 頂替 Y」）
+
+scenario-eng@592e1c7 併入 main（77a3ab7）後已 `git merge main`。
+- 驗證器 `fidelity.substitutes_used` 現以 Module 5 的 `substitute_for`（來源指名的原始軟體）作為 `real` 欄位，報告讀作「以 <substitute> 頂替 <real>」（例：以 nginx 頂替 Microsoft IIS），不再用替身自己的 image id；無原始名稱時退回 image_hint/component。`difference` 採 inspect_plan 的 `fidelity_difference`，並附 `substitute_basis` 依據。
+- 重構為 `_build_substitutes()` 並加單元測試 `test_substitutes_name_the_original_software`（verify real=原始名稱、真實元件不列入、無原始名稱退回）。
+- 清理：移除我名下殘留 `cr-demo-poc-mh-b87605`（多網路測試 teardown 被中斷者）之容器與網路；其餘 `cr-demo-scn_*`／`cr-demo-infra-*` 非我所建，未動。
