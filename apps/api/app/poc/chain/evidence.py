@@ -152,9 +152,23 @@ def execution_log(result: Any) -> dict[str, Any] | None:
         if start is None or end is None or start > end:
             return None
         ownership = log.get("ownership")
-        if not isinstance(ownership, dict) or ownership.get("scenario_id") != scenario_id or not ownership.get("service_ref"):
-            return None
         if not isinstance(log.get("evidence"), list):
+            return None
+        # A prerequisite/ownership gate can stop an attempt before any target is
+        # inspected. Its hashed job identity is still valid for batch grouping,
+        # without attesting ownership or exploit effect. verify_execution keeps
+        # this record BLOCKED; executed results retain the ownership requirement.
+        stages = _get(result, "stages", {}) or {}
+        gated_block = (
+            _get(result, "status") == "BLOCKED" and ownership is None
+            and _get(result, "target_ownership_verified") is False
+            and all(_get(stages, key) is False for key in (
+                "started", "delivered", "responded", "vuln_behavior", "state_change", "action_complete"))
+            and not log["evidence"]
+            and all(_get(e, "kind") == "log" for e in (_get(result, "evidence", []) or []))
+        )
+        if not gated_block and (not isinstance(ownership, dict)
+                                or ownership.get("scenario_id") != scenario_id or not ownership.get("service_ref")):
             return None
         # Every attached effect must be in the immutable log and in THIS run's directory.
         for evidence in (_get(result, "evidence", []) or []):
