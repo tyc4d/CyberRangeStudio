@@ -15,6 +15,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from app import config, store as scenario_store
 from app.deploy import manager
 from app.poc import store as poc_store
+from app.poc.chain.evidence import scenario_digest
 from app.poc.models import Evidence, ExecStages, ExecutionResult
 
 from .adapters import get_adapter
@@ -65,20 +66,35 @@ def _write_artifact(path: Path, content: str) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _run_context(request: ExecutionRequest, run_id: str, started: str,
+def _run_context(request: ExecutionRequest, run_id: str,
                  ownership: dict[str, Any] | None) -> dict[str, Any]:
     """Bind hashed log evidence to this attempt, IR snapshot, and deployment."""
     ir = scenario_store.get(request.scenario_id)
-    scenario_sha = None
+    context: dict[str, Any] = {"run_id": run_id, "scenario_id": request.scenario_id}
+    if request.job_id is not None:
+        context["job_id"] = request.job_id
     if isinstance(ir, dict):
-        canonical = json.dumps(ir, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        scenario_sha = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    return {"run_id": run_id, "scenario_id": request.scenario_id, "action_id": request.action_id,
-            "job_id": request.job_id,
-            "scenario_sha256": scenario_sha, "started_at": started,
-            "payload_sha256": hashlib.sha256(request.payload.encode("utf-8")).hexdigest(),
-            "deployment_record_id": (ownership or {}).get("deployment_record_id"),
-            "ownership": ownership}
+        context["scenario_sha256"] = scenario_digest(ir)
+    deployment_id = (ownership or {}).get("deployment_record_id")
+    if type(deployment_id) is int and deployment_id > 0:
+        context["deployment_record_id"] = deployment_id
+    return context
+
+
+def _record_result(request: ExecutionRequest, result: ExecutionResult, context: dict[str, Any],
+                   ownership: dict[str, Any] | None, output: str,
+                   cleanup_note: str | None = None) -> ExecutionResult:
+    """Hash the completed attempt and bind its effects before adding the log's own hash."""
+    log = {"action_id": result.action_id, "status": result.status,
+           "started_at": result.started_at, "ended_at": result.ended_at,
+           "payload_sha256": result.payload_sha256, "proof_id": request.proof_id,
+           "context": context, "ownership": ownership,
+           "evidence": [asdict(item) for item in result.evidence],
+           "output": output, "reason": result.failure_reason, "cleanup": cleanup_note}
+    digest = _write_artifact(config.DATA_DIR / result.logs_path,
+                             json.dumps(log, ensure_ascii=False, sort_keys=True))
+    result.evidence.append(Evidence("log", result.logs_path, digest, True, "redacted runner log"))
+    return result
 
 
 def _result_dict(result: ExecutionResult) -> dict[str, Any]:
@@ -180,11 +196,9 @@ class SandboxRunner:
         payload_hash = hashlib.sha256(request.payload.encode("utf-8")).hexdigest()
         ref = dict(request.ref or {})
         safe_scenario = hashlib.sha256(request.scenario_id.encode("utf-8")).hexdigest()[:16]
-        safe_action = hashlib.sha256(request.action_id.encode("utf-8")).hexdigest()[:16]
         run_id = uuid.uuid4().hex
-        run_directory = f"poc-runs/{safe_scenario}/{safe_action}/{run_id}"
+        run_directory = f"poc-runs/{safe_scenario}/{run_id}"
         logs_path = f"{run_directory}/output.log"
-        artifact = config.DATA_DIR / logs_path
         poc = {"source_url": _redact_url(request.source_url),
                "ref": {key: _redact(str(value)) for key, value in ref.items()},
                "sha256": request.sha256}
@@ -205,16 +219,11 @@ class SandboxRunner:
         except TargetBlocked as exc:
             reason = str(exc)
             output = "BLOCKED: ownership/isolation not verified; payload was not executed."
-            log_text = json.dumps({"context": _run_context(request, run_id, started, None),
-                                   "status": "BLOCKED", "output": output, "reason": reason},
-                                  ensure_ascii=False, sort_keys=True)
-            digest = _write_artifact(artifact, log_text)
-            return ExecutionResult(request.action_id, poc, "BLOCKED", stages, logs_path, confidence,
-                                   False, payload_hash, started, _now(), evidence=[Evidence(
-                                       "log", logs_path, digest, True, "ownership guard blocked execution")],
-                                   failure_reason=reason)
+            result = ExecutionResult(request.action_id, poc, "BLOCKED", stages, logs_path, confidence,
+                                     False, payload_hash, started, _now(), failure_reason=reason)
+            return _record_result(request, result, _run_context(request, run_id, None), None, output)
 
-        context = _run_context(request, run_id, started, ownership)
+        context = _run_context(request, run_id, ownership)
         stages.started = True
         _emit_progress(request, stages)
         adapter = get_adapter(request.exec_method)
@@ -289,15 +298,10 @@ class SandboxRunner:
             prepared = adapter.prepare(AdapterInput(request.payload))
             status, reason = "BLOCKED", prepared.blocked_reason or "adapter is not supported by the pinned sandbox"
 
-        log_text = json.dumps({"context": context, "action_id": request.action_id, "status": status,
-                               "ownership": ownership, "output": output, "reason": reason,
-                               "cleanup": cleanup_note},
-                              ensure_ascii=False, sort_keys=True)
-        digest = _write_artifact(artifact, log_text)
-        evidence.append(Evidence("log", logs_path, digest, True, "redacted runner log"))
-        return ExecutionResult(request.action_id, poc, status, stages, logs_path, confidence,
-                               True, payload_hash, started, _now(), evidence=evidence,
-                               exit_code=exit_code, failure_reason=reason)
+        result = ExecutionResult(request.action_id, poc, status, stages, logs_path, confidence,
+                                 True, payload_hash, started, _now(), evidence=evidence,
+                                 exit_code=exit_code, failure_reason=reason)
+        return _record_result(request, result, context, ownership, output, cleanup_note)
 
 
 class _JobCancellation:
