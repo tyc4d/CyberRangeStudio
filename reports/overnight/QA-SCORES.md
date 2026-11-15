@@ -11,5 +11,14 @@
 
 三位測試者皆回報：系統沒有假 PASS、不支援的元件被如實拒絕部署。
 
-## Round 2
-尚未開始——等修復分支通過審查並整合進 main、重啟 QA 站台後進行。
+## Round 2（凍結版 tag `qa-round2` = main 43ba325；全新測試者、真實 Chromium、Codex gpt-6.1-sol Ultra、Fast 關閉）
+| 測試者 | 分數 | 結論 | High | 報告 |
+|---|---:|---|---|---|
+| qa-instructor-r2（講師：Equifax＋CISA AA22-320A） | 45 | 未達標；Equifax 卡 IaC，PoC／全鏈／最終報告未測（該項 0/15） | 4 High／2 Medium／1 Low | `qa/round2/qa-instructor-r2.md`（74 截圖＋trace） |
+| qa-admin-r2（管理者：Equifax 教學替代＋Demo 同時部署） | 54 | 未達標；雙場景真實部署、逐一清除重建通過；完整攻擊鏈仍 PARTIAL | 4 High／5 Medium／1 Low | `qa/round2/qa-admin-r2.md` |
+| qa-ux-r2（UX：Clop MOVEit＋負向情資） | 62 | 未達標；原始 MOVEit 與不足情資正確阻擋；nginx 教學替代真實部署／驗證／清除 | 3 High／6 Medium／1 Low | `qa/round2/qa-ux-r2.md`（251 截圖＋3 trace） |
+
+與 Round 1 相比：講師 43→45、管理者 54→54、UX 53→62。Round 1 的 High（關係被洗成使用者、主機合併、撞埠）已不再出現；Round 2 換了更嚴格的情資（可部署的 Equifax 鏈）後暴露新的 High，見 `qa/round2/TRIAGE.md`。**門檻未達，持續修復。**
+
+## Round 3
+尚未開始——待 Round 2 問題修復、審查、整合後凍結新版本。
