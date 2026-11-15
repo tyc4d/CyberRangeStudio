@@ -25,6 +25,10 @@ No mock tests, local Docker deployment, vulnerability image, exploit probe, exte
 
 The existing generated Compose approval marker still says `local PoC`. It is only a comment, while the API gate is backend-neutral; changing the marker would change the Compose fingerprint and make existing generated plans stale, so it remains unchanged in this integration.
 
+## QA runtime cutover
+
+After the UI smoke passed, the old `qa-site` API/UI and `codex-integrate` preview API/UI plus their two LAN proxies were stopped. The candidate branch was brought up on the standard local ports (`127.0.0.1:8077` API and `127.0.0.1:5177` web); LAN proxies now expose those same ports at `192.168.16.213` with a source allowlist of `192.168.0.0/16`. Both local and LAN preflight requests returned `backend=proxmox`, `mode=live`, PVE 9.2.2, current IaC, and zero workers. A browser check through the LAN URL showed the PVE target, isolation notice, `not_created` state, and no JavaScript errors. No scenario VM or CRS Docker containers remained running after cutover; unrelated Docker services were left running.
+
 ## Verification boundary
 
 `py_compile`, `tsc --noEmit`, and `git diff --check` passed after the code changes. The browser run was a manual real-service flow, not the automated test suite; no mocks were used. This is one single-worker internal deployment lifecycle; it does not establish concurrent API-worker safety, external client access, vulnerability-image deployment/probe behavior, or general production readiness. Live mode remains explicitly gated. Uncertain clone outcomes require manual reconciliation.
