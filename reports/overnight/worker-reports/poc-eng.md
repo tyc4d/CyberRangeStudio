@@ -136,3 +136,24 @@ scenario-eng@592e1c7 併入 main（77a3ab7）後已 `git merge main`。
 - 驗證器 `fidelity.substitutes_used` 現以 Module 5 的 `substitute_for`（來源指名的原始軟體）作為 `real` 欄位，報告讀作「以 <substitute> 頂替 <real>」（例：以 nginx 頂替 Microsoft IIS），不再用替身自己的 image id；無原始名稱時退回 image_hint/component。`difference` 採 inspect_plan 的 `fidelity_difference`，並附 `substitute_basis` 依據。
 - 重構為 `_build_substitutes()` 並加單元測試 `test_substitutes_name_the_original_software`（verify real=原始名稱、真實元件不列入、無原始名稱退回）。
 - 清理：移除我名下殘留 `cr-demo-poc-mh-b87605`（多網路測試 teardown 被中斷者）之容器與網路；其餘 `cr-demo-scn_*`／`cr-demo-infra-*` 非我所建，未動。
+
+## 里程碑 8：Round 2 QA 修復（模組 8，AR2-04／UXR2-03）
+
+讀畢 round2 三份 QA 報告中與模組 8 有關的全部問題與扣分理由（admin AR2-04、ux UXR2-03、評分表 PoC 15 分項）。核心問題：behavior_repro 因 HTTP 200／pg_isready 這類健康檢查而 PASS，摘要寫「行為重現通過」，與分析頁「0/5 可重現」矛盾；核心攻擊行為無動作專屬驗證。
+
+根因修復（`apps/api/app/validator/runner.py`）：
+1. **行為重現層改由『動作專屬攻擊探針』驅動**：良性服務存活（HTTP 200／pg_isready）改歸類為 `connectivity`（服務存活證據），**不再計入 behavior_repro**，故不會因首頁回應而 PASS。
+2. **把 Phase 3 動作專屬探針接進產品驗證流程**：目標為 catalogue 漏洞映像且在**隔離守門**通過時，真的對該動作執行探針——`vuln-struts2-s2-045` 跑 Struts OGNL 求值（觀測回應標頭 `vulhub:54289`）→ 行為與動作判 PASS（真實重現）。`vuln-log4shell-solr` 在產品計畫缺 in-lab listener 時標 NOT_TESTED 並指向 Phase 3 獨立 harness（不假 PASS）。非漏洞替代目標／有情境動作者標 NOT_TESTED（教學替代，未重現）。
+3. **執行前隔離守門保留**：攻擊探針只在來源容器連不到宿主機閘道:22 與公網時才執行，否則該探針 NOT_TESTED（不強跑）。
+4. **動作重現判定**：動作唯有在動作專屬攻擊探針觀測到效果時才 PASS（真實重現）；探針失敗 FAIL；僅連通性前置成立 PARTIAL；否則 NOT_TESTED。移除舊的「full_chain 一律降 PARTIAL」夾制（攻擊現在可真實執行）。
+5. **摘要與 level_criteria 改為誠實文字**：明說服務存活不等於攻擊行為重現。
+
+測試：
+- 單元 `test_runner.py` 11 passed（更新既有斷言以符合新語意）。
+- **真實產品流程** `tests/e2e/test_struts_product_validation.py`：經 API generate→approve→up 部署真實 vulhub struts，驗證器跑 OGNL 探針→`vulhub:54289`→動作 a1=PASS（真實重現）、behavior_repro=PASS；實跑 26s 通過。
+- 更新 `test_local_compose_integration.py`：無攻擊動作的 demo 場景 behavior_repro 由 PASS 改為 NOT_TESTED（誠實），其餘 check 仍全 PASS。
+- 全套件 **189 passed, 3 subtests passed**。
+
+### 需其他人配合的介面變更（已回報 Lead）
+- **frontend-eng**：驗證器現在只對「動作專屬攻擊檢查」用 category `behavior`；良性服務存活改 category `connectivity`。前端 behavior_repro 分頁（categories=["behavior"]）因此只會顯示攻擊行為，與其提問「個別攻擊行為…能觀察到嗎」對齊；env_build 分頁會包含服務存活。報告摘要文字已改誠實，前端摘要/「可重現」顯示請一併對齊。
+- Log4Shell 要在產品流程內真實重現，需 infra-eng 在計畫內提供 in-lab JNDI listener 主機（目前以 Phase 3 獨立 harness 覆蓋，產品流程標 NOT_TESTED）。
