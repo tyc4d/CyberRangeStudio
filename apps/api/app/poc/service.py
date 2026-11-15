@@ -263,20 +263,6 @@ def _topo_order(ids: list[str], preds: dict[str, list[str]]) -> list[str]:
     return ordered
 
 
-def _blocked_result(action_id: str, req: Any, reason: str) -> dict[str, Any]:
-    from app.poc.models import ExecStages, ExecutionResult
-
-    now = _now()
-    res = ExecutionResult(
-        action_id=action_id,
-        poc={"source_url": req.source_url, "ref": req.ref, "sha256": req.sha256},
-        status="BLOCKED", stages=ExecStages(), logs_path="",
-        confidence=0.0, target_ownership_verified=False, payload_sha256=req.sha256,
-        started_at=now, ended_at=now, failure_reason=reason,
-    )
-    return res.to_dict()
-
-
 def execute(scenario_id: str, action_ids: list[str] | None = None) -> list[dict[str, Any]]:  # m9-runner
     """Run real payloads for poc_exec items that have a vetted verifier, in dependency order.
 
@@ -313,24 +299,20 @@ def execute(scenario_id: str, action_ids: list[str] | None = None) -> list[dict[
             source_url=proof["source_url"], ref={}, sha256=proof["sha256"],
             exec_method=proof["exec_method"], payload=proof["payload"],
             expected_marker=proof["expected_marker"], proof_id=proof_id,
+            # ALL declared predecessors, incl. ones absent from this batch (deselected /
+            # not_executable / substitute) — run_job gates them within one job and marks an
+            # unmet dependent BLOCKED. (R2-02/R2-04)
+            required_predecessors=tuple(preds.get(str(aid), [])),
         )
         order.append(str(aid))
     if not reqs:
         return []
 
-    status: dict[str, str] = {}
-    results: list[dict[str, Any]] = []
-    for aid in _topo_order(order, preds):
-        unmet = [p for p in preds.get(aid, []) if p in reqs and status.get(p) != "PASS"]
-        if unmet:
-            res = _blocked_result(aid, reqs[aid],
-                                  f"required predecessor(s) {unmet} did not pass; dependent not executed")
-        else:
-            out = run_job(scenario_id, [reqs[aid]])
-            res = out[0] if out else _blocked_result(aid, reqs[aid], "execution produced no result")
-        status[aid] = str(res.get("status"))
-        results.append(res)
-    return results
+    # ONE job for the whole batch (shared job_id): run_job runs in dependency order, gates
+    # predecessors, BLOCKs unmet dependents, persists every result, and cancel covers all
+    # not-yet-started actions. Chain selects this single job and keeps every valid result.
+    ordered = [reqs[aid] for aid in _topo_order(order, preds)]
+    return run_job(scenario_id, ordered)
 
 
 def _executions(scenario_id: str) -> list[dict[str, Any]]:
