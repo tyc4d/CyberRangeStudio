@@ -42,3 +42,11 @@ After independent QA (CHANGES REQUESTED, 15 findings / 26 repro tests), fix roun
   R3-04 live stage render — all fixed. Prior rounds hold.
 - Full backend suite: **268 passed**. review1 **57/1**, review2 **89/0**, review3 **34/0**.
 - Sole remaining failure: #5 deploy-layer guaranteed-cancel handle (honest fail-closed). Round-4 check pending.
+
+## Fix round 4 complete (5039c32)
+- R4-01 (P1) export STRUCTURAL redaction rewrite (converged: secret keys/headers/userinfo/concatenation/nested
+  JSON, truthful verify_bundle), R4-02 GUI raw-result invalidation + generation guard, R4-03 runner job-identity
+  status + GUI stop-by-cancelled-id, R4-04 chain no stale-batch fallback. Prior rounds hold.
+- Full backend suite: **277 passed**. Review Python: review1 57/1, review2 89/0, review3 34/0, review4 59/0.
+  Frontend checks: 4/4, 6/6, 9/9, 10/10.
+- Sole remaining failure: #5 deploy-layer guaranteed-cancel handle (honest fail-closed). Round-5 gate pending.
