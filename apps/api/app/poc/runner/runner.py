@@ -385,17 +385,29 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
 
 
 def execution_status(scenario_id: str) -> dict[str, Any]:
-    """Return the newest job's own stages and log, using its hashed job identity."""
+    """Return selected-job results plus the identities/states of overlapping jobs.
+
+    job_state is the scenario's activity summary for existing polling clients;
+    selected_job_state always names the selected job's actual persisted state.
+    A cancel flag is only a request: that job stays active until its state changes.
+    """
     db = poc_store._conn()
     try:
-        job_row = db.execute(
+        # Keep selected job, active jobs and result rows in one database snapshot.
+        # Artifact verification below happens after this short read transaction.
+        db.execute("BEGIN")
+        job_rows = db.execute(
             "SELECT * FROM poc_jobs WHERE scenario_id=? AND kind='execute' "
-            "ORDER BY created_at DESC, rowid DESC LIMIT 1",
+            "ORDER BY created_at DESC, rowid DESC",
             (scenario_id,),
-        ).fetchone()
-        if not job_row:
-            return {"job_state": "idle", "per_action": [], "logs_tail": ""}
-        job = dict(job_row)
+        ).fetchall()
+        if not job_rows:
+            return {"job_id": None, "job_state": "idle", "selected_job_state": "idle",
+                    "jobs": [], "active_jobs": [], "per_action": [], "logs_tail": ""}
+        job = dict(job_rows[0])
+        jobs = [{"job_id": row["id"], "state": row["state"], "cancel_requested": bool(row["cancel"])}
+                for row in job_rows]
+        active_jobs = [entry for entry in jobs if entry["state"] in {"pending", "running"}]
         rows = db.execute(
             "SELECT result FROM poc_runs WHERE scenario_id=? ORDER BY id",
             (scenario_id,),
@@ -430,7 +442,10 @@ def execution_status(scenario_id: str) -> dict[str, Any]:
         per_action.append({"action_id": current_id, "stages": detail.get("stages") or asdict(ExecStages())})
     logs_tail = (_redact(json.dumps(latest_log, ensure_ascii=False, sort_keys=True)[-4000:])
                  if latest_log is not None else "")
-    return {"job_state": job["state"], "per_action": per_action, "logs_tail": logs_tail}
+    job_state = ("running" if any(entry["state"] == "running" for entry in active_jobs)
+                 else "pending" if active_jobs else job["state"])
+    return {"job_id": job["id"], "selected_job_state": job["state"], "job_state": job_state,
+            "jobs": jobs, "active_jobs": active_jobs, "per_action": per_action, "logs_tail": logs_tail}
 
 
 def cancel_execution(scenario_id: str) -> dict[str, bool]:
