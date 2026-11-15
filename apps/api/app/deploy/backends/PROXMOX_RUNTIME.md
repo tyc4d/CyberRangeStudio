@@ -19,9 +19,11 @@ The FastAPI process must receive these variables explicitly at startup; it does 
 Integration interface:
 
 - `preflight() -> dict`: read-only version, template ownership/state/hardware, pool, node and pool memory, VM quota, and storage checks.
+- Preflight responses include `placement_target` with the configured PVE node, resource pool, template, worker VMID range, and fixed worker sizing. This is infrastructure placement metadata, not a physical room/rack location.
 - `plan(scenario_id, compose_yaml, *, compose_sha256=None, attach_lab_network=False) -> dict`: candidate VMID and planned API calls; contains no Compose text.
 - `up(scenario_id, compose_yaml, *, host_id="worker", attach_lab_network=False, compose_sha256=None) -> dict`: returns the worker `vmid` and digest; persist `(scenario_id, host_id, vmid, compose_sha256)` for later calls.
 - `status(scenario_id, *, vmid, host_id="worker") -> dict` and `down(...) -> dict`: require that persisted identity and revalidate pool membership, tags, and JSON description before guest or destructive actions.
+- Status responses include the owned worker's `placement` (node, pool, VMID/name/state, configured vCPU/memory/disk, and NIC count); the scenario deployment status API carries this to the UI.
 - `guest_exec(scenario_id, *, vmid, host_id, command, timeout=60, require_isolation=True) -> dict`: bounded public QGA command interface requiring the matching active durable reservation and a passing isolation report by default.
 
 At deployment time the backend generates a throwaway database password in memory, writes the Compose interpolation values to `/opt/cr-runtime/compose.env` inside the zero-NIC worker, and restricts the file to mode `0600` before running Compose. Every Compose command, including service execs, uses that env file. The password is not stored in the API database or request journal; removing the worker removes the file. Failed `up` responses include a bounded, redacted guest diagnostic to make startup errors actionable. The deployed reset snapshot also contains this throwaway value; it must never be replaced with a real external credential.

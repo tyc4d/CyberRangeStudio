@@ -349,6 +349,8 @@ def compose_ps_result(scenario_id: str) -> dict[str, Any]:
         normalized = _pve_result(compose)
         normalized["vm_state"] = vm_state
         normalized["backend"] = "proxmox"
+        if isinstance(result.get("placement"), dict):
+            normalized["placement"] = result["placement"]
         return normalized
     except Exception as exc:
         return {"returncode": 127, "stdout": "", "stderr": f"Proxmox status unavailable: {type(exc).__name__}",
@@ -452,6 +454,8 @@ def live_containers(scenario_id: str) -> dict[str, Any]:
             "state": state, "containers": containers, "error": (result["stderr"] or None) if state == "error" else None}
     live["iac"] = iac_state(scenario_id)
     live["published_ports"] = [] if deploy_backend() == "proxmox" else published_ports(scenario_id, containers)
+    if isinstance(result.get("placement"), dict):
+        live["placement"] = result["placement"]
     return live
 
 

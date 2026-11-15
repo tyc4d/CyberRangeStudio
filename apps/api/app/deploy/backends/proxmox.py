@@ -251,7 +251,8 @@ class ProxmoxBackend:
 
     def preflight(self) -> dict[str, Any]:
         """Read-only readiness and capacity report; absence/failure means not ready."""
-        report: dict[str, Any] = {"backend": "proxmox", "mode": self.settings.mode, "ok": False, "checks": {}}
+        report: dict[str, Any] = {"backend": "proxmox", "mode": self.settings.mode, "ok": False, "checks": {},
+                                  "placement_target": self.placement_target()}
         try:
             version = self._get("/api2/json/version")
             report["checks"]["version"] = version
@@ -336,6 +337,13 @@ class ProxmoxBackend:
         except (PveError, ProxmoxBackendError, KeyError, TypeError, ValueError) as exc:
             report.update(state="unavailable", error=str(redact(str(exc))))
         return report
+
+    def placement_target(self) -> dict[str, Any]:
+        """Configured PVE resource path and worker size; facility/rack locations are not modeled."""
+        return {"provider": "Proxmox VE", "node": self.settings.node, "pool": self.settings.pool,
+                "template_vmid": self.settings.template_vmid, "worker_vmid_range": "900100–900999",
+                "worker_vcpus": WORKER_VCPUS, "worker_memory_mib": WORKER_MEMORY_MIB,
+                "worker_disk_gib": WORKER_DISK_GIB}
 
     def plan(self, scenario_id: str, compose_yaml: str, *, compose_sha256: str | None = None,
              attach_lab_network: bool = False) -> dict[str, Any]:
@@ -514,16 +522,26 @@ class ProxmoxBackend:
 
     def status(self, scenario_id: str, *, vmid: int, host_id: str = "worker") -> dict[str, Any]:
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
-        self._assert_owned(vmid, scenario_id, host_id)
+        config = self._assert_owned(vmid, scenario_id, host_id)
         status = self._get(f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/current")
+        nic_fields = sorted(key for key, value in config.items()
+                            if re.fullmatch(r"net\d+", str(key)) and value)
+        placement = {**self.placement_target(), "worker_vm": {
+            "vmid": vmid, "name": config.get("name"), "state": status.get("status", "unknown"),
+            "vcpus": int(config.get("cores", WORKER_VCPUS)),
+            "memory_mib": int(config.get("memory", WORKER_MEMORY_MIB)),
+            "disk_gib": _disk_size_gib(str(config.get("scsi0", ""))),
+            "nic_count": len(nic_fields), "nic_fields": nic_fields,
+        }}
         if status.get("status") != "running":
             return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid,
+                    "placement": placement,
                     "state": status.get("status", "unknown"), "qmpstatus": status.get("qmpstatus"),
                     "compose": {"returncode": 127, "exitcode": 127, "stdout": "",
                                 "stderr": "worker VM is not running; guest Compose status unavailable"}}
         qga = self._guest_exec(vmid, _compose_command(scenario_id, "ps", "--format", "json"),
                                scenario_id=scenario_id, host_id=host_id, timeout=60)
-        return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid,
+        return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid, "placement": placement,
                 "state": status.get("status", "unknown"), "qmpstatus": status.get("qmpstatus"),
                 "compose": qga}
 

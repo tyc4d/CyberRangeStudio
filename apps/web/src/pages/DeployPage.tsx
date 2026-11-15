@@ -6,6 +6,8 @@ import { useAction, useLoad } from "../lib/hooks";
 import { isPlanApproved } from "../lib/plan";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, DataView, Empty, fmtTime, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
+import { PlacementPanel } from "./PlacementPanel";
+import type { EnvHost, EnvNetwork } from "@contracts";
 
 const POLL_MS = 5000;
 
@@ -95,6 +97,7 @@ const REASON_ZH: Record<string, string> = {
 function Body({ ir }: { ir: ScenarioIR }) {
   const { reload: reloadIr } = useScenario();
   const status = useLoad(() => api.deployStatus(ir.id), [ir.id]);
+  const preflight = useLoad(() => api.deployPreflight(ir.id), [ir.id]);
   const health = useLoad(() => api.deployHealth(ir.id), [ir.id]);
   const records = useLoad(() => api.deployRecords(ir.id), [ir.id]);
   const [auto, setAuto] = useState(true);
@@ -110,7 +113,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   }, [pollable, status.reload, health.reload]);
   useEffect(() => { if (status.data && !status.loading) setLastAt(new Date()); }, [status.data, status.loading]);
 
-  const after = async () => { await Promise.all([status.reload(true), health.reload(true), records.reload(true)]); void reloadIr(); };
+  const after = async () => { await Promise.all([status.reload(true), preflight.reload(true), health.reload(true), records.reload(true)]); void reloadIr(); };
   // Refresh even when the action fails: a refused or failed attempt is still written to the audit trail.
   const up = useAction(async () => { try { await api.deployUp(ir.id); } finally { await after(); } });
   const down = useAction(async () => { try { await api.deployDown(ir.id); } finally { await after(); } });
@@ -130,8 +133,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
   const state = typeof stateRaw === "string" ? stateRaw : undefined;
   const containers: unknown = s && typeof s === "object" ? s.containers ?? s.services : undefined;
+  const placementActual = s && typeof s === "object" ? s.placement : undefined;
+  const placementTarget = preflight.data?.isolation?.placement_target ?? preflight.data?.capacity?.placement_target;
   const rest = s && typeof s === "object" && !Array.isArray(s)
-    ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services", "backend"].includes(k)))
+    ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services", "backend", "placement"].includes(k)))
     : null;
   // The status endpoint answers state=error with this text when no compose file exists. That is "nothing to deploy yet", not a fault.
   const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
@@ -139,7 +144,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const rawRecords: any[] = Array.isArray(records.data?.records) ? records.data.records : [];
   const history = rawRecords.map((r) => ({ id: r.id, action: r.action, state: r.state, at: r.recorded_at, reason: recordReason(r.details), output: recordOutput(r.details) }));
   // Host name for a compose service id, from the approved plan. The gateway is not in the plan: it is platform plumbing.
-  const planHosts: any[] = (ir.environment_plan as any)?.hosts ?? [];
+  const planHosts: EnvHost[] = (ir.environment_plan as any)?.hosts ?? [];
+  const planNetworks: EnvNetwork[] = (ir.environment_plan as any)?.networks ?? [];
   const roleOf = (svc: string): string | undefined => planHosts.find((h) => h.id === svc)?.role;
   // Ports of the running deployment: the newest successful "up" in the audit trail (the up response carries the same list).
   const lastUp = rawRecords.find((r) => r.action === "up");
@@ -179,7 +185,24 @@ function Body({ ir }: { ir: ScenarioIR }) {
       {down.busy && <div className="card"><Busy label="關閉中，正在移除容器…" elapsed={down.elapsed} /></div>}
       <CommandFailure error={up.error} what="啟動部署" />
       <CommandFailure error={down.error} what="關閉部署" />
+      {status.error && <ApiNotice error={status.error} what="部署狀態" onRetry={() => status.reload()} />}
 
+      <PlacementPanel
+        hosts={planHosts}
+        networks={planNetworks}
+        containers={Array.isArray(containers) ? containers : []}
+        target={placementTarget}
+        actual={placementActual}
+        backend={backend}
+        state={state}
+        statusLoading={status.loading}
+        statusError={!!status.error}
+        projectName={s?.project_name ?? `cr-demo-${ir.id}`}
+      />
+
+      <details className="deploy-more">
+        <summary>容器明細、健康狀態與部署紀錄</summary>
+        <div className="deploy-more__content">
       <div className="card flush">
         <div className="card-head">
           <h2>目前狀態</h2>
@@ -195,7 +218,6 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </div>
         </div>
         <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
-          {status.error && <ApiNotice error={status.error} what="部署狀態" onRetry={() => status.reload()} />}
           {status.error && status.data && <div className="muted" style={{ fontSize: 12 }}>以下是最後一次成功取得的狀態，可能已過期。</div>}
           {status.loading && !status.data && !status.error && <Busy label="讀取部署狀態…" />}
           {noCompose(s) && <span className="muted" style={{ fontSize: 13 }}>這個情境還沒有生成部署設定（IaC），所以沒有任何容器，也沒有可查詢的部署。</span>}
@@ -301,6 +323,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </table>
         )}
       </div>
+        </div>
+      </details>
 
       <Notice kind="info">
         {isProxmox

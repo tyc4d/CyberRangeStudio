@@ -174,6 +174,7 @@ export const api = {
   deployUp: (id: string) => post<any>(`/api/deploy/${enc(id)}/up`, { test_approved: true }),
   deployDown: (id: string) => post<any>(`/api/deploy/${enc(id)}/down`),
   deployStatus: (id: string) => req<any>(`/api/deploy/${enc(id)}/status`),
+  deployPreflight: (id: string) => req<any>(`/api/deploy/${enc(id)}/preflight`),
   deployHealth: (id: string) => req<any>(`/api/deploy/${enc(id)}/health`),
   /** Audit trail of up/down attempts (including refused ones), newest first. */
   deployRecords: (id: string) => req<any>(`/api/deploy/${enc(id)}/records`),
