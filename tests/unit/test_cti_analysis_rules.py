@@ -174,7 +174,8 @@ class CapabilitiesAndTrafficDescriptions(unittest.TestCase):
             "actions": [
                 {"id": "a1", "name": "installed a web shell", "occurrence": "performed", "epistemic_status": "supported",
                  "evidence": [{"quote": "The group installed a web shell on the portal server.", "source_ref": "p1"}]},
-                {"id": "a2", "name": "create a new administrator account", "occurrence": "capability", "epistemic_status": "supported",
+                {"id": "a2", "name": "create a new administrator account", "occurrence": "capability", "outcome": "succeeded",
+                 "epistemic_status": "supported",
                  "evidence": [{"quote": "create a new administrator account with a randomly generated username", "source_ref": "p2"}]},
             ], "relations": [], "artifacts": [],
             "target_context": {"hosts": [], "services": [
@@ -184,6 +185,7 @@ class CapabilitiesAndTrafficDescriptions(unittest.TestCase):
         self.assertNotIn("occurrence", a1)
         self.assertEqual((a2["occurrence"], a2["source_certainty"], a2["epistemic_status"]), ("capability", "capability", "supported"))
         self.assertIn("epistemic_reason", a2)
+        self.assertNotIn("outcome", a2)
         self.assertEqual(ir["quality"]["capability_action_count"], 1)
         self.assertEqual(ir["quality"]["dropped_non_software_services"], ["existing encrypted communication channels"])
         self.assertEqual([service["id"] for service in ir["services"]], ["service-unspecified"])

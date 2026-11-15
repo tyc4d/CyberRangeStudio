@@ -32,6 +32,23 @@ def is_communication_description(name: Any) -> bool:
             and all(word in _COMMUNICATION_WORDS or word in _COMMUNICATION_MODIFIERS for word in words))
 
 
+_ATTACKER_ROLE_RE = re.compile(
+    r"^\W*(?:the\s+)?(?:(?:local|lab|external|remote|isolated|simulated)\s+)*"
+    r"(?:(?:attacker|adversary|threat[\s-]actor|red[\s-]?team|operator)(?:'s|s'|s)?[\s-]*)+"
+    r"(?:(?:controlled|owned|side|origin)[\s-]*)?"
+    r"(?:(?:host|machine|box|system|workstation|server|infrastructure|toolbox|vm|container|c2|node|endpoint|"
+    r"network|segment|address|addresses|ip|internet)[\s-]*)*\W*$", re.IGNORECASE)
+
+
+def is_attacker_role(role: Any) -> bool:
+    """True when a host's role says the machine is the attacker's own.
+
+    "attacker", "local attacker host" or "red-team operator workstation" are; "databases the
+    attackers queried" is a victim system that merely mentions them.
+    """
+    return bool(_ATTACKER_ROLE_RE.match(str(role or "")))
+
+
 def _present(value: Any) -> bool:
     if isinstance(value, str):
         return bool(value.strip()) and value.strip().casefold() not in _UNKNOWN
@@ -300,7 +317,7 @@ def _host_questions(ir: dict[str, Any], subjects: list[tuple[dict[str, Any], str
                     all_text: str, items: list[dict[str, Any]]) -> None:
     actions_by_id = {str(action.get("id")): action for action in actions if action.get("id")}
     for host, source_kind in subjects:
-        if re.search(r"\b(?:attacker|red[\s-]team|operator)\b", str(host.get("role") or ""), re.IGNORECASE):
+        if is_attacker_role(host.get("role")):
             continue  # the lab's own attacker machine is scaffolding, not a target to reconstruct
         host_id = str(host.get("id") or "target")
         label = _name(host, host_id)
@@ -711,7 +728,7 @@ def _generic_gap_questions(ir: dict[str, Any], services: list[dict[str, Any]], a
             credential_actions, ["使用專用測試帳號（不提供真實密碼）", "填入來源記載的存放位置並指定安全替身", "無法確認；保留為未知"])
 
     database_actions = matching(r"\b(?:databases?|sql|queries|query|queried)\b|資料庫")
-    has_database = any(re.search(r"\b(?:database|sql|db|postgres\w*|mysql|mariadb|oracle|mongo\w*|redis)\b",
+    has_database = any(re.search(r"\b(?:databases?|sql|dbs?|postgres\w*|mysql|mariadb|oracle|mongo\w*|redis|data\s+(?:store|repository))\b",
                                  str(service.get("name") or ""), re.IGNORECASE) for service in real_services)
     if database_actions and not has_database:
         ask("database-product", "資料庫產品、版本與所在主機", "software",

@@ -190,5 +190,43 @@ class ReproducibilityIsAboutTheBehaviour(unittest.TestCase):
         self.assertEqual(planned["fidelity"], "not_reproducible")
 
 
+class AttackerRole(unittest.TestCase):
+    def test_only_a_role_that_is_the_attackers_machine_counts(self):
+        from app.cti.missing import is_attacker_role
+        for role in ("attacker", "Attacker host", "local attacker host", "red-team operator workstation",
+                     "attacker-controlled C2 server", "threat actor infrastructure", "operator"):
+            self.assertTrue(is_attacker_role(role), role)
+        for role in ("additional databases queried by the attackers", "server the attacker exploited",
+                     "operator console of the SCADA system", "web server", ""):
+            self.assertFalse(is_attacker_role(role), role)
+
+    def test_victim_host_that_mentions_attackers_is_planned_as_a_target(self):
+        planned = plan_dependencies(ir_with(
+            [step("a1", "exploited a vulnerability in Apache Struts", "h1", attack_technique="T1190"),
+             step("a2", "queried the additional databases", "h3", source_host_ref="h1")],
+            services=[{"id": "s1", "name": "Apache Struts", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}],
+            hosts=[{"id": "h1", "role": "portal server", "epistemic_status": "supported", "source": "llm"},
+                   {"id": "h3", "role": "additional databases accessed by the attackers", "epistemic_status": "supported", "source": "llm"}]))
+        plan = build_environment_plan(planned)
+        hosts = {h["id"]: h for h in plan["hosts"]}
+        self.assertEqual(hosts["h3"]["networks"], ["scenario-internal"])
+        self.assertNotEqual(hosts["h3"].get("image_hint"), "oss-attacker")
+        self.assertIn("attacker", hosts)
+
+
+class UnsupportedSoftwareQuestion(unittest.TestCase):
+    def test_question_is_in_plain_language_and_suggests_fitting_substitutes(self):
+        planned = plan_dependencies(ir_with(
+            [step("a1", "queried the databases associated with the portal", "h2")],
+            services=[{"id": "s2", "name": "databases associated with the online dispute portal", "host_ref": "h2",
+                       "epistemic_status": "supported", "source": "llm"}],
+            hosts=[{"id": "h2", "role": "database servers", "epistemic_status": "supported", "source": "llm"}]))
+        question = next(i for i in planned["missing_items"] if i["id"].startswith("planner_dep_software"))
+        self.assertEqual(question["service_ref"], "s2")
+        self.assertIn("教學替代", question["question"])
+        self.assertTrue(any("PostgreSQL" in s for s in question["suggestions"]), question["suggestions"])
+        self.assertFalse(any("NGINX" in s for s in question["suggestions"]))
+
+
 if __name__ == "__main__":
     unittest.main()

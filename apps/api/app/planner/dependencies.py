@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any
 
-from app.cti.missing import is_communication_description, refresh_missing_items
+from app.cti.missing import is_attacker_role, is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
 from app.planner.reproducibility import annotate_reproducibility
 
@@ -51,8 +51,7 @@ def _mentions(text: str, phrase: str) -> bool:
 
 
 def _is_attacker_role(role: str) -> bool:
-    return (_mentions(role, "attacker") or _mentions(role, "red team") or _mentions(role, "red-team")
-            or _mentions(role, "operator"))
+    return is_attacker_role(role)
 
 
 def _role_terms(role: str) -> set[str]:
@@ -443,6 +442,19 @@ def _match_component(name: str) -> tuple[dict[str, Any] | None, bool]:
     return next(iter(found.values())) if len(found) == 1 and not extra else (None, False)
 
 
+def _substitute_suggestions(text: str) -> list[str]:
+    """Deployable catalogue components whose function words appear in an unsupported service's name."""
+    lowered = text.casefold()
+    found = []
+    for component in load_components():
+        if component.get("id") == "oss-attacker" or component.get("runtime") != "container" or not component.get("image"):
+            continue
+        keywords = [keyword.casefold() for keyword in component.get("role_keywords", [])]
+        if any(re.search(rf"(?<![a-z0-9]){re.escape(keyword)}s?(?![a-z0-9])", lowered) for keyword in keywords):
+            found.append(f"{component['name']}（替代品，不等於原軟體）")
+    return found[:4]
+
+
 def _generic_function_component(name: str) -> dict[str, Any] | None:
     """Catalogue stand-in for a service the source names only by its function.
 
@@ -533,7 +545,7 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     candidates = recorded + candidates
 
     # Bind an unscoped service to the only known target when the IR has one.
-    target_hosts = [hid for hid, host in hosts.items() if "attacker" not in host.get("role", "").casefold()]
+    target_hosts = [hid for hid, host in hosts.items() if not is_attacker_role(host.get("role", ""))]
     if candidates and not target_hosts:
         hosts.setdefault("target", {"id": "target", "role": "target", "epistemic_status": "inferred", "source": "program"})
         target_hosts = ["target"]
@@ -653,6 +665,9 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             entry["resolution"] = resolution
         if service_ref:
             entry["service_ref"] = service_ref  # the service a chosen substitute is applied to
+            entry["question"] = (f"{field.removeprefix('software dependency: ')} 在元件目錄中沒有可部署的對應。"
+                                 "要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。")
+            entry["suggestions"] = _substitute_suggestions(field) + ["不部署；此軟體相關步驟標記為未重現"]
         earlier = previous_planner_items.get(ident)
         if earlier and earlier.get("resolution_source") == "user":
             # Re-planning must not discard a decision the user already made on this question.

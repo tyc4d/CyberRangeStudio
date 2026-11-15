@@ -816,6 +816,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         if str(item.get("occurrence") or "").strip().casefold() == "capability":
             # What a tool can do is not an event of this incident. Keep the step, say what it is.
             action["occurrence"] = "capability"
+            action.pop("outcome", None)  # something not said to have happened has no outcome
             action["source_certainty"] = "capability"
             action["epistemic_reason"] = "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
         elif action["epistemic_status"] == "supported":

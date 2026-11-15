@@ -9,6 +9,7 @@ from typing import Any
 
 from cr_contracts import iter_errors
 
+from app.cti.missing import is_attacker_role
 from app.planner.catalogue import component_by_id
 
 
@@ -31,8 +32,7 @@ def _host_id(value: Any) -> str:
 
 
 def _is_attacker(host: dict[str, Any]) -> bool:
-    role = str(host.get("role", "")).casefold()
-    return any(label in role for label in ("attacker", "red-team", "red team", "operator"))
+    return is_attacker_role(host.get("role", ""))
 
 
 def _role_contains(role: str, term: str) -> bool:
