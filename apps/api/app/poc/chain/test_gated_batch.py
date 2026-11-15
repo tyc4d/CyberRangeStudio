@@ -14,7 +14,7 @@ from app.poc.runner import payloads, runner
 from app.poc.runner.models import ExecutionRequest
 
 
-class GatedBatchTests(unittest.TestCase):
+class GatedBatchFixture(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -83,6 +83,7 @@ class GatedBatchTests(unittest.TestCase):
         self.assertFalse(chain["passes"])
         self.assertFalse(chain["objective_reached"])
 
+class GatedBatchTests(GatedBatchFixture):
     def test_failed_predecessor_and_gated_blocked_stay_in_same_batch(self):
         self.assert_gated_batch(1, "FAIL")
 

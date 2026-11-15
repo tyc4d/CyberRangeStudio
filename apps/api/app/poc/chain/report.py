@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.poc.chain.evidence import artifact_bytes, execution_log
-from app.poc.chain.validation import _select_runs
+from app.poc.chain.validation import _select_runs, latest_execute_job, validate_chain
 
 _VALID_LEVELS = {"PASS", "FAIL", "PARTIAL", "NOT_TESTED"}
 
@@ -33,6 +33,12 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
     base_levels = base.get("levels") if isinstance(base.get("levels"), dict) else {}
     env_build = _level(base_levels.get("env_build"))
     behavior_repro = _level(base_levels.get("behavior_repro"))
+
+    job = latest_execute_job(scenario_id)
+    if job is not None:
+        # The caller's chain may predate a new execute job. Use one job snapshot
+        # for action verdicts, fidelity buckets, evidence paths and provenance.
+        chain = validate_chain(scenario_id, ir, plan, executions, execution_job=job)
 
     actions = [a for a in (ir.get("actions") or []) if isinstance(a, dict) and a.get("id")]
     action_by_id = {str(a["id"]): a for a in actions}
@@ -74,7 +80,7 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
         full_chain = "PARTIAL"
 
     checks = list(base.get("checks") or [])
-    runs, ambiguous = _select_runs(executions)
+    runs, ambiguous = _select_runs(executions, job=job)
     for aid in action_by_id:
         run = runs.get(aid, {}) if aid not in ambiguous else {}
         check = {"id": f"poc-{aid}", "name": _action_name(action_by_id[aid]), "category": "behavior",
@@ -85,6 +91,10 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
             evidence = next((e.get("path") for e in run.get("evidence", []) if artifact_bytes(e) is not None), None)
             if evidence:
                 check["evidence"] = evidence
+        if job is not None:
+            check["observed"] += f"; job_id={job['id']}; job_state={job['state']}"
+            if run:
+                check["observed"] += f"; started_at={run['started_at']}; ended_at={run['ended_at']}"
         checks.append(check)
     checks.append({"id": "poc-full-chain", "name": "End-to-end attack chain", "category": "chain",
                    "status": chain_status,
@@ -94,6 +104,13 @@ def build_fidelity_report(scenario_id: str, ir: dict[str, Any], plan: dict[str, 
                                 f"order_ok={str(bool(chain.get('order_ok'))).lower()}; "
                                 f"verified_transfers={sum(t.get('verified') is True for t in chain.get('transfers', []))}/"
                                 f"{len(chain.get('transfers', []))}")})
+    if job is not None:
+        created = datetime.fromtimestamp(job["created_at"], timezone.utc).isoformat()
+        updated = datetime.fromtimestamp(job["updated_at"], timezone.utc).isoformat()
+        checks[-1]["observed"] += (
+            f"; job_id={job['id']}; job_state={job['state']}; created_at={created}; updated_at={updated}"
+            "; selection=latest_execute_job; historical runs are retained separately"
+        )
     return {
         "scenario_id": scenario_id,
         "run_at": datetime.now(timezone.utc).isoformat(),

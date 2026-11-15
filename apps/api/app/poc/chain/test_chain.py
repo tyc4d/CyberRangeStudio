@@ -31,6 +31,7 @@ class ArtifactFixture(unittest.TestCase):
         self.records = [{"id": 7, "action": "up", "state": "running", "details": {"backend": "proxmox"}}]
         for target, options in (
             ("app.config.DATA_DIR", {"new": self.root}),
+            ("app.poc.store._DB", {"new": self.root / "poc.db"}),
             ("app.deploy.manager._lifecycle_records", {"side_effect": lambda sid: self.records}),
             ("app.store.get", {"side_effect": lambda sid: self.ir if sid == "s1" else None}),
         ):
