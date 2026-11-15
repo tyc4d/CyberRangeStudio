@@ -190,6 +190,31 @@ class ReproducibilityIsAboutTheBehaviour(unittest.TestCase):
         self.assertEqual(planned["fidelity"], "not_reproducible")
 
 
+class ExploitStepWithoutTheProductName(unittest.TestCase):
+    """The source may name the product in one sentence and describe its exploitation in another."""
+
+    def plan(self, quote, extra_services=()):
+        ir = ir_with(
+            [step("a1", "gained unauthorized access to the portal and confirmed they could run commands", evidence_refs=["e1"]),
+             step("a2", "ran queries against other systems")],
+            services=[{"id": "s1", "name": "Apache Struts Web Framework", "host_ref": "h1", "epistemic_status": "supported",
+                       "source": "llm"}, *extra_services])
+        ir["evidence"] = [{"id": "e1", "quote": quote, "locator": {"kind": "paragraph", "ref": "1"}, "quote_verified": True}]
+        return {a["id"]: a for a in plan_dependencies(ir)["actions"]}
+
+    def test_exploitation_wording_in_the_cited_quote_ties_the_step_to_the_vulnerable_service(self):
+        actions = self.plan("Using software designed to exploit the vulnerability, the individuals gained unauthorized access")
+        self.assertEqual(actions["a1"]["reproducibility"], "reproducible")
+        self.assertIn("assumed", actions["a1"]["reproducibility_reason"])
+        self.assertEqual(actions["a2"]["reproducibility"], "not_reproducible")
+
+    def test_no_exploitation_wording_or_two_vulnerable_services_do_not_qualify(self):
+        self.assertEqual(self.plan("the individuals gained access to the portal")["a1"]["reproducibility"], "not_reproducible")
+        two = self.plan("Using software designed to exploit the vulnerability", [
+            {"id": "s2", "name": "Apache Solr", "host_ref": "h1", "epistemic_status": "supported", "source": "llm"}])
+        self.assertNotEqual(two["a1"]["reproducibility"], "reproducible")
+
+
 class AttackerRole(unittest.TestCase):
     def test_only_a_role_that_is_the_attackers_machine_counts(self):
         from app.cti.missing import is_attacker_role
