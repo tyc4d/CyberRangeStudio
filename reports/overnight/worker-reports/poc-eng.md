@@ -178,3 +178,14 @@ scenario-eng@592e1c7 併入 main（77a3ab7）後已 `git merge main`。
 - 以未部署主機為目標的情境動作 → action NOT_TESTED，observed 寫明未部署原因；full_chain 因此不可能 PASS。
 - 報告新增 `not_deployed`、`skipped_connections`、`deployed_host_ids` 欄位；fidelity.summary 寫明「已部署 X 台、未部署 N 台」。
 - 測試：新增真實產品流程 `tests/e2e/test_not_deployed_validation.py`（計畫含 deployable:false 的 db → 部署 attacker+web、db 不部署；驗證 service-up-db NOT_TESTED、env_build PARTIAL、action-a2 NOT_TESTED 附原因、full_chain≠PASS、not_deployed 列出 db）。全套件 **210 passed, 3 subtests**。
+
+## 里程碑 11：單一探針不得把同主機多行為全標真實重現（frontend-eng 誠實性發現）
+
+問題：Equifax 部署後，單一 Struts 探針讓 a1–a4（掃描/發現/取得存取/隱匿）四個同目標行為全被列為已重現，其中 3 項沒有自己的探針。
+
+根因修復（`runner.py`）：攻擊探針以 **ATT&CK 技術** 歸因——每個探針宣告其重現的技術（Struts S2-045 與 Log4Shell 皆為 **T1190** Exploit Public-Facing Application）。探針 PASS 只重現「技術相符」的那個動作；同主機但技術不符的其他動作標 **NOT_TESTED**，observed 註明「由同目標行為 aN 的攻擊探針間接涵蓋，未單獨驗證（indirectly covered, not individually verified）」，且**不計入 `reproduced`**。技術資料缺漏且該連線只對應單一動作時，視為無歧義歸因給該動作（保留既有單動作測試）。full_chain 因此在有行為未驗證時不得 PASS。
+
+測試：
+- 新增真實產品流程 `tests/e2e/test_struts_multiaction_attribution.py`：四動作（T1595/T1046/T1190/T1070）同指 web，部署真實 struts → 只有 **a3（T1190）** PASS 真實重現；a1/a2/a4 NOT_TESTED（間接涵蓋）、不在 reproduced；`fidelity.reproduced==['a3']`、full_chain≠PASS。實跑 26s 通過。
+- 既有單動作產品測試（struts、log4shell）仍通過（單動作無歧義歸因）。
+- 全套件 **247 passed, 3 subtests**。測完清除、無殘留。
