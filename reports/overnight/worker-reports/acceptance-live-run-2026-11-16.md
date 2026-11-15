@@ -2,7 +2,7 @@
 
 ## Candidate and safety boundary
 
-- Candidate base: `agent/trapa-deploy-ui` at `f020597`; integration work is uncommitted in `agent/acceptance-lead`. `main` remains `4c2c5fa`.
+- Candidate branch: `agent/acceptance-lead`, based on `agent/trapa-deploy-ui` at `f020597`. PVE acceptance updates are locally committed; `main` remains `4c2c5fa`, and no acceptance commit has been pushed or merged.
 - The live test used the explicitly approved synthetic scenario `scn_2acb1b9c902c`; every deploy/reset/down request included `test_approved=true`.
 - The ten initial create/deploy/snapshot/destroy cycles used the candidate API on `127.0.0.1:8077`. Reset/rollback used a temporary API on port `8293` from `agent/acceptance-lead`; ports `8077` and `8283` were left untouched.
 - A separate existing worker, VMID `900100` for `scn_db358a6d2c07`, was confirmed running before and after. It was not stopped, modified, or deleted.
@@ -40,6 +40,12 @@ One earlier candidate startup had accidentally inherited PVE `probe` mode: the u
 
 To exercise the down cleanup failure path without a mock, another approved synthetic worker was deployed (record `130`, VMID `900101`) with V1 and isolation passing. Through its owned QGA session, the test stopped `docker.socket` and `docker.service`; both stops returned exit code 0. `/down` then observed guest Compose cleanup exit code 1 and recorded `guest Compose down returned a nonzero exit code`, but continued through the owned VM shutdown/delete path and returned HTTP 200 (record `131`). The test worker and its reservation were removed. Post-check showed the scenario `not_created`, no scenario containers, pool worker count 1, capacity `ready`, and the sole active reservation still belonged to VMID `900100` for the retained scenario. The first attempt that stopped only `docker.service` did not trigger the failure (Compose returned 0); the second attempt stopped the socket as well and did.
 
+### Owner-approved worker hard cap of five
+
+The owner raised the hard worker cap from 2 to 5. The candidate sets both the worker-count and running-worker ceiling to 5; node, pool-memory, storage, and durable-reservation checks remain unchanged. Independent read-only review approved the cap change with these capacity limits. A live read-only preflight on the candidate returned ready with one worker (VMID `900100`), 8192 MiB pool memory available, 18972 MiB node memory free, and `local-lvm` free bytes `84636092439`.
+
+The current 16384 MiB pool budget includes the 4096 MiB template, leaving 12288 MiB for workers. At 4096 MiB per worker, the current pool budget can hold at most **3 worker VMs** total; other node or storage checks can lower that further. Five workers require at least 24576 MiB of pool memory, plus sufficient node memory and storage. No resources were changed, and five-worker capacity was not tested. The cap is therefore the policy ceiling; it is not evidence that five VMs can run now.
+
 ### Secret-pattern scan
 
 Scanned 91 deployment records for the two acceptance scenarios and the five persisted PVE acceptance artifacts/reports. The scan found zero PVE API-token, Authorization, generated database-password, or credential-like key/value patterns; values were not printed. No persistent API log file exists under `apps/api/data`; prior interactive terminal sessions were not part of this scan, so the broader console-log scan remains open.
@@ -62,4 +68,5 @@ Scanned 91 deployment records for the two acceptance scenarios and the five pers
 - P4 reset-cycle evidence: `evidence/pve-p4-reset-cycles-20261116.jsonl`.
 - P4 V1 lifecycle evidence: `evidence/pve-v1-lifecycle-20261116.json`.
 - Real down-cleanup failure-injection evidence: `evidence/pve-failure-down-cleanup-20261116.json`.
+- Owner-approved cap-5 and current capacity evidence: `evidence/pve-worker-cap-5-readiness-20261116.json`.
 - V2/V6 smoke evidence: `evidence/pve-v2-v6-smoke-20261116.json`.

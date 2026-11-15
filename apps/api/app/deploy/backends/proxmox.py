@@ -20,8 +20,9 @@ from app.deploy.pve_client import PveClient, PveError, PveSettings, PROTECTED_VM
 WORKER_MEMORY_MIB = 4096
 WORKER_VCPUS = 2
 WORKER_DISK_GIB = 20
-# Owner-approved 2026-11-15: at most two product worker VMs (900100-900999) at once.
-MAX_WORKER_VMS = 2
+# Owner-approved 2026-11-16: at most five product worker VMs (900100-900999) at once.
+# Node/pool/storage preflight remains authoritative and can allow fewer than five.
+MAX_WORKER_VMS = 5
 OWNER = "cyberrange"
 _BACKEND_INSTANCE = "codex-20261115"
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
@@ -403,7 +404,7 @@ class ProxmoxBackend:
                 raise ProxmoxBackendError("insufficient node memory; notify product owner, no existing VM will be stopped")
             if pool_memory_available < WORKER_MEMORY_MIB:
                 raise ProxmoxBackendError("cr-range memory budget is exhausted; notify product owner")
-            if worker_vmid_count >= MAX_WORKER_VMS or running_pool_vms >= 4:
+            if worker_vmid_count >= MAX_WORKER_VMS or running_pool_vms >= MAX_WORKER_VMS:
                 raise ProxmoxBackendError("cr-range runtime VM quota is exhausted")
             if storage_free < (self.settings.datastore_reserve_gib + WORKER_DISK_GIB) * 1024**3:
                 raise ProxmoxBackendError("insufficient local-lvm space; notify product owner")
