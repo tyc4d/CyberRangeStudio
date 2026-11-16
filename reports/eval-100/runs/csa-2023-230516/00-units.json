@@ -1,0 +1,354 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: BianLian Ransomware Group"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-136A\n> - Date: 2023-05-16\n> - URL: https://www.ic3.gov/CSA/2023/230516.pdf\n> - PDF SHA-256: 4186a47a23c9cb93ea21aba82c91e585cf10d9773c8ec88174bde949a2eeeb06 (`source.pdf`, 19 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (73 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                         TLP:CLEAR           Product ID: AA23-136A\n                                                                                                                    May 16, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: BianLian Ransomware\n        Group\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of an             Actions to take today to mitigate\n        ongoing #StopRansomware effort to publish advisories for                cyber threats from BianLian\n        network defenders that detail various ransomware variants               ransomware and data extortion:\n        and ransomware threat actors. These #StopRansomware                     • Strictly limit the use of RDP and\n        advisories include recently and historically observed tactics,          other remote desktop services.\n        techniques, and procedures (TTPs) and indicators of                     • Disable command-line and\n        compromise (IOCs) to help organizations protect against                 scripting activities and\n        ransomware. Visit stopransomware.gov to see all                         permissions.\n        #StopRansomware advisories and learn more about other                   • Restrict usage of PowerShell and\n        ransomware threats and no-cost resources.                               update Windows PowerShell or\n        The Federal Bureau of Investigation (FBI), Cybersecurity and            PowerShell Core to the latest\n        Infrastructure Security Agency (CISA), and Australian Cyber             version.\n        Security Centre (ACSC) are releasing this joint Cybersecurity\n        Advisory to disseminate known BianLian ransomware and data extortion group IOCs and TTPs\n        identified through FBI and ACSC investigations as of March 2023."
+ },
+ {
+  "id": "p5",
+  "text": "BianLian is a ransomware developer, deployer, and data extortion cybercriminal group that has\n        targeted organizations in multiple U.S. critical infrastructure sectors since June 2022. They have also\n        targeted Australian critical infrastructure sectors in addition to professional services and property\n        development. The group gains access to victim systems through valid Remote Desktop Protocol\n        (RDP) credentials, uses open-source tools and command-line scripting for discovery and credential\n        harvesting, and exfiltrates victim data via File Transfer Protocol (FTP), Rclone, or Mega. BianLian\n        group actors then extort money by threatening to release data if payment is not made. BianLian group\n        originally employed a double-extortion model in which they encrypted victims’ systems after\n        U.S. organizations: To report suspicious or criminal activity related to information found in this Joint\n        Cybersecurity Advisory, contact your local FBI field office at fbi.gov/contact-us/field-offices. When available,\n        please include the following information regarding the incident: date, time, and location of the incident; type of\n        activity; number of people affected; type of equipment used for the activity; the name of the submitting company\n        or organization; and a designated point of contact. To request incident response resources or technical assistance\n        related to these threats, contact CISA at Report@cisa.dhs.gov. Australian organizations: Visit cyber.gov.au or\n        call 1300 292 371 (1300 CYBER1) to report cybersecurity incidents and access alerts and advisories.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p6",
+  "text": "exfiltrating the data; however, around January 2023, they shifted to primarily exfiltration-based\n       extortion."
+ },
+ {
+  "id": "p7",
+  "text": "FBI, CISA, and ACSC encourage critical infrastructure organizations and small- and medium-sized\n       organizations to implement the recommendations in the Mitigations section of this advisory to reduce\n       the likelihood and impact of BianLian and other ransomware incidents."
+ },
+ {
+  "id": "p8",
+  "text": "For a downloadable copy of IOCs, see AA23-136A STIX XML (XML, 35 KB)"
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See the MITRE\n       ATT&CK® Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK® Tactics and Techniques. For assistance with mapping malicious cyber activity to the\n       MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK\n       Mapping and CISA’s Decider Tool.\n       BianLian is a ransomware developer, deployer, and data extortion cybercriminal group. FBI observed\n       BianLian group targeting organizations in multiple U.S. critical infrastructure sectors since June 2022.\n       In Australia, ACSC has observed BianLian group predominately targeting private enterprises,\n       including one critical infrastructure organization. BianLian group originally employed a double-\n       extortion model in which they exfiltrated financial, client, business, technical, and personal files for\n       leverage and encrypted victims’ systems. In 2023, FBI observed BianLian shift to primarily exfiltration-\n       based extortion with victims’ systems left intact, and ACSC observed BianLian shift exclusively to\n       exfiltration-based extortion. BianLian actors warn of financial, business, and legal ramifications if\n       payment is not made."
+ },
+ {
+  "id": "p10",
+  "text": "Initial Access\n       BianLian group actors gain initial access to networks by leveraging compromised Remote Desktop\n       Protocol (RDP) credentials likely acquired from initial access brokers [T1078],[T1133] or via phishing\n       [T1566]."
+ },
+ {
+  "id": "p11",
+  "text": "Command and Control\n       BianLian group actors implant a custom backdoor specific to each victim written in Go (see the\n       Indicators of Compromise Section for an example) [T1587.001] and install remote management and\n       access software—e.g., TeamViewer, Atera Agent, SplashTop, AnyDesk—for persistence and\n       command and control [T1105],[T1219].\n       FBI also observed BianLian group actors create and/or activate local administrator accounts\n       [T1136.001] and change those account passwords [T1098]."
+ },
+ {
+  "id": "p12",
+  "text": "Defense Evasion\n       BianLian group actors use PowerShell [T1059.001] and Windows Command Shell [T1059.003] to\n       disable antivirus tools [T1562.001], specifically Windows defender and Anti-Malware Scan Interface\n       (AMSI). BianLian actors modify the Windows Registry [T1112] to disable tamper protection for"
+ },
+ {
+  "id": "p13",
+  "text": "Sophos SAVEnabled, SEDEenabled, and SAVService services, which enables them to uninstall\n       these services. See Appendix: Windows PowerShell and Command Shell Activity for additional\n       information, including specific commands they have used."
+ },
+ {
+  "id": "p14",
+  "text": "Discovery\n       BianLian group actors use a combination of compiled tools, which they first download to the victim\n       environment, to learn about the victim’s environment. BianLian group actors have used:\n           •    Advanced Port Scanner, a network scanner used to find open ports on network computers\n                and retrieve versions of programs running on the detected ports [T1046].\n           •    SoftPerfect Network Scanner (netscan.exe), a network scanner that can ping computers,\n                scan ports, and discover shared folders [T1135].\n           •    SharpShares to enumerate accessible network shares in a domain.\n           •    PingCastle to enumerate Active Directory (AD) [T1482]. PingCastle provides an AD map to\n                visualize the hierarchy of trust relationships."
+ },
+ {
+  "id": "p15",
+  "text": "BianLian actors also use native Windows tools and Windows Command Shell to:\n           •    Query currently logged-in users [T1033].\n           •    Query the domain controller to identify:\n                   o All groups [T1069.002].\n                   o Accounts in the Domain Admins and Domain Computers groups [1087.002].\n                   o All users in the domain.\n           •    Retrieve a list of all domain controllers and domain trusts.\n           •    Identify accessible devices on the network [T1018]."
+ },
+ {
+  "id": "p16",
+  "text": "See Appendix: Windows PowerShell and Command Shell Activity for additional information, including\n       specific commands they have used."
+ },
+ {
+  "id": "p17",
+  "text": "Credential Access\n       BianLian group uses valid accounts for lateral movement through the network and to pursue other\n       follow-on activity. To obtain the credentials, BianLian group actors use Windows Command Shell to\n       find unsecured credentials on the local machine [T1552.001]. FBI also observed BianLian harvest\n       credentials from the Local Security Authority Subsystem Service (LSASS) memory [T1003.001],\n       download RDP Recognizer (a tool that could be used to brute force RDP passwords or check for RDP\n       vulnerabilities) to the victim system, and attempt to access an Active Directory domain database\n       (NTDS.dit) [T1003.003].\n       In one case, FBI observed BianLian actors use a portable executable version of an Impacket tool\n       (secretsdump.py) to move laterally to a domain controller and harvest credential hashes from it.\n       Note: Impacket is a Python toolkit for programmatically constructing and manipulating network\n       protocols. Through the Command Shell, an Impacket user with credentials can run commands on a\n       remote device using the Windows management protocols required to support an enterprise network."
+ },
+ {
+  "id": "p18",
+  "text": "Threat actors can run portable executable files on victim systems using local user rights, assuming\n       the executable is not blocked by an application allowlist or antivirus solution.\n       See Appendix: Windows PowerShell and Command Shell Activity for additional information."
+ },
+ {
+  "id": "p19",
+  "text": "Persistence and Lateral Movement\n       BianLian group actors use PsExec and RDP with valid accounts for lateral movement [T1021.001].\n       Prior to using RDP, BianLian actors used Command Shell and native Windows tools to add user\n       accounts to the local Remote Desktop Users group, modified the added account’s password, and\n       modified Windows firewall rules to allow incoming RDP traffic [T1562.004]. See Appendix: Windows\n       PowerShell and Command Shell Activity for additional information.\n       In one case, FBI found a forensic artifact (exp.exe) on a compromised system that likely exploits the\n       Netlogon vulnerability (CVE-2020-1472) and connects to a domain controller."
+ },
+ {
+  "id": "p20",
+  "text": "Collection\n       FBI observed BianLian group actors using malware (system.exe) that enumerates registry [T1012]\n       and files [T1083] and copies clipboard data from users [T1115]."
+ },
+ {
+  "id": "p21",
+  "text": "Exfiltration and Impact\n       BianLian group actors search for sensitive files using PowerShell scripts (See Appendix: Windows\n       PowerShell and Command Shell Activity) and exfiltrate them for data extortion. Prior to January 2023,\n       BianLian actors encrypted files [T1486] after exfiltration for double extortion.\n       BianLian group uses File Transfer Protocol (FTP) [T1048] and Rclone, a tool used to sync files to\n       cloud storage, to exfiltrate data [T1537]. FBI observed BianLian group actors install Rclone and other\n       files in generic and typically unchecked folders such as programdata\\vmware and music folders.\n       ACSC observed BianLian group actors use Mega file-sharing service to exfiltrate victim data\n       [T1567.002].\n       BianLian’s encryptor (encryptor.exe) modified all encrypted files to have the .bianlian extension.\n       The encryptor created a ransom note, Look at this instruction.txt, in each affected directory\n       (see Figure 1 for an example ransom note.) According to the ransom note, BianLian group specifically\n       looked for, encrypted, and exfiltrated financial, client, business, technical, and personal files."
+ },
+ {
+  "id": "p22",
+  "text": "Your network systems were attacked and encrypted. Contact us in order to restore your data. Don't\n        make any changes in your file structure: touch no files, don't try to recover by yourself, that may\n        lead to it's complete loss."
+ },
+ {
+  "id": "p23",
+  "text": "To contact us you have to download \"tox\" messenger: https://qtox.github[.]io/"
+ },
+ {
+  "id": "p24",
+  "text": "Add user with the following ID to get your instructions:\n        A4B3B0845DA242A64BF17E0DB4278EDF4BF17E0DB4278EDF85855739667D3E2AE8B89D5439015F07E81D12D767FC"
+ },
+ {
+  "id": "p25",
+  "text": "Alternative way: swikipedia@onionmail[.]org"
+ },
+ {
+  "id": "p26",
+  "text": "Your ID: [Unique ID Assigned to Victim]"
+ },
+ {
+  "id": "p27",
+  "text": "You should know that we have been downloading data from your network for a significant time before\n        the attack: financial, client, business, post, technical and personal files.\n        In 10 days - it will be posted at our site http://bianlianlbc5an4kgnay3opdemgcryg2\n        gnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad[.]onion with links send to your clients, partners,\n        competitors and news agencies, that will lead to a negative impact on your company: potential\n        financial, business and reputational loses."
+ },
+ {
+  "id": "p28",
+  "text": "Figure 1: BianLian Sample Ransom Note (Look at this instruction.txt)"
+ },
+ {
+  "id": "p29",
+  "text": "If a victim refuses to pay the ransom demand, BianLian group threatens to publish exfiltrated data to a\n       leak site maintained on the Tor network. The ransom note provides the Tox ID\n       A4B3B0845DA242A64BF17E0DB4278EDF85855739667D3E2AE8B89D5439015F07E81D12D767FC, which\n       does not vary across victims. The Tox ID directs the victim organization to a Tox chat via\n       https://qtox.gitbhub[.]io and includes an alternative contact email address\n       (swikipedia@onionmail[.]org or xxx@mail2tor[.]com). The email address is also the same\n       address listed on the group’s Tor site under the contact information section. Each victim company is\n       assigned a unique identifier included in the ransom note. BianLian group receives payments in unique\n       cryptocurrency wallets for each victim company.\n       BianLian group engages in additional techniques to pressure the victim into paying the ransom; for\n       example, printing the ransom note to printers on the compromised network. Employees of victim\n       companies also reported receiving threatening telephone calls from individuals associated with\n       BianLian group."
+ },
+ {
+  "id": "p30",
+  "text": "INDICATORS OF COMPROMISE (IOC)\n       See Table 1 for IOCs obtained from FBI investigations as of March 2023."
+ },
+ {
+  "id": "p31",
+  "text": "Table 1: BianLian Ransomware and Data Extortion Group IOCs"
+ },
+ {
+  "id": "p32",
+  "text": "Name                               SHA-256 Hash                                 Description"
+ },
+ {
+  "id": "p33",
+  "text": "def.exe               7b15f570a23a5c5ce8ff942da60834a9d0549ea3ea9f34f900      Malware associated with\n                              a09331325df893                                          BianLian intrusions, which\n                                                                                      is an example of a possible\n                                                                                      backdoor developed by\n                                                                                      BianLian group."
+ },
+ {
+  "id": "p34",
+  "text": "encryptor.exe         1fd07b8d1728e416f897bef4f1471126f9b18ef108eb952f4b      Example of a BianLian\n                              75050da22e8e43                                          encryptor."
+ },
+ {
+  "id": "p35",
+  "text": "exp.exe               0c1eb11de3a533689267ba075e49d93d55308525c04d6aff        Possible NetLogon\n                              0d2c54d1f52f5500                                        vulnerability (CVE-2020-\n                                                                                      1472) exploitation."
+ },
+ {
+  "id": "p36",
+  "text": "system.exe            40126ae71b857dd22db39611c25d3d5dd0e60316b72830e         Enumerates registry and\n                              930fba9baf23973ce                                       files. Reads clipboard data."
+ },
+ {
+  "id": "p37",
+  "text": "MITRE ATT&CK TECHNIQUES\n       See Table 2 for all referenced threat actor tactics and techniques in this advisory.\n                               Table 2: BianLian Group Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p38",
+  "text": "Resource Development"
+ },
+ {
+  "id": "p39",
+  "text": "Technique Title                    ID                             Use"
+ },
+ {
+  "id": "p40",
+  "text": "Develop Capabilities: Malware           T1587.001     BianLian group actors developed a custom\n                                                              backdoor used in their intrusions.\n                                                      Initial Access"
+ },
+ {
+  "id": "p41",
+  "text": "Technique Title                    ID                             Use"
+ },
+ {
+  "id": "p42",
+  "text": "External Remote Services                  T1133       BianLian group actors used RDP with valid\n                                                              accounts as a means of gaining initial access\n                                                              and for lateral movement.\n        Phishing                                  T1566       BianLian group actors used phishing to obtain\n                                                              valid user credentials for initial access."
+ },
+ {
+  "id": "p43",
+  "text": "Valid Accounts                   T1078       BianLian group actors used RDP with valid\n                                                     accounts as a means of gaining initial access\n                                                     and for lateral movement.\n                                                Execution"
+ },
+ {
+  "id": "p44",
+  "text": "Technique Title          ID                             Use"
+ },
+ {
+  "id": "p45",
+  "text": "Command and Scripting           T1059.001    BianLian group actors used PowerShell to\n        Interpreter: PowerShell                      disable AMSI on Windows. See Appendix:\n                                                     Windows PowerShell and Command Shell\n                                                     Activity for additional information.\n        Command and Scripting           T1059.003    BianLian group actors used Windows\n        Interpreter: Windows Command                 Command Shell to disable antivirus tools, for\n        Shell                                        discovery, and to execute their tools on victim\n                                                     networks. See Appendix: Windows PowerShell\n                                                     and Command Shell Activity for additional\n                                                     information.\n        Scheduled Task/Job: Scheduled   T1053.005    BianLian group actors used a Scheduled Task\n        Task                                         run as SYSTEM (the highest privilege Windows\n                                                     accounts) to execute a Dynamic Link Library\n                                                     (DLL) file daily. See Appendix: Windows\n                                                     PowerShell and Command Shell Activity for\n                                                     additional information.\n                                             Persistence"
+ },
+ {
+  "id": "p46",
+  "text": "Technique Title          ID                             Use"
+ },
+ {
+  "id": "p47",
+  "text": "Account Manipulation             T1098       BianLian group actors changed the password\n                                                     of an account they created.\n                                                     BianLian actors modified the password of an\n                                                     account they added to the local Remote\n                                                     Desktop Users group."
+ },
+ {
+  "id": "p48",
+  "text": "Create Account: Local Account   T1136.001   BianLian group actors created/activated a local\n                                                    administrator account.\n                                                    BianLian group actors used net.exe to add a\n                                                    user account to the local Remote Desktop\n                                                    Users group. (See Appendix: Windows\n                                                    PowerShell and Command Shell Activity for\n                                                    more information.)\n                                           Defense Evasion"
+ },
+ {
+  "id": "p49",
+  "text": "Technique Title          ID                            Use"
+ },
+ {
+  "id": "p50",
+  "text": "Modify Registry                  T1112      BianLian group actors modified the registry to\n                                                    disable user authentication for RDP\n                                                    connections, allow a user to receive help from\n                                                    Remote Assistance, and disable tamper\n                                                    protection for Sophos SAVEnabled,\n                                                    SEDEenabled, and SAVService services,\n                                                    which enables them to uninstall these services.\n        Impair Defenses: Disable or     T1562.001   BianLian group actors disabled Windows\n        Modify Tools                                defender, AMSI, and Sophos SAVEnabled and\n                                                    SEDEenabled tamper protection services. See\n                                                    Appendix: Windows PowerShell and Command\n                                                    Shell Activity for additional information.\n        Impair Defenses: Disable or     T1562.004   BianLian group actors added modified firewalls\n        Modify System Firewall                      to allow RDP traffic by adding new rules to the\n                                                    Windows firewall that allow incoming RDP\n                                                    traffic and enable a pre-existing Windows\n                                                    firewall rule group named Remote Desktop.\n                                          Credential Access"
+ },
+ {
+  "id": "p51",
+  "text": "Technique Title          ID                            Use"
+ },
+ {
+  "id": "p52",
+  "text": "OS Credential Dumping: LSASS    T1003.001   BianLian group actors accessed credential\n        Memory                                      material stored in the process memory of the\n                                                    LSASS. See Appendix: Windows PowerShell\n                                                    and Command Shell Activity for additional\n                                                    information."
+ },
+ {
+  "id": "p53",
+  "text": "OS Credential Dumping: NTDS    T1003.003    BianLian group actors attempted to access or\n                                                    create a copy of the Active Directory domain\n                                                    database in order to steal credential\n                                                    information and to obtain other information\n                                                    about domain members such as devices,\n                                                    users, and access rights.\n        Unsecured Credentials:         T1552.001    BianLian group actors searched local file\n        Credentials In Files                        systems and remote file shares for files\n                                                    containing insecurely stored credentials.\n                                               Discovery"
+ },
+ {
+  "id": "p54",
+  "text": "Technique Title         ID                              Use"
+ },
+ {
+  "id": "p55",
+  "text": "Account Discovery: Domain      1087.002     BianLian group actors queried the domain\n        Account                                     controller to identify accounts in the Domain\n                                                    Admins and Domain Computers groups. This\n                                                    information can help adversaries determine\n                                                    which domain accounts exist to aid in follow-on\n                                                    activity.\n        Domain Trust Discovery          T1482       BianLian group actors used PingCastle to\n                                                    enumerate the AD and map trust relationships.\n                                                    BianLian group actors retrieved a list of domain\n                                                    trust relationships used to identify lateral\n                                                    movement opportunities in Windows multi-\n                                                    domain/forest environments.\n        File and Directory Discovery    T1083       BianLian group used malware (system.exe)\n                                                    that enumerates files.\n        Network Service Discovery       T1046       BianLian actors used Advanced Port Scanner\n                                                    and SoftPerfect Network Scanner to ping\n                                                    computers, scan ports, and identify program\n                                                    versions running on ports.\n        Network Share Discovery         T1135       BianLian actors used SoftPerfect Network\n                                                    Scanner, which can discover shared folders.\n                                                    BianLian group actors used SharpShares to\n                                                    enumerate accessible network shares in a\n                                                    domain.\n        Permission Groups Discovery:   T1069.002    BianLian group actors queried the domain\n        Domain Groups                               controller to identify groups."
+ },
+ {
+  "id": "p56",
+  "text": "Query Registry                   T1012        BianLian group used malware (system.exe)\n                                                      that enumerates registry.\n        Remote System Discovery          T1018        BianLian group actors attempted to get a listing\n                                                      of other systems by IP address, hostname, or\n                                                      other logical identifier on a network that may be\n                                                      used for lateral movement.\n                                                      BianLian group actors retrieved a list of domain\n                                                      controllers.\n        System Owner User Discovery      T1033        BianLian group actors queried currently logged-\n                                                      in users on a machine.\n                                          Lateral Movement"
+ },
+ {
+  "id": "p57",
+  "text": "Technique Title          ID                               Use"
+ },
+ {
+  "id": "p58",
+  "text": "Remote Services: Remote         T1021.001     BianLian group actors used RDP with valid\n        Desktop Protocol                              accounts for lateral movement.\n                                                Collection"
+ },
+ {
+  "id": "p59",
+  "text": "Technique Title          ID                               Use"
+ },
+ {
+  "id": "p60",
+  "text": "Clipboard Data                   T1115        BianLian group actors’ malware collects data\n                                                      stored in the clipboard from users copying\n                                                      information within or between applications.\n                                        Command and Control"
+ },
+ {
+  "id": "p61",
+  "text": "Technique Title          ID                               Use"
+ },
+ {
+  "id": "p62",
+  "text": "Ingress Tool Transfer            T1105        BianLian group actors transferred tools or other\n                                                      files from an external system into a\n                                                      compromised environment.\n        Remote Access Software           T1219        BianLian group actors used legitimate desktop\n                                                      support and remote access software, such as\n                                                      TeamViewer, Atera, and SplashTop, to\n                                                      establish an interactive command and control\n                                                      channel to target systems within networks."
+ },
+ {
+  "id": "p63",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p64",
+  "text": "Technique Title                ID                               Use"
+ },
+ {
+  "id": "p65",
+  "text": "Transfer Data to Cloud Account         T1537         BianLian group actors used Rclone to exfiltrate\n                                                             data to a cloud account they control on the\n                                                             same service to avoid typical file\n                                                             transfers/downloads and network-based\n                                                             exfiltration detection.\n        Exfiltration Over Alternative          T1048         BianLian group actors exfiltrated data via FTP.\n        Protocol\n        Exfiltration Over Web Service:       T1567.002       BianLian group actors exfiltrated data via Mega\n        Exfiltration to Cloud Storage                        public file-sharing service.\n                                                        Impact"
+ },
+ {
+  "id": "p66",
+  "text": "Technique Title                ID                               Use"
+ },
+ {
+  "id": "p67",
+  "text": "Data Encrypted for Impact              T1486         BianLian group actors encrypted data on target\n                                                             systems."
+ },
+ {
+  "id": "p68",
+  "text": "MITIGATIONS\n       FBI, CISA, and ACSC recommend organizations implement the mitigations below to improve your\n       organization’s cybersecurity posture on the basis of the threat actors’ activity. These mitigations align\n       with the Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the National\n       Institute of Standards and Technology (NIST). The CPGs provide a minimum set of practices and\n       protections that CISA and NIST recommend all organizations implement. CISA and NIST based the\n       CPGs on existing cybersecurity frameworks and guidance to protect against the most common and\n       impactful threats and TTPs. Visit CISA’s Cross-Sector Cybersecurity Performance Goals for more\n       information on the CPGs, including additional recommended baseline protections.\n           •    Reduce threat of malicious actors using remote access tools by:\n                   o Auditing remote access tools on your network to identify currently used and/or\n                      authorized software.\n                   o Reviewing logs for execution of remote access software to detect abnormal use of\n                      programs running as a portable executable [CPG 2.T].\n                   o Using security software to detect instances of remote access software only being\n                      loaded in memory.\n                   o Requiring authorized remote access solutions only be used from within your\n                      network over approved remote access solutions, such as virtual private networks\n                      (VPNs) or virtual desktop interfaces (VDIs)."
+ },
+ {
+  "id": "p69",
+  "text": "o   Blocking both inbound and outbound connections on common remote access\n                        software ports and protocols at the network perimeter.\n           •    Implement application controls to manage and control execution of software, including\n                allowlisting remote access programs.\n                    o    Application controls should prevent installation and execution of portable versions of\n                         unauthorized remote access and other software. A properly configured application\n                         allowlisting solution will block any unlisted application execution. Allowlisting is\n                         important because antivirus solutions may fail to detect the execution of malicious\n                         portable executables when the files use any combination of compression, encryption,\n                         or obfuscation."
+ },
+ {
+  "id": "p70",
+  "text": "See NSA Cybersecurity Information sheet Enforce Signed Software Execution Policies\n                         for additional guidance.\n           •    Strictly limit the use of RDP and other remote desktop services. If RDP is necessary,\n                rigorously apply best practices, for example [CPG 2.W]:\n                    o Audit the network for systems using RDP.\n                    o Close unused RDP ports.\n                    o Enforce account lockouts after a specified number of attempts.\n                    o Apply phishing-resistant multifactor authentication (MFA).\n                    o Log RDP login attempts.\n           •    Disable command-line and scripting activities and permissions [CPG 2.N].\n           •    Restrict the use of PowerShell, using Group Policy, and only grant to specific users on a\n                case-by-case basis. Typically, only those users or administrators who manage the network or\n                Windows operating systems (OSs) should be permitted to use PowerShell [CPG 2.E].\n           •    Update Windows PowerShell or PowerShell Core to the latest version and uninstall all\n                earlier PowerShell versions. Logs from Windows PowerShell prior to version 5.0 are either\n                non-existent or do not record enough detail to aid in enterprise monitoring and incident\n                response activities [CPG 1.E, 2.S, 2.T].\n           •    Enable enhanced PowerShell logging [CPG 2.T, 2.U].\n                    o PowerShell logs contain valuable data, including historical OS and registry interaction\n                        and possible TTPs of a threat actor’s PowerShell use.\n                    o Ensure PowerShell instances, using the latest version, have module, script block, and\n                        transcription logging enabled (enhanced logging).\n                    o The two logs that record PowerShell activity are the PowerShell Windows Event Log\n                        and the PowerShell Operational Log. FBI and CISA recommend turning on these\n                        two Windows Event Logs with a retention period of at least 180 days. These logs\n                        should be checked on a regular basis to confirm whether the log data has been\n                        deleted or logging has been turned off. Set the storage size permitted for both logs to\n                        as large as possible."
+ },
+ {
+  "id": "p71",
+  "text": "•    Configure the Windows Registry to require User Account Control (UAC) approval for\n                any PsExec operations requiring administrator privileges to reduce the risk of lateral\n                movement by PsExec.\n           •    Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts [CPG 4.C].\n           •    Audit user accounts with administrative privileges and configure access controls according\n                to the principle of least privilege [CPG 2.E].\n           •    Reduce the threat of credential compromise via the following:\n                    o Place domain admin accounts in the protected users’ group to prevent caching of\n                        password hashes locally.\n                    o Implement Credential Guard for Windows 10 and Server 2016 (Refer to Microsoft:\n                        Manage Windows Defender Credential Guard for more information). For Windows\n                        Server 2012R2, enable Protected Process Light for Local Security Authority (LSA).\n                    o Refrain from storing plaintext credentials in scripts.\n           •    Implement time-based access for accounts set at the admin level and higher [CPG 2.A,\n                2.E]. For example, the Just-in-Time (JIT) access method provisions privileged access when\n                needed and can support enforcement of the principle of least privilege (as well as the Zero\n                Trust model). This is a process where a network-wide policy is set in place to automatically\n                disable admin accounts at the Active Directory (AD) level when the account is not in direct\n                need. Individual users may submit their requests through an automated process that grants\n                them access to a specified system for a set timeframe when they need to support the\n                completion of a certain task."
+ },
+ {
+  "id": "p72",
+  "text": "In addition, FBI, CISA, and ACSC recommend network defenders apply the following mitigations to\n       limit potential adversarial use of common system and network discovery techniques and to reduce the\n       impact and risk of compromise by ransomware or data extortion actors:\n           •    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers in a physically separate, segmented, and secure location (e.g., hard drive,\n                storage device, or the cloud).\n           •    Maintain offline backups of data, and regularly maintain backup and restoration (daily or\n                weekly at minimum). By instituting this practice, an organization minimizes the impact of\n                disruption to business practices as they will not be as severe and/or only have irretrievable\n                data [CPG 2.R]. ACSC recommends organizations follow the 3-2-1 backup strategy in which\n                organizations have three copies of data (one copy of production data and two backup copies)\n                on two different media such as disk and tape, with one copy kept off-site for disaster recovery.\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with National Institute for Standards and Technology\n                (NIST) standards for developing and managing password policies.\n                    o Use longer passwords consisting of at least 15 characters [CPG 2.B].\n                    o Store passwords in hashed format using industry-recognized password managers.\n                    o Add password user “salts” to shared login credentials."
+ },
+ {
+  "id": "p73",
+  "text": "o    Avoid reusing passwords [CPG 2.C].\n                    o    Implement multiple failed login attempt account lockouts [CPG 2.G].\n                    o    Disable password “hints”.\n                    o    Refrain from requiring password changes more frequently than once per year.\n                         Note: NIST guidance suggests favoring longer passwords instead of requiring regular\n                         and frequent password resets. Frequent password resets are more likely to result in\n                         users developing password “patterns” cyber criminals can easily decipher.\n                    o    Require administrator credentials to install software.\n           •    Require phishing-resistant multifactor authentication for all services to the extent\n                possible, particularly for webmail, virtual private networks, and accounts that access critical\n                systems [CPG 2.H].\n           •    Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats. Organizations should patch vulnerable software and hardware systems\n                within 24 to 48 hours from vulnerability disclosure. Prioritize patching known exploited\n                vulnerabilities in internet-facing systems [CPG 1.E].\n           •    Segment networks to prevent the spread of ransomware. Network segmentation can help\n                prevent the spread of ransomware by controlling traffic flows between—and access to—\n                various subnetworks, restricting further lateral movement [CPG 2.F].\n           •    Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting ransomware,\n                implement a tool that logs and reports all network traffic, including lateral movement activity on\n                a network. Endpoint detection and response (EDR) tools are particularly useful for detecting\n                lateral connections, as they have insight into common and uncommon network connections for\n                each host [CPG 3.A].\n           •    Install, regularly update, and enable real time detection for antivirus software on all\n                hosts.\n           •    Disable unused ports [CPG 2.V].\n           •    Consider adding an email banner to emails received from outside your organization [CPG\n                2.M].\n           •    Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and\n                covers the entire organization’s data infrastructure [CPG 2.K, 2.L, 2.R]."
+ },
+ {
+  "id": "p74",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, FBI, CISA, and ACSC recommend exercising, testing, and\n       validating your organization's security program against the threat behaviors mapped to the MITRE\n       ATT&CK for Enterprise framework in this advisory. FBI, CISA, and ACSC recommend testing your\n       existing security controls inventory to assess how they perform against the ATT&CK techniques\n       described in this advisory."
+ },
+ {
+  "id": "p75",
+  "text": "To get started:\n           1. Select an ATT&CK technique described in this advisory (see Table 2).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       FBI, CISA, and ACSC recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p76",
+  "text": "RESOURCES\n           •    Stopransomware.gov, a whole-of-government approach with one central location for U.S.\n                ransomware resources and alerts.\n           •    cyber.gov.au for the Australian Government’s central location to report cyber incidents,\n                including ransomware, and to see advice and alerts. The site also provides ransomware\n                advisories for businesses and organizations to help mitigate cyber threats.\n           •    CISA-Multi-State Information Sharing and Analysis Center (MS-ISAC) Joint Ransomware\n                Guide for guidance on mitigating and responding to a ransomware attack\n           •    For no-cost cyber hygiene services for U.S. organizations, Cyber Hygiene Services and\n                Ransomware Readiness Assessment."
+ },
+ {
+  "id": "p77",
+  "text": "REPORTING\n       The FBI is seeking any information that can be shared, including boundary logs showing\n       communication to and from foreign IP addresses, a sample ransom note, communications with\n       BianLian actors, Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted\n       file. The FBI and CISA do not encourage paying ransom, as payment does not guarantee victim files\n       will be recovered. Furthermore, payment may also embolden adversaries to target additional\n       organizations, encourage other criminal actors to engage in the distribution of ransomware, and/or\n       fund illicit activities. Regardless of whether you or your organization have decided to pay the ransom,\n       the FBI and CISA urge you to promptly report ransomware incidents to a local FBI Field Office or\n       CISA at cisa.gov/report. Australian organizations that have been impacted or require assistance in\n       regard to a ransomware incident can contact ACSC via 1300 CYBER1 (1300 292 371) or by\n       submitting a report cyber.gov.au."
+ },
+ {
+  "id": "p78",
+  "text": "ACKNOWLEDGEMENTS\n       Microsoft and Sophos contributed to this advisory."
+ },
+ {
+  "id": "p79",
+  "text": "APPENDIX: WINDOWS POWERSHELL AND COMMAND SHELL ACTIVITY\n       Through FBI investigations as of March 2023, FBI has observed BianLian actors use the commands\n       in Table 3. ACSC has observed BianLian actors use some of the same commands.\n                                   Table 3: PowerShell and Windows Command Shell Activity"
+ },
+ {
+  "id": "p80",
+  "text": "Command                                              Use"
+ },
+ {
+  "id": "p81",
+  "text": "[Ref].Assembly.GetType(‘System.Management             Disables the AMSI on Windows. AMSI is a\n        .Automation.AmsiUtils’).GetField(‘amsiInitFaile       built-in feature on Windows 10 and newer that\n        d’,’NonPublic,* Static’).SetValue($null,$true)        provides an interface for anti-malware scanners\n                                                              to inspect scripts prior to execution. When\n                                                              AMSI is disabled, malicious scripts may bypass\n                                                              antivirus solutions and execute undetected.\n        cmd.exe /Q /c for /f “tokens=1,2 delims= “ ^%A        Creates a memory dump lsass.exe process\n        in (‘”tasklist /fi “Imagename eq lsass.exe” | find    and saves it as a CSV\n        “lsass””’) do rundll32.exe                            filehttps://attack.mitre.org/versions/v12/techniq\n        C:\\windows\\System32\\comsvcs.dll, MiniDump             ues/T1003/001/. BianLian actors used it to\n        ^%B \\Windows\\Temp\\<file>.csv full                     harvest credentials from lsass.exe.\n        cmd.exe /Q /c net user <admin> /active:yes 1>         Activates the local Administrator account.\n        \\\\127.0.0.1\\C$\\Windows\\Temp\\<folder> 2>&1\n        cmd.exe /Q /c net user \"<admin>\"<password>            Changes the password of the newly activated\n        1> \\\\127.0.0.1\\C$\\Windows\\Temp\\<folder>               local Administrator account.\n        2>&1\n        cmd.exe /Q /c quser 1>                                Executes quser.exe to query the currently\n        \\\\127.0.0.1\\C$\\Windows\\Temp\\<folder> 2>&1             logged-in users on a machine. The command is\n                                                              provided arguments to run quietly and exit\n                                                              upon completion, and the output is directed to\n                                                              the \\Windows\\Temp directory.\n        dism.exe /online /Disable-Feature                     Using the Deployment Image Servicing and\n        /FeatureName:Windows-Defender /Remove                 Management (DISM) executable file, removes\n        /NoRestart                                            the Windows Defender feature.\n        dump.exe -no-pass -just-dc                            Executes secretsdump.py, a Portable\n        user.local/<fileserver.local>\\@<local_ip>             Executable version of an Impacket tool. Used\n                                                              to dump password hashes from domain\n                                                              controllers.\n        exp.exe -n <fileserver.local> -t <local_ip>           Possibly attempted exploitation of the\n                                                              NetLogon vulnerability (CVE-2020-1472)."
+ },
+ {
+  "id": "p82",
+  "text": "Command                                      Use"
+ },
+ {
+  "id": "p83",
+  "text": "findstr /spin \"password\" *.*                Searches for the string password in all files in\n        >C:\\Users\\training\\Music\\<file>.txt         the current directory and its subdirectories and\n                                                    puts the output to a file.\n        ldap.exe -u user\\<user> -p <password>       Connects to the organization’s Lightweight\n        ldap://<local_ip>                           Directory Access Protocol (LDAP) server.\n        logoff                                      Logs off the current user from a Windows\n                                                    session. Can be used to log off multiple users\n                                                    at once.\n        mstsc                                       Launches Microsoft Remote Desktop\n                                                    Connection client application in Windows.\n        net group /domain                           Retrieves a list of all groups from the domain\n                                                    controller.\n        net group 'Domain Admins' /domain           Queries the domain controller to retrieve a list\n                                                    of all accounts from Domain Admins group.\n        net group 'Domain Computers' /domain        Queries the domain controller to retrieve a list\n                                                    of all accounts from Domain Computers group.\n        net user /domain                            Queries the domain controller to retrieve a list\n                                                    of all users in the domain.\n        net.exe localgroup \"Remote Desktop Users\"   Adds a user account to the local Remote\n        <user> /add                                 Desktop Users group.\n        net.exe user <admin> <password> /domain     Modifies the password for the specified\n                                                    account.\n        netsh.exe advfirewall firewall add rule     Adds a new rule to the Windows firewall that\n        \"name=allow RemoteDesktop\" dir=in *         allows incoming RDP traffic.\n        protocol=TCP localport=<port num>\n        action=allow\n        netsh.exe advfirewall firewall set rule     Enables the pre-existing Windows firewall rule\n        \"group=remote desktop\" new enable=Yes       group named Remote Desktop. This rule group\n                                                    allows incoming RDP traffic.\n        nltest /dclist                              Retrieves a list of domain controllers.\n        nltest /domain_trusts                       Retrieves a list of domain trusts.\n        ping.exe -4 -n 1 *                          Sends a single ICMP echo request packet to all\n                                                    devices on the local network using the IPv4"
+ },
+ {
+  "id": "p84",
+  "text": "Command                                           Use"
+ },
+ {
+  "id": "p85",
+  "text": "protocol. The output of the command will show\n                                                           if the device is reachable or not.\n        quser;                                             Lists the current Windows identity for the\n        ([adsisearcher]\"(ObjectClass=computer)\").Find      logged-in user and displays the user's name.\n        All().count;([adsisearcher]\"(ObjectClass=user)\")   Uses the Active Directory Services Interface\n        .FindAll().count;[Security.Principal.WindowsIde    (ADSI) to search for all computer and user\n        ntity]::GetCurrent() | select name;net user        objects in the domain and returns counts of the\n        \"$env:USERNAME\" /domain; (Get-WmiObject -          quantities found. Lists information about the\n        class Win32_OperatingSystem).Caption; Get-         current user account from the domain, such as\n        WmiObject -Namespace root\\cimv2 -Class             the user's name, description, and group\n        Win32_ComputerSystem; net group \"domain            memberships. Lists information about the\n        admins\" /domain; nltest /dclist:; nltest           operating system installed on the local\n        /DOMAIN_TRUSTS                                     computer. Lists information about the \"Domain\n                                                           Admins\" group from the domain. Lists all\n                                                           domain controllers in the domain. Displays\n                                                           information about domain trusts.\n        reg.exe add                                        Adds/overwrites a new Registry value to\n        \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentC                disable user authentication for RDP\n        ontrolSet\\Control\\Terminal *                       connections.\n        Server\\WinStations\\RDP-Tcp\" /v\n        UserAuthentication /t REG_DWORD /d 0 /f\n        reg.exe add                                        Adds/overwrites a new Registry value to allow\n        \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentC                a user to receive help from Remote Assistance.\n        ontrolSet\\Control\\Terminal Server\" /* v\n        fAllowToGetHelp /t REG_DWORD /d 1 /f\n        reg.exe add                                        Adds/overwrites a new Registry value to\n        \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentC                disable tamper protection for Sophos antivirus\n        ontrolSet\\Services\\Sophos Endpoint *               named SAVEnabled.\n        Defense\\TamperProtection\\Config\" /t\n        REG_DWORD /v SAVEnabled /d 0 /f\n        reg.exe add                                        Adds/overwrites a new Registry value to\n        \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentC                disable tamper protection for Sophos antivirus\n        ontrolSet\\Services\\Sophos Endpoint *               named SEDEnabled.\n        Defense\\TamperProtection\\Config\" /t\n        REG_DWORD /v SEDEnabled /d 0 /f"
+ },
+ {
+  "id": "p86",
+  "text": "Command                                            Use"
+ },
+ {
+  "id": "p87",
+  "text": "reg.exe ADD *                                      Adds/overwrites a new registry value to disable\n        HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW                    tamper protection for a Sophos antivirus\n        6432Node\\Sophos\\SAVService\\TamperProtecti          service called SAVService.\n        on /t REG_DWORD /v Enabled /d 0 /f\n        reg.exe copy                                       Copies the configuration settings for the\n        hklm\\system\\CurrentControlSet\\services\\tvnser      tvnserver service to a new location in the\n        ver *                                              registry that will be used when the computer\n        hklm\\system\\CurrentControlSet\\control\\safeboo      boots into Safe Mode with Networking. This\n        t\\network\\tvnserver /s /f                          allows the service to run with the same settings\n                                                           in Safe Mode as it does in normal mode.\n        s.exe /threads:50 /ldap:all /verbose               Executes SharpShares.\n        /outfile:c:\\users\\<user>\\desktop\\1.txt\n        schtasks.exe /RU SYSTEM /create /sc ONCE           Creates a Scheduled Task run as SYSTEM at\n        /<user> /tr \"cmd.exe /crundll32.exe                0443 AM. When the task is run, cmd.exe uses\n        c:\\programdata\\netsh.dll,Entry\" /ST 04:43          crundll32.exe to run the DLL file netsh.dll.\n                                                           (It is likely that netsh.dll is a malware file and\n                                                           not associated with netsh.)\n        start-process PowerShell.exe -arg                  Executes a PowerShell script, while keeping\n        C:\\Users\\Public\\Music\\<file>.ps1 -WindowStyle      the PowerShell window hidden from the user.\n        Hidden"
+ },
+ {
+  "id": "p88",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI, CISA, and\n       ACSC do not endorse any commercial product or service, including any subjects of analysis. Any\n       reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by FBI, CISA, or ACSC."
+ }
+]

@@ -1,0 +1,254 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: Hive Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-321A\n> - Date: 2022-11-17\n> - URL: https://www.ic3.gov/CSA/2022/221117.pdf\n> - PDF SHA-256: e61f347e0925226bfe06fa76fa2c9b5fb9ae425bfc3a9a40cf3ba1bd3da3dfb7 (`source.pdf`, 12 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (34 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                               Product ID: AA22-321A\n                                                                                                                 November 17, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: Hive Ransomware\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of              Actions to Take Today to Mitigate\n        an ongoing #StopRansomware effort to publish                          Cyber Threats from Ransomware:\n        advisories for network defenders that detail various\n        ransomware variants and ransomware threat actors.                        Prioritize remediating known\n        These #StopRansomware advisories include recently                         exploited vulnerabilities.\n        and historically observed tactics, techniques, and                       Enable and enforce multifactor\n        procedures (TTPs) and indicators of compromise (IOCs)                     authentication with strong\n        to help organizations protect against ransomware. Visit                   passwords.\n        stopransomware.gov to see all #StopRansomware                            Close unused ports and remove\n        advisories and to learn more about other ransomware                       any application not deemed\n        threats and no-cost resources.                                            necessary for day-to-day\n                                                                                  operations.\n        The Federal Bureau of Investigation (FBI), the\n        Cybersecurity and Infrastructure Security Agency (CISA), and the Department of Health and Human\n        Services (HHS) are releasing this joint CSA to disseminate known Hive IOCs and TTPs identified\n        through FBI investigations as recently as November 2022.\n        FBI, CISA, and HHS encourage organizations to implement the recommendations in the Mitigations\n        section of this CSA to reduce the likelihood and impact of ransomware incidents. Victims of\n        ransomware operations should report the incident to their local FBI field office or CISA."
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\n        Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 12. See MITRE\n        ATT&CK for Enterprise for all referenced tactics and techniques.\n        As of November 2022, Hive ransomware actors have victimized over 1,300 companies worldwide,\n        receiving approximately US$100 million in ransom payments, according to FBI information. Hive"
+ },
+ {
+  "id": "p6",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the following\n        information regarding the incident: date, time, and location of the incident; type of activity; number of people\n        affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n        designated point of contact. To request incident response resources or technical assistance related to these\n        threats, contact CISA at Report@cisa.dhs.gov.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "ransomware follows the ransomware-as-a-service (RaaS) model in which developers create,\n     maintain, and update the malware, and affiliates conduct the ransomware attacks. From June 2021\n     through at least November 2022, threat actors have used Hive ransomware to target a wide range of\n     businesses and critical infrastructure sectors, including Government Facilities, Communications,\n     Critical Manufacturing, Information Technology, and especially Healthcare and Public Health (HPH).\n       The method of initial intrusion will depend on which affiliate targets the network. Hive actors have\n       gained initial access to victim networks by using single factor logins via Remote Desktop Protocol\n       (RDP), virtual private networks (VPNs), and other remote network connection protocols [T1133]. In\n       some cases, Hive actors have bypassed multifactor authentication (MFA) and gained access to\n       FortiOS servers by exploiting Common Vulnerabilities and Exposures (CVE) CVE-2020-12812. This\n       vulnerability enables a malicious cyber actor to log in without a prompt for the user’s second\n       authentication factor (FortiToken) when the actor changes the case of the username.\n       Hive actors have also gained initial access to victim networks by distributing phishing emails with\n       malicious attachments [T1566.001] and by exploiting the following vulnerabilities against Microsoft\n       Exchange servers [T1190]:\n           •    CVE-2021-31207 - Microsoft Exchange Server Security Feature Bypass Vulnerability\n           •    CVE-2021-34473 - Microsoft Exchange Server Remote Code Execution Vulnerability\n           •    CVE-2021-34523 - Microsoft Exchange Server Privilege Escalation Vulnerability"
+ },
+ {
+  "id": "p8",
+  "text": "After gaining access, Hive ransomware attempts to evade detention by executing processes to:\n           •    Identify processes related to backups, antivirus/anti-spyware, and file copying and then\n                terminating those processes to facilitate file encryption [T1562].\n           •    Stop the volume shadow copy services and remove all existing shadow copies via vssadmin\n                on command line or via PowerShell [T1059] [T1490].\n           •    Delete Windows event logs, specifically the System, Security and Application logs [T1070]."
+ },
+ {
+  "id": "p9",
+  "text": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows\n       Defender and other common antivirus programs in the system registry [T1112].\n       Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz\n       [T1537]. In addition to its capabilities against the Microsoft Windows operating system, Hive\n       ransomware has known variants for Linux, VMware ESXi, and FreeBSD.\n       During the encryption process, a file named *.key (previously *.key.*) is created in the root\n       directory (C:\\ or /root/). Required for decryption, this key file only exists on the machine where it\n       was created and cannot be reproduced. The ransom note, HOW_TO_DECRYPT.txt is dropped into\n       each affected directory and states the *.key file cannot be modified, renamed, or deleted, otherwise\n       the encrypted files cannot be recovered [T1486]. The ransom note contains a “sales department”\n       .onion link accessible through a TOR browser, enabling victim organizations to contact the actors\n       through a live chat panel to discuss payment for their files. However, some victims reported receiving\n       phone calls or emails from Hive actors directly to discuss payment."
+ },
+ {
+  "id": "p10",
+  "text": "The ransom note also threatens victims that a public disclosure or leak site accessible on the TOR\n     site, “HiveLeaks”, contains data exfiltrated from victim organizations who do not pay the ransom\n     demand (see figure 1 below). Additionally, Hive actors have used anonymous file sharing sites to\n     disclose exfiltrated data (see table 1 below)."
+ },
+ {
+  "id": "p11",
+  "text": "Figure 1: Sample Hive Ransom Note"
+ },
+ {
+  "id": "p12",
+  "text": "Table 2: Anonymous File Sharing Sites Used to Disclose Data"
+ },
+ {
+  "id": "p13",
+  "text": "https://anonfiles[.]com\n                                                      https://mega[.]nz\n                                                   https://send.exploit[.]in\n                                                       https://ufile[.]io\n                                               https://www.sendspace[.]com"
+ },
+ {
+  "id": "p14",
+  "text": "https://privatlab[.]net\n                                                 https://privatlab[.]com"
+ },
+ {
+  "id": "p15",
+  "text": "Once the victim organization contacts Hive actors on the live chat panel, Hive actors communicate\n       the ransom amount and the payment deadline. Hive actors negotiate ransom demands in U.S.\n       dollars, with initial amounts ranging from several thousand to millions of dollars. Hive actors demand\n       payment in Bitcoin."
+ },
+ {
+  "id": "p16",
+  "text": "Hive actors have been known to reinfect—with either Hive ransomware or another ransomware\n       variant—the networks of victim organizations who have restored their network without making a\n       ransom payment."
+ },
+ {
+  "id": "p17",
+  "text": "Indicators of Compromise\n       Threat actors have leveraged the following IOCs during Hive ransomware compromises. Note: Some\n       of these indicators are legitimate applications that Hive threat actors used to aid in further malicious\n       exploitation. FBI, CISA, and HHS recommend removing any application not deemed necessary for\n       day-to-day operations. See tables 2−3 below for IOCs obtained from FBI threat response\n       investigations as recently as November 2022.\n                                       Table 2: Known IOCs as of November 2022"
+ },
+ {
+  "id": "p18",
+  "text": "Known IOCs - Files"
+ },
+ {
+  "id": "p19",
+  "text": "HOW_TO_DECRYPT.txt typically in directories with encrypted files\n           *.key typically in the root directory, i.e., C:\\ or /root\n           hive.bat\n           shadow.bat\n           asq.r77vh0[.]pw - Server hosted malicious HTA file\n           asq.d6shiiwz[.]pw - Server referenced in malicious regsvr32 execution\n           asq.swhw71un[.]pw - Server hosted malicious HTA file\n           asd.s7610rir[.]pw - Server hosted malicious HTA file\n           Windows_x64_encrypt.dll\n           Windows_x64_encrypt.exe\n           Windows_x32_encrypt.dll\n           Windows_x32_encrypt.exe\n           Linux_encrypt\n           Esxi_encrypt"
+ },
+ {
+  "id": "p20",
+  "text": "Known IOCs – Events\n           System, Security and Application Windows event logs wiped\n           Microsoft Windows Defender AntiSpyware Protection disabled\n           Microsoft Windows Defender AntiVirus Protection disabled\n           Volume shadow copies deleted\n           Normal boot process prevented"
+ },
+ {
+  "id": "p21",
+  "text": "Known IOCs – Logged Processes"
+ },
+ {
+  "id": "p22",
+  "text": "wevtutil.exe cl system\n           wevtutil.exe cl security\n           wevtutil.exe cl application\n           vssadmin.exe delete shadows /all /quiet\n           wmic.exe SHADOWCOPY /nointeractive\n           wmic.exe shadowcopy delete\n           bcdedit.exe /set {default} bootstatuspolicy ignoreallfailures\n           bcdedit.exe /set {default} recoveryenabled no"
+ },
+ {
+  "id": "p23",
+  "text": "Table 3: Potential IOC IP Addresses as of November 2022\n         Note: Some of these observed IP addresses are more than a year old. FBI and CISA recommend\n          vetting or investigating these IP addresses prior to taking forward-looking action like blocking."
+ },
+ {
+  "id": "p24",
+  "text": "Potential IOC IP Addresses for Compromise or Exfil:"
+ },
+ {
+  "id": "p25",
+  "text": "84.32.188[.]57                              84.32.188[.]238\n                             93.115.26[.]251                              185.8.105[.]67\n                             181.231.81[.]239                             185.8.105[.]112\n                             186.111.136[.]37                            192.53.123[.]202\n                             158.69.36[.]149                             46.166.161[.]123\n                             108.62.118[.]190                             46.166.161[.]93\n                             185.247.71[.]106                            46.166.162[.]125\n                               5.61.37[.]207                              46.166.162[.]96\n                             185.8.105[.]103                              46.166.169[.]34\n                             5.199.162[.]220                              93.115.25[.]139"
+ },
+ {
+  "id": "p26",
+  "text": "5.199.162[.]229                                    93.115.27[.]148\n                             89.147.109[.]208                                     83.97.20[.]81"
+ },
+ {
+  "id": "p27",
+  "text": "5.61.37[.]207                                     5.199.162[.]220\n                             5.199.162[.]229                                    46.166.161[.]93\n                            46.166.161[.]123                                    46.166.162[.]96\n                            46.166.162[.]125                                    46.166.169[.]34\n                               83.97.20[.]81                                    84.32.188[.]238\n                             84.32.188[.]57                                     89.147.109[.]208\n                             93.115.25[.]139                                    93.115.26[.]251\n                             93.115.27[.]148                                   108.62.118[.]190\n                             158.69.36[.]149                                   181.231.81[.]239\n                             185.8.105[.]67                                     185.8.105[.]103\n                             185.8.105[.]112                                   185.247.71[.]106\n                            186.111.136[.]37                                   192.53.123[.]202"
+ },
+ {
+  "id": "p28",
+  "text": "MITRE ATT&CK TECHNIQUES\n       See table 4 for all referenced threat actor tactics and techniques listed in this advisory.\n                                      Table 4: Hive Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p29",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p30",
+  "text": "Technique Title                        ID                              Use"
+ },
+ {
+  "id": "p31",
+  "text": "External Remote Services                        T1133         Hive actors gain access to victim networks\n                                                                      by using single factor logins via RDP,\n                                                                      VPN, and other remote network\n                                                                      connection protocols."
+ },
+ {
+  "id": "p32",
+  "text": "Exploit Public-Facing Application               T1190         Hive actors gain access to victim network\n                                                                      by exploiting the following Microsoft\n                                                                      Exchange vulnerabilities: CVE-2021-\n                                                                      34473, CVE-2021-34523, CVE-2021-\n                                                                      31207, CVE-2021-42321."
+ },
+ {
+  "id": "p33",
+  "text": "Phishing                         T1566.001         Hive actors gain access to victim networks\n                                                           by distributing phishing emails with\n                                                           malicious attachments."
+ },
+ {
+  "id": "p34",
+  "text": "Execution"
+ },
+ {
+  "id": "p35",
+  "text": "Technique Title          ID                                 Use"
+ },
+ {
+  "id": "p36",
+  "text": "Command and Scripting             T1059            Hive actors looks to stop the volume\n        Interpreter                                        shadow copy services and remove all\n                                                           existing shadow copies via vssadmin on\n                                                           command line or PowerShell."
+ },
+ {
+  "id": "p37",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p38",
+  "text": "Technique Title          ID                                 Use"
+ },
+ {
+  "id": "p39",
+  "text": "Indicator Removal on Host         T1070            Hive actors delete Windows event logs,\n                                                           specifically, the System, Security and\n                                                           Application logs."
+ },
+ {
+  "id": "p40",
+  "text": "Modify Registry                   T1112            Hive actors set registry values for\n                                                           DisableAntiSpyware and\n                                                           DisableAntiVirus to 1."
+ },
+ {
+  "id": "p41",
+  "text": "Impair Defenses                   T1562            Hive actors seek processes related to\n                                                           backups, antivirus/anti-spyware, and file\n                                                           copying and terminates those processes\n                                                           to facilitate file encryption."
+ },
+ {
+  "id": "p42",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p43",
+  "text": "Technique Title          ID                                 Use"
+ },
+ {
+  "id": "p44",
+  "text": "Transfer Data to Cloud Account    T1537            Hive actors exfiltrate data from victims,\n                                                           using a possible combination of Rclone\n                                                           and the cloud storage service Mega.nz."
+ },
+ {
+  "id": "p45",
+  "text": "Impact"
+ },
+ {
+  "id": "p46",
+  "text": "Technique Title          ID                                 Use"
+ },
+ {
+  "id": "p47",
+  "text": "Data Encrypted for Impact         T1486            Hive actors deploy a ransom note\n                                                           HOW_TO_DECRYPT.txt into each affected\n                                                           directory which states the *.key file"
+ },
+ {
+  "id": "p48",
+  "text": "cannot be modified, renamed, or deleted,\n                                                                 otherwise the encrypted files cannot be\n                                                                 recovered."
+ },
+ {
+  "id": "p49",
+  "text": "Inhibit System Recovery                    T1490         Hive actors looks to stop the volume\n                                                                 shadow copy services and remove all\n                                                                 existing shadow copies via vssadmin via\n                                                                 command line or PowerShell."
+ },
+ {
+  "id": "p50",
+  "text": "MITIGATIONS\n       FBI, CISA, and HHS recommend organizations, particularly in the HPH sector, implement the\n       following to limit potential adversarial use of common system and network discovery techniques and\n       to reduce the risk of compromise by Hive ransomware:\n           •    Verify Hive actors no longer have access to the network.\n           •    Install updates for operating systems, software, and firmware as soon as they are\n                released. Prioritize patching VPN servers, remote access software, virtual machine software,\n                and known exploited vulnerabilities. Consider leveraging a centralized patch management\n                system to automate and expedite the process.\n           •    Require phishing-resistant MFA for as many services as possible—particularly for webmail,\n                VPNs, accounts that access critical systems, and privileged accounts that manage backups.\n           •    If used, secure and monitor RDP.\n                    o Limit access to resources over internal networks, especially by restricting RDP and\n                         using virtual desktop infrastructure.\n                    o After assessing risks, if you deem RDP operationally necessary, restrict the originating\n                         sources and require MFA to mitigate credential theft and reuse.\n                    o If RDP must be available externally, use a VPN, virtual desktop infrastructure, or other\n                         means to authenticate and secure the connection before allowing RDP to connect to\n                         internal devices.\n                    o Monitor remote access/RDP logs, enforce account lockouts after a specified number of\n                         attempts to block brute force campaigns, log RDP login attempts, and disable unused\n                         remote access/RDP ports.\n                    o Be sure to properly configure devices and enable security features.\n                    o Disable ports and protocols not used for business purposes, such as RDP Port\n                         3389/TCP.\n           •    Maintain offline backups of data, and regularly maintain backup and restoration. By instituting\n                this practice, the organization ensures they will not be severely interrupted, and/or only have\n                irretrievable data.\n           •    Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and covers\n                the entire organization’s data infrastructure. Ensure your backup data is not already infected.\n           •    Monitor cyber threat reporting regarding the publication of compromised VPN login credentials\n                and change passwords/settings if applicable."
+ },
+ {
+  "id": "p51",
+  "text": "• Install and regularly update anti-virus or anti-malware software on all hosts.\n       • Enable PowerShell Logging including module logging, script block logging and transcription.\n       • Install an enhanced monitoring tool such as Sysmon from Microsoft for increased logging.\n       • Review the following additional resources.\n             o The joint advisory from Australia, Canada, New Zealand, the United Kingdom, and the\n                  United States on Technical Approaches to Uncovering and Remediating Malicious\n                  Activity provides additional guidance when hunting or investigating a network and\n                  common mistakes to avoid in incident handling.\n             o The Cybersecurity and Infrastructure Security Agency-Multi-State Information Sharing\n                  & Analysis Center Joint Ransomware Guide covers additional best practices and ways\n                  to prevent, protect, and respond to a ransomware attack.\n             o StopRansomware.gov is the U.S. Government’s official one-stop location for resources\n                  to tackle ransomware more effectively."
+ },
+ {
+  "id": "p52",
+  "text": "If your organization is impacted by a ransomware incident, FBI, CISA, and HHS recommend the\n       following actions.\n           •    Isolate the infected system. Remove the infected system from all networks, and disable the\n                computer’s wireless, Bluetooth, and any other potential networking capabilities. Ensure all\n                shared and networked drives are disconnected.\n           •    Turn off other computers and devices. Power-off and segregate (i.e., remove from the\n                network) the infected computer(s). Power-off and segregate any other computers or devices\n                that share a network with the infected computer(s) that have not been fully encrypted by\n                ransomware. If possible, collect and secure all infected and potentially infected computers and\n                devices in a central location, making sure to clearly label any computers that have been\n                encrypted. Powering-off and segregating infected computers and computers that have not\n                been fully encrypted may allow for the recovery of partially encrypted files by specialists.\n           •    Secure your backups. Ensure that your backup data is offline and secure. If possible, scan\n                your backup data with an antivirus program to check that it is free of malware."
+ },
+ {
+  "id": "p53",
+  "text": "In addition, FBI, CISA, and HHS urge all organizations to apply the following recommendations to\n       prepare for, mitigate/prevent, and respond to ransomware incidents."
+ },
+ {
+  "id": "p54",
+  "text": "Preparing for Cyber Incidents\n           •    Review the security posture of third-party vendors and those interconnected with your\n                organization. Ensure all connections between third-party vendors and outside software or\n                hardware are monitored and reviewed for suspicious activity.\n           •    Implement listing policies for applications and remote access that only allow systems to\n                execute known and permitted programs under an established security policy.\n           •    Document and monitor external remote connections. Organizations should document\n                approved solutions for remote management and maintenance, and immediately investigate if\n                an unapproved solution is installed on a workstation."
+ },
+ {
+  "id": "p55",
+  "text": "• Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n          data and servers in a physically separate, segmented, and secure location (i.e., hard drive,\n          storage device, the cloud)."
+ },
+ {
+  "id": "p56",
+  "text": "Identity and Access Management\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with National Institute of Standards and Technology\n                (NIST) standards for developing and managing password policies.\n                   o Use longer passwords consisting of at least 8 characters and no more than 64\n                       characters in length.\n                   o Store passwords in hashed format using industry-recognized password managers.\n                   o Add password user “salts” to shared login credentials.\n                   o Avoid reusing passwords.\n                   o Implement multiple failed login attempt account lockouts.\n                   o Disable password “hints.”\n                   o Refrain from requiring password changes more frequently than once per year unless a\n                       password is known or suspected to be compromised.\n                       Note: NIST guidance suggests favoring longer passwords instead of requiring regular\n                       and frequent password resets. Frequent password resets are more likely to result in\n                       users developing password “patterns” cyber criminals can easily decipher.\n                   o Require administrator credentials to install software.\n           •    Require phishing-resistant multifactor authentication for all services to the extent\n                possible, particularly for webmail, virtual private networks, and accounts that access critical\n                systems.\n           •    Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts.\n           •    Audit user accounts with administrative privileges and configure access controls according\n                to the principle of least privilege.\n           •    Implement time-based access for accounts set at the admin level and higher. For\n                example, the Just-in-Time (JIT) access method provisions privileged access when needed\n                and can support enforcement of the principle of least privilege (as well as the Zero Trust\n                model). This is a process where a network-wide policy is set in place to automatically disable\n                admin accounts at the Active Directory level when the account is not in direct need. Individual\n                users may submit their requests through an automated process that grants them access to a\n                specified system for a set timeframe when they need to support the completion of a certain\n                task."
+ },
+ {
+  "id": "p57",
+  "text": "Protective Controls and Architecture\n           •    Segment networks to prevent the spread of ransomware. Network segmentation can help\n                prevent the spread of ransomware by controlling traffic flows between—and access to—\n                various subnetworks and by restricting adversary lateral movement."
+ },
+ {
+  "id": "p58",
+  "text": "• Identify, detect, and investigate abnormal activity and potential traversal of the\n          indicated ransomware with a networking monitoring tool. To aid in detecting the\n          ransomware, implement a tool that logs and reports all network traffic, including lateral\n          movement activity on a network. Endpoint detection and response (EDR) tools are particularly\n          useful for detecting lateral connections as they have insight into common and uncommon\n          network connections for each host.\n       • Install, regularly update, and enable real time detection for antivirus software on all\n          hosts."
+ },
+ {
+  "id": "p59",
+  "text": "Vulnerability and Configuration Management\n           •    Consider adding an email banner to emails received from outside your organization.\n           •    Disable command-line and scripting activities and permissions. Privilege escalation and\n                lateral movement often depend on software utilities running from the command line. If threat\n                actors are not able to run these tools, they will have difficulty escalating privileges and/or\n                moving laterally.\n           •    Ensure devices are properly configured and that security features are enabled.\n           •    Restrict Server Message Block (SMB) Protocol within the network to only access\n                necessary servers and remove or disable outdated versions of SMB (i.e., SMB version\n                1). Threat actors use SMB to propagate malware across organizations."
+ },
+ {
+  "id": "p60",
+  "text": "REFERENCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n           •    Resource to mitigate a ransomware attack: CISA-Multi-State Information Sharing and Analysis\n                Center (MS-ISAC) Joint Ransomware Guide.\n           •    No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment."
+ },
+ {
+  "id": "p61",
+  "text": "INFORMATION REQUESTED\n       The FBI, CISA, and HHS do not encourage paying a ransom to criminal actors. Paying a ransom may\n       embolden adversaries to target additional organizations, encourage other criminal actors to engage in\n       the distribution of ransomware, and/or fund illicit activities. Paying the ransom also does not\n       guarantee that a victim’s files will be recovered. However, the FBI, CISA, and HHS understand that\n       when businesses are faced with an inability to function, executives will evaluate all options to protect\n       their shareholders, employees, and customers. Regardless of whether you or your organization\n       decide to pay the ransom, the FBI, CISA, and HHS urge you to promptly report ransomware incidents\n       to your local FBI field office, or to CISA at report@cisa.gov or (888) 282-0870. Doing so provides\n       investigators with the critical information they need to track ransomware attackers, hold them\n       accountable under US law, and prevent future attacks.\n       The FBI may seek the following information that you determine you can legally share, including:\n           •    Recovered executable files"
+ },
+ {
+  "id": "p62",
+  "text": "• Live random access memory (RAM) capture\n       • Images of infected systems\n       • Malware samples\n       • IP addresses identified as malicious or suspicious\n       • Email addresses of the attackers\n       • A copy of the ransom note\n       • Ransom amount\n       • Bitcoin wallets used by the attackers\n       • Bitcoin wallets used to pay the ransom\n       • Post-incident forensic reports"
+ },
+ {
+  "id": "p63",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI, CISA, and\n       HHS do not endorse any commercial product or service, including any subjects of analysis. Any\n       reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by FBI, CISA, or HHS."
+ }
+]

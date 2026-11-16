@@ -1,0 +1,142 @@
+[
+ {
+  "id": "p1",
+  "text": "# Indicators of Compromise Associated with OnePercent Group Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id CU-000149-MW\n> - Date: 2021-08-23\n> - URL: https://www.ic3.gov/CSA/2021/210823.pdf\n> - PDF SHA-256: 4368226ba955eeac473935d8f0e0a37a35178b72d7e235d179801bf4edf5bad8 (`source.pdf`, 7 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (16 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "The following information is being provided by the FBI, with no guarantees or\n      23 AUG 2021\n                           warranties, for potential use at the sole discretion of recipients in order to\n                           protect against cyber threats. This data is provided to help cyber security\n     Alert Number          professionals and system administrators guard against the persistent malicious\n    CU-000149-MW\n                           actions of cyber actors. This FLASH was coordinated with DHS-CISA.\n   WE NEED YOUR\n        HELP!              This FLASH has been released TLP: WHITE. Subject to standard copyright rules,\n  If you find any of       TLP: WHITE information may be distributed without restriction.\nthese indicators on\n your networks, or\n     have related          Indicators of Compromise Associated with OnePercent\ninformation, please\n       contact             Group Ransomware\nwww.fbi.gov/con\n                           Summary\n tact-us/field-\n    offices\n                           The FBI has learned of a cyber-criminal group who self identifies as the\n*Note: By reporting        “OnePercent Group” and who have used Cobalt Strike to perpetuate\n      any related          ransomware attacks against US companies since November 2020. OnePercent\n information to the\n     FBI, you are\n                           Group actors compromise victims through a phishing email in which an\nassisting in sharing       attachment is opened by the user. The attachment’s macros infect the system\n  information that         with the IcedID1 banking trojan. IcedID downloads additional software to include\n  allows the FBI to\n   track malicious         Cobalt Strike. Cobalt Strike moves laterally in the network, primarily with\n      actors and           PowerShell remoting.\n   coordinate with\n   private industry        OnePercent Group actors encrypt the data and exfiltrate it from the victims’\n   and the United\n                           systems. The actors contact the victims via telephone and email, threatening to\nStates Government\n  to prevent future        release the stolen data through The Onion Router (TOR) network and clearnet,\n    intrusions and         unless a ransom is paid in virtual currency. OnePercent Group actors’ extortion\n        attacks.\n                           tactics always begin with a warning and progress from a partial leak of data to a\n                           full leak of all the victim’s exfiltrated data. The extortion/data leak typically\n                           follows these steps:"
+ },
+ {
+  "id": "p4",
+  "text": "IcedID can also be delivered using TA551 (also known as Shathak and GoldCabin)."
+ },
+ {
+  "id": "p5",
+  "text": "• Leak Warning: After initially gaining access to a victim network, OnePercent Group actors leave a\n        ransom note stating the data has been encrypted and exfiltrated. The note states the victim needs\n        to contact the OnePercent Group actors on TOR or the victim data will be leaked. If the victim does\n        not make prompt communication within a week of infection, the OnePercent Group actors follow\n        up with emails and phone calls to the victim stating the data will be leaked."
+ },
+ {
+  "id": "p6",
+  "text": "• One Percent Leak: If the victim does not pay the ransom quickly, the OnePercent Group actors\n        threaten to release a portion of the stolen data to various clearnet websites."
+ },
+ {
+  "id": "p7",
+  "text": "• Full Leak: If the ransom is not paid in full after the “one percent leak”, OnePercent Group actors\n        threaten to sell the stolen data to the Sodinokibi Group2 to publish at an auction."
+ },
+ {
+  "id": "p8",
+  "text": "Ransom Note Details and TOR Website"
+ },
+ {
+  "id": "p9",
+  "text": "OnePercent Group ransom notes are uniquely named and provide a link to the TOR website, which victims\nmust access by downloading and using a TOR browser. This website is used to communicate the ransom\namount, provide technical support, and negotiate with the victims via an online chat functionality. The\nvictims are instructed to pay the ransom to a Bitcoin address, and advised that a decryption key will be\nprovided in 24-48 hours after payment."
+ },
+ {
+  "id": "p10",
+  "text": "Details\n    Onion Domain:\n    5mvifa3xq5m7sou3xzaajfz7h6eserp5fnkwotohns5pgbb5oxty3zad.onion\n    BTC Address: bc1qds0yly3fn608gtm332gag029munvlute2wxktn"
+ },
+ {
+  "id": "p11",
+  "text": "File Names and Tools used by Attackers"
+ },
+ {
+  "id": "p12",
+  "text": "The following applications are leveraged by OnePercent actors to compromise victims. While some of\nthese applications support legitimate purposes, they can also be used by threat actors to aid in system\ncompromise or exploration of a victim company’s enterprise network:"
+ },
+ {
+  "id": "p13",
+  "text": "Sodinokibi is a Russia-based ransomware-as-a-service group."
+ },
+ {
+  "id": "p14",
+  "text": "•   AWS S3 cloud\n   •   IcedID\n   •   Cobalt Strike\n   •   Powershell\n   •   Rclone\n   •   Mimikatz\n   •   SharpKatz\n   •   BetterSafetyKatz\n   •   SharpSploit"
+ },
+ {
+  "id": "p15",
+  "text": "Technical Details"
+ },
+ {
+  "id": "p16",
+  "text": "OnePercent Group actors gain unauthorized access to victim networks through phishing emails with a\nmalicious zip file attachment. The zip file includes a Microsoft Word or Excel document that contains\nmalicious macros that allow the actors to subsequently infect the victim’s system with the banking Trojan\nIcedID. The actors use IcedID to install and execute the software Cobalt Strike on the victim’s network to\nmove laterally to other systems within the environment through PowerShell remoting. The actors use\nrclone for data exfiltration from the victim’s network. The actors have been observed within the victim’s\nnetwork for approximately one month prior to deployment of the ransomware."
+ },
+ {
+  "id": "p17",
+  "text": "Once the ransomware is successfully deployed, the victim will start to receive phone calls through spoofed\nphone numbers with ransom demands and are provided a ProtonMail email address for further\ncommunication. The actors will persistently demand to speak with a victim company’s designated\nnegotiator or otherwise threaten to publish the stolen data. When a victim company does not respond,\nthe actors send subsequent threats to publish the victim company’s stolen data via the same ProtonMail\nemail address."
+ },
+ {
+  "id": "p18",
+  "text": "The FBI identified the following indicators of compromise (IOCs) that we assess are likely associated with\nthis activity."
+ },
+ {
+  "id": "p19",
+  "text": "Indicators\n File Extension   The file extension presents itself as a random 8 character string.\n of Encrypted\n Files:           .dZCqciAv is an example of an extension seen by a victim company."
+ },
+ {
+  "id": "p20",
+  "text": "File Name of    [8 character random string]-readme.txt\n Ransom Note\n                 This readme file will share the same random characters as the encrypted\n                 files."
+ },
+ {
+  "id": "p21",
+  "text": ".dZCqciAv-readme.txt is an example seen by a victim company\n Observed        %TEMP%\\Temp1_request.zip\\[FILENAME].doc\n Malware\n Filename:       %PROGRAMDATA%\\vexby.txt\n TOR URL:        http://5mvifa3xq5m7sou3xzaajfz7h6eserp5fnkwotohns5pgbb5oxty3zad.\n                 onion"
+ },
+ {
+  "id": "p22",
+  "text": "Email Addresses Provided by OnePercent Group Threat Actors\n 1percentransom@protonmail.com              1percentransomware@protonmail.com"
+ },
+ {
+  "id": "p23",
+  "text": "IPs and Domains\n 157.245.239.187       31.187.64.199       206.189.227.145           167.71.224.39\n 80.82.67.221          138.197.179.153     134.209.203.30            nix1.xyz\n golddisco.top         delokijio.pw        june85.cyou               intensemisha.cyou\n biggarderoub.cyou     d30qpb9e10re4o.cloudfront.net"
+ },
+ {
+  "id": "p24",
+  "text": "Recommended Mitigations"
+ },
+ {
+  "id": "p25",
+  "text": "Due to the attackers in question utilizing the rclone program, it is recommended that affected\norganizations be aware of the following hashes associated with rclone:"
+ },
+ {
+  "id": "p26",
+  "text": "Rclone File Hashes\n SHA256                ECA9FAC6848545FF9386176773810F96323FEFF0D575C4B6E1C55F\n Rclone.exe (64 bit)   8DB842E7FE\n SHA1                  C00CFB456FC6AF0376FBEA877B742594C443DF97\n Rclone.exe (64 bit)\n SHA256                E70ED531C8A12E7ECCE83223D7B9AA1895110DC140EDF85AFC31C\n Rclone.exe (32 bit)   8C5CD580116\n SHA1                  A1D985E13C07EDDFA2721B14F7C9F869B0D733C9\n Rclone.exe (32 bit)\n TOR URL:              http://5mvifa3xq5m7sou3xzaajfz7h6eserp5fnkwotohns5pgbb5oxty\n                       3zad. onion"
+ },
+ {
+  "id": "p27",
+  "text": "•   Back-up critical data offline.\n   •   Ensure administrators are not using “Admin Approval” mode.\n   •   Implement Microsoft LAPS, if possible.\n   •   Ensure copies of critical data are in the cloud or on an external hard drive or storage device. This\n       information should not be accessible from the compromised network.\n   •   Secure your back-ups and ensure data is not accessible for modification or deletion from the\n       system where the original data resides.\n   •   Keep computers, devices, and applications patched and up-to-date.\n   •   Consider adding an email banner to emails received from outside your organization.\n   •   Disable unused remote access/Remote Desktop Protocol (RDP) ports and monitor remote\n       access/RDP logs.\n   •   Audit user accounts with administrative privileges and configure access controls with least privilege\n       in mind.\n   •   Implement network segmentation.\n   •   Use multi-factor authentication with strong passphrases."
+ },
+ {
+  "id": "p28",
+  "text": "Additional Resources"
+ },
+ {
+  "id": "p29",
+  "text": "For additional resources related to the prevention and mitigation of ransomware, go to\nhttps://www.stopransomware.gov as well as the CISA-Multi-State Information Sharing and Analysis\nCenter (MS-ISAC) Joint Ransomware Guide. Stopransomeware.gov is the U.S. Government’s new, official\none-stop location for resources to tackle ransomware more effectively."
+ },
+ {
+  "id": "p30",
+  "text": "Reporting Notice"
+ },
+ {
+  "id": "p31",
+  "text": "The FBI encourages recipients of this document to report information concerning suspicious or\ncriminal activity to their local FBI field office. Field office contacts can be identified at\nwww.fbi.gov/contact-us/field-offices. When available, each report submitted should include the\ndate, time, location, type of activity, number of people, and type of equipment used for the activity,\nthe name of the submitting company or organization, and a designated point of contact."
+ },
+ {
+  "id": "p32",
+  "text": "Administrative Note"
+ },
+ {
+  "id": "p33",
+  "text": "This product is marked TLP: WHITE. Subject to standard copyright rules, TLP: WHITE information may be\ndistributed without restriction."
+ },
+ {
+  "id": "p34",
+  "text": "Your Feedback on the Value of this Product Is Critical\n  Was this product of value to your organization? Was the content clear and concise?\n  Your comments are very important to us and can be submitted anonymously. Please\ntake a moment to complete the survey at the link below. Feedback should be specific to\n    your experience with our written products to enable the FBI to make quick and\n continuous improvements to such products. Feedback may be submitted online here:\n                             https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p35",
+  "text": "Please note that this survey is for feedback on content and value only."
+ }
+]

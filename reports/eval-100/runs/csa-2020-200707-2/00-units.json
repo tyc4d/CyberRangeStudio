@@ -1,0 +1,118 @@
+[
+ {
+  "id": "p1",
+  "text": "# Kwampirs Malware Indicators of Compromise Employed in Ongoing Cyber Supply Chain Campaign Targeting Global Industries"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id CP-000111-MW\n> - Date: 2020-07-07\n> - URL: https://www.ic3.gov/CSA/2020/200707-2.pdf\n> - PDF SHA-256: d8eea20d9076fb7d029a526f44bdb0512b699b9942afbcc7288d1013d3d5a997 (`source.pdf`, 6 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (12 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "25 March 2020                  The following information is being provided by the FBI, with no guarantees or\n                               warranties, for potential use at the sole discretion of recipients in order to\n     Alert Number\n                               protect against cyber threats. This data is provided in order to help cyber security\nCP-000111-MW                   professionals and system administrators to guard against the persistent malicious\n                               actions of cyber criminals.\n                               This FLASH has been released TLP: WHITE: The information in this product may\n                               be distributed without restriction, subject to copyright controls.\n *Note: This information is\nbeing provided by the FBI to\n     assist cyber security\n specialists protect against\n                               Kwampirs Malware Indicators of Compromise\n   the persistent malicious    Employed in Ongoing Cyber Supply Chain Campaign\n actions of cyber criminals.\nThe information is provided    Targeting Global Industries\n  without any guaranty or\n warranty and is for use at\n  the sole discretion of the   Summary:\n          recipients.\n                               This is a re-release of FBI FLASH message (CP-000111-MW) previously\n                               disseminated on 06 January 2020.\n                               Since at least 2016, an ongoing campaign using the Kwampirs Remote Access\n                               Trojan (RAT) targeted several global industries, including the software supply\n                               chain, healthcare, energy, and financial sectors. The FBI assesses software supply\n                               chain companies are a key interest and target of the Kwampirs campaign. This\n                               campaign is a two-phased approach. The first phase establishes a broad and\n                               persistent presence on the targeted network, to include delivery and execution of\n                               secondary malware payload(s). The second phase includes the delivery of\n                               additional Kwampirs components or malicious payload(s) to further exploit the\n                               infected victim host(s)."
+ },
+ {
+  "id": "p4",
+  "text": "Technical Details:"
+ },
+ {
+  "id": "p5",
+  "text": "Propagation, Persistence, Backdoor (Module 1):"
+ },
+ {
+  "id": "p6",
+  "text": "Upon successful infection, the Kwampirs RAT propagates laterally across the\n                               targeted network via SMB port 445, using hidden admin shares such as ADMIN$\n                               and C$. The malware maintains persistence on the infected Windows host by\n                               dropping a binary to the hard drive and creating a malicious Windows system\n                               service set to auto start upon reboot. The new malicious service scans and\n                               catalogs the host configuration, encrypts the data, and transmits it to an external\n                               Command and Control (C2) server via an HTTP GET request on port 80."
+ },
+ {
+  "id": "p7",
+  "text": "Secondary Payload (Module 2):"
+ },
+ {
+  "id": "p8",
+  "text": "Module 2 executes additional Kwampirs RAT modular components on the infected host(s). These malicious\ncomponents can allow for additional detailed collection of system and network interface configuration. This\ninformation is encrypted and transmitted to the C2 server via HTTP. The FBI has observed secondary module\ncommands, to be highly targeted, and executed on critical business and / or network hosts, to include the\nfollowing:"
+ },
+ {
+  "id": "p9",
+  "text": "   Primary Domain Controllers\n      Secondary Domain Controllers\n      Engineering & Quality Assurance / Testing workstations\n      Primary Source Code servers"
+ },
+ {
+  "id": "p10",
+  "text": "Secondary Modules executed on the victim host(s), include the following additional commands being\nexecuted, resulting in much deeper and thorough reconnaissance on the targeted entity."
+ },
+ {
+  "id": "p11",
+  "text": "Command Prompt                            Command Description\n cmd.exe /c \"hostname\" 2>nul               Query infected system’s hostname\n cmd.exe /c \"getmac\" 2>nul                 Query infected system’s MAC address\n cmd.exe /c \"ver\" 2>nul                    Query infected system’s version number\n cmd.exe /c \"arp -a\" 2>nul                 View the current ARP cache\n                                           Display detailed configuration information, product ID, and\n cmd.exe /c \"systeminfo\" 2>nul\n                                           hardware properties\n cmd.exe /c \"tasklist /v\" 2>nul            Display the currently-running tasks in a verbose format\n                                           Display the currently-running tasks with services hosted in\n cmd.exe /c \"tasklist /svc\" 2>nul\n                                           each process\n                                           Deliver basic statistics on all network activities. (-n=Numerical\n                                           display of address and port numbers, -a=Display all active\n cmd.exe /c \"netstat -nab\" 2>nul\n                                           ports, -b=Display execuatable file of a connection or listening\n                                           port)"
+ },
+ {
+  "id": "p12",
+  "text": "Command Prompt WMIC Command            Command Description\ncmd.exe /c \"wmic nic get               Query infected system’s network interface card type and\ncaption,AdapterType,                   manufacturer\nManufacturer\" 2>nul\ncmd.exe /c \"wmic timezone get          Query infected system’s timezone\ncaption\" 2>nul\ncmd.exe /c \"wmic IRQ get caption,      Query the infected system’s Interrupt ReQuest setting in the\nIRQNumber\" 2>nul                       system’s BIOS\ncmd.exe /c \"wmic port get              Identify open and closed ports on an infected system\nStartingAddress, EndingAddress\"\n 2>nul\ncmd.exe /c \"wmic csproduct\" 2>nul      Aquire the computer model of the infected system\ncmd.exe /c \"wmic computerSystem\"       Aquire the computer manufacturer and model, to include\n 2>nul                                 (32bit/64bit) architecture information\n                                       Aquire motherboard manufacturer, model number, and\ncmd.exe /c \"wmic baseboard\" 2>nul\n                                       serial number\ncmd.exe /c \"wmic cpu\" 2>nul            Aquire the current CPU settings for the infected system\ncmd.exe /c \"wmic partition\"    2>nul   Identify disk partitions on the infected system\n                                       Determine the current BIOS configuration for the infected\ncmd.exe /c \"wmic bios\" 2>nul\n                                       system\ncmd.exe /c \"wmic startup\" 2>nul        List programs that run on startup on the infected system\ncmd.exe /c \"wmic netlogin\" 2>nul       Display login sessions on an infected system\ncmd.exe /c \"wmic portconnector\"        Identify open ports on the infected system\n 2>nul\ncmd.exe /c \"wmic memphysical\"          Display the amount of physical memory that the infected\n 2>nul                                 system has\ncmd.exe /c \"wmic share\" 2>nul          Display all shared resources\n                                       Display what username is currently logged onto the infected\ncmd.exe /c \"wmic logon\" 2>nul\n                                       system\n                                       Determine the current operating system type for the\ncmd.exe /c \"wmic OS\" 2>nul\n                                       infected system\ncmd.exe /c \"wmic logicaldisk get       Determine the current disk space, type, and manufacturer\ncaption,description,size,\nprovidername\" 2>nul\n                                       Query desktop configuration settings through the infected\ncmd.exe /c \"wmic desktop\" 2>nul\n                                       system's desktop management software\ncmd.exe /c \"wmic process get           Generate process list of current infected system\ncaption,commandline\" 2>nul"
+ },
+ {
+  "id": "p13",
+  "text": "The FBI has discovered that the Kwampirs RAT establishes persistence on the victim host by creating a\nservice with the following configuration:"
+ },
+ {
+  "id": "p14",
+  "text": "Kwampirs RAT Created Service\n Service name:           WmiApSrvEx\n Service display name:   WMI Performance Adapter Extension\n                         SYSTEM\\CurrentControlSet\\Services\n Registry key:\n                         \\WmiApSrvEx\n                         %SystemRoot%\\system32\\**Executable\n Service image path:\n                         Filename**"
+ },
+ {
+  "id": "p15",
+  "text": "The FBI has identified the following Kwampirs RAT executable filenames:"
+ },
+ {
+  "id": "p16",
+  "text": "Kwampirs RAT Executable Files - Found in: c:\\windows\\system32\\\n wmiaprvse.exe             wmiapsrve.exe              wmiapsvrce.exe\n wmiapsrvce.exe            wmiApSrvEx.exe             wmiapsvre.exe\n wmiapvsre.exe             wmipsvrce.exe              wmipvsre.exe\n wmipsrvce.exe             wmiprvse.exe               wmipsvre.exe"
+ },
+ {
+  "id": "p17",
+  "text": "The FBI has identified additional Kwampirs RAT DLL files, utilized by the malware:"
+ },
+ {
+  "id": "p18",
+  "text": "Kwampirs RAT DLL files dropped to disk\n Files identified in c:\\windows\\syswow64\\\n wmipadp.dll               wmiassn.dll                wmipdpa.dll\n wmiamgmt.dll\n Files identified in c:\\windows\\system32\\\n wmiadrv.dll               wmipadp.dll                wmiassn.dll\n wmipdpa.dll               wmiamgmt.dll"
+ },
+ {
+  "id": "p19",
+  "text": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/\n mtmndkb32.pnf                 digirps.pnf\n mkdiawb3.pnf                  ie11.pnf"
+ },
+ {
+  "id": "p20",
+  "text": "Recommended Actions Post Infection:"
+ },
+ {
+  "id": "p21",
+  "text": "If a Kwampirs RAT infection is detected, contact your IT mitigation and remediation company and coordinate\nyour mitigation efforts with your local FBI field office. The following information would assist the FBI’s\ninvestigation of this malware:\n      Full capture of network traffic in PCAP format from the infected host(s). (48 hour capture)\n      Full image and memory capture of infected host(s).\n      Web proxy logs capture, to include cache of the Web proxy.\n      DNS and firewall logs.\n      Identification and description of host(s) communicating with the C2 (ex: server, workstation, other).\n      Identification of patient zero and attack vector(s), if able."
+ },
+ {
+  "id": "p22",
+  "text": "Best Practices for Network Security and Defense:\n    Employ regular updates to applications and the host operating system to ensure protection against\n       known vulnerabilities.\n    Establish, and backup offline, a “known good” version of the relevant server and a regular change-\n       management policy to enable monitoring for alterations to servable content with a file integrity\n       system.\n    Employ user input validation to restrict local and remote file inclusion vulnerabilities.\n    Implement a least-privileges policy on the Web server to:\n          o Reduce adversaries’ ability to escalate privileges or pivot laterally to other hosts.\n          o Control creation and execution of files in particular directories.\n    If not already present, consider deploying a demilitarized zone (DMZ) between the Web-facing\n       systems and corporate network. Limiting the interaction and logging traffic between the two provides\n       a method to identify possible malicious activity.\n    Ensure a secure configuration of Web servers. All unnecessary services and ports should be disabled\n       or blocked. All necessary services and ports should be restricted where feasible. This can include\n       whitelisting or blocking external access to administration panels and not using default login\n       credentials.\n    Utilize a reverse proxy or alternative service to restrict accessible URL paths to known legitimate\n       ones.\n    Conduct regular system and application vulnerability scans to establish areas of risk. While this\n       method does not protect against zero day attacks, it will highlight possible areas of concern."
+ },
+ {
+  "id": "p23",
+  "text": "   Deploy a Web application firewall and conduct regular virus signature checks, application fuzzing,\n       code reviews, and server network analysis."
+ },
+ {
+  "id": "p24",
+  "text": "Reporting Notice:"
+ },
+ {
+  "id": "p25",
+  "text": "The FBI encourages recipients of this document to report information concerning suspicious or criminal\nactivity to their local FBI field office. With regards to specific information that appears in this communication;\nthe context, individual indicators, particularly those of a non-deterministic or ephemeral nature (such as\nfilenames or IP addresses), may not be indicative of a compromise. Indicators should always be evaluated in\nlight of your complete information security situation."
+ },
+ {
+  "id": "p26",
+  "text": "Field office contacts can be identified at www.fbi.gov/contact-us/field. When available, each report\nsubmitted should include the date, time, location, type of activity, number of people, and type of equipment\nused for the activity, the name of the submitting company or organization, and a designated point of\ncontact."
+ },
+ {
+  "id": "p27",
+  "text": "Administrative Note:\nThis product is marked TLP:WHITE. Subject to standard copyright rules, TLP:WHITE information may be\ndistributed without restriction."
+ },
+ {
+  "id": "p28",
+  "text": "Your Feedback on the Value of this Product Is Critical\n    Was this product of value to your organization? Was the content clear and concise?\n    Your comments are very important to us and can be submitted anonymously. Please\n  take a moment to complete the survey at the link below. Feedback should be specific to\n      your experience with our written products to enable the FBI to make quick and\n   continuous improvements to such products. Feedback may be submitted online here:\n                               https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p29",
+  "text": "Please note that this survey is for feedback on content and value only."
+ }
+]

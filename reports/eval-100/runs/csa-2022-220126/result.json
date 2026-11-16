@@ -1,0 +1,541 @@
+{
+  "id": "csa-2022-220126",
+  "returncode": 0,
+  "module6": {
+    "scenario_id": "csa-2022-220126",
+    "deployable": false,
+    "blockers": [
+      {
+        "code": "port_not_served_by_image",
+        "message": "主機 h1 的服務「externally accessible mysql databases (phpMyAdmin)」宣告在埠 3306，但這台主機選用的映像 Apache Tomcat（oss-tomcat）只在埠 8080 提供服務。一台主機只會跑一個映像，所以這個埠上不會有東西在聽。",
+        "fix": "擇一處理：(1) 若「externally accessible mysql databases (phpMyAdmin)」其實不是另一套軟體（例如只是通訊協定或加密通道），在依賴頁把它移除或併入主要服務；(2) 若它是另一套軟體，把它放到另一台主機；(3) 若它就是同一個服務，把埠改成 8080。改完重新產生拓樸並核准。",
+        "error": "host h1 declares port 3306, unsupported by oss-tomcat",
+        "host": "h1",
+        "service": "externally accessible mysql databases (phpMyAdmin)",
+        "port": 3306,
+        "image": "oss-tomcat",
+        "supported_ports": [
+          8080
+        ]
+      }
+    ],
+    "plan_notes": [
+      "An attacker host was added as a lab scaffold because the IR did not define one.",
+      "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+      "No port is known for service websites running PHP code (s1); it remains unreachable by default.",
+      "No port is known for service Wordpress (revslider and layerslider plugins) (s3); it remains unreachable by default.",
+      "No port is known for service Drupal (s4); it remains unreachable by default.",
+      "No port is known for service Ckeditor and Fckeditor (including Roxy Fileman) (s6); it remains unreachable by default.",
+      "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+      "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+      "Services without a resolved host association were left out of host service lists: svc-oss-mysql, svc-oss-wordpress.",
+      "Actions for host h1 do not identify one of its multiple services; no inbound service port was opened."
+    ],
+    "platform_components": [],
+    "not_deployed_hosts": [
+      {
+        "host_id": "h2",
+        "role": "voting-related websites targeted for unauthorized access attempts",
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      },
+      {
+        "host_id": "h3",
+        "role": "media company network successfully accessed without authorization",
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      }
+    ],
+    "skipped_connections": [],
+    "deployed_host_ids": [
+      "h1",
+      "attacker"
+    ],
+    "components": [
+      {
+        "host_id": "h1",
+        "image_hint": "oss-tomcat",
+        "component": "oss-tomcat",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": false,
+        "image": "tomcat:9.0.124-jre25-temurin-noble@sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+        "version": "9.0.124",
+        "digest": "sha256:071f2f04ccb19f0bfc7f70cced8bf5ecdccf3542b8fb0dfe0e96e24aeccfc85f",
+        "substitute": false,
+        "catalogue_component": "oss-tomcat",
+        "published": true,
+        "exposure": "publishable",
+        "healthcheck": true,
+        "limits": {
+          "mem_limit": "768m",
+          "cpus": 1.0,
+          "pids_limit": 512
+        },
+        "reason": "主機 h1 的服務「externally accessible mysql databases (phpMyAdmin)」宣告在埠 3306，但這台主機選用的映像 Apache Tomcat（oss-tomcat）只在埠 8080 提供服務。一台主機只會跑一個映像，所以這個埠上不會有東西在聽。",
+        "service_ports": [
+          {
+            "port": 3306,
+            "protocol": "tcp",
+            "names": [
+              "externally accessible mysql databases (phpMyAdmin)"
+            ]
+          },
+          {
+            "port": 8080,
+            "protocol": "tcp",
+            "names": [
+              "Apache Tomcat"
+            ]
+          }
+        ],
+        "blockers": [
+          "port_not_served_by_image"
+        ]
+      },
+      {
+        "host_id": "h2",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+      },
+      {
+        "host_id": "h3",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+      },
+      {
+        "host_id": "attacker",
+        "image_hint": "oss-attacker",
+        "component": "oss-attacker",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": true,
+        "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "version": "3.22",
+        "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "substitute": false,
+        "catalogue_component": "oss-attacker",
+        "published": false,
+        "exposure": "publishable",
+        "healthcheck": false,
+        "limits": {
+          "mem_limit": "256m",
+          "cpus": 1.0,
+          "pids_limit": 256
+        },
+        "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+        "service_ports": []
+      }
+    ],
+    "vms": [],
+    "host_port_mappings": [
+      {
+        "host_id": "h1",
+        "container_port": 3306,
+        "host_port": 42000,
+        "env": "CR_HOSTPORT_0",
+        "via": "cr-gateway"
+      },
+      {
+        "host_id": "h1",
+        "container_port": 8080,
+        "host_port": 42001,
+        "env": "CR_HOSTPORT_1",
+        "via": "cr-gateway"
+      }
+    ],
+    "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+    "publishing": "published ports terminate on the generated cr-gateway forwarder; lab services are attached to internal networks only",
+    "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+    "networks": [
+      {
+        "id": "scenario-internal",
+        "name": "cr-demo-csa-2022-220126-scenario-internal",
+        "internal": true,
+        "plan_internal": true,
+        "role": "internal_segment",
+        "published_to_host": true,
+        "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+      },
+      {
+        "id": "external",
+        "name": "cr-demo-csa-2022-220126-external",
+        "internal": true,
+        "plan_internal": false,
+        "role": "exposed_segment",
+        "published_to_host": false,
+        "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+      }
+    ],
+    "errors": [
+      "host h1 declares port 3306, unsupported by oss-tomcat"
+    ]
+  },
+  "inventory": [
+    {
+      "service_id": "s1",
+      "name": "websites running PHP code",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "websites running PHP code is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s2",
+      "name": "externally accessible mysql databases (phpMyAdmin)",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "externally accessible mysql databases (phpMyAdmin) is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s3",
+      "name": "Wordpress (revslider and layerslider plugins)",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "Wordpress (revslider and layerslider plugins) is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s4",
+      "name": "Drupal",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "Drupal is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s5",
+      "name": "Apache Tomcat",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "have",
+        "component_id": "oss-tomcat",
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "Single deployable version: Apache Tomcat 9.0.124 (oss-tomcat).",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s6",
+      "name": "Ckeditor and Fckeditor (including Roxy Fileman)",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "Ckeditor and Fckeditor (including Roxy Fileman) is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    }
+  ],
+  "manifest": {
+    "scenario_id": "csa-2022-220126",
+    "generated_at": "2026-11-16T21:46:12.719353+00:00",
+    "items": [
+      {
+        "action_id": "a2",
+        "cve": "CVE-2026-108097",
+        "source": "github",
+        "source_url": "https://github.com/FurkanKAYAPINAR/CVE-2026-108097",
+        "ref": {},
+        "product": "Drupal",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "MIT",
+        "trust": "medium",
+        "last_updated": "2026-10-16T12:05:38Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2025-24813",
+        "source": "github",
+        "source_url": "https://github.com/Ghost-Bx1/TomcatPartialPUT-CVE-2025-24813",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "for CVE-2025-24813 - Apache Tomcat Partial PUT RCE (CVSS 9.8)",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-11-06T20:03:23Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2024-50379",
+        "source": "github",
+        "source_url": "https://github.com/Ghost-Bx1/TomcatRace-CVE-2024-50379",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "for CVE-2024-50379 - Apache Tomcat Race Condition RCE (CVSS 9.8)",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-11-06T20:03:30Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2019-0232",
+        "source": "github",
+        "source_url": "https://github.com/yuzuki-ayanami/CVE-2019-0232",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-07-12T22:50:04Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2025-24813",
+        "source": "github",
+        "source_url": "https://github.com/yuzuki-ayanami/CVE-2025-24813",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-07-12T16:25:42Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2018-7600",
+        "source": "github",
+        "source_url": "https://github.com/Prapul1/VulnHub-DC1-Writeup",
+        "ref": {},
+        "product": "Drupal",
+        "version_range": "",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-06-25T21:33:27Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2024-50379",
+        "source": "github",
+        "source_url": "https://github.com/azilRababe/CVE-2024-50379",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-06-20T18:29:04Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2018-7600",
+        "source": "github",
+        "source_url": "https://github.com/erman-bolukbasi/web-penetration-drupal",
+        "ref": {},
+        "product": "Drupal",
+        "version_range": "",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-07-02T13:26:47Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a2",
+        "cve": "CVE-2017-12615",
+        "source": "github",
+        "source_url": "https://github.com/nouhaila2030/apache-tomcat-security-audit",
+        "ref": {},
+        "product": "Apache Tomcat",
+        "version_range": "",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-10-10T00:00:36Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      }
+    ]
+  },
+  "postprocess_error": null,
+  "runner_stdout": "ir schema errors: []\nactions 22 relations 20 hosts 3 services 6 missing 12 quality {'quote_verified_rate': 0.7917, 'unsupported_claim_count': 15, 'inferred_count': 13, 'absent_count': 0, 'method': 'single_pass', 'provisional': True, 'dropped_placeholder_hosts': 0, 'excluded_non_attacker_actions': [], 'hedged_action_count': 1, 'capability_action_count': 1, 'dropped_non_software_services': [], 'dropped_misplaced_techniques': []}\n",
+  "runner_stderr": "",
+  "budget": {
+    "estimated_usd": 0.048916799999999996,
+    "calls": 3,
+    "cached_calls": 0
+  },
+  "cache_db_exists": true,
+  "input": "fixtures/cti-corpus/csa-2022-220126/report.md",
+  "run_dir": "reports/eval-100/runs/csa-2022-220126"
+}

@@ -1,0 +1,189 @@
+{
+  "id": "csa-2021-211203",
+  "returncode": 0,
+  "module6": {
+    "scenario_id": "csa-2021-211203",
+    "deployable": true,
+    "blockers": [],
+    "plan_notes": [
+      "An attacker host was added as a lab scaffold because the IR did not define one.",
+      "No target host is stated or inferable as reachable from outside; the attacker has no path to any target until a host's network placement is supplied.",
+      "Host h1 deploys one component; not deployed there: tomcat (oss-tomcat). Move them to another host or remove them.",
+      "No port is known for service ServiceDesk REST API (s1); it remains unreachable by default."
+    ],
+    "platform_components": [],
+    "not_deployed_hosts": [],
+    "skipped_connections": [],
+    "deployed_host_ids": [
+      "h1",
+      "attacker"
+    ],
+    "components": [
+      {
+        "host_id": "h1",
+        "image_hint": "oss-postgres",
+        "component": "oss-postgres",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": true,
+        "image": "postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+        "version": "16.16",
+        "digest": "sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2",
+        "substitute": false,
+        "catalogue_component": "oss-postgres",
+        "published": false,
+        "exposure": "internal_only",
+        "healthcheck": true,
+        "limits": {
+          "mem_limit": "512m",
+          "cpus": 1.0,
+          "pids_limit": 256
+        },
+        "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+        "service_ports": [
+          {
+            "port": 5432,
+            "protocol": "tcp",
+            "names": [
+              "postgres"
+            ]
+          }
+        ]
+      },
+      {
+        "host_id": "attacker",
+        "image_hint": "oss-attacker",
+        "component": "oss-attacker",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": true,
+        "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "version": "3.22",
+        "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "substitute": false,
+        "catalogue_component": "oss-attacker",
+        "published": false,
+        "exposure": "publishable",
+        "healthcheck": false,
+        "limits": {
+          "mem_limit": "256m",
+          "cpus": 1.0,
+          "pids_limit": 256
+        },
+        "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+        "service_ports": []
+      }
+    ],
+    "vms": [],
+    "host_port_mappings": [],
+    "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+    "publishing": "nothing is published on the host",
+    "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+    "networks": [
+      {
+        "id": "scenario-internal",
+        "name": "cr-demo-csa-2021-211203-scenario-internal",
+        "internal": true,
+        "plan_internal": true,
+        "role": "internal_segment",
+        "published_to_host": false,
+        "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+      },
+      {
+        "id": "external",
+        "name": "cr-demo-csa-2021-211203-external",
+        "internal": true,
+        "plan_internal": false,
+        "role": "exposed_segment",
+        "published_to_host": false,
+        "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+      }
+    ],
+    "errors": []
+  },
+  "inventory": [
+    {
+      "service_id": "s1",
+      "name": "ServiceDesk REST API",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "ServiceDesk REST API is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    }
+  ],
+  "manifest": {
+    "scenario_id": "csa-2021-211203",
+    "generated_at": "2026-11-16T21:43:05.677790+00:00",
+    "items": [
+      {
+        "action_id": "a1",
+        "cve": "CVE-2021-44077",
+        "source": "github",
+        "source_url": "https://github.com/horizon3ai/CVE-2021-44077",
+        "ref": {},
+        "product": "ServiceDesk REST API",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2021-12-08T21:43:16Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a1",
+        "cve": "CVE-2021-44077",
+        "source": "github",
+        "source_url": "https://github.com/pizza-power/Golang-CVE-2021-44077-POC",
+        "ref": {},
+        "product": "ServiceDesk REST API",
+        "version_range": "",
+        "language": "Go",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "go",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2022-10-02T19:35:59Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.65
+        },
+        "compatibility_score": 0.7275
+      }
+    ]
+  },
+  "postprocess_error": null,
+  "runner_stdout": "ir schema errors: []\nactions 2 relations 1 hosts 1 services 1 missing 3 quality {'quote_verified_rate': 1.0, 'unsupported_claim_count': 0, 'inferred_count': 1, 'absent_count': 0, 'method': 'single_pass', 'provisional': True, 'dropped_placeholder_hosts': 0, 'excluded_non_attacker_actions': [], 'hedged_action_count': 0, 'capability_action_count': 0, 'dropped_non_software_services': [], 'dropped_misplaced_techniques': []}\n",
+  "runner_stderr": "",
+  "budget": {
+    "estimated_usd": 0.025824000000000003,
+    "calls": 3,
+    "cached_calls": 0
+  },
+  "cache_db_exists": true,
+  "input": "fixtures/cti-corpus/csa-2021-211203/report.md",
+  "run_dir": "reports/eval-100/runs/csa-2021-211203"
+}

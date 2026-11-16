@@ -1,0 +1,73 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim systems",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Telegram API over HTTPS",
+     "port": 443,
+     "protocol": "tcp"
+    },
+    {
+     "name": "HTTP",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "oss-nginx",
+   "substitute_for": "HTTP",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "assumed",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a2); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Windows Management Instrumentation (s1); it remains unreachable by default.",
+  "No port is known for service PowerShell (s2); it remains unreachable by default.",
+  "No port is known for service Microsoft Exchange (s3); it remains unreachable by default.",
+  "No port is known for service Microsoft Netlogon (s4); it remains unreachable by default."
+ ]
+}

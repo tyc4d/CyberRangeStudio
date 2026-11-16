@@ -1,0 +1,270 @@
+[
+ {
+  "id": "p1",
+  "text": "# Ransomware Activity Targeting the Healthcare and Public Health Sector"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA20-302A\n> - Date: 2020-11-02\n> - URL: https://www.ic3.gov/CSA/2020/201102.pdf\n> - PDF SHA-256: 959064f94d53547452f8cc2cda6c6e4833aab9d9482b131f9d312108209a01b4 (`source.pdf`, 22 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (106 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "WHITE"
+ },
+ {
+  "id": "p4",
+  "text": "JOINT\n CYBERSECURITY\n ADVISORY\n Ransomware Activity Targeting the\n Healthcare and Public Health Sector\n AA20-302A\n October 28, 2020"
+ },
+ {
+  "id": "p5",
+  "text": "Updated October 29, 2020"
+ },
+ {
+  "id": "p6",
+  "text": "TLP:WHITE                                                                                                           FBI |"
+ },
+ {
+  "id": "p7",
+  "text": "Note: This advisory was updated on October 29, 2020 to include information on Conti, TrickBot, and\nBazarLoader, including new IOCs and Yara Rules for detection.\nThis advisory uses the MITRE Adversarial Tactics, Techniques, and Common Knowledge\n(ATT&CK®) version 7 framework. See the ATT&CK for Enterprise version 7 for all referenced threat\nactor tactics and techniques."
+ },
+ {
+  "id": "p8",
+  "text": "SUMMARY\nThis joint cybersecurity advisory was coauthored by the Cybersecurity and Infrastructure Security\nAgency (CISA), the Federal Bureau of Investigation (FBI), and the Department of Health and Human\nServices (HHS). This advisory describes the tactics, techniques, and procedures (TTPs) used by\ncybercriminals against targets in the Healthcare and Public Health Sector (HPH) to infect systems\nwith ransomware, notably Ryuk and Conti, for financial gain.\nCISA, FBI, and HHS have credible information of an increased and imminent cybercrime threat to\nU.S. hospitals and healthcare providers. CISA, FBI, and HHS are sharing this information to provide\nwarning to healthcare providers to ensure that they take timely and reasonable precautions to protect\ntheir networks from these threats.\nKey Findings\n       CISA, FBI, and HHS assess malicious cyber actors are targeting the HPH Sector with TrickBot\n        and BazarLoader malware, often leading to ransomware attacks, data theft, and the disruption\n        of healthcare services.\n       These issues will be particularly challenging for organizations within the COVID-19 pandemic;\n        therefore, administrators will need to balance this risk when determining their cybersecurity\n        investments."
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\nThreat Details\nThe cybercriminal enterprise behind TrickBot, which is likely also the creator of BazarLoader\nmalware, has continued to develop new functionality and tools, increasing the ease, speed, and\nprofitability of victimization. These threat actors increasingly use loaders—like TrickBot and\nBazarLoader (or BazarBackdoor)—as part of their malicious cyber campaigns. Cybercriminals\ndisseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious\nwebsites that host the malware or attachments with the malware. Loaders start the infection chain by\ndistributing the payload; they deploy and execute the backdoor from the C2 server and install it on the\nvictim’s machine."
+ },
+ {
+  "id": "p10",
+  "text": "This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information\ncarries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\nrelease. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.\nFor more information on the Traffic Light Protocol, see http://www.us-cert.gov/tlp/."
+ },
+ {
+  "id": "p11",
+  "text": "TrickBot\n    What began as a banking trojan and descendant of Dyre malware, TrickBot now provides its\n    operators a full suite of tools to conduct a myriad of illegal cyber activities. These activities include\n    credential harvesting, mail exfiltration, cryptomining, point-of-sale data exfiltration, and the\n    deployment of ransomware, such as Ryuk and Conti.\n    In early 2019, FBI began to observe new TrickBot modules named Anchor, which cyber actors\n    typically used in attacks targeting high-profile victims—such as large corporations. These attacks\n    often involved data exfiltration from networks and point-of-sale devices. As part of the new Anchor\n    toolset, TrickBot developers created anchor_dns, a tool for sending and receiving data from victim\n    machines using Domain Name System (DNS) tunneling.\n    anchor_dns is a backdoor that allows victim machines to communicate with command and control\n    (C2) servers over DNS to evade typical network defense products and make their malicious\n    communications blend in with legitimate DNS traffic. anchor_dns uses a single-byte XOR cipher to\n    encrypt its communications, which have been observed using key 0xB9. Once decrypted, the string\n    anchor_dns can be found in the DNS request traffic.\n    TrickBot Indicators of Compromise\n    After successful execution of the malware, TrickBot copies itself as an executable file with a 12-\n    character (includes .exe), randomly generated file name (e.g. mfjdieks.exe) and places this file in\n    one of the following directories.\n           C:\\Windows\\\n           C:\\Windows\\SysWOW64\\\n           C:\\Users\\[Username]\\AppData\\Roaming\\\n    Once the executable is running and successful in establishing communication with C2s, the\n    executable places appropriate modules downloaded from C2s for the infected processor architecture\n    type (32 or 64 bit instruction set), to the infected host’s %APPDATA% or %PROGRAMDATA% directory, such\n    as %AppData\\Roaming\\winapp. Some commonly named plugins that are created in a Modules\n    subdirectory are (the detected architecture is appended to the module filename, e.g., importDll32 or\n    importDll64):\n           Systeminfo\n           importDll\n           outlookDll\n           injectDll with a directory (ex. injectDLL64_configs) containing configuration files:\n               o dinj\n               o sinj\n               o dpost\n           mailsearcher with a directory (ex. mailsearcher64_configs) containing configuration file:\n               o mailconf\n           networkDll with a directory (ex. networkDll64_configs) containing configuration file:"
+ },
+ {
+  "id": "p12",
+  "text": "o dpost\n           wormDll\n           tabDll\n           shareDll\n    Filename client_id or data or FAQ with the assigned bot ID of the compromised system is created\n    in the malware directory. Filename group_tag or Readme.md containing the TrickBot campaign IDs is\n    created in the malware directory.\n    The malware may also drop a file named anchorDiag.txt in one of the directories listed above.\n    Part of the initial network communications with the C2 server involves sending information about the\n    victim machine such as its computer name/hostname, operating system version, and build via a\n    base64-encoded GUID. The GUID is composed of /GroupID/ClientID/ with the following naming\n    convention:\n    /anchor_dns/[COMPUTERNAME]_[WindowsVersionBuildNo].[32CharacterString]/.\n    The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim\n    machine. The scheduled task typically uses the following naming convention.\n    [random_folder_name_in_%APPDATA%_excluding_Microsoft]\n    autoupdate#[5_random_numbers] (e.g., Task autoupdate#16876).\n    After successful execution, anchor_dns further deploys malicious batch scripts (.bat) using\n    PowerShell commands.\n    The malware deploys self-deletion techniques by executing the following commands.\n           cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample]\n           cmd.exe /C PowerShell \\\"Start-Sleep 3; Remove-Item\n            C:\\Users\\[username]\\[malware_sample_location]\\\"\n    The following domains found in outbound DNS records are associated with anchor_dns.\n           kostunivo[.]com\n           chishir[.]com\n           mangoclone[.]com\n           onixcellent[.]com\n    This malware used the following legitimate domains to test internet connectivity.\n           ipecho[.]net\n           api[.]ipify[.]org\n           checkip[.]amazonaws[.]com\n           ip[.]anysrc[.]net\n           wtfismyip[.]com\n           ipinfo[.]io"
+ },
+ {
+  "id": "p13",
+  "text": "    icanhazip[.]com\n            myexternalip[.]com\n            ident[.]me\n    Currently, there is an open source tracker for Trickbot C2 servers located at\n    https://feodotracker.abuse.ch/browse/trickbot/.\n    The anchor_dns malware historically used the following C2 servers.\n            23[.]95[.]97[.]59\n            51[.]254[.]25[.]115\n            193[.]183[.]98[.]66\n            91[.]217[.]137[.]37\n            87[.]98[.]175[.]85\n    TrickBot YARA Rules\n    rule anchor_dns_strings_filenames {\n            meta:\n            description = \"Rule to detect AnchorDNS samples based off strings or\n    filenames used in malware\"\n                author = \"NCSC\"\n                hash1 = \"fc0efd612ad528795472e99cae5944b68b8e26dc\"\n                hash2 = \"794eb3a9ce8b7e5092bb1b93341a54097f5b78a9\"\n                hash3 = \"9dfce70fded4f3bc2aa50ca772b0f9094b7b1fb2\"\n                hash4 = \"24d4bbc982a6a561f0426a683b9617de1a96a74a\"\n            strings:\n                $ = \",Control_RunDLL \\x00\"\n                $ = \":$GUID\" ascii wide\n                $ = \":$DATA\" ascii wide\n                $ = \"/1001/\"\n                $ = /(\\x00|\\xCC)qwertyuiopasdfghjklzxcvbnm(\\x00|\\xCC)/\n                $ = /(\\x00|\\xCC)QWERTYUIOPASDFGHJKLZXCVBNM(\\x00|\\xCC)/\n                $ = \"start program with cmdline \\\"%s\\\"\"\n                $ = \"Global\\\\fde345tyhoVGYHUJKIOuy\"\n                $ = \"ChardWorker::thExecute: error registry me\"\n                $ = \"get command: incode %s, cmdid \\\"%s\\\", cmd \\\"%s\\\"\""
+ },
+ {
+  "id": "p14",
+  "text": "$ = \"anchorDNS\"\n               $ = \"Anchor_x86\"\n               $ = \"Anchor_x64\"\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and 3 of them\n    }"
+ },
+ {
+  "id": "p15",
+  "text": "rule anchor_dns_icmp_transport {\n         meta:\n               description = \"Rule to detect AnchorDNS samples based off ICMP transport\n    strings\"\n               author = \"NCSC\"\n               hash1 = \"056f326d9ab960ed02356b34a6dcd72d7180fc83\"\n         strings:\n               $ = \"reset_connection <- %s\"\n               $ = \"server_ok <- %s (packets on server %s)\"\n               $ = \"erase successfully transmitted packet (count: %d)\"\n               $ = \"Packet sended with crc %s -> %s\"\n               $ = \"send data confimation to server(%s)\"\n               $ = \"data recived from <- %s\"\n               $ = \"Rearmost packed recived (id: %s)\"\n               $ = \"send poll to server -> : %s\"\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and 3 of them\n    }"
+ },
+ {
+  "id": "p16",
+  "text": "rule anchor_dns_config_dexor {\n         meta:\n            description = \"Rule to detect AnchorDNS samples based off configuration\n    deobfuscation (XOR 0x23 countup)\""
+ },
+ {
+  "id": "p17",
+  "text": "author = \"NCSC\"\n               hash1 = \"d0278ec015e10ada000915a1943ddbb3a0b6b3db\"\n               hash2 = \"056f326d9ab960ed02356b34a6dcd72d7180fc83\"\n         strings:\n            $x86 = {75 1F 56 6A 40 B2 23 33 C9 5E 8A 81 ?? ?? ?? ?? 32 C2 FE C2 88 81\n    ?? ?? ?? ?? 41 83 EE 01 75 EA 5E B8 ?? ?? ?? ?? C3}\n            $x64 = {41 B0 23 41 B9 80 00 00 00 8A 84 3A ?? ?? ?? 00 41 32 C0 41 FE C0\n    88 04 32 48 FF C2 49 83 E9 01 75 E7}\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and any of them\n    }"
+ },
+ {
+  "id": "p18",
+  "text": "rule anchor_dns_installer {\n         meta:\n            description = \"Rule to detect AnchorDNS installer samples based off MZ\n    magic under one-time pad or deobfuscation loop code\"\n               author = \"NCSC\"\n               hash1 = \"fa98074dc18ad7e2d357b5d168c00a91256d87d1\"\n               hash2 = \"78f0737d2b1e605aad62af252b246ef390521f02\"\n         strings:\n               $pre = {43 00 4F 00 4E 00 4F 00 55 00 54 00 24 00 00 00} //CONOUT$\n               $pst = {6B 65 72 6E 65 6C 33 32 2E 64 6C 6C 00 00 00 00} //kernel32.dll\n            $deob_x86 = {8B C8 89 4D F8 83 F9 FF 74 52 46 89 5D F4 88 5D FF 85 F6 74\n    34 8A 83 ?? ?? ?? ?? 32 83 ?? ?? ?? ?? 6A 00 88 45 FF 8D 45 F4 50 6A 01 8D 45 FF\n    50 51 FF 15 34 80 41 00 8B 4D F8 43 8B F0 81 FB 00 ?? ?? ?? 72 CC 85 F6 75 08}\n            $deob_x64 = {42 0F B6 84 3F ?? ?? ?? ?? 4C 8D 8C 24 80 00 00 00 42 32 84\n    3F ?? ?? ?? ?? 48 8D 54 24 78 41 B8 01 00 00 00 88 44 24 78 48 8B CE 48 89 6C 24\n    20 FF 15 ?? ?? ?? ?? 48 FF C7 8B D8 48 81 FF ?? ?? ?? ?? 72 B8}\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550)\n               and\n                     (     uint16(@pre+16) ^ uint16(@pre+16+((@pst-(@pre+16))\\2)) == 0x5A4D"
+ },
+ {
+  "id": "p19",
+  "text": "or\n                           $deob_x86 or $deob_x64\n                     )\n    }"
+ },
+ {
+  "id": "p20",
+  "text": "import \"pe\"\n    rule anchor_dns_string_1001_with_pe_section_dll_export_resolve_ip_domains {\n         meta:\n             description = \"Rule to detect AnchorDNS samples based off /1001/ string\n    in combination with DLL export name string, PE section .addr or IP resolution\n    domains\"\n               author = \"NCSC\"\n               hash1 = \"ff8237252d53200c132dd742edc77a6c67565eee\"\n               hash2 = \"c8299aadf886da55cb47e5cbafe8c5a482b47fc8\"\n         strings:\n               $str1001 = {2F 31 30 30 31 2F 00} // /1001/\n            $strCtrl = {2C 43 6F 6E 74 72 6F 6C 5F 52 75 6E 44 4C 4C 20 00} //\n    ,Control_RunDLL\n               $ip1 = \"checkip.amazonaws.com\" ascii wide\n               $ip2 = \"ipecho.net\" ascii wide\n               $ip3 = \"ipinfo.io\" ascii wide\n               $ip4 = \"api.ipify.org\" ascii wide\n               $ip5 = \"icanhazip.com\" ascii wide\n               $ip6 = \"myexternalip.com\" ascii wide\n               $ip7 = \"wtfismyip.com\" ascii wide\n               $ip8 = \"ip.anysrc.net\" ascii wide\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550)\n               and $str1001\n               and (\n                           for any i in (0..pe.number_of_sections): ("
+ },
+ {
+  "id": "p21",
+  "text": "pe.sections[i].name == \".addr\"\n                           )\n                     or\n                           $strCtrl\n                     or\n                           6 of ($ip*)\n                     )\n    }"
+ },
+ {
+  "id": "p22",
+  "text": "rule anchor_dns_check_random_string_in_dns_response {\n         meta:\n            description = \"Rule to detect AnchorDNS samples based off checking random\n    string in DNS response\"\n               author = \"NCSC\"\n               hash1 = \"056f326d9ab960ed02356b34a6dcd72d7180fc83\"\n               hash2 = \"14e9d68bba7a184863667c680a8d5a757149aa36\"\n         strings:\n            $x86 = {8A D8 83 C4 10 84 DB 75 08 8B 7D BC E9 84 00 00 00 8B 7D BC 32 DB\n    8B C7 33 F6 0F 1F 00 85 C0 74 71 40 6A 2F 50 E8 ?? ?? ?? ?? 46 83 C4 08 83 FE 03\n    72 EA 85 C0 74 5B 83 7D D4 10 8D 4D C0 8B 75 D0 8D 50 01 0F 43 4D C0 83 EE 04 72\n    11 8B 02 3B 01 75 10 83 C2 04 83 C1 04 83 EE 04 73 EF 83 FE FC 74 2D 8A 02 3A 01\n    75 29 83 FE FD 74 22 8A 42 01 3A 41 01 75 1C 83 FE FE 74 15 8A 42 02 3A 41 02 75\n    0F 83 FE FF 74 08 8A 42 03 3A 41 03 75 02 B3 01 8B 75 B8}\n            $x64 = {4C 39 75 EF 74 56 48 8D 45 DF 48 83 7D F7 10 48 0F 43 45 DF 49 8B\n    FE 48 85 C0 74 40 48 8D 48 01 BA 2F 00 00 00 E8 ?? ?? ?? ?? 49 03 FF 48 83 FF 03\n    72 E4 48 85 C0 74 24 48 8D 55 1F 48 83 7D 37 10 48 0F 43 55 1F 48 8D 48 01 4C 8B\n    45 2F E8 ?? ?? ?? ?? 0F B6 DB 85 C0 41 0F 44 DF 49 03 F7 48 8B 55 F7 48 83 FE 05\n    0F 82 6A FF FF FF}\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and any of them\n    }"
+ },
+ {
+  "id": "p23",
+  "text": "rule anchor_dns_default_result_execute_command {"
+ },
+ {
+  "id": "p24",
+  "text": "meta:\n            description = \"Rule to detect AnchorDNS samples based off default result\n    value and executing command\"\n               author = \"NCSC\"\n               hash1 = \"056f326d9ab960ed02356b34a6dcd72d7180fc83\"\n               hash2 = \"14e9d68bba7a184863667c680a8d5a757149aa36\"\n         strings:\n            $x86 = {83 C4 04 3D 80 00 00 00 73 15 8B 04 85 ?? ?? ?? ?? 85 C0 74 0A 8D\n    4D D8 51 8B CF FF D0 8A D8 84 DB C7 45 A4 0F 00 00 00}\n            $x64 = {48 98 B9 E7 03 00 00 48 3D 80 00 00 00 73 1B 48 8D 15 ?? ?? ?? ??\n    48 8B 04 C2 48 85 C0 74 0B 48 8D 55 90 48 8B CE FF D0 8B C8}\n         condition:\n               (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and any of them\n    }"
+ },
+ {
+  "id": "p25",
+  "text": "rule anchor_dns_pdbs {\n         meta:\n               description = \"Rule to detect AnchorDNS samples based off partial PDB\n    paths\"\n               author = \"NCSC\"\n               hash1 = \"f0e575475f33600aede6a1b9a5c14f671cb93b7b\"\n               hash2 = \"1304372bd4cdd877778621aea715f45face93d68\"\n               hash3 = \"e5dc7c8bfa285b61dda1618f0ade9c256be75d1a\"\n               hash4 = \"f96613ac6687f5dbbed13c727fa5d427e94d6128\"\n               hash5 = \"46750d34a3a11dd16727dc622d127717beda4fa2\"\n         strings:\n               $ = \":\\\\MyProjects\\\\secondWork\\\\Anchor\\\\\"\n               $ = \":\\\\simsim\\\\anchorDNS\"\n               $ = \":\\\\[JOB]\\\\Anchor\\\\\"\n               $ = \":\\\\Anchor\\\\Win32\\\\Release\\\\Anchor_\"\n               $ = \":\\\\Users\\\\ProFi\\\\Desktop\\\\data\\\\Win32\\\\anchor\""
+ },
+ {
+  "id": "p26",
+  "text": "condition:\n                (uint16(0) == 0x5A4D and uint16(uint32(0x3c)) == 0x4550) and any of them\n    }"
+ },
+ {
+  "id": "p27",
+  "text": "BazarLoader/BazarBackdoor\n    Beginning in approximately early 2020, actors believed to be associated with Trickbot began using\n    BazarLoader and BazarBackdoor to infect victim networks. The loader and backdoor work closely\n    together to achieve infection and communicate with the same C2 infrastructure. Campaigns using\n    Bazar represent a new technique for cybercriminals to infect and monetize networks and have\n    increasingly led to the deployment of ransomware, including Ryuk. BazarLoader has become one of\n    the most commonly used vectors for ransomware deployment.\n    Deployment of the BazarLoader malware typically comes from phishing email and contains the\n    following:\n            Phishing emails are typically delivered by commercial mass email delivery services. Email\n             received by a victim will contain a link to an actor-controlled Google Drive document or other\n             free online filehosting solutions, typically purporting to be a PDF file.\n            This document usually references a failure to create a preview of the document and contains a\n             link to a URL hosting a malware payload in the form of a misnamed or multiple extension file.\n            Emails can appear as routine, legitimate business correspondence about customer\n             complaints, hiring decision, or other important tasks that require the attention of the recipient.\n            Some email communications have included the recipient’s name or employer name in the\n             subject line and/or email body.\n    Through phishing emails linking users to Google Documents, actors used the below identified file\n    names to install BazarLoader:\n            Report-Review26-10.exe\n            Review_Report15-10.exe\n            Document_Print.exe\n            Report10-13.exe\n            Text_Report.exe\n    Bazar activity can be identified by searching the system startup folders and Userinit values under the\n    HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon registry key:\n    %APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\adobe.lnk\n    For a comprehensive list of indicators of compromise regarding the BazarLocker malware, see\n    https://www.fireeye.com/blog/threat-research/2020/10/kegtap-and-singlemalt-with-a-ransomware-\n    chaser.html.\n    Indicators"
+ },
+ {
+  "id": "p28",
+  "text": "In addition to TrickBot and BazarLoader, threat actors are using malware, such as KEGTAP,\n    BEERBOT, SINGLEMALT, and others as they continue to change tactics, techniques, and\n    procedures in their highly dynamic campaign.1 The following C2 servers are known to be associated\n    with this malicious activity.\n           45[.]148[.]10[.]92\n           170[.]238[.]117[.]187\n           177[.]74[.]232[.]124\n           185[.]68[.]93[.]17\n           203[.]176[.]135[.]102\n           96[.]9[.]73[.]73\n           96[.]9[.]77[.]142\n           37[.]187[.]3[.]176\n           45[.]89[.]127[.]92\n           62[.]108[.]35[.]103\n           91[.]200[.]103[.]242\n           103[.]84[.]238[.]3\n           36[.]89[.]106[.]69\n           103[.]76[.]169[.]213\n           36[.]91[.]87[.]227\n           105[.]163[.]17[.]83\n           185[.]117[.]73[.]163\n           5[.]2[.]78[.]118\n           185[.]90[.]61[.]69\n           185[.]90[.]61[.]62\n           86[.]104[.]194[.]30\n           31[.]131[.]21[.]184\n           46[.]28[.]64[.]8\n           104[.]161[.]32[.]111\n           107[.]172[.]140[.]171\n           131[.]153[.]22[.]148\n           195[.]123[.]240[.]219\n           195[.]123[.]242[.]119\n           195[.]123[.]242[.]120\n           51[.]81[.]113[.]25"
+ },
+ {
+  "id": "p29",
+  "text": "1 FireEye: Unhappy Hour Special: KEGTAP and SINGLEMALT With a Ransomware Chaser"
+ },
+ {
+  "id": "p30",
+  "text": "   74[.]222[.]14[.]27"
+ },
+ {
+  "id": "p31",
+  "text": "Ryuk Ransomware\n    Typically Ryuk has been deployed as a payload from banking Trojans such as TrickBot.2 Ryuk first\n    appeared in August 2018 as a derivative of Hermes 2.1 ransomware, which first emerged in late 2017\n    and was available for sale on the open market as of August 2018. Ryuk still retains some aspects of\n    the Hermes code. For example, all of the files encrypted by Ryuk contain the HERMES tag but, in some\n    infections, the files have .ryk added to the filename, while others do not. In other parts of the\n    ransomware code, Ryuk has removed or replaced features of Hermes, such as the restriction against\n    targeting specific Eurasia-based systems.\n    While negotiating the victim network, Ryuk actors will commonly use commercial off-the-shelf\n    products—such as Cobalt Strike and PowerShell Empire—in order to steal credentials. Both\n    frameworks are very robust and are highly effective dual-purpose tools, allowing actors to dump clear\n    text passwords or hash values from memory with the use of Mimikatz. This allows the actors to inject\n    malicious dynamic-link library into memory with read, write, and execute permissions. In order to\n    maintain persistence in the victim environment, Ryuk actors have been known to use scheduled tasks\n    and service creation.\n    Ryuk actors will quickly map the network in order to enumerate the environment to understand the\n    scope of the infection. In order to limit suspicious activity and possible detection, the actors choose to\n    live off the land and, if possible, use native tools—such as net view, net computers, and ping—to\n    locate mapped network shares, domain controllers, and active directory. In order to move laterally\n    throughout the network, the group relies on native tools, such as PowerShell, Windows Management\n    Instrumentation (WMI), Windows Remote Management , and Remote Desktop Protocol (RDP). The\n    group also uses third-party tools, such as Bloodhound.\n    Once dropped, Ryuk uses AES-256 to encrypt files and an RSA public key to encrypt the AES key.\n    The Ryuk dropper drops a .bat file that attempts to delete all backup files and Volume Shadow\n    Copies (automatic backup snapshots made by Windows), preventing the victim from recovering\n    encrypted files without the decryption program.\n    In addition, the attackers will attempt to shut down or uninstall security applications on the victim\n    systems that might prevent the ransomware from executing. Normally this is done via a script, but if\n    that fails, the attackers are capable of manually removing the applications that could stop the attack.\n    The RyukReadMe file placed on the system after encryption provides either one or two email\n    addresses, using the end-to-end encrypted email provider Protonmail, through which the victim can"
+ },
+ {
+  "id": "p32",
+  "text": "See the United Kingdom (UK) National Cyber Security Centre (NCSC) advisory, Ryuk Ransomware Targeting\n    Organisations Globally, on their ongoing investigation into global Ryuk ransomware campaigns and associated\n    Emotet and TrickBot malware."
+ },
+ {
+  "id": "p33",
+  "text": "contact the attacker(s). While earlier versions provide a ransom amount in the initial notifications,\n    Ryuk users are now designating a ransom amount only after the victim makes contact.\n    The victim is told how much to pay to a specified Bitcoin wallet for the decryptor and is provided a\n    sample decryption of two files.\n    Initial testing indicates that the RyukReadMe file does not need to be present for the decryption script\n    to run successfully but other reporting advises some files will not decrypt properly without it. Even if\n    run correctly, there is no guarantee the decryptor will be effective. This is further complicated because\n    the RyukReadMe file is deleted when the script is finished. This may affect the decryption script unless\n    it is saved and stored in a different location before running.\n    According to MITRE, Ryuk uses the ATT&CK techniques listed in table 1.\n                                            Table 1: Ryuk ATT&CK techniques"
+ },
+ {
+  "id": "p34",
+  "text": "Technique                                  Use"
+ },
+ {
+  "id": "p35",
+  "text": "System Network Configuration               Ryuk has called GetIpNetTable in attempt to identify all\n     Discovery [T1016]                          mounted drives and hosts that have Address Resolution\n                                                Protocol entries."
+ },
+ {
+  "id": "p36",
+  "text": "Masquerading: Match Legitimate             Ryuk has constructed legitimate appearing installation folder\n     Name or Location [T1036.005]               paths by calling GetWindowsDirectoryW and then inserting a\n                                                null byte at the fourth character of the path. For Windows Vista\n                                                or higher, the path would appear as C:\\Users\\Public."
+ },
+ {
+  "id": "p37",
+  "text": "Process Injection [T1055]                  Ryuk has injected itself into remote processes to encrypt files\n                                                using a combination of VirtualAlloc, WriteProcessMemory,\n                                                and CreateRemoteThread."
+ },
+ {
+  "id": "p38",
+  "text": "Process Discovery [T1057]                  Ryuk has called CreateToolhelp32Snapshot to enumerate\n                                                all running processes."
+ },
+ {
+  "id": "p39",
+  "text": "Command and Scripting                      Ryuk has used cmd.exe to create a Registry entry to establish\n     Interpreter: Windows Command               persistence.\n     Shell [T1059.003]"
+ },
+ {
+  "id": "p40",
+  "text": "File and Directory\n                                                Ryuk has called GetLogicalDrives to enumerate all mounted\n     Discovery [T1083]\n                                                drives, and GetDriveTypeW to determine the drive type."
+ },
+ {
+  "id": "p41",
+  "text": "Native API [T1106]                         Ryuk has used multiple native APIs\n                                                including ShellExecuteW to run executables,"
+ },
+ {
+  "id": "p42",
+  "text": "Technique                              Use\n                                            GetWindowsDirectoryW to create folders,\n                                            and VirtualAlloc, WriteProcessMemory,\n                                            and CreateRemoteThread for process injection."
+ },
+ {
+  "id": "p43",
+  "text": "Access Token Manipulation [T1134]      Ryuk has attempted to adjust its token privileges to have\n                                            the SeDebugPrivilege.\n     Data Encrypted for Impact [T1486]      Ryuk has used a combination of symmetric and asymmetric\n                                            encryption to encrypt files. Files have been encrypted with their\n                                            own AES key and given a file extension of .RYK. Encrypted\n                                            directories have had a ransom note of RyukReadMe.txt\n                                            written to the directory."
+ },
+ {
+  "id": "p44",
+  "text": "Service Stop [T1489]                   Ryuk has called kill.bat for stopping services, disabling\n                                            services and killing processes."
+ },
+ {
+  "id": "p45",
+  "text": "Inhibit System Recovery [T1490]        Ryuk has used vssadmin Delete Shadows /all /quiet to\n                                            delete volume shadow copies and vssadmin resize\n                                            shadowstorage to force deletion of shadow copies created by\n                                            third-party applications.\n     Boot or Logon Autostart\n                                            Ryuk has used the Windows command line to create a Registry\n     Execution: Registry Run Keys /\n     Startup Folder [T1547.001]             entry\n                                            under HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\n                                            \\CurrentVersion\\Run to establish persistence."
+ },
+ {
+  "id": "p46",
+  "text": "Impair Defenses: Disable or Modify     Ryuk has stopped services related to anti-virus.\n     Tools [T1562.001]"
+ },
+ {
+  "id": "p47",
+  "text": "MITIGATIONS\n    For a downloadable copy of IOCs, see AA20-302A.stix. For additional IOCs detailing this activity, see\n    https://gist.github.com/aaronst/6aa7f61246f53a8dd4befea86e832456.\n    Plans and Policies\n    CISA, FBI, and HHS encourage HPH Sector organizations to maintain business continuity plans—the\n    practice of executing essential functions through emergencies (e.g., cyberattacks)—to minimize\n    service interruptions. Without planning, provision, and implementation of continuity principles,\n    organizations may be unable to continue operations. Evaluating continuity and capability will help\n    identify continuity gaps. Through identifying and addressing these gaps, organizations can establish a\n    viable continuity program that will help keep them functioning during cyberattacks or other"
+ },
+ {
+  "id": "p48",
+  "text": "emergencies. CISA, FBI, and HHS suggest HPH Sector organizations review or establish patching\n    plans, security policies, user agreements, and business continuity plans to ensure they address\n    current threats posed by malicious cyber actors.\n    Network Best Practices\n           Patch operating systems, software, and firmware as soon as manufacturers release updates.\n           Check configurations for every operating system version for HPH organization-owned assets\n            to prevent issues from arising that local users are unable to fix due to having local\n            administration disabled.\n           Regularly change passwords to network systems and accounts and avoid reusing passwords\n            for different accounts.\n           Use multi-factor authentication where possible.\n           Disable unused remote access/Remote Desktop Protocol (RDP) ports and monitor remote\n            access/RDP logs.\n           Implement application and remote access allow listing to only allow systems to execute\n            programs known and permitted by the established security policy.\n           Audit user accounts with administrative privileges and configure access controls with least\n            privilege in mind.\n           Audit logs to ensure new accounts are legitimate.\n           Scan for open or listening ports and mediate those that are not needed.\n           Identify critical assets such as patient database servers, medical records, and teleheatlh and\n            telework infrastructure; create backups of these systems and house the backups offline from\n            the network.\n           Implement network segmentation. Sensitive data should not reside on the same server and\n            network segment as the email environment.\n           Set antivirus and anti-malware solutions to automatically update; conduct regular scans."
+ },
+ {
+  "id": "p49",
+  "text": "Ransomware Best Practices\n    CISA, FBI and HHS do not recommend paying ransoms. Payment does not guarantee files will be\n    recovered. It may also embolden adversaries to target additional organizations, encourage other\n    criminal actors to engage in the distribution of ransomware, and/or fund illicit activities. In addition to\n    implementing the above network best practices, the FBI, CISA and HHS also recommend the\n    following:"
+ },
+ {
+  "id": "p50",
+  "text": "   Regularly back up data, air gap, and password protect backup copies offline.\n           Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n            data and servers in a physically separate, secure location."
+ },
+ {
+  "id": "p51",
+  "text": "User Awareness Best Practices\n           Focus on awareness and training. Because end users are targeted, make employees and\n            stakeholders aware of the threats—such as ransomware and phishing scams—and how they"
+ },
+ {
+  "id": "p52",
+  "text": "are delivered. Additionally, provide users training on information security principles and\n            techniques as well as overall emerging cybersecurity risks and vulnerabilities.\n           Ensure that employees know who to contact when they see suspicious activity or when they\n            believe they have been a victim of a cyberattack. This will ensure that the proper established\n            mitigation strategy can be employed quickly and efficiently."
+ },
+ {
+  "id": "p53",
+  "text": "Recommended Mitigation Measures\n    System administrators who have indicators of a TrickBot network compromise should immediately\n    take steps to back up and secure sensitive or proprietary data. TrickBot infections may be indicators\n    of an imminent ransomware attack; system administrators should take steps to secure network\n    devices accordingly. Upon evidence of a TrickBot infection, review DNS logs and use the XOR key of\n    0xB9 to decode XOR encoded DNS requests to reveal the presence of anchor_dns, and maintain and\n    provide relevant logs."
+ },
+ {
+  "id": "p54",
+  "text": "GENERAL RANSOMWARE MITIGATIONS — HPH SECTOR\n    This section is based on CISA and Multi-State Information Sharing and Analysis Center (MS-ISAC)'s\n    Joint Ransomware Guide, which can be found at https://www.cisa.gov/publication/ransomware-guide.\n    CISA, FBI, and HHS recommend that healthcare organizations implement both ransomware\n    prevention and ransomware response meaures immediately.\n    Ransomware Prevention\n    Join and Engage with Cybersecurity Organizations\n    CISA, FBI, and HHS recommend that healthcare organizations take the following initial steps:\n           Join a healthcare information sharing organization, H-ISAC:\n                o Health Information Sharing and Analysis Center (H-ISAC): https://h-\n                    isac.org/membership-account/join-h-isac/\n                o Sector-based ISACs - National Council of ISACs:\n                    https://www.nationalisacs.org/member-isacs\n                o Information Sharing and Analysis Organization (ISAO) Standards Organization:\n                    https://www.isao.org/information-sharing-groups/\n           Engage with CISA and FBI, as well as HHS—through the HHS Health Sector Cybersecurity\n            Coordination Center (HC3)—to build a lasting partnership and collaborate on information\n            sharing, best practices, assessments, and exercises.\n               o CISA: cisa.gov, https://us-cert.cisa.gov/mailing-lists-and-feeds,\n               o FBI: ic3.gov, www.fbi.gov/contact-us/field-offices\n               o HHS/HC3: http://www.hhs.gov/hc3,"
+ },
+ {
+  "id": "p55",
+  "text": "Engaging with the H-ISAC, ISAO, CISA, FBI, and HHS/HC3 will enable your organization to receive\n    critical information and access to services to better manage the risk posed by ransomware and other\n    cyber threats."
+ },
+ {
+  "id": "p56",
+  "text": "Follow Ransomware Best Practices\n    Refer to the best practices and references below to help manage the risk posed by ransomware and\n    support your organization’s coordinated and efficient response to a ransomware incident. Apply these\n    practices to the greatest extent possible based on availability of organizational resources.\n           It is critical to maintain offline, encrypted backups of data and to regularly test your backups.\n            Backup procedures should be conducted on a regular basis. It is important that backups be\n            maintained offline or in separated networks as many ransomware variants attempt to find and\n            delete any accessible backups. Maintaining offline, current backups is most critical because\n            there is no need to pay a ransom for data that is readily accessible to your organization.\n                 o Use the 3-2-1 rule as a guideline for backup practices. The rule states that three\n                      copies of all critical data are retained on at least two different types of media and at\n                      least one of them is stored offline.\n                 o Maintain regularly updated “gold images” of critical systems in the event they need to\n                      be rebuilt. This entails maintaining image “templates” that include a preconfigured\n                      operating system (OS) and associated software applications that can be quickly\n                      deployed to rebuild a system, such as a virtual machine or server.\n                 o Retain backup hardware to rebuild systems in the event rebuilding the primary system\n                      is not preferred.\n                       Hardware that is newer or older than the primary system can present installation or\n                           compatibility hurdles when rebuilding from images.\n                       Ensure all backup hardware is properly patched.\n           In addition to system images, applicable source code or executables should be available\n            (stored with backups, escrowed, license agreement to obtain, etc.). It is more efficient to\n            rebuild from system images, but some images will not install on different hardware or\n            platforms correctly; having separate access to needed software will help in these cases.\n           Create, maintain, and exercise a basic cyber incident response plan and associated\n            communications plan that includes response and notification procedures for a ransomware\n            incident.\n                o Review available incident response guidance, such as CISA’s Technical Approaches\n                    to Uncovering and Remediating Malicious Activity https://us-\n                    cert.cisa.gov/ncas/alerts/aa20-245a.\n           Help your organization better organize around cyber incident response.\n           Develop a cyber incident response plan.\n           The Ransomware Response Checklist, available in the CISA and MS-ISAC Joint\n            Ransomware Guide, serves as an adaptable, ransomware- specific annex to organizational\n            cyber incident response or disruption plans.\n           Review and implement as applicable MITRE’s Medical Device Cybersecurity: Regional\n            Incident Preparedness and Response Playbook\n            (https://www.mitre.org/sites/default/files/publications/pr-18-1550-Medical-Device-\n            Cybersecurity-Playbook.pdf)."
+ },
+ {
+  "id": "p57",
+  "text": "   Develop a risk management plan that maps critical health services and care to the necessary\n            information systems; this will ensure that the incident response plan will contain the proper\n            triage procedures.\n           Plan for the possibility of critical information systems being inaccessible for an extended\n            period of time. This should include but not be limited to the following:\n                o Print and properly store/protect hard copies of digital information that would be\n                    required for critical patient healthcare.\n                o Plan for and periodically train staff to handle the re-routing of incoming/existing\n                    patients in an expedient manner if information systems were to abruptly and\n                    unexpectedly become unavailable.\n                o Coordinate the potential for surge support with other healthcare facilities in the greater\n                    local area. This should include organizational leadership periodically meeting and\n                    collaborating with counterparts in the greater local area to create/update plans for their\n                    facilities to both abruptly send and receive a significant amount of critical patients for\n                    immediate care. This may include the opportunity to re-route healthcare employees\n                    (and possibly some equipment) to provide care along with additional patients.\n           Consider the development of a second, air-gapped communications network that can provide\n            a minimum standard of backup support for hospital operations if the primary network becomes\n            unavailable if/when needed.\n           Predefine network segments, IT capabilities and other functionality that can either be quickly\n            separated from the greater network or shut down entirely without impacting operations of the\n            rest of the IT infrastructure.\n           Legacy devices should be identified and inventoried with highest priority and given special\n            consideration during a ransomware event.\n           See CISA and MS-ISAC's Joint Ransomware Guide for infection vectors including internet-\n            facing vulnerabilities and misconfigurations; phishing; precursor malware infection; and third\n            parties and managed service providers.\n           HHS/HC3 tracks ransomware that is targeting the HPH Sector; this information can be found\n            at http://www.hhs.gov/hc3."
+ },
+ {
+  "id": "p58",
+  "text": "Hardening Guidance\n           The Food and Drug Administration provides multiple guidance documents regarding the\n            hardening of healthcare and specifically medical devices found here:\n            https://www.fda.gov/medical-devices/digital-health-center-excellence/cybersecurity.\n           See CISA and MS-ISAC's Joint Ransomware Guide for additional in-depth hardening\n            guidance."
+ },
+ {
+  "id": "p59",
+  "text": "Contact CISA for These No-Cost Resources\n           Information sharing with CISA and MS-ISAC (for SLTT organizations) includes bi-directional\n            sharing of best practices and network defense information regarding ransomware trends and\n            variants as well as malware that is a precursor to ransomware."
+ },
+ {
+  "id": "p60",
+  "text": "   Policy-oriented or technical assessments help organizations understand how they can\n            improve their defenses to avoid ransomware infection: https://www.cisa.gov/cyber-resource-\n            hub.\n                o Assessments include Vulnerability Scanning and Phishing Campaign Assessment.\n           Cyber exercises evaluate or help develop a cyber incident response plan in the context of a\n            ransomware incident scenario.\n           CISA Cybersecurity Advisors (CSAs) advise on best practices and connect you with CISA\n            resources to manage cyber risk."
+ },
+ {
+  "id": "p61",
+  "text": "Ransomware Quick References\n           Ransomware: What It Is and What to Do About It (CISA): General ransomware guidance for\n            organizational leadership and more in-depth information for CISOs and technical staff:\n            https://www.us-cert.cisa.gov/sites/default/files/publications/Ransomware_Executive_One-\n            Pager_and_Technical_ Document-FINAL.pdf\n           Ransomware (CISA): Introduction to ransomware, notable links to CISA products on\n            protecting networks, specific ransomware threats, and other resources: https://www.us-\n            cert.cisa.gov/Ransomware\n           HHS/HC3: Ransomware that impacts HPH is tracked by the HC3 and can be found at\n            www.hhs.gov/hc3\n           Security Primer – Ransomware (MS-ISAC): Outlines opportunistic and strategic ransomware\n            campaigns, common infection vectors, and best practice recommendations:\n            https://www.cisecurity.org/white-papers/security-primer-ransomware/\n           Ransomware: Facts, Threats, and Countermeasures (MS- ISAC): Facts about ransomware,\n            infection vectors, ransomware capabilities, and how to mitigate the risk of ransomware\n            infection: https://www.cisecurity.org/blog/ransomware- facts-threats-and-countermeasures/\n           HHS Ransomware Fact Sheet:\n            https://www.hhs.gov/sites/default/files/RansomwareFactSheet.pdf\n           NIST Securing Data Integrity White Paper: https://csrc.nist.gov/publications/detail/white-\n            paper/2020/10/01/securing-data-integrity-against-ransomware-attacks/draft"
+ },
+ {
+  "id": "p62",
+  "text": "Ransomware Response Checklist\n    Remember: Paying the ransom will not ensure your data is decrypted or that your systems or\n    data will no longer be compromised. CISA, FBI, and HHS do not recommend paying ransom.\n    Should your organization be a victim of ransomware, CISA strongly recommends responding by using\n    the Ransomware Response Checklist located in CISA and MS-ISAC's Joint Ransomware Guide,\n    which contains steps for detection and analysis as well as containment and eradication.\n    Consider the Need For Extended Identification or Analysis\n    If extended identification or analysis is needed, CISA, HHS/HC3, or federal law enforcement may be\n    interested in any of the following information that your organization determines it can legally share:"
+ },
+ {
+  "id": "p63",
+  "text": "□ Recovered executable file\n            □ Copies of the readme file – DO NOT REMOVE the file or decryption may not be possible\n            □ Live memory (RAM) capture from systems with additional signs of compromise (use of\n            exploit toolkits, RDP activity, additional files found locally)\n            □ Images of infected systems with additional signs of compromise (use of exploit toolkits, RDP\n            activity, additional files found locally)\n            □ Malware samples\n            □ Names of any other malware identified on your system\n            □ Encrypted file samples\n            □ Log files (Windows Event Logs from compromised systems, Firewall logs, etc.)\n            □ Any PowerShell scripts found having executed on the systems\n            □ Any user accounts created in Active Directory or machines added to the network during the\n            exploitation\n            □ Email addresses used by the attackers and any associated phishing emails\n            □ A copy of the ransom note\n            □ Ransom amount and whether or not the ransom was paid\n            □ Bitcoin wallets used by the attackers\n            □ Bitcoin wallets used to pay the ransom (if applicable)\n            □ Copies of any communications with attackers\n    Upon voluntary request, CISA can assist with analysis (e.g., phishing emails, storage media, logs,\n    malware) at no cost to support your organization in understanding the root cause of an incident, even\n    in the event additional remote assistance is not requested.\n           CISA – Advanced Malware Analysis Center: https://www.malware.us-\n            cert.gov/MalwareSubmission/pages/submission.jsf"
+ },
+ {
+  "id": "p64",
+  "text": "CONTACT INFORMATION\n    CISA, FBI, and HHS recommend identifying and having on hand the following contact information for\n    ready use should your organization become a victim of a ransomware incident. Consider contacting\n    these organizations for mitigation and response assistance or for purpose of notification.\n           State and Local Response Contacts\n           IT/IT Security Team – Centralized Cyber Incident Reporting\n           State and Local Law Enforcement\n           Fusion Center\n           Managed/Security Service Providers"
+ },
+ {
+  "id": "p65",
+  "text": "   Cyber Insurance"
+ },
+ {
+  "id": "p66",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity\n    Advisory, contact your local FBI field office at www.fbi.gov/contact-us/field-offices. When available,\n    please include the following information regarding the incident: date, time, and location of the incident;\n    type of activity; number of people affected; type of equipment used for the activity; the name of the\n    submitting company or organization; and a designated point of contact.\n    Additionally, see CISA and MS-ISAC's Joint Ransomware Guide for information on contacting—and\n    what to expect from contacting—federal asset response and federal threat response contacts."
+ },
+ {
+  "id": "p67",
+  "text": "RESOURCES\n           CISA Emergency Services Sector Continuity Planning Suite\n           CISA MS-ISAC Joint Ransomware Guide\n           CISA Tip: Avoiding Social Engineering and Phishing Attacks\n           FBI PSA: High-Impact Ransomware Attacks Threaten U.S. Businesses and Organizations\n           Health Industry Cybersecurity Tactical Crisis Response\n           Health Industry Cybersecurity Practices (HICP)\n           HHS - Ransomware Spotlight Webinar\n           HHS - Health Industry Cybersecurity Practices: Managing Threats and Protecting Patients\n           HHS - Ransomware Briefing\n           HHS - Aggressive Ransomware Impacts\n           HHS - Ransomware Fact Sheet\n           HHS - Cyber Attack Checklist\n           HHS - Cyber-Attack Response Infographic\n           NIST - Data Integrity Publication\n           NIST - Guide for Cybersecurity Event Recovery\n           NIST - Identifying and Protecting Assets Against Ransomware and Other Destructive Events\n           NIST - Detecting and Responding to Ransomware and Other Destructive Events\n           NIST - Recovering from Ransomware and Other Destructive Events\n           FireEye - Unhappy Hour Special: KEGTAP and SINGLEMALT With a Ransomware Chaser\n           Github list of IOCs"
+ }
+]

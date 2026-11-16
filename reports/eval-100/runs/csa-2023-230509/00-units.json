@@ -1,0 +1,906 @@
+[
+ {
+  "id": "p1",
+  "text": "# Hunting Russian Intelligence \"Snake\" Malware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-129A\n> - Date: 2023-05-09\n> - URL: https://www.ic3.gov/CSA/2023/230509.pdf\n> - PDF SHA-256: 99af77a9d4b6384b2d8df7fbf6381a950026b45d93c97c04543dedcd03ad0b7b (`source.pdf`, 48 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Note: contains third-party code with its own licence notice (\"# This file is Copyright 2019 Volatility Foundation and licensed under the\"); its licence applies to that code\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (135 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR             Product ID: AA23-129A\n                                                                                                                        May 9, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Hunting Russian Intelligence “Snake” Malware\n        SUMMARY\n        The Snake implant is considered the most sophisticated cyber espionage tool designed and used by\n        Center 16 of Russia’s Federal Security Service (FSB) for long-term intelligence collection on sensitive\n        targets. To conduct operations using this tool, the FSB created a covert peer-to-peer (P2P) network of\n        numerous Snake-infected computers worldwide. Many systems in this P2P network serve as relay\n        nodes which route disguised operational traffic to and from Snake implants on the FSB’s ultimate\n        targets. Snake’s custom communications protocols employ encryption and fragmentation for\n        confidentiality and are designed to hamper detection and collection efforts.\n        We have identified Snake infrastructure in over 50 countries across North America, South America,\n        Europe, Africa, Asia, and Australia, to include the United States and Russia itself. Although Snake\n        uses infrastructure across all industries, its targeting is purposeful and tactical in nature. Globally, the\n        FSB has used Snake to collect sensitive intelligence from high-priority targets, such as government\n        networks, research facilities, and journalists. As one example, FSB actors used Snake to access and\n        exfiltrate sensitive international relations documents, as well as other diplomatic communications,\n        from a victim in a North Atlantic Treaty Organization (NATO) country. Within the United States, the\n        FSB has victimized industries including education, small businesses, and media organizations, as\n        well as critical infrastructure sectors including government facilities, financial services, critical\n        manufacturing, and communications.\n        This Cybersecurity Advisory (CSA) provides background on Snake’s attribution to the FSB and\n        detailed technical descriptions of the implant’s host architecture and network communications. This\n        CSA also addresses a recent Snake variant that has not yet been widely disclosed. The technical\n        information and mitigation recommendations in this CSA are provided to assist network defenders in\n        detecting Snake and associated activity. For more information on FSB and Russian state-sponsored\n        cyber activity, please see the joint advisory Russian State-Sponsored and Criminal Cyber Threats to\n        Critical Infrastructure and CISA’s Russia Cyber Threat Overview and Advisories webpage."
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n        available, please include the following information regarding the incident: date, time, and location of the incident;\n        type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n        company or organization; and a designated point of contact.\n        This document is marked TLP:CLEAR. Recipients may share this information without restriction. Information is\n        subject to standard copyright rules. For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "TLP:CLEAR                                                                                                                                   International Partnership"
+ },
+ {
+  "id": "p7",
+  "text": "TABLE OF CONTENTS\n       Summary ......................................................................................................................................... 1\n       Introduction..................................................................................................................................... 4\n          What is Snake? ............................................................................................................................ 4\n          Background ................................................................................................................................... 4\n          Attribution ..................................................................................................................................... 5\n          Victimization ................................................................................................................................. 5\n          Other Tools and TTPs Employed with Snake ........................................................................... 6\n          Snake Architecture ...................................................................................................................... 6\n          Capitalizing on Mistakes ............................................................................................................. 7\n       Snake Host-Based Technical Details ....................................................................................... 8\n          Installer .......................................................................................................................................... 8\n          On-Disk Components ................................................................................................................... 8\n          The Queue ................................................................................................................................... 11\n       Snake Network Communications ........................................................................................... 17\n          Network Obfuscation ................................................................................................................. 17\n          Snake’s Network Authentication Technique (“ustart”) ........................................................ 17\n          Snake UDP .................................................................................................................................. 19\n          Snake HTTP ................................................................................................................................. 20\n          Snake TCP ................................................................................................................................... 21\n          Snake “enc” Layer ...................................................................................................................... 23\n       Snake Application Layer ........................................................................................................... 24\n          Command 0x15-byte Header ................................................................................................... 24\n          Command Encryption ................................................................................................................ 24\n          Command Decoding .................................................................................................................. 25\n          High Commands ......................................................................................................................... 26\n          Queue Commands ..................................................................................................................... 27\n          Forward Commands .................................................................................................................. 28"
+ },
+ {
+  "id": "p8",
+  "text": "TLP:CLEAR                                                                                                                               International Partnership"
+ },
+ {
+  "id": "p9",
+  "text": "Snake Implant Operation.......................................................................................................... 31\n          Active Operations ....................................................................................................................... 31\n          Passive Operations .................................................................................................................... 31\n       Mitigations .................................................................................................................................... 35\n          Network-Based Detection ......................................................................................................... 35\n          Host-Based Detection ................................................................................................................ 37\n          Memory Analysis ........................................................................................................................ 40\n       Prevention ..................................................................................................................................... 42\n          Change Credentials and Apply Updates ................................................................................. 42\n          Execute Organizational Incident Response Plan .................................................................. 42\n       Appendix ........................................................................................................................................ 43\n          Partnership.................................................................................................................................. 43\n          Disclaimer ................................................................................................................................... 43\n          MITRE ATT&CK® Techniques ................................................................................................... 43\n          Volatility Plugin ........................................................................................................................... 47"
+ },
+ {
+  "id": "p10",
+  "text": "TLP:CLEAR                                                                                       International Partnership"
+ },
+ {
+  "id": "p11",
+  "text": "INTRODUCTION\n       What is Snake?\n       We consider Snake to be the most sophisticated cyber espionage tool in the FSB’s arsenal. The\n       sophistication of Snake stems from three principal areas. First, Snake employs means to achieve a\n       rare level of stealth in its host components and network communications. Second, Snake’s internal\n       technical architecture allows for easy incorporation of new or replacement components. This design\n       also facilitates the development and interoperability of Snake instances running on different host\n       operating systems. We have observed interoperable Snake implants for Windows, MacOS, and Linux\n       operating systems. Lastly, Snake demonstrates careful software engineering design and\n       implementation, with the implant containing surprisingly few bugs given its complexity.\n       Following open source reporting by cybersecurity and threat intelligence companies on Snake tactics,\n       techniques, and procedures (TTPs), the FSB implemented new techniques to evade detection. The\n       modifications to the implant enhanced challenges in identifying and collecting Snake and related\n       artifacts, directly hampering detection from both host- and network-based defensive tools.\n       The effectiveness of this type of cyber espionage implant depends entirely on its long-term stealth,\n       since the objective of an extended espionage operation involves remaining on the target for months\n       or years to provide consistent access to important intelligence. The uniquely sophisticated aspects of\n       Snake represent significant effort by the FSB over many years to enable this type of covert access."
+ },
+ {
+  "id": "p12",
+  "text": "Background\n       The FSB began developing Snake as “Uroburos” in late 2003. Development of the initial versions of\n       the implant appeared to be completed around early 2004, with cyber operations first conducted using\n       the implant shortly thereafter. The name Uroburos is appropriate, as the FSB cycled it through nearly\n       constant stages of upgrade and redevelopment, even after public disclosures, instead of abandoning\n       it. The name appears throughout early versions of the code, and the FSB developers also left other\n       unique strings, including “Ur0bUr()sGoTyOu#”, which have publicly come back to haunt them.\n       Unique features in early versions of Uroburos included a low\n       resolution image of a portion of a historical illustration of an\n       uroboros by the German philosopher and theologian Jakob\n       Böhme. One approach to a tertiary backdoor used this image\n       as the key. The same image had also been embedded in other\n       Snake-related components. The image, blown up to a higher\n       resolution, is shown at right.\n       In addition, early FSB developers of the Snake implant left\n       portions of unique code throughout the implant which reveal\n       inside jokes, personal interests, and taunts directed at security\n       researchers. For instance, the “Ur0bUr()sGoTyOu#” string\n       referenced above was replaced with “gLASs D1cK” in 2014\n       following some of the public cybersecurity reporting."
+ },
+ {
+  "id": "p13",
+  "text": "TLP:CLEAR                                                                                                        International Partnership"
+ },
+ {
+  "id": "p14",
+  "text": "Attribution\n       We attribute Snake operations to a known unit within Center 16 of the FSB. 1 This unit more broadly\n       operates the numerous elements of the Turla2 toolset, and has subunits spread throughout Russia in\n       a reflection of historical KGB signals intelligence operations in the Soviet Union. Snake has been a\n       core component of this unit’s operations for almost as long as Center 16 has been part of the FSB. 3\n       The extensive influence of Snake across the Turla toolset demonstrates its impact on practically\n       every aspect of the unit’s modern era of cyber operations.\n       Daily operations using Snake have been carried out from an FSB facility in Ryazan, Russia, with an\n       increase in Snake activity during FSB working hours in Ryazan, approximately 7:00 AM to 8:00 PM,\n       Moscow Standard Time (GMT+3). The main developers were Ryazan-based FSB officers known by\n       monikers included in the code of some versions of Snake. In addition to developing Snake, Ryazan-\n       based FSB officers used it to conduct worldwide operations; these operations were different from\n       others launched from Moscow or other FSB sites based on infrastructure and techniques.\n       While the development and re-tooling of Snake has historically been done by Ryazan-based FSB\n       officers, Snake operations were also launched from an FSB Center 16-occupied building in Moscow.\n       Our investigations have identified examples of FSB operators using Snake to its full potential, as well\n       as FSB operators who appeared to be unfamiliar with Snake’s more advanced capabilities. These\n       observations serve to illustrate the difficulty in using such an advanced toolset across the various\n       geographically dispersed teams comprising this unit within FSB Center 16.\n       We have been collectively investigating Snake and Snake-related tools for almost 20 years, as well\n       as other operations by this unit since the 1990s. During that time, the FSB has used Snake in many\n       different operations, and they have demonstrated the value placed in this tool by making numerous\n       adjustments and revisions to keep it viable after repeated public disclosures and other mitigations.\n       Snake’s code and multiple Snake-related tools have been either a starting point or a key influence\n       factor for a diverse range of other highly prolific implants and operational tools in the Turla family.\n       Most notably, this has included Carbon (aka Cobra)—derived from Snake’s code base—and the\n       similarly Snake-adjacent implant Chinch (currently known in open sources as ComRAT)."
+ },
+ {
+  "id": "p15",
+  "text": "Victimization\n       We have identified Snake infrastructure in over 50 countries across North America, South America,\n       Europe, Africa, Asia, and Australia, to include the United States and Russia itself. Although Snake\n       leverages infrastructure across all industries, its targeting is purposeful and tactical in nature. For\n       instance, if an infected system did not respond to Snake communications, the FSB actors would\n       strategically re-infect it within days. Globally, the FSB has used Snake to collect sensitive intelligence\n       from high priority targets, such as government networks, research facilities, and journalists. As one\n       example, FSB actors used Snake to access and exfiltrate sensitive international relations documents,"
+ },
+ {
+  "id": "p16",
+  "text": "This unit is distinct from a sister unit in FSB Center 16 which the FBI publicly attributes to Dragonfly operations.\n         Turla is one of many open source terms used to describe the family of implants used by this FSB Center 16 unit. Snake\n       and the broader Turla family have also previously been referenced in private sector reporting using the names Krypton,\n       Venomous Bear, Penquin, Agent.BTZ, ComRAT, Waterbug, Tavdig, Wipbot, Epic Turla, Mosquito, Carbon, and others.\n         The 3rd Chief Directorate of FAPSI was transferred to the FSB as Center 16 when FAPSI was dissolved in 2003."
+ },
+ {
+  "id": "p17",
+  "text": "TLP:CLEAR                                                                                                        International Partnership"
+ },
+ {
+  "id": "p18",
+  "text": "as well as other diplomatic communications, from a victim in a NATO country. Within the United\n       States, the FSB has victimized industries including education, small businesses, and media\n       organizations, as well as critical infrastructure sectors including government facilities, financial\n       services, critical manufacturing, and communications."
+ },
+ {
+  "id": "p19",
+  "text": "Other Tools and TTPs Employed with Snake\n       The FSB typically deploys Snake to external-facing infrastructure nodes on a network, and from there\n       uses other tools and TTPs on the internal network to conduct additional exploitation operations. Upon\n       gaining and cementing ingress into a target network, the FSB typically enumerates the network and\n       works to obtain administrator credentials and access domain controllers. A wide array of mechanisms\n       has been employed to gather user and administrator credentials in order to expand laterally across\n       the network, to include keyloggers, network sniffers, and open source tools. 4\n       Typically, after FSB operators map out a network and obtain administrator credentials for various\n       domains in the network, regular collection operations begin. In most instances with Snake, further\n       heavyweight implants are not deployed, and they rely on credentials and lightweight remote-access\n       tools internally within a network. FSB operators sometimes deploy a small remote reverse shell along\n       with Snake to enable interactive operations. This triggerable reverse shell, which the FSB has used\n       for around 20 years, can be used as a backup access vector, or to maintain a minimal presence in a\n       network and avoid detection while moving laterally.5"
+ },
+ {
+  "id": "p20",
+  "text": "Snake Architecture\n       Snake’s architectural design reflects professional software engineering practices. Critical pathways\n       within the implant are made of stacks of loosely coupled components that implement well-designed\n       interfaces. In addition to facilitating software development and debugging, this construction allows\n       Snake to use multiple different components for the same purpose, choosing the specific component\n       based on environmental considerations. For example, Snake’s custom network communications\n       protocols function as a stack. All implementations use an encryption layer and a transport layer, such\n       as Snake’s custom HTTP or raw TCP socket protocol. Each layer of the Snake network protocol stack\n       solely implements a specified interface for operability with the two adjacent layers. The encryption\n       layer and underlying transport layer thus function independently, so any custom Snake network\n       protocol can employ an encryption overlay without any change to the encryption layer code. 6\n       This modularity allows Snake operators to choose the most logical network transport for the given\n       environment without affecting Snake’s other functionality. When using a compromised HTTP server\n       as part of the Snake P2P network, the operators can ensure that all traffic to this machine follows the\n       Snake custom HTTP protocol and thereby blends effectively with legitimate traffic. In the context of a\n       compromised machine that legitimately allows secure shell (SSH) connections, Snake can utilize its\n       custom raw TCP socket protocol instead of its custom HTTP protocol. All other layers of the Snake\n       protocol stack, from the immediately adjacent transport encryption layer to the distant command\n       processing layer, can and do remain entirely agnostic to the transport layer as long as it implements"
+ },
+ {
+  "id": "p21",
+  "text": "MITRE ATT&CK IDs: [T0840], [T1003], [T1040], [T1046], [T1056.001], [T1078], [T1083], [T1135], [T1482]\n         MITRE ATT&CK IDs: [T1190], [T1570], [T1587.001], [T1608]\n         MITRE ATT&CK IDs: [T1095], [T1547.006], [T1587.001]"
+ },
+ {
+  "id": "p22",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p23",
+  "text": "its interface correctly. This architecture also allows the Snake developers to easily substitute a new\n       communications protocol when they believe one has been compromised, without necessitating any\n       downstream changes in the code base. Lastly, this design facilitates the development of fully\n       interoperable Snake implants running on different host operating systems.\n       Snake’s technical sophistication extends from the software architecture into the lower-level software\n       implementation. Original versions of Snake were developed as early as 2003, before many of the\n       modern programming languages and frameworks that facilitate this type of modular development\n       were available. Snake is written entirely in C, which provides significant advantages in low-level\n       control and efficiency, but which does not provide direct support for objects or interfaces at the\n       language level and provides no assistance with memory management. The developers of Snake\n       successfully implemented the implant’s complex design in C with very few bugs, including careful\n       avoidance of the common pitfalls associated with null-terminated strings and the mixing of signed and\n       unsigned integers. Additionally, the developers demonstrate an understanding of computer science\n       principles throughout the implant’s implementation. This includes selecting and correctly coding\n       asymptotically optimal algorithms, designing and utilizing efficient custom encoding methodologies\n       that closely resemble common encoding schemes, and handling the numerous possible errors\n       associated with systems-level programming in a secure manner."
+ },
+ {
+  "id": "p24",
+  "text": "Capitalizing on Mistakes\n       Although the Snake implant as a whole is a highly sophisticated espionage tool, it does not escape\n       human error. A tool like Snake requires more familiarity and expertise to use correctly, and in several\n       instances Snake operators neglected to use it as designed. Various mistakes in its development and\n       operation provided us with a foothold into the inner workings of Snake and were key factors in the\n       development of capabilities that have allowed for tracking Snake and the manipulation of its data.\n       The FSB used the OpenSSL library to handle its Diffie-Hellman key exchange. The Diffie-Hellman\n       key-set created by Snake during the key exchange is too short to be secure. The FSB provided the\n       function DH_generate_parameters with a prime length of only 128 bits, which is inadequate for\n       asymmetric key systems. Also, in some instances of what appeared to be rushed deployments of\n       Snake, the operators neglected to strip the Snake binary. This led to the discovery of numerous\n       function names, cleartext strings, and developer comments as seen in the following figure."
+ },
+ {
+  "id": "p25",
+  "text": "TLP:CLEAR                                                                                                        International Partnership"
+ },
+ {
+  "id": "p26",
+  "text": "SNAKE HOST-BASED TECHNICAL DETAILS\n       The FSB has quickly adapted Snake when its capabilities have been publicly disclosed by private\n       industry. Snake therefore exists in several variants, as it has evolved over almost 20 years. This CSA\n       focuses on one of the more recent variants of Snake that up until now has not been widely disclosed.\n       Older variants of Snake will be discussed briefly where applicable, but not discussed in depth, as\n       many details of earlier Snake variants already exist in the public domain."
+ },
+ {
+  "id": "p27",
+  "text": "Installer\n       The Snake installer has gone by various names throughout Snake’s existence (e.g., “jpinst.exe”). This\n       advisory will describe the version of the installer which regularly used the name “jpsetup.exe”. This\n       executable is packed using a customized obfuscation methodology. The developers appear to have\n       added the unpacking functionality from an open source project for viewing JPEG files. This technique\n       serves to obfuscate the unpacking code within an otherwise legitimate code base. 7 The unpacking\n       code extracts an executable, herein referred to as the “Png Exe”, and it extracts an AES encrypted\n       blob from the Png Exe’s resources, which herein will be referred to as the “Png Resource”.8\n       The jpsetup.exe installer requires two arguments to be passed via the command line for execution.\n       The first argument is a wide character string hashed with SHA-256 twice, and the resulting value of\n       these computations becomes the AES key that decrypts the Png Resource. The AES initialization\n       vector (IV) consists of the first 16 bytes of the second argument to jpsetup.exe after prepending the\n       argument with a wide character “1” string. Once decrypted, the Png Resource becomes an\n       executable that will be referred to herein as “Stage 2”.9\n       When unpacked, many components are extracted from Stage 2’s resources. Several of the resources\n       are executables with additional resources of their own. Stage 2 creates structures from its resources,\n       which ultimately become the host artifacts of Snake."
+ },
+ {
+  "id": "p28",
+  "text": "On-Disk Components\n       As Windows has been the most prevalent operating system targeted by Snake, this document will\n       only discuss the Windows-based artifacts; however, Snake can be cross-compiled and is capable of\n       running on other operating systems.\n       On-Disk Obfuscation\n       Snake’s host architecture and network communications allow an unusual level of stealth. Snake\n       makes inventive use of its kernel module in both of these contexts. All known Windows versions of\n       Snake have used a concealed storage mechanism to hide host componentry. In addition to using the\n       kernel module to remove the relevant components from any listing returned by the operating system,\n       Snake utilizes the kernel module to mediate any requests between Snake’s user mode components\n       and the concealed storage mechanism, which itself is encrypted with a unique per-implant key. This"
+ },
+ {
+  "id": "p29",
+  "text": "The Snake developers have long used custom packers for the implant. This packer had several options for disguising the\n       installer on a host. The first was as a JPEG viewer; later options included disguising the installer as Notepad++ or 7zip.\n         MITRE ATT&CK IDs: [T1027.002], [T1140], [T1546.016], [T1588], [T1610]\n         MITRE ATT&CK IDs: [T1573.001], [T1573.002]"
+ },
+ {
+  "id": "p30",
+  "text": "TLP:CLEAR                                                                                       International Partnership"
+ },
+ {
+  "id": "p31",
+  "text": "unique keying creates detection difficulties even for tools that are independent of the compromised\n       operating system, since simple signatures targeting Snake host components would be ineffective. 10\n       Persistence Mechanism\n       The Snake version primarily discussed in this advisory registers a service to maintain persistence on\n       a system. Typically, this service is named “WerFaultSvc,” which we assess was used to blend in with\n       the legitimate Windows service WerSvc. On boot, this service will execute Snake’s WerFault.exe,\n       which Snake developers chose to hide among the numerous valid Windows “WerFault.exe” files in\n       the %windows%\\WinSxS\\ directory. Executing WerFault.exe will start the process of decrypting\n       Snake’s components and loading them into memory.11"
+ },
+ {
+  "id": "p32",
+  "text": "MITRE ATT&CK IDs: [T1014], [T1027], [T1547.006], [T1610]\n            MITRE ATT&CK IDs: [T1027], [T1036], [T1140], [T1564], [T1569.002]"
+ },
+ {
+  "id": "p33",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p34",
+  "text": "Encrypted Registry Key Data\n       Upon execution, Snake’s WerFault.exe will attempt to decrypt an encrypted blob within the Windows\n       registry that is typically found at HKLM:\\SOFTWARE\\Classes\\.wav\\OpenWithProgIds. The encrypted\n       data includes the AES key, IV, and path that is used to find and decrypt the file containing Snake’s\n       kernel driver and kernel driver loader. The registry object’s structure can be seen on the right side of\n       the following figure. Snake uses Microsoft Windows Cryptography API: Next Generation (CNG) key\n       store to store the AES key needed to decrypt the registry object. 12"
+ },
+ {
+  "id": "p35",
+  "text": "Kernel Driver and Custom Loader\n       Snake’s installer drops the kernel driver and a custom DLL which is used to load the driver into a\n       single AES encrypted file on disk. Typically, this file is named “comadmin.dat” and is stored in the\n       %windows%\\system32\\Com directory. The structure of this file can be seen on the left side of the\n       figure above. The key, IV, and path to comadmin.dat are stored in the encrypted registry blob. 13"
+ },
+ {
+  "id": "p36",
+  "text": "MITRE ATT&CK IDs: [T1106], [T1112], [T1547.006]\n            MITRE ATT&CK IDs: [T1027], [T1547.006], [T1569.002], [T1574.002]"
+ },
+ {
+  "id": "p37",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p38",
+  "text": "The Queue File\n       The last host-based artifact to discuss is the Queue File. Typically, this file has been found within the\n       %windows%\\Registration directory with the format of <RANDOM_GUID>.<RANDOM_GUID>.crmlog,\n       and is decrypted by Snake’s kernel driver. Due to the complexity and importance of the Queue File,\n       its details are discussed at length in the following subsection. 14"
+ },
+ {
+  "id": "p39",
+  "text": "The Queue\n       The Queue is a Snake structure that contains various pieces of information, including key material,\n       communication channels, modes of operation, the principal user mode component, etc., that Snake\n       requires for successful operation. It should be noted that this is a name used by the developers and is\n       not equivalent to a “queue” in the normal context of computer science. The Queue data is saved on\n       disk in the Queue File, which is a flat file with a substructure that includes a 0x2c-byte file header\n       followed by data blocks. Each data block corresponds to exactly one Queue Item, which could be, for\n       example, a simple configuration parameter, a Snake command, or an entire embedded executable.\n       Each Queue Item is associated with a specific Queue Container.\n       Queue Containers and Items\n       Each Container is identified by its Type and Instance values. Each Container Type holds the same\n       type of information used by the Snake implant for a specific purpose. The following table shows the\n       various Container Types and their functions. A Queue can have multiple Containers of the same\n       Type, but each of these Containers will have different Instance values."
+ },
+ {
+  "id": "p40",
+  "text": "MITRE ATT&CK IDs: [T1027], [T1112], [T1564], [T1610]"
+ },
+ {
+  "id": "p41",
+  "text": "TLP:CLEAR                                                                                       International Partnership"
+ },
+ {
+  "id": "p42",
+  "text": "The data in each Container in the Queue is separated into Queue Items with the 0x40-byte metadata\n       structure shown in the following table. The data content of the Queue Item immediately follows this\n       structure. The Queue Items in each Container are distinguished by their corresponding Item Number\n       as well as their Item Type identifier. The Item Number is assigned by the Snake implant itself, while\n       Snake operators generally refer to the Item Type value when trying to reference a specific item."
+ },
+ {
+  "id": "p43",
+  "text": "Queue File Encryption\n       In previous versions of Snake, the Queue File existed within an encrypted covert store. The data\n       belonging to the Queue Items themselves were also CAST-128 encrypted. In more recent versions,\n       the covert store was removed, and the Queue File exists by itself on disk. The Queue Items inside the\n       Queue File are still encrypted with CAST-128, and in addition, the full Queue File is also CAST-128\n       encrypted. The CAST keys used to encrypt the Queue Items within a Container Instance can be\n       found in that Instance's corresponding 0x2 Container as Item Type 0x229 (see below). The key and\n       IV used to encrypt the Queue File can be found by decoding strings within Snake’s kernel driver."
+ },
+ {
+  "id": "p44",
+  "text": "TLP:CLEAR                                                                                    International Partnership"
+ },
+ {
+  "id": "p45",
+  "text": "Container Descriptions\n       0xb Container\n       The 0xb Container lists the available modes of operation for a given Snake implant. When using a\n       certain mode, Snake uses a specific set of Containers and communication channels. Each infection\n       can use up to four different modes. Each mode in the 0xb Container will have a Container Instance\n       value that all Containers associated with this mode will use, except for the 0x3 Container. 15"
+ },
+ {
+  "id": "p46",
+  "text": "0x0 Container\n       The 0x0 Container handles incoming commands/data for the host of the Snake infection. Commands\n       will be queued in this Container until the implant is ready to execute them."
+ },
+ {
+  "id": "p47",
+  "text": "MITRE ATT&CK IDs: [T1104]"
+ },
+ {
+  "id": "p48",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p49",
+  "text": "0x1 Container\n       The 0x1 Container handles outbound commands/data for the host of the Snake infection. The data\n       will be queued within the 0x1 Container until the implant is ready to exfiltrate them.\n       0x2 Container\n       The 0x2 Container holds the configuration information for the mode to which it corresponds. Various\n       pieces of information vital to Snake’s successful operation are stored within these Containers. This\n       subsection will discuss a subset of the parameters that can be found within the 0x2 Container."
+ },
+ {
+  "id": "p50",
+  "text": "TLP:CLEAR                                                                                       International Partnership"
+ },
+ {
+  "id": "p51",
+  "text": "Pivotal key information can be found within the 0x2 Containers. This includes the inbound and\n       outbound RSA keys (Items 0x228 and 0x227, respectively), the CAST key (Item 0x229) used to\n       encrypt the individual items within the Queue Container, pre-shared keys used for the top layer of\n       encryption in Snake’s network communication protocol, and a quasi-unique value for the implant,\n       called the “ustart” value, needed for Snake network connectivity.\n       Snake is constantly passing data between its kernel and user mode components. The methodology\n       (generally, named pipes) used to make these communications is listed in Items 0x65-0x6f of the 0x2\n       Container. Items 0x70-0x7a list the parameters necessary to establish these communications. 16\n       Items 0xc9-0xd3 contain details of up to ten other Snake infections, referred to as “communication\n       channels”, which the implant can communicate with during Passive Operations. The parameters\n       needed to establish Snake sessions with the other hosts can be found in Items 0xd4-0xde.\n       Many additional data points, such as the process name where Snake injected itself or the modules\n       Snake has loaded from its 0x3 Container, can be found within 0x2 Containers.\n       0x3 Container\n       The 0x3 Container houses embedded files and modules for Snake. A single 0x3 Container will be\n       accessible to all Containers in the Queue. The 0x3 Container has its own dedicated 0x2 Container\n       that only includes a single Queue Item of Item Type 0x229 (a CAST-128 key). This key will be used to\n       encrypt and decrypt all of the embedded files and modules within the 0x3 Container."
+ },
+ {
+  "id": "p52",
+  "text": "MITRE ATT&CK IDs: [T1559]"
+ },
+ {
+  "id": "p53",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p54",
+  "text": "The Item Types assigned to the embedded files and modules within the 0x3 Container are consistent\n       across all of the Snake infections within Snake’s P2P network. For example, the 0x01 Item Type is\n       the Zlib library, and therefore any time an Item Type of 0x01 is seen within the 0x3 Container of a\n       Snake infection, that file is always the Zlib library. The implant’s 0x2 Container will keep track of\n       libraries that it has loaded. If the DLL is a file on disk, the full path to the DLL is saved in the 0x2\n       Container. If the library was loaded from a 0x3 Container, the loaded module will be displayed in the\n       implant’s 0x2 Container in the format “&<Item Type (within 3 container) of loaded module>”.17\n       0x4 Container\n       The 0x4 Container logs command activity. Each Queue Item within the Container is a log of a single\n       executed or attempted command. Each mode will have its own corresponding 0x4 Container.\n       0x5 Container\n       The 0x5 Container holds Snake network logs, noting any IP address that has connected to this\n       implant. Some versions of Snake no longer make use of this Container.\n       0x6 Container\n       The 0x6 Container saves commands that are set to execute at specific times. A Queue Item is\n       created for each scheduled command.\n       0x7 Container\n       The 0x7 Container logs the IP addresses of any other Snake implants that have connected to this\n       implant during Passive Operations. The commands 0x79 (Read Agents Track) and 0x7a (Clear\n       Agents Track) are used to interact with this Container. Note that the command 0x7a had been\n       deprecated in some versions of Snake and returns the error “function unsupported” if called."
+ },
+ {
+  "id": "p55",
+  "text": "MITRE ATT&CK IDs: [T1055.001]"
+ },
+ {
+  "id": "p56",
+  "text": "TLP:CLEAR                                                                                                          International Partnership"
+ },
+ {
+  "id": "p57",
+  "text": "SNAKE NETWORK COMMUNICATIONS\n       Snake’s network communications are encrypted, fragmented, and sent using custom methodologies\n       that ride over common network protocols, including both raw TCP and UDP sockets and higher-level\n       protocols like HTTP, SMTP, and DNS. Snake’s protocols for HTTP and TCP are the most commonly\n       seen, but functionality exists for UDP, ICMP, and raw IP traffic. Snake’s network communications are\n       comprised of “sessions”, which are distinct from the sessions associated with the legitimate protocol it\n       is riding on top of (e.g., TCP sessions). The Snake session is then comprised of distinct commands.\n       Both Snake’s custom transport encryption layer (“enc”) and Snake’s Application Layer have their own\n       encryption mechanisms, where the enc layer operates on an individual P2P session and the Snake\n       Application Layer provides end-to-end encryption between the controller (i.e., point of origin) and the\n       command’s ultimate destination. The following figure details Snake’s communication protocol stack. 18"
+ },
+ {
+  "id": "p58",
+  "text": "Network Obfuscation\n       Snake’s use of its kernel module also facilitates stealthy network communications. To participate fully\n       in Snake’s P2P network, implanted machines which are not the ultimate target must act as servers for\n       other Snake nodes. Snake’s kernel module, along with a thoughtfully designed mechanism for\n       distinguishing Snake traffic from legitimate client traffic, allows the implant to function as a server in\n       the Snake P2P network without opening any new ports, greatly complicating detection efforts.\n       Additionally, Snake’s custom network communication protocols are designed to blend with traffic that\n       the compromised server normally would receive. This allows Snake operators to use legitimate\n       servers as infrastructure, which reduces the effectiveness of simple IP address or domain blocking\n       without needing to open new ports or send unusual looking traffic to this infrastructure. 19"
+ },
+ {
+  "id": "p59",
+  "text": "Snake’s Network Authentication Technique (“ustart”)\n       Snake uses its custom HTTP and raw socket TCP based protocols for large data communications.\n       With these protocols and others, Snake employs a specific authentication mechanism to distinguish\n       Snake traffic from legitimate traffic destined for application software on the compromised server. This"
+ },
+ {
+  "id": "p60",
+  "text": "MITRE ATT&CK IDs: [T1001.003], [T1071], [T1071.003], [T1090.003], [T1095], [T1132], [T1572], [T1573]\n            MITRE ATT&CK IDs: [T1001.003], [T1071], [T1132.002], [T1547.006], [T1584]"
+ },
+ {
+  "id": "p61",
+  "text": "TLP:CLEAR                                                                                            International Partnership"
+ },
+ {
+  "id": "p62",
+  "text": "technique enables one of the uniquely sophisticated aspects of Snake, which is its ability to function\n       effectively as server software without opening any further ports on the compromised system. The\n       relevant per-implant authentication value is referred to as the “ustart” and is stored in the implant’s\n       Queue File. There are multiple forms of the ustart value, including “ustart”, “ustart2”, and “ustartl”. 20\n       Rather than open a listening socket on a specified TCP port, the Snake kernel module intercepts the\n       first client-to-server packet following the 3-way handshake in every TCP session. The kernel module\n       then determines whether or not the contents of that packet are in fact valid for the ustart value of that\n       target Snake implant. If so, the Snake kernel module forwards that packet and any future packets in\n       the same TCP session to Snake’s own processing functionality, and the (presumably legitimate)\n       application listening on that port remains unaware of this TCP session. If not, the Snake kernel\n       module allows the packet—and the rest of the TCP session as it occurs—to reach the legitimate\n       listening application, for example web server software. See the following for an illustration. 21"
+ },
+ {
+  "id": "p63",
+  "text": "All of the ustart versions perform authentication by sending a random nonce along with data that\n       comprises a mathematical operation on the combination of the nonce and the ustart value itself. The"
+ },
+ {
+  "id": "p64",
+  "text": "MITRE ATT&CK IDs: [T1132.002], [T1572]\n            MITRE ATT&CK IDs: [T1071.001], [T1547.006]"
+ },
+ {
+  "id": "p65",
+  "text": "TLP:CLEAR                                                                                              International Partnership"
+ },
+ {
+  "id": "p66",
+  "text": "receiving machine then extracts the nonce and performs the same computations to authenticate the\n       sending machine. The ustart2 and ustartl versions use the Fowler-Noll-Vo (FNV) hash algorithm to\n       generate the overall authentication value from the nonce and the ustart. This mechanism is slightly\n       different in the custom Snake HTTP protocol versus the custom Snake TCP protocol.\n       Using the ustart methodology, a node in the Snake P2P network can function as a server without\n       opening any otherwise closed ports and without interfering in the compromised server’s legitimate\n       functionality. Snake will only communicate over TCP ports on which another application is actively\n       listening. This technique makes detecting Snake compromises through network traffic monitoring far\n       more difficult. Inbound traffic to an unexpected TCP port can be detected or blocked using standard\n       firewall or network intrusion detection functionality. Replacing a legitimate service application with a\n       modified executable can lead to detection at either the host or network level. Snake’s technique\n       bypasses both of these mitigations. When combined with the fact that Snake traffic looks similar to\n       expected traffic, especially in the case of Snake’s HTTP based protocols, this renders detecting\n       Snake communications difficult absent detailed knowledge of Snake’s custom protocols."
+ },
+ {
+  "id": "p67",
+  "text": "Snake UDP\n       Outbound Communications via DNS Query\n       Snake uses a specialized communications protocol to encode information in seemingly standard DNS\n       queries run via the Windows or POSIX API function gethostbyname, depending on the version. 22\n       Snake outbound DNS requests consist of character strings that are constructed to resemble standard\n       domain names. The actual information being transmitted from the implant is contained in the part of\n       the character string prior to the first ‘.’ character. For illustration purposes, this subsection will outline\n       how an arbitrary string of bytes is manipulated and then encoded to form an outbound Snake DNS\n       request carrying data provided by the implant.\n       Snake outbound DNS requests originally take the form of byte arrays stored on the stack as the\n       implant progresses through the communications function. The byte array has the following structure."
+ },
+ {
+  "id": "p68",
+  "text": "Only the low-order seven bits of the flags byte are used, and they have the following significance."
+ },
+ {
+  "id": "p69",
+  "text": "MITRE ATT&CK IDs: [T1001.003], [T1071.004], [T1132.002]"
+ },
+ {
+  "id": "p70",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p71",
+  "text": "After calculating and obfuscating the byte array values shown above, Snake encodes these byte\n       values as de-facto base32 text, using the ten digits 0-9 and the 26 lowercase ASCII letters a-z, with v,\n       w, x, y, and z all corresponding to the same value, as only 32 distinct characters are needed. Snake\n       then inserts ‘-‘ characters at specified locations and sends the DNS request using the gethostbyname\n       function. The resulting encoded string mimics a legitimate DNS request; because characters after the\n       first ‘.’ are not part of the implant’s communications, any arbitrary suffix (e.g., “.com”) can be used.23\n       Inbound Communications via DNS Query Response\n       After sending the encoded DNS request, Snake parses the returned information. In a normal DNS\n       request, the returned hostent structure contains a list of IPv4 addresses as 32-bit unsigned integers if\n       the domain resolves to one or more IPv4 addresses. In the Snake DNS protocol, these 32-bit integers\n       represent the covert channel data. The Snake implant sorts the 32-bit integers by the highest order\n       nibble and then interprets the remaining 28 bits of each integer as the actual encoded data.\n       The Snake DNS protocol thus provides a well-concealed, low-bandwidth communications channel.\n       For larger bandwidth communications, Snake uses its custom HTTP and TCP protocols."
+ },
+ {
+  "id": "p72",
+  "text": "Snake HTTP\n       The most common custom protocol that Snake uses is its “http” protocol, which rides on top of\n       standard HTTP. It generally looks like normal HTTP communications, including a lot of base64-\n       looking strings, thus blending well with normal network traffic. There have been multiple iterations of\n       Snake’s http protocol, though the differences are only in the encoding; once that is peeled away, the\n       underlying Snake http protocol is the same. For the purposes of this document, Snake’s former\n       version of HTTP will be referred to as “http” and its more recent version as “http2”. 24\n       Snake communications using http2 are contained within seemingly legitimate Application Layer HTTP\n       communications. In the client-to-server direction, the implant data is contained within an HTTP header\n       field of a GET request, unless the data is over a certain size (usually 256 bytes, but configurable).\n       Observed field keys have included: Auth-Data, Cache-Auth, Cookie, and Cockie (note misspelling).\n       This list is not exhaustive; any standard HTTP header field can be used. The communication itself is\n       contained in the legitimate HTTP header field’s value, meaning the content following the ‘:’ character\n       and any whitespace immediately thereafter. In HTTP GET requests, the implant generally uses the\n       default path ‘/’, but this is not required and is configurable.25"
+ },
+ {
+  "id": "p73",
+  "text": "MITRE ATT&CK IDs: [T1001.003], [T1071.004], [T1132.002]\n          MITRE ATT&CK IDs: [T1001.003], [T1071.001], [T1572]\n          MITRE ATT&CK IDs: [T1001.003], [T1071.001]"
+ },
+ {
+  "id": "p74",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p75",
+  "text": "Larger client-to-server Snake http2 requests are contained in the body of an HTTP POST request,\n       and server-to-client communications are contained in the body of the HTTP response.\n       All client-to-server Snake http and http2 requests begin with the ustart authentication. The specifics\n       vary with each ustart version, but in each case the random nonce and the computed function of the\n       nonce and ustart value are encoded in a manner which closely resembles the rest of the Snake\n       communication. Since Snake http and http2 implant sessions can span multiple TCP sessions, the\n       ustart authentication mechanism is included in every client-to-server communication.\n       Base62 Encoding\n       Snake’s http2 protocol uses a custom base62 encoding scheme that has the following differences\n       from base64. Base62 uses 62 semantically significant characters instead of 64. The ratio of encoded-\n       to-decoded characters in base62 is less dense (11:8) than the ratio base64 can achieve (12:9). Also,\n       base62 uses extraneous characters in certain instances that have no semantic significance. 26\n       The base62 characters of semantic significance are the 62 strict alphanumeric characters: [0-9A-Za-\n       z]. The extraneous characters that can be present in a base62 string—but which have no semantic\n       significance—are: ‘/’, ‘;’, ‘=’, and ‘_‘ (underscore). When present, these characters are removed prior\n       to performing the decoding process. A valid base62 string can have up to 11 of these extraneous\n       characters. A regular expression for base62 is included in the Mitigations section of this CSA.\n       http and http2 Metadata Structure\n       After the base62 decoding is completed, if necessary, the remaining data begins with an 8-byte\n       metadata structure that provides rudimentary sessionization on top of the stateless HTTP. Snake’s\n       http and http2 client-to-server communications have three de-facto parts, which are concatenated into\n       a single HTTP header value. These parts are: 1) an announce or authentication string, 2) a custom\n       metadata structure, and 3) payload data. The metadata structure consists of the following:\n                  struct http_meta {\n                       uint32_t session_number;\n                       uint16_t communication_number;\n                       uint8_t flags;\n                       uint8_t checksum;\n                  };"
+ },
+ {
+  "id": "p76",
+  "text": "Snake uses the session_number and communication_number fields to provide its own custom\n       sessionization on top of the stateless Application Layer HTTP protocol. The checksum byte serves to\n       validate the integrity of the structure and must equal the sum of the first seven bytes modulo 256."
+ },
+ {
+  "id": "p77",
+  "text": "Snake TCP\n       Snake has the ability to communicate through POSIX-style TCP sockets. The implant’s custom TCP\n       protocol, which herein will be called “tcp”, uses the reliability features of the underlying TCP protocol.\n       Thus, in the implant’s custom tcp protocol, the concept of a TCP session and an implant “session” are\n       the same, whereas in the implant’s custom http protocols, one implant session could span multiple"
+ },
+ {
+  "id": "p78",
+  "text": "MITRE ATT&CK IDs: [T1132.002], [T1572]"
+ },
+ {
+  "id": "p79",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p80",
+  "text": "Transport Layer TCP sessions. Since the implant’s overall communications protocol is based on the\n       idea of commands and responses, Snake depends on being able to specify the length of any given\n       command and response so the recipient Snake node knows when a particular communication ends.\n       Snake achieves this in the custom tcp protocol by prefacing each communication with its length\n       encoded as a 32-bit big-endian unsigned integer.27\n       Immediately following the TCP 3-way handshake, the implant completes the ustart authentication for\n       this session. Since Snake tcp sessions are mapped one-to-one with an underlying protocol TCP\n       session, the ustart authentication only occurs once per session, rather than with each client-to-server\n       communication as in Snake http and http2. The Snake tcp ustart mechanism is similar to the Snake\n       http and http2 mechanisms, except that for certain ustart versions, Snake tcp uses a raw binary ustart\n       which is not encoded in printable characters.\n       After the ustart authentication, the implant will begin sending length-data pairs. These pairs can be\n       sent in the same packet or in two (or theoretically more) separate packets, but the pattern of length-\n       data pairs will be present in each half of the stream (i.e., each direction) for the entirety of the implant\n       communications for the remainder of the TCP session. Specifically, a length-data pair will consist of\n       the length encoded as a big-endian 32-bit unsigned integer followed by data of exactly that length.\n       For example, consider the instance where the implant is sending the following 4 arbitrary bytes: 28\n                  89 ab cd ef\n       The on-wire communication from the implant would send the integer value 4 encoded as a big-endian\n       32-bit integer, followed by the actual 4 bytes themselves, as shown below. This could be split across\n       two (or theoretically more) packets.\n                  00 00 00 04 89 ab cd ef\n       The custom tcp protocol (as well as all custom http protocols) have been used in conjunction with the\n       Snake enc protocol. Details of the Snake enc protocol are provided in the following subsection. Due\n       to the manner in which the Snake enc and Snake tcp protocols interact, the first six length-data pairs\n       of each TCP half-stream (following the single client-to-server announce or authentication packet\n       described above) will have known lengths. Specifically, each half-stream will begin with length-data\n       pairs of the following lengths: 0x8, 0x4, 0x10, 0x1, 0x10, 0x10. Note that these are the lengths of the\n       raw data, so each communication will be preceded by a 4-byte big-endian integer specifying the\n       corresponding length. Thus, one of the half-streams could have the following TCP content:\n                  00 00 00 08 12 34 56 78 9a bc de f0\n                  00 00 00 04 89 ab cd ef\n                  00 00 00 10 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0\n                  00 00 00 01 12\n                  00 00 00 10 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0\n                  00 00 00 10 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0"
+ },
+ {
+  "id": "p81",
+  "text": "MITRE ATT&CK IDs: [T1001.003], [T1071.001]\n            MITRE ATT&CK IDs: [T1132.002]"
+ },
+ {
+  "id": "p82",
+  "text": "TLP:CLEAR                                                                                            International Partnership"
+ },
+ {
+  "id": "p83",
+  "text": "Snake “enc” Layer\n       As described above, Snake communications are all comprised of “Snake sessions”, irrespective of\n       whichever legitimate protocol Snake is operating on top of. Snake’s top layer of encryption, called the\n       enc layer, utilizes a multi-step process to establish a unique session key. The session key is formed\n       through the combination of a Diffie-Hellman key exchange mixed with a pre-shared key (PSK) known\n       to both parties. This PSK is stored in one of the communication channels, stored within the Queue. 29\n       The overall establishment of the session key requires 12 communication steps, six in each direction,\n       which involve sharing the pseudo-random values used in the Diffie-Hellman exchange process as\n       well as custom aspects of the Snake session key derivation method. The session key is used to\n       encrypt the command headers and (inner) encrypted payloads.\n       This is the layer in which the critical error of providing a value of 128 bits instead of 128 bytes for the\n       call to DH_generate_parameters within the OpenSSL library occurred. Due to this insufficient key\n       length, breaking the Diffie-Hellman portion of the exchange is possible. Note that in the following\n       figure, the variables ‘p’, ‘g’, ‘a’, and ‘b’ are used in standard descriptions of Diffie-Hellman."
+ },
+ {
+  "id": "p84",
+  "text": "MITRE ATT&CK IDs: [T1573], [T1573.002], [T1610]"
+ },
+ {
+  "id": "p85",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p86",
+  "text": "SNAKE APPLICATION LAYER\n       Snake’s Application Layer is used to process Snake commands. The payload data for a Snake\n       session can contain one or more command exchanges, which include both the incoming data sent to\n       the implant as well as the response returned to the server. Each command is associated with a\n       specific ordinal, and due to Snake’s modular design, operators are able to add new commands to\n       extend Snake’s capabilities by remotely loading a new module.\n       The Snake implant differentiates between High and Low commands and handles them differently,\n       based on the ordinal number range. The majority of Snake commands are High commands that have\n       an ordinal of 0x64 (100 decimal) or higher. There are far fewer Low commands, and these include the\n       Forwarding command (with ordinal 0x1), and the four Queue commands (with ordinals 0xa, 0xb, 0xc,\n       and 0xd). While Low commands are mostly used for moving data across the network, the High\n       commands give the operator many options for interacting with an infected system.30"
+ },
+ {
+  "id": "p87",
+  "text": "Command 0x15-byte Header\n       All commands begin with a 0x15-byte header, followed by optional command parameter data; only\n       some commands require parameters for successful execution. For example, the command Get, which\n       exfiltrates a file, requires the name of the file to exfiltrate, whereas the command Process List, which\n       returns a process listing, does not require any parameters.31\n       The most important Command Header field contains the integer ordinal of the command being sent.\n       The Item UID field represents a unique identifier for each individual command instance, and these\n       values increase sequentially. The header has two fields used when a command is set to run at a\n       specified date and time; these commands will be written to the 0x6 Container.\n       Some Low commands have another header before the payload data, which will be detailed below. All\n       other commands have only the Command Header followed by the encrypted parameter data."
+ },
+ {
+  "id": "p88",
+  "text": "Command Encryption\n       Underneath Snake http2 or tcp encryption at the session layer, each command exchange is further\n       encrypted. In older versions of Snake, the exchanges were CAST-128 encrypted using a different key\n       for incoming and outgoing data. These keys were saved in the 0x2 Container in the 0x227 and 0x228"
+ },
+ {
+  "id": "p89",
+  "text": "MITRE ATT&CK IDs: [T1001], [T1104]\n            MITRE ATT&CK IDs: [T1074], [T1119], [T1560.003]"
+ },
+ {
+  "id": "p90",
+  "text": "TLP:CLEAR                                                                                           International Partnership"
+ },
+ {
+  "id": "p91",
+  "text": "Items. The incoming payload data, if parameter data was present, could be decrypted with the 0x227\n       CAST key. Any response data was encrypted with the 0x228 CAST key. 32\n       In recent versions, the 0x227 and 0x228 Items hold two RSA-4096 public keys. For each side of an\n       exchange, a new 16-byte CAST key is created with Microsoft’s CryptoAPI CryptGenRandom function\n       to obtain 16 random bytes. This key is used to CAST-128 encrypt the parameter or response data.\n       For an incoming command, the CAST key is signed (not encrypted) by the private key corresponding\n       to the public key on the node to create a 512-byte RSA data blob. The incoming payload has the RSA\n       blob, followed by the optional parameter data, which is CAST-128 encrypted. Snake uses the 0x227\n       RSA public key to decrypt the RSA blob, recover the CAST key, then decrypt the parameter data.\n       For an outgoing command, a new CAST key is obtained from CryptGenRandom, and any response\n       data is CAST-128 encrypted. The key is then encrypted using the 0x228 public key to create a 512-\n       byte data blob. The response payload data contains the 512-byte RSA blob, followed by the\n       encrypted response data, when present."
+ },
+ {
+  "id": "p92",
+  "text": "Command Decoding\n       The implant will expect data in a specific format for each command ordinal. Parameter and response\n       data contain several possible underlying data types, including wide-character plaintext strings,\n       numeric values, data tables, files, or a combination of multiple types.33\n       The parameter data buffer itself will be formatted in a specific way, depending on the command\n       ordinal. Some commands have required parameters, as well as optional parameters. Commands with\n       optional parameters will include a metadata header with the data length and data type (e.g., bool,\n       integer, text, or data buffer) before the optional parameter’s data. Other commands will expect the\n       parameters to be formatted with length-data pairs, consisting of the parameter data length encoded\n       as a four-byte big-endian integer followed by data of exactly that length. Still other commands have a\n       custom header or will expect no length or metadata and will simply send the parameter data alone.\n       The response data will similarly be formatted by the implant in a specific way according to the\n       command ordinal. The response data typically does not have a length or metadata preceding it, with\n       the exception of the data tables. Examples of commands that return a table are the Process List\n       command and the List Dir command.\n       Response data that includes a table will start with a table description header that indicates the\n       number of columns and rows in the table. In addition, the header will include a Column Descriptor\n       structure to indicate the type of data that column will contain, for example a string, uint32 or uint64,\n       timestamp in epoch format, or the contents of a whole file (included as a table entry).\n       After the table description header, each field is added to the data payload buffer one at a time in a\n       length-data pair. The fields across the first row are added in order, then the fields across the second\n       row are added immediately after the first row with no metadata or separation, and so on. To parse this\n       table, the server will account for the number of columns to determine where the next row starts."
+ },
+ {
+  "id": "p93",
+  "text": "MITRE ATT&CK IDs: [T1573]\n            MITRE ATT&CK IDs: [T1132.002]"
+ },
+ {
+  "id": "p94",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p95",
+  "text": "High Commands\n       High commands are those with an ordinal of 0x64 (decimal 100) or higher. High commands give the\n       operator many options for interacting with an infected system, as well as implant components. This\n       subsection will describe some examples of the many High commands that can exist in the implant.\n       Some of the most basic High commands will gather information about the machine and return the\n       results. For example, the FSB operators can use the PS command (0x65) to return a list of running\n       processes, the List Dir command (0x840) to list the contents of a directory, or the Syst command\n       (0x6b) to gather basic system information.\n       There are several commands that interact with the infected machine using standard built-in OS tools.\n       The operator can use the Kill command (0x67) to kill a process, the Get command (0x68) to exfiltrate\n       a file, the Put command (0x69) to write a file, the Del command (0x6a) to delete a file, or the Run\n       command (0x66) to execute a command in a terminal shell and receive the results. For example,\n       operators have used the Run command to run PowerShell commands, ping other hosts, use the\n       Windows “net use” command to map network drives, and to run executable files that had been\n       previously written to the node using the Put command.34"
+ },
+ {
+  "id": "p96",
+  "text": "MITRE ATT&CK IDs: [T1059.001]"
+ },
+ {
+  "id": "p97",
+  "text": "TLP:CLEAR                                                                                     International Partnership"
+ },
+ {
+  "id": "p98",
+  "text": "In addition to commands that use the built-in OS functionality, there are several High commands that\n       interact with Snake components. An operator can use the Read Config command (0x70) to read the\n       0x2 Container, which contains configuration data, or the Set Config Item command (0x71) to set a\n       specific Queue Item within the 0x2 Container. For example, operators have used the Set Config Item\n       command to add or update the IP addresses or domains and option parameters used to communicate\n       with other Snake nodes. The Read Agents Track and Clear Agents Track commands (0x79 and 0x7a)\n       interact with the 0x7 Container to read or delete logs which track which other Snake nodes have\n       connected to this node. Note that the 0x7a command has been deprecated in some versions of\n       Snake and returns the error “function unsupported” if called.\n       Snake has the ability to add additional commands by loading new modules. New modules can be\n       loaded using the Load Modules command (0x72) or directly into memory using the Load Modules\n       Mem command (0x7f). When compiling a module, the developer will assign an ordinal to each\n       constituent command, which will then be used by the operator to call the newly added commands.\n       These loaded modules can be removed using the Module Unload command (0x73)."
+ },
+ {
+  "id": "p99",
+  "text": "Queue Commands\n       The Snake commands with ordinals 0xa, 0xb, 0xc, and 0xd are used to enumerate, read, write, and\n       delete items from the 0x0 or 0x1 Queue Containers, respectively. Note that these commands are not\n       used to manipulate any other Containers.35\n       Queue Command Header\n       The four Queue commands contain a 0x3d-byte Queue Header following the Command Header. In\n       more recent versions of Snake, this header is encrypted using the same CAST key used to encrypt\n       the payload data. In this case, the Command Header is followed by the 512-byte RSA encrypted\n       CAST key blob, the encrypted Queue Header, and finally the encrypted payload data. 36"
+ },
+ {
+  "id": "p100",
+  "text": "Even though each of the four Queue commands only use a subset of the fields of the Queue Header\n       (in different ways), the full header must be present for the command to be considered valid by the\n       implant. Two fields in the header that all four Queue commands use are the Container Instance and\n       Container Type fields, which indicate the specific Container on a node the Queue command intends\n       to interact with. In the Queue Read and Write commands, the Item Type field is used to track the\n       specific commands and their responses in the Containers."
+ },
+ {
+  "id": "p101",
+  "text": "MITRE ATT&CK IDs: [T1001], [T1104]\n            MITRE ATT&CK IDs: [T1573]"
+ },
+ {
+  "id": "p102",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p103",
+  "text": "Queue Enumerate Command\n       The Queue Enumerate command, with ordinal 0xa, is used to enumerate the contents of the 0x0 or\n       0x1 Containers to list all incoming or outgoing commands, respectively. The enumeration returns the\n       0x40-byte structure described above for each Queue Item, concatenated into a single return buffer.\n       Queue Read Command\n       The Queue Read command, with ordinal 0xb, is used to read an Item from the specified 0x0 or 0x1\n       Container. Several relevant fields in the Queue Header determine how the data is sent and stored.\n       For example, the header determines whether the data should be sent immediately back to the server\n       or stored for later transport. The header indicates if the implant should send the Queue Item’s header\n       (i.e., the same 0x40-byte metadata structure returned by the 0xa command), the Item’s data, or both.\n       The header also indicates whether the Queue Item should be deleted after being read and can also\n       indicate that Queue Items with a lower Item Type should be deleted. This allows FSB operators to\n       clear out all command Items previous to the one being read.\n       Queue Write Command\n       The Queue Write command, with ordinal 0xc, is used to write a Queue Item to the specified 0x0 or\n       0x1 Container. The Queue Header will indicate if a new Queue Item will be created, or an existing\n       Queue Item will be modified.\n       If a Queue Item is set to be modified, an Item with the specified Item Type must exist in the specified\n       Container. Several fields in the header must match specific attributes of the existing Queue Item. If\n       these checks are met, the parameter data is written to the Queue Item. Fields in the Queue Header\n       will indicate the length of data to be written, and the offset into the existing Queue Item where the\n       write should begin.\n       If a Queue Item is set to be created, Snake will delete existing Queue Items of the specified Item\n       Type in the Container of interest, then create a new Item of the specified Item Type and write the\n       parameter data to the Queue Item. A field in the Queue Header will indicate the length of data to be\n       written.\n       Queue Delete Command\n       The Queue Delete command, with ordinal 0xd, is used to delete a Queue Item from the specified 0x0\n       or 0x1 Container. The Flags field will determine if the single Queue Item should be deleted, or if all\n       Queue Items with a lower Item Type should be deleted as well."
+ },
+ {
+  "id": "p104",
+  "text": "Forward Commands\n       Forward commands, with command ordinal 0x1, are used to tell an implant to forward a Snake\n       command to a second target node, where the command will be executed. The target node sends the\n       response data back to the first implant, which will then package that response data as its own\n       response back to the caller.\n       The command is designed to tell an implant to forward one command to another implant, but in\n       practice, Forward commands are often built on top of each other to create a chain of hop points that"
+ },
+ {
+  "id": "p105",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p106",
+  "text": "will continue to forward a command to an end point, where it will be executed. The response data is\n       then sent back through the same chain of hop points until it reaches the operator.37\n       The Forward command has a 0x199-byte Forward Header, followed by the encrypted command\n       parameter data that will be sent to the target node of the Forward command. The Forward Header\n       contains the information the implant will need to connect to the target node, including the ordinal of\n       the Snake command that is being forwarded to the target node for execution.\n       The implant that receives the Forward command will construct a new Snake command of the ordinal\n       indicated in the Forward Header. It will connect to the target node in a new session, construct the\n       Command Header, and send the encrypted command parameter data on to the target node. The\n       parameter data already will have been encrypted using the key associated with the target node, so\n       that the target implant will be able to decrypt the parameter data and execute the command.\n       When the Forward command is constructed, the CAST key used to CAST-128 encrypt the payload\n       data—to include the 0x199-byte header and the parameter data to be forwarded—is encrypted with\n       the RSA key pair used by the first implant. The parameter data that contains the parameters for the\n       command to be forwarded is also CAST-128 encrypted, but the key used to encrypt the parameter\n       data is encrypted with the RSA key pair used by the target node. The first implant knows through the\n       header what command ordinal it is forwarding, but it is unable to decrypt the parameter data.\n       If the Forward Header sent to the first implant indicates that the command to be forwarded was\n       another Forward command, the first target node will decrypt the parameter data and find another\n       Forward Header. This first target node implant will then go through the same process to connect to\n       the next target node, constructing the new command with the ordinal indicated in the second Forward\n       Header to send the remaining encrypted parameter data to the next target node. This will repeat until\n       the command to be forwarded is something other than another Forward command.\n       The Command Header and pertinent parameters for each target node are encrypted specifically for\n       that node by the operator before the Forward command is sent into the Snake P2P network. To\n       illustrate, the diagram below shows how the buffer might look when several Forward commands are\n       chained together to include two hop points and an end point. The first hop point (HP1) will recover the\n       first CAST key and CAST-128 decrypt the rest of the buffer, which will uncover the first Forward\n       Header. HP1 will then forward the remainder of the decrypted buffer to the next hop point (HP2),\n       starting with the second CAST key blob. HP2 will recover the second CAST key and CAST-128\n       decrypt the rest of the buffer, which will uncover the second Forward Header. HP2 will then forward\n       the remainder of the decrypted buffer to the end point, starting with the third CAST key blob. The end\n       point will recover the CAST key, decrypt the command parameter data, and execute the command.\n       When a target machine has executed a forwarded command, the return data is encrypted with that\n       implant’s RSA keys and returned directly to the previous hop point. As the data is returned up the\n       chain in the Snake P2P network, the intermediate hop points do not manipulate the encrypted data,\n       as they do not have the RSA private key necessary to do so. In this manner, the return data is de-\n       facto end-to-end encrypted throughout the P2P network until it arrives back at the FSB operator."
+ },
+ {
+  "id": "p107",
+  "text": "MITRE ATT&CK IDs: [T1090.003], [T1573]"
+ },
+ {
+  "id": "p108",
+  "text": "TLP:CLEAR                               International Partnership"
+ },
+ {
+  "id": "p109",
+  "text": "TLP:CLEAR                                                                                       International Partnership"
+ },
+ {
+  "id": "p110",
+  "text": "SNAKE IMPLANT OPERATION\n       Snake uses two main methods for communication and command execution, namely Passive and\n       Active. In general, Snake operators will employ Active operations to communicate with hop points\n       within Snake’s infrastructure; however, hop points can and do sometimes operate using Snake’s\n       Passive method. Snake’s end points tend to solely operate using the Passive method. 38"
+ },
+ {
+  "id": "p111",
+  "text": "Active Operations\n       During Active operations, Snake commands are issued by an FSB operator or a script to a target\n       machine, generally through Forward commands (described in the previous section). The response to\n       the command is immediately returned to the point of origin following the same path that the command\n       took to reach its end target, as shown in the previous figure on Forward command structure."
+ },
+ {
+  "id": "p112",
+  "text": "Passive Operations\n       During Passive operations, Snake implants operate on their own, without the synchronous interaction\n       of FSB operators. The nodes with which an implant communicates during Passive operations are\n       stored within its 0x2 Container(s) as communication channels. Up to ten communication channels can\n       be present at any time; an operator can change these channels via the Set Config Item command.\n       Passive Intake\n       During Passive operations, the implant will beacon by sending a Queue Read (0xb) command to one\n       of its stored communication channels that it has chosen at random. These Queue Read commands\n       look for a Queue Item within a Container with an Instance Number equal to the implant’s UID. The\n       matching UID indicates the Queue Items in this Container are intended for the beaconing implant.\n       If such a Queue Item is found, the beaconing implant will read in the Queue Item and delete it off of\n       the host from which it was read. There can be multiple Queue Items found within the specified Queue\n       Container that was beaconed to; each Queue Read command will read one of these items. This\n       process is repeated until all items within the Container are read, which the infrastructure node will\n       indicate by sending a specific error in response to the Queue Read. This beaconing will continue to\n       randomly select hosts at nondeterministic time intervals for as long as the implant is set to perform\n       Passive operations.\n       Passive Data Exfiltration\n       Similar to how Snake intakes commands passively, it can also exfiltrate the resulting data passively.\n       This is done using Queue Write (0xc) commands to write to one of the stored communication\n       channels chosen at random. Once the data is off the end point node, operators generally retrieve it\n       manually or using a script. The Item Type field, which is unique per executed Snake command, is\n       needed to associate the exfiltrated data with the target node on which the command was run.\n       In the context of Passive Snake communications, the term Item Type is defined as a UID for a given\n       Snake command and its resulting data. The Item Type serves as a unique identifier to associate the\n       results of command execution with the original command written by the operator. When the FSB"
+ },
+ {
+  "id": "p113",
+  "text": "MITRE ATT&CK IDs: [T1104]"
+ },
+ {
+  "id": "p114",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p115",
+  "text": "collects the data, Snake knows exactly what infection the data came from, and therefore it can\n       determine what key to use to successfully decrypt the data."
+ },
+ {
+  "id": "p116",
+  "text": "TLP:CLEAR                                                                                                    International Partnership"
+ },
+ {
+  "id": "p117",
+  "text": "To illustrate how Passive operations are conducted between the end points, the operator, and the hop\n       points in between, see the diagram above, which is explained further by the following steps: 39\n               (1), (2): During Passive operations, the Node randomly chooses a host from amongst its\n                stored communication channels and will beacon out to it with a Queue Read command (Hop\n                Point 1 in this case). The Item Type for these beacons will be one greater than the Item Type\n                of the last command received by the Node, indicating in this example that a command of Item\n                Type 0x08 was the last command that was read in by the Node during Passive operations.\n                This Node will continue to beacon with Item Type 0x09 until it receives a command, via\n                Passive operations, with an Item Type of 0x09 or greater. The lines are dotted for (1) and (2)\n                as this activity will be repeated at random intervals until a successful Queue Read occurs."
+ },
+ {
+  "id": "p118",
+  "text": "   (3), (4): In these steps, the operator uses a Queue Write command to write a command to Hop\n                Point 140 that is ultimately intended for the Node. The Item Type of the command being written\n                to Hop Point 1 is assigned 0x20 (for this example). Note that the path of this command, its\n                execution, and its results making it back to the operator can be tracked via the red text."
+ },
+ {
+  "id": "p119",
+  "text": "   (5), (6): The Node continues to beacon out looking for commands to read in (5). The return (6)\n                is successful, and the command written by the operator to Hop Point 1 (3) is read in by the\n                Node, then deleted from Hop Point 1."
+ },
+ {
+  "id": "p120",
+  "text": "   (7), (8): The Node attempts another Queue Read to Hop Point 1, however now the Item Type\n                is set to 0x21, one greater than the command that was just read in by the Node at (5) and (6).\n                This returns an error as Hop Point 1 has nothing else for the Node to read in, indicating to the\n                Node that everything at Hop Point 1 was read."
+ },
+ {
+  "id": "p121",
+  "text": "   (9), (10): At this point, the Node has executed the command it read in at (5) and (6) and is\n                attempting to send back the results. The Node randomly selects another host from its stored\n                communication channels, Hop Point 2 in this case, and sends out a 0xb command to make\n                sure that the Item Type 0x20, the Item Type of the command it executed, does not already\n                exist within the Queue of Hop Point 2. If it receives an error, there is no Item with Item Type\n                0x20 on Hop Point 2, and the Node can proceed to send the command results."
+ },
+ {
+  "id": "p122",
+  "text": "   (11), (12): Here the data from the executed command is written to Hop Point 2 with Item Type\n                0x20 into its 0x1 Container with a 0xc command, the Item Type the command was initially\n                given at creation (3)."
+ },
+ {
+  "id": "p123",
+  "text": "   (13), (14): The Node continues its normal beaconing routine again as seen in (1) and (2),\n                searching for Item Type 0x21, one greater than the Item Type of the most recently executed"
+ },
+ {
+  "id": "p124",
+  "text": "MITRE ATT&CK IDs: [T1090.003], [T1104]\n         The operator knows that Hop Point 1 is stored in the communications channels of the Node, thus the operator knows\n       that the Node will beacon out to Hop Point 1 at some point and be able to retrieve the data."
+ },
+ {
+  "id": "p125",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p126",
+  "text": "command. As in (1) and (2), the lines here are dotted to denote that this process will repeat\n                until there was a successful beacon as in (5) and (6)."
+ },
+ {
+  "id": "p127",
+  "text": "    (15-22): These steps show how the operator retrieves the resulting data that was written to\n                Hop Point 2. The Queue Enumerate command (15) lists the contents of Hop Point 2’s 0x1\n                Container, showing the data written by the Node (11). This data is identifiable by its Item Type,\n                namely 0x20. The Queue Read command (17) reads in the Item that was found in Hop Point\n                2’s Container. The Queue Read command that follows (19) is asking if there is any data left. In\n                this case, the entirety of the data was read with the first Queue Read (17, 18). Therefore, the\n                error returned from second Queue Read command (20) lets the operator know all of the data\n                from Item Type 0x20 was read and there is nothing further. A Queue Delete command (21)\n                follows and is sent to delete the item with Item Type 0x20 from Hop Point 2."
+ },
+ {
+  "id": "p128",
+  "text": "    The subsequent Queue Read, Queue Read, and Queue Delete commands (17-21) are\n                denoted with dashed lines to indicate that this sequence of commands is repeated for all items\n                returned from the Queue Enumerate command (15)."
+ },
+ {
+  "id": "p129",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p130",
+  "text": "MITIGATIONS\n       A number of complementary detection techniques effectively identify some of the more recent\n       variants of Snake. However, as described above, Snake is purpose-built to avoid large-scale\n       detection. Below is a discussion of the advantages and disadvantages of various detection\n       methodologies available for Snake.\n       Note that some of the techniques identified in this section can affect the availability or stability\n       of a system. Defenders should follow organizational policies and incident response best practices to\n       minimize the risk to operations while hunting for Snake."
+ },
+ {
+  "id": "p131",
+  "text": "Network-Based Detection\n       Network Intrusion Detection Systems (NIDS) can feasibly identify some of the more recent variants of\n       Snake and its custom network protocols as detailed above.\n       Advantages: High-confidence, large-scale (network-wide) detection of custom Snake communication\n       protocols.\n       Disadvantages: Low visibility of Snake implant operations and encrypted data in transit. There is\n       some potential for false positives in the Snake http, http2, and tcp signatures. Snake operators\n       can easily change network-based signatures.\n       Snake http\n       Snake client-to-server http and http2 traffic is contained within an arbitrary HTTP header field. The\n       header field value for http begins with 10 pure alphanumeric characters, followed by base64 encoding\n       of 8 bytes, which yields exactly 11 valid base64 characters plus one base64 padding character.\n                ^[0-9A-Za-z]{10}[0-9A-Za-z/\\+]{11}="
+ },
+ {
+  "id": "p132",
+  "text": "The following two Suricata rules will detect the traffic described:\n       alert http any any -> any any (msg: \"http rule (Cookie)\";\\\n             pcre:\"/[0-9A-Za-z]{10}[0-9A-Za-z\\/\\+]{11}=/C\";\\\n             flow: established, to_server;\\\n             sid: 7; rev: 1;)\n       alert http any any -> any any (msg: \"http rule (Other Header)\";\\\n             pcre:\"/[0-9A-Za-z]{10}[0-9A-Za-z\\/\\+]{11}=/H\";\\\n             flow: established, to_server;\\\n             sid: 8; rev: 1;)"
+ },
+ {
+  "id": "p133",
+  "text": "Snake http2\n       The header field value for http2 begins with 22 pure alphanumeric characters (base62 with non-\n       extraneous characters), followed by the base62 encoding of at least 8 bytes, which must comprise at\n       least 11 base62 characters with the four extraneous characters allowed. The actual requirement is"
+ },
+ {
+  "id": "p134",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p135",
+  "text": "stricter than this expression, since the total number of non-extraneous characters alone must equal or\n       exceed 11; however, it is not possible to encode that aspect into a regular language.\n                ^[0-9A-Za-z]{22}[0-9A-Za-z/;_=]{11}"
+ },
+ {
+  "id": "p136",
+  "text": "The following two Suricata rules will detect the traffic described:\n       alert http any any -> any any (msg: \"http2 rule (Cookie)\";\\\n             pcre:\"/[0-9A-Za-z]{22}[0-9A-Za-z\\/_=\\;]{11}/C\";\\\n             flow: established, to_server;\\\n             sid: 9; rev: 1;)\n       alert http any any -> any any (msg: \"http2 rule (Other Header)\";\\\n             pcre:\"/[0-9A-Za-z]{22}[0-9A-Za-z\\/_=\\;]{11}/H\";\\\n             flow: established, to_server;\\\n             sid: 10; rev: 1;)"
+ },
+ {
+  "id": "p137",
+  "text": "Snake tcp\n       The client-to-server communication for tcp must begin with the ustart, which is not captured in this\n       signature set. Immediately following the ustart, the next client-to-server communication must be the\n       big-endian 32-bit unsigned integer 8 followed by any 8 bytes of data. The next communication must\n       also be client-to-server, and it must comprise the big-endian 32-bit unsigned integer 4 followed by any\n       4 bytes of data. The next two communications must be server-to-client, comprising the integer 8\n       followed by 8 bytes of data and the integer 4 followed by 4 bytes of data.\n       The following six Suricata rules will, in conjunction, detect traffic of the form described:\n       alert tcp any any -> any any (msg: \"tcp rule\";\\\n             content: \"|00 00 00 08|\"; startswith; dsize: 12;\\\n             flow: established, to_server; flowbits: set, a8; flowbits: noalert;\\\n             sid: 1; rev: 1;)\n       alert tcp any any -> any any (msg: \"tcp rule\";\\\n             content: \"|00 00 00 04|\"; startswith; dsize:8;\\\n             flow: established, to_server; flowbits: isset, a8; flowbits: unset, a8;\\\n             flowbits: set, a4; flowbits: noalert;\\\n             sid: 2; rev: 1;)\n       alert tcp any any -> any any (msg: \"tcp rule\";\\\n             content: \"|00 00 00 08|\"; startswith; dsize: 4;\\\n             flow: established, to_client; flowbits: isset, a4; flowbits: unset, a4;\\\n             flowbits: set, b81; flowbits: noalert;\\\n             sid: 3; rev: 1;)"
+ },
+ {
+  "id": "p138",
+  "text": "TLP:CLEAR                                                                                            International Partnership"
+ },
+ {
+  "id": "p139",
+  "text": "alert tcp any any -> any any (msg: \"tcp rule\";\\\n             dsize: 8; flow: established, to_client; flowbits: isset, b81;\\\n             flowbits: unset, b81; flowbits: set, b8; flowbits: noalert;\\\n             sid: 4; rev: 1;)\n       alert tcp any any -> any any (msg: \"tcp rule\";\\\n             content: \"|00 00 00 04|\"; startswith; dsize: 4;\\\n             flow: established, to_client; flowbits: isset, b8; flowbits: unset, b8;\\\n             flowbits: set, b41; flowbits: noalert;\\\n             sid: 5; rev: 1;)\n       alert tcp any any -> any any (msg: \"tcp rule\";\\\n             dsize: 4; flow: established, to_client; flowbits: isset, b41;\\\n             flowbits: unset, b41;\\\n             sid: 6; rev: 1;)"
+ },
+ {
+  "id": "p140",
+  "text": "Host-Based Detection\n       Advantages: High confidence based on totality of positive hits for host-based artifacts.\n       Disadvantages: Many of the artifacts on the host are easily shifted to exist in a different location or\n       with a different name. As the files are fully encrypted, accurately identifying these files is difficult.\n       Covert Store Detection\n       The Snake covert store comprises a file-backed NTFS (usually) or FAT-16 (rarely) filesystem. The\n       filesystem is encrypted with CAST-128 in CBC mode. The encryption key can be either statically\n       hardcoded or dynamically stored in a specified Windows registry location. The IV is 8 bytes, since\n       CAST-128 has an 8-byte block length. The first byte of the IV for any 512-byte block of the covert\n       store is the 0-indexed block number. The remaining bytes of the IV are the corresponding bytes of the\n       key, meaning that bytes at 0-indexed indices 1 through 7 of the IV are the bytes at 0-indexed indices\n       1 through 7 of the key.\n       When statically hardcoded, the encryption key has the following constant value:\n                A1 D2 10 B7 60 5E DA 0F A1 65 AF EF 79 C3 66 FA\n       When stored in the Windows registry, the encryption key is the classname associated with the\n       following key:\n                SECURITY\\Policy\\Secrets\\n\n       The following initial 8-byte sequences are known to be used by NTFS or FAT-16 filesystems as\n       observed:\n                EB 52 90 4E 54 46 53 20\n                EB 5B 90 4E 54 46 53 20"
+ },
+ {
+  "id": "p141",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p142",
+  "text": "EB 3C 90 4D 53 44 4F 53\n                EB 00 00 00 00 00 00 00\n       For tool development, the following test vector illustrates the encryption of the first given header\n       above (EB 52 90 …) using CAST-128 with the default key shown above and the IV constructed as\n       described, given this header occurs at the beginning of the first 512-byte block of the covert store.\n                Plaintext:       EB 52 90 4E 54 46 53 20\n                Key:             A1 D2 10 B7 60 5E DA 0F A1 65 AF EF 79 C3 66 FA\n                IV:              00 D2 10 B7 60 5E DA 0F\n                Ciphertext:      C2 C7 F4 CA F7 DA 3A C8\n       By encrypting each possible initial filesystem byte sequence with CAST-128 using the key obtained\n       from the registry—or the default encryption key if the registry entry does not exist—and searching for\n       any file with a size that is an even multiple of 220, it is possible to efficiently detect Snake covert\n       stores. Validation can be performed by decrypting the entire file using the outlined methodology and\n       then verifying that it comprises an NTFS or FAT-16 filesystem.\n       Other On-Disk Artifact Detection\n       Registry Blob\n       The registry blob is generally found at the location listed below. In case it is not present at its typical\n       location, the registry blob can be found by searching the full registry for a value of at least 0x1000\n       bytes in size and entropy of at least 7.9.\n                Typical Name: Unknown (RegBlob)\n                Typical Path: HKLM\\SOFTWARE\\Classes\\.wav\\OpenWithProgIds\n                Characteristics: High Entropy\n       Queue File\n                Typical Name: < RANDOM_GUID >.<RANDOM_GUID>.crmlog\n                Typical Path: %windows\\registration\\\n                Unique Characteristics: High Entropy, file attributes of hidden, system, and archive\n                Role: Snake Queue File\n       The Snake Queue File generally has a predictable path and filename structure, in addition to being\n       high entropy. The Snake Queue File can be located by scanning all files in the typical queue path with\n       filenames matching a regular expression that captures the typical naming convention. Files meeting\n       these criteria should be scanned for high entropy, which is performed by the Yara rule below:\n       rule HighEntropy\n       {"
+ },
+ {
+  "id": "p143",
+  "text": "TLP:CLEAR                                                                                  International Partnership"
+ },
+ {
+  "id": "p144",
+  "text": "meta:\n                  description = \"entropy rule\""
+ },
+ {
+  "id": "p145",
+  "text": "condition:\n                  math.entropy(0, filesize) >= 7.0\n       }"
+ },
+ {
+  "id": "p146",
+  "text": "The following UNIX find command will scan files with names matching the GUID-based convention\n       (note that the HighEntropy yara rule is assumed to be contained in a file named “1.yar”):\n       find /PATH/TO/WINDOWS_DIR -type f -regextype posix-egrep -iregex \\\n             '.*\\/registration/(\\{[0-9A-F]{8}\\-([0-9A-F]{4}\\-){3}[0-9A-F]{12}\\}\\.){2}crmlog' \\\n              -exec yara 1.yar {} \\;"
+ },
+ {
+  "id": "p147",
+  "text": "The following PowerShell command does the same:\n       Get-ChildItem -Recurse -File -Path %WINDOWS% | Where-Object {\n           $_.FullName -match\n           '(?i)/registration/(\\{[0-9A-F]{8}\\-([0-9A-F]{4}\\-){3}[0-9A-F]{12}\\}\\.){2}crmlog$'\n       } | ForEach-Object {\n           yara 1.yar $_.FullName\n       }"
+ },
+ {
+  "id": "p148",
+  "text": "Comadmin\n                Typical Name: comadmin.dat\n                Typical Path: %windows%\\system32\\Com\n                Unique Characteristics: High Entropy\n                Role: Houses Snake’s kernel driver and the driver’s loader\n       The Snake Comadmin file can be found using analogous techniques to that presented above for\n       locating the Snake Queue File. The following UNIX find command will do so:\n       find /PATH/TO/WINDOWS -type f -regextype posix-egrep -iregex \\\n             '.*\\/system32/Com/comadmin\\.dat' \\\n              -exec yara 1.yar {} \\;"
+ },
+ {
+  "id": "p149",
+  "text": "The following PowerShell command does the same:\n       Get-ChildItem -Recurse -File -Path %WINDOWS% | Where-Object {\n             $_.FullName -match '(?i)/system32/Com/comadmin\\.dat$'\n       } | ForEach-Object {\n             yara 1.yar $_.FullName"
+ },
+ {
+  "id": "p150",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p151",
+  "text": "}"
+ },
+ {
+  "id": "p152",
+  "text": "Werfault\n                Typical Name: Werfault.exe\n              Typical Path: %windows%\\WinSxS\\x86_microsoft-windows-\n       errorreportingfaults_31bf3856ad364e35_4.0.9600.16384_none_a13f7e283339a0502\\\n                Unique Characteristics: Icon is different than that of a valid Windows Werfault.exe file\n                Role: Persistence mechanism\n       The Snake Werfault.exe file has non-standard icon sizes, which form the basis of the Yara rule below.\n       This rule should be run on all files in the typical path, specifically the %Windows%\\WinSxS directory.\n       rule PeIconSizes\n       {\n             meta:\n                  description = \"werfault rule\""
+ },
+ {
+  "id": "p153",
+  "text": "condition:\n                  pe.is_pe\n                  and\n                  for any rsrc in pe.resources:\n                        (rsrc.type == pe.RESOURCE_TYPE_ICON and rsrc.length == 3240)\n                  and\n                  for any rsrc in pe.resources:\n                        (rsrc.type == pe.RESOURCE_TYPE_ICON and rsrc.length == 1384)\n                  and\n                  for any rsrc in pe.resources:\n                        (rsrc.type == pe.RESOURCE_TYPE_ICON and rsrc.length == 7336)\n       }"
+ },
+ {
+  "id": "p154",
+  "text": "Memory Analysis\n       Advantages: High confidence as memory provides the greatest level of visibility into Snake’s\n       behaviors and artifacts.\n       Disadvantages: Potential impact on system stability, difficult scalability.\n       Capturing and analyzing the memory of a system will be the most effective approach in detecting\n       Snake because it bypasses many of the behaviors that Snake employs to hide itself. With a memory\n       analysis tool, such as Volatility, detection of a Snake compromise may be possible."
+ },
+ {
+  "id": "p155",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p156",
+  "text": "Snake’s principal user mode component is injected into a chosen process via a single allocation of\n       PAGE_EXECUTE_READWRITE memory. The starting offset is generally 0x20000000, however the\n       module does allow for relocation if needed. Additionally, since the user mode component is not\n       obfuscated in any way, a valid PE header can be located at the beginning of the allocated memory\n       region. Further validation can be performed by confirming the presence of strings known to exist in\n       the user mode component also within the memory region. A plugin compatible with Volatility3 which\n       can scan all processes on a system using this method is provided in the Appendix. A screenshot\n       showing the results of the plugin successfully detecting Snake is displayed below."
+ },
+ {
+  "id": "p157",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p158",
+  "text": "PREVENTION\n       Note that the mitigations that follow are not meant to protect against the initial access vector and are\n       only designed to prevent Snake’s persistence and hiding techniques."
+ },
+ {
+  "id": "p159",
+  "text": "Change Credentials and Apply Updates\n       System owners who are believed to be compromised by Snake are advised to change their\n       credentials immediately (from a non-compromised system) and to not use any type of passwords\n       similar to those used before. Snake employs a keylogger functionality that routinely returns logs back\n       to FSB operators. Changing passwords and usernames to values which cannot be brute forced or\n       guessed based on old passwords is recommended.\n       System owners are advised to apply updates to their Operating Systems. Modern versions of\n       Windows, Linux, and MacOS make it much harder for adversaries to operate in the kernel space. This\n       will make it much harder for FSB actors to load Snake’s kernel driver on the target system."
+ },
+ {
+  "id": "p160",
+  "text": "Execute Organizational Incident Response Plan\n       If system owners receive detection signatures of Snake implant activity or have other indicators of\n       compromise that are associated with FSB actors using Snake, the impacted organization should\n       immediately initiate their documented incident response plan.\n       We recommend implementing the following Cross-Sector Cybersecurity Performance Goals (CPGs)\n       to help defend against FSB actors using Snake, or mitigate negative impacts post-compromise:\n       CPG 2.A: Changing Default Passwords will prevent FSB actors from compromising default\n       credentials to gain initial access or move laterally within a network.\n       CPG 2.B: Requiring Minimum Password Strength across an organization will prevent FSB actors\n       from being able to successfully conduct password spraying or cracking operations.\n       CPG 2.C: Requiring Unique Credentials will prevent FSB actors from compromising valid accounts\n       through password spraying or brute force.\n       CPG 2.E Separating User and Privileged Accounts will make it harder for FSB actors to gain\n       access to administrator credentials.\n       CPG 2.F. Network Segmentation to deny all connections by default unless explicitly required for\n       specific system functionality, and ensure all incoming communication is going through a properly\n       configured firewall.\n       CPG 2.H Implementing Phishing Resistant MFA adds an additional layer of security even when\n       account credentials are compromised and can mitigate a variety of attacks towards valid accounts, to\n       include brute forcing passwords and exploiting external remote services software.\n       CPG 4.C. Deploy Security.txt Files to ensure all public facing web domains have a security.txt file\n       that conforms to the recommendations in RFC 9118."
+ },
+ {
+  "id": "p161",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p162",
+  "text": "APPENDIX\n       Partnership\n       This advisory was developed as a joint effort by an international partnership of multiple agencies in\n       furtherance of the respective cybersecurity missions of each of the partner agencies, including our\n       responsibilities to develop and issue cybersecurity specifications and mitigations. This partnership\n       includes the following organizations:\n               Federal Bureau of Investigation\n               National Security Agency\n               Cybersecurity and Infrastructure Security Agency\n               Cyber National Mission Force\n               The United Kingdom’s National Cyber Security Centre\n               Canadian Centre for Cyber Security\n               Communications Security Establishment\n               Australian Cyber Security Centre\n               New Zealand National Cyber Security Centre\n       Collectively, we use a variety of sources, methods, and partnerships to acquire information about\n       foreign cyber threats. This advisory contains the information we have concluded can be publicly\n       released, consistent with the protection of sources and methods and the public interest."
+ },
+ {
+  "id": "p163",
+  "text": "Disclaimer\n       The information in this report is being provided “as is” for informational purposes only. We do not\n       endorse any commercial product or service, including any subjects of analysis. Any reference to\n       specific commercial products, processes, or services by service mark, trademark, manufacturer, or\n       otherwise, does not constitute or imply endorsement, recommendation, or favoring by co-authors."
+ },
+ {
+  "id": "p164",
+  "text": "MITRE ATT&CK Techniques\n       This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See MITRE ATT&CK\n       for Enterprise for all referenced tactics and techniques. MITRE and ATT&CK are registered trademarks\n       of The MITRE Corporation. This report references the following MITRE ATT&CK techniques."
+ },
+ {
+  "id": "p165",
+  "text": "Technique Title             ID                                    Use"
+ },
+ {
+  "id": "p166",
+  "text": "Network Connection                        Adversaries may perform network connection enumeration to\n                                         T0840\n               Enumeration                             discover information about device communication patterns."
+ },
+ {
+  "id": "p167",
+  "text": "Adversaries may obfuscate command and control traffic to make\n               Data Obfuscation          T1001\n                                                                      it more difficult to detect."
+ },
+ {
+  "id": "p168",
+  "text": "Adversaries may impersonate legitimate protocols or web service\n           Protocol Impersonation       T1001.003      traffic to disguise command and control activity and thwart\n                                                                              analysis efforts."
+ },
+ {
+  "id": "p169",
+  "text": "TLP:CLEAR                                                                                                 International Partnership"
+ },
+ {
+  "id": "p170",
+  "text": "Adversaries may attempt to dump credentials to obtain account\n          OS Credential Dumping          T1003      login and credential material, normally in the form of a hash or a\n                                                      clear text password, from the operating system and software."
+ },
+ {
+  "id": "p171",
+  "text": "Adversaries may use rootkits to hide the presence of programs,\n                   Rootkit               T1014      files, network connections, services, drivers, and other system\n                                                                             components."
+ },
+ {
+  "id": "p172",
+  "text": "Adversaries may attempt to make an executable or file difficult to\n             Obfuscated Files or\n                                         T1027         discover or analyze by encrypting, encoding, or otherwise\n                Information\n                                                          obfuscating its contents on the system or in transit."
+ },
+ {
+  "id": "p173",
+  "text": "Adversaries may perform software packing or virtual machine\n              Software Packing          T1027.002\n                                                              software protection to conceal their code."
+ },
+ {
+  "id": "p174",
+  "text": "Adversaries may attempt to manipulate features of their artifacts\n               Masquerading              T1036         to make them appear legitimate or benign to users and/or\n                                                                           security tools."
+ },
+ {
+  "id": "p175",
+  "text": "Adversaries may sniff network traffic to capture information about\n              Network Sniffing           T1040       an environment, including authentication material passed over\n                                                                              the network."
+ },
+ {
+  "id": "p176",
+  "text": "Adversaries may attempt to get a listing of services running on\n         Network Service Discovery       T1046      remote hosts and local network infrastructure devices, including\n                                                     those that may be vulnerable to remote software exploitation."
+ },
+ {
+  "id": "p177",
+  "text": "Adversaries may inject dynamic-link libraries (DLLs) into\n            Dynamic-link Library\n                                        T1055.001   processes in order to evade process-based defenses as well as\n                Injection\n                                                                      possibly elevate privileges."
+ },
+ {
+  "id": "p178",
+  "text": "Adversaries may log user keystrokes to intercept credentials as\n                 Keylogging             T1056.001\n                                                                        the user types them."
+ },
+ {
+  "id": "p179",
+  "text": "Adversaries may abuse PowerShell commands and scripts for\n                 PowerShell             T1059.001\n                                                                            execution."
+ },
+ {
+  "id": "p180",
+  "text": "Adversaries may communicate using OSI application layer\n         Application Layer Protocol      T1071      protocols to avoid detection/network filtering by blending in with\n                                                                             existing traffic."
+ },
+ {
+  "id": "p181",
+  "text": "Adversaries may communicate using application layer protocols\n               Web Protocols            T1071.001   associated with web traffic to avoid detection/network filtering by\n                                                                    blending in with existing traffic."
+ },
+ {
+  "id": "p182",
+  "text": "Adversaries may communicate using application layer protocols\n                Mail Protocols          T1071.003          associated with electronic mail delivery to avoid\n                                                     detection/network filtering by blending in with existing traffic."
+ },
+ {
+  "id": "p183",
+  "text": "Adversaries may communicate using the Domain Name System\n                     DNS                T1071.004     (DNS) application layer protocol to avoid detection/network\n                                                              filtering by blending in with existing traffic."
+ },
+ {
+  "id": "p184",
+  "text": "TLP:CLEAR                                                                                                International Partnership"
+ },
+ {
+  "id": "p185",
+  "text": "Adversaries may stage collected data in a central location or\n                Data Staged              T1074\n                                                                    directory prior to Exfiltration."
+ },
+ {
+  "id": "p186",
+  "text": "Adversaries may obtain and abuse credentials of existing\n               Valid Accounts            T1078         accounts as a means of gaining Initial Access, Persistence,\n                                                               Privilege Escalation, or Defense Evasion."
+ },
+ {
+  "id": "p187",
+  "text": "Adversaries may enumerate files and directories or may search in\n              File and Directory\n                                         T1083           specific locations of a host or network share for certain\n                  Discovery\n                                                                     information within a file system."
+ },
+ {
+  "id": "p188",
+  "text": "To disguise the source of malicious traffic, adversaries may chain\n               Multi-hop Proxy          T1090.003\n                                                                        together multiple proxies."
+ },
+ {
+  "id": "p189",
+  "text": "Adversaries may use an OSI non-application layer protocol for\n           Non-Application Layer\n                                         T1095       communication between host and C2 server or among infected\n                Protocol\n                                                                       hosts within a network."
+ },
+ {
+  "id": "p190",
+  "text": "Adversaries may create multiple stages for command and control\n            Multi-Stage Channels         T1104         that are employed under different conditions or for certain\n                                                                             functions."
+ },
+ {
+  "id": "p191",
+  "text": "Adversaries may interact with the native OS application\n                 Native API              T1106\n                                                           programming interface (API) to execute behaviors."
+ },
+ {
+  "id": "p192",
+  "text": "Adversaries may interact with the Windows Registry to hide\n                                                         configuration information within Registry keys, remove\n               Modify Registry           T1112\n                                                    information as part of cleaning up, or as part of other techniques\n                                                                  to aid in persistence and execution."
+ },
+ {
+  "id": "p193",
+  "text": "Once established within a system or network, an adversary may\n            Automated Collection         T1119\n                                                        use automated techniques for collecting internal data."
+ },
+ {
+  "id": "p194",
+  "text": "Adversaries may encode data to make the content of command\n               Data Encoding             T1132\n                                                                and control traffic more difficult to detect."
+ },
+ {
+  "id": "p195",
+  "text": "Adversaries may encode data with a non-standard data encoding\n          Non-Standard Encoding         T1132.002   system to make the content of command and control traffic more\n                                                                          difficult to detect."
+ },
+ {
+  "id": "p196",
+  "text": "Adversaries may look for folders and drives shared on remote\n                                                      systems as a means of identifying sources of information to\n         Network Share Discovery         T1135\n                                                      gather as a precursor for Collection and to identify potential\n                                                               systems of interest for Lateral Movement."
+ },
+ {
+  "id": "p197",
+  "text": "Deobfuscate/Decode Files                     Adversaries may use Obfuscated Files or Information to hide\n                                         T1140\n              or Information                                     artifacts of an intrusion from analysis."
+ },
+ {
+  "id": "p198",
+  "text": "Exploit Public-Facing                    Adversaries may attempt to exploit a weakness in an Internet-\n                                         T1190\n                Application                               facing host or system to initially access a network."
+ },
+ {
+  "id": "p199",
+  "text": "TLP:CLEAR                                                                                                International Partnership"
+ },
+ {
+  "id": "p200",
+  "text": "Adversaries may attempt to gather information on domain trust\n          Domain Trust Discovery         T1482        relationships that may be used to identify lateral movement\n                                                      opportunities in Windows multi-domain/forest environments."
+ },
+ {
+  "id": "p201",
+  "text": "Adversaries may establish persistence and elevate privileges by\n             Installer Packages         T1546.016\n                                                     using an installer to trigger the execution of malicious content."
+ },
+ {
+  "id": "p202",
+  "text": "Adversaries may execute their own malicious payloads by\n         Dynamic Linker Hijacking       T1547.006    hijacking environment variables the dynamic linker uses to load\n                                                                            shared libraries."
+ },
+ {
+  "id": "p203",
+  "text": "Inter-Process                          Adversaries may abuse inter-process communication (IPC)\n                                         T1559\n               Communication                              mechanisms for local code or command execution."
+ },
+ {
+  "id": "p204",
+  "text": "An adversary may compress and/or encrypt data that is collected\n           Archive Collected Data       T1560.003\n                                                                        prior to exfiltration."
+ },
+ {
+  "id": "p205",
+  "text": "Adversaries may attempt to hide artifacts associated with their\n                Hide Artifacts           T1564\n                                                                    behaviors to evade detection."
+ },
+ {
+  "id": "p206",
+  "text": "Adversaries may abuse the Windows service control manager to\n             Service Execution          T1569.002\n                                                              execute malicious commands or payloads."
+ },
+ {
+  "id": "p207",
+  "text": "Adversaries may transfer tools or other files between systems in\n            Lateral Tool Transfer        T1570\n                                                                    a compromised environment."
+ },
+ {
+  "id": "p208",
+  "text": "Adversaries may tunnel network communications to and from a\n                                                            victim system within a separate protocol to avoid\n             Protocol Tunneling          T1572\n                                                      detection/network filtering and/or enable access to otherwise\n                                                                          unreachable systems."
+ },
+ {
+  "id": "p209",
+  "text": "Adversaries may employ a known encryption algorithm to conceal\n             Encrypted Channel           T1573       command and control traffic rather than relying on any inherent\n                                                           protections provided by a communication protocol."
+ },
+ {
+  "id": "p210",
+  "text": "Adversaries may employ a known symmetric encryption algorithm\n          Symmetric Cryptography        T1573.001   to conceal command and control traffic rather than relying on any\n                                                       inherent protections provided by a communication protocol."
+ },
+ {
+  "id": "p211",
+  "text": "Adversaries may employ a known asymmetric encryption\n                                                      algorithm to conceal command and control traffic rather than\n         Asymmetric Cryptography        T1573.002\n                                                    relying on any inherent protections provided by a communication\n                                                                                protocol."
+ },
+ {
+  "id": "p212",
+  "text": "Adversaries may execute their own malicious payloads by side-\n             DLL Side-Loading           T1574.002\n                                                                            loading DLLs."
+ },
+ {
+  "id": "p213",
+  "text": "Adversaries may compromise third-party infrastructure that can\n         Compromise Infrastructure       T1584\n                                                                      be used during targeting."
+ },
+ {
+  "id": "p214",
+  "text": "Adversaries may develop malware and malware components that\n                   Malware              T1587.001\n                                                                     can be used during targeting."
+ },
+ {
+  "id": "p215",
+  "text": "TLP:CLEAR                                                                                            International Partnership"
+ },
+ {
+  "id": "p216",
+  "text": "Adversaries may buy and/or steal capabilities that can be used\n             Obtain Capabilities        T1588\n                                                                       during targeting."
+ },
+ {
+  "id": "p217",
+  "text": "Adversaries may upload, install, or otherwise set up capabilities\n             Stage Capabilities         T1608\n                                                              that can be used during targeting."
+ },
+ {
+  "id": "p218",
+  "text": "Adversaries may deploy a container into an environment to\n              Deploy Container          T1610\n                                                              facilitate execution or evade defenses."
+ },
+ {
+  "id": "p219",
+  "text": "Volatility Plugin\n       The following plugin for the Volatility memory analysis framework will scan all processes on the\n       system until it finds the Snake user mode component injected into a process. If found, the plugin will\n       list both the injected process and the virtual memory address at which the Snake user mode\n       component is loaded.\n       # This plugin to identify the injected usermode component of Snake is based\n       # on the malfind plugin released with Volatility3\n       #\n       # This file is Copyright 2019 Volatility Foundation and licensed under the\n       # Volatility Software License 1.0\n       # which is available at https://www.volatilityfoundation.org/license/vsl-v1.0\n       import logging\n       from typing import Iterable, Tuple\n       from volatility3.framework import interfaces, symbols, exceptions, renderers\n       from volatility3.framework.configuration import requirements\n       from volatility3.framework.objects import utility\n       from volatility3.framework.renderers import format_hints\n       from volatility3.plugins.windows import pslist, vadinfo\n       vollog = logging.getLogger(__name__)\n       class snake(interfaces.plugins.PluginInterface):\n           _required_framework_version = (2, 4, 0)"
+ },
+ {
+  "id": "p220",
+  "text": "@classmethod\n             def get_requirements(cls):\n                 return [\n                     requirements.ModuleRequirement(name = 'kernel',\n                           description = 'Windows kernel',\n                           architectures = [\"Intel32\", \"Intel64\"]),\n                     requirements.VersionRequirement(name = 'pslist',\n                           component = pslist.PsList, version = (2, 0, 0)),\n                     requirements.VersionRequirement(name = 'vadinfo',\n                           component = vadinfo.VadInfo, version = (2, 0, 0))]"
+ },
+ {
+  "id": "p221",
+  "text": "@classmethod\n             def list_injections(\n                     cls, context: interfaces.context.ContextInterface,\n                           kernel_layer_name: str, symbol_table: str,\n                     proc: interfaces.objects.ObjectInterface) -> Iterable[\n                           Tuple[interfaces.objects.ObjectInterface, bytes]]:\n                 proc_id = \"Unknown\"\n                 try:"
+ },
+ {
+  "id": "p222",
+  "text": "TLP:CLEAR                                                                          International Partnership"
+ },
+ {
+  "id": "p223",
+  "text": "proc_id = proc.UniqueProcessId\n                      proc_layer_name = proc.add_process_layer()\n                  except exceptions.InvalidAddressException as excp:\n                      vollog.debug(\"Process {}: invalid address {} in layer {}\".\n                             format(proc_id, excp.invalid_address, excp.layer_name))\n                      return\n                  proc_layer = context.layers[proc_layer_name]\n                  for vad in proc.get_vad_root().traverse():\n                      protection_string = vad.get_protection(vadinfo.VadInfo.\n                             protect_values(context, kernel_layer_name, symbol_table),\n                             vadinfo.winnt_protections)\n                      if not \"PAGE_EXECUTE_READWRITE\" in protection_string:\n                          continue"
+ },
+ {
+  "id": "p224",
+  "text": "if (vad.get_private_memory() == 1\n                                and vad.get_tag() == \"VadS\") or (vad.get_private_memory()\n                                          == 0 and protection_string !=\n                                          \"PAGE_EXECUTE_WRITECOPY\"):\n                            data = proc_layer.read(vad.get_start(),\n                                    vad.get_size(), pad = True)\n                            if data.find(b'\\x4d\\x5a') != 0:\n                                continue\n                            yield vad, data"
+ },
+ {
+  "id": "p225",
+  "text": "def _generator(self, procs):\n                 kernel = self.context.modules[self.config['kernel']]\n                 is_32bit_arch = not symbols.symbol_table_is_64bit(self.context,\n                     kernel.symbol_table_name)\n                 for proc in procs:\n                     process_name = utility.array_to_string(proc.ImageFileName)\n                     for vad, data in self.list_injections(self.context,\n                           kernel.layer_name, kernel.symbol_table_name, proc):\n                         strings_to_find = [b'\\x25\\x73\\x23\\x31',b'\\x25\\x73\\x23\\x32',\n                                 b'\\x25\\x73\\x23\\x33',b'\\x25\\x73\\x23\\x34',\n                                 b'\\x2e\\x74\\x6d\\x70', b'\\x2e\\x73\\x61\\x76',\n                                 b'\\x2e\\x75\\x70\\x64']\n                         if not all(stringToFind in data for\n                                 stringToFind in strings_to_find):\n                             continue\n                         yield (0, (proc.UniqueProcessId, process_name,\n                                 format_hints.Hex(vad.get_start()),\n                                    format_hints.Hex(vad.get_size()),\n                                    vad.get_protection(\n                                        vadinfo.VadInfo.protect_values(self.context,\n                                 kernel.layer_name, kernel.symbol_table_name),\n                                 vadinfo.winnt_protections)))\n                         return"
+ },
+ {
+  "id": "p226",
+  "text": "def run(self):\n                 kernel = self.context.modules[self.config['kernel']]\n                 return renderers.TreeGrid([(\"PID\", int), (\"Process\", str),\n                     (\"Address\", format_hints.Hex), (\"Length\", format_hints.Hex),\n                     (\"Protection\", str)], self._generator(pslist.PsList.list_processes(\n                     context = self.context, layer_name = kernel.layer_name,\n                     symbol_table = kernel.symbol_table_name)))"
+ }
+]

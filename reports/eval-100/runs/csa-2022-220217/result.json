@@ -1,0 +1,524 @@
+{
+  "id": "csa-2022-220217",
+  "returncode": 0,
+  "module6": {
+    "scenario_id": "csa-2022-220217",
+    "deployable": false,
+    "blockers": [
+      {
+        "code": "no_deployable_target",
+        "message": "這個計畫沒有任何會被部署的目標主機（全部被標為不部署）。",
+        "fix": "至少要有一台目標主機對應到 catalogue 內可部署的元件；請回依賴頁為主要服務選擇元件或教學替代。",
+        "error": "no deployable target host remains"
+      }
+    ],
+    "plan_notes": [
+      "An attacker host was added as a lab scaffold because the IR did not define one.",
+      "Host h1 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology).",
+      "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+      "No port is known for service FortiClient (s1); it remains unreachable by default.",
+      "No port is known for service virtual private networks (VPNs) (s2); it remains unreachable by default.",
+      "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+      "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+    ],
+    "platform_components": [],
+    "not_deployed_hosts": [
+      {
+        "host_id": "h1",
+        "role": "domain controllers",
+        "reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。",
+        "image_hint": "unsupported-ad-ds",
+        "runtime": "vm",
+        "services": [
+          "Active Directory"
+        ]
+      },
+      {
+        "host_id": "h2",
+        "role": "cloud environment",
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      },
+      {
+        "host_id": "h3",
+        "role": "internet-facing systems",
+        "reason": "服務 FortiClient、virtual private networks (VPNs) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      },
+      {
+        "host_id": "h4",
+        "role": "operational nodes",
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      }
+    ],
+    "skipped_connections": [],
+    "deployed_host_ids": [
+      "attacker"
+    ],
+    "components": [
+      {
+        "host_id": "h1",
+        "image_hint": "unsupported-ad-ds",
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "vm",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。"
+      },
+      {
+        "host_id": "h2",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+      },
+      {
+        "host_id": "h3",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "服務 FortiClient、virtual private networks (VPNs) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+      },
+      {
+        "host_id": "h4",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+      },
+      {
+        "host_id": "attacker",
+        "image_hint": "oss-attacker",
+        "component": "oss-attacker",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": true,
+        "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "version": "3.22",
+        "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "substitute": false,
+        "catalogue_component": "oss-attacker",
+        "published": false,
+        "exposure": "publishable",
+        "healthcheck": false,
+        "limits": {
+          "mem_limit": "256m",
+          "cpus": 1.0,
+          "pids_limit": 256
+        },
+        "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+        "service_ports": []
+      }
+    ],
+    "vms": [],
+    "host_port_mappings": [],
+    "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+    "publishing": "nothing is published on the host",
+    "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+    "networks": [
+      {
+        "id": "scenario-internal",
+        "name": "cr-demo-csa-2022-220217-scenario-internal",
+        "internal": true,
+        "plan_internal": true,
+        "role": "internal_segment",
+        "published_to_host": false,
+        "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+      },
+      {
+        "id": "external",
+        "name": "cr-demo-csa-2022-220217-external",
+        "internal": true,
+        "plan_internal": false,
+        "role": "exposed_segment",
+        "published_to_host": false,
+        "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+      }
+    ],
+    "errors": [
+      "no deployable target host remains"
+    ]
+  },
+  "inventory": [
+    {
+      "service_id": "s1",
+      "name": "FortiClient",
+      "product": null,
+      "version": null,
+      "cves": [
+        "CVE-2018-13379"
+      ],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "FortiClient is not in the inventory and no substitute matches; not reproducible. Named CVE(s) CVE-2018-13379 are not reproducible by any inventory component.",
+        "needs_question": false
+      }
+    },
+    {
+      "service_id": "s2",
+      "name": "virtual private networks (VPNs)",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "virtual private networks (VPNs) is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    }
+  ],
+  "manifest": {
+    "scenario_id": "csa-2022-220217",
+    "generated_at": "2026-11-16T21:50:56.070745+00:00",
+    "items": [
+      {
+        "action_id": "a4",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/0xHunter/FortiOS-Credentials-Disclosure",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "GPL-3.0",
+        "trust": "medium",
+        "last_updated": "2019-09-24T08:51:28Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/0xHunter/FortiOS-Credentials-Disclosure",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "GPL-3.0",
+        "trust": "medium",
+        "last_updated": "2019-09-24T08:51:28Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/0xHunter/FortiOS-Credentials-Disclosure",
+        "ref": {},
+        "product": "virtual private networks (VPNs)",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "GPL-3.0",
+        "trust": "medium",
+        "last_updated": "2019-09-24T08:51:28Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a4",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Instructor-Admin/Multi-threaded-mass-exploiter-CVE-2018-13379-POC",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-05-23T14:03:56Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Instructor-Admin/Multi-threaded-mass-exploiter-CVE-2018-13379-POC",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-05-23T14:03:56Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Instructor-Admin/Multi-threaded-mass-exploiter-CVE-2018-13379-POC",
+        "ref": {},
+        "product": "virtual private networks (VPNs)",
+        "version_range": "",
+        "language": "Python",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "python",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-05-23T14:03:56Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 1.0,
+          "source_trust": 0.7,
+          "exec_cost": 0.85
+        },
+        "compatibility_score": 0.7475
+      },
+      {
+        "action_id": "a4",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Justjeff211/conti-ransomware-writeup",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "Conducted a full SOC investigation into a Conti ransomware compromise of an Exchange server using Splunk 8.2.2. Analysed 28,145 events across Windows Security, Sysmon, and IIS log sources to reconstruct the complete attack chain. Identified three exploited CVEs (CVE-2020-0796, CVE-2018-13374, CVE-2018-13379), located a trojanised cmd.exe",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-03-27T09:16:33Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Justjeff211/conti-ransomware-writeup",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "Conducted a full SOC investigation into a Conti ransomware compromise of an Exchange server using Splunk 8.2.2. Analysed 28,145 events across Windows Security, Sysmon, and IIS log sources to reconstruct the complete attack chain. Identified three exploited CVEs (CVE-2020-0796, CVE-2018-13374, CVE-2018-13379), located a trojanised cmd.exe",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-03-27T09:16:33Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Justjeff211/conti-ransomware-writeup",
+        "ref": {},
+        "product": "virtual private networks (VPNs)",
+        "version_range": "Conducted a full SOC investigation into a Conti ransomware compromise of an Exchange server using Splunk 8.2.2. Analysed 28,145 events across Windows Security, Sysmon, and IIS log sources to reconstruct the complete attack chain. Identified three exploited CVEs (CVE-2020-0796, CVE-2018-13374, CVE-2018-13379), located a trojanised cmd.exe",
+        "language": "unknown",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2026-03-27T09:16:33Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a4",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Zeop-CyberSec/fortios_vpnssl_traversal_leak",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Ruby",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2021-02-26T13:40:57Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Zeop-CyberSec/fortios_vpnssl_traversal_leak",
+        "ref": {},
+        "product": "FortiClient",
+        "version_range": "",
+        "language": "Ruby",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2021-02-26T13:40:57Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      },
+      {
+        "action_id": "a5",
+        "cve": "CVE-2018-13379",
+        "source": "github",
+        "source_url": "https://github.com/Zeop-CyberSec/fortios_vpnssl_traversal_leak",
+        "ref": {},
+        "product": "virtual private networks (VPNs)",
+        "version_range": "",
+        "language": "Ruby",
+        "dependencies": [],
+        "preconditions": [],
+        "exec_method": "manual",
+        "license": "",
+        "trust": "medium",
+        "last_updated": "2021-02-26T13:40:57Z",
+        "score_breakdown": {
+          "version": 0.45,
+          "env": 1.0,
+          "code_available": 0.35,
+          "source_trust": 0.7,
+          "exec_cost": 0.1
+        },
+        "compatibility_score": 0.5425
+      }
+    ]
+  },
+  "postprocess_error": null,
+  "runner_stdout": "ir schema errors: []\nactions 12 relations 11 hosts 4 services 2 missing 17 quality {'quote_verified_rate': 0.5854, 'unsupported_claim_count': 17, 'inferred_count': 4, 'absent_count': 0, 'method': 'single_pass', 'provisional': True, 'dropped_placeholder_hosts': 0, 'excluded_non_attacker_actions': [], 'hedged_action_count': 0, 'capability_action_count': 0, 'dropped_non_software_services': [], 'dropped_misplaced_techniques': []}\n",
+  "runner_stderr": "",
+  "budget": {
+    "estimated_usd": 0.049341600000000006,
+    "calls": 3,
+    "cached_calls": 0
+  },
+  "cache_db_exists": true,
+  "input": "fixtures/cti-corpus/csa-2022-220217/report.md",
+  "run_dir": "reports/eval-100/runs/csa-2022-220217"
+}

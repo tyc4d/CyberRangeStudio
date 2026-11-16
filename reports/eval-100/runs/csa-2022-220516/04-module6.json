@@ -1,0 +1,109 @@
+{
+  "scenario_id": "csa-2022-220516",
+  "deployable": true,
+  "blockers": [],
+  "plan_notes": [
+    "An attacker host was added as a lab scaffold because the IR did not define one.",
+    "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a4)); the source does not state its network placement. Confirm or correct it.",
+    "No port is known for service customized online checkout page (s1); it remains unreachable by default.",
+    "No port is known for service PHP Hypertext Preprocessor (PHP) (s2); it remains unreachable by default."
+  ],
+  "platform_components": [],
+  "not_deployed_hosts": [],
+  "skipped_connections": [],
+  "deployed_host_ids": [
+    "h1",
+    "attacker"
+  ],
+  "components": [
+    {
+      "host_id": "h1",
+      "image_hint": "oss-mysql",
+      "component": "oss-mysql",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "version": "8.0.46",
+      "digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "substitute": false,
+      "catalogue_component": "oss-mysql",
+      "published": true,
+      "exposure": "publishable",
+      "healthcheck": true,
+      "limits": {
+        "mem_limit": "1g",
+        "cpus": 1.0,
+        "pids_limit": 256
+      },
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": [
+        {
+          "port": 3306,
+          "protocol": "tcp",
+          "names": [
+            "MySQL database (implied by Adminer usage)",
+            "MySQL"
+          ]
+        }
+      ]
+    },
+    {
+      "host_id": "attacker",
+      "image_hint": "oss-attacker",
+      "component": "oss-attacker",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+      "version": "3.22",
+      "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+      "substitute": false,
+      "catalogue_component": "oss-attacker",
+      "published": false,
+      "exposure": "publishable",
+      "healthcheck": false,
+      "limits": {
+        "mem_limit": "256m",
+        "cpus": 1.0,
+        "pids_limit": 256
+      },
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": []
+    }
+  ],
+  "vms": [],
+  "host_port_mappings": [
+    {
+      "host_id": "h1",
+      "container_port": 3306,
+      "host_port": 42000,
+      "env": "CR_HOSTPORT_0",
+      "via": "cr-gateway"
+    }
+  ],
+  "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+  "publishing": "published ports terminate on the generated cr-gateway forwarder; lab services are attached to internal networks only",
+  "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+  "networks": [
+    {
+      "id": "scenario-internal",
+      "name": "cr-demo-csa-2022-220516-scenario-internal",
+      "internal": true,
+      "plan_internal": true,
+      "role": "internal_segment",
+      "published_to_host": true,
+      "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+    },
+    {
+      "id": "external",
+      "name": "cr-demo-csa-2022-220516-external",
+      "internal": true,
+      "plan_internal": false,
+      "role": "exposed_segment",
+      "published_to_host": false,
+      "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+    }
+  ],
+  "errors": []
+}

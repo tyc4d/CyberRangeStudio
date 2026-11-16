@@ -1,0 +1,490 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-201103-3",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "8018dc828e7d96bccb8f0160c871a31833d3092a3ff424862b4f85e29ac171a7",
+  "source_name": "csa-2020-201103-3"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicly accessible IP address",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "access source code repositories of US government agencies and private businesses by exploiting known configuration vulnerabilities in SonarQube instances",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "exfiltrate proprietary source code from SonarQube instances and post the data publicly",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "leak internal data from two organizations through a public lifecycle repository tool sourced from SonarQube instances using default port settings and admin credentials",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a6",
+   "name": "exfiltrate proprietary source code from enterprises through poorly secured SonarQube instances and publish the exfiltrated source code on a self-hosted public repository",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that the use of default credentials follows scanning.",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exfiltration depends on gaining access to proprietary code.",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Leaked data was sourced from SonarQube instances using default port settings and admin credentials.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The activity in a6 is similar to the previous data leak described in a5.",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "vulnerable SonarQube instances targeted by cyber actors",
+   "source": "llm",
+   "name": "SonarQube instances",
+   "network_placement": "exposed to the open Internet using the default port (9000) and a publicly accessible IP address",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-1",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "SonarQube",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "port": 9000,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "default administrator credentials (username: admin, password: admin)",
+   "type": "account",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "During the initial attack phase, cyber actors scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicly accessible IP address.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the initial attack phase, cyber actors scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicl"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Cyber actors then use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cyber actors then use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Since April 2020, unidentified cyber actors have actively targeted vulnerable SonarQube instances to access source code repositories of US government agencies and private businesses. The actors exploit known configuration vulnerabilities, allowing them to gain access to proprietary code, exfiltrate it, and post the data publicly.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Since April 2020, unidentified cyber actors have actively targeted vulnerable SonarQube instances to access source code repositories of US government agencies a"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The actors exploit known configuration vulnerabilities, allowing them to gain access to proprietary code, exfiltrate it, and post the data publicly.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors exploit known configuration vulnerabilities, allowing them to gain access to proprietary code, exfiltrate it, and post the data publicly."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "In August 2020, unknown threat actors leaked internal data from two organizations through a public lifecycle repository tool. The stolen data was sourced from SonarQube instances that used default port settings and admin credentials running on the affected organizations’ networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In August 2020, unknown threat actors leaked internal data from two organizations through a public lifecycle repository tool. The stolen data was sourced from S"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "This activity is similar to a previous data leak in July 2020, in which an identified cyber actor exfiltrated proprietary source code from enterprises through poorly secured SonarQube instances and published the exfiltrated source code on a self-hosted public repository.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This activity is similar to a previous data leak in July 2020, in which an identified cyber actor exfiltrated proprietary source code from enterprises through p"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "During the initial attack phase, cyber actors scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicly accessible IP address. Cyber actors then use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the initial attack phase, cyber actors scan the internet for SonarQube instances exposed to\nthe open Internet using the default port (9000) and a publicl"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Beginning in April 2020, the FBI observed source code leaks associated with insecure SonarQube instances from US government agencies and private US companies",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Beginning in April 2020, the FBI observed source code leaks associated with insecure SonarQube instances from US government agencies and private US companies"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "SonarQube instances that used default port settings and admin credentials running on the affected organizations’ networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "SonarQube instances that used default port settings and admin credentials running on the affected organizations’ networks"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "SonarQube instances — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "SonarQube instances 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — SonarQube instances",
+    "action:a1 — scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicly accessible IP address",
+    "action:a2 — use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances",
+    "action:a3 — access source code repositories of US government agencies and private businesses by exploiting known configuration vulnerabilities in SonarQube instances",
+    "action:a4 — exfiltrate proprietary source code from SonarQube instances and post the data publicly",
+    "action:a5 — leak internal data from two organizations through a public lifecycle repository tool sourced from SonarQube instances using default port settings and admin credentials",
+    "action:a6 — exfiltrate proprietary source code from enterprises through poorly secured SonarQube instances and publish the exfiltrated source code on a self-hosted public repository"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "SonarQube instances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-1",
+      "evidence-9",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "SonarQube instances — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "SonarQube instances 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — SonarQube instances",
+    "action:a1 — scan the internet for SonarQube instances exposed to the open Internet using the default port (9000) and a publicly accessible IP address",
+    "action:a2 — use default administrator credentials (username: admin, password: admin) to attempt to access SonarQube instances",
+    "action:a3 — access source code repositories of US government agencies and private businesses by exploiting known configuration vulnerabilities in SonarQube instances",
+    "action:a4 — exfiltrate proprietary source code from SonarQube instances and post the data publicly",
+    "action:a5 — leak internal data from two organizations through a public lifecycle repository tool sourced from SonarQube instances using default port settings and admin credentials",
+    "action:a6 — exfiltrate proprietary source code from enterprises through poorly secured SonarQube instances and publish the exfiltrated source code on a self-hosted public repository"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "SonarQube instances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-1",
+      "evidence-9",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：SonarQube。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a3 — access source code repositories of US government agencies and private businesses by exploiting known configuration vulnerabilities in SonarQube instances",
+    "host:h1 — SonarQube instances"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "access source code repositories of US government agencies and private businesses by exploiting known configuration vulnerabilities in SonarQube instances",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a4 — exfiltrate proprietary source code from SonarQube instances and post the data publicly",
+    "action:a6 — exfiltrate proprietary source code from enterprises through poorly secured SonarQube instances and publish the exfiltrated source code on a self-hosted public repository",
+    "host:h1 — SonarQube instances"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate proprietary source code from SonarQube instances and post the data publicly",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate proprietary source code from enterprises through poorly secured SonarQube instances and publish the exfiltrated source code on a self-hosted public repository",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 2,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

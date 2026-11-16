@@ -1,0 +1,113 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Active Directory host",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Server Message Block (SMB) protocol",
+     "port": 445,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Group Policy",
+     "port": 445,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "windows-server-eval-vm",
+   "substitute_for": "Group Policy",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "assumed",
+   "deployed_version": null,
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": 2,
+    "memory_mib": 4096,
+    "disk_gib": 50
+   },
+   "deployable": false,
+   "not_deployed_reason": "Windows Server Evaluation VM (user supplied media) 需要尚未備妥的 VM 映像（OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied）；這台主機不會被部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38 require access to Remote Desktop Protocol (RDP).",
+   "port": 3389,
+   "protocol": "tcp"
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38 require access to Group Policy.",
+   "port": 445,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 3389
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 445
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Microsoft SQL Server (s3); it remains unreachable by default.",
+  "Host h1 needs Windows Server Evaluation VM (user supplied media) as a VM, which is not deployable yet (OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied)."
+ ]
+}

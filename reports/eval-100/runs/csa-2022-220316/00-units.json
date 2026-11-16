@@ -1,0 +1,130 @@
+[
+ {
+  "id": "p1",
+  "text": "# Russian State-Sponsored Cyber Actors Gain Network Access by Exploiting Default Multifactor Authentication Protocols and \"PrintNightmare\" Vulnerability"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-074A\n> - Date: 2022-03-16\n> - URL: https://www.ic3.gov/CSA/2022/220316.pdf\n> - PDF SHA-256: 84e55ecfd2cf3daad4155e41b91ae00e8d114ac5ea999a6276837b3b183cd2d1 (`source.pdf`, 6 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (11 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "TLP:WHITE                                                                                                  Product ID: AA22-074A\n                                                                                                                March 15, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "Russian State-Sponsored Cyber Actors Gain\n    Network Access by Exploiting Default\n    Multifactor Authentication Protocols and\n    “PrintNightmare” Vulnerability\n    SUMMARY\n    The Federal Bureau of Investigation (FBI) and            Multifactor Authentication (MFA):\n    Cybersecurity and Infrastructure Security                    A Cybersecurity Essential\n    Agency (CISA) are releasing this joint\n    Cybersecurity Advisory (CSA) to warn               MFA is one of the most important\n    organizations that Russian state-sponsored         cybersecurity practices to reduce the risk of\n    cyber actors have gained network access            intrusions—according to industry research,\n    through exploitation of default MFA protocols      users who enable MFA are up to 99 percent\n    and a known vulnerability. As early as May         less likely to have an account compromised.\n    2021, Russian state-sponsored cyber actors         Every organization should enforce MFA for all\n    took advantage of a misconfigured account set      employees and customers, and every user\n    to default MFA protocols at a non-governmental     should sign up for MFA when available.\n    organization (NGO), allowing them to enroll a\n                                                       Organizations that implement MFA should\n    new device for MFA and access the victim\n                                                       review default configurations and modify as\n    network. The actors then exploited a critical\n                                                       necessary, to reduce the likelihood that a\n    Windows Print Spooler vulnerability,\n                                                       sophisticated adversary can circumvent this\n    “PrintNightmare” (CVE-2021-34527) to run\n                                                       control.\n    arbitrary code with system privileges. Russian\n    state-sponsored cyber actors successfully exploited the vulnerability while targeting an NGO using\n    Cisco’s Duo MFA, enabling access to cloud and email accounts for document exfiltration.\n    This advisory provides observed tactics, techniques, and procedures, indicators of compromise\n    (IOCs), and recommendations to protect against Russian state-sponsored malicious cyber activity.\n    FBI and CISA urge all organizations to apply the recommendations in the Mitigations section of this\n    advisory, including the following:"
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n    your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the following\n    information regarding the incident: date, time, and location of the incident; type of activity; number of people\n    affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n    designated point of contact. To request incident response resources or technical assistance related to these\n    threats, contact CISA at CISAServiceDesk@cisa.dhs.gov.\n    This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information\n    carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n    release. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.\n    For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "TLP:WHITE                                                                                                 FBI | CISA"
+ },
+ {
+  "id": "p7",
+  "text": "•    Enforce MFA and review configuration policies to protect against “fail open” and re-enrollment\n                 scenarios.\n            •    Ensure inactive accounts are disabled uniformly across the Active Directory and MFA\n                 systems.\n            •    Patch all systems. Prioritize patching for known exploited vulnerabilities.\n       For more general information on Russian state-sponsored malicious cyber activity, see CISA's Russia\n       Cyber Threat Overview and Advisories webpage. For more information on the threat of Russian state-\n       sponsored malicious cyber actors to U.S. critical infrastructure as well as additional mitigation\n       recommendations, see joint CSA Understanding and Mitigating Russian State-Sponsored Cyber\n       Threats to U.S. Critical Infrastructure and CISA’s Shields Up Technical Guidance webpage.\n       For a downloadable copy of IOCs, see [AA22-074A.stix]."
+ },
+ {
+  "id": "p8",
+  "text": "TECHNICAL DETAILS\n       Threat Actor Activity\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 10. See appendix A for a\n       table of the threat actors’ activity mapped to MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p9",
+  "text": "As early as May 2021, the FBI observed Russian state-sponsored cyber actors gain access to an\n       NGO, exploit a flaw in default MFA protocols, and move laterally to the NGO’s cloud environment.\n       Russian state-sponsored cyber actors gained initial access [TA0001] to the victim organization via\n       compromised credentials [T1078] and enrolling a new device in the organization’s Duo MFA. The\n       actors gained the credentials [TA0006] via brute-force password guessing attack [T1110.001],\n       allowing them access to a victim account with a simple, predictable password. The victim account had\n       been un-enrolled from Duo due to a long period of inactivity but was not disabled in the Active\n       Directory. As Duo’s default configuration settings allow for the re-enrollment of a new device for\n       dormant accounts, the actors were able to enroll a new device for this account, complete the\n       authentication requirements, and obtain access to the victim network.\n       Using the compromised account, Russian state-sponsored cyber actors performed privilege\n       escalation [TA0004] via exploitation of the “PrintNightmare” vulnerability (CVE-2021-34527) [T1068]\n       to obtain administrator privileges. The actors also modified a domain controller file,\n       c:\\windows\\system32\\drivers\\etc\\hosts, redirecting Duo MFA calls to localhost instead of the\n       Duo server [T1556]. This change prevented the MFA service from contacting its server to validate\n       MFA login—this effectively disabled MFA for active domain accounts because the default policy of\n       Duo for Windows is to “fail open” if the MFA server is unreachable. Note: “Fail open” can happen to\n       any MFA implementation and is not exclusive to Duo.\n       After effectively disabling MFA, Russian state-sponsored cyber actors were able to successfully\n       authenticate to the victim’s virtual private network (VPN) as non-administrator users and make\n       Remote Desktop Protocol (RDP) connections to Windows domain controllers [T1133]. The actors ran\n       commands to obtain credentials for additional domain accounts; then, using the method described in\n       the previous paragraph, changed the MFA configuration file and bypassed MFA for these newly"
+ },
+ {
+  "id": "p10",
+  "text": "TLP:WHITE                                                                                              FBI | CISA"
+ },
+ {
+  "id": "p11",
+  "text": "compromised accounts. The actors leveraged mostly internal Windows utilities already present within\n       the victim network to perform this activity.\n       Using these compromised accounts without MFA enforced, Russian state-sponsored cyber actors\n       were able to move laterally [TA0008] to the victim’s cloud storage and email accounts and access\n       desired content."
+ },
+ {
+  "id": "p12",
+  "text": "Indicators of Compromise\n       Russian state-sponsored cyber actors executed the following processes:\n           •    ping.exe − A core Windows Operating System process used to perform the Transmission\n                Control Protocol (TCP)/IP Ping command; used to test network connectivity to a remote host\n                [T1018] and is frequently used by actors for network discovery [TA0007].\n           •    regedit.exe − A standard Windows executable file that opens the built-in registry editor\n                [T1112].\n           •    rar.exe − A data compression, encryption, and archiving tool [T1560.001]. Malicious cyber\n                actors have traditionally sought to compromise MFA security protocols as doing so would\n                provide access to accounts or information of interest.\n           •    ntdsutil.exe − A command-line tool that provides management facilities for Active Directory\n                Domain Services. It is possible this tool was used to enumerate Active Directory user\n                accounts [T1003.003]."
+ },
+ {
+  "id": "p13",
+  "text": "Actors modified the c:\\windows\\system32\\drivers\\etc\\hosts file to prevent communication with\n       the Duo MFA server:"
+ },
+ {
+  "id": "p14",
+  "text": "•    127.0.0.1 api-<redacted>.duosecurity.com"
+ },
+ {
+  "id": "p15",
+  "text": "The following access device IP addresses used by the actors have been identified to date:\n           •    45.32.137[.]94\n           •    191.96.121[.]162\n           •    173.239.198[.]46\n           •    157.230.81[.]39"
+ },
+ {
+  "id": "p16",
+  "text": "MITIGATIONS\n       The FBI and CISA recommend organizations remain cognizant of the threat of state-sponsored cyber\n       actors exploiting default MFA protocols and exfiltrating sensitive information. Organizations should:\n           •    Enforce MFA for all users, without exception. Before implementing, organizations should\n                review configuration policies to protect against “fail open” and re-enrollment scenarios.\n           •    Implement time-out and lock-out features in response to repeated failed login attempts.\n           •    Ensure inactive accounts are disabled uniformly across the Active Directory, MFA systems\n                etc."
+ },
+ {
+  "id": "p17",
+  "text": "TLP:WHITE                                                                                                        FBI | CISA"
+ },
+ {
+  "id": "p18",
+  "text": "•    Update software, including operating systems, applications, and firmware on IT network\n                assets in a timely manner. Prioritize patching known exploited vulnerabilities, especially critical\n                and high vulnerabilities that allow for remote code execution or denial-of-service on internet-\n                facing equipment.\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and domain\n                admin accounts) to have strong, unique passwords. Passwords should not be reused across\n                multiple accounts or stored on the system where an adversary may have access.\n           •    Continuously monitor network logs for suspicious activity and unauthorized or unusual login\n                attempts.\n           •    Implement security alerting policies for all changes to security-enabled accounts/groups, and\n                alert on suspicious process creation events (ntdsutil, rar, regedit, etc.)."
+ },
+ {
+  "id": "p19",
+  "text": "Note: If a domain controller compromise is suspected, a domain-wide password reset—including service\n       accounts, Microsoft 365 (M365) synchronization accounts, and krbtgt—will be necessary to remove the\n       actors’ access. (For more information, see https://docs.microsoft.com/en-us/answers/questions/87978/reset-\n       krbtgt-password.html). Consider soliciting support from a third-party IT organization to provide subject matter\n       expertise, ensure the actor is eradicated from the network, and avoid residual issues that could enable follow-on\n       exploitation."
+ },
+ {
+  "id": "p20",
+  "text": "FBI and CISA also recommend organizations implement the recommendations listed below to further\n       reduce the risk of malicious cyber activity."
+ },
+ {
+  "id": "p21",
+  "text": "Security Best Practices\n           •    Deploy Local Administrator Password Solution (LAPS), enforce Server Message Block (SMB)\n                Signing, restrict Administrative privileges (local admin users, groups, etc.), and review\n                sensitive materials on domain controller’s SYSVOL share.\n           •    Enable increased logging policies, enforce PowerShell logging, and ensure antivirus/endpoint\n                detection and response (EDR) are deployed to all endpoints and enabled.\n           •    Routinely verify no unauthorized system modifications, such as additional accounts and\n                Secure Shell (SSH) keys, have occurred to help detect a compromise. To detect these\n                modifications, administrators can use file integrity monitoring software that alerts an\n                administrator or blocks unauthorized changes on the system."
+ },
+ {
+  "id": "p22",
+  "text": "Network Best Practices\n           •    Monitor remote access/RDP logs and disable unused remote access/RDP ports.\n           •    Deny atypical inbound activity from known anonymization services, to include commercial\n                VPN services and The Onion Router (TOR).\n           •    Implement listing policies for applications and remote access that only allow systems to\n                execute known and permitted programs under an established security policy.\n           •    Regularly audit administrative user accounts and configure access control under the concept\n                of least privilege.\n           •    Regularly audit logs to ensure new accounts are legitimate users."
+ },
+ {
+  "id": "p23",
+  "text": "TLP:WHITE                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p24",
+  "text": "•    Scan networks for open and listening ports and mediate those that are unnecessary.\n           •    Maintain historical network activity logs for at least 180 days, in case of a suspected\n                compromise.\n           •    Identify and create offline backups for critical assets.\n           •    Implement network segmentation.\n           •    Automatically update anti-virus and anti-malware solutions and conduct regular virus and\n                malware scans."
+ },
+ {
+  "id": "p25",
+  "text": "Remote Work Environment Best Practices\n       With the increased use of remote work environments and VPN services, the FBI and CISA encourage\n       organizations to implement the following best practices to improve network security:\n           •    Regularly update VPNs, network infrastructure devices, and devices used for remote work\n                environments with the latest software patches and security configurations.\n           •    When possible, implement multi-factor authentication on all VPN connections. Physical\n                security tokens are the most secure form of MFA, followed by authenticator applications.\n                When MFA is unavailable, require employees engaging in remote work to use strong\n                passwords.\n           •    Monitor network traffic for unapproved and unexpected protocols.\n           •    Reduce potential attack surfaces by discontinuing unused VPN servers that may be used as a\n                point of entry for cyber actors."
+ },
+ {
+  "id": "p26",
+  "text": "User Awareness Best Practices\n       Cyber actors frequently use unsophisticated methods to gain initial access, which can often be\n       mitigated by stronger employee awareness of indicators of malicious activity. The FBI and CISA\n       recommend the following best practices to improve employee operations security when conducting\n       business:\n           •    Provide end-user awareness and training. To help prevent targeted social engineering and\n                spearphishing scams, ensure that employees and stakeholders are aware of potential cyber\n                threats and delivery methods. Also, provide users with training on information security\n                principles and techniques.\n           •    Inform employees of the risks associated with posting detailed career information to social or\n                professional networking sites.\n           •    Ensure that employees are aware of what to do and whom to contact when they see\n                suspicious activity or suspect a cyber incident, to help quickly and efficiently identify threats\n                and employ mitigation strategies."
+ },
+ {
+  "id": "p27",
+  "text": "INFORMATION REQUESTED\n       All organizations should report incidents and anomalous activity to the FBI via your local FBI field\n       office and/or CISA’s 24/7 Operations Center at report@cisa.gov or (888) 282-0870."
+ },
+ {
+  "id": "p28",
+  "text": "TLP:WHITE                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p29",
+  "text": "APPENDIX A: THREAT ACTOR TACTICS AND TECHNIQUES\n       See table 1 for the threat actors’ tactics and techniques identified in this CSA. See the ATT&CK for\n       Enterprise for all referenced threat actor tactics and techniques.\n                                  Table 1: Threat Actor MITRE ATT&CK Tactics and Techniques"
+ },
+ {
+  "id": "p30",
+  "text": "Tactic                                       Technique\n        Initial Access [TA0001]                             Valid Accounts [T1078]\n        Persistence [TA0003]                                External Remote Services [T1133]\n                                                            Modify Authentication Process [T1556]"
+ },
+ {
+  "id": "p31",
+  "text": "Privilege Escalation [TA0004]                       Exploitation for Privilege Escalation [T1068]\n        Defense Evasion [TA0005]                            Modify Registry [T1112]\n        Credential Access [TA0006]                          Brute Force: Password Guessing\n                                                            [T1110.001]\n                                                            OS Credential Dumping: NTDS [T1003.003]"
+ },
+ {
+  "id": "p32",
+  "text": "Discovery [TA0007]                                  Remote System Discovery [T1018]\n        Lateral Movement [TA0008]\n        Collection [TA0009]                                 Archive Collected Data: Archive via Utility\n                                                            [T1560.001]"
+ }
+]

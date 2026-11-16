@@ -1,0 +1,66 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "target of exploitation attempts",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "SQL database",
+     "port": 5432,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "oss-postgres",
+   "substitute_for": "SQL database",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "assumed",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a3)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Web servers hosting US election infrastructure (s2); it remains unreachable by default.",
+  "Actions for host h1 do not identify one of its multiple services; no inbound service port was opened."
+ ]
+}

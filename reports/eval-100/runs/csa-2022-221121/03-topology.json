@@ -1,0 +1,170 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access target",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Log4j",
+     "port": 8983,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "vuln-log4shell-solr",
+   "substitute_for": "Log4j",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "substituted",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h2",
+   "role": "lateral movement target and tool deployment host",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "lateral movement target and credential compromise host",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "lateral movement targets and persistence hosts",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h5",
+   "role": "discovery and credential harvesting host",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Active Directory 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "h1",
+   "to_host": "h2",
+   "reason": "Action a5 is stated to run from h1 against h2.",
+   "port": 3389,
+   "protocol": "tcp"
+  },
+  {
+   "from_host": "h3",
+   "to_host": "h4",
+   "reason": "Action a9 is stated to run from h3 against h4.",
+   "port": 3389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "h1",
+   "to": "h2",
+   "action": "allow",
+   "port": 3389
+  },
+  {
+   "from": "h3",
+   "to": "h4",
+   "action": "allow",
+   "port": 3389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:3389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service VMware Horizon server (s1); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Active Directory (s4); it remains unreachable by default.",
+  "Host h5 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Action a8 is stated to run from h2 against h3, but no destination service port is identified; the path stays denied."
+ ]
+}

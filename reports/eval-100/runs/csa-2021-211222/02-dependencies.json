@@ -1,0 +1,1080 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-211222",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "f3fa41660001c0e4fea36b0a876a989706e88b010977c6e154421ceaa9c3ac60",
+  "source_name": "csa-2021-211222"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+   "source": "llm",
+   "description": "An adversary can exploit Log4Shell by submitting a specially crafted request to a vulnerable system that causes that system to execute arbitrary code.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  },
+  {
+   "id": "a2",
+   "name": "Gain full control over system via Log4Shell exploitation",
+   "source": "llm",
+   "description": "The request allows the adversary to take full control over the system. The adversary can then steal information, launch ransomware, or conduct other malicious activity.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  },
+  {
+   "id": "a3",
+   "name": "Scan networks to potentially exploit Log4Shell and related vulnerabilities",
+   "source": "llm",
+   "description": "Malicious cyber actors are actively scanning networks to potentially exploit Log4Shell, CVE-2021-45046, and CVE-2021-45105 in vulnerable systems.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  },
+  {
+   "id": "a4",
+   "name": "Deploy cryptomining and botnet malware after exploiting Log4Shell",
+   "source": "llm",
+   "description": "The FBI has observed attempted exploitation and widespread scanning of the Log4j vulnerability to gain access to networks to deploy cryptomining and botnet malware.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the later action uses the access gained by the earlier action",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "deploying malware after gaining access through exploitation",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "system vulnerable to Log4Shell exploitation",
+   "source": "llm",
+   "name": "vulnerable system",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "service_refs": [
+    "s1",
+    "svc-vuln-log4shell-solr-h1",
+    "svc-oss-httpd-h1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "affected organizations' IT and cloud assets",
+   "source": "llm",
+   "name": "IT and cloud assets",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  },
+  {
+   "id": "h3",
+   "role": "operational technology (OT)/industrial control systems (ICS) assets",
+   "source": "llm",
+   "name": "OT/ICS assets",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Apache Log4j library",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "matched_text": "Log4Shell",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "Apache Log4j library is not in the inventory and no substitute matches; not reproducible."
+  },
+  {
+   "id": "svc-vuln-log4shell-solr-h1",
+   "name": "Log4j",
+   "inventory_component_name": "Log4j",
+   "matched_text": "Log4Shell",
+   "cve": [
+    "CVE-2021-45046",
+    "CVE-2021-45105"
+   ],
+   "catalogue_component": "vuln-log4shell-solr",
+   "is_substitute": true,
+   "tier": "have",
+   "version_basis": "substituted",
+   "reproduces_cve": [],
+   "epistemic_status": "inferred",
+   "source": "program",
+   "substitute_of": "Log4Shell",
+   "host_ref": "h1",
+   "placement": "conflict",
+   "placement_reason": "主機 h1 已由 Apache（oss-httpd）決定映像；一台主機只能部署一個元件，Log4j（vuln-log4shell-solr）不會被部署在這台主機上。"
+  },
+  {
+   "id": "svc-oss-httpd-h1",
+   "name": "Apache",
+   "inventory_component_name": "Apache",
+   "cve": [],
+   "catalogue_component": "oss-httpd",
+   "is_substitute": false,
+   "tier": "have",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1",
+   "deployed_version": "2.4.71"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2021-44228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11",
+    "evidence-12",
+    "evidence-13",
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2021-45046",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-17",
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2021-45105",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20",
+    "evidence-21",
+    "evidence-22"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "An adversary can exploit Log4Shell by submitting a specially crafted request to a vulnerable system that causes that system to execute arbitrary code.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "An adversary can exploit Log4Shell by submitting a specially crafted request to a vulnerable system that causes that system to execute arbitrary code."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The request allows the adversary to take full control over the system. The adversary can then steal information, launch ransomware, or conduct other malicious activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The request allows the adversary to take full control over the system. The adversary can then steal information, launch ransomware, or conduct other malicious a"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Malicious cyber actors are actively scanning networks to potentially exploit Log4Shell, CVE-2021-45046, and CVE-2021-45105 in vulnerable systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Malicious cyber actors are actively scanning networks to potentially exploit Log4Shell, CVE 2021 45046, and CVE 2021 45105 in vulnerable systems."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The FBI has observed attempted exploitation and widespread scanning of the Log4j vulnerability to gain access to networks to deploy cryptomining and botnet malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI has observed attempted exploitation and widespread scanning of the Log4j vulnerability to gain access to networks to deploy cryptomining and botnet malw"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The request allows the adversary to take full control over the system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The request allows the adversary to take full control over the system."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "CISA, the FBI, NSA, ACSC, CCCS, CERT NZ, NZ NCSC, and NCSC-UK recommend that affected organizations take the following steps to patch these vulnerabilities in their IT and cloud assets and initiate threat hunting to detect possible compromise.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA, the FBI, NSA, ACSC, CCCS, CERT NZ, NZ NCSC, and NCSC UK recommend that affected organizations take the following steps to patch these vulnerabilities in t"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "This CSA also provides guidance for affected organizations with operational technology (OT)/industrial control systems (ICS) assets.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This CSA also provides guidance for affected organizations with operational technology (OT)/industrial control systems (ICS) assets."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Due to the pervasiveness of the Apache Log4j software library—and the integration of the library in operational products—CISA, the FBI, NSA, ACSC, CCCS, CERT NZ, NZ NCSC, and NCSC-UK strongly recommend that OT asset owners and operators review their operational architecture and enumerate the vulnerability status against current product alerts and advisories.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Due to the pervasiveness of the Apache Log4j software library and the integration of the library in operational products CISA, the FBI, NSA, ACSC, CCCS, CERT NZ"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Log4Shell, disclosed on December 10, 2021, is a remote code execution (RCE) vulnerability affecting Apache’s Log4j library",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Log4Shell, disclosed on December 10, 2021, is a remote code execution (RCE) vulnerability affecting Apache’s Log4j library"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "CVE-2021-\n                                  44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2021-45046",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45046"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2021-45046",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45046"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2021-45046",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45046"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "CVE-2021-45046",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45046"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "CVE-2021-45105",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45105"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "CVE-2021-45105",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45105"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "CVE-2021- 45105",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45105"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "CVE-2021-45105",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45105"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "vulnerable system — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "vulnerable system 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — vulnerable system",
+    "action:a1 — Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+    "action:a2 — Gain full control over system via Log4Shell exploitation"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "vulnerable system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "vulnerable system — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "vulnerable system 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — vulnerable system",
+    "action:a1 — Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+    "action:a2 — Gain full control over system via Log4Shell exploitation"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "vulnerable system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "vulnerable system — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "vulnerable system 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — vulnerable system",
+    "action:a1 — Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+    "action:a2 — Gain full control over system via Log4Shell exploitation"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "vulnerable system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "IT and cloud assets — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT and cloud assets 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — IT and cloud assets"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT and cloud assets",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "IT and cloud assets — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT and cloud assets 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — IT and cloud assets"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT and cloud assets",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "IT and cloud assets — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT and cloud assets 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — IT and cloud assets"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT and cloud assets",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "OT/ICS assets — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT/ICS assets 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — OT/ICS assets"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT/ICS assets",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "OT/ICS assets — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT/ICS assets 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — OT/ICS assets"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT/ICS assets",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "OT/ICS assets — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT/ICS assets 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — OT/ICS assets"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT/ICS assets",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Apache Log4j library — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a1, a4 使用 Apache Log4j library，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1, a4 依賴 Apache Log4j library。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Apache Log4j library",
+    "action:a1 — Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+    "action:a4 — Deploy cryptomining and botnet malware after exploiting Log4Shell"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Apache Log4j library",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Submit specially crafted request to vulnerable Log4j system to execute arbitrary code",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Deploy cryptomining and botnet malware after exploiting Log4Shell",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a2 — Gain full control over system via Log4Shell exploitation",
+    "host:h1 — vulnerable system"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Gain full control over system via Log4Shell exploitation",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-apache-log4j-library",
+   "field": "software dependency: Apache Log4j library",
+   "category": "software",
+   "reason": "Apache Log4j library is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "目錄沒有可部署的 Apache Log4j library。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_substitute-log4j",
+   "field": "exact software fidelity: Log4j",
+   "category": "software",
+   "reason": "This component is a functional substitute and does not fully reproduce the original software.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Using Apache Solr 8.11.0 with Log4j 2.14.1 (CVE-2021-44228 exercise target) (vuln-log4shell-solr) as a substitute. It is not a full recreation of Log4j."
+  },
+  {
+   "id": "planner_dep_version-log4j-h1",
+   "field": "version for Log4j",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-apache-h1",
+   "field": "version for Apache",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_deployed-version-svc-oss-httpd-h1",
+   "field": "deployed version of Apache",
+   "category": "version",
+   "reason": "The source does not state a version; the catalogue provides 2.4.71.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Deploying Apache HTTP Server 2.4.71. This release is an assumption, not a fact from the source; results do not show that the original system ran it."
+  },
+  {
+   "id": "planner_dep_host-component-conflict-h1",
+   "field": "主機 h1 的元件衝突",
+   "category": "dependency",
+   "reason": "主機 h1 的服務對應到多個元件（vuln-log4shell-solr, oss-httpd），但一台主機只能部署一個映像。目前只會部署 Apache（oss-httpd）；Log4j 不會被部署。請把它們移到另一台主機、改成同一個元件，或確認不部署。",
+   "severity": "blocker",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a5",
+    "name": "Identify assets affected by Log4Shell and other Log4j-related vulnerabilities",
+    "actor": "defender"
+   },
+   {
+    "id": "a6",
+    "name": "Upgrade Log4j assets and affected products to latest version",
+    "actor": "defender"
+   },
+   {
+    "id": "a7",
+    "name": "Initiate hunt and incident response procedures to detect possible Log4Shell exploitation",
+    "actor": "defender"
+   },
+   {
+    "id": "a8",
+    "name": "Inventory all assets that make use of the Log4j Java library",
+    "actor": "defender"
+   },
+   {
+    "id": "a9",
+    "name": "Identify inventoried assets likely vulnerable to Log4Shell",
+    "actor": "defender"
+   },
+   {
+    "id": "a10",
+    "name": "Treat known and suspected vulnerable assets as compromised and isolate them",
+    "actor": "defender"
+   },
+   {
+    "id": "a11",
+    "name": "Patch Log4j and other affected products to latest version",
+    "actor": "defender"
+   },
+   {
+    "id": "a12",
+    "name": "Apply vendor-provided mitigations or workarounds if unable to immediately patch",
+    "actor": "defender"
+   },
+   {
+    "id": "a13",
+    "name": "Verify mitigation success by scanning patched assets and monitoring",
+    "actor": "defender"
+   },
+   {
+    "id": "a14",
+    "name": "Hunt for signs of exploitation and compromise on assets using Log4j",
+    "actor": "defender"
+   },
+   {
+    "id": "a15",
+    "name": "Initiate incident response procedures if compromise is detected",
+    "actor": "defender"
+   },
+   {
+    "id": "a16",
+    "name": "Block specific outbound TCP and UDP network traffic to mitigate exploitation",
+    "actor": "defender"
+   },
+   {
+    "id": "a17",
+    "name": "Review operational architecture and enumerate vulnerability status for OT/ICS assets",
+    "actor": "defender"
+   },
+   {
+    "id": "a18",
+    "name": "Apply patches or mitigations to OT/ICS devices as soon as operationally feasible",
+    "actor": "defender"
+   },
+   {
+    "id": "a19",
+    "name": "Minimize network exposure and isolate control system devices from business network",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

@@ -1,0 +1,661 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230208",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "875d447ce41c2b97935260923e6555402e780e7dcbe1356a195d09b66c981ff8",
+  "source_name": "csa-2023-230208"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "Encrypt configuration files on ESXi servers with ESXiArgs ransomware",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the ransomware encrypts configuration files on ESXi servers after gaining access",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2",
+    "evidence-3",
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "servers targeted by ESXiArgs ransomware",
+   "source": "llm",
+   "name": "VMware ESXi servers",
+   "os": "VMware ESXi",
+   "os_version": "unpatched and out-of-service or out-of-date versions",
+   "network_placement": "likely exposed to internal or external network but should not be exposed to the public internet",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-6",
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "VMware ESXi software",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false,
+   "tier": "unavailable",
+   "version_basis": "assumed",
+   "reproduces_cve": [],
+   "not_reproducible": true,
+   "not_reproducible_reason": "VMware ESXi software is not in the inventory and no substitute matches; not reproducible."
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "ESXiArgs ransomware",
+   "type": "malware",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "url",
+   "value": "https://github.com/cisagov/ESXiArgs-Recover/issues",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-8"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "github.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-9"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "recover.sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "raw.githubusercontent.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-11"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "index.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "cve",
+   "value": "CVE-2020-3992",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-13"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Malicious actors may be exploiting known vulnerabilities in VMware ESXi servers that are likely running unpatched and out-of-service or out-of-date versions of VMware ESXi software to gain access and deploy ransomware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Malicious actors may be exploiting known vulnerabilities in VMware ESXi servers that are likely running unpatched and out of service or out of date versions of "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Open-source reporting indicates that malicious actors are exploiting known vulnerabilities in VMware ESXi software to gain access to servers and deploy ESXiArgs ransomware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Open source reporting indicates that malicious actors are exploiting known vulnerabilities in VMware ESXi software to gain access to servers and deploy ESXiArgs"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The ESXiArgs ransomware encrypts configuration files on ESXi servers, potentially rendering virtual machines (VMs) unusable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The ESXiArgs ransomware encrypts configuration files on ESXi servers, potentially rendering virtual machines (VMs) unusable."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "ESXiArgs ransomware encrypts certain configuration files on ESXi servers, potentially rendering VMs unusable. Specifically, the ransomware encrypts configuration files associated with the VMs; it does not encrypt flat files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ESXiArgs ransomware encrypts certain configuration files on ESXi servers, potentially rendering VMs unusable. Specifically, the ransomware encrypts configuratio"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "ESXiArgs ransomware encrypts certain configuration files on ESXi servers, potentially rendering VMs unusable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ESXiArgs ransomware encrypts certain configuration files on ESXi servers, potentially rendering VMs unusable."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Update servers to the latest version of VMware ESXi software, Harden ESXi hypervisors by disabling the Service Location Protocol (SLP) service, and Ensure the ESXi hypervisor is not exposed to the public internet.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Harden ESXi hypervisors by disabling the Service Location Protocol (SLP) service, and "
+  },
+  {
+   "id": "evidence-7",
+   "quote": "ESXiArgs ransomware encrypts configuration files on ESXi servers, potentially rendering virtual machines (VMs) unusable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ESXiArgs ransomware encrypts configuration files on ESXi servers, potentially rendering virtual machines (VMs) unusable."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "https://github.com/cisagov/ESXiArgs-Recover/issues",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://github.com/cisagov/ESXiArgs Recover/issues"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "github.com"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "recover.sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "recover.sh"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "raw.githubusercontent.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "raw.githubusercontent.com"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "index.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "index.html"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CVE-2020-3992",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 3992"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "VMware ESXi servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware ESXi servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — VMware ESXi servers",
+    "action:a1 — Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+    "action:a2 — Encrypt configuration files on ESXi servers with ESXiArgs ransomware"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware ESXi servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "VMware ESXi",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "VMware ESXi servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware ESXi servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — VMware ESXi servers",
+    "action:a1 — Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+    "action:a2 — Encrypt configuration files on ESXi servers with ESXiArgs ransomware"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware ESXi servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "作業系統版本",
+     "value": "unpatched and out-of-service or out-of-date versions",
+     "source_ref": "hosts:h1.os_version",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "VMware ESXi servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware ESXi servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — VMware ESXi servers",
+    "action:a1 — Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+    "action:a2 — Encrypt configuration files on ESXi servers with ESXiArgs ransomware"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware ESXi servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "likely exposed to internal or external network but should not be exposed to the public internet",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6",
+      "evidence-7",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "VMware ESXi software — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a1 使用 VMware ESXi software，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 依賴 VMware ESXi software。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — VMware ESXi software",
+    "action:a1 — Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "VMware ESXi software",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：VMware ESXi software。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a1 — Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+    "host:h1 — VMware ESXi servers"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Exploit known vulnerabilities in VMware ESXi software to gain access and deploy ransomware",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-vmware-esxi-software",
+   "field": "software dependency: VMware ESXi software",
+   "category": "software",
+   "reason": "VMware ESXi software is not in the inventory and no substitute matches; not reproducible.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "目錄沒有可部署的 VMware ESXi software。要用哪個元件當教學替代？也可以選擇不部署並保留為未重現。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9231,
+  "unsupported_claim_count": 1,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a3",
+    "name": "Download CISA’s ESXiArgs recovery script",
+    "actor": "defender"
+   },
+   {
+    "id": "a4",
+    "name": "Give execute permissions to the recovery script",
+    "actor": "defender"
+   },
+   {
+    "id": "a5",
+    "name": "Run the recovery script on a VM folder",
+    "actor": "defender"
+   },
+   {
+    "id": "a6",
+    "name": "Re-register the VM after successful recovery",
+    "actor": "defender"
+   },
+   {
+    "id": "a7",
+    "name": "Remove ransom note and restore access to ESXi web interface if inaccessible",
+    "actor": "defender"
+   },
+   {
+    "id": "a8",
+    "name": "Quarantine or take affected hosts offline to prevent repeat infection",
+    "actor": "defender"
+   },
+   {
+    "id": "a9",
+    "name": "Update servers to the latest VMware ESXi software version",
+    "actor": "defender"
+   },
+   {
+    "id": "a10",
+    "name": "Harden ESXi hypervisors by disabling the Service Location Protocol (SLP) service",
+    "actor": "defender"
+   },
+   {
+    "id": "a11",
+    "name": "Ensure ESXi hypervisor is not exposed to the public internet",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

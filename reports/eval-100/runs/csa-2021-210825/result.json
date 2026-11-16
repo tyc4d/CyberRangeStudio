@@ -1,0 +1,173 @@
+{
+  "id": "csa-2021-210825",
+  "returncode": 0,
+  "module6": {
+    "scenario_id": "csa-2021-210825",
+    "deployable": false,
+    "blockers": [
+      {
+        "code": "no_deployable_target",
+        "message": "這個計畫沒有任何會被部署的目標主機（全部被標為不部署）。",
+        "fix": "至少要有一台目標主機對應到 catalogue 內可部署的元件；請回依賴頁為主要服務選擇元件或教學替代。",
+        "error": "no deployable target host remains"
+      }
+    ],
+    "plan_notes": [
+      "An attacker host was added as a lab scaffold because the IR did not define one.",
+      "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+      "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+      "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+    ],
+    "platform_components": [],
+    "not_deployed_hosts": [
+      {
+        "host_id": "h1",
+        "role": "victim network compromised by Hive ransomware",
+        "reason": "服務 Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": [
+          "Remote Desktop Protocol (RDP)"
+        ]
+      },
+      {
+        "host_id": "h2",
+        "role": "host where Hive ransomware components are dropped and executed",
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+        "image_hint": null,
+        "runtime": "container",
+        "services": []
+      }
+    ],
+    "skipped_connections": [
+      {
+        "from_host": "attacker",
+        "to_host": "h1",
+        "port": 3389,
+        "reason": "主機 h1 不部署，這條連線不會建立"
+      }
+    ],
+    "deployed_host_ids": [
+      "attacker"
+    ],
+    "components": [
+      {
+        "host_id": "h1",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "服務 Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+      },
+      {
+        "host_id": "h2",
+        "image_hint": null,
+        "component": "not_deployed",
+        "component_mode": "not_deployed",
+        "runtime": "container",
+        "deployable": false,
+        "skipped": true,
+        "image": null,
+        "version": null,
+        "digest": null,
+        "substitute": false,
+        "published": false,
+        "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+      },
+      {
+        "host_id": "attacker",
+        "image_hint": "oss-attacker",
+        "component": "oss-attacker",
+        "component_mode": "real",
+        "runtime": "container",
+        "deployable": true,
+        "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "version": "3.22",
+        "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+        "substitute": false,
+        "catalogue_component": "oss-attacker",
+        "published": false,
+        "exposure": "publishable",
+        "healthcheck": false,
+        "limits": {
+          "mem_limit": "256m",
+          "cpus": 1.0,
+          "pids_limit": 256
+        },
+        "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+        "service_ports": []
+      }
+    ],
+    "vms": [],
+    "host_port_mappings": [],
+    "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+    "publishing": "nothing is published on the host",
+    "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+    "networks": [
+      {
+        "id": "scenario-internal",
+        "name": "cr-demo-csa-2021-210825-scenario-internal",
+        "internal": true,
+        "plan_internal": true,
+        "role": "internal_segment",
+        "published_to_host": false,
+        "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+      },
+      {
+        "id": "external",
+        "name": "cr-demo-csa-2021-210825-external",
+        "internal": true,
+        "plan_internal": false,
+        "role": "exposed_segment",
+        "published_to_host": false,
+        "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+      }
+    ],
+    "errors": [
+      "no deployable target host remains"
+    ]
+  },
+  "inventory": [
+    {
+      "service_id": "s1",
+      "name": "Remote Desktop Protocol (RDP)",
+      "product": null,
+      "version": null,
+      "cves": [],
+      "technique": null,
+      "resolution": {
+        "tier": "unavailable",
+        "component_id": null,
+        "is_substitute": false,
+        "version_basis": "assumed",
+        "reproduces_cve": [],
+        "substitute_of": null,
+        "reason": "Remote Desktop Protocol (RDP) is not in the inventory and no substitute matches; not reproducible.",
+        "needs_question": false
+      }
+    }
+  ],
+  "manifest": {
+    "scenario_id": "csa-2021-210825",
+    "generated_at": "2026-11-16T21:31:41.412594+00:00",
+    "items": []
+  },
+  "postprocess_error": null,
+  "runner_stdout": "ir schema errors: []\nactions 13 relations 12 hosts 2 services 1 missing 8 quality {'quote_verified_rate': 0.9487, 'unsupported_claim_count': 2, 'inferred_count': 7, 'absent_count': 0, 'method': 'single_pass', 'provisional': True, 'dropped_placeholder_hosts': 0, 'excluded_non_attacker_actions': [], 'hedged_action_count': 0, 'capability_action_count': 0, 'dropped_non_software_services': [], 'dropped_misplaced_techniques': []}\n",
+  "runner_stderr": "",
+  "budget": {
+    "estimated_usd": 0.0330176,
+    "calls": 3,
+    "cached_calls": 0
+  },
+  "cache_db_exists": true,
+  "input": "fixtures/cti-corpus/csa-2021-210825/report.md",
+  "run_dir": "reports/eval-100/runs/csa-2021-210825"
+}

@@ -1,0 +1,104 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim healthcare systems targeted by DPRK ransomware attacks",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 X-Popup messenger 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "victim organizations targeted by DPRK ransomware attacks",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "specific targets of DPRK cyber operations",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Log4j",
+     "port": 8983,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "vuln-log4shell-solr",
+   "substitute_for": "Log4j",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "substituted",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "reason": "Scenario action(s) a4 require access to Log4j.",
+   "port": 8983,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h3",
+   "action": "allow",
+   "port": 8983
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h3 was placed on the external network as the inferred entry point (basis: initial-access action(s) a4); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service X-Popup messenger (s3); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Services without a resolved host association were left out of host service lists: s1, s2."
+ ]
+}

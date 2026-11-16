@@ -1,0 +1,202 @@
+{
+  "scenario_id": "csa-2022-221020",
+  "deployable": true,
+  "blockers": [],
+  "plan_notes": [
+    "An attacker host was added as a lab scaffold because the IR did not define one.",
+    "Host h2 deploys one component; not deployed there: Wordpress (oss-wordpress). Move them to another host or remove them.",
+    "No port is known for service PHP websites (s2); it remains unreachable by default.",
+    "No port is known for service Drupal (s4); it remains unreachable by default.",
+    "No port is known for service Ckeditor (s6); it remains unreachable by default."
+  ],
+  "platform_components": [
+    {
+      "id": "cr-listener",
+      "kind": "callback_listener",
+      "scenario_host": false,
+      "host": "cr-listener",
+      "port": 1389,
+      "protocol": "tcp",
+      "networks": [
+        "scenario-internal",
+        "external"
+      ],
+      "for_hosts": [
+        "h1",
+        "h3"
+      ],
+      "published": false,
+      "behavior": "records inbound TCP connections (peer address, first bytes); never sends a reply",
+      "evidence": "one line 'CALLBACK {json}' per connection on the container's stdout",
+      "description": "平台驗證元件（不是情境主機）：只在實驗網路內接收並記錄連線，不回傳任何內容、不對本機開埠。"
+    }
+  ],
+  "not_deployed_hosts": [],
+  "skipped_connections": [],
+  "deployed_host_ids": [
+    "h1",
+    "h2",
+    "h3",
+    "attacker"
+  ],
+  "components": [
+    {
+      "host_id": "h1",
+      "image_hint": "vuln-log4shell-solr",
+      "component": "vuln-log4shell-solr",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "vulhub/solr:8.11.0@sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+      "version": "8.11.0",
+      "digest": "sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+      "substitute": true,
+      "substitute_for": "CVE-2021-44228",
+      "substitute_basis": "catalogue_substitute",
+      "catalogue_component": "vuln-log4shell-solr",
+      "published": false,
+      "exposure": "isolated_only",
+      "healthcheck": true,
+      "limits": {
+        "mem_limit": "1536m",
+        "cpus": 2.0,
+        "pids_limit": 512
+      },
+      "vulnerable": true,
+      "cves": [
+        "CVE-2021-44228"
+      ],
+      "isolation": "deliberately vulnerable exercise image: joined only to internal networks, never published to a host port",
+      "fidelity_difference": "deployed as vuln-log4shell-solr in place of CVE-2021-44228; does not reproduce that software or its vulnerabilities",
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": [
+        {
+          "port": 8983,
+          "protocol": "tcp",
+          "names": [
+            "CVE-2021-44228"
+          ]
+        }
+      ]
+    },
+    {
+      "host_id": "h2",
+      "image_hint": "oss-mysql",
+      "component": "oss-mysql",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "version": "8.0.46",
+      "digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "substitute": false,
+      "catalogue_component": "oss-mysql",
+      "published": false,
+      "exposure": "internal_only",
+      "healthcheck": true,
+      "limits": {
+        "mem_limit": "1g",
+        "cpus": 1.0,
+        "pids_limit": 256
+      },
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": [
+        {
+          "port": 3306,
+          "protocol": "tcp",
+          "names": [
+            "MySQL databases"
+          ]
+        }
+      ]
+    },
+    {
+      "host_id": "h3",
+      "image_hint": "vuln-log4shell-solr",
+      "component": "vuln-log4shell-solr",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "vulhub/solr:8.11.0@sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+      "version": "8.11.0",
+      "digest": "sha256:fe2561b7ac823bf2467fa211935fc9399f9c29874ec7cbe733df35201649ba23",
+      "substitute": true,
+      "substitute_for": "Log4j",
+      "substitute_basis": "catalogue_substitute",
+      "catalogue_component": "vuln-log4shell-solr",
+      "published": false,
+      "exposure": "isolated_only",
+      "healthcheck": true,
+      "limits": {
+        "mem_limit": "1536m",
+        "cpus": 2.0,
+        "pids_limit": 512
+      },
+      "vulnerable": true,
+      "cves": [
+        "CVE-2021-44228"
+      ],
+      "isolation": "deliberately vulnerable exercise image: joined only to internal networks, never published to a host port",
+      "fidelity_difference": "deployed as vuln-log4shell-solr in place of Log4j; does not reproduce that software or its vulnerabilities",
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": [
+        {
+          "port": 8983,
+          "protocol": "tcp",
+          "names": [
+            "Log4j"
+          ]
+        }
+      ]
+    },
+    {
+      "host_id": "attacker",
+      "image_hint": "oss-attacker",
+      "component": "oss-attacker",
+      "component_mode": "real",
+      "runtime": "container",
+      "deployable": true,
+      "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+      "version": "3.22",
+      "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+      "substitute": false,
+      "catalogue_component": "oss-attacker",
+      "published": false,
+      "exposure": "publishable",
+      "healthcheck": false,
+      "limits": {
+        "mem_limit": "256m",
+        "cpus": 1.0,
+        "pids_limit": 256
+      },
+      "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+      "service_ports": []
+    }
+  ],
+  "vms": [],
+  "host_port_mappings": [],
+  "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+  "publishing": "nothing is published on the host",
+  "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+  "networks": [
+    {
+      "id": "scenario-internal",
+      "name": "cr-demo-csa-2022-221020-scenario-internal",
+      "internal": true,
+      "plan_internal": true,
+      "role": "internal_segment",
+      "published_to_host": false,
+      "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+    },
+    {
+      "id": "external",
+      "name": "cr-demo-csa-2022-221020-external",
+      "internal": true,
+      "plan_internal": false,
+      "role": "exposed_segment",
+      "published_to_host": false,
+      "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+    }
+  ],
+  "errors": []
+}

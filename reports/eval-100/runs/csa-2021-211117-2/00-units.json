@@ -1,0 +1,106 @@
+[
+ {
+  "id": "p1",
+  "text": "# An APT Group Exploiting a 0-day in FatPipe WARP, MPVPN, and IPVPN Software"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2021-11-17\n> - URL: https://www.ic3.gov/CSA/2021/211117-2.pdf\n> - PDF SHA-256: 290347d4897c3f780035d9659e1ccd434fea72f492329cf8d140190e418a8202 (`source.pdf`, 5 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (9 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "16 NOV 2021                The following information is being provided by the FBI, with no guarantees or warranties, for potential\n                           use at the sole discretion of recipients to protect against cyber threats. This data is provided in order\n  FLASH Number             to help cyber security professionals and system administrators to guard against the persistent malicious\n                           actions of cyber actors. This FLASH was coordinated with DHS/CISA.\nAC-000155-MW               This FLASH has been released TLP:WHITE"
+ },
+ {
+  "id": "p4",
+  "text": "WE NEED YOUR HELP! If you identify any suspicious activity within your enterprise or have related information,\n     please contact your local FBI Cyber Squad immediately with respect to the procedures outlined in the\n                                    Reporting Notice section of this message."
+ },
+ {
+  "id": "p5",
+  "text": "*Note: By reporting any related information to FBI Cyber Squads, you are assisting in sharing information that allows the FBI to track\n       malicious actors and coordinate with private industry and the United States Government to prevent future intrusions and attacks."
+ },
+ {
+  "id": "p6",
+  "text": "An APT Group Exploiting a 0-day in FatPipe WARP,\n       MPVPN, and IPVPN Software"
+ },
+ {
+  "id": "p7",
+  "text": "Summary\n       As of November 2021, FBI forensic analysis indicated exploitation of a 0-day vulnerability in the\n       FatPipe MPVPN® device software1 going back to at least May 2021. The vulnerability allowed\n       APT actors to gain access to an unrestricted file upload function to drop a webshell for\n       exploitation activity with root access, leading to elevated privileges and potential follow-on\n       activity. Exploitation of this vulnerability then served as a jumping off point into other\n       infrastructure for the APT actors. This vulnerability is not yet identified with a CVE number but\n       can be located with the FatPipe Security Advisory number FPSA006. The vulnerability affects all\n       FatPipe WARP®, MPVPN, and IPVPN® device software prior to the latest version releases\n       10.1.2r60p93 and 10.2.2r44p1."
+ },
+ {
+  "id": "p8",
+  "text": "A patented router clustering device."
+ },
+ {
+  "id": "p9",
+  "text": "The compromise of affected systems running FatPipe MPVPN software involves exploiting a\nservlet at the URL path /fpui/uploadConfigServlet and dropping a webshell\n/fpui/img/1.jsp with root privileges."
+ },
+ {
+  "id": "p10",
+  "text": "Technical Details\nThe following was executed for initial exploitation:\n    GET request to /RELEASE-NOTES.txt\n    POST request to /fpui/uploadConfigServlet?fileNumber=undefined\nImmediately after the POST request, the following activity was observed:\n    Download <attacker_ip>/sshd_config\n    Download <attacker_ip>/authorized_keys\n    Backup the system's current SSHd configuration file, sshd_config, and the \"root\"\n        user’s SSH authorized keys file, /root/.ssh/authorized_keys\n    Overwrite the legitimate sshd_config and root user’s authorized_keys files with the\n        actor’s malicious versions\n    Restart the SSHd service"
+ },
+ {
+  "id": "p11",
+  "text": "During a varying length of time while the webshell was available, the actor(s) used the new SSH\naccess to route malicious traffic through the device and target additional U.S. infrastructure.\nIn most cases, after the exploitation activity was complete, the following activity was observed\nas part of a \"clean-up\" process to hide the malicious actor’s activity and to protect their exploit\nuntil a later date:"
+ },
+ {
+  "id": "p12",
+  "text": "   Restore original sshd_config and authorized_keys files and delete the\n       malicious copies\n      Overwrite the btmp, wtmp, and lastlog entries to hide their session activity\n      Restart the SSHd service\n      Delete the webshell at <tomcat-installation-\n       path>/webapps/fpui/img/1.jsp"
+ },
+ {
+  "id": "p13",
+  "text": "Indicators\n      <tomcat-installation-path>/webapps/fpui/img/1.jsp\n      /etc/ssh/sshd_config.bak\n      /root/.ssh/authorized_keys.bak"
+ },
+ {
+  "id": "p14",
+  "text": "   Search Tomcat access logs, located at\n        /var/log/tomcat/localhost_access_log*, for:\n            o POST requests to the URL:\n                /fpui/uploadConfigServlet?fileNumber=undefined\n            o GET requests to the URL, with commands: /fpui/img/1.jsp\n       Search SSH access/secure logs under /var/log for successful SSH connections via\n        public key from unknown IP addresses: Accepted publickey for root\n       Search wtmp and lastlog files for sessions from unknown IP addresses\n       Search Tomcat error logs, located at /var/log/tomcat/catalina*, for the\n        following caught exception:"
+ },
+ {
+  "id": "p15",
+  "text": "ERROR com.fatpipe.centralmanager.servlet.UploadConfigServlet-\n Exception occurred while uploading config. Exception is : null"
+ },
+ {
+  "id": "p16",
+  "text": "NOTE: Detection of exploitation activity may be difficult, as cleanup scripts designed to remove\ntraces of the actor(s) activity were discovered in most cases."
+ },
+ {
+  "id": "p17",
+  "text": "Yara Signatures\nrule APT_Webshell_1_jsp {\n        strings:\n            $s1 = \"Runtime.getRuntime().exec(request.getParameter(\"\n            $s2 = \"request.getParameter(\\\"pwd\\\")\"\n            $s3 = \"while((a=in.read(b))!=-1){\"\n        condition:\n            filesize < 25KB and 2 of them\n}"
+ },
+ {
+  "id": "p18",
+  "text": "Information Requested:\nPlease report to FBI the existence of any of the following:\n       Identification of indicators of compromise as outlined above.\n       Presence of webshell code on compromised FatPipe WARP, MPVPN, and IPVPN\n        appliances.\n       Unauthorized access to or use of accounts."
+ },
+ {
+  "id": "p19",
+  "text": "   Evidence of lateral movement by malicious actors with access to compromised systems.\n      Malicious IPs identified through the conducted log file searches and session activity.\n      Suspicious or malicious .bash_history contents.\n      Other indicators of unauthorized access or compromise."
+ },
+ {
+  "id": "p20",
+  "text": "Recipients of this information are encouraged to contribute any additional information that\nthey may have related to this threat."
+ },
+ {
+  "id": "p21",
+  "text": "Recommended Mitigations:\nOrganizations that identify any activity related to these indicators of compromise within their\nnetworks should take action immediately.\nFatPipe released a patch and security advisory, FPSA006, on November 16, 2021, that fixes the\nvulnerability. All FatPipe WARP, MPVPN, and IPVPN device software prior to releases\n10.1.2r60p93 and 10.2.2r44p1 are vulnerable. The security advisory and additional details are\navailable at the following URL: https://fatpipeinc.com/support/cve-list.php."
+ },
+ {
+  "id": "p22",
+  "text": "FBI strongly urges system administrators to upgrade their devices immediately and to follow\nother FatPipe security recommendations such as disabling UI and SSH access from the WAN\ninterface (externally facing) when not actively using it."
+ },
+ {
+  "id": "p23",
+  "text": "Reporting Notice\n     The FBI encourages recipients of this document to report information concerning suspicious or\n     criminal activity to their local FBI field office. With regards to specific information that appears\n     in this communication: the context and individual indicators, particularly those of a non-\n     deterministic or ephemeral nature (such as filenames or IP addresses), may not be indicative of\n     a compromise. Indicators should always be evaluated in light of your complete information\n     security situation."
+ },
+ {
+  "id": "p24",
+  "text": "Field office contacts can be identified at www.fbi.gov/contact-us/field-offices. When available,\n     each report submitted should include the date, time, location, type of activity, number of\n     people, type of equipment used for the activity, the name of the submitting company or\n     organization, and a designated point of contact."
+ },
+ {
+  "id": "p25",
+  "text": "Administrative Note\n     This product is marked TLP:WHITE. Subject to standard copyright rules, the information in this product\n     may be shared without restriction."
+ },
+ {
+  "id": "p26",
+  "text": "Your Feedback Regarding this Product is Critical\nWas this product of value to your organization? Was the content clear and concise?\nYour comments are very important to us and can be submitted anonymously. Please take a\nmoment to complete the survey at the link below. Feedback should be specific to your\nexperience with our written products to enable the FBI to make quick and continuous\nimprovements to such products. Feedback may be submitted online here:\nhttps://www.ic3.gov/PIFSurvey\nPlease note that this survey is for feedback on content and value only. Reporting of technical\ninformation regarding FLASH reports must be submitted through your local FBI Field Office."
+ }
+]

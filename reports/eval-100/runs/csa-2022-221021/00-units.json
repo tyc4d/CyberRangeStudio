@@ -1,0 +1,254 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: Daixin Team"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-294A\n> - Date: 2022-10-21\n> - URL: https://www.ic3.gov/CSA/2022/221021.pdf\n> - PDF SHA-256: b5ec797842142814cdcd4800775732ea1126d141855ea8174d0dc41d2891a94e (`source.pdf`, 10 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (19 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:WHITE            Product ID: AA22-294A\n                                                                                                                   October 21, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: Daixin Team\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of an ongoing #StopRansomware effort to\n        publish advisories for network defenders that detail various ransomware variants and ransomware\n        threat actors. These #StopRansomware advisories include recently and historically observed tactics,\n        techniques, and procedures (TTPs) and indicators of compromise (IOCs) to help organizations\n        protect against ransomware. Visit stopransomware.gov to see all #StopRansomware advisories and\n        to learn more about other ransomware threats and no-cost resources.\n        The Federal Bureau of Investigation (FBI), Cybersecurity\n                                                                                Actions to take today to mitigate\n        and Infrastructure Security Agency (CISA), and Department\n                                                                                cyber threats from ransomware:\n        of Health and Human Services (HHS) are releasing this joint\n                                                                                • Install updates for operating\n        CSA to provide information on the “Daixin Team,” a\n                                                                                systems, software, and firmware as\n        cybercrime group that is actively targeting U.S. businesses,\n                                                                                soon as they are released.\n        predominantly in the Healthcare and Public Health (HPH)\n        Sector, with ransomware and data extortion operations.                  • Require phishing-resistant MFA for\n                                                                                as many services as possible.\n        This joint CSA provides TTPs and IOCs of Daixin actors\n        obtained from FBI threat response activities and third-party            • Train users to recognize and report\n        reporting.                                                              phishing attempts."
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\n        Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 11. See MITRE\n        ATT&CK for Enterprise for all referenced tactics and techniques.\n        Cybercrime actors routinely target HPH Sector organizations with ransomware:"
+ },
+ {
+  "id": "p6",
+  "text": "•     As of October 2022, per FBI Internet Crime Complaint Center (IC3) data, specifically victim\n                  reports across all 16 critical infrastructure sectors, the HPH Sector accounts for 25 percent of\n                  ransomware complaints.\n        All organizations should report incidents and anomalous activity to CISA’s 24/7 Operations Center at\n        report@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field office. When available, please include\n        the following information regarding the incident: date, time, and location of the incident; type of activity; number\n        of people affected; type of equipment used for the activity; the name of the submitting company or organization;\n        and a designated point of contact.\n        This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:WHITE                                                                                                FBI | CISA | HHS"
+ },
+ {
+  "id": "p8",
+  "text": "•    According to an IC3 annual report in 2021, 649 ransomware reports were made across 14\n                critical infrastructure sectors; the HPH Sector accounted for the most reports at 148."
+ },
+ {
+  "id": "p9",
+  "text": "The Daixin Team is a ransomware and data extortion group that has targeted the HPH Sector with\n       ransomware and data extortion operations since at least June 2022. Since then, Daixin Team\n       cybercrime actors have caused ransomware incidents at multiple HPH Sector organizations where\n       they have:\n           •    Deployed ransomware to encrypt servers responsible for healthcare services—including\n                electronic health records services, diagnostics services, imaging services, and intranet\n                services, and/or\n           •    Exfiltrated personal identifiable information (PII) and patient health information (PHI) and\n                threatened to release the information if a ransom is not paid."
+ },
+ {
+  "id": "p10",
+  "text": "Daixin actors gain initial access to victims through virtual private network (VPN) servers. In one\n       confirmed compromise, the actors likely exploited an unpatched vulnerability in the organization’s\n       VPN server [T1190]. In another confirmed compromise, the actors used previously compromised\n       credentials to access a legacy VPN server [T1078] that did not have multifactor authentication (MFA)\n       enabled. The actors are believed to have acquired the VPN credentials through the use of a phishing\n       email with a malicious attachment [T1598.002].\n       After obtaining access to the victim’s VPN server, Daixin actors move laterally via Secure Shell (SSH)\n       [T1563.001] and Remote Desktop Protocol (RDP) [T1563.002]. Daixin actors have sought to gain\n       privileged account access through credential dumping [T1003] and pass the hash [T1550.002]. The\n       actors have leveraged privileged accounts to gain access to VMware vCenter Server and reset\n       account passwords [T1098] for ESXi servers in the environment. The actors have then used SSH to\n       connect to accessible ESXi servers and deploy ransomware [T1486] on those servers.\n       According to third-party reporting, the Daixin Team’s ransomware is based on leaked Babuk Locker\n       source code. This third-party reporting as well as FBI analysis show that the ransomware targets\n       ESXi servers and encrypts files located in /vmfs/volumes/ with the following extensions: .vmdk,\n       .vmem, .vswp, .vmsd, .vmx, and .vmsn. A ransom note is also written to /vmfs/volumes/. See Figure\n       1 for targeted file system path and Figure 2 for targeted file extensions list. Figure 3 and Figure 4\n       include examples of ransom notes. Note that in the Figure 3 ransom note, Daixin actors misspell\n       “Daixin” as “Daxin.”"
+ },
+ {
+  "id": "p11",
+  "text": "Figure 1: Daixin Team – Ransomware Targeted File Path"
+ },
+ {
+  "id": "p12",
+  "text": "TLP:WHITE                                                                                     FBI | CISA | HHS"
+ },
+ {
+  "id": "p13",
+  "text": "Figure 2: Daixin Team – Ransomware Targeted File Extensions"
+ },
+ {
+  "id": "p14",
+  "text": "Figure 3: Example 1 of Daixin Team Ransomware Note"
+ },
+ {
+  "id": "p15",
+  "text": "TLP:WHITE                                                                                                  FBI | CISA | HHS"
+ },
+ {
+  "id": "p16",
+  "text": "Figure 4: Example 2 of Daixin Team Ransomware Note"
+ },
+ {
+  "id": "p17",
+  "text": "In addition to deploying ransomware, Daixin actors have exfiltrated data [TA0010] from victim\n       systems. In one confirmed compromise, the actors used Rclone—an open-source program to\n       manage files on cloud storage—to exfiltrate data to a dedicated virtual private server (VPS). In\n       another compromise, the actors used Ngrok—a reverse proxy tool for proxying an internal service out\n       onto an Ngrok domain—for data exfiltration [T1567]."
+ },
+ {
+  "id": "p18",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Table 1 for all referenced threat actor tactics and techniques included in this advisory.\n                                   Table 1: Daixin Actors’ ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p19",
+  "text": "Reconnaissance"
+ },
+ {
+  "id": "p20",
+  "text": "Technique Title                         ID                               Use"
+ },
+ {
+  "id": "p21",
+  "text": "Phishing for Information:                       T1598.002      Daixin actors have acquired the VPN\n       Spearphishing Attachment                                       credentials (later used for initial access) by\n                                                                      a phishing email with a malicious\n                                                                      attachment."
+ },
+ {
+  "id": "p22",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p23",
+  "text": "Technique Title                         ID                               Use"
+ },
+ {
+  "id": "p24",
+  "text": "Exploit Public-Facing Application                 T1190        Daixin actors exploited an unpatched\n                                                                      vulnerability in a VPN server to gain initial\n                                                                      access to a network."
+ },
+ {
+  "id": "p25",
+  "text": "TLP:WHITE                                                                                       FBI | CISA | HHS"
+ },
+ {
+  "id": "p26",
+  "text": "Valid Accounts                        T1078           Daixin actors use previously compromised\n                                                             credentials to access servers on the target\n                                                             network."
+ },
+ {
+  "id": "p27",
+  "text": "Persistence"
+ },
+ {
+  "id": "p28",
+  "text": "Technique Title             ID                                Use"
+ },
+ {
+  "id": "p29",
+  "text": "Account Manipulation                  T1098           Daixin actors have leveraged privileged\n                                                             accounts to reset account passwords for\n                                                             VMware ESXi servers in the compromised\n                                                             environment."
+ },
+ {
+  "id": "p30",
+  "text": "Credential Access"
+ },
+ {
+  "id": "p31",
+  "text": "Technique Title             ID                                Use"
+ },
+ {
+  "id": "p32",
+  "text": "OS Credential Dumping                 T1003           Daixin actors have sought to gain privileged\n                                                             account access through credential\n                                                             dumping."
+ },
+ {
+  "id": "p33",
+  "text": "Lateral Movement"
+ },
+ {
+  "id": "p34",
+  "text": "Technique Title                                               Use\n                                               ID"
+ },
+ {
+  "id": "p35",
+  "text": "Remote Service Session Hijacking:                     Daixin actors use SSH and RDP to move\n                                           T1563.001\n       SSH Hijacking                                         laterally across a network."
+ },
+ {
+  "id": "p36",
+  "text": "Remote Service Session Hijacking:                     Daixin actors use RDP to move laterally\n                                           T1563.002\n       RDP Hijacking                                         across a network."
+ },
+ {
+  "id": "p37",
+  "text": "Use Alternate Authentication                          Daixin actors have sought to gain privileged\n                                           T1550.002\n       Material: Pass the Hash                               account access through pass the hash."
+ },
+ {
+  "id": "p38",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p39",
+  "text": "TLP:WHITE                                                                                             FBI | CISA | HHS"
+ },
+ {
+  "id": "p40",
+  "text": "Technique Title                     ID                              Use"
+ },
+ {
+  "id": "p41",
+  "text": "Exfiltration Over Web Service                               Daixin Team members have used Ngrok for\n                                                     T1567\n                                                                   data exfiltration over web servers."
+ },
+ {
+  "id": "p42",
+  "text": "Impact"
+ },
+ {
+  "id": "p43",
+  "text": "Technique Title                     ID                              Use"
+ },
+ {
+  "id": "p44",
+  "text": "Data Encrypted for Impact                     T1486         Daixin actors have encrypted data on target\n                                                                   systems or on large numbers of systems in\n                                                                   a network to interrupt availability to system\n                                                                   and network resources."
+ },
+ {
+  "id": "p45",
+  "text": "INDICATORS OF COMPROMISE\n       See Table 2 for IOCs obtained from third-party reporting.\n                               Table 2: Daixin Team IOCs – Rclone Associated SHA256 Hashes"
+ },
+ {
+  "id": "p46",
+  "text": "File                                          SHA256\n        rclone-v1.59.2-windows-amd64\\git-log.txt            9E42E07073E03BDEA4CD978D9E7B44A957497\n                                                            2818593306BE1F3DCFDEE722238\n        rclone-v1.59.2-windows-amd64\\rclone.1               19ED36F063221E161D740651E6578D50E0D3CA\n                                                            CEE89D27A6EBED4AB4272585BD\n        rclone-v1.59.2-windows-amd64\\rclone.exe             54E3B5A2521A84741DC15810E6FED9D739EB80\n                                                            83CB1FE097CB98B345AF24E939\n        rclone-v1.59.2-windows-                             EC16E2DE3A55772F5DFAC8BF8F5A365600FAD\n        amd64\\README.html                                   40A244A574CBAB987515AA40CBF\n        rclone-v1.59.2-windows-amd64\\README.txt             475D6E80CF4EF70926A65DF5551F59E35B71A0\n                                                            E92F0FE4DD28559A9DEBA60C28"
+ },
+ {
+  "id": "p47",
+  "text": "MITIGATIONS\n       FBI, CISA, and HHS urge HPH Sector organizations to implement the following to protect against\n       Daixin and related malicious activity:\n           •    Install updates for operating systems, software, and firmware as soon as they are released.\n                Prioritize patching VPN servers, remote access software, virtual machine software, and known"
+ },
+ {
+  "id": "p48",
+  "text": "TLP:WHITE                                                                                               FBI | CISA | HHS"
+ },
+ {
+  "id": "p49",
+  "text": "exploited vulnerabilities. Consider leveraging a centralized patch management system to\n                automate and expedite the process.\n           •    Require phishing-resistant MFA for as many services as possible—particularly for webmail,\n                VPNs, accounts that access critical systems, and privileged accounts that manage backups.\n           •    If you use Remote Desktop Protocol (RDP), secure and monitor it.\n                     o Limit access to resources over internal networks, especially by restricting RDP and\n                        using virtual desktop infrastructure. After assessing risks, if RDP is deemed\n                        operationally necessary, restrict the originating sources, and require multifactor\n                        authentication (MFA) to mitigate credential theft and reuse. If RDP must be available\n                        externally, use a virtual private network (VPN), virtual desktop infrastructure, or other\n                        means to authenticate and secure the connection before allowing RDP to connect to\n                        internal devices. Monitor remote access/RDP logs, enforce account lockouts after a\n                        specified number of attempts to block brute force campaigns, log RDP login attempts,\n                        and disable unused remote access/RDP ports.\n                     o Ensure devices are properly configured and that security features are enabled. Disable\n                        ports and protocols that are not being used for business purposes (e.g., RDP\n                        Transmission Control Protocol Port 3389).\n           •    Turn off SSH and other network device management interfaces such as Telnet, Winbox, and\n                HTTP for wide area networks (WANs) and secure with strong passwords and encryption when\n                enabled.\n           •    Implement and enforce multi-layer network segmentation with the most critical\n                communications and data resting on the most secure and reliable layer.\n           •    Limit access to data by deploying public key infrastructure and digital certificates to\n                authenticate connections with the network, Internet of Things (IoT) medical devices, and the\n                electronic health record system, as well as to ensure data packages are not manipulated while\n                in transit from man-in-the-middle attacks.\n           •    Use standard user accounts on internal systems instead of administrative accounts, which\n                allow for overarching administrative system privileges and do not ensure least privilege.\n           •    Secure PII/PHI at collection points and encrypt the data at rest and in transit by using\n                technologies such as Transport Layer Security (TPS). Only store personal patient data on\n                internal systems that are protected by firewalls, and ensure extensive backups are available if\n                data is ever compromised.\n           •    Protect stored data by masking the permanent account number (PAN) when it is displayed\n                and rendering it unreadable when it is stored—through cryptography, for example.\n           •    Secure the collection, storage, and processing practices for PII and PHI, per regulations such\n                as the Health Insurance Portability and Accountability Act of 1996 (HIPAA). Implementing\n                HIPAA security measures can prevent the introduction of malware on the system.\n           •    Use monitoring tools to observe whether IoT devices are behaving erratically due to a\n                compromise.\n           •    Create and regularly review internal policies that regulate the collection, storage, access, and\n                monitoring of PII/PHI."
+ },
+ {
+  "id": "p50",
+  "text": "TLP:WHITE                                                                                              FBI | CISA | HHS"
+ },
+ {
+  "id": "p51",
+  "text": "In addition, the FBI, CISA, and HHS urge all organizations, including HPH Sector organizations, to\n       apply the following recommendations to prepare for, mitigate/prevent, and respond to ransomware\n       incidents."
+ },
+ {
+  "id": "p52",
+  "text": "Preparing for Ransomware\n           •    Maintain offline (i.e., physically disconnected) backups of data, and regularly test backup and\n                restoration. These practices safeguard an organization’s continuity of operations or at least\n                minimize potential downtime from a ransomware incident and protect against data losses.\n                    o Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted),\n                        and covers the entire organization’s data infrastructure.\n           •    Create, maintain, and exercise a basic cyber incident response plan and associated\n                communications plan that includes response procedures for a ransomware incident.\n                   o Organizations should also ensure their incident response and communications plans\n                       include response and notification procedures for data breach incidents. Ensure the\n                       notification procedures adhere to applicable state laws.\n                           ▪ Refer to applicable state data breach laws and consult legal counsel when\n                               necessary.\n                           ▪ For breaches involving electronic health information, you may need to notify the\n                               Federal Trade Commission (FTC) or the Department of Health and Human\n                               Services, and—in some cases—the media. Refer to the FTC’s Health Breach\n                               Notification Rule and U.S. Department of Health and Human Services’ Breach\n                               Notification Rule for more information.\n                   o See CISA-Multi-State Information Sharing and Analysis Center (MS-ISAC) Joint\n                       Ransomware Guide and CISA Fact Sheet, Protecting Sensitive and Personal\n                       Information from Ransomware-Caused Data Breaches, for information on creating a\n                       ransomware response checklist and planning and responding to ransomware-caused\n                       data breaches."
+ },
+ {
+  "id": "p53",
+  "text": "Mitigating and Preventing Ransomware\n           •    Restrict Server Message Block (SMB) Protocol within the network to only access servers that\n                are necessary and remove or disable outdated versions of SMB (i.e., SMB version 1). Threat\n                actors use SMB to propagate malware across organizations.\n           •    Review the security posture of third-party vendors and those interconnected with your\n                organization. Ensure all connections between third-party vendors and outside software or\n                hardware are monitored and reviewed for suspicious activity.\n           •    Implement listing policies for applications and remote access that only allow systems to\n                execute known and permitted programs.\n           •    Open document readers in protected viewing modes to help prevent active content from\n                running.\n           •    Implement user training program and phishing exercises to raise awareness among users\n                about the risks of visiting suspicious websites, clicking on suspicious links, and opening"
+ },
+ {
+  "id": "p54",
+  "text": "TLP:WHITE                                                                                             FBI | CISA | HHS"
+ },
+ {
+  "id": "p55",
+  "text": "suspicious attachments. Reinforce the appropriate user response to phishing and\n                spearphishing emails.\n           •    Use strong passwords and avoid reusing passwords for multiple accounts. See CISA Tip\n                Choosing and Protecting Passwords and the National Institute of Standards and Technology’s\n                (NIST’s) Special Publication 800-63B: Digital Identity Guidelines for more information.\n           •    Require administrator credentials to install software.\n           •    Audit user accounts with administrative or elevated privileges and configure access controls\n                with least privilege in mind.\n           •    Install and regularly update antivirus and antimalware software on all hosts.\n           •    Only use secure networks and avoid using public Wi-Fi networks. Consider installing and\n                using a VPN.\n           •    Consider adding an email banner to messages coming from outside your organizations.\n           •    Disable hyperlinks in received emails."
+ },
+ {
+  "id": "p56",
+  "text": "Responding to Ransomware Incidents\n       If a ransomware incident occurs at your organization:\n           •    Follow your organization’s Ransomware Response Checklist (see Preparing for Ransomware\n                section).\n           •    Scan backups. If possible, scan backup data with an antivirus program to check that it is free\n                of malware. This should be performed using an isolated, trusted system to avoid exposing\n                backups to potential compromise.\n           •    Follow the notification requirements as outlined in your cyber incident response plan.\n           •    Report incidents to the FBI at a local FBI Field Office, CISA at cisa.gov/report, or the U.S.\n                Secret Service (USSS) at a USSS Field Office.\n           •    Apply incident response best practices found in the joint Cybersecurity Advisory, Technical\n                Approaches to Uncovering and Remediating Malicious Activity, developed by CISA and the\n                cybersecurity authorities of Australia, Canada, New Zealand, and the United Kingdom."
+ },
+ {
+  "id": "p57",
+  "text": "Note: FBI, CISA, and HHS strongly discourage paying ransoms as doing so does not guarantee files\n       and records will be recovered. Furthermore, payment may also embolden adversaries to target\n       additional organizations, encourage other criminal actors to engage in the distribution of ransomware,\n       and/or fund illicit activities."
+ },
+ {
+  "id": "p58",
+  "text": "REFERENCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n           •    Resource to mitigate a ransomware attack: CISA-Multi-State Information Sharing and Analysis\n                Center (MS-ISAC) Joint Ransomware Guide.\n           •    No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment."
+ },
+ {
+  "id": "p59",
+  "text": "TLP:WHITE                                                                                             FBI | CISA | HHS"
+ },
+ {
+  "id": "p60",
+  "text": "•    Ongoing Threat Alerts and Sector alerts are produced by the Health Sector Cybersecurity\n                Coordination Center (HC3) and can be found at hhs.gov/HC3\n           •    For additional best practices for Healthcare cybersecurity issues see the HHS 405(d) Aligning\n                Health Care Industry Security Approaches at 405d.hhs.gov"
+ },
+ {
+  "id": "p61",
+  "text": "REPORTING\n       The FBI is seeking any information that can be shared, to include boundary logs showing\n       communication to and from foreign IP addresses, a sample ransom note, communications with Daixin\n       Group actors, Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted file.\n       Regardless of whether you or your organization have decided to pay the ransom, the FBI, CISA, and\n       HHS urge you to promptly report ransomware incidents to a local FBI Field Office, or CISA at\n       cisa.gov/report."
+ },
+ {
+  "id": "p62",
+  "text": "ACKNOWLEDGEMENTS\n       FBI, CISA, and HHS would like to thank CrowdStrike and the Health Information Sharing and Analysis\n       Center (Health-ISAC) for their contributions to this CSA."
+ },
+ {
+  "id": "p63",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI, CISA, and\n       HHS do not endorse any commercial product or service, including any subjects of analysis. Any\n       reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by FBI, CISA, or HHS."
+ }
+]

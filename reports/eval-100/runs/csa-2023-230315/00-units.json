@@ -1,0 +1,426 @@
+[
+ {
+  "id": "p1",
+  "text": "# Threat Actors Exploit Progress Telerik Vulnerability in U.S. Government IIS Server"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-074A\n> - Date: 2023-03-15\n> - URL: https://www.ic3.gov/CSA/2023/230315.pdf\n> - PDF SHA-256: 3070a2318af6edb331d11e6147fe6383e1b03596bd30811907c65ebbd416346a (`source.pdf`, 17 pages)\n> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (66 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                               Product ID: AA23-074A\n                                                                                                                    March 15, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Threat Actors Exploit Progress Telerik\n        Vulnerability in U.S. Government IIS Server\n        SUMMARY\n        From November 2022 through early January 2023, the                 Actions to take today to mitigate\n        Cybersecurity and Infrastructure Security Agency                   malicious cyber activity:\n        (CISA) and authoring organizations identified the\n        presence of indicators of compromise (IOCs) at a                   •   Implement a patch management\n        federal civilian executive branch (FCEB) agency.                       solution to ensure compliance with\n        Analysts determined that multiple cyber threat actors,                 the latest security patches.\n        including an APT actor, were able to exploit a .NET                •   Validate output from patch\n        deserialization vulnerability (CVE-2019-18935) in                      management and vulnerability\n        Progress Telerik user interface (UI) for ASP.NET                       scanning against running services to\n        AJAX, located in the agency’s Microsoft Internet                       check for discrepancies and account\n        Information Services (IIS) web server. Successful                      for all services.\n        exploitation of this vulnerability allows for remote code\n        execution. According to Progress Software, Telerik UI              •   Limit service accounts to the\n        for ASP.NET AJAX builds before R1 2020 (2020.1.114)                    minimum permissions necessary to\n        are vulnerable to this exploit.[1]                                     run services."
+ },
+ {
+  "id": "p5",
+  "text": "CISA, the Federal Bureau of Investigation (FBI), and the Multi-State Information Sharing and Analysis\n        Center (MS-ISAC) are releasing this joint Cybersecurity Advisory (CSA) to provide IT infrastructure\n        defenders with tactics, techniques, and procedures (TTPs), IOCs, and methods to detect and protect\n        against similar exploitation."
+ },
+ {
+  "id": "p6",
+  "text": "For a downloadable copy of IOCs, see AA23-074A.stix (STIX, 6 KB)."
+ },
+ {
+  "id": "p7",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n        your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282- 0870. When\n        available, please include the information regarding the incident: date, time, and location of the incident; type of\n        activity; number of people affected; type of equipment used for the activity; the name of the submitting company\n        or organization; and a designated point of contact.\n        This document is marked TLP:CLEAR. Recipients may share this information without restriction. Information is\n        subject to standard copyright rules. For more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p8",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 12. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK tactics and techniques with corresponding detection and mitigation recommendations."
+ },
+ {
+  "id": "p9",
+  "text": "Overview\n       CISA and authoring organizations assess that, beginning as late as November 2022, threat actors\n       successfully exploited a .NET deserialization vulnerability (CVE-2019-18935) in an instance of Telerik\n       UI for ASP.NET AJAX Q2 2013 SP1 (version 2013.2.717) running on an FCEB agency’s Microsoft IIS\n       server. This exploit, which results in interactive access with the web server, enabled the threat actors\n       to successfully execute remote code on the vulnerable web server. Though the agency’s vulnerability\n       scanner had the appropriate plugin for CVE-2019-18935, it failed to detect the vulnerability due to the\n       Telerik UI software being installed in a file path it does not typically scan. This may be the case for\n       many software installations, as file paths widely vary depending on the organization and installation\n       method.\n       In addition to CVE-2019-18935, this version (2013.2.717) of Telerik UI for ASP.NET AJAX contains\n       the following known vulnerabilities: CVE-2017-11357, CVE-2017-11317, and CVE-2017-9248.\n       Analysis suggests that cyber threat actors exploited CVE-2019-18935 in conjunction with either CVE-\n       2017-11357 or CVE-2017-11317. Australian Cyber Security Centre (ACSC) Advisory 2020-004\n       assesses that exploitation of CVE-2019-18935 is only possible with knowledge of Telerik\n       RadAsyncUpload encryption keys.[2] Threat actors can obtain these keys through either prior\n       knowledge or exploitation of vulnerabilities—CVE-2017-11357 or CVE-2017-11317—present in older,\n       unpatched versions of Telerik released between 2007 and 2017. Forensic evidence is not available to\n       definitively confirm exploitation of either CVE-2017-11357 or CVE-2017-11317."
+ },
+ {
+  "id": "p10",
+  "text": "Threat Actor Activity\n       CISA and authoring organizations observed multiple cyber threat actors, including an APT actor—\n       hereafter referred to as Threat Actor 1 (TA1)—and known cybercriminal actor XE Group—hereafter\n       referred to as Threat Actor 2 (TA2)—conducting reconnaissance and scanning activities [T1595.002]\n       that correlate to the successful exploitation of CVE-2019-18935 in the agency’s IIS server running\n       Telerik UI for ASP.NET AJAX [T1190].\n       When exploiting the vulnerability, the threat actors uploaded malicious dynamic-link library (DLL) files\n       (some masqueraded as portable network graphics [PNG] files) [T1105] to the C:\\Windows\\Temp\\\n       directory. The malicious files were then executed from the C:\\Windows\\Temp\\ directory via the\n       w3wp.exe process—a legitimate process that runs on IIS servers. This process is routine for handling\n       requests sent to web servers and delivering content. The review of antivirus logs identified that some\n       DLL files were created [T1055.001] and detected as early as August 2021.\n       CISA and authoring organizations confirmed that some malicious files dropped on the IIS server are\n       consistent with a previously reported file naming convention that threat actors commonly use when\n       exploiting CVE-2019-18935.[3] The threat actors name the files in the Unix Epoch time format and\n       use the date and time as recorded on the target system. The file naming convention follows the"
+ },
+ {
+  "id": "p11",
+  "text": "pattern [10 digits].[7 digits].dll (e.g., a file created on October 31, 2022, could be\n       1667203023.5321205.dll).\n       The names of some of the PNG files were misleading. For example, file 1596835329.5015914.png,\n       which decodes to August 7, 2020, 21:22:09 UTC, first appeared on October 13, 2022, but the file\n       system shows a creation date of August 7, 2020. The uncorrelated Unix Epoch time format may\n       indicate that the threat actors used the timestomping [T1070.006] technique. This file naming\n       convention is a primary IOC used by the threat actors.\n       In many cases, malicious artifacts were not available for analysis because the threat actors’\n       malware—that looks for and removes files with the .dll file extension—removed files [T1070.004] from\n       the C:\\Windows\\Temp\\ directory. Through full packet data capture analysis and reverse engineering\n       of malicious DLL files, no indications of additional malicious activity or sub-processes were found\n       executed by the w3wp.exe process. CISA and authoring organizations observed error messages\n       being sent to the threat actors’ command and control (C2) server when permission restraints\n       prevented the service account from executing the malicious DLLs and writing new files.\n       Network activity analysis was consistent with the artifacts provided for review. Analysts did not\n       observe evidence of privilege escalation or lateral movement.\n       Threat Actor 1\n       CISA and authoring organizations observed TA1 exploiting CVE-2019-18935 for system enumeration\n       beginning in August 2022. The vulnerability allows a threat actor to upload malicious DLLs on a target\n       system and execute them by abusing a legitimate process, e.g., the w3wp.exe process. In this\n       instance, TA1 was able to upload malicious DLL files to the C:\\Windows\\Temp\\ directory and then\n       achieve remote code execution, executing the DLL files via the w3wp.exe process.\n       At least nine DLL files used for discovery [TA0007], C2 [TA0011], and defense evasion [TA0005]. All\n       of the analyzed samples have network parameters, including host name, domain name, Domain\n       Name System (DNS) server Internet Protocol (IP) address and machine name, Network Basic\n       Input/Output System (NetBIOS) ID, adapter information, IP address, subnet, gateway IP, and\n       Dynamic Host Configuration Protocol (DHCP) server [T1016]. All analyzed samples communicate this\n       collected data to a C2 server at IP address 137.184.130[.]162 or 45.77.212[.]12. The C2 traffic\n       to these IP addresses uses a non-application layer protocol [T1095] by leveraging Transmission\n       Control Protocol (TCP) clear text (i.e., unencrypted) over port 443. Analysis also identified that:\n                ●   Some of the analyzed samples can load additional libraries; enumerate the system,\n                    processes, files, directories [T1083]; and write files.\n                ●   Other analyzed samples can delete DLL files ending with the .dll extension in the\n                    C:\\Windows\\Temp\\ directory on the server. TA1 may use this capability to hide additional\n                    malicious activity on the network.\n       CISA, in coordination with the authoring organizations, identified and observed the following threat\n       actor IPs and timestamps associated with this activity:\n                                       Table 1: Observed TA1 IPs and Timestamps"
+ },
+ {
+  "id": "p12",
+  "text": "IP Address                         First Identified               Last Identified"
+ },
+ {
+  "id": "p13",
+  "text": "137.184.130[.]162                        09/26/2022                    10/08/2022"
+ },
+ {
+  "id": "p14",
+  "text": "45.77.212[.]12                        10/07/2022                    11/25/2022"
+ },
+ {
+  "id": "p15",
+  "text": "104.225.129[.]102                        10/10/2022                    11/16/2022"
+ },
+ {
+  "id": "p16",
+  "text": "149.28.85[.]24                        10/12/2022                    10/17/2022"
+ },
+ {
+  "id": "p17",
+  "text": "185.186.245[.]72                        10/18/2022                    10/18/2022"
+ },
+ {
+  "id": "p18",
+  "text": "193.8.172[.]113                        09/25/2022                    09/25/2022"
+ },
+ {
+  "id": "p19",
+  "text": "193.8.172[.]13                        09/25/2022                    10/17/2022"
+ },
+ {
+  "id": "p20",
+  "text": "216.120.201[.]12                        10/13/2022                    11/10/2022"
+ },
+ {
+  "id": "p21",
+  "text": "5.34.178[.]246                        09/25/2022                    09/25/2022"
+ },
+ {
+  "id": "p22",
+  "text": "79.133.124[.]242                        09/25/2022                    09/25/2022"
+ },
+ {
+  "id": "p23",
+  "text": "92.38.169[.]193                        09/27/2022                    10/08/2022"
+ },
+ {
+  "id": "p24",
+  "text": "92.38.176[.]109                        09/12/2022                    09/25/2022"
+ },
+ {
+  "id": "p25",
+  "text": "92.38.176[.]130                        09/25/2022                    10/07/2022"
+ },
+ {
+  "id": "p26",
+  "text": "Threat Actor 2\n       TA2—identified as likely the cybercriminal actor XE Group—often includes xe[word] nomenclature in\n       original filenames and registered domains. Volexity lists this naming convention and other observed\n       TTPs as common for this threat actor group.[4]\n       As early as August 2021, CISA and authoring organizations observed TA2 delivering malicious PNG\n       files that, following analysis, were masqueraded DLL files to avoid detection [T1036.005]. Similar to\n       TA1, TA2 exploited CVE-2019-18935 and was able to upload at least three unique DLL files into the\n       C:\\Windows\\Temp\\ directory that TA2 executed via the w3wp.exe process. These DLL files drop and\n       execute reverse (remote) shell utilities for unencrypted communication with C2 IP addresses\n       associated with the malicious domains listed in Table 2. Note: At the time of analysis, the domains\n       resolved to the listed IP addresses.\n                                            Table 2: TA2 IPs and Resolving Domains"
+ },
+ {
+  "id": "p27",
+  "text": "IP Address                                    Resolving Domains"
+ },
+ {
+  "id": "p28",
+  "text": "xework[.]com\n                           184.168.104[.]171                                         xegroups[.]com\n                                                                                       hivnd[.]com"
+ },
+ {
+  "id": "p29",
+  "text": "144.96.103[.]245                                         xework[.]com"
+ },
+ {
+  "id": "p30",
+  "text": "Analysis of DLL files determined the files listed in Table 3 were dropped, decoded, and attempted to\n       connect to the respective malicious domains. Embedded payloads dropped by the DLL files were\n       observed using the command line utility certutil[.]exe and writing new files as xesvrs[.]exe to\n       invoke reverse shell utilities execution.\n                                               Table 3: Identified Malicious Files"
+ },
+ {
+  "id": "p31",
+  "text": "Filename                                              Description"
+ },
+ {
+  "id": "p32",
+  "text": "XEReverseShell.exe               DLL files (masqueraded as PNG files) located in the\n                                         C:\\Windows\\Temp\\ directory contain a base64 encoded file with the\n                                         internal name XEReverseShell.exe, which was dropped into the\n                                         same directory as sortcombat.exe.\n                                         When executed, the reverse shell utility attempts to connect to\n                                         xework[.]com or xegroups[.]com to obtain the IP address of the\n                                         C2 server and port number for unencrypted communication.\n                                         Note: It is likely the threat actors changed the file extension from .dll\n                                         to .png to avoid detection."
+ },
+ {
+  "id": "p33",
+  "text": "Multi-OS_ReverseShell.exe        Reverse shell utility decoded from the base64 encoded file\n                                         xesmartshell.tmp.\n                                         When executed, it will attempt to connect to xegroups[.]com or\n                                         xework[.]com to obtain the IP address of the C2 server and port\n                                         number for unencrypted communication."
+ },
+ {
+  "id": "p34",
+  "text": "SortVistaCompat                  Base64 encoded payload dropped from Multi-\n                                         OS_ReverseShell.exe. This file receives the C2 IP and port from\n                                         xework[.]com."
+ },
+ {
+  "id": "p35",
+  "text": "When the TA2 malware is executed a DLL file drops an executable (XEReverseShell.exe) that\n       attempts to pull a C2 IP address and port number from xework[.]com or xegroups[.]com.\n                •   If no port or IP address is found, the program will exit.\n                •   If a port and IP address are found, the program will establish a listener and wait for further\n                    commands."
+ },
+ {
+  "id": "p36",
+  "text": "If communication is established between the TA2 malware and the C2:\n              • The malware will identify the operating system (Windows or Linux) and create the\n                 appropriate shell (cmd or bash), sending system information back to the C2.\n              • The C2 server may send the command xesetshell, causing the malware to connect to\n                 the server and download a file called small.txt—a base64-encoded webshell that the\n                 malware decodes and places in the C:\\Windows\\Temp\\ directory.\n              • The C2 server may send the command xequit, causing the malware to sleep for a period\n                 of time determined by the threat actors."
+ },
+ {
+  "id": "p37",
+  "text": "The two files xesmartshell.tmp and SortVistaCompat have the capability to drop an Active Server\n       Pages (ASPX) webshell—a base64 encoded text file small.txt decoded [T1140] as small.aspx\n       [T1505.003]—to enumerate drives; to send, receive, and delete files; and to execute incoming\n       commands. The webshell contains an interface for easily browsing files, directories, or drives on the\n       system, and allows the user to upload or download files to any directory. No webshells were observed\n       to be dropped on the target system, likely due to the abused service account having restrictive write\n       permissions.\n       For more information on the DLLs, binaries, and webshell, see CISA MAR-10413062-1.v1 Telerik\n       Vulnerability in U.S. Government IIS Server."
+ },
+ {
+  "id": "p38",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Table 4 for all referenced threat actor tactics and techniques in this advisory. For assistance with\n       mapping to the MITRE ATT&CK framework, see CISA’s Decider Tool and Best Practices for MITRE\n       ATT&CK Mapping Guide.\n                                       Table 4: Identified ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p39",
+  "text": "Reconnaissance"
+ },
+ {
+  "id": "p40",
+  "text": "Technique Title                     ID                                Use"
+ },
+ {
+  "id": "p41",
+  "text": "Active Scanning: Vulnerability           T1595.002      Actors were observed conducting active scanning\n        Scanning                                                activity for vulnerable devices and specific ports."
+ },
+ {
+  "id": "p42",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p43",
+  "text": "Technique Title                     ID                                Use"
+ },
+ {
+  "id": "p44",
+  "text": "Exploit Public-Facing Application        T1190          Actors exploited a known vulnerability in the\n                                                                Microsoft IIS server."
+ },
+ {
+  "id": "p45",
+  "text": "Persistence"
+ },
+ {
+  "id": "p46",
+  "text": "Technique Title             ID                                Use"
+ },
+ {
+  "id": "p47",
+  "text": "Server Software Component:         T1505.003   TA2’s malware dropped an ASPX webshell to\n        Web Shell                                      enumerate drives; send, receive, and delete files;\n                                                       and execute commands."
+ },
+ {
+  "id": "p48",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p49",
+  "text": "Technique Title             ID                                Use"
+ },
+ {
+  "id": "p50",
+  "text": "Masquerading: Match Legitimate     T1036.005   Actors leveraged the legitimate w3wp.exe process\n        Name or Location                               on the IIS server to write malicious DLL files and\n                                                       evade detection."
+ },
+ {
+  "id": "p51",
+  "text": "Process Injection: DLL Injection   T1055.001   Actors loaded newly created DLLs into a running\n                                                       w3wp.exe process."
+ },
+ {
+  "id": "p52",
+  "text": "Indicator Removal: File Deletion   T1070.004   TA1’s malware deleted files with \".dll\" from the\n                                                       C:\\Windows\\Temp\\ directory, which may indicate\n                                                       hidden malicious activity on the network."
+ },
+ {
+  "id": "p53",
+  "text": "Indicator Removal: Timestomp       T1070.006   Actors modified file time attributes to insert\n                                                       misleading creation dates."
+ },
+ {
+  "id": "p54",
+  "text": "Decode Files                       T1140       The base64 encoded text file small.txt decoded\n                                                       as the webshell small.aspx."
+ },
+ {
+  "id": "p55",
+  "text": "Discovery"
+ },
+ {
+  "id": "p56",
+  "text": "Technique Title             ID                                Use"
+ },
+ {
+  "id": "p57",
+  "text": "File and Directory Discovery       T1083       Actors enumerated the IIS server via OS\n                                                       fingerprinting, executed Windows processes, and\n                                                       collected network information.\n                                                       TA1’s malware enumerates systems, processes,\n                                                       files, and directories."
+ },
+ {
+  "id": "p58",
+  "text": "System Network Configuration        T1016         TA1’s malware gathers network parameters,\n        Discovery                                         including host name, domain name, DNS servers,\n                                                          NetBIOS ID, adapter information, IP address,\n                                                          subnet, gateway IP, and DHCP server."
+ },
+ {
+  "id": "p59",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p60",
+  "text": "Technique Title                ID                               Use"
+ },
+ {
+  "id": "p61",
+  "text": "Ingress Tool Transfer               T1105         TA1 and TA2 uploaded malicious DLL files (some\n                                                          masqueraded as PNG files) to the\n                                                          C:\\Windows\\Temp\\ directory."
+ },
+ {
+  "id": "p62",
+  "text": "Non-Application Layer Protocol      T1095         Actors used a non-application layer protocol (TCP)\n                                                          for w3wp.exe process exploitation, C2, and\n                                                          enumeration on the IIS server."
+ },
+ {
+  "id": "p63",
+  "text": "DETECTION METHODS\n       CISA and authoring organizations recommend that organizations review the steps listed in this\n       section and Table 4: Identified ATT&CK Techniques for Enterprise to detect similar activity on IIS\n       servers."
+ },
+ {
+  "id": "p64",
+  "text": "YARA Rule\n       CISA developed the following YARA rule from the base proof-of-concept code for CVE-2019-\n       18935.[5] Note: Authoring organizations do not guarantee all malicious DLL files (if identified) will use\n       the same code provided in this YARA rule.\n       rule CISA_10424018_01 {\n             meta:\n                   Author = \"CISA Code & Media Analysis\"\n                   Incident = \"10424018\"\n                   Date = \"2023-02-07\"\n                   Last_Modified = \"20230216_1500\"\n                   Actor = \"n/a\"\n                   Family = \"n/a\"\n                   Capabilities = \"n/a\"\n                   Malware_Type = \"n/a\"\n                   Tool_Type = \"n/a\"\n                   Description = \"Detects open-source exploit samples\"\n                   SHA256 = \"n/a\"\n             strings:\n                   $s0 = { 3D 20 7B 20 22 63 6D 22 2C 20 22 64 2E 65 22 2C }"
+ },
+ {
+  "id": "p65",
+  "text": "$s1 = { 20 22 78 22 2C 20 22 65 22 20 7D 3B }\n                      $s2 = { 52 65 76 65 72 73 65 53 68 65 6C 6C 28 29 }\n                      $s3 = { 54 65 6C 65 72 69 6B 20 55 49 }\n                      $s4 = { 66 69 6C 65 6E 61 6D 65 5F 6C 6F 63 61 6C }\n                      $s5 = { 66 69 6C 65 6E 61 6D 65 5F 72 65 6D 6F 74 65 }\n                      $s6 = { 41 55 43 69 70 68 65 72 2E 65 6E 63 72 79 70 74 }\n                      $s7 = { 31 32 31 66 61 65 37 38 31 36 35 62 61 33 64 34 }\n                      $s8 = { 43 6F 6E 6E 65 63 74 53 74 61 67 69 6E 67 53 65 72 76 65 72 28\n                      29 }\n                      $s9 = { 53 74 61 67 69 6E 67 53 65 72 76 65 72 53 6F 63 6B 65 74 }\n                      $s10 = { 2A 62 75 66 66 65 72 20 3D 20 28 75 6E 73 69 67 6E 65 }\n                      $s11 = { 28 2A 29 28 29 29 62 75 66 66 65 72 3B 0A 20 20 20 20 66 75\n                      6E 63 28 29 3B }\n                      $s12 = { 75 70 6C 6F 61 64 28 70 61 79 6C 6F 61 64 28 54 65 6D 70 54\n                      61 72 67 65 74 }\n                      $s13 = { 36 32 36 31 36 66 33 37 37 35 36 66 32 66 }\n                condition:\n                      ($s0 and $s1 and $s2) or ($s3 and $s4 and $s5 and $s6 and $s7) or ($s8\n                      and $s9 and $s10 and $s11) or ($s12 and $s13)\n       }"
+ },
+ {
+  "id": "p66",
+  "text": "Log Collection, Retention, and Analysis\n       CISA, FBI, and MS-ISAC recommend that organizations utilize a centralized log collection and\n       monitoring capability, as well as implement or increase logging and forensic data retention. Longer\n       retention policies improve the availability of data for forensic analysis and aid thorough identification\n       of incident scope.\n           •    Centralized log collection and monitoring allows for the discovery of webshell and other\n                exploit activity. For example, organizations should monitor for external connections made from\n                the IIS server to unknown external IP addresses. Logging may also be available—if enabled at\n                the router or firewall—for any outbound connections initiated with PowerShell.\n           •    Access- and security-focused firewall (e.g., Web Application Firewall [WAF]) logs can\n                be collected and stored for use in both detection and forensic analysis activities. Organizations\n                should use a WAF to guard against publicly known web application vulnerabilities, in addition\n                to guarding against common web application attacks."
+ },
+ {
+  "id": "p67",
+  "text": "Creation of Malicious DLLs\n       CISA, FBI, and MS-ISAC recommend that organizations use process monitoring—which provides\n       visibility into file system and application process activity—to detect suspicious executable files running\n       from the C:\\Windows\\Temp\\ directory. Process monitoring via Windows Event Code 4688 will detect\n       the legitimate w3wp.exe process running suspicious DLL files and other anomalous child processes.\n       Note: Enabling this event may inundate security event logging. Use centralized log collection to\n       prevent log rollover, increase log retention and archiving, and/or enable command line event logging.\n       Forensic analysis commonly identified the threat actors taking the following steps:"
+ },
+ {
+  "id": "p68",
+  "text": "1. Create one of the DLL files (C:\\Windows\\Temp\\1665890187.8690152.dll) by process\n              w3wp.exe PID 6484.\n           2. Load the newly created DLL into a currently running IIS process, w3wp.exe PID 6484.\n           3. Make a TCP connection using w3wp.exe PID 6484 to 45.77.212[.]12 over port 443.\n           4. Invoke C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute\n              payload."
+ },
+ {
+  "id": "p69",
+  "text": "Steps 1 and 2 occur every time a malicious DLL file is created. In some cases, an ASP .NET temp file\n       was created, but this may have indicated benign IIS server activity. Note: The Process ID (PID) used\n       in this example is unique to this investigation and is not universal. IP address 45.77.212[.]12\n       correlates to TA1, but the pattern can be used as general practice to identify similar activity."
+ },
+ {
+  "id": "p70",
+  "text": "Additional Searching for IIS Servers\n       The following information was derived from artifact analysis and is provided to equip IT infrastructure\n       defenders searching for similar activity on an IIS server. Several artifacts can be referenced to assist\n       in determining if CVE-2019-18935 has been successfully exploited.\n       File Type: DLL\n       Location: - %SystemDrive%\\Windows\\Temp\\\n       When this CVE is exploited, it uploads malicious DLL files to the C:\\Windows\\Temp\\ directory. The\n       malicious DLL file naming convention translates to the exact time the file was uploaded to the server.\n       The time is represented in a series of digits, known as Unix Epoch time. The files observed during this\n       investigation contained two sets of digits separated by a period (.) before the DLL extension (.dll).\n       Example: 1667206973.2270932.dll\n       Nearly all recovered files contain a series of 10 digits to the left of the period (.) and seven digits to\n       the right. However, one file contained only five digits in the second set, which should be taken into\n       consideration when writing regex patterns to search for the existence of these files. Example Regex:\n       \\d{10}\\.\\d{1,8}\\.dll\n       These numbers can be copied and translated from digits into readable language with the month, day,\n       year, hour, minute, and seconds displayed.\n       Log Type: IIS\n       Location: - %SystemDrive%\\inetpub\\logs\\LogFiles\n       When investigating IIS logs, specific fields were searched for and captured during the time of each\n       connection.\n       If the Unix Epoch time signature has been translated from a DLL filename, specific logs can be\n       searched based on that time. However, if the Unix Epoch time signature has not been translated, the\n       following will still work, but may take longer for the query to run.\n       The four most important fields to identify this traffic are noted in the following table. These\n       descriptions are sourced directly from Microsoft.[6]"
+ },
+ {
+  "id": "p71",
+  "text": "Table 5: Four Fields Searched in IIS Logs"
+ },
+ {
+  "id": "p72",
+  "text": "General Name                  Field Name                                 Description"
+ },
+ {
+  "id": "p73",
+  "text": "Method                    cs-method                 Requested action; for example, a GET method"
+ },
+ {
+  "id": "p74",
+  "text": "URI Stem                  cs-uri-stem               Universal Resource Identifier (URI), or target, of the\n                                                            action"
+ },
+ {
+  "id": "p75",
+  "text": "URI Query                 cs-uri-query              The query, if any, that the client was trying to perform;\n                                                            A URI query is necessary only for dynamic pages."
+ },
+ {
+  "id": "p76",
+  "text": "Protocol Status           sc-status                 Hypertext Transfer Protocol (HTTP) or File Transfer\n                                                            Protocol (FTP) status code"
+ },
+ {
+  "id": "p77",
+  "text": "Note: Depending on how logs are collected and stored, the field names may not be an exact match;\n       this should be taken into consideration when constructing queries.\n       When ingesting logs into security information and event management (SIEM), the final field names\n       did not use a hyphen (-) but used an underscore (_).\n       Example: cs_method instead of cs-method\n       Artifacts:\n                                  Table 6: Information Contained in Two Observed IIS Events"
+ },
+ {
+  "id": "p78",
+  "text": "Field Name                                                  Artifact"
+ },
+ {
+  "id": "p79",
+  "text": "cs-method                                                  POST"
+ },
+ {
+  "id": "p80",
+  "text": "cs-uri-stem                                                /Telerik.Web.UI.WebResource.axd"
+ },
+ {
+  "id": "p81",
+  "text": "cs-uri-query                                               type=rau"
+ },
+ {
+  "id": "p82",
+  "text": "sc-status                                                  200 and 302"
+ },
+ {
+  "id": "p83",
+  "text": "When reviewing logs, two IIS events were observed with the same timestamp each time this CVE-\n       2019-18935 was exploited. Both events contained the same information in the cs-method, cs-uri-\n       stem, and cs-uri-query. One event had a sc-status of 200 and the other had a sc-status of 302.\n       Log Type: Windows Event Application Logs\n       Location: -%SystemDrive%\\Windows\\System32\\winevt\\logs\\Application.evtx\n       Kroll Artifact Parser and Extractor (KAPE), a forensic artifact collector and parser, was used to extract\n       the Windows event logs from a backup image of the compromised IIS server. All field names refer to"
+ },
+ {
+  "id": "p84",
+  "text": "the labels provided via KAPE exports. The strings are of value and can be used to locate other\n       artifacts if different tools are used. Note: The payload data in the following table has been shortened\n       to only necessary strings to obscure and protect victim information.\n                                               Table 7: Example Payload Data"
+ },
+ {
+  "id": "p85",
+  "text": "Event\n                                                               Payload\n         ID"
+ },
+ {
+  "id": "p86",
+  "text": "1309        3005, An unhandled exception has\n                    occurred[*redacted*]w3wp.exe[*redacted*]InvalidCastException, Unable to cast object of type\n                    'System.Configuration.Install.AssemblyInstaller' to type\n                    'Telerik.Web.UI.IAsyncUploadConfiguration'.\\n at\n                    Telerik.Web.UI.AsyncUploadHandler.GetConfiguration(String rawData)\\n at\n                    Telerik.Web.UI.AsyncUploadHandler.EnsureSetup()\\n at\n                    Telerik.Web.UI.AsyncUploadHandler.ProcessRequest(HttpContext context)\\n at\n                    Telerik.Web.UI.HandlerRouter.ProcessHandler(String handlerKey, HttpContext context)\\n at\n                    Telerik.Web.UI.WebResource.ProcessRequest(HttpContext context)\\n at\n                    System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionSte\n                    p.Execute()\\n at System.Web.HttpApplication.ExecuteStepImpl(IExecutionStep step)\\n at\n                    System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean&amp;\n                    completedSynchronously)\\n\\n, [*redacted*]/Telerik.Web.UI.WebResource.axd?type=rau,\n                    /Telerik.Web.UI.WebResource.axd, [*redacted*], False, [*redacted*], 15, [*redacted*], False, at\n                    Telerik.Web.UI.AsyncUploadHandler.GetConfiguration(String rawData)\\n at\n                    Telerik.Web.UI.AsyncUploadHandler.EnsureSetup()\\n at\n                    Telerik.Web.UI.AsyncUploadHandler.ProcessRequest(HttpContext context)\\n at\n                    Telerik.Web.UI.HandlerRouter.ProcessHandler(String handlerKey, HttpContext context)\\n at\n                    Telerik.Web.UI.WebResource.ProcessRequest(HttpContext context)\\n at\n                    System.Web.HttpApplication.CallHandlerExecutionStep.System.Web.HttpApplication.IExecutionSte\n                    p.Execute()\\n at System.Web.HttpApplication.ExecuteStepImpl(IExecutionStep step)\\n at\n                    System.Web.HttpApplication.ExecuteStep(IExecutionStep step, Boolean&amp;\n                    completedSynchronously)\\n\",\"Binary\":\"\"}}"
+ },
+ {
+  "id": "p87",
+  "text": "Authoring organizations recommend looking for the following key strings in the payload:\n                ●    w3wp.exe: This is the parent process that executes the code inside the malicious DLLs.\n                ●    System.Configuration.Install.AssemblyInstaller: Figure 1 is from the creator’s\n                     GitHub repo,[7] where the string can be observed in the code. As presented by Bishop Fox\n                     and proven during authoring organizations’ investigation of IIS server logs, an exception\n                     does not mean that the exploit failed, but more likely that it executed successfully.[3]"
+ },
+ {
+  "id": "p88",
+  "text": "Figure 1: Threat Actor Assembly Installer"
+ },
+ {
+  "id": "p89",
+  "text": "If a Werfault crash report was written, Windows event application logs may contain evidence of this—\n       even if the DLLs have been removed from the system as part of a cleanup effort by the threat actors.\n                                           Table 8: Example Threat Actor Cleanup"
+ },
+ {
+  "id": "p90",
+  "text": "EventID                    ExecutableInfo             MapDescription                Payload"
+ },
+ {
+  "id": "p91",
+  "text": "1000           w3wp.exe |1664175639.65719.dll          Application Error   {\"EventData\":{\"Data\":\"w3wp.e\n                       |c:\\windows\\system32\\inetsrv\\w3wp.exe                       xe, 8.5.9600.16384,\n                       |C:\\Windows\\Temp\\1664175639.65719.d                         5215df96,\n                       ll                                                          1664175639.65719.dll,\n                                                                                   0.0.0.0, 63314d94, c00000fd,\n                                                                                   00000000000016f8, 1708,\n                                                                                   01d8d0a5f84af443,\n                                                                                   c:\\\\windows\\\\system32\\\\inetsr\n                                                                                   v\\\\w3wp.exe,\n                                                                                   C:\\\\Windows\\\\Temp\\\\1664175\n                                                                                   639.65719.dll, eed89eeb-\n                                                                                   3d68-11ed-817c-\n                                                                                   005056990ed7\",\"Binary\":\"\"}}"
+ },
+ {
+  "id": "p92",
+  "text": "1001           w3wp.exe |1664175639.65719.dll          Application Crash   {\"EventData\":{\"Data\":\"0,\n                       |C:\\ProgramData\\Microsoft\\Windows\\WE                        APPCRASH, Not available, 0,\n                       R\\ReportQueue\\AppCrash_w3wp.exe                             w3wp.exe, 8.5.9600.16384,\n                       |C:\\ProgramData\\Microsoft\\Windows\\WE                        5215df96,\n                       R\\ReportQueue\\AppCrash_w3wp.exe                             1664175639.65719.dll,\n                       |C:\\ProgramData\\Microsoft\\Windows\\WE                        0.0.0.0, 63314d94, c00000fd,\n                       R\\ReportQueue\\AppCrash_w3wp.exe                             00000000000016f8,\n                                                                                   \\nC:\\\\Windows\\\\Temp\\\\WERE\n                                                                                   3F6.tmp.appcompat.txt\\nC:\\\\\n                                                                                   Windows\\\\Temp\\\\WERE639.t\n                                                                                   mp.WERInternalMetadata.xml\n                                                                                   \\nC:\\\\ProgramData\\\\Microsoft\\\n                                                                                   \\Windows\\\\WER\\\\ReportQueu\n                                                                                   e\\\\AppCrash_w3wp.exe_d538\n                                                                                   da447d49df5862c37684118d\n                                                                                   0c25c2eff_9e3fd63b_cab_0c3\n                                                                                   ee656\\\\memory.hdmp\\nC:\\\\Pr\n                                                                                   ogramData\\\\Microsoft\\\\Windo\n                                                                                   ws\\\\WER\\\\ReportQueue\\\\App\n                                                                                   Crash_w3wp.exe_d538da447\n                                                                                   d49df5862c37684118d0c25c\n                                                                                   2eff_9e3fd63b_cab_0c3ee65\n                                                                                   6\\\\triagedump.dmp,\n                                                                                   C:\\\\ProgramData\\\\Microsoft\\\\\n                                                                                   Windows\\\\WER\\\\ReportQueu\n                                                                                   e\\\\AppCrash_w3wp.exe_d538"
+ },
+ {
+  "id": "p93",
+  "text": "da447d49df5862c37684118d\n                                                                                    0c25c2eff_9e3fd63b_cab_0c3\n                                                                                    ee656, 0, eed89eeb-3d68-\n                                                                                    11ed-817c-005056990ed7,\n                                                                                    4\",\"Binary\":\"\"}}"
+ },
+ {
+  "id": "p94",
+  "text": "The EventID field maps to Windows EventIDs for an easy filter. Users can leverage the Windows\n       EventIDs to find malicious DLL with the Unix Epoch time-based name inside the C:\\Windows\\Temp\\\n       directory.\n       Depending how log analysis is performed, various filters can be determined. However, if regex is\n       available, the example listed in Table 8 above can be reused to match the Unix Epoch timestamp\n       convention to assist in filtering.\n       Additional Analysis\n       When evidence of malicious DLLs is found, reverse engineering will need to be conducted to fully\n       understand what actions occur as the malicious files could do nearly anything. Leveraging Windows\n       security event logs, as well as Windows PowerShell logs, may provide insight into what actions the\n       DLLs are taking. CISA and authoring organizations recommend the following process:\n           1. Convert any discovered malicious DLL timestamps to readable format.\n           2. Export the Windows security event and PowerShell logs from the device.\n                      ○ Default path: %SystemDrive%\\Windows\\System32\\winevt\\logs\\Windows\n                         PowerShell\n                      ○ Default path: %SystemDrive%\\Windows\\System32\\winevt\\logs\\Security.evtx\n           3. Filter based on identified timestamps.\n           4. Search for new processes created via w3wp.exe in Windows security event logs (e.g.,\n              Windows EventID 4688 New Process created).\n           5. Search for new PIDs from identified events. Investigate to determine if they spawned any\n              other processes.\n                      ○ Example: CMD.EXE launching PowerShell or running other commands such as\n                         nslookup or netstat. Note: This is not an exhaustive list.\n           6. Search for EventID 600 in PowerShell logs.\n       Trellix XDR Platform Searching\n       If Trellix XDR Platform is deployed in an environment and a standard HX triage audit is completed in\n       a timely manner of the suspected use of CVE-2019-18935, an organization can search for file write\n       events from known web processes. This will identify the executables written by the web server\n       process. CISA and authoring organizations specifically recommend searching for the following field\n       value pair:\n                                          Table 9: Field Value Pair for Searching"
+ },
+ {
+  "id": "p95",
+  "text": "Field                                       Value Begins With"
+ },
+ {
+  "id": "p96",
+  "text": "TextAtLowestOffset                                     MZ"
+ },
+ {
+  "id": "p97",
+  "text": "MITIGATIONS\n       Note: These mitigations align with the Cross-Sector Cybersecurity Performance Goals (CPGs)\n       developed by CISA and the National Institute of Standards and Technology (NIST). The CPGs\n       provide a minimum set of practices and protections that CISA and NIST recommend all organizations\n       implement. CISA and NIST based the CPGs on existing cybersecurity frameworks and guidance to\n       protect against the most common and impactful threats, tactics, techniques, and procedures. Visit\n       CISA’s Cross-Sector Cybersecurity Performance Goals for more information on the CPGs, including\n       additional recommended baseline protections."
+ },
+ {
+  "id": "p98",
+  "text": "Manage Vulnerabilities and Configurations\n           •    Upgrade all instances of Telerik UI ASP.NET AJAX to the latest version after\n                appropriate testing. Keep all software up to date and prioritize patching to known exploited\n                vulnerabilities (KEVs). [CPG 5.1]\n           •    Prioritize remediation of vulnerabilities on internet-facing systems. For additional\n                guidance, see CISA Insights - Remediate Vulnerabilities for Internet-Accessible Systems.\n                [CPG 5.1]\n           •    Implement a patch management solution to ensure compliance with the latest security\n                patches. A patch management solution that inventories all software running in addition to\n                vulnerability scanning is recommended.\n           •    Ensure vulnerability scanners are configured to scan a comprehensive scope of\n                devices and locations. For example, as noted in the Technical Details section, the victim\n                organization had the appropriate plugin for CVE-2019-18935, but the vulnerability went\n                undetected due to the Telerik UI software being installed in a file path not typically scanned.\n                To identify unpatched instances of software vulnerabilities, organizations using vulnerability\n                scanners should be aware that all installations may not be considered “typical” and may\n                require full file scans of web applications.\n                    o Note: Vulnerability scanners may have limitations in detecting vulnerabilities, such as\n                        only being able to identify Windows Installer-installed applications, which was the case\n                        with this agency’s vulnerability scanner. The Telerik UI software was installed via a\n                        continuous integration (CI) and continuous delivery (CD) pipeline rather than the\n                        Windows Installer. This highlights the importance of using a comprehensive approach\n                        for vulnerability scanning that considers all potential installation methods and file paths.\n           •    Validate output from patch management and vulnerability scanning solutions against\n                running services to check for discrepancies and account for all services."
+ },
+ {
+  "id": "p99",
+  "text": "Segment Networks Based on Function\n           •    Implement network segmentation to separate network segments based on role and\n                functionality. Proper network segmentation significantly reduces the ability for threat actor\n                lateral movement by controlling traffic flows between—and access to—various subnetworks."
+ },
+ {
+  "id": "p100",
+  "text": "(See CISA’s Layering Network Security Through Segmentation infographic and the National\n                Security Agency’s Segment Networks and Deploy Application-Aware Defenses.) [CPG 8.1]\n           •    Isolate similar systems and implement micro-segmentation with granular access and\n                policy restrictions to modernize cybersecurity and adopt zero trust principles for both\n                network perimeter and internal devices. Logical and physical segmentation are critical to\n                limiting and preventing lateral movement, privilege escalation, and exfiltration. Utilize access\n                control lists (ACLs), hardened firewalls, and network monitoring devices to regulate, monitor,\n                and audit cross-segment access and data transfers."
+ },
+ {
+  "id": "p101",
+  "text": "Other Best Practice Mitigation Recommendations\n           •    Implement phishing-resistant multifactor authentication (MFA) for as many services\n                possible—particularly for webmail, virtual private networks (VPNs), accounts that access\n                critical systems, and privileged accounts that manage backups.\n                     o MFA can still be leveraged for secure access using a jump server—an asset placed\n                         between the external and internal networks that serves as an intermediary for\n                         access—to facilitate connections if assets do not have the capability to support MFA\n                         implementation.\n                     o For additional guidance on secure MFA configurations, visit cisa.gov/mfa. [CPG 1.3]\n           •    Monitor and analyze activity logs generated from Microsoft IIS and remote PowerShell.\n                Collect access and security focused logs (IDS/IDPS, firewall, DLP, VPN) and ensure logs are\n                securely stored for a specified duration informed by risk or pertinent regulatory guidance.\n                [CPG 3.1, 3.2]\n                     o Evaluate user permissions and maintain separate user accounts for all actions and\n                         activities not associated with the administrator role, e.g., for business email, web\n                         browsing, etc. All privileges should be reevaluated on a recurring basis to validate\n                         continued need for a given set of permissions. [CPG 1.5]\n           •    Limit service accounts to the minimum permissions necessary to run services. CISA\n                observed numerous error messages in network logs indicative of failed attempts to write files\n                to additional directories or move laterally.\n           •    Maintain a robust asset management policy through comprehensive documentation of\n                assets, tracking current version information to maintain awareness of outdated software, and\n                mapping assets to business and critical functions.\n                     o Determine the need and functionality of assets that require public internet exposure.\n                         [CPG 2.3]"
+ },
+ {
+  "id": "p102",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, CISA, FBI, and MS-ISAC recommend exercising, testing, and\n       validating your organization's security program against the threat behaviors mapped to the MITRE\n       ATT&CK for Enterprise framework in this advisory. CISA and co-sealers recommend testing your\n       existing security controls inventory to assess how they perform against the ATT&CK techniques\n       described in this advisory.\n       To get started:"
+ },
+ {
+  "id": "p103",
+  "text": "1. Select an ATT&CK technique described in this advisory (see Table 4).\n           2. Align your security technologies against the selected technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program—including people, processes, and technologies—based on the\n              data generated by this process.\n       CISA, FBI, and MS-ISAC recommend continually testing your security program, at scale, in a\n       production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p104",
+  "text": "RESOURCES\n       UNIX Timestamp Converter"
+ },
+ {
+  "id": "p105",
+  "text": "REFERENCES\n       [1] Telerik: Exploiting .NET JavaScriptSerializer Deserialization (CVE-2019-18935)\n       [2] ACSC Advisory 2020-004\n       [3] Bishop Fox CVE-2019-18935: Remote Code Execution via Insecure Deserialization in Telerik UI\n       [4] Volexity Threat Research: XE Group\n       [5] GitHub: Proof-of-Concept Exploit for CVE-2019-18935\n       [6] Microsoft: Configure Logging in IIS\n       [7] GitHub: CVE-2019-18935"
+ },
+ {
+  "id": "p106",
+  "text": "ACKNOWLEDGEMENTS\n       Google’s Threat Analysis Group (TAG) contributed to this CSA."
+ }
+]

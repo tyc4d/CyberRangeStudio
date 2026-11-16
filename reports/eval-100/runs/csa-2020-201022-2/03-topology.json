@@ -1,0 +1,103 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "virtual private networks (VPNs)",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 F5 VPNs 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "web applications",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "web server (substitute)",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "stated",
+   "image_hint": "oss-nginx",
+   "substitute_for": "web server (substitute)",
+   "substitute_basis": "catalogue_substitute",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h3",
+   "role": "content management system (CMS)",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 content management system (CMS) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "election-related public-facing websites",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "No port is known for service F5 VPNs (s1); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Telerik UI for ASP.NET AJAX (s2); it remains unreachable by default.",
+  "No port is known for service content management system (CMS) (s3); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

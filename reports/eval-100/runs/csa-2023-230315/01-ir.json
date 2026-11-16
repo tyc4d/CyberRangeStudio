@@ -1,0 +1,2439 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230315",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "d6e693766e1a8f1abdbd9197eb4b05c3ed1be22e7fb5a600b896e90de41a87c2",
+  "source_name": "csa-2023-230315"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit CVE-2019-18935 in Telerik UI for ASP.NET AJAX on IIS server",
+   "source": "llm",
+   "description": "Threat actors exploited a .NET deserialization vulnerability (CVE-2019-18935) in Telerik UI for ASP.NET AJAX running on a Microsoft IIS server to achieve remote code execution.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+   "source": "llm",
+   "description": "Threat actors uploaded malicious dynamic-link library (DLL) files, some masqueraded as PNG files, to the C:\\Windows\\Temp\\ directory on the IIS server.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1105",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Execute malicious DLL files via w3wp.exe process",
+   "source": "llm",
+   "description": "Threat actors executed the uploaded malicious DLL files from the C:\\Windows\\Temp\\ directory via the legitimate w3wp.exe process on the IIS server.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1055.001",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Delete DLL files with .dll extension from C:\\Windows\\Temp\\ directory",
+   "source": "llm",
+   "description": "TA1's malware deleted files with the .dll extension from the C:\\Windows\\Temp\\ directory to hide malicious activity.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1070.004",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Use timestomping to modify file creation dates",
+   "source": "llm",
+   "description": "Threat actors used timestomping to modify file time attributes to insert misleading creation dates on malicious files.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1070.006",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Conduct reconnaissance and scanning activities",
+   "source": "llm",
+   "description": "Multiple cyber threat actors, including TA1 and TA2, conducted reconnaissance and scanning activities correlating to exploitation of CVE-2019-18935.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1595.002",
+   "evidence_refs": [
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "TA1 gather system and network information and communicate to C2 server",
+   "source": "llm",
+   "description": "TA1's malware collected system and network parameters and communicated this data to C2 servers at IP addresses 137.184.130[.]162 or 45.77.212[.]12 using unencrypted TCP over port 443.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1016",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "TA2 upload and execute masqueraded DLL files as PNG files",
+   "source": "llm",
+   "description": "TA2 uploaded malicious DLL files masqueraded as PNG files to the C:\\Windows\\Temp\\ directory and executed them via the w3wp.exe process, which dropped and executed reverse shell utilities.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1036.005",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "TA2 malware attempts to connect to C2 domains and establish reverse shell",
+   "source": "llm",
+   "description": "TA2 malware attempts to connect to C2 domains xework[.]com or xegroups[.]com to obtain IP address and port for unencrypted communication, establish a listener, identify OS, create appropriate shell, and execute commands including dropping a base64-encoded ASPX webshell.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1140",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "TA2 malware drops and decodes base64 encoded ASPX webshell",
+   "source": "llm",
+   "description": "TA2 malware drops a base64 encoded text file small.txt which decodes to an ASPX webshell small.aspx that allows enumeration of drives, file operations, and command execution.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1505.003",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a11",
+   "name": "TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+   "source": "llm",
+   "description": "Threat actors used a non-application layer protocol (TCP) for w3wp.exe process exploitation, command and control, and enumeration on the IIS server.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1095",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-23"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "Create malicious DLL file by w3wp.exe process",
+   "source": "llm",
+   "description": "Threat actors created malicious DLL files in the C:\\Windows\\Temp\\ directory by the w3wp.exe process.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "Load newly created DLL into running w3wp.exe process",
+   "source": "llm",
+   "description": "Threat actors loaded the newly created malicious DLL into a currently running IIS process w3wp.exe.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a14",
+   "name": "Make TCP connection using w3wp.exe process to C2 IP over port 443",
+   "source": "llm",
+   "description": "Threat actors made a TCP connection using w3wp.exe process to IP 45.77.212[.]12 over port 443.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a15",
+   "name": "Invoke Windows C runtime library to execute payload",
+   "source": "llm",
+   "description": "Threat actors invoked C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a6",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "reconnaissance and scanning activities precede and correlate to exploitation",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "uploading malicious DLL files occurs when exploiting the vulnerability",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "execution of DLL files occurs after uploading them",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "creation of DLL files by w3wp.exe process is part of execution activity",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a12",
+   "to_action": "a13",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "loading newly created DLL into running w3wp.exe process follows creation",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "making TCP connection to C2 server using w3wp.exe process follows DLL loading",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a14",
+   "to_action": "a15",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "invoking Windows C runtime library to execute payload follows TCP connection",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "deletion of DLL files occurs after execution to hide activity",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r9",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "timestomping used on files after upload to modify creation dates",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a2",
+   "to_action": "a11",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "C2 communication uses non-application layer protocol after DLL upload",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r11",
+   "from_action": "a8",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "TA2 uploads masqueraded DLL files as PNG files to the directory",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r12",
+   "from_action": "a8",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "TA2 executes DLL files via w3wp.exe process after upload",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r13",
+   "from_action": "a9",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "TA2 malware attempts C2 connection and reverse shell after DLL execution",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r14",
+   "from_action": "a10",
+   "to_action": "a9",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "TA2 malware drops and decodes base64 encoded ASPX webshell after establishing C2 connection",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "agency’s Microsoft Internet Information Services (IIS) web server",
+   "source": "llm",
+   "name": "Microsoft IIS server",
+   "os": "Windows",
+   "os_version": "not explicitly stated",
+   "network_placement": "federal civilian executive branch (FCEB) agency",
+   "evidence_refs": [
+    "evidence-35",
+    "evidence-36",
+    "evidence-37",
+    "evidence-38",
+    "evidence-39",
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Progress Telerik UI for ASP.NET AJAX",
+   "source": "llm",
+   "version": "2013.2.717",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-41"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2019-18935"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s2",
+   "name": "w3wp.exe process",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7",
+    "evidence-39",
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2019-18935"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "malicious DLL files",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-43",
+    "evidence-7",
+    "evidence-39"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "XEReverseShell.exe",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-44"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Multi-OS_ReverseShell.exe",
+   "type": "file",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "SortVistaCompat",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-46"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "small.txt",
+   "type": "file",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-47"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "small.aspx",
+   "type": "file",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "vcruntime140.dll",
+   "type": "file",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-48"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2019-18935",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49",
+    "evidence-50",
+    "evidence-51",
+    "evidence-52",
+    "evidence-53",
+    "evidence-54",
+    "evidence-55",
+    "evidence-56",
+    "evidence-57",
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2017-11357",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2017-11317",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2017-9248",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "ASP.NET",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "137.184.130[.]162",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63",
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "45.77.212[.]12",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65",
+    "evidence-66",
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "104.225.129[.]102",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "149.28.85[.]24",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "185.186.245[.]72",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "193.8.172[.]113",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "193.8.172[.]13",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "216.120.201[.]12",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "5.34.178[.]246",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "79.133.124[.]242",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "92.38.169[.]193",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "92.38.176[.]109",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "92.38.176[.]130",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "184.168.104[.]171",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "xework[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80",
+    "evidence-81",
+    "evidence-82",
+    "evidence-83",
+    "evidence-84",
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "xegroups[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86",
+    "evidence-87",
+    "evidence-88",
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "hivnd[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "144.96.103[.]245",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "multiple cyber threat actors, including an APT actor, were able to exploit a .NET deserialization vulnerability (CVE-2019-18935) in Progress Telerik user interface (UI) for ASP.NET AJAX, located in the agency’s Microsoft Internet Information Services (IIS) web server. Successful exploitation of this vulnerability allows for remote code execution.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " exploitation of this vulnerability allows for remote code execution."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "threat actors successfully exploited a .NET deserialization vulnerability (CVE-2019-18935) in an instance of Telerik UI for ASP.NET AJAX Q2 2013 SP1 (version 2013.2.717) running on an FCEB agency’s Microsoft IIS server. This exploit, which results in interactive access with the web server, enabled the threat actors to successfully execute remote code on the vulnerable web server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "threat actors successfully exploited a .NET deserialization vulnerability (CVE 2019 18935) in an instance of Telerik UI for ASP.NET AJAX Q2 2013 SP1 (version 20"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Threat Actor Activity...conducting reconnaissance and scanning activities that correlate to the successful exploitation of CVE-2019-18935 in the agency’s IIS server running Telerik UI for ASP.NET AJAX.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Threat Actor Activity … conducting reconnaissance and scanning activities that correlate to the successful exploitation of CVE 2019 18935 in the agency’s IIS se"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "When exploiting the vulnerability, the threat actors uploaded malicious dynamic-link library (DLL) files (some masqueraded as portable network graphics [PNG] files) to the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When exploiting the vulnerability, the threat actors uploaded malicious dynamic link library (DLL) files (some masqueraded as portable network graphics [PNG] fi"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "TA1 and TA2 uploaded malicious DLL files (some masqueraded as PNG files) to the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "TA1 and TA2 uploaded malicious DLL files (some masqueraded as PNG files) to the C:\\Windows\\Temp\\ directory."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The malicious files were then executed from the C:\\Windows\\Temp\\ directory via the w3wp.exe process—a legitimate process that runs on IIS servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malicious files were then executed from the C:\\Windows\\Temp\\ directory via the w3wp.exe process a legitimate process that runs on IIS servers."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "TA1 was able to upload malicious DLL files to the C:\\Windows\\Temp\\ directory and then achieve remote code execution, executing the DLL files via the w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "TA1 was able to upload malicious DLL files to the C:\\Windows\\Temp\\ directory and then achieve remote code execution, executing the DLL files via the w3wp.exe pr"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Actors loaded newly created DLLs into a running w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "51"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors loaded newly created DLLs into a running w3wp.exe process."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "TA1’s malware deleted files with \".dll\" from the C:\\Windows\\Temp\\ directory, which may indicate hidden malicious activity on the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "52"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "TA1’s malware deleted files with \".dll\" from the C:\\Windows\\Temp\\ directory, which may indicate hidden malicious activity on the network."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Other analyzed samples can delete DLL files ending with the .dll extension in the C:\\Windows\\Temp\\ directory on the server. TA1 may use this capability to hide additional malicious activity on the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Other analyzed samples can delete DLL files ending with the .dll extension in the C:\\Windows\\Temp\\ directory on the server. TA1 may use this capability to hide "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The uncorrelated Unix Epoch time format may indicate that the threat actors used the timestomping technique.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The uncorrelated Unix Epoch time format may indicate that the threat actors used the timestomping technique."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Actors modified file time attributes to insert misleading creation dates.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors modified file time attributes to insert misleading creation dates."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CISA and authoring organizations observed multiple cyber threat actors, including an APT actor—hereafter referred to as Threat Actor 1 (TA1)—and known cybercriminal actor XE Group—hereafter referred to as Threat Actor 2 (TA2)—conducting reconnaissance and scanning activities that correlate to the successful exploitation of CVE-2019-18935 in the agency’s IIS server running Telerik UI for ASP.NET AJAX.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA and authoring organizations observed multiple cyber threat actors, including an APT actor hereafter referred to as Threat Actor 1 (TA1) and known cybercrim"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Actors were observed conducting active scanning activity for vulnerable devices and specific ports.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "canning activity for vulnerable devices and specific ports."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "All of the analyzed samples have network parameters, including host name, domain name, Domain Name System (DNS) server Internet Protocol (IP) address and machine name, Network Basic Input/Output System (NetBIOS) ID, adapter information, IP address, subnet, gateway IP, and Dynamic Host Configuration Protocol (DHCP) server. All analyzed samples communicate this collected data to a C2 server at IP address 137.184.130[.]162 or 45.77.212[.]12. The C2 traffic to these IP addresses uses a non-application layer protocol by leveraging Transmission Control Protocol (TCP) clear text (i.e., unencrypted) over port 443.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "All of the analyzed samples have network parameters, including host name, domain name, Domain Name System (DNS) server Internet Protocol (IP) address and machin"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "As early as August 2021, CISA and authoring organizations observed TA2 delivering malicious PNG files that, following analysis, were masqueraded DLL files to avoid detection. Similar to TA1, TA2 exploited CVE-2019-18935 and was able to upload at least three unique DLL files into the C:\\Windows\\Temp\\ directory that TA2 executed via the w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "As early as August 2021, CISA and authoring organizations observed TA2 delivering malicious PNG files that, following analysis, were masqueraded DLL files to av"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "TA2’s malware dropped an ASPX webshell to enumerate drives; send, receive, and delete files; and execute commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " enumerate drives; send, receive, and delete files; and execute commands."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "When the TA2 malware is executed a DLL file drops an executable (XEReverseShell.exe) that attempts to pull a C2 IP address and port number from xework[.]com or xegroups[.]com. If a port and IP address are found, the program will establish a listener and wait for further commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "When the TA2 malware is executed a DLL file drops an executable (XEReverseShell.exe) that attempts to pull a C2 IP address and port number from xework[.]com or "
+  },
+  {
+   "id": "evidence-19",
+   "quote": "If communication is established between the TA2 malware and the C2: The malware will identify the operating system (Windows or Linux) and create the appropriate shell (cmd or bash), sending system information back to the C2. The C2 server may send the command xesetshell, causing the malware to connect to the server and download a file called small.txt—a base64-encoded webshell that the malware decodes and places in the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " The C2 server may send the command xesetshell, causing the malware to connect to the server and download a file called small.txt a base64 encoded webshell that"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The base64 encoded text file small.txt decoded as the webshell small.aspx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The base64 encoded text file small.txt decoded as the webshell small.aspx."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The two files xesmartshell.tmp and SortVistaCompat have the capability to drop an Active Server Pages (ASPX) webshell—a base64 encoded text file small.txt decoded as small.aspx—to enumerate drives; to send, receive, and delete files; and to execute incoming commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The two files xesmartshell.tmp and SortVistaCompat have the capability to drop an Active Server Pages (ASPX) webshell a base64 encoded text file small.txt decod"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The C2 traffic to these IP addresses uses a non-application layer protocol by leveraging Transmission Control Protocol (TCP) clear text (i.e., unencrypted) over port 443.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The C2 traffic to these IP addresses uses a non application layer protocol by leveraging Transmission Control Protocol (TCP) clear text (i.e., unencrypted) over"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Actors used a non-application layer protocol (TCP) for w3wp.exe process exploitation, C2, and enumeration on the IIS server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "62"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors used a non application layer protocol (TCP) for w3wp.exe process exploitation, C2, and enumeration on the IIS server."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Create one of the DLL files (C:\\Windows\\Temp\\1665890187.8690152.dll) by process w3wp.exe PID 6484.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Create one of the DLL files (C:\\Windows\\Temp\\1665890187.8690152.dll) by process w3wp.exe PID 6484."
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Load the newly created DLL into a currently running IIS process, w3wp.exe PID 6484.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Load the newly created DLL into a currently running IIS process, w3wp.exe PID 6484."
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Make a TCP connection using w3wp.exe PID 6484 to 45.77.212[.]12 over port 443.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Make a TCP connection using w3wp.exe PID 6484 to 45.77.212[.]12 over port 443."
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Invoke C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Invoke C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload."
+  },
+  {
+   "id": "evidence-28",
+   "quote": "1. Create one of the DLL files (C:\\Windows\\Temp\\1665890187.8690152.dll) by process w3wp.exe PID 6484.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1. Create one of the DLL files (C:\\Windows\\Temp\\1665890187.8690152.dll) by process w3wp.exe PID 6484."
+  },
+  {
+   "id": "evidence-29",
+   "quote": "2. Load the newly created DLL into a currently running IIS process, w3wp.exe PID 6484.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2. Load the newly created DLL into a currently running IIS process, w3wp.exe PID 6484."
+  },
+  {
+   "id": "evidence-30",
+   "quote": "3. Make a TCP connection using w3wp.exe PID 6484 to 45.77.212[.]12 over port 443.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3. Make a TCP connection using w3wp.exe PID 6484 to 45.77.212[.]12 over port 443."
+  },
+  {
+   "id": "evidence-31",
+   "quote": "4. Invoke C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4. Invoke C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload."
+  },
+  {
+   "id": "evidence-32",
+   "quote": "In many cases, malicious artifacts were not available for analysis because the threat actors’ malware—that looks for and removes files with the .dll file extension—removed files from the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In many cases, malicious artifacts were not available for analysis because the threat actors’ malware that looks for and removes files with the .dll file extens"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "Similar to TA1, TA2 exploited CVE-2019-18935 and was able to upload at least three unique DLL files into the C:\\Windows\\Temp\\ directory that TA2 executed via the w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Similar to TA1, TA2 exploited CVE 2019 18935 and was able to upload at least three unique DLL files into the C:\\Windows\\Temp\\ directory that TA2 executed via th"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "When the TA2 malware is executed a DLL file drops an executable (XEReverseShell.exe) that attempts to pull a C2 IP address and port number from xework[.]com or xegroups[.]com.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When the TA2 malware is executed a DLL file drops an executable (XEReverseShell.exe) that attempts to pull a C2 IP address and port number from xework[.]com or "
+  },
+  {
+   "id": "evidence-35",
+   "quote": "Progress Telerik user interface (UI) for ASP.NET AJAX, located in the agency’s Microsoft Internet Information Services (IIS) web server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " agency’s Microsoft I"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "CISA and authoring organizations observed multiple cyber threat actors, including an APT actor—hereafter referred to as Threat Actor 1 (TA1)—and known cybercriminal actor XE Group—hereafter referred to as Threat Actor 2 (TA2)—conducting reconnaissance and scanning activities that correlate to the successful exploitation of CVE-2019-18935 in the agency’s IIS server running Telerik UI for ASP.NET AJAX",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA and authoring organizations observed multiple cyber threat actors, including an APT actor hereafter referred to as Threat Actor 1 (TA1) and known cybercrim"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "Threat actors uploaded malicious dynamic-link library (DLL) files (some masqueraded as portable network graphics [PNG] files) to the C:\\Windows\\Temp\\ directory. The malicious files were then executed from the C:\\Windows\\Temp\\ directory via the w3wp.exe process—a legitimate process that runs on IIS servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "hreat actors uploaded malicious dynamic link library (DLL) files (some masqueraded as portable network graphics [PNG] files) to the C:\\Windows\\Temp\\ directory. "
+  },
+  {
+   "id": "evidence-38",
+   "quote": "Threat Actor 1 (TA1) was able to upload malicious DLL files to the C:\\Windows\\Temp\\ directory and then achieve remote code execution, executing the DLL files via the w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " was able to upload malicious DLL files to the C:\\Windows\\Temp\\ directory and then achieve remote code execution, executing the DLL files via the w3wp.exe proce"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "TA2 exploited CVE-2019-18935 and was able to upload at least three unique DLL files into the C:\\Windows\\Temp\\ directory that TA2 executed via the w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "TA2 exploited CVE 2019 18935 and was able to upload at least three unique DLL files into the C:\\Windows\\Temp\\ directory that TA2 executed via the w3wp.exe proce"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "CISA MAR-10413062-1.v1 Telerik Vulnerability in U.S. Government IIS Server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA MAR 10413062 1.v1 Telerik Vulnerability in U.S. Government IIS Server"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "CISA and authoring organizations assess that, beginning as late as November 2022, threat actors successfully exploited a .NET deserialization vulnerability (CVE-2019-18935) in an instance of Telerik UI for ASP.NET AJAX Q2 2013 SP1 (version 2013.2.717) running on an FCEB agency’s Microsoft IIS server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA and authoring organizations assess that, beginning as late as November 2022, threat actors successfully exploited a .NET deserialization vulnerability (CVE"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Threat actors loaded newly created DLLs into a running w3wp.exe process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "51"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9,
+   "matched_text": "ctors loaded newly created DLLs into a running w3wp.exe process."
+  },
+  {
+   "id": "evidence-43",
+   "quote": "Threat actors uploaded malicious dynamic-link library (DLL) files (some masqueraded as portable network graphics [PNG] files) to the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "hreat actors uploaded malicious dynamic link library (DLL) files (some masqueraded as portable network graphics [PNG] files) to the C:\\Windows\\Temp\\ directory."
+  },
+  {
+   "id": "evidence-44",
+   "quote": "XEReverseShell.exe DLL files (masqueraded as PNG files) located in the C:\\Windows\\Temp\\ directory contain a base64 encoded file with the internal name XEReverseShell.exe, which was dropped into the same directory as sortcombat.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "XEReverseShell.exe DLL files (masqueraded as PNG files) located in the C:\\Windows\\Temp\\ directory contain a base64 encoded file with the internal name XEReverse"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "Multi-OS_ReverseShell.exe Reverse shell utility decoded from the base64 encoded file xesmartshell.tmp.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Multi OS_ReverseShell.exe Reverse shell utility decoded from the base64 encoded file xesmartshell.tmp."
+  },
+  {
+   "id": "evidence-46",
+   "quote": "SortVistaCompat Base64 encoded payload dropped from Multi-OS_ReverseShell.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "SortVistaCompat Base64 encoded payload dropped from Multi OS_ReverseShell.exe."
+  },
+  {
+   "id": "evidence-47",
+   "quote": "The C2 server may send the command xesetshell, causing the malware to connect to the server and download a file called small.txt—a base64-encoded webshell that the malware decodes and places in the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The C2 server may send the command xesetshell, causing the malware to connect to the server and download a file called small.txt a base64 encoded webshell that "
+  },
+  {
+   "id": "evidence-48",
+   "quote": "Threat actors invoked C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7857,
+   "matched_text": " C:\\Windows\\System32\\vcruntime140.dll (Windows C runtime library) to execute payload."
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "CVE-2019-\n       18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "CVE-2019-18935",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "105"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 18935"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "CVE-2017-11357",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 11357"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "CVE-2017-11317",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 11317"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "CVE-2017-9248",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 9248"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "ASP.NET",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ASP.NET"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "137.184.130[.]162",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "137.184.130[.]162"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "137.184.130[.]162",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "137.184.130[.]162"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "45.77.212[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.77.212[.]12"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "45.77.212[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.77.212[.]12"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "45.77.212[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "69"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.77.212[.]12"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "104.225.129[.]102",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.225.129[.]102"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "149.28.85[.]24",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.28.85[.]24"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "185.186.245[.]72",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.186.245[.]72"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "193.8.172[.]113",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.8.172[.]113"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "193.8.172[.]13",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.8.172[.]13"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "216.120.201[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.120.201[.]12"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "5.34.178[.]246",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.178[.]246"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "79.133.124[.]242",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.133.124[.]242"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "92.38.169[.]193",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.38.169[.]193"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "92.38.176[.]109",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.38.176[.]109"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "92.38.176[.]130",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.38.176[.]130"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "184.168.104[.]171",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "184.168.104[.]171"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "xework[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xework[.]com"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "xegroups[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xegroups[.]com"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "xegroups[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xegroups[.]com"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "xegroups[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xegroups[.]com"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "xegroups[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xegroups[.]com"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "hivnd[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hivnd[.]com"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "144.96.103[.]245",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "144.96.103[.]245"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Microsoft IIS server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft IIS server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Microsoft IIS server",
+    "action:a1 — Exploit CVE-2019-18935 in Telerik UI for ASP.NET AJAX on IIS server",
+    "action:a2 — Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process",
+    "action:a4 — Delete DLL files with .dll extension from C:\\Windows\\Temp\\ directory",
+    "action:a5 — Use timestomping to modify file creation dates",
+    "action:a6 — Conduct reconnaissance and scanning activities",
+    "action:a7 — TA1 gather system and network information and communicate to C2 server",
+    "action:a8 — TA2 upload and execute masqueraded DLL files as PNG files",
+    "action:a9 — TA2 malware attempts to connect to C2 domains and establish reverse shell",
+    "action:a10 — TA2 malware drops and decodes base64 encoded ASPX webshell",
+    "action:a11 — TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+    "action:a12 — Create malicious DLL file by w3wp.exe process",
+    "action:a13 — Load newly created DLL into running w3wp.exe process",
+    "action:a14 — Make TCP connection using w3wp.exe process to C2 IP over port 443",
+    "action:a15 — Invoke Windows C runtime library to execute payload"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft IIS server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Microsoft IIS server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft IIS server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Microsoft IIS server",
+    "action:a1 — Exploit CVE-2019-18935 in Telerik UI for ASP.NET AJAX on IIS server",
+    "action:a2 — Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process",
+    "action:a4 — Delete DLL files with .dll extension from C:\\Windows\\Temp\\ directory",
+    "action:a5 — Use timestomping to modify file creation dates",
+    "action:a6 — Conduct reconnaissance and scanning activities",
+    "action:a7 — TA1 gather system and network information and communicate to C2 server",
+    "action:a8 — TA2 upload and execute masqueraded DLL files as PNG files",
+    "action:a9 — TA2 malware attempts to connect to C2 domains and establish reverse shell",
+    "action:a10 — TA2 malware drops and decodes base64 encoded ASPX webshell",
+    "action:a11 — TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+    "action:a12 — Create malicious DLL file by w3wp.exe process",
+    "action:a13 — Load newly created DLL into running w3wp.exe process",
+    "action:a14 — Make TCP connection using w3wp.exe process to C2 IP over port 443",
+    "action:a15 — Invoke Windows C runtime library to execute payload"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft IIS server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    },
+    {
+     "field": "作業系統版本",
+     "value": "not explicitly stated",
+     "source_ref": "hosts:h1.os_version",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Microsoft IIS server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft IIS server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Microsoft IIS server",
+    "action:a1 — Exploit CVE-2019-18935 in Telerik UI for ASP.NET AJAX on IIS server",
+    "action:a2 — Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process",
+    "action:a4 — Delete DLL files with .dll extension from C:\\Windows\\Temp\\ directory",
+    "action:a5 — Use timestomping to modify file creation dates",
+    "action:a6 — Conduct reconnaissance and scanning activities",
+    "action:a7 — TA1 gather system and network information and communicate to C2 server",
+    "action:a8 — TA2 upload and execute masqueraded DLL files as PNG files",
+    "action:a9 — TA2 malware attempts to connect to C2 domains and establish reverse shell",
+    "action:a10 — TA2 malware drops and decodes base64 encoded ASPX webshell",
+    "action:a11 — TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+    "action:a12 — Create malicious DLL file by w3wp.exe process",
+    "action:a13 — Load newly created DLL into running w3wp.exe process",
+    "action:a14 — Make TCP connection using w3wp.exe process to C2 IP over port 443",
+    "action:a15 — Invoke Windows C runtime library to execute payload"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft IIS server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "federal civilian executive branch (FCEB) agency",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-39",
+      "evidence-40",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s2-version",
+   "field": "w3wp.exe process — 版本",
+   "category": "version",
+   "reason": "IR 指出 w3wp.exe process（CVE-2019-18935），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 w3wp.exe process 的哪個版本？請選受 CVE-2019-18935 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s2 — w3wp.exe process",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process",
+    "action:a8 — TA2 upload and execute masqueraded DLL files as PNG files",
+    "action:a11 — TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+    "action:a12 — Create malicious DLL file by w3wp.exe process",
+    "action:a13 — Load newly created DLL into running w3wp.exe process",
+    "action:a14 — Make TCP connection using w3wp.exe process to C2 IP over port 443"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "w3wp.exe process",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-39",
+      "evidence-42"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2019-18935",
+     "source_ref": "services:s2.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-39",
+      "evidence-42"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s2-configuration",
+   "field": "w3wp.exe process — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a3 使用 w3wp.exe process，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 依賴 w3wp.exe process。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s2 — w3wp.exe process",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "w3wp.exe process",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-39",
+      "evidence-42"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Execute malicious DLL files via w3wp.exe process",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2, a3, a8, a11 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a2 — Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+    "action:a3 — Execute malicious DLL files via w3wp.exe process",
+    "action:a8 — TA2 upload and execute masqueraded DLL files as PNG files",
+    "action:a11 — TA1 and TA2 use non-application layer protocol (TCP) for C2 communication"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Upload malicious DLL files to C:\\Windows\\Temp\\ directory",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Execute malicious DLL files via w3wp.exe process",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "TA2 upload and execute masqueraded DLL files as PNG files",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "TA1 and TA2 use non-application layer protocol (TCP) for C2 communication",
+     "source_ref": "actions:a11.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-22",
+      "evidence-23"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8791,
+  "unsupported_claim_count": 8,
+  "inferred_count": 7,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 1,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

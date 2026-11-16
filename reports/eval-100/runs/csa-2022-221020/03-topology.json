@@ -1,0 +1,144 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim organization targeted by Emennet Pasargad",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "CVE-2021-44228",
+     "port": 8983,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "vuln-log4shell-solr",
+   "substitute_for": "CVE-2021-44228",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "substituted",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h2",
+   "role": "victim entities targeted by Emennet Pasargad",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "MySQL databases",
+     "port": 3306,
+     "protocol": "tcp"
+    }
+   ],
+   "unplaced_services": [
+    {
+     "name": "Wordpress",
+     "component": "oss-wordpress",
+     "reason": "host already uses another component"
+    }
+   ],
+   "image_hint": "oss-mysql",
+   "version_basis": "assumed",
+   "deployed_version": "8.0.46",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h3",
+   "role": "web server of the US-based organization accessed and taken down by Emennet",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Log4j",
+     "port": 8983,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "stated",
+   "image_hint": "vuln-log4shell-solr",
+   "substitute_for": "Log4j",
+   "substitute_basis": "catalogue_substitute",
+   "version_basis": "substituted",
+   "deployed_version": null,
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "reason": "Scenario action(s) a9 require access to Log4j.",
+   "port": 8983,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h3",
+   "action": "allow",
+   "port": 8983
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 8983,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h1:8983 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 3306,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:3306 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h2 deploys one component; not deployed there: Wordpress (oss-wordpress). Move them to another host or remove them.",
+  "No port is known for service PHP websites (s2); it remains unreachable by default.",
+  "No port is known for service Drupal (s4); it remains unreachable by default.",
+  "No port is known for service Ckeditor (s6); it remains unreachable by default."
+ ]
+}
