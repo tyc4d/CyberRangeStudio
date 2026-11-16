@@ -127,6 +127,10 @@ def _placement_lock(database_path: str):
             "FROM pve_worker_reservations WHERE pve_worker_reservations.vmid=pve_probe_operations.vmid) "
             "WHERE generation_id IS NULL OR generation_id=''"
         )
+        # Persist schema upgrades and legacy generation backfills before callers
+        # read or act on their values, then hold the lock for the caller's work.
+        connection.commit()
+        connection.execute("BEGIN EXCLUSIVE")
         yield connection
     finally:
         if connection.in_transaction:

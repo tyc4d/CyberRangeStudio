@@ -176,6 +176,59 @@ def test_cancel_does_not_bind_legacy_operation_when_identity_mismatches(tmp_path
         assert operation["state"] == "running"
 
 
+def test_cancel_migrates_1e0c4a3_ledger_and_binds_matching_job(tmp_path: Path) -> None:
+    db_path = tmp_path / "reservations.sqlite3"
+    connection = sqlite3.connect(db_path)
+    connection.execute(
+        "CREATE TABLE pve_worker_reservations ("
+        "vmid INTEGER PRIMARY KEY CHECK(vmid BETWEEN 900100 AND 900999), "
+        "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, state TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL, UNIQUE(scenario_id, host_id))")
+    connection.execute(
+        "CREATE TABLE pve_probe_operations ("
+        "operation_id TEXT PRIMARY KEY CHECK(length(operation_id)=32), "
+        "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, vmid INTEGER NOT NULL, "
+        "service_id TEXT NOT NULL, target_name TEXT NOT NULL, state TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL, exitcode INTEGER, stdout_b64 TEXT, stderr_b64 TEXT)")
+    connection.execute(
+        "INSERT INTO pve_worker_reservations(vmid,scenario_id,host_id,state,updated_at) "
+        "VALUES(?,?,?,?,?)", (VMID, SID, HOST, "active", "2026-11-15T00:00:00+00:00"))
+    connection.execute(
+        "INSERT INTO pve_probe_operations(operation_id,scenario_id,host_id,vmid,service_id,"
+        "target_name,state,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+        (OPERATION, SID, HOST, VMID, SERVICE, f"cr-demo-{SID}-{SERVICE}", "running",
+         "2026-11-15T00:01:00+00:00"))
+    connection.commit()
+    connection.close()
+
+    backend = backend_for(db_path)
+    with _placement_lock(str(db_path)) as db:
+        worker = _reservation(db, VMID)
+        operation = _probe_operation(db, OPERATION)
+        assert worker and worker["state"] == "active" and worker["generation_id"]
+        assert operation and operation["job_id"] is None
+        assert operation["generation_id"] == worker["generation_id"]
+
+    guest_commands: list[list[str]] = []
+
+    def guest_exec(vmid, command, **kwargs):
+        guest_commands.append(command)
+        return response("cancelled", True)
+
+    backend._guest_exec = guest_exec
+    cancelled = cancel_operation(
+        backend, {"generation_id": worker["generation_id"]}, job_id=JOB_ID)
+
+    assert cancelled["state"] == "cancelled" and cancelled["resource_absent"] is True
+    assert len(guest_commands) == 1
+    assert guest_commands[0][2:4] == ["cancel", OPERATION]
+    with _placement_lock(str(db_path)) as db:
+        operation = _probe_operation(db, OPERATION)
+        assert operation and operation["job_id"] == JOB_ID
+        assert operation["generation_id"] == worker["generation_id"]
+        assert operation["state"] == "cancelled"
+
+
 def test_probe_mode_blocks_before_recording_or_calling_guest(tmp_path: Path) -> None:
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)
