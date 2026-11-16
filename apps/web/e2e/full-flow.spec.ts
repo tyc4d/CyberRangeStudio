@@ -24,7 +24,8 @@ const R = (k: K) => new RegExp(`^${esc(zh[k]).replace(/\\\{\w+\\\}/g, "\\d+")}$`
 const P = (k: K) => zh[k].split(/\{\w+\}/).map((s) => s.trim()).sort((a, b) => b.length - a.length)[0];
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ARTIFACTS = path.join(HERE, "artifacts");
+// Keep QA output separate when a run must preserve existing evidence in this checkout.
+const ARTIFACTS = process.env.CR_E2E_ARTIFACTS || path.join(HERE, "artifacts");
 const SHOTS = path.join(ARTIFACTS, "screenshots");
 const REPORT_FIXTURE = path.resolve(HERE, "../../../fixtures/sample-scenarios/demo-intrusion.md");
 

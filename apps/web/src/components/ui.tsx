@@ -215,10 +215,10 @@ function TechDetails({ error }: { error: ApiError }) {
 
 /** Turns an API failure into a plain-language notice. `what` names the feature. Known server messages are shown in the
  *  current language. Anything else gets a short generic line, and the raw text stays in the collapsed details. */
-export function ApiNotice({ error, what, onRetry }: { error: ApiError | null; what: string; onRetry?: () => void }) {
+export function ApiNotice({ error, what, onRetry, retryDisabled = false }: { error: ApiError | null; what: string; onRetry?: () => void; retryDisabled?: boolean }) {
   const tr = useT();
   if (!error) return null;
-  const retry = onRetry ? <button className="small" onClick={onRetry}>{tr("notice.retry")}</button> : undefined;
+  const retry = onRetry ? <button className="small" disabled={retryDisabled} onClick={onRetry}>{tr("notice.retry")}</button> : undefined;
   const details = <TechDetails error={error} />;
   if (error.kind === "unimplemented")
     return <Notice kind="info" title={tr("notice.unimpl.title", { what })} action={retry}>{tr("notice.unimpl.body")}{details}</Notice>;

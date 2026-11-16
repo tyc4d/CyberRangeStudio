@@ -409,7 +409,9 @@ class CveServiceAssociation(unittest.TestCase):
             and item["locator"] == {"kind": "paragraph", "ref": "1"}
             for item in relationship_evidence))
         missing_ids = {item["id"] for item in ir["missing_items"]}
-        self.assertIn("missing-service-s1-version", missing_ids)
+        # The integrated inventory resolves this exact CVE to its pinned vulnerable Struts
+        # exercise image, so asking the user for a version would repeat a decision the CVE fixes.
+        self.assertNotIn("missing-service-s1-version", missing_ids)
         self.assertNotIn("missing-cve-cve-2017-5638-software", missing_ids)
         self.assertNotIn("missing-gap-exploited-weakness", missing_ids)
 
@@ -419,7 +421,9 @@ class CveServiceAssociation(unittest.TestCase):
         self.assertEqual((planned_service["name"], planned_service["cve"]),
                          ("Apache Struts component", ["CVE-2017-5638"]))
         self.assertNotIn("version", planned_service)
-        self.assertEqual((planned_service["version_basis"], planned_service["deployed_version"]), ("assumed", "2.3.30"))
+        self.assertEqual(planned_service["version_basis"], "assumed")
+        self.assertEqual(planned_service["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertEqual(planned_service["reproduces_cve"], ["CVE-2017-5638"])
         self.assertFalse(any("affected software for CVE-2017-5638" == item.get("field")
                              for item in planned["missing_items"]))
         host = next(host for host in build_environment_plan(planned)["hosts"] if host["id"] == "h1")

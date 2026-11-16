@@ -15,6 +15,7 @@ import { TopologyPage } from "./pages/TopologyPage";
 import { IacPage } from "./pages/IacPage";
 import { DeployPage } from "./pages/DeployPage";
 import { ReportPage } from "./pages/ReportPage";
+import { PocPage } from "./pages/PocPage";
 import { LocaleProvider, useI18n, type MsgKey } from "./i18n";
 import { stackTables } from "./lib/stackTables";
 
@@ -30,6 +31,7 @@ export const STAGES: { path: string; label: MsgKey; key: string; element: ReactN
   { path: "/iac", label: "stage.iac", key: "iac", element: <IacPage /> },
   { path: "/deploy", label: "stage.deploy", key: "deploy", element: <DeployPage /> },
   { path: "/report", label: "stage.report", key: "report", element: <ReportPage /> },
+  { path: "/poc", label: "stage.poc", key: "poc", element: <PocPage /> },
 ];
 
 function BudgetChip() {

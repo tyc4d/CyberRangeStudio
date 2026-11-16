@@ -64,6 +64,7 @@ ROUTER_STATUS = {
     "deploy": _safe_include("app.routers.deploy"),       # module 7    (infra)
     "validate": _safe_include("app.routers.validate"),   # module 8    (infra)
     "attackflow": _safe_include("app.routers.attackflow"), # module 1-3 (Attack Flow STIX)
+    "poc": _safe_include("app.routers.poc"),             # module 9    (poc discovery/validation/export)
 }
 
 

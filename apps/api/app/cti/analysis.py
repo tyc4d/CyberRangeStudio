@@ -12,6 +12,7 @@ from app.cti.citations import evidence_record, grade_quote, strip_attack_tags
 from app.cti.missing import calculate_missing_items, is_communication_description
 from app.cti.parser import SourceUnit
 from app.llm.client import complete
+from app.planner.inventory import inventory_summary
 
 
 METHODS = {"single_pass", "staged", "staged_review"}
@@ -908,6 +909,7 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
     if review:
         rules += " Keep valid draft claims, remove unsupported factual detail only by marking it insufficient and retaining its evidence. Return the corrected full analysis object."
     user_payload: dict[str, Any] = {"task": task, "rules": rules, "source_units": source_payload}
+    user_payload["inventory_availability"] = inventory_summary()
     if extracted is not None:
         user_payload["extracted_facts"] = extracted
     if draft is not None:
@@ -1220,7 +1222,6 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["evidence_refs"] = _refs
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
-
     # Explicit non-factual seeds keep downstream modules aware that target data
     # is not yet known. The accompanying missing_items explain what is absent.
     if not hosts:

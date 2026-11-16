@@ -8,6 +8,7 @@ from typing import Any
 
 from app.cti.missing import is_attacker_role, is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
+from app.planner.inventory import resolve as resolve_inventory
 from app.planner.reproducibility import annotate_reproducibility
 
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
@@ -100,7 +101,7 @@ def _cves(value: Any) -> list[str]:
 
 
 def _candidate(name: str, text: str = "", *, version: Any = None, cves: Any = None,
-               host_ref: Any = None, explicit_port: Any = None) -> dict[str, Any]:
+               host_ref: Any = None, explicit_port: Any = None, attack_technique: Any = None) -> dict[str, Any]:
     if not version:
         match = _VERSION_RE.search(text[:len(name) + 48])
         version = match.group(1) if match else None
@@ -114,6 +115,7 @@ def _candidate(name: str, text: str = "", *, version: Any = None, cves: Any = No
         "cve": _cves(cves if cves is not None else text),
         "host_ref": _host_id(host_ref) if _is_host_ref(host_ref) else None,
         "port": port if port and 1 <= port <= 65535 else None,
+        "attack_technique": str(attack_technique).strip().upper() if attack_technique else None,
     }
 
 
@@ -363,6 +365,9 @@ def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallba
         spans = _host_name_spans(clause, hosts)
         named = list(dict.fromkeys(hid for _, hid in spans))
         for candidate in _candidate_from_mentions(clause):
+            if candidate["name"].casefold() in {"domain controller", "domain controllers"}:
+                # A host role is useful matched evidence, but it is not deployable software.
+                continue
             position = clause.casefold().find(candidate["name"].casefold())
             following = next((hid for start, hid in spans if start > position), None)
             host = following or (named[0] if len(named) == 1 else None)
@@ -583,7 +588,22 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     actions = ir.get("actions", [])
     for action in actions:
         text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
-        candidates.extend(_mentions_bound_to_hosts(text, hosts, action.get("target_host_ref")))
+        if re.search(r"\blog4shell\b", text, re.IGNORECASE):
+            mention = _candidate("Log4Shell", text, host_ref=action.get("target_host_ref"))
+            mention["matched_text"] = "Log4Shell"
+            mention["resolution_name"] = "Log4Shell"
+            mention["name"] = "Log4j"
+            mention["from_mention"] = True
+            mention["host_explicit"] = bool(_is_host_ref(action.get("target_host_ref")))
+            candidates.append(mention)
+        mentions = list(_mentions_bound_to_hosts(text, hosts, action.get("target_host_ref")))
+        # A vulnerability nickname can identify an affected product, but is not itself
+        # a software name. Keep the alias as matched_text while resolving the real product.
+        for mention in mentions:
+            if mention["name"].casefold() == "log4shell":
+                mention["matched_text"] = "Log4Shell"
+                mention["name"] = "Log4j"
+        candidates.extend(mentions)
     # Verified source quotes cited for a host or service often carry the version and port the
     # structured record lacks ("runs nginx version 1.31.8 on TCP/80"); read them, bound to that host.
     verified = {str(item.get("id")): str(item.get("quote") or "") for item in ir.get("evidence", []) or []
@@ -628,7 +648,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     # or not the catalogue knows it; ignoring them would hide unsupported software.
     recorded = [_candidate(service.get("name", ""), service.get("name", ""),
                            version=service.get("version"), cves=service.get("cve", []),
-                           host_ref=service.get("host_ref"), explicit_port=service.get("port"))
+                           host_ref=service.get("host_ref"), explicit_port=service.get("port"),
+                           attack_technique=next((action.get("attack_technique") for action in ir.get("actions", [])
+                                                 if action.get("target_host_ref") == service.get("host_ref")
+                                                 and action.get("attack_technique")), None))
                 for service in ir.get("services", []) if _is_recorded_service(service)]
     # Recorded services go first so a text mention of the same product merges into them.
     candidates = recorded + candidates
@@ -686,6 +709,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         else:
             target["cve"] = list(dict.fromkeys([*target.get("cve", []), *candidate.get("cve", [])]))
             target["port"] = target.get("port") or candidate.get("port")
+            if candidate.get("matched_text"):
+                prior = target.get("matched_text")
+                prior_values = prior if isinstance(prior, list) else ([prior] if prior else [])
+                target["matched_text"] = list(dict.fromkeys([*prior_values, candidate["matched_text"]]))
             if candidate.get("from_supplement"):
                 target.setdefault("from_supplement", candidate["from_supplement"])
                 if candidate.get("lab_version"):
@@ -709,9 +736,46 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         else:
             for key, value in existing_host.items():
                 if key != "id":
-                    hosts[hid].setdefault(key, copy.deepcopy(value))
+                    if key == "role" and hosts[hid].get(key) in {None, "", "target"}:
+                        hosts[hid][key] = copy.deepcopy(value)
+                    else:
+                        hosts[hid].setdefault(key, copy.deepcopy(value))
     _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
+    # Preserve role/vulnerability mentions as matching evidence without turning them
+    # into deployable software records.
+    role_mentions: dict[str, list[str]] = {}
+    action_text_by_host: dict[str, str] = {}
+    for action in actions:
+        text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
+        action_host = str(action.get("target_host_ref") or "")
+        action_text_by_host[action_host] = (action_text_by_host.get(action_host, "") + " " + text).strip()
+        for phrase in ("Log4Shell", "domain controller"):
+            if _mentions(text, phrase) or phrase.casefold() in text.casefold():
+                role_mentions.setdefault(str(action.get("target_host_ref") or ""), []).append(phrase)
+    for host_ref, text in action_text_by_host.items():
+        if "Log4Shell" in role_mentions.get(host_ref, []) and not any(
+                service.get("host_ref") == host_ref and service.get("name", "").casefold() == "log4j"
+                for service in result.get("services", []) or []):
+            result.setdefault("services", []).append({"id": f"svc-log4j-{_slug(host_ref)}", "name": "Log4j",
+                "host_ref": host_ref, "matched_text": "Log4Shell", "source": "program",
+                "epistemic_status": "inferred", "cve": []})
+    for host_ref, phrases in role_mentions.items():
+        target_service = next((service for service in result.get("services", []) or []
+                               if service.get("host_ref") == host_ref and service.get("name") != "domain controller"), None)
+        if target_service is None and phrases:
+            target_service = next((service for service in result.get("services", []) or []
+                                   if service.get("name", "").casefold() == "log4j"), None)
+        if target_service:
+            prior = target_service.get("matched_text")
+            prior = ", ".join(prior) if isinstance(prior, list) else str(prior or "")
+            target_service["matched_text"] = ", ".join(dict.fromkeys([part for part in [prior, *phrases] if part]))
+    for host in hosts.values():
+        role = str(host.get("role") or "")
+        if any(term in role.casefold() for term in ("horizon", "active directory", "domain controller")):
+            host["runtime"] = "external_platform"
+            host["deployable"] = False
+            host["not_reproducible"] = True
 
     # Internally hosts are keyed by a normalised id; the IR's own host ids are the ones
     # every other reference uses, so map back before anything is written to the result.
@@ -725,6 +789,12 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             action["target_host_ref"] = canonical.get(action["target_host_ref"], action["target_host_ref"])
 
     original_services = copy.deepcopy(result.get("services", []))
+    for service in original_services:
+        phrases = role_mentions.get(str(service.get("host_ref") or ""), [])
+        if phrases:
+            existing = service.get("matched_text")
+            values = existing if isinstance(existing, list) else ([existing] if existing else [])
+            service["matched_text"] = list(dict.fromkeys([*values, *phrases]))
     existing_user_services = [item for item in original_services if _is_recorded_service(item)]
     services: list[dict[str, Any]] = []
     generated_host_refs: dict[str, list[str]] = {}
@@ -769,7 +839,32 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     used_user_ids: set[str] = set()
     for candidate in candidates:
         name = candidate["name"]
-        component, is_substitute = _match_component(name)
+        legacy_component, legacy_substitute = _match_component(name)
+        inventory = resolve_inventory(candidate.get("resolution_name") or name, candidate.get("version"), candidate.get("cve", []),
+                                      candidate.get("attack_technique"))
+        # Keep established exact/alias catalogue matches (including family aliases such
+        # as "Apache web server"). Inventory CVE/technique decisions take precedence.
+        component = component_by_id(inventory.get("component_id"))
+        is_substitute = bool(inventory.get("is_substitute")) if component else False
+        # Catalogue-only unsupported sentinels are records of unavailability, not
+        # deployable images. Never expose them as containers via the legacy matcher.
+        if (legacy_component and legacy_component.get("id", "").startswith("unsupported-")
+                and not component):
+            component, is_substitute = None, False
+            inventory = {**inventory, "tier": "unavailable", "component_id": None,
+                         "needs_question": False,
+                         "reason": inventory.get("reason") or f"{name} is unavailable and not reproducible."}
+        elif component is None:
+            # The inventory resolver may decide that the supplied CVE/technique has no
+            # compatible substitute. Keep the legacy unsupported-product question shape
+            # so its service_ref, UI suggestions and user write-back remain intact.
+            inventory = {**inventory, "needs_question": False}
+            component, is_substitute = legacy_component, legacy_substitute
+        if component is not None and not inventory.get("component_id"):
+            catalogue_tier = component.get("tier") or "have"
+            inventory = {**inventory, "tier": "have", "component_id": component["id"],
+                         "version_basis": "assumed", "reproduces_cve": [], "needs_question": False}
+            inventory["tier"] = catalogue_tier
         existing_user = next((item for item in existing_user_services
                               if item.get("name", "").casefold() == name.casefold()
                               and (not item.get("version") or not candidate.get("version")
@@ -789,25 +884,70 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained = copy.deepcopy(original)
                 retained["no_component"] = True
                 retained["is_substitute"] = False
+                retained.update({"tier": "unavailable", "version_basis": inventory["version_basis"],
+                                 "reproduces_cve": inventory["reproduces_cve"],
+                                 "not_reproducible": True, "not_reproducible_reason": inventory["reason"]})
                 if retained not in services:
                     services.append(retained)
                     if retained.get("host_ref"):
                         # Still this host's service, even without a catalogue component.
                         generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
-            add_missing(f"software-{name}-{candidate.get('version') or ''}",
-                        f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
-                        "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
-                        service_ref=original.get("id") if original else None)
+            if inventory.get("needs_question"):
+                question = inventory.get("question") or {}
+                add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
+                            question.get("field") or f"version for {name}", inventory["reason"], category="version",
+                            service_ref=original.get("id") if original else None)
+                if missing and question.get("text"):
+                    missing[-1]["question"] = question["text"]
+                    missing[-1]["suggestions"] = question.get("suggestions", [])
+                    if original:
+                        missing[-1]["service_ref"] = original["id"]
+                        missing[-1]["suggestions"] = list(dict.fromkeys([*missing[-1]["suggestions"], *_substitute_suggestions(name)]))
+            else:
+                add_missing(f"software-{name}-{candidate.get('version') or ''}",
+                            f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
+                            inventory["reason"], service_ref=original.get("id") if original else None)
+                if original and missing:
+                    missing[-1]["question"] = (f"目錄沒有可部署的 {name}。要用哪個元件當教學替代？"
+                                                  "也可以選擇不部署並保留為未重現。")
+                    missing[-1]["suggestions"] = _substitute_suggestions(name) + ["不部署；此軟體相關步驟標記為未重現"]
             continue
 
         if existing_user:
             service_id = existing_user.get("id")
             if service_id not in used_user_ids:
                 service = copy.deepcopy(existing_user)
-                service["catalogue_component"] = component["id"]
-                service["is_substitute"] = bool(is_substitute)
+                explicit_choice = ((service.get("field_sources") or {}).get("catalogue_component") == "user"
+                                   or service.get("substitute_basis") == "user_chosen")
+                if explicit_choice:
+                    chosen = component_by_id(service.get("catalogue_component"))
+                    if chosen:
+                        component = chosen
+                        is_substitute = bool(service.get("is_substitute", True))
+                        inventory = {**inventory, "component_id": chosen["id"],
+                                     "tier": chosen.get("tier", "have"),
+                                     "is_substitute": is_substitute,
+                                     "version_basis": "substituted" if is_substitute else inventory.get("version_basis", "assumed"),
+                                     "substitute_of": service.get("substitute_of") or name,
+                                     "reproduces_cve": list(chosen.get("reproduces_cve", []))}
+                    service["catalogue_component"] = component["id"]
+                    service["is_substitute"] = is_substitute
+                    service["tier"] = inventory["tier"]
+                    service["version_basis"] = ("substituted" if is_substitute else inventory["version_basis"])
+                    service["reproduces_cve"] = list(inventory.get("reproduces_cve", []))
+                    if is_substitute:
+                        service["substitute_basis"] = "user_chosen"
+                        service["substitute_of"] = inventory.get("substitute_of") or name
+                else:
+                    service["catalogue_component"] = component["id"]
+                    service["is_substitute"] = bool(is_substitute)
+                    service.update({"tier": inventory["tier"], "version_basis": inventory["version_basis"]})
+                    if is_substitute:
+                        service["substitute_of"] = inventory.get("substitute_of")
+                service["reproduces_cve"] = list(inventory.get("reproduces_cve", []))
                 service.setdefault("epistemic_status", "inferred")
                 service.setdefault("source", "user")
+                # `cve` records source facts; component capability is kept separately.
                 service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
                 if candidate.get("lab_version"):
                     # What the user says the lab runs; the service's own `version` stays the source's.
@@ -835,6 +975,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                     status="substitute_chosen",
                     resolution=f"Used {component['name']} ({component['id']}) as a function-based substitute. This is not asserted to be the original software or a full recreation.",
                 )
+                if missing:
+                    missing[-1]["service_ref"] = existing_user.get("id")
+                    missing[-1]["question"] = f"來源只指出此主機是 {name}，要用哪個元件作為教學替代？"
+                    missing[-1]["suggestions"] = _substitute_suggestions(name) + ["不部署；此步驟標記為未重現"]
             elif is_substitute:
                 substitute_info = next((entry for entry in component.get("substitutes_for", [])
                                         if name.casefold() in {n.casefold() for n in entry.get("names", [])}), {})
@@ -862,16 +1006,23 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             serial += 1
         used_ids.add(service_id)
         display_name = _display_name(candidate, component)
+        matched_text = candidate.get("matched_text")
         service: dict[str, Any] = {
             "id": service_id,
-            "name": display_name,
-            **({"matched_text": name} if display_name != name else {}),
-            "cve": candidate.get("cve", []),
+            "name": name,
+            "inventory_component_name": display_name,
+            **({"matched_text": matched_text or name} if matched_text or display_name != name else {}),
+            "cve": list(candidate.get("cve", [])),
             "catalogue_component": component["id"],
             "is_substitute": bool(is_substitute),
+            "tier": inventory["tier"],
+            "version_basis": inventory["version_basis"],
+            "reproduces_cve": inventory["reproduces_cve"],
             "epistemic_status": "inferred",
             "source": "program",
         }
+        if is_substitute:
+            service["substitute_of"] = inventory.get("substitute_of")
         if candidate.get("from_supplement"):
             # Stated by the user in a supplement, not derived by the planner.
             # "absent": the source does not provide it; the user did (USER_SUPPLIED).
@@ -909,7 +1060,35 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if _is_attacker_role(role):
             continue
         host_refs = set(host.get("service_refs", [])) | set(generated_host_refs.get(hid, []))
-        if any(service.get("id") in host_refs or service.get("host_ref") == hid for service in services):
+        if any((service.get("id") in host_refs or service.get("host_ref") == hid)
+               and service.get("catalogue_component")
+               and not str(service.get("catalogue_component")).startswith("unsupported-")
+               for service in services):
+            continue
+        # Known unsupported external platforms still need a service record so the
+        # topology builder can use the catalogue runtime (external_platform).
+        resolution = resolve_inventory(role)
+        role_component, _ = _match_component(role)
+        unsupported = next((entry for entry in load_components()
+                           if entry.get("id", "").startswith("unsupported-")
+                           and entry.get("tier") == "unavailable"
+                           and (resolution.get("component_id") == entry.get("id")
+                                or (role_component or {}).get("id") == entry.get("id")
+                                or (role_component or {}).get("runtime") == "external_platform"
+                                   and role_component.get("id") == entry.get("id")
+                                or any(_mentions(role, alias) or role.casefold().startswith(str(alias).casefold() + " ")
+                                       for alias in entry.get("aliases", [])))), None)
+        if unsupported:
+            service_id = f"svc-{unsupported['id']}-{hid}"
+            service_name = "Active Directory" if unsupported["id"] == "unsupported-ad-ds" else role
+            services.append({"id": service_id, "name": service_name, "matched_text": role,
+                             "host_ref": hid,
+                             "catalogue_component": unsupported["id"], "is_substitute": False,
+                             "tier": "unavailable", "not_reproducible": True,
+                             "not_reproducible_reason": resolution.get("reason") or unsupported.get("fidelity"),
+                             "version_basis": "assumed", "reproduces_cve": [],
+                             "epistemic_status": "inferred", "source": "program"})
+            generated_host_refs.setdefault(hid, []).append(service_id)
             continue
         matched = [component for component in load_components()
                    if component.get("id") != "oss-attacker"
@@ -1030,10 +1209,9 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             by_id[hid] = generated
         else:
             existing = by_id[hid]
-            if generated.get("os") and not existing.get("os"):
-                existing["os"] = generated["os"]
-            if generated.get("os_version") and not existing.get("os_version"):
-                existing["os_version"] = generated["os_version"]
+            for key in ("os", "os_version", "runtime", "deployable", "not_reproducible"):
+                if generated.get(key) is not None and (key not in existing or key in {"runtime", "deployable", "not_reproducible"}):
+                    existing[key] = generated[key]
     for hid, host in by_id.items():
         current_refs = list(host.get("service_refs", []))
         current_refs = [ref for ref in current_refs if ref not in old_generated_ids]
@@ -1049,6 +1227,17 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    for host_ref, phrases in role_mentions.items():
+        if "domain controller" in phrases and not any(
+                service.get("host_ref") == host_ref and service.get("catalogue_component") == "unsupported-ad-ds"
+                for service in services):
+            services.append({"id": f"svc-unsupported-ad-ds-{_slug(host_ref)}", "name": "Active Directory",
+                             "host_ref": host_ref, "matched_text": "domain controller",
+                             "catalogue_component": "unsupported-ad-ds", "source": "program",
+                             "epistemic_status": "inferred", "is_substitute": False, "tier": "unavailable",
+                             "not_reproducible": True,
+                             "not_reproducible_reason": "Active Directory Domain Services is unavailable in this runtime.",
+                             "version_basis": "assumed", "reproduces_cve": []})
     # One host is one image. When its services map to different catalogue components only one
     # can be deployed there; say which, and raise it here rather than letting IaC fail later.
     by_host: dict[str, list[dict[str, Any]]] = {}
@@ -1090,6 +1279,9 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     if any(item.get("id") not in _PLACEHOLDER_SERVICE_IDS for item in services):
         services = [item for item in services if item.get("id") not in _PLACEHOLDER_SERVICE_IDS]
     result["services"] = services
+    for service in result["services"]:
+        if isinstance(service.get("matched_text"), list):
+            service["matched_text"] = ", ".join(str(value) for value in service["matched_text"] if value)
     regenerated = {str(item.get("id")) for item in missing}
     for ident, earlier in previous_planner_items.items():
         if ident not in regenerated and earlier.get("resolution_source") == "user":

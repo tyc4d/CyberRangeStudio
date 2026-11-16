@@ -126,3 +126,45 @@ def get_topology(scenario_id: str):
     response = copy.deepcopy(plan)
     response["approval_state"] = topology_approval_state(ir)
     return response
+
+
+# --- Inventory read endpoints (module 4 pre-check / substitute transparency) ---
+from app.planner import inventory as _inv  # noqa: E402
+
+
+def _inventory_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for service in ir.get("services", []) or []:
+        if not isinstance(service, dict):
+            continue
+        cve = service.get("cve")
+        cves = [str(value) for value in cve] if isinstance(cve, list) else ([str(cve)] if cve else [])
+        technique = service.get("attack_technique")
+        items.append({
+            "ref_kind": "service", "ref_id": service.get("id"), "name": service.get("name"),
+            "version": service.get("version"), "cves": cves, "attack_technique": technique,
+            "resolution": _inv.resolve(service.get("name"), service.get("version"), cves, technique),
+            "auto_resolution": None, "override": service.get("inventory_override"),
+        })
+    for host in ir.get("hosts", []) or []:
+        if not isinstance(host, dict) or not host.get("os"):
+            continue
+        items.append({
+            "ref_kind": "host", "ref_id": host.get("id"), "name": host.get("os"),
+            "version": host.get("os_version"), "cves": [], "attack_technique": None,
+            "resolution": _inv.resolve(host.get("os"), host.get("os_version"), None, None),
+            "auto_resolution": None, "override": host.get("inventory_override"),
+        })
+    return items
+
+
+@router.get("/inventory")
+def get_inventory():
+    """Full inventory (have/obtainable/unavailable) for component selection."""
+    return {"entries": _inv.inventory_entries()}
+
+
+@router.get("/{scenario_id}/inventory")
+def get_scenario_inventory(scenario_id: str):
+    """Per-service and host inventory resolution for this scenario."""
+    return {"items": _inventory_items(_get_or_404(scenario_id))}

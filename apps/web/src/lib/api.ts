@@ -2,7 +2,10 @@ import { t } from "../i18n";
 // Thin API client. All backend calls go through here. Never touches API keys.
 // Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
 // are the frontend's working assumption (see apps/web/README.md). They live only in this file.
-import type { ScenarioIR, ValidationReport } from "@contracts";
+import type {
+  ScenarioIR, ValidationReport,
+  ValidationPlan, PocManifest, ExecutionResult, ChainValidation, ExportManifest,
+} from "@contracts";
 
 export interface Budget {
   est_total_usd: number;
@@ -97,6 +100,62 @@ export function extractScenarioId(resp: any): string | null {
 
 const enc = encodeURIComponent;
 
+/* ---------- inventory (docs/inventory/DESIGN.md, Resolution contract). Route names: reports/inventory/requests/inv-gui.md ---------- */
+export type InventoryTier = "have" | "obtainable" | "unavailable";
+export type InventoryVersionBasis = "stated" | "assumed" | "substituted" | "user_supplied";
+/** Output of app.planner.inventory.resolve, as the backend decided it. The UI renders it; it never re-derives it. */
+export interface InventoryResolution {
+  tier: InventoryTier;
+  component_id: string | null;
+  is_substitute: boolean;
+  version_basis: InventoryVersionBasis;
+  reproduces_cve: string[];
+  substitute_of: string | null;
+  reason: string;
+  needs_question: boolean;
+  question?: { field: string; text: string; suggestions: string[] };
+}
+/** One row of app.planner.inventory.inventory_entries(). */
+export interface InventoryEntry {
+  id: string;
+  name?: string | null;
+  kind?: string;
+  runtime?: string | null;
+  version?: string | null;
+  tier: InventoryTier;
+  reproduces_cve: string[];
+  substitute_for?: { products: string[]; cves: string[]; techniques: string[] };
+  obtainability?: { source?: string; pullable?: boolean; est_cost_usd?: number | null; ref?: string; note?: string } | null;
+}
+/** What the user decided for one component. Stored by the backend on the scenario; absent = automatic resolution stands. */
+export interface InventoryOverride {
+  action: "accept" | "replace" | "version";
+  component_id?: string | null;
+  version?: string | null;
+  at?: string;
+}
+/** One extracted component of a scenario and how it resolved. `resolution` is the effective one (after any override). */
+export interface InventoryItem {
+  ref_kind: "service" | "host";
+  ref_id: string;
+  name: string;
+  version?: string | null;
+  cves?: string[];
+  attack_technique?: string | null;
+  resolution: InventoryResolution;
+  /** The automatic proposal, when an override changed it (so the UI can show what was replaced). */
+  auto_resolution?: InventoryResolution | null;
+  override?: InventoryOverride | null;
+}
+export interface InventoryOverrideRequest {
+  ref_id: string;
+  /** accept = keep the auto-proposed substitute (user confirmed); replace = use component_id; version = use `version` (user_supplied); clear = drop the override. */
+  action: "accept" | "replace" | "version" | "clear";
+  component_id?: string;
+  version?: string;
+}
+export interface ScenarioInventory { items: InventoryItem[] }
+
 export const api = {
   health: () => req<{ status: string }>("/api/health"),
   budget: () => req<Budget>("/api/budget"),
@@ -166,6 +225,15 @@ export const api = {
   approveTopology: (id: string, note?: string) =>
     post<any>(`/api/planning/${enc(id)}/topology/approve`, { approved: true, approved_by: "user", ...(note ? { note } : {}) }),
 
+  // inventory: what the platform can stand up, and how each extracted component resolved against it
+  /** Every inventory entry with its tier (have / obtainable / unavailable). */
+  inventory: () => req<{ entries: InventoryEntry[] }>("/api/planning/inventory"),
+  /** Per-component resolution for this scenario (services and hosts), including any user override. */
+  scenarioInventory: (id: string) => req<ScenarioInventory>(`/api/planning/${enc(id)}/inventory`),
+  /** Accept / replace / version-supply / clear for one component. Returns the new items and, when the IR changed, the scenario. */
+  overrideInventory: (id: string, body: InventoryOverrideRequest) =>
+    post<ScenarioInventory & { scenario?: unknown }>(`/api/planning/${enc(id)}/inventory/override`, body),
+
   // module 6 IaC
   getIac: (id: string) => req<any>(`/api/iac/${enc(id)}`),
   generateIac: (id: string) => post<any>(`/api/iac/${enc(id)}/generate`),
@@ -183,4 +251,41 @@ export const api = {
   // module 8 validation
   getReport: (id: string) => req<ValidationReport | any>(`/api/validate/${enc(id)}/report`),
   runValidation: (id: string) => post<ValidationReport | any>(`/api/validate/${enc(id)}/run`),
+
+  // module 9 — PoC discovery, exploit validation & environment export (CONTRACT.md §HTTP API, prefix /api/poc).
+  // All six frozen routes. The /report response shape is not yet a @contracts type (m9-chain owns it), so it is
+  // typed loosely; the GUI derives its five separate fidelity metrics defensively. See requests/m9-gui.md.
+  poc: {
+    plan: (id: string) => post<ValidationPlan>(`/api/poc/${enc(id)}/plan`),
+    discover: (id: string) => post<PocManifest>(`/api/poc/${enc(id)}/discover`),
+    /** Real, ownership-gated payload execution. `signal` also aborts the client wait if the backend is unreachable. */
+    execute: (id: string, actionIds?: string[], signal?: AbortSignal) =>
+      req<ExecutionResult[]>(`/api/poc/${enc(id)}/execute`, {
+        method: "POST",
+        body: JSON.stringify(actionIds && actionIds.length ? { action_ids: actionIds } : {}),
+        signal,
+      }),
+    /** Live job state while a run is in flight: job state + per-action stages, for the GUI to poll. */
+    executeStatus: (id: string) => req<any>(`/api/poc/${enc(id)}/execute/status`),
+    /** Ask the backend to cancel the in-flight run (cancel flag + finally-kill + cleanup). */
+    executeCancel: (id: string) => post<any>(`/api/poc/${enc(id)}/execute/cancel`),
+    chain: (id: string) => post<ChainValidation>(`/api/poc/${enc(id)}/chain`),
+    report: (id: string) => req<any>(`/api/poc/${enc(id)}/report`),
+    /** `format` is additive (CONTRACT has no field yet; a backend may ignore it). */
+    export: (id: string, format?: string) =>
+      post<{ bundle_path: string; manifest: ExportManifest }>(`/api/poc/${enc(id)}/export`, format ? { format } : {}),
+    /** Fetch the built ZIP bytes. No frozen route yet (see requests/m9-gui.md); resolves null on 404/501. */
+    exportDownload: async (id: string): Promise<{ data: ArrayBuffer; contentType: string } | null> => {
+      const path = `/api/poc/${enc(id)}/export/download`;
+      let r: Response;
+      try {
+        r = await fetch(path);
+      } catch (e) {
+        throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "GET", path, "offline");
+      }
+      if (r.status === 404 || r.status === 501) return null;
+      if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
+      return { data: await r.arrayBuffer(), contentType: r.headers.get("content-type") ?? "" };
+    },
+  },
 };

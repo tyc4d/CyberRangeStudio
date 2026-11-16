@@ -89,6 +89,20 @@ test.describe("phone layout (read-only)", () => {
     });
   }
 
+  for (const width of PHONES) {
+    test(`PoC page at ${width}px keeps readable text and no sideways scroll`, async ({ browser }) => {
+      test.skip(!SCENARIO, "CR_E2E_SCENARIO is not set: needs an existing scenario id");
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, locale: "zh-TW" });
+      const page = await context.newPage();
+      const writes = await openReadOnly(page, "/poc");
+      await expect(page.locator("main")).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      expect(await smallText(page, 14), "visible PoC text under 14px").toEqual([]);
+      expect(writes, "no write requests").toEqual([]);
+      await context.close();
+    });
+  }
+
   test("deploy page technical-details summary is a 44px touch target at 390px", async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "zh-TW" });
     const page = await context.newPage();

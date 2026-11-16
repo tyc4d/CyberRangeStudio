@@ -251,6 +251,7 @@ def probe_in_service(scenario_id: str, service_id: str, python_script: str, time
         docker, "run", "--rm", "--pull=never", "--network", f"container:{source_container}",
         "--read-only", "--cap-drop=ALL", "--security-opt", "no-new-privileges:true",
         "--user", "65532:65532", "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+        "--memory", "256m", "--cpus", "1", "--pids-limit", "128",
         _BASE_IMAGE, "python", "-c", python_script,
     ]
     return _run(command, timeout=timeout)
