@@ -16,7 +16,8 @@ def test_status_and_cancel_use_latest_scenario_execution_job(tmp_path: Path) -> 
     sid = "m9-status-job"
     stages = {"started": True, "delivered": False, "responded": False,
               "vuln_behavior": False, "state_change": False, "action_complete": False}
-    with patch.object(poc_store, "_DB", db_path), patch.object(config, "DATA_DIR", tmp_path):
+    with patch.object(poc_store, "_DB", db_path), patch.object(config, "DATA_DIR", tmp_path), \
+         patch("app.poc.runner.runner.manager.active_probe_operations", return_value=[]):
         poc_store.init()
         poc_store.create_job(job_id, sid, "execute", timeout_s=120)
         poc_store.set_job_state(job_id, "running", json.dumps({"current_action_id": "a1", "stages": stages}))

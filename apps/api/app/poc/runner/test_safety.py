@@ -15,6 +15,20 @@ from app import config
 from app.poc.runner import guard, payloads, runner
 from app.poc.runner.models import ExecutionRequest
 
+TEST_VMID = 900100
+TEST_HOST = "worker"
+TEST_GENERATION = "a" * 32
+
+
+def pinned_reservation(_scenario_id, _service_id, operation_id, job_id, _worker_identity):
+    return {"state": "reserved", "resource_absent": True, "operation_id": operation_id,
+            "vmid": TEST_VMID, "host_id": TEST_HOST, "generation_id": TEST_GENERATION,
+            "job_id": job_id}
+
+
+def pinned_worker_identity(_scenario_id):
+    return {"vmid": TEST_VMID, "host_id": TEST_HOST, "generation_id": TEST_GENERATION}
+
 
 def request(**kwargs):
     proof = payloads.KNOWN_POC_PROOFS[payloads.STRUTS_S2045_PROOF_ID]
@@ -32,17 +46,21 @@ def isolated(monkeypatch, tmp_path):
     monkeypatch.setattr("subprocess.run", Mock(side_effect=AssertionError("no real subprocess")))
     monkeypatch.setattr("urllib.request.urlopen", Mock(side_effect=AssertionError("no real HTTP")))
     monkeypatch.setattr(runner.manager, "_pve_guest_exec", Mock(side_effect=AssertionError("no real PVE")))
+    monkeypatch.setattr(runner.manager, "probe_worker_identity", pinned_worker_identity)
 
 
 @pytest.mark.parametrize("backend", ["local-docker", "proxmox"])
 @pytest.mark.parametrize("cancelled", [False, True])
 def test_poc_transport_uses_pve_supervisor_and_keeps_local_d6_block(monkeypatch, backend, cancelled):
     monkeypatch.setattr(runner.manager, "deploy_backend", lambda: backend)
+    monkeypatch.setattr(runner.manager, "reserve_probe_operation", Mock(side_effect=pinned_reservation))
     start = Mock(return_value={"state": "running", "resource_absent": False})
     wait = Mock(return_value={"state": "completed", "resource_absent": True,
                               "exitcode": 0, "stdout": payloads.STRUTS_S2045_MARKER, "stderr": ""})
     monkeypatch.setattr(runner.manager, "start_probe_operation", start)
     monkeypatch.setattr(runner.manager, "wait_probe_operation", wait)
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation",
+                        Mock(return_value={"state": "cancelled", "resource_absent": True}))
     monkeypatch.setattr(runner.manager, "probe_in_service", start)
     cancellation = threading.Event()
     if cancelled:
@@ -64,6 +82,7 @@ def test_poc_transport_uses_pve_supervisor_and_keeps_local_d6_block(monkeypatch,
 
 def test_cancel_during_wait_stops_and_joins_the_registered_operation(monkeypatch):
     monkeypatch.setattr(runner.manager, "deploy_backend", lambda: "proxmox")
+    monkeypatch.setattr(runner.manager, "reserve_probe_operation", Mock(side_effect=pinned_reservation))
     cancellation = threading.Event()
     monkeypatch.setattr(runner.manager, "start_probe_operation", Mock(return_value={
         "state": "running", "resource_absent": False}))
@@ -86,10 +105,11 @@ def test_cancel_during_wait_stops_and_joins_the_registered_operation(monkeypatch
 
 
 def test_uncertain_transport_keeps_operation_id_for_later_reconciliation(monkeypatch):
-    job_id = "uncertain-runner-job"
-    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    job_id = "a" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute", worker_identity=pinned_worker_identity("runner-safety"))
     runner.poc_store.set_job_state(job_id, "running")
     monkeypatch.setattr(runner.manager, "deploy_backend", lambda: "proxmox")
+    monkeypatch.setattr(runner.manager, "reserve_probe_operation", Mock(side_effect=pinned_reservation))
     uncertain = {"state": "uncertain", "resource_absent": False}
     monkeypatch.setattr(runner.manager, "start_probe_operation", Mock(return_value=uncertain))
     monkeypatch.setattr(runner.manager, "wait_probe_operation", Mock(return_value=uncertain))
@@ -252,32 +272,37 @@ def test_pve_supervisor_result_requires_absence_for_terminal_state():
 
 
 def test_cancel_endpoint_cancels_and_joins_persisted_guest_operation(monkeypatch):
-    job_id, operation_id = "cancel-job-1", "d" * 32
-    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    job_id, operation_id = "1" * 32, "d" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute", worker_identity=pinned_worker_identity("runner-safety"))
     runner.poc_store.set_job_state(job_id, "running")
-    assert runner.poc_store.register_job_operation(job_id, operation_id, "web", "a1")
+    assert runner.poc_store.register_job_operation(
+        job_id, operation_id, "web", "a1", TEST_VMID, TEST_HOST, TEST_GENERATION)
     cancel = Mock(return_value={"state": "cancelled", "resource_absent": True})
     join = Mock(return_value={"state": "cancelled", "resource_absent": True})
     monkeypatch.setattr(runner.manager, "cancel_probe_operation", cancel)
     monkeypatch.setattr(runner.manager, "join_probe_operation", join)
+    monkeypatch.setattr(runner.manager, "active_probe_operations", Mock(return_value=[]))
 
     response = runner.cancel_execution("runner-safety")
 
     assert response == {"cancelled": True, "joined": True, "uncertain": False, "operations": 1}
-    cancel.assert_called_once_with("runner-safety", operation_id, "web")
+    cancel.assert_called_once_with("runner-safety", operation_id, "web", TEST_VMID, TEST_HOST,
+                                   TEST_GENERATION, job_id)
     join.assert_not_called()
     assert runner.poc_store.get_job_operation(job_id) is None
     assert runner.poc_store.get_job(job_id)["state"] == "cancelled"
 
 
 def test_uncertain_cancel_keeps_job_operation_registered_and_active(monkeypatch):
-    job_id, operation_id = "cancel-job-uncertain", "e" * 32
-    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    job_id, operation_id = "2" * 32, "e" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute", worker_identity=pinned_worker_identity("runner-safety"))
     runner.poc_store.set_job_state(job_id, "running")
-    assert runner.poc_store.register_job_operation(job_id, operation_id, "web", "a1")
+    assert runner.poc_store.register_job_operation(
+        job_id, operation_id, "web", "a1", TEST_VMID, TEST_HOST, TEST_GENERATION)
     uncertain = {"state": "uncertain", "resource_absent": False}
     monkeypatch.setattr(runner.manager, "cancel_probe_operation", Mock(return_value=uncertain))
     monkeypatch.setattr(runner.manager, "join_probe_operation", Mock(return_value=uncertain))
+    monkeypatch.setattr(runner.manager, "active_probe_operations", Mock(return_value=[]))
 
     response = runner.cancel_execution("runner-safety")
 
@@ -286,11 +311,35 @@ def test_uncertain_cancel_keeps_job_operation_registered_and_active(monkeypatch)
     assert runner.poc_store.get_job(job_id)["state"] == "running"
 
 
-def test_job_cancel_flag_prevents_late_operation_registration():
-    job_id = "cancel-before-register"
-    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+def test_cancel_flag_allows_binding_a_pre_reserved_operation_for_cleanup():
+    job_id = "3" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute", worker_identity=pinned_worker_identity("runner-safety"))
     runner.poc_store.set_job_state(job_id, "running")
     runner.poc_store.request_cancel(job_id)
 
-    assert not runner.poc_store.register_job_operation(job_id, "f" * 32, "web", "a1")
+    assert not runner.poc_store.register_job_operation(
+        job_id, "f" * 32, "web", "a1", TEST_VMID, TEST_HOST, "b" * 32)
+    assert runner.poc_store.register_job_operation(
+        job_id, "f" * 32, "web", "a1", TEST_VMID, TEST_HOST, TEST_GENERATION)
+    assert runner.poc_store.get_job_operation(job_id)["generation_id"] == TEST_GENERATION
+
+
+def test_error_job_with_unresolved_operation_remains_cancellable(monkeypatch):
+    job_id, operation_id = "4" * 32, "5" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute", worker_identity=pinned_worker_identity("runner-safety"))
+    runner.poc_store.set_job_state(job_id, "running")
+    assert runner.poc_store.register_job_operation(
+        job_id, operation_id, "web", "a1", TEST_VMID, TEST_HOST, TEST_GENERATION)
+    runner.poc_store.set_job_state(job_id, "error", "execution worker failed after launch")
+    cancel = Mock(return_value={"state": "cancelled", "resource_absent": True})
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation", cancel)
+    monkeypatch.setattr(runner.manager, "join_probe_operation", Mock(side_effect=AssertionError("already joined")))
+    monkeypatch.setattr(runner.manager, "active_probe_operations", Mock(return_value=[]))
+
+    response = runner.cancel_execution("runner-safety")
+
+    assert response == {"cancelled": True, "joined": True, "uncertain": False, "operations": 1}
+    cancel.assert_called_once_with("runner-safety", operation_id, "web", TEST_VMID, TEST_HOST,
+                                   TEST_GENERATION, job_id)
     assert runner.poc_store.get_job_operation(job_id) is None
+    assert runner.poc_store.get_job(job_id)["state"] == "cancelled"

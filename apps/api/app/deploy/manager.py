@@ -5,6 +5,7 @@ import json
 import hashlib
 import ipaddress
 import os
+import re
 import secrets
 import socket
 import shutil
@@ -265,7 +266,8 @@ def _active_proxmox_deployment(scenario_id: str) -> dict[str, Any] | None:
             vmid = details.get("vmid")
             host_id = details.get("host_id")
             if isinstance(vmid, int) and not isinstance(vmid, bool) and isinstance(host_id, str):
-                return {"vmid": vmid, "host_id": host_id, "details": details}
+                return {"vmid": vmid, "host_id": host_id,
+                        "generation_id": details.get("generation_id"), "details": details}
         if entry.get("action") == "up" and entry.get("state") == "failed":
             outcome = details.get("result") or {}
             orphan = outcome.get("recoverable_orphan") if isinstance(outcome, dict) else None
@@ -393,8 +395,10 @@ def probe_in_service(scenario_id: str, service_id: str, python_script: str, time
     return _pve_guest_exec(scenario_id, command, timeout, require_isolation=True)
 
 
-def _probe_operation_backend(scenario_id: str) -> tuple[Any | None, dict[str, Any] | None, dict[str, Any] | None]:
-    """Resolve the selected PVE worker without providing a local-Docker fallback."""
+def _probe_operation_backend(scenario_id: str, *, vmid: int | None = None,
+                             host_id: str | None = None) -> tuple[Any | None, dict[str, Any] | None,
+                                                                  dict[str, Any] | None]:
+    """Select PVE without local fallback; callers supply the worker pin for operations."""
     scenario_id = validate_id(scenario_id)
     selected = deploy_backend()
     conflict = _backend_conflict(scenario_id, selected)
@@ -406,67 +410,132 @@ def _probe_operation_backend(scenario_id: str) -> tuple[Any | None, dict[str, An
     if selected != "proxmox":
         return None, None, {"state": "blocked", "resource_absent": False,
                             "error": "no approved cancellable probe transport is selected"}
-    deployment = _active_proxmox_deployment(scenario_id)
-    if deployment is None or deployment.get("orphan"):
-        return None, None, {"state": "uncertain", "resource_absent": False,
-                            "error": "matching active owned Proxmox worker is unavailable"}
     try:
-        return _proxmox_backend(), deployment, None
+        backend = _proxmox_backend()
     except Exception as exc:
-        return None, deployment, {"state": "uncertain", "resource_absent": False,
+        return None, None, {"state": "uncertain", "resource_absent": False,
                                   "error": f"Proxmox probe transport unavailable ({type(exc).__name__})"}
+    if vmid is None and host_id is None:
+        return backend, None, None
+    if vmid is None or not isinstance(host_id, str) or not host_id:
+        return None, None, {"state": "blocked", "resource_absent": False,
+                            "error": "probe transport requires a pinned worker identity"}
+    return backend, {"vmid": vmid, "host_id": host_id}, None
 
 
-def start_probe_operation(scenario_id: str, service_id: str, operation_id: str,
+def probe_worker_identity(scenario_id: str) -> dict[str, Any] | None:
+    """Capture the immutable worker identity recorded by the successful deployment."""
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    if selected != "proxmox" or _backend_conflict(scenario_id, selected):
+        return None
+    deployment = _active_proxmox_deployment(scenario_id)
+    if (deployment is None or deployment.get("orphan")
+            or not re.fullmatch(r"[a-f0-9]{32}", str(deployment.get("generation_id", "")))):
+        return None
+    return {key: deployment[key] for key in ("vmid", "host_id", "generation_id")}
+
+
+def reserve_probe_operation(scenario_id: str, service_id: str, operation_id: str,
+                            job_id: str, worker_identity: dict[str, Any] | None) -> dict[str, Any]:
+    """Commit a PVE lifecycle fence for the job's already captured worker generation."""
+    if (not isinstance(worker_identity, dict) or not isinstance(worker_identity.get("vmid"), int)
+            or not isinstance(worker_identity.get("host_id"), str)
+            or not re.fullmatch(r"[a-f0-9]{32}", str(worker_identity.get("generation_id", "")))):
+        return {"state": "blocked", "resource_absent": True,
+                "error": "POC job has no pinned active Proxmox worker generation"}
+    backend, deployment, error = _probe_operation_backend(
+        scenario_id, vmid=worker_identity["vmid"], host_id=worker_identity["host_id"])
+    if error:
+        return error
+    try:
+        return backend.reserve_probe_operation(
+            scenario_id, vmid=deployment["vmid"], host_id=deployment["host_id"],
+            generation_id=worker_identity["generation_id"], operation_id=operation_id,
+            service_id=service_id, job_id=job_id)
+    except Exception as exc:
+        existing = backend.probe_operation(operation_id)
+        if (existing and existing.get("scenario_id") == scenario_id
+                and existing.get("service_id") == service_id and existing.get("job_id") == job_id
+                and existing.get("generation_id") == worker_identity["generation_id"]):
+            return {"state": "uncertain", "resource_absent": False,
+                    "vmid": existing["vmid"], "host_id": existing["host_id"],
+                    "generation_id": existing["generation_id"],
+                    "error": f"probe launch reservation response is uncertain ({type(exc).__name__})"}
+        return {"state": "blocked", "resource_absent": True,
+                "error": f"probe launch reservation failed before registering ({type(exc).__name__})"}
+
+
+def active_probe_operations(scenario_id: str) -> list[dict[str, Any]]:
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    recorded = _recorded_active_backend(scenario_id)
+    if selected == "local-docker" and recorded != "proxmox":
+        return []
+    try:
+        backend = _proxmox_backend()
+    except Exception as exc:
+        raise RuntimeError(f"PVE probe ledger is unavailable ({type(exc).__name__})") from None
+    return backend.active_probe_operations(scenario_id)
+
+
+def start_probe_operation(scenario_id: str, service_id: str, operation_id: str, job_id: str,
+                          vmid: int, host_id: str, generation_id: str,
                           script: str, timeout: int) -> dict[str, Any]:
-    backend, deployment, error = _probe_operation_backend(scenario_id)
+    backend, deployment, error = _probe_operation_backend(scenario_id, vmid=vmid, host_id=host_id)
     if error:
         return error
     try:
         return backend.start_probe_operation(
             scenario_id, vmid=deployment["vmid"], host_id=deployment["host_id"],
-            operation_id=operation_id, service_id=service_id, script=script, timeout=timeout)
+            generation_id=generation_id, job_id=job_id, operation_id=operation_id,
+            service_id=service_id, script=script, timeout=timeout)
     except Exception as exc:
         return {"state": "uncertain", "resource_absent": False,
                 "error": f"probe launch outcome is uncertain ({type(exc).__name__})"}
 
 
-def wait_probe_operation(scenario_id: str, operation_id: str, timeout: int = 10) -> dict[str, Any]:
-    backend, deployment, error = _probe_operation_backend(scenario_id)
+def wait_probe_operation(scenario_id: str, operation_id: str, vmid: int,
+                         host_id: str, generation_id: str, timeout: int = 10) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id, vmid=vmid, host_id=host_id)
     if error:
         return error
     try:
         return backend.wait_probe_operation(
             scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
-            host_id=deployment["host_id"], timeout=timeout)
+            host_id=deployment["host_id"], generation_id=generation_id, timeout=timeout)
     except Exception as exc:
         return {"state": "uncertain", "resource_absent": False,
                 "error": f"probe wait outcome is uncertain ({type(exc).__name__})"}
 
 
 def cancel_probe_operation(scenario_id: str, operation_id: str,
-                           service_id: str) -> dict[str, Any]:
-    backend, deployment, error = _probe_operation_backend(scenario_id)
+                           service_id: str, vmid: int, host_id: str,
+                           generation_id: str, job_id: str | None = None) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id, vmid=vmid, host_id=host_id)
     if error:
         return error
     try:
         return backend.cancel_probe_operation(
             scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
-            host_id=deployment["host_id"], service_id=service_id)
+            host_id=deployment["host_id"], generation_id=generation_id,
+            service_id=service_id, job_id=job_id)
     except Exception as exc:
         return {"state": "uncertain", "resource_absent": False,
                 "error": f"probe cancellation is unconfirmed ({type(exc).__name__})"}
 
 
 def join_probe_operation(scenario_id: str, operation_id: str, service_id: str,
+                         vmid: int, host_id: str, generation_id: str,
                          timeout: int = 30) -> dict[str, Any]:
-    backend, deployment, error = _probe_operation_backend(scenario_id)
+    backend, deployment, error = _probe_operation_backend(scenario_id, vmid=vmid, host_id=host_id)
     if error:
         return error
     try:
         return backend.join_probe_operation(
             scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
-            host_id=deployment["host_id"], service_id=service_id, timeout=timeout)
+            host_id=deployment["host_id"], generation_id=generation_id,
+            service_id=service_id, timeout=timeout)
     except Exception as exc:
         return {"state": "uncertain", "resource_absent": False,
                 "error": f"probe join is unconfirmed ({type(exc).__name__})"}
@@ -855,6 +924,7 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
                                                      "host_id": "worker", "state": "isolation_unconfirmed"}
         state = "running" if success else str(outcome.get("state") or "failed")
         details = {"backend": "proxmox", "vmid": outcome.get("vmid"), "host_id": "worker",
+                   "generation_id": outcome.get("generation_id"),
                    "compose_sha256": source_digest, "compose_source_sha256": source_digest,
                    "proxmox_compose_sha256": outcome.get("compose_sha256"),
                    "isolation": isolation or outcome.get("isolation"),

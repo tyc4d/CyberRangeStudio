@@ -33,6 +33,7 @@ def lab(monkeypatch, tmp_path):
     monkeypatch.setattr(runner.poc_store, "_DB", tmp_path / "poc.db")
     monkeypatch.setattr(runner.scenario_store, "get", lambda sid: ir if sid == SID else None)
     monkeypatch.setattr(runner.manager, "_lifecycle_records", lambda sid: [record] if sid == SID else [])
+    monkeypatch.setattr(runner.manager, "active_probe_operations", lambda sid: [])
     monkeypatch.setattr(runner, "assert_target_owned", lambda *args: dict(ownership))
     monkeypatch.setattr("subprocess.run", Mock(side_effect=AssertionError("no real subprocess")))
     monkeypatch.setattr("urllib.request.urlopen", Mock(side_effect=AssertionError("no real HTTP")))

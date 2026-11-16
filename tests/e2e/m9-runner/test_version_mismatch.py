@@ -30,6 +30,12 @@ def test_version_mismatch_response_is_not_pass() -> None:
     )
     with patch("app.poc.runner.runner.assert_target_owned", return_value={"service_ref": "web"}), \
          patch("app.poc.runner.runner.manager.deploy_backend", return_value="proxmox"), \
+         patch("app.poc.runner.runner.manager.probe_worker_identity", return_value={
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32}), \
+         patch("app.poc.runner.runner.manager.reserve_probe_operation", side_effect=lambda sid, service, opid, jobid, identity: {
+             "state": "reserved", "resource_absent": True, "operation_id": opid,
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32,
+             "job_id": jobid}), \
          patch("app.poc.runner.runner.manager.start_probe_operation",
                return_value={"state": "running", "resource_absent": False}), \
          patch("app.poc.runner.runner.manager.wait_probe_operation",
@@ -90,6 +96,12 @@ def test_cancel_during_probe_requests_best_effort_helper_cleanup() -> None:
 
     timer = threading.Timer(0.1, request.cancel.set)
     with patch("app.poc.runner.runner.manager.deploy_backend", return_value="proxmox"), \
+         patch("app.poc.runner.runner.manager.probe_worker_identity", return_value={
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32}), \
+         patch("app.poc.runner.runner.manager.reserve_probe_operation", side_effect=lambda sid, service, opid, jobid, identity: {
+             "state": "reserved", "resource_absent": True, "operation_id": opid,
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32,
+             "job_id": jobid}), \
          patch("app.poc.runner.runner.manager.start_probe_operation",
                return_value={"state": "running", "resource_absent": False}) as start, \
          patch("app.poc.runner.runner.manager.wait_probe_operation", side_effect=wait_for_cancel) as wait, \

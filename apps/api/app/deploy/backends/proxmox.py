@@ -33,7 +33,7 @@ _ISOLATED_BRIDGE_OPTIONS = {_ISOLATED_BRIDGE_OPT: "isolated"}
 _DEMO_APP_SOURCE = Path(__file__).resolve().parents[5] / "infra" / "templates" / "demo-app"
 _DEMO_APP_GUEST = "/opt/cr-runtime/demo-app"
 _COMPOSE_ENV_GUEST = "/opt/cr-runtime/compose.env"
-_PROBE_ACTIVE_STATES = ("starting", "running", "cancel_requested", "uncertain")
+_PROBE_ACTIVE_STATES = ("reserved", "starting", "running", "cancel_requested", "uncertain")
 _PROBE_TERMINAL_STATES = ("cancelled", "completed", "failed")
 
 
@@ -87,21 +87,46 @@ def _placement_lock(database_path: str):
             "CREATE TABLE IF NOT EXISTS pve_worker_reservations ("
             "vmid INTEGER PRIMARY KEY CHECK(vmid BETWEEN 900100 AND 900999), "
             "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, state TEXT NOT NULL, "
-            "updated_at TEXT NOT NULL, UNIQUE(scenario_id, host_id))"
+            "updated_at TEXT NOT NULL, generation_id TEXT, UNIQUE(scenario_id, host_id))"
         )
+        reservation_columns = {str(row[1]) for row in connection.execute(
+            "PRAGMA table_info(pve_worker_reservations)").fetchall()}
+        if "generation_id" not in reservation_columns:
+            connection.execute("ALTER TABLE pve_worker_reservations ADD COLUMN generation_id TEXT")
+        for (vmid,) in connection.execute(
+                "SELECT vmid FROM pve_worker_reservations WHERE generation_id IS NULL OR generation_id=''"
+        ).fetchall():
+            connection.execute("UPDATE pve_worker_reservations SET generation_id=? WHERE vmid=?",
+                                (secrets.token_hex(16), vmid))
         connection.execute(
             "CREATE TABLE IF NOT EXISTS pve_probe_operations ("
             "operation_id TEXT PRIMARY KEY CHECK(length(operation_id)=32), "
             "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, vmid INTEGER NOT NULL, "
-            "service_id TEXT NOT NULL, target_name TEXT NOT NULL, state TEXT NOT NULL, "
+            "service_id TEXT NOT NULL, target_name TEXT NOT NULL, job_id TEXT, generation_id TEXT, state TEXT NOT NULL, "
             "updated_at TEXT NOT NULL, exitcode INTEGER, stdout_b64 TEXT, stderr_b64 TEXT)"
         )
+        operation_columns = {str(row[1]) for row in connection.execute(
+            "PRAGMA table_info(pve_probe_operations)").fetchall()}
+        if "job_id" not in operation_columns:
+            connection.execute("ALTER TABLE pve_probe_operations ADD COLUMN job_id TEXT")
+        if "generation_id" not in operation_columns:
+            connection.execute("ALTER TABLE pve_probe_operations ADD COLUMN generation_id TEXT")
         connection.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS pve_one_active_probe_per_worker "
+            "UPDATE pve_probe_operations SET generation_id=(SELECT generation_id "
+            "FROM pve_worker_reservations WHERE pve_worker_reservations.vmid=pve_probe_operations.vmid) "
+            "WHERE generation_id IS NULL OR generation_id=''"
+        )
+        connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS pve_one_active_probe_per_worker_v2 "
             "ON pve_probe_operations(vmid) WHERE state IN "
-            "('starting','running','cancel_requested','uncertain')"
+            "('reserved','starting','running','cancel_requested','uncertain')"
         )
         _migrate_singleton_reservation(connection)
+        connection.execute(
+            "UPDATE pve_probe_operations SET generation_id=(SELECT generation_id "
+            "FROM pve_worker_reservations WHERE pve_worker_reservations.vmid=pve_probe_operations.vmid) "
+            "WHERE generation_id IS NULL OR generation_id=''"
+        )
         yield connection
     finally:
         if connection.in_transaction:
@@ -124,6 +149,8 @@ def _migrate_singleton_reservation(connection: sqlite3.Connection) -> None:
             "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at) "
             "VALUES(?, ?, ?, ?, ?)", (int(row[2]), row[0], row[1], row[3], row[4]),
         )
+        connection.execute("UPDATE pve_worker_reservations SET generation_id=? WHERE vmid=?",
+                           (secrets.token_hex(16), int(row[2])))
     connection.execute("DROP TABLE pve_worker_reservation")
     connection.commit()
     connection.execute("BEGIN EXCLUSIVE")
@@ -131,9 +158,10 @@ def _migrate_singleton_reservation(connection: sqlite3.Connection) -> None:
 
 def _reservations(connection: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = connection.execute(
-        "SELECT scenario_id, host_id, vmid, state FROM pve_worker_reservations ORDER BY vmid"
+        "SELECT scenario_id, host_id, vmid, state, generation_id FROM pve_worker_reservations ORDER BY vmid"
     ).fetchall()
-    return [{"scenario_id": row[0], "host_id": row[1], "vmid": int(row[2]), "state": row[3]}
+    return [{"scenario_id": row[0], "host_id": row[1], "vmid": int(row[2]), "state": row[3],
+             "generation_id": row[4]}
             for row in rows]
 
 
@@ -144,11 +172,11 @@ def _reservation(connection: sqlite3.Connection, vmid: int) -> dict[str, Any] | 
 def _persist_reservation(connection: sqlite3.Connection, *, scenario_id: str,
                          host_id: str, vmid: int, state: str) -> None:
     cursor = connection.execute(
-        "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at) "
-        "VALUES(?, ?, ?, ?, ?) ON CONFLICT(vmid) DO UPDATE SET "
+        "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at,generation_id) "
+        "VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(vmid) DO UPDATE SET "
         "state=excluded.state, updated_at=excluded.updated_at "
         "WHERE scenario_id=excluded.scenario_id AND host_id=excluded.host_id",
-        (vmid, scenario_id, host_id, state, datetime.now(timezone.utc).isoformat()),
+        (vmid, scenario_id, host_id, state, datetime.now(timezone.utc).isoformat(), secrets.token_hex(16)),
     )
     if cursor.rowcount != 1:
         raise ProxmoxBackendError("durable worker reservation identity changed; manual reconciliation required")
@@ -171,24 +199,28 @@ def _clear_reservation(connection: sqlite3.Connection, *, scenario_id: str,
 def _probe_operation(connection: sqlite3.Connection, operation_id: str) -> dict[str, Any] | None:
     row = connection.execute(
         "SELECT operation_id, scenario_id, host_id, vmid, service_id, target_name, state, "
-        "exitcode, stdout_b64, stderr_b64 FROM pve_probe_operations WHERE operation_id=?",
+        "exitcode, stdout_b64, stderr_b64, job_id, generation_id "
+        "FROM pve_probe_operations WHERE operation_id=?",
         (operation_id,),
     ).fetchone()
     if row is None:
         return None
     return {"operation_id": row[0], "scenario_id": row[1], "host_id": row[2], "vmid": int(row[3]),
             "service_id": row[4], "target_name": row[5], "state": row[6], "exitcode": row[7],
-            "stdout_b64": row[8], "stderr_b64": row[9]}
+            "stdout_b64": row[8], "stderr_b64": row[9], "job_id": row[10],
+            "generation_id": row[11]}
 
 
 def _create_probe_operation(connection: sqlite3.Connection, *, operation_id: str,
                             scenario_id: str, host_id: str, vmid: int, service_id: str,
-                            target_name: str, state: str) -> None:
+                            target_name: str, generation_id: str, state: str,
+                            job_id: str | None = None) -> None:
     try:
         connection.execute(
             "INSERT INTO pve_probe_operations(operation_id,scenario_id,host_id,vmid,service_id,"
-            "target_name,state,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-            (operation_id, scenario_id, host_id, vmid, service_id, target_name, state,
+            "target_name,job_id,generation_id,state,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (operation_id, scenario_id, host_id, vmid, service_id, target_name, job_id,
+             generation_id, state,
              datetime.now(timezone.utc).isoformat()),
         )
     except sqlite3.IntegrityError as exc:
@@ -218,6 +250,21 @@ def _active_probe_for_worker(connection: sqlite3.Connection, vmid: int) -> dict[
         (vmid, *_PROBE_ACTIVE_STATES),
     ).fetchone()
     return {"operation_id": row[0], "state": row[1]} if row else None
+
+
+def _active_probe_operations_for_scenario(connection: sqlite3.Connection,
+                                          scenario_id: str) -> list[dict[str, Any]]:
+    placeholders = ",".join("?" for _ in _PROBE_ACTIVE_STATES)
+    rows = connection.execute(
+        "SELECT operation_id,scenario_id,host_id,vmid,service_id,state,job_id,generation_id "
+        f"FROM pve_probe_operations WHERE scenario_id=? AND state IN ({placeholders}) "
+        "ORDER BY updated_at,operation_id",
+        (scenario_id, *_PROBE_ACTIVE_STATES),
+    ).fetchall()
+    return [{"operation_id": row[0], "scenario_id": row[1], "host_id": row[2],
+             "vmid": int(row[3]), "service_id": row[4], "state": row[5], "job_id": row[6],
+             "generation_id": row[7]}
+            for row in rows]
 
 
 def _normalize_compose(document: str, scenario_id: str) -> tuple[str, dict[str, Any]]:
@@ -562,9 +609,11 @@ class ProxmoxBackend:
                     "error": f"V1 isolated bridge check failed immediately before deployment: {detail}",
                     "bridge_v1": {"before": bridge_v1_before}}
         reservation_written = self.settings.mode == "live"
+        generation_id = None
         if reservation_written:
             _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
                                  vmid=vmid, state="creating")
+            generation_id = _reservation(reservation_db, vmid)["generation_id"]
         nonce = secrets.token_hex(6)
         pending_name = f"cr-pending-{_pve_vm_name_id(scenario_id[:16])}-{nonce}"
         source_metadata = ready["checks"].get("template_source", {})
@@ -574,7 +623,8 @@ class ProxmoxBackend:
                                   "creation_nonce": nonce},
                                  sort_keys=True, separators=(",", ":"))
         vmname = f"cr-{_pve_vm_name_id(scenario_id[:20])}-worker"
-        result: dict[str, Any] = {"ok": False, "vmid": vmid, "scenario_id": scenario_id, "state": "creating"}
+        result: dict[str, Any] = {"ok": False, "vmid": vmid, "scenario_id": scenario_id,
+                                  "generation_id": generation_id, "state": "creating"}
         ownership_configured = False
         clone_completed = False
         try:
@@ -1125,12 +1175,80 @@ class ProxmoxBackend:
         if int(permissions.get("exitcode", 1)) != 0:
             raise ProxmoxBackendError("could not restrict permissions on the probe supervisor")
 
-    def start_probe_operation(self, scenario_id: str, *, vmid: int, host_id: str,
-                              operation_id: str, service_id: str, script: str,
-                              timeout: int) -> dict[str, Any]:
-        """Fence and start a bounded helper; only its unique operation ID may own it."""
+    @staticmethod
+    def _probe_job_id(job_id: str) -> str:
+        if not isinstance(job_id, str) or not re.fullmatch(r"[a-f0-9]{32}", job_id):
+            raise ProxmoxBackendError("probe job id must be 32 lowercase hexadecimal characters")
+        return job_id
+
+    @staticmethod
+    def _probe_generation_id(generation_id: str) -> str:
+        if not isinstance(generation_id, str) or not re.fullmatch(r"[a-f0-9]{32}", generation_id):
+            raise ProxmoxBackendError("worker generation id must be 32 lowercase hexadecimal characters")
+        return generation_id
+
+    def reserve_probe_operation(self, scenario_id: str, *, vmid: int, host_id: str,
+                                generation_id: str, operation_id: str,
+                                service_id: str, job_id: str) -> dict[str, Any]:
+        """Persist a generation-bound launch fence before the POC job can start a probe."""
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         service_id = _safe_id(service_id, "service id")
+        operation_id = self._probe_operation_id(operation_id)
+        job_id = self._probe_job_id(job_id)
+        generation_id = self._probe_generation_id(generation_id)
+        if self.settings.mode != "live":
+            return {"state": "blocked", "error": "live Proxmox mode is required to reserve a probe operation"}
+        target_name = f"{_project_name(scenario_id)}-{service_id}"
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            held = _reservation(reservation_db, vmid)
+            if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
+                    or held["vmid"] != vmid or held["state"] != "active"
+                    or held.get("generation_id") != generation_id):
+                raise ProxmoxBackendError("probe reservation requires its matching active worker")
+            generation_id = self._probe_generation_id(held.get("generation_id"))
+            existing = _probe_operation(reservation_db, operation_id)
+            if existing:
+                if (existing["scenario_id"], existing["host_id"], existing["vmid"],
+                        existing["service_id"], existing["target_name"], existing["job_id"],
+                        existing["generation_id"]) != (
+                        scenario_id, host_id, vmid, service_id, target_name, job_id, generation_id):
+                    raise ProxmoxBackendError("probe operation id is already bound to another job or worker generation")
+                return {"state": existing["state"], "operation_id": operation_id,
+                        "vmid": vmid, "host_id": host_id, "generation_id": generation_id,
+                        "resource_absent": existing["state"] in _PROBE_TERMINAL_STATES}
+            active_probe = _active_probe_for_worker(reservation_db, vmid)
+            if active_probe:
+                raise ProxmoxBackendError(
+                    f"worker is already fenced by probe operation {active_probe['operation_id']}"
+                )
+            _create_probe_operation(
+                reservation_db, operation_id=operation_id, scenario_id=scenario_id,
+                host_id=host_id, vmid=vmid, service_id=service_id, target_name=target_name,
+                generation_id=generation_id, job_id=job_id, state="reserved")
+            return {"state": "reserved", "operation_id": operation_id, "vmid": vmid,
+                    "host_id": host_id, "generation_id": generation_id,
+                    "resource_absent": True}
+
+    def active_probe_operations(self, scenario_id: str) -> list[dict[str, Any]]:
+        """Read durable active fences, including reservations not yet attached to a POC job."""
+        scenario_id = _safe_id(scenario_id, "scenario id")
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            return _active_probe_operations_for_scenario(reservation_db, scenario_id)
+
+    def probe_operation(self, operation_id: str) -> dict[str, Any] | None:
+        operation_id = self._probe_operation_id(operation_id)
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            return _probe_operation(reservation_db, operation_id)
+
+    def start_probe_operation(self, scenario_id: str, *, vmid: int, host_id: str,
+                              generation_id: str, job_id: str, operation_id: str,
+                              service_id: str, script: str,
+                              timeout: int) -> dict[str, Any]:
+        """Start only an operation already reserved for this exact worker generation."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        service_id = _safe_id(service_id, "service id")
+        generation_id = self._probe_generation_id(generation_id)
+        job_id = self._probe_job_id(job_id)
         operation_id = self._probe_operation_id(operation_id)
         if not isinstance(script, str) or not script or "\x00" in script or len(script.encode("utf-8")) > 20_000:
             raise ProxmoxBackendError("probe script is empty or exceeds the strict bound")
@@ -1147,36 +1265,27 @@ class ProxmoxBackend:
         with _placement_lock(self.settings.reservation_db) as reservation_db:
             held = _reservation(reservation_db, vmid)
             if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
-                    or held["state"] != "active"):
+                    or held["state"] != "active" or held.get("generation_id") != generation_id):
                 raise ProxmoxBackendError("probe start requires its matching active worker reservation")
             existing = _probe_operation(reservation_db, operation_id)
-            if existing:
-                if (existing["scenario_id"], existing["host_id"], existing["vmid"],
-                        existing["service_id"], existing["target_name"]) != (
-                        scenario_id, host_id, vmid, service_id, target_name):
-                    raise ProxmoxBackendError("probe operation id is already bound to another target")
-                if existing["state"] in {"cancel_requested", "cancelled"}:
-                    return {"state": existing["state"],
-                            "resource_absent": existing["state"] == "cancelled"}
-                if existing["state"] in {"uncertain", "starting", "running"}:
-                    return {"state": existing["state"], "resource_absent": False}
-                return {"state": existing["state"], "resource_absent": True,
-                        "exitcode": existing["exitcode"], "stdout": "", "stderr": ""}
+            if (existing is None or (existing["scenario_id"], existing["host_id"], existing["vmid"],
+                                     existing["service_id"], existing["target_name"], existing["job_id"],
+                                     existing["generation_id"]) != (
+                    scenario_id, host_id, vmid, service_id, target_name, job_id, generation_id)):
+                raise ProxmoxBackendError("probe start requires its exact durable job and worker-generation fence")
+            if existing["state"] != "reserved":
+                if existing["state"] in _PROBE_TERMINAL_STATES:
+                    return {"state": existing["state"], "resource_absent": True,
+                            "exitcode": existing["exitcode"], "stdout": "", "stderr": ""}
+                return {"state": existing["state"], "resource_absent": False}
             active_probe = _active_probe_for_worker(reservation_db, vmid)
-            if active_probe:
-                _create_probe_operation(reservation_db, operation_id=operation_id,
-                                        scenario_id=scenario_id, host_id=host_id, vmid=vmid,
-                                        service_id=service_id, target_name=target_name, state="failed")
-                _update_probe_operation(reservation_db, operation_id, state="failed", exitcode=127)
-                return {"state": "failed", "resource_absent": True, "exitcode": 127,
-                        "stdout": "", "stderr": "another probe operation already owns this worker"}
+            if active_probe and active_probe["operation_id"] != operation_id:
+                raise ProxmoxBackendError("worker is fenced by a different probe operation")
             isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
             if not isolation.get("checked") or not isolation.get("isolated"):
                 raise ProxmoxBackendError("probe start requires verified worker isolation")
             self._install_probe_supervisor(vmid, scenario_id, host_id)
-            _create_probe_operation(reservation_db, operation_id=operation_id,
-                                    scenario_id=scenario_id, host_id=host_id, vmid=vmid,
-                                    service_id=service_id, target_name=target_name, state="starting")
+            _update_probe_operation(reservation_db, operation_id, state="starting")
             try:
                 result = self._call_probe_supervisor(
                     scenario_id, vmid=vmid, host_id=host_id, operation_id=operation_id,
@@ -1197,9 +1306,11 @@ class ProxmoxBackend:
             return result
 
     def wait_probe_operation(self, scenario_id: str, *, operation_id: str,
-                             vmid: int, host_id: str, timeout: int = 30) -> dict[str, Any]:
+                             vmid: int, host_id: str, generation_id: str,
+                             timeout: int = 30) -> dict[str, Any]:
         """Read and persist one supervisor state without holding the placement lock while waiting."""
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        generation_id = self._probe_generation_id(generation_id)
         operation_id = self._probe_operation_id(operation_id)
         if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 300:
             raise ProxmoxBackendError("probe wait timeout exceeds the approved bound")
@@ -1207,9 +1318,11 @@ class ProxmoxBackend:
             held = _reservation(reservation_db, vmid)
             operation = _probe_operation(reservation_db, operation_id)
             if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
-                    or held["state"] != "active" or operation is None
+                    or held["state"] != "active" or held.get("generation_id") != generation_id
+                    or operation is None
                     or (operation["scenario_id"], operation["host_id"], operation["vmid"]) != (
-                        scenario_id, host_id, vmid)):
+                        scenario_id, host_id, vmid)
+                    or operation.get("generation_id") != generation_id):
                 raise ProxmoxBackendError("probe wait requires its matching active operation and reservation")
             if operation["state"] in _PROBE_TERMINAL_STATES:
                 return {"state": operation["state"], "resource_absent": True,
@@ -1236,30 +1349,46 @@ class ProxmoxBackend:
             return result
 
     def cancel_probe_operation(self, scenario_id: str, *, operation_id: str,
-                               vmid: int, host_id: str, service_id: str) -> dict[str, Any]:
+                               vmid: int, host_id: str, generation_id: str,
+                               service_id: str, job_id: str | None = None) -> dict[str, Any]:
         """Persist a cancel fence before asking the guest to stop and prove absence."""
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         service_id = _safe_id(service_id, "service id")
+        generation_id = self._probe_generation_id(generation_id)
+        if job_id is not None:
+            job_id = self._probe_job_id(job_id)
         operation_id = self._probe_operation_id(operation_id)
         target_name = f"{_project_name(scenario_id)}-{service_id}"
         with _placement_lock(self.settings.reservation_db) as reservation_db:
+            operation = _probe_operation(reservation_db, operation_id)
+            expected = (scenario_id, host_id, vmid, service_id, target_name, generation_id)
+            if operation and (operation["scenario_id"], operation["host_id"], operation["vmid"],
+                              operation["service_id"], operation["target_name"],
+                              operation.get("generation_id")) == expected:
+                if job_id is not None and operation.get("job_id") != job_id:
+                    raise ProxmoxBackendError("probe cancellation job identity does not match its durable operation")
+                if operation["state"] in _PROBE_TERMINAL_STATES:
+                    return {"state": operation["state"], "resource_absent": True,
+                            "exitcode": operation["exitcode"],
+                            "stdout": base64.b64decode(operation["stdout_b64"] or "").decode("utf-8", "replace"),
+                            "stderr": base64.b64decode(operation["stderr_b64"] or "").decode("utf-8", "replace")}
             held = _reservation(reservation_db, vmid)
             if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
-                    or held["state"] != "active"):
+                    or held["state"] != "active" or held.get("generation_id") != generation_id):
                 raise ProxmoxBackendError("probe cancellation requires its matching active worker reservation")
-            operation = _probe_operation(reservation_db, operation_id)
             if operation is None:
                 _create_probe_operation(reservation_db, operation_id=operation_id,
                                         scenario_id=scenario_id, host_id=host_id, vmid=vmid,
                                         service_id=service_id, target_name=target_name,
+                                        generation_id=generation_id, job_id=job_id,
                                         state="cancel_requested")
                 operation = _probe_operation(reservation_db, operation_id)
             elif (operation["scenario_id"], operation["host_id"], operation["vmid"],
-                  operation["service_id"], operation["target_name"]) != (
-                    scenario_id, host_id, vmid, service_id, target_name):
+                  operation["service_id"], operation["target_name"], operation["generation_id"]) != (
+                    scenario_id, host_id, vmid, service_id, target_name, generation_id):
                 raise ProxmoxBackendError("probe cancellation identity does not match its durable operation")
-            if operation["state"] in _PROBE_TERMINAL_STATES:
-                return {"state": operation["state"], "resource_absent": True}
+            if job_id is not None and operation.get("job_id") != job_id:
+                raise ProxmoxBackendError("probe cancellation job identity does not match its durable operation")
             _update_probe_operation(reservation_db, operation_id, state="cancel_requested")
             try:
                 self._install_probe_supervisor(vmid, scenario_id, host_id)
@@ -1281,24 +1410,28 @@ class ProxmoxBackend:
             return result
 
     def join_probe_operation(self, scenario_id: str, *, operation_id: str,
-                             vmid: int, host_id: str, service_id: str,
+                             vmid: int, host_id: str, generation_id: str,
+                             service_id: str,
                              timeout: int = 30) -> dict[str, Any]:
         """Poll until the helper is terminal and absent, or mark the operation uncertain."""
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         service_id = _safe_id(service_id, "service id")
+        generation_id = self._probe_generation_id(generation_id)
         operation_id = self._probe_operation_id(operation_id)
         if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 300:
             raise ProxmoxBackendError("probe join timeout exceeds the approved bound")
         with _placement_lock(self.settings.reservation_db) as reservation_db:
             operation = _probe_operation(reservation_db, operation_id)
             if (operation is None or (operation["scenario_id"], operation["host_id"],
-                                      operation["vmid"], operation["service_id"]) != (
-                    scenario_id, host_id, vmid, service_id)):
+                                      operation["vmid"], operation["service_id"],
+                                      operation.get("generation_id")) != (
+                    scenario_id, host_id, vmid, service_id, generation_id)):
                 raise ProxmoxBackendError("probe join identity does not match its durable operation")
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             result = self.wait_probe_operation(scenario_id, operation_id=operation_id,
                                                vmid=vmid, host_id=host_id,
+                                               generation_id=generation_id,
                                                timeout=min(30, max(1, int(deadline - time.monotonic()))))
             if result.get("state") in _PROBE_TERMINAL_STATES and result.get("resource_absent") is True:
                 return result
@@ -1308,7 +1441,8 @@ class ProxmoxBackend:
         with _placement_lock(self.settings.reservation_db) as reservation_db:
             operation = _probe_operation(reservation_db, operation_id)
             if operation and (operation["scenario_id"], operation["host_id"], operation["vmid"]) == (
-                    scenario_id, host_id, vmid) and operation["state"] not in _PROBE_TERMINAL_STATES:
+                    scenario_id, host_id, vmid) and operation.get("generation_id") == generation_id \
+                    and operation["state"] not in _PROBE_TERMINAL_STATES:
                 _update_probe_operation(reservation_db, operation_id, state="uncertain")
         return {"state": "uncertain", "resource_absent": False,
                 "error": "probe helper did not reach a confirmed terminal state before join timeout"}

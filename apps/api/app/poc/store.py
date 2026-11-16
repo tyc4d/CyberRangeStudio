@@ -97,16 +97,33 @@ def _conn() -> sqlite3.Connection:
             operation_id TEXT,
             operation_service_id TEXT,
             operation_action_id TEXT,
+            operation_vmid INTEGER,
+            operation_host_id TEXT,
+            operation_generation_id TEXT,
+            worker_vmid INTEGER,
+            worker_host_id TEXT,
+            worker_generation_id TEXT,
             detail TEXT,
             created_at REAL,
             updated_at REAL
         )"""
     )
     job_columns = {row[1] for row in c.execute("PRAGMA table_info(poc_jobs)").fetchall()}
-    for name in ("operation_id", "operation_service_id", "operation_action_id"):
+    operation_columns = {
+        "operation_id": "TEXT",
+        "operation_service_id": "TEXT",
+        "operation_action_id": "TEXT",
+        "operation_vmid": "INTEGER",
+        "operation_host_id": "TEXT",
+        "operation_generation_id": "TEXT",
+        "worker_vmid": "INTEGER",
+        "worker_host_id": "TEXT",
+        "worker_generation_id": "TEXT",
+    }
+    for name, column_type in operation_columns.items():
         if name not in job_columns:
             try:
-                c.execute(f"ALTER TABLE poc_jobs ADD COLUMN {name} TEXT")
+                c.execute(f"ALTER TABLE poc_jobs ADD COLUMN {name} {column_type}")
             except sqlite3.OperationalError as exc:
                 # Concurrent API workers may both observe the old schema before
                 # one of them applies this additive migration.
@@ -304,15 +321,19 @@ def save_export(scenario_id: str, bundle_path: str, manifest: dict[str, Any]) ->
 
 
 # --- jobs (poll state for the GUI) -----------------------------------------
-def create_job(job_id: str, scenario_id: str, kind: str, timeout_s: float | None = None) -> None:
+def create_job(job_id: str, scenario_id: str, kind: str, timeout_s: float | None = None,
+               worker_identity: dict[str, Any] | None = None) -> None:
     now = time.time()
+    worker_identity = worker_identity if isinstance(worker_identity, dict) else {}
     with _LOCK:
         c = _conn()
         try:
             c.execute(
                 "INSERT INTO poc_jobs (id, scenario_id, kind, state, cancel, timeout_s, "
-                "created_at, updated_at) VALUES (?,?,?,?,0,?,?,?)",
-                (job_id, scenario_id, kind, "pending", timeout_s, now, now),
+                "worker_vmid,worker_host_id,worker_generation_id,created_at,updated_at) "
+                "VALUES (?,?,?,?,0,?,?,?,?,?,?)",
+                (job_id, scenario_id, kind, "pending", timeout_s, worker_identity.get("vmid"),
+                 worker_identity.get("host_id"), worker_identity.get("generation_id"), now, now),
             )
             c.commit()
         finally:
@@ -359,16 +380,20 @@ def is_cancelled(job_id: str) -> bool:
     return bool(job and job["cancel"])
 
 
-def register_job_operation(job_id: str, operation_id: str, service_id: str, action_id: str) -> bool:
-    """Atomically attach an operation only while its job is active and uncancelled."""
+def register_job_operation(job_id: str, operation_id: str, service_id: str, action_id: str,
+                           vmid: int, host_id: str, generation_id: str) -> bool:
+    """Attach a pre-reserved worker operation to its job with the worker-generation pin."""
     with _LOCK:
         c = _conn()
         try:
             c.execute("BEGIN IMMEDIATE")
             cursor = c.execute(
-                "UPDATE poc_jobs SET operation_id=?, operation_service_id=?, operation_action_id=?, updated_at=? "
-                "WHERE id=? AND state IN ('pending','running') AND cancel=0 AND operation_id IS NULL",
-                (operation_id, service_id, action_id, time.time(), job_id),
+                "UPDATE poc_jobs SET operation_id=?, operation_service_id=?, operation_action_id=?, "
+                "operation_vmid=?, operation_host_id=?, operation_generation_id=?, updated_at=? "
+                "WHERE id=? AND state IN ('pending','running') AND operation_id IS NULL "
+                "AND (worker_vmid IS NULL OR (worker_vmid=? AND worker_host_id=? AND worker_generation_id=?))",
+                (operation_id, service_id, action_id, vmid, host_id, generation_id, time.time(),
+                 job_id, vmid, host_id, generation_id),
             )
             c.commit()
             return cursor.rowcount == 1
@@ -382,7 +407,8 @@ def clear_job_operation(job_id: str, operation_id: str) -> None:
         try:
             c.execute(
                 "UPDATE poc_jobs SET operation_id=NULL, operation_service_id=NULL, "
-                "operation_action_id=NULL, updated_at=? WHERE id=? AND operation_id=?",
+                "operation_action_id=NULL, operation_vmid=NULL, operation_host_id=NULL, "
+                "operation_generation_id=NULL, updated_at=? WHERE id=? AND operation_id=?",
                 (time.time(), job_id, operation_id),
             )
             c.commit()
@@ -395,7 +421,8 @@ def get_job_operation(job_id: str) -> dict[str, Any] | None:
         c = _conn()
         try:
             row = c.execute(
-                "SELECT id, scenario_id, state, cancel, operation_id, operation_service_id, operation_action_id "
+                "SELECT id, scenario_id, state, cancel, operation_id, operation_service_id, "
+                "operation_action_id, operation_vmid, operation_host_id, operation_generation_id "
                 "FROM poc_jobs WHERE id=?", (job_id,),
             ).fetchone()
         finally:
@@ -403,7 +430,23 @@ def get_job_operation(job_id: str) -> dict[str, Any] | None:
     if row is None or not row[4]:
         return None
     return {"job_id": row[0], "scenario_id": row[1], "state": row[2], "cancel": bool(row[3]),
-            "operation_id": row[4], "service_id": row[5], "action_id": row[6]}
+            "operation_id": row[4], "service_id": row[5], "action_id": row[6],
+            "vmid": row[7], "host_id": row[8], "generation_id": row[9]}
+
+
+def get_job_worker_identity(job_id: str) -> dict[str, Any] | None:
+    with _LOCK:
+        c = _conn()
+        try:
+            row = c.execute(
+                "SELECT worker_vmid,worker_host_id,worker_generation_id FROM poc_jobs WHERE id=?",
+                (job_id,),
+            ).fetchone()
+        finally:
+            c.close()
+    if row is None or not isinstance(row[0], int) or not isinstance(row[1], str) or not isinstance(row[2], str):
+        return None
+    return {"vmid": row[0], "host_id": row[1], "generation_id": row[2]}
 
 
 def request_cancel_operations(scenario_id: str) -> tuple[bool, list[dict[str, Any]]]:
@@ -415,18 +458,22 @@ def request_cancel_operations(scenario_id: str) -> tuple[bool, list[dict[str, An
             c.execute("BEGIN IMMEDIATE")
             updated = c.execute(
                 "UPDATE poc_jobs SET cancel=1, updated_at=? "
-                "WHERE scenario_id=? AND kind='execute' AND state IN ('pending','running')",
+                "WHERE scenario_id=? AND kind='execute' AND "
+                "(state IN ('pending','running') OR (state='error' AND operation_id IS NOT NULL))",
                 (now, scenario_id),
             )
             rows = c.execute(
-                "SELECT id, scenario_id, operation_id, operation_service_id "
+                "SELECT id, scenario_id, operation_id, operation_service_id, operation_vmid, "
+                "operation_host_id, operation_generation_id "
                 "FROM poc_jobs WHERE scenario_id=? AND kind='execute' "
-                "AND state IN ('pending','running') AND operation_id IS NOT NULL",
+                "AND (state IN ('pending','running') OR (state='error' AND operation_id IS NOT NULL)) "
+                "AND operation_id IS NOT NULL",
                 (scenario_id,),
             ).fetchall()
             c.commit()
             operations = [{"job_id": row[0], "scenario_id": row[1],
-                           "operation_id": row[2], "service_id": row[3]} for row in rows]
+                           "operation_id": row[2], "service_id": row[3], "vmid": row[4],
+                           "host_id": row[5], "generation_id": row[6]} for row in rows]
             return updated.rowcount > 0, operations
         finally:
             c.close()

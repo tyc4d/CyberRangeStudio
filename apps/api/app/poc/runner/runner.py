@@ -128,13 +128,16 @@ def _operation_result(operation: dict[str, Any]) -> dict[str, Any] | None:
             "stderr": str(operation.get("stderr", ""))}
 
 
-def _cancel_and_join(request: ExecutionRequest, operation_id: str) -> tuple[dict[str, Any], str | None]:
+def _cancel_and_join(request: ExecutionRequest, operation_id: str, *, job_id: str,
+                     vmid: int, host_id: str, generation_id: str) -> tuple[dict[str, Any], str | None]:
     try:
         cancellation = manager.cancel_probe_operation(
-            request.scenario_id, operation_id, request.service_ref)
+            request.scenario_id, operation_id, request.service_ref, vmid, host_id,
+            generation_id, job_id)
         joined = (cancellation if _operation_result(cancellation) is not None else
                   manager.join_probe_operation(
-                      request.scenario_id, operation_id, request.service_ref, timeout=30))
+                      request.scenario_id, operation_id, request.service_ref,
+                      vmid, host_id, generation_id, timeout=30))
     except Exception as exc:
         return {"state": "uncertain", "resource_absent": False}, (
             f"probe cancellation/join was not confirmed ({type(exc).__name__})")
@@ -159,13 +162,50 @@ def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> 
         return {"returncode": 125, "stdout": "", "stderr": "cancelled before payload delivery"}, None
 
     operation_id = uuid.uuid4().hex
+    job_id = request.job_id or uuid.uuid4().hex
+    try:
+        worker_identity = (poc_store.get_job_worker_identity(request.job_id)
+                           if request.job_id else manager.probe_worker_identity(request.scenario_id))
+    except Exception:
+        worker_identity = None
+    if not isinstance(worker_identity, dict):
+        return {"returncode": 127, "stdout": "",
+                "stderr": "POC job has no pinned active Proxmox worker generation"}, None
+    try:
+        reservation = manager.reserve_probe_operation(
+            request.scenario_id, request.service_ref, operation_id, job_id, worker_identity)
+    except Exception as exc:
+        reservation = {"state": "blocked", "resource_absent": True,
+                       "error": f"probe launch reservation failed ({type(exc).__name__})"}
+    if reservation.get("state") == "blocked" and reservation.get("resource_absent") is True:
+        return {"returncode": 127, "stdout": "", "stderr": reservation.get(
+            "error", "probe launch reservation was refused")}, None
+    identity = (reservation.get("vmid"), reservation.get("host_id"), reservation.get("generation_id"))
+    if (not isinstance(identity[0], int) or not isinstance(identity[1], str)
+            or not isinstance(identity[2], str)):
+        return {"returncode": 127, "stdout": "", "stderr": reservation.get(
+            "error", "probe launch reservation identity is uncertain")}, None
+    vmid, host_id, generation_id = identity
     if request.job_id and not poc_store.register_job_operation(
-            request.job_id, operation_id, request.service_ref, request.action_id):
-        return {"returncode": 125, "stdout": "", "stderr": "cancelled before operation registration"}, None
+            request.job_id, operation_id, request.service_ref, request.action_id,
+            vmid, host_id, generation_id):
+        result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                        host_id=host_id, generation_id=generation_id)
+        return (result if "returncode" in result else {"returncode": 127, "stdout": "",
+                "stderr": "probe reservation cleanup is uncertain"}), note
+
+    if reservation.get("state") != "reserved" or _cancelled(request.cancel):
+        result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                        host_id=host_id, generation_id=generation_id)
+        if request.job_id and "returncode" in result:
+            poc_store.clear_job_operation(request.job_id, operation_id)
+        return (result if "returncode" in result else {"returncode": 127, "stdout": "",
+                "stderr": reservation.get("error", "probe reservation was cancelled before launch")}), note
 
     try:
         started = manager.start_probe_operation(
-            request.scenario_id, request.service_ref, operation_id, script,
+            request.scenario_id, request.service_ref, operation_id, job_id,
+            vmid, host_id, generation_id, script,
             max(1, min(int(timeout), _MAX_TIMEOUT)))
     except Exception as exc:
         started = {"state": "uncertain", "resource_absent": False,
@@ -185,12 +225,14 @@ def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> 
     deadline = time.monotonic() + max(1, min(int(timeout), _MAX_TIMEOUT))
     while True:
         if _cancelled(request.cancel):
-            result, note = _cancel_and_join(request, operation_id)
+            result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                            host_id=host_id, generation_id=generation_id)
             if request.job_id and "returncode" in result:
                 poc_store.clear_job_operation(request.job_id, operation_id)
             return result, note
         if time.monotonic() >= deadline:
-            result, note = _cancel_and_join(request, operation_id)
+            result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                            host_id=host_id, generation_id=generation_id)
             if result.get("returncode") in {125, 0, 1}:
                 # The runtime deadline is authoritative even if the helper raced to completion.
                 result = {"returncode": 124, "stdout": "", "stderr": "probe timed out after helper cleanup"}
@@ -198,7 +240,8 @@ def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> 
                 poc_store.clear_job_operation(request.job_id, operation_id)
             return result, note
         try:
-            current = manager.wait_probe_operation(request.scenario_id, operation_id, timeout=10)
+            current = manager.wait_probe_operation(
+                request.scenario_id, operation_id, vmid, host_id, generation_id, timeout=10)
         except Exception as exc:
             current = {"state": "uncertain", "resource_absent": False,
                        "error": f"probe wait failed ({type(exc).__name__})"}
@@ -211,12 +254,14 @@ def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> 
             return operation_result, note
         if current.get("state") == "uncertain":
             # Attempt fenced cancellation, but retain the job operation if absence stays unknown.
-            result, note = _cancel_and_join(request, operation_id)
+            result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                            host_id=host_id, generation_id=generation_id)
             if request.job_id and "returncode" in result:
                 poc_store.clear_job_operation(request.job_id, operation_id)
             return result, note or "probe transport was uncertain; the helper cleanup was confirmed"
         if current.get("state") not in {"starting", "running"}:
-            result, note = _cancel_and_join(request, operation_id)
+            result, note = _cancel_and_join(request, operation_id, job_id=job_id, vmid=vmid,
+                                            host_id=host_id, generation_id=generation_id)
             if request.job_id and "returncode" in result:
                 poc_store.clear_job_operation(request.job_id, operation_id)
             return result, note or "probe transport state was not recognized; helper absence was confirmed"
@@ -376,7 +421,13 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
     if any(request.scenario_id != scenario_id for request in requests):
         raise ValueError("every execution request must belong to the job scenario")
     job_id = uuid.uuid4().hex
-    poc_store.create_job(job_id, scenario_id, "execute", timeout_s=timeout_s)
+    try:
+        worker_identity = (manager.probe_worker_identity(scenario_id)
+                           if manager.deploy_backend() == "proxmox" else None)
+    except Exception:
+        worker_identity = None
+    poc_store.create_job(job_id, scenario_id, "execute", timeout_s=timeout_s,
+                         worker_identity=worker_identity)
     cancellation = _JobCancellation(job_id)
     results: list[dict[str, Any]] = []
     statuses: dict[str, str] = {}
@@ -492,25 +543,44 @@ def execution_status(scenario_id: str) -> dict[str, Any]:
 
 
 def cancel_execution(scenario_id: str) -> dict[str, Any]:
-    """Flag active jobs, then cancel and join each registered guest operation."""
-    flagged, operations = poc_store.request_cancel_operations(scenario_id)
-    joined_all = True
-    uncertain = False
+    """Flag jobs, then reconcile every durable PVE fence, including pre-job reservations."""
+    flagged, job_operations = poc_store.request_cancel_operations(scenario_id)
+    by_id = {operation["operation_id"]: operation for operation in job_operations}
+    ledger_error = False
+    try:
+        for operation in manager.active_probe_operations(scenario_id):
+            prior = by_id.get(operation["operation_id"], {})
+            by_id[operation["operation_id"]] = {**prior, **operation,
+                                                "job_id": operation.get("job_id") or prior.get("job_id")}
+    except Exception:
+        ledger_error = True
+    operations = list(by_id.values())
+    joined_all = not ledger_error
+    uncertain = ledger_error
     for operation in operations:
+        if (not isinstance(operation.get("vmid"), int) or not isinstance(operation.get("host_id"), str)
+                or not isinstance(operation.get("generation_id"), str)):
+            joined_all = False
+            uncertain = True
+            continue
         try:
             cancelled = manager.cancel_probe_operation(
-                scenario_id, operation["operation_id"], operation["service_id"])
+                scenario_id, operation["operation_id"], operation["service_id"],
+                operation["vmid"], operation["host_id"], operation["generation_id"],
+                operation.get("job_id"))
             joined = (cancelled if _operation_result(cancelled) is not None else
                       manager.join_probe_operation(
-                          scenario_id, operation["operation_id"], operation["service_id"], timeout=30))
+                          scenario_id, operation["operation_id"], operation["service_id"],
+                          operation["vmid"], operation["host_id"], operation["generation_id"], timeout=30))
         except Exception as exc:
             joined = {"state": "uncertain", "resource_absent": False,
                       "error": f"cancel operation failed ({type(exc).__name__})"}
         terminal = joined.get("state") in {"cancelled", "completed", "failed"}
         if terminal and joined.get("resource_absent") is True:
-            poc_store.clear_job_operation(operation["job_id"], operation["operation_id"])
-            poc_store.set_job_state(operation["job_id"], "cancelled", json.dumps({
-                "operation_id": operation["operation_id"], "cleanup": "confirmed", "joined": True}))
+            if operation.get("job_id"):
+                poc_store.clear_job_operation(operation["job_id"], operation["operation_id"])
+                poc_store.set_job_state(operation["job_id"], "cancelled", json.dumps({
+                    "operation_id": operation["operation_id"], "cleanup": "confirmed", "joined": True}))
         else:
             joined_all = False
             uncertain = True

@@ -21,7 +21,9 @@ from app.deploy.backends.proxmox import (
     _create_probe_operation,
     _placement_lock,
     _persist_reservation,
+    _reservation,
     _probe_operation,
+    _update_probe_operation,
 )
 from app.deploy.pve_client import PveClient, PveError, PveSettings
 from app.deploy.backends.probe_supervisor import PROBE_SUPERVISOR_PATH
@@ -31,6 +33,7 @@ HOST = "worker"
 VMID = 900100
 SERVICE = "web"
 OPERATION = "c" * 32
+JOB_ID = "d" * 32
 
 
 def backend_for(path: Path, *, mode: str = "live") -> ProxmoxBackend:
@@ -46,9 +49,43 @@ def backend_for(path: Path, *, mode: str = "live") -> ProxmoxBackend:
     return backend
 
 
-def reserve(path: Path) -> None:
+def reserve(path: Path) -> str:
     with _placement_lock(str(path)) as db:
         _persist_reservation(db, scenario_id=SID, host_id=HOST, vmid=VMID, state="active")
+        return _reservation(db, VMID)["generation_id"]
+
+
+def reserve_operation(backend: ProxmoxBackend, *, operation_id: str = OPERATION,
+                      job_id: str = JOB_ID, vmid: int = VMID,
+                      host_id: str = HOST, scenario_id: str = SID,
+                      service_id: str = SERVICE, generation_id: str | None = None) -> dict:
+    if generation_id is None:
+        with _placement_lock(str(backend.settings.reservation_db)) as db:
+            held = _reservation(db, vmid)
+            generation_id = held["generation_id"]
+    return backend.reserve_probe_operation(scenario_id, vmid=vmid, host_id=host_id,
+                                           generation_id=generation_id,
+                                           operation_id=operation_id, service_id=service_id,
+                                           job_id=job_id)
+
+
+def start_operation(backend: ProxmoxBackend, reservation: dict, *,
+                    operation_id: str = OPERATION, job_id: str = JOB_ID,
+                    vmid: int = VMID, host_id: str = HOST,
+                    scenario_id: str = SID, service_id: str = SERVICE) -> dict:
+    return backend.start_probe_operation(
+        scenario_id, vmid=vmid, host_id=host_id, generation_id=reservation["generation_id"],
+        job_id=job_id, operation_id=operation_id, service_id=service_id,
+        script="print('harmless')", timeout=5)
+
+
+def cancel_operation(backend: ProxmoxBackend, reservation: dict, *,
+                     operation_id: str = OPERATION, job_id: str | None = JOB_ID,
+                     vmid: int = VMID, host_id: str = HOST,
+                     scenario_id: str = SID, service_id: str = SERVICE) -> dict:
+    return backend.cancel_probe_operation(
+        scenario_id, operation_id=operation_id, vmid=vmid, host_id=host_id,
+        generation_id=reservation["generation_id"], service_id=service_id, job_id=job_id)
 
 
 def response(state: str, absent: bool) -> dict:
@@ -59,6 +96,7 @@ def test_cancel_first_writes_durable_tombstone_and_late_start_is_refused(tmp_pat
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)
     backend = backend_for(db_path)
+    reservation = reserve_operation(backend)
     guest_state: dict[str, str] = {}
     calls: list[str] = []
 
@@ -76,11 +114,8 @@ def test_cancel_first_writes_durable_tombstone_and_late_start_is_refused(tmp_pat
         raise AssertionError(action)
 
     backend._guest_exec = guest_exec
-    cancelled = backend.cancel_probe_operation(
-        SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE)
-    late = backend.start_probe_operation(
-        SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE,
-        script="print('harmless')", timeout=5)
+    cancelled = cancel_operation(backend, reservation)
+    late = start_operation(backend, reservation)
 
     assert cancelled["state"] == "cancelled" and cancelled["resource_absent"] is True
     assert late["state"] == "cancelled" and late["resource_absent"] is True
@@ -97,23 +132,50 @@ def test_probe_mode_blocks_before_recording_or_calling_guest(tmp_path: Path) -> 
     backend = backend_for(db_path, mode="probe")
     backend._guest_exec = Mock(side_effect=AssertionError("probe mode must not call QGA"))
 
-    result = backend.start_probe_operation(
-        SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE,
-        script="print('harmless')", timeout=5)
+    result = reserve_operation(backend)
 
     assert result == {
-        "state": "blocked", "resource_absent": True,
-        "error": "live Proxmox mode is required to start a probe operation",
+        "state": "blocked",
+        "error": "live Proxmox mode is required to reserve a probe operation",
     }
     backend._guest_exec.assert_not_called()
     with _placement_lock(str(db_path)) as db:
         assert _probe_operation(db, OPERATION) is None
 
 
+def test_launch_fence_blocks_lifecycle_and_old_generation_cannot_start_after_same_vmid_redeploy(
+        tmp_path: Path) -> None:
+    db_path = tmp_path / "reservations.sqlite3"
+    old_generation = reserve(db_path)
+    backend = backend_for(db_path)
+    backend._guest_exec = Mock(side_effect=AssertionError("stale operation must not reach QGA"))
+    pinned = reserve_operation(backend)
+    assert pinned["generation_id"] == old_generation
+
+    with pytest.raises(ProxmoxBackendError, match="blocked by reserved probe operation"):
+        backend.down(SID, vmid=VMID, host_id=HOST)
+    with pytest.raises(ProxmoxBackendError, match="blocked by reserved probe operation"):
+        backend.reset(SID, vmid=VMID, host_id=HOST)
+
+    # Model a replacement with the same scenario, host, and VMID after an external
+    # lifecycle actor ignored the fence. The immutable generation must still differ.
+    with _placement_lock(str(db_path)) as db:
+        db.execute("DELETE FROM pve_worker_reservations WHERE vmid=?", (VMID,))
+        db.commit()
+        _persist_reservation(db, scenario_id=SID, host_id=HOST, vmid=VMID, state="active")
+        new_generation = _reservation(db, VMID)["generation_id"]
+    assert new_generation != old_generation
+
+    with pytest.raises(ProxmoxBackendError, match="matching active worker reservation"):
+        start_operation(backend, pinned)
+    backend._guest_exec.assert_not_called()
+
+
 def test_start_first_holds_shared_lock_until_cancel_joins_and_absence_is_saved(tmp_path: Path) -> None:
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)
     backend = backend_for(db_path)
+    reservation = reserve_operation(backend)
     launch_entered, allow_launch, cancel_entered = threading.Event(), threading.Event(), threading.Event()
     guest_state: dict[str, str] = {}
     outcomes: dict[str, dict] = {}
@@ -136,15 +198,12 @@ def test_start_first_holds_shared_lock_until_cancel_joins_and_absence_is_saved(t
 
     backend._guest_exec = guest_exec
     start_thread = threading.Thread(target=lambda: outcomes.setdefault(
-        "start", backend.start_probe_operation(
-            SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE,
-            script="print('harmless')", timeout=5)))
+        "start", start_operation(backend, reservation)))
     start_thread.start()
     assert launch_entered.wait(1)
 
     cancel_thread = threading.Thread(target=lambda: outcomes.setdefault(
-        "cancel", backend.cancel_probe_operation(
-            SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE)))
+        "cancel", cancel_operation(backend, reservation)))
     cancel_thread.start()
     time.sleep(0.05)
     assert not cancel_entered.is_set(), "shared placement lock did not serialize cancel behind start"
@@ -162,39 +221,31 @@ def test_start_first_holds_shared_lock_until_cancel_joins_and_absence_is_saved(t
 
 def test_second_operation_is_tombstoned_without_guest_launch(tmp_path: Path) -> None:
     db_path = tmp_path / "reservations.sqlite3"
-    reserve(db_path)
+    generation_id = reserve(db_path)
     first_id, second_id = "1" * 32, "2" * 32
     with _placement_lock(str(db_path)) as db:
-        db.execute(
-            "INSERT INTO pve_probe_operations(operation_id,scenario_id,host_id,vmid,service_id,"
-            "target_name,state,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-            (first_id, SID, HOST, VMID, SERVICE, f"cr-demo-{SID}-{SERVICE}", "running", "now"),
-        )
-        db.commit()
+        _create_probe_operation(db, operation_id=first_id, scenario_id=SID, host_id=HOST,
+                                vmid=VMID, service_id=SERVICE, target_name=f"cr-demo-{SID}-{SERVICE}",
+                                generation_id=generation_id, job_id=JOB_ID, state="running")
     backend = backend_for(db_path)
     backend._guest_exec = Mock(side_effect=AssertionError("second operation must not launch"))
 
-    result = backend.start_probe_operation(
-        SID, operation_id=second_id, vmid=VMID, host_id=HOST, service_id=SERVICE,
-        script="print('harmless')", timeout=5)
+    with pytest.raises(ProxmoxBackendError, match="worker is already fenced"):
+        reserve_operation(backend, operation_id=second_id, job_id="2" * 32)
 
-    assert result["state"] == "failed" and result["resource_absent"] is True
     backend._guest_exec.assert_not_called()
     with _placement_lock(str(db_path)) as db:
         second = _probe_operation(db, second_id)
-        assert second and second["state"] == "failed" and second["exitcode"] == 127
+        assert second is None
 
 
 def test_uncertain_operation_remains_a_lifecycle_blocker(tmp_path: Path) -> None:
     db_path = tmp_path / "reservations.sqlite3"
-    reserve(db_path)
+    generation_id = reserve(db_path)
     with _placement_lock(str(db_path)) as db:
-        db.execute(
-            "INSERT INTO pve_probe_operations(operation_id,scenario_id,host_id,vmid,service_id,"
-            "target_name,state,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-            (OPERATION, SID, HOST, VMID, SERVICE, f"cr-demo-{SID}-{SERVICE}", "uncertain", "now"),
-        )
-        db.commit()
+        _create_probe_operation(db, operation_id=OPERATION, scenario_id=SID, host_id=HOST,
+                                vmid=VMID, service_id=SERVICE, target_name=f"cr-demo-{SID}-{SERVICE}",
+                                generation_id=generation_id, job_id=JOB_ID, state="uncertain")
         active = _active_probe_for_worker(db, VMID)
         assert active == {"operation_id": OPERATION, "state": "uncertain"}
 
@@ -210,11 +261,10 @@ def test_uncertain_launch_response_is_persisted_and_blocks_lifecycle(tmp_path: P
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)
     backend = backend_for(db_path)
+    reservation = reserve_operation(backend)
     backend._guest_exec = Mock(side_effect=TimeoutError("QGA response was lost"))
 
-    result = backend.start_probe_operation(
-        SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE,
-        script="print('harmless')", timeout=5)
+    result = start_operation(backend, reservation)
 
     assert result["state"] == "uncertain" and result["resource_absent"] is False
     with _placement_lock(str(db_path)) as db:
@@ -231,14 +281,12 @@ def test_uncertain_cancel_response_keeps_worker_blocked_until_retry_confirms_abs
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)
     backend = backend_for(db_path)
+    reservation = reserve_operation(backend)
     with _placement_lock(str(db_path)) as db:
-        _create_probe_operation(db, operation_id=OPERATION, scenario_id=SID, host_id=HOST,
-                                vmid=VMID, service_id=SERVICE, target_name=f"cr-demo-{SID}-{SERVICE}",
-                                state="running")
+        _update_probe_operation(db, OPERATION, state="running")
     backend._guest_exec = Mock(side_effect=TimeoutError("QGA response was lost"))
 
-    uncertain = backend.cancel_probe_operation(
-        SID, operation_id=OPERATION, vmid=VMID, host_id=HOST, service_id=SERVICE)
+    uncertain = cancel_operation(backend, reservation)
 
     assert uncertain["state"] == "uncertain" and uncertain["resource_absent"] is False
     with _placement_lock(str(db_path)) as db:
