@@ -18,6 +18,7 @@ from app.deploy.backends.probe_supervisor import PROBE_SUPERVISOR_SCRIPT
 SID = "supervisor-test"
 OPID = "a" * 32
 TARGET = f"cr-demo-{SID}-web"
+TARGET_ID = "c" * 64
 
 
 FAKE_DOCKER = r'''#!/bin/sh
@@ -49,11 +50,22 @@ case "$action" in
     if [ "${1:-}" = -f ]; then format=$2; shift 2; fi
     reference=${1:-}
     name=$reference
+    if [ "$reference" = "$FAKE_DOCKER_TARGET" ] && [ "$format" = '{{.Id}}' ]; then
+      printf '%s\n' "$FAKE_DOCKER_TARGET_ID"
+      exit 0
+    fi
     case "$reference" in bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)
       name=$(cat "$state/$reference.name" 2>/dev/null || true) ;;
     esac
     file="$state/$name.pid"
-    if [ ! -f "$file" ]; then echo "Error: No such object: $name" >&2; exit 1; fi
+    if [ ! -f "$file" ]; then
+      if [ "${FAKE_DOCKER_LOWERCASE_MISSING:-0}" = 1 ]; then
+        echo "error: no such object: $name" >&2
+      else
+        echo "Error: No such object: $name" >&2
+      fi
+      exit 1
+    fi
     pid=$(cat "$file")
     if kill -0 "$pid" 2>/dev/null; then status=running; code=0; else status=exited; code=0; fi
     case "$format" in
@@ -108,7 +120,8 @@ def supervisor(tmp_path: Path):
     supervisor_path.write_text(script)
     payload = "cHJpbnQoJ29rJyk="  # harmless `print('ok')`, never executed by this fake CLI
     env = {**os.environ, "FAKE_DOCKER_STATE": str(docker_state), "FAKE_DOCKER_OPID": OPID,
-           "FAKE_DOCKER_SCENARIO": SID, "FAKE_DOCKER_TARGET": TARGET}
+           "FAKE_DOCKER_SCENARIO": SID, "FAKE_DOCKER_TARGET": TARGET,
+           "FAKE_DOCKER_TARGET_ID": TARGET_ID}
 
     def command(action: str, operation_id: str = OPID):
         command = ["/bin/sh", str(supervisor_path), action, operation_id, SID, TARGET, "5", payload]
@@ -187,3 +200,26 @@ def test_wrong_target_network_keeps_helper_and_returns_uncertain(supervisor):
     assert "resource_absent=false" in mismatch.stdout
     assert list(state.glob("*.pid")), "the supervisor removed a helper attached to an unexpected target"
     assert "state=cancelled" in call("cancel").stdout
+
+
+def test_cancel_confirms_absence_with_lowercase_docker_error(supervisor):
+    call, _, state, _ = supervisor
+    assert "state=running" in call("start").stdout
+    cancelled = call("cancel", extra_env={"FAKE_DOCKER_LOWERCASE_MISSING": "1"})
+
+    assert cancelled.returncode == 0
+    assert "state=cancelled" in cancelled.stdout
+    assert "resource_absent=true" in cancelled.stdout
+    assert not list(state.glob("*.pid"))
+
+
+def test_cancel_accepts_docker_canonicalized_target_container_id(supervisor):
+    call, _, state, _ = supervisor
+    network_mode = f"container:{TARGET_ID}"
+    started = call("start", extra_env={"FAKE_DOCKER_NETWORK_MODE": network_mode})
+    cancelled = call("cancel", extra_env={"FAKE_DOCKER_NETWORK_MODE": network_mode})
+
+    assert started.returncode == 0 and "state=running" in started.stdout
+    assert cancelled.returncode == 0 and "state=cancelled" in cancelled.stdout
+    assert "resource_absent=true" in cancelled.stdout
+    assert not list(state.glob("*.pid"))

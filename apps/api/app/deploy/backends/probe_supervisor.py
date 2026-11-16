@@ -94,11 +94,20 @@ $detail
 EOF
   case "$container_id" in *[!0-9a-f]*|'') echo 'helper ownership check failed'; return 2 ;; esac
   [ "${#container_id}" -ge 12 ] || { echo 'helper ownership check failed'; return 2; }
+  target_id=$("$DOCKER_BIN" inspect -f '{{.Id}}' "$target_name" 2>/dev/null) || {
+    echo 'target ownership proof failed'
+    return 2
+  }
+  case "$target_id" in *[!0-9a-f]*|'') echo 'target ownership proof failed'; return 2 ;; esac
+  [ "${#target_id}" -ge 12 ] || { echo 'target ownership proof failed'; return 2; }
   [ "$owner_operation" = "$operation_id" ] || { echo 'helper ownership check failed'; return 2; }
   [ "$owner_scenario" = "$scenario_id" ] || { echo 'helper ownership check failed'; return 2; }
   [ "$owner_target" = "$target_name" ] || { echo 'helper ownership check failed'; return 2; }
   [ "$image" = "$HELPER_IMAGE" ] || { echo 'helper ownership check failed'; return 2; }
-  [ "$network_mode" = "container:$target_name" ] || { echo 'helper ownership check failed'; return 2; }
+  case "$network_mode" in
+    "container:$target_name"|"container:$target_id") ;;
+    *) echo 'helper ownership check failed'; return 2 ;;
+  esac
   [ "$user" = '65532:65532' ] || { echo 'helper ownership check failed'; return 2; }
   [ "$readonly" = true ] && [ "$cap_drop" = '["ALL"]' ] || { echo 'helper ownership check failed'; return 2; }
   [ "$memory" = 268435456 ] && [ "$nano_cpus" = 1000000000 ] && [ "$pids_limit" = 128 ] || {
@@ -111,8 +120,9 @@ EOF
 is_confirmed_absent() {
   reference=${1:-$container_name}
   inspect_output=$("$DOCKER_BIN" inspect "$reference" 2>&1) && return 1
-  case "$inspect_output" in
-    *'No such object'*|*'No such container'*) return 0 ;;
+  lower_inspect_output=$(printf '%s' "$inspect_output" | tr '[:upper:]' '[:lower:]')
+  case "$lower_inspect_output" in
+    *'no such object'*|*'no such container'*) return 0 ;;
     *) return 2 ;;
   esac
 }
@@ -146,8 +156,9 @@ case "$action" in
         completed|failed) emit_state "$saved_state" "$saved_code" "$saved_stdout" "$saved_stderr" true; exit 0 ;;
         starting)
           live_detail=$(inspect_helper) || {
-            case "$live_detail" in
-              *'No such object'*|*'No such container'*) save_state failed 127 '' ''; emit_state failed 127 '' '' true; exit 0 ;;
+            lower_live_detail=$(printf '%s' "$live_detail" | tr '[:upper:]' '[:lower:]')
+            case "$lower_live_detail" in
+              *'no such object'*|*'no such container'*) save_state failed 127 '' ''; emit_state failed 127 '' '' true; exit 0 ;;
               *) save_state uncertain; emit_state uncertain '' '' '' false; exit 75 ;;
             esac
           }
@@ -172,8 +183,9 @@ case "$action" in
         --tmpfs /tmp:rw,noexec,nosuid,size=16m --memory 256m --cpus 1 --pids-limit 128 \
         "$HELPER_IMAGE" python -c "$payload" >/dev/null 2>&1; then
       live_detail=$(inspect_helper) || {
-        case "$live_detail" in
-          *'No such object'*|*'No such container'*) save_state failed 127 '' ''; emit_state failed 127 '' '' true; exit 0 ;;
+        lower_live_detail=$(printf '%s' "$live_detail" | tr '[:upper:]' '[:lower:]')
+        case "$lower_live_detail" in
+          *'no such object'*|*'no such container'*) save_state failed 127 '' ''; emit_state failed 127 '' '' true; exit 0 ;;
           *) save_state uncertain; emit_state uncertain '' '' '' false; exit 75 ;;
         esac
       }
@@ -201,8 +213,9 @@ case "$action" in
       exit 0
     fi
     live_detail=$(inspect_helper) || {
-      case "$live_detail" in
-        *'No such object'*|*'No such container'*)
+      lower_live_detail=$(printf '%s' "$live_detail" | tr '[:upper:]' '[:lower:]')
+      case "$lower_live_detail" in
+        *'no such object'*|*'no such container'*)
           save_state failed 127 '' ''
           emit_state failed 127 '' '' true
           exit 0
@@ -226,8 +239,9 @@ case "$action" in
       exit 0
     fi
     live_detail=$(inspect_helper) || {
-      case "$live_detail" in
-        *'No such object'*|*'No such container'*) save_state cancelled; emit_state cancelled '' '' '' true; exit 0 ;;
+      lower_live_detail=$(printf '%s' "$live_detail" | tr '[:upper:]' '[:lower:]')
+      case "$lower_live_detail" in
+        *'no such object'*|*'no such container'*) save_state cancelled; emit_state cancelled '' '' '' true; exit 0 ;;
         *) save_state uncertain; emit_state uncertain '' '' '' false; exit 75 ;;
       esac
     }
