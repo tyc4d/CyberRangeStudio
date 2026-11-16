@@ -356,20 +356,22 @@ function Body({ ir }: { ir: ScenarioIR & { __execStarted?: number; __execDone?: 
 
   const planAct = useAction(async () => { const d = await api.poc.plan(ir.id); setPlan(d); return d; });
   const discoverAct = useAction(async () => { const d = await api.poc.discover(ir.id); setCandidates(d.items ?? []); return d; });
+  // A snapshot read is applied only if the execute lifecycle is byte-for-byte unchanged between when it STARTED and
+  // when it returned, AND no execute was in flight when it started (gs === gd). This rejects a read that began
+  // during an in-flight execute even when it returns after that execute has completed — such a read saw the prior
+  // batch and must never overwrite the completed execute's results. R5-02 + R6-02.
   const reportAct = useAction(async () => {
-    const gs = ir.__execStarted || 0;
+    const gs = ir.__execStarted || 0, gd = ir.__execDone || 0;
     const d = await api.poc.report(ir.id);
-    // Keep this snapshot only if no newer execute started and none is in flight; otherwise it is stale. R5-02.
-    if ((ir.__execStarted || 0) === gs && (ir.__execDone || 0) === (ir.__execStarted || 0)) setReport(d);
+    if (gs === gd && (ir.__execStarted || 0) === gs && (ir.__execDone || 0) === gd) setReport(d);
     return d;
   });
   const chainAct = useAction(async () => {
-    const gs = ir.__execStarted || 0;
+    const gs = ir.__execStarted || 0, gd = ir.__execDone || 0;
     const d = await api.poc.chain(ir.id);
-    // Keep this snapshot only if no newer execute started and none is in flight; a snapshot read never cancels an
-    // in-flight execute, and a stale read never overwrites it. The report refresh still fires (its own guard
-    // decides whether to apply), so the request ordering the backend sees is unchanged. R5-02.
-    if ((ir.__execStarted || 0) === gs && (ir.__execDone || 0) === (ir.__execStarted || 0)) setChain(d);
+    // A snapshot read never cancels an in-flight execute, and a stale read never overwrites it. The report refresh
+    // still fires (its own stamp decides whether to apply) so the request ordering the backend sees is unchanged.
+    if (gs === gd && (ir.__execStarted || 0) === gs && (ir.__execDone || 0) === gd) setChain(d);
     void reportAct.run();
     return d;
   });
@@ -660,7 +662,7 @@ function Body({ ir }: { ir: ScenarioIR & { __execStarted?: number; __execDone?: 
           )}
         </div>
         {chainAct.busy && <div className="card"><Busy label={t("poc.what.chain")} elapsed={chainAct.elapsed} /></div>}
-        <ApiNotice error={chainAct.error} what={t("poc.what.chain")} onRetry={() => chainAct.run()} />
+        <ApiNotice error={chainAct.error} what={t("poc.what.chain")} onRetry={() => chainAct.run()} retryDisabled={execAct.busy} />
         {chain || results ? (
           <ChainFlow ir={ir} chain={chain} statusByAction={statusByAction} evidenceByAction={evidenceByAction} actionName={actionName} />
         ) : <Empty>{t("poc.chain.none")}</Empty>}
@@ -668,7 +670,7 @@ function Body({ ir }: { ir: ScenarioIR & { __execStarted?: number; __execDone?: 
 
       {/* 4. Fidelity report — five separate metrics */}
       <Section n="4" title={t("poc.s.fidelity")} desc={t("poc.s.fidelity.desc")}>
-        <ApiNotice error={reportAct.error} what={t("poc.what.report")} onRetry={() => reportAct.run()} />
+        <ApiNotice error={reportAct.error} what={t("poc.what.report")} onRetry={() => reportAct.run()} retryDisabled={execAct.busy} />
         {!fid.any ? <Empty>{t("poc.fid.none")}</Empty> : (
           <>
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
