@@ -12,6 +12,7 @@ from app.cti.citations import evidence_record, grade_quote, strip_attack_tags
 from app.cti.missing import calculate_missing_items, is_communication_description
 from app.cti.parser import SourceUnit
 from app.llm.client import complete
+from app.planner.inventory import inventory_summary, resolve as resolve_inventory
 
 
 METHODS = {"single_pass", "staged", "staged_review"}
@@ -700,6 +701,7 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
     if review:
         rules += " Keep valid draft claims, remove unsupported factual detail only by marking it insufficient and retaining its evidence. Return the corrected full analysis object."
     user_payload: dict[str, Any] = {"task": task, "rules": rules, "source_units": source_payload}
+    user_payload["inventory_availability"] = inventory_summary()
     if extracted is not None:
         user_payload["extracted_facts"] = extracted
     if draft is not None:
@@ -1007,14 +1009,31 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
 
-    # A CVE the source names in the same sentence as a recorded product belongs to that product.
+    # A report-level vulnerability may be named by its nickname rather than the affected
+    # product's spelling (for example Log4Shell while the service is named Log4j).
+    # Attach only CVEs present in the cited source sentence, never inferred identifiers.
     sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
+    report_cves = list(dict.fromkeys(re.sub(r"\s+", "", match).upper()
+                                     for unit in units for match in _CVE_RE.findall(unit.text)))
     for service in services:
         service_name = str(service.get("name") or "").casefold().strip()
         if len(service_name) < 4:
             continue
-        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if service_name in sentence.casefold()
-                 for match in _CVE_RE.findall(sentence)]
+        found = []
+        for sentence in sentences:
+            cited_cves = [re.sub(r"\s+", "", match).upper() for match in _CVE_RE.findall(sentence)]
+            if not cited_cves:
+                continue
+            if service_name in sentence.casefold() or resolve_inventory(service_name, cves=cited_cves).get("component_id"):
+                found.extend(cited_cves)
+        if not found:
+            # Some reports name the affected product in one passage and its CVE elsewhere.
+            # Cross-reference only a unique CVE-to-component mapping, and only when the
+            # inventory identifies this service as that component's product.
+            for cve in report_cves:
+                resolution = resolve_inventory(service_name, cves=[cve])
+                if resolution.get("component_id") and not resolution.get("is_substitute"):
+                    found.append(cve)
         merged = list(dict.fromkeys([*service.get("cve", []), *found]))
         if merged != service.get("cve", []):
             service["cve"] = merged

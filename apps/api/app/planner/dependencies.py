@@ -8,6 +8,7 @@ from typing import Any
 
 from app.cti.missing import is_attacker_role, is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
+from app.planner.inventory import resolve as resolve_inventory
 from app.planner.reproducibility import annotate_reproducibility
 
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
@@ -100,7 +101,7 @@ def _cves(value: Any) -> list[str]:
 
 
 def _candidate(name: str, text: str = "", *, version: Any = None, cves: Any = None,
-               host_ref: Any = None, explicit_port: Any = None) -> dict[str, Any]:
+               host_ref: Any = None, explicit_port: Any = None, attack_technique: Any = None) -> dict[str, Any]:
     if not version:
         match = _VERSION_RE.search(text[:len(name) + 48])
         version = match.group(1) if match else None
@@ -114,6 +115,7 @@ def _candidate(name: str, text: str = "", *, version: Any = None, cves: Any = No
         "cve": _cves(cves if cves is not None else text),
         "host_ref": _host_id(host_ref) if _is_host_ref(host_ref) else None,
         "port": port if port and 1 <= port <= 65535 else None,
+        "attack_technique": str(attack_technique).strip().upper() if attack_technique else None,
     }
 
 
@@ -549,7 +551,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
     # or not the catalogue knows it; ignoring them would hide unsupported software.
     recorded = [_candidate(service.get("name", ""), service.get("name", ""),
                            version=service.get("version"), cves=service.get("cve", []),
-                           host_ref=service.get("host_ref"), explicit_port=service.get("port"))
+                           host_ref=service.get("host_ref"), explicit_port=service.get("port"),
+                           attack_technique=next((action.get("attack_technique") for action in ir.get("actions", [])
+                                                 if action.get("target_host_ref") == service.get("host_ref")
+                                                 and action.get("attack_technique")), None))
                 for service in ir.get("services", []) if _is_recorded_service(service)]
     # Recorded services go first so a text mention of the same product merges into them.
     candidates = recorded + candidates
@@ -634,6 +639,23 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
 
+    # CVEs may be stated at report level while the service is named in a different
+    # sentence. Propagate only a unique CVE-to-product inventory match.
+    report_text = " ".join(
+        [str(value) for action in actions if isinstance(action, dict)
+         for value in (action.get("name"), action.get("description")) if value]
+        + [str(item.get("quote")) for item in result.get("evidence", []) or []
+           if isinstance(item, dict) and item.get("quote_verified") is True]
+    )
+    report_cves = list(dict.fromkeys(cve.upper() for cve in _CVE_RE.findall(report_text)))
+    for candidate in candidates:
+        matching_cves = []
+        for cve in report_cves:
+            resolution = resolve_inventory(candidate["name"], candidate.get("version"), [cve])
+            if resolution.get("component_id") and not resolution.get("is_substitute"):
+                matching_cves.append(cve)
+        candidate["cve"] = list(dict.fromkeys([*candidate.get("cve", []), *matching_cves]))
+
     # Internally hosts are keyed by a normalised id; the IR's own host ids are the ones
     # every other reference uses, so map back before anything is written to the result.
     canonical = {_host_id(host["id"]): host["id"] for host in result.get("hosts", []) if host.get("id")}
@@ -690,7 +712,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     used_user_ids: set[str] = set()
     for candidate in candidates:
         name = candidate["name"]
-        component, is_substitute = _match_component(name)
+        inventory = resolve_inventory(name, candidate.get("version"), candidate.get("cve", []),
+                                      candidate.get("attack_technique"))
+        component = component_by_id(inventory.get("component_id"))
+        is_substitute = bool(inventory.get("is_substitute"))
         existing_user = next((item for item in existing_user_services
                               if item.get("name", "").casefold() == name.casefold()
                               and (not item.get("version") or not candidate.get("version")
@@ -710,15 +735,26 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained = copy.deepcopy(original)
                 retained["no_component"] = True
                 retained["is_substitute"] = False
+                retained.update({"tier": inventory["tier"], "version_basis": inventory["version_basis"],
+                                 "reproduces_cve": inventory["reproduces_cve"],
+                                 "not_reproducible": True, "not_reproducible_reason": inventory["reason"]})
                 if retained not in services:
                     services.append(retained)
                     if retained.get("host_ref"):
                         # Still this host's service, even without a catalogue component.
                         generated_host_refs.setdefault(retained["host_ref"], []).append(retained["id"])
-            add_missing(f"software-{name}-{candidate.get('version') or ''}",
-                        f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
-                        "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
-                        service_ref=original.get("id") if original else None)
+            if inventory.get("needs_question"):
+                question = inventory.get("question") or {}
+                add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
+                            question.get("field") or f"version for {name}", inventory["reason"], category="version",
+                            service_ref=original.get("id") if original else None)
+                if missing and question.get("text"):
+                    missing[-1]["question"] = question["text"]
+                    missing[-1]["suggestions"] = question.get("suggestions", [])
+            else:
+                add_missing(f"software-{name}-{candidate.get('version') or ''}",
+                            f"software dependency: {name}" + (f" {candidate['version']}" if candidate.get("version") else ""),
+                            inventory["reason"], service_ref=None)
             continue
 
         if existing_user:
@@ -727,9 +763,13 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 service = copy.deepcopy(existing_user)
                 service["catalogue_component"] = component["id"]
                 service["is_substitute"] = bool(is_substitute)
+                service.update({"tier": inventory["tier"], "version_basis": inventory["version_basis"],
+                                "reproduces_cve": inventory["reproduces_cve"]})
+                if is_substitute:
+                    service["substitute_of"] = inventory.get("substitute_of")
                 service.setdefault("epistemic_status", "inferred")
                 service.setdefault("source", "user")
-                service["cve"] = list(dict.fromkeys([*service.get("cve", []), *candidate.get("cve", [])]))
+                service["cve"] = list(dict.fromkeys([*service.get("cve", []), *inventory.get("reproduces_cve", [])]))
                 if candidate.get("lab_version"):
                     # What the user says the lab runs; the service's own `version` stays the source's.
                     service["lab_version"] = candidate["lab_version"]
@@ -762,7 +802,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 explanation = substitute_info.get("reason") or "This component is a functional substitute and does not fully reproduce the original software."
                 add_missing(f"substitute-{name}", f"exact software fidelity: {name}", explanation,
                             status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-            if (not function_substitute and not candidate.get("version") and not existing_user.get("version")
+            if (not function_substitute and inventory.get("needs_question") and not candidate.get("version") and not existing_user.get("version")
                     and not version_already_asked(name, service_id)):
                 add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
                             f"version for {name}",
@@ -785,14 +825,20 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         display_name = _display_name(candidate, component)
         service: dict[str, Any] = {
             "id": service_id,
-            "name": display_name,
+            "name": name,
+            "inventory_component_name": display_name,
             **({"matched_text": name} if display_name != name else {}),
-            "cve": candidate.get("cve", []),
+            "cve": list(dict.fromkeys([*candidate.get("cve", []), *inventory.get("reproduces_cve", [])])),
             "catalogue_component": component["id"],
             "is_substitute": bool(is_substitute),
+            "tier": inventory["tier"],
+            "version_basis": inventory["version_basis"],
+            "reproduces_cve": inventory["reproduces_cve"],
             "epistemic_status": "inferred",
             "source": "program",
         }
+        if is_substitute:
+            service["substitute_of"] = inventory.get("substitute_of")
         if candidate.get("from_supplement"):
             # Stated by the user in a supplement, not derived by the planner.
             # "absent": the source does not provide it; the user did (USER_SUPPLIED).
@@ -814,7 +860,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             add_missing(f"substitute-{name}",
                         f"exact software fidelity: {name}", explanation,
                         status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-        if not candidate.get("version") and not version_already_asked(display_name):
+        if inventory.get("needs_question") and not candidate.get("version") and not version_already_asked(display_name):
             add_missing(f"version-{name}-{host_ref or 'unassigned'}", f"version for {display_name}",
                         "A software dependency was identified, but its version was not stated in the actions or target context.",
                         category="version")
