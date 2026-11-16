@@ -7,6 +7,7 @@ redirected to temp locations so the test never writes into the repository.
 from __future__ import annotations
 
 import copy
+import base64
 import hashlib
 import io
 import json
@@ -384,10 +385,10 @@ class ExposedPlanExportTests(ExportTestBase):
         z = "m9-local-synthetic-cred-R4k3"
         basic = base64.b64encode(f"u:{z}".encode()).decode()
         cases = {
-            json.dumps({"password": z, "user": "x"}): '{"password": "[REDACTED]", "user": "x"}',
-            "'password': '" + z + "'": "'password': '[REDACTED]'",
-            "Authorization: Basic " + basic: "Authorization: [REDACTED]",
-            "Cookie: session_id=" + z + "; theme=dark": "Cookie: [REDACTED]",
+            json.dumps({"password": z, "user": "x"}): {"password": "[REDACTED]", "user": "x"},
+            "'password': '" + z + "'": {"password": "[REDACTED]"},
+            "Authorization: Basic " + basic: {"Authorization": "[REDACTED]"},
+            "Cookie: session_id=" + z + "; theme=dark": {"Cookie": "[REDACTED]"},
             "//u:" + z + "@h.invalid/p": "//[REDACTED]@h.invalid/p",
             'https://u:pub"' + z + "@h.invalid/": "https://[REDACTED]@h.invalid/",
             "password='public'\"" + z + '"': "password='[REDACTED]'",
@@ -397,7 +398,11 @@ class ExposedPlanExportTests(ExportTestBase):
             "https://h.invalid/?%61%63%63%65%73%73%5f%74%6f%6b%65%6e=" + z: "https://h.invalid/?%61%63%63%65%73%73%5f%74%6f%6b%65%6e=[REDACTED]",
         }
         for raw, expected in cases.items():
-            self.assertEqual(B.redact(raw, []), expected, raw)
+            cleaned = B.redact(raw, [])
+            self.assertEqual(yaml.safe_load(cleaned) if isinstance(expected, dict) else cleaned, expected, raw)
+            self.assertNotIn(z, cleaned)
+            self.assertNotIn(basic, cleaned)
+            self.assertEqual(B.find_field_secrets({"description": cleaned}), [], raw)
             self.assertTrue(B.find_secrets(raw, []) or B.find_field_secrets(B._embedded_structure(raw)), raw)
         self.assertEqual(B.redact({"%70%61%73%73%77%6f%72%64": z}, []), {"%70%61%73%73%77%6f%72%64": "[REDACTED]"})
         nested = B.redact(json.dumps({"nested": json.dumps({"token": z})}), [])
@@ -411,15 +416,20 @@ class ExposedPlanExportTests(ExportTestBase):
     def test_r5_multiline_values_are_redacted_whole_and_checked_by_parsing(self):
         z = "m9-local-synthetic-cred-R5m1"
         cases = {
-            "password: |\n  " + z + "\n  second line\n": "password: [REDACTED]\n",
-            "password: >-\n  " + z + "\n": "password: [REDACTED]\n",
-            "password:\n  " + z + "\n": "password:[REDACTED]\n",
-            'password: "public\n  ' + z + '"\n': 'password: "[REDACTED]"\n',
+            "password: |\n  " + z + "\n  second line\n": {"password": "[REDACTED]"},
+            "password: >-\n  " + z + "\n": {"password": "[REDACTED]"},
+            "password:\n  " + z + "\n": {"password": "[REDACTED]"},
+            'password: "public\n  ' + z + '"\n': {"password": "[REDACTED]"},
             "password=public\\\n" + z + "\n": "password=[REDACTED]\n",
-            "Intro.\ncreds:\n  password: |\n    " + z + "\nafter: ok\n": "Intro.\ncreds:\n  password: [REDACTED]\nafter: ok\n",
+            "Intro.\ncreds:\n  password: |\n    " + z + "\nafter: ok\n":
+                ["Intro.\n", {"creds": {"password": "[REDACTED]"}, "after": "ok"}],
         }
         for raw, expected in cases.items():
-            self.assertEqual(B.redact(raw, []), expected, raw)
+            cleaned = B.redact(raw, [])
+            self.assertEqual(B._embedded_structure(cleaned) if isinstance(expected, (dict, list)) else cleaned,
+                             expected, raw)
+            self.assertNotIn(z, cleaned)
+            self.assertEqual(B.find_field_secrets({"description": cleaned}), [], raw)
             self.assertTrue(B.find_secrets(raw, []) or B.find_field_secrets(B._embedded_structure(raw)), raw)
         # parse-based check: an embedded YAML secret key with a real value is a leak even with no label hit
         self.assertTrue(B.find_field_secrets({"description": "a: 1\npassword: >\n  " + z + "\n"}))
@@ -480,6 +490,164 @@ class VmAndUngeneratedTests(ExportTestBase):
         self.assertTrue(any(m.startswith("infrastructure/docker-compose.yml: not generated") for m in missing))
         self.assertFalse([n for n in zf.namelist() if n.startswith("infrastructure/")])
         self.assertIn("scenario/scenario.json", zf.namelist())  # descriptors still exportable
+        self.assertEqual(B.verify_bundle(data), [])
+
+
+class FailClosedStructureTests(ExportTestBase):
+    plan = EXPOSED_PLAN
+    synthetic = "m9-structured-synthetic-credential-R6f8"
+
+    def assert_resolved_secret_values_removed(self, obj, under_secret=False, depth=0):
+        """Independent oracle: real YAML also reads JSON and resolves encoded strings recursively."""
+        self.assertLess(depth, 128)
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                name = key.decode() if isinstance(key, bytes) else key
+                self.assert_resolved_secret_values_removed(
+                    value, under_secret or name in {"password", "credentials", "token"}, depth + 1)
+        elif isinstance(obj, list):
+            for value in obj:
+                self.assert_resolved_secret_values_removed(value, under_secret, depth + 1)
+        elif under_secret:
+            self.assertIn(obj, ("[REDACTED]", "", b"", None, True, False))
+        elif isinstance(obj, str):
+            resolved = yaml.safe_load(obj)
+            if resolved != obj:
+                self.assert_resolved_secret_values_removed(resolved, False, depth + 1)
+
+    def reseal(self, zf, path, body):
+        files = {name: zf.read(name) for name in zf.namelist()}
+        files[path] = body
+        manifest = json.loads(files["manifest.json"])
+        for entry in manifest["files"]:
+            if entry["path"] == path:
+                entry["sha256"] = hashlib.sha256(body).hexdigest()
+        files["manifest.json"] = json.dumps(manifest).encode()
+        out = io.BytesIO()
+        with zipfile.ZipFile(out, "w") as dest:
+            for name, value in files.items():
+                dest.writestr(name, value)
+        return out.getvalue()
+
+    def test_resolved_tags_aliases_and_nested_documents_are_clean_in_both_emitted_formats(self):
+        z = self.synthetic
+        encoded = base64.b64encode(z.encode()).decode()
+        inputs = [
+            "password: !!str " + z,
+            "password: !!str |\n  " + z + "\n",
+            "password: !!str >\n  " + z + "\n",
+            "password: !!binary |\n  " + encoded + "\n",
+            '"\\u0070assword": !!str false\n',
+            "!!binary cGFzc3dvcmQ=: !!str " + z,
+            "credentials:\n  public: &value " + z + "\n  password: *value\n",
+            "defaults: &creds {password: " + z + "}\ncopy: {<<: *creds}\n",
+            "password: !!set {" + z + ": null}",
+            "password: !!omap [{value: " + z + "}]",
+            json.dumps({"nested": "password: !!binary " + encoded}),
+            yaml.safe_dump({"nested": json.dumps({"password": z})}),
+            json.dumps(json.dumps({"password": z})),
+        ]
+        for source in inputs:
+            with self.subTest(source=source):
+                self.ir["description"] = source
+                data, manifest, zf = self.build()
+                for name in ("scenario/scenario.json", "scenario/scenario.yaml"):
+                    outer = (json.loads(zf.read(name)) if name.endswith(".json")
+                             else yaml.safe_load(zf.read(name)))
+                    self.assertNotIn(z, outer["description"])
+                    self.assertNotIn(encoded, outer["description"])
+                    self.assert_resolved_secret_values_removed(outer)
+                    self.assertEqual(B.find_field_secrets(outer), [])
+                self.assertIs(manifest["contains_secrets"], False)
+                self.assertEqual(B.verify_bundle(data), [])
+
+    def test_secret_aliases_cannot_keep_a_public_copy_of_the_original_value(self):
+        for value in ("!!str " + self.synthetic,
+                      "!!binary " + base64.b64encode(self.synthetic.encode()).decode()):
+            for document in ("public: &value " + value + "\npassword: *value\n",
+                             "password: &value " + value + "\npublic: *value\n"):
+                with self.subTest(document=document):
+                    self.ir["description"] = document
+                    with self.assertRaises(B.ExportError) as raised:
+                        self.build()
+                    self.assertNotIn(self.synthetic, str(raised.exception))
+
+    def test_malformed_embedded_documents_are_refused_and_verifier_flags_them_with_correct_hash(self):
+        _, _, zf = self.build()
+        for source in (
+            "password: [REDACTED] " + self.synthetic,
+            "password: [REDACTED] |\n  " + self.synthetic + "\n",
+            "password: !unknown " + self.synthetic,
+            '{"password": "[REDACTED]",',
+            "Intro.\npassword: [REDACTED] >\n  " + self.synthetic,
+            "&loop {node: *loop}",
+            "node: " + "[" * 80 + "null" + "]" * 80,
+        ):
+            with self.subTest(source=source):
+                self.ir["description"] = source
+                with self.assertRaises(B.ExportError) as raised:
+                    self.build()
+                self.assertNotIn(self.synthetic, str(raised.exception))
+                for path in ("scenario/scenario.json", "scenario/scenario.yaml"):
+                    ir = json.loads(zf.read("scenario/scenario.json"))
+                    ir["description"] = source
+                    body = (json.dumps(ir) if path.endswith(".json") else yaml.safe_dump(ir)).encode()
+                    errors = B.verify_bundle(self.reseal(zf, path, body))
+                    self.assertIn("secret material in " + path, errors)
+                    self.assertFalse(any("sha256" in error for error in errors), errors)
+                    self.assertNotIn(self.synthetic, " ".join(errors))
+
+    def test_corrupt_or_unredacted_reserialization_is_refused(self):
+        for bad_output in ("password: [REDACTED] |\n  " + self.synthetic,
+                           "password: !!binary " + base64.b64encode(self.synthetic.encode()).decode()):
+            with self.subTest(output=bad_output):
+                self.ir["description"] = "password: !!str " + self.synthetic
+                with patch.object(B.yaml, "safe_dump", return_value=bad_output):
+                    with self.assertRaises(B.ExportError):
+                        self.build()
+
+    def test_verifier_resolves_real_yaml_bytes_aliases_and_scalar_encodings(self):
+        _, _, zf = self.build()
+        encoded = base64.b64encode(self.synthetic.encode()).decode()
+        for document in (
+            "password: !!binary " + encoded,
+            "public: &value " + self.synthetic + "\npassword: *value",
+            '"\\u0070assword": !!str false',
+            "!!binary cGFzc3dvcmQ=: !!str " + self.synthetic,
+        ):
+            with self.subTest(document=document):
+                path = "scenario/scenario.yaml"
+                errors = B.verify_bundle(self.reseal(zf, path, document.encode()))
+                self.assertIn("secret material in " + path, errors)
+                self.assertFalse(any("sha256" in error for error in errors), errors)
+
+    def test_public_documents_prose_and_runtime_references_remain_exportable(self):
+        cases = [
+            "Public reproduction notes\nNo credentials are required.",
+            '"Public reproduction notes"',
+            "release: 2026-11-16\nsteps: [inspect, reproduce]\n",
+            "defaults: &defaults {name: public}\ncopy: {<<: *defaults}\n",
+            "password: ${DB_PASSWORD}\n",
+            "password: '[REDACTED]'\n",
+            json.dumps({"steps": ["inspect", "reproduce"], "port": 8080}),
+        ]
+        for source in cases:
+            with self.subTest(source=source):
+                self.ir["description"] = source
+                data, _, zf = self.build()
+                self.assertEqual(B.verify_bundle(data), [])
+                description = json.loads(zf.read("scenario/scenario.json"))["description"]
+                self.assertNotEqual(description, B.REDACTED)
+                # Preserve the decoded content, including the generator-independent public values.
+                expected = yaml.safe_load(source)
+                actual = yaml.safe_load(description)
+                self.assertEqual(actual, expected)
+
+    def test_legacy_unquoted_marker_is_normalized_without_a_false_refusal(self):
+        self.ir["description"] = "password: [REDACTED]\n"
+        data, _, zf = self.build()
+        description = json.loads(zf.read("scenario/scenario.json"))["description"]
+        self.assert_resolved_secret_values_removed(yaml.safe_load(description))
         self.assertEqual(B.verify_bundle(data), [])
 
 
