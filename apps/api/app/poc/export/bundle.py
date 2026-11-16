@@ -37,6 +37,7 @@ import os
 import re
 import zipfile
 from urllib.parse import unquote
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -78,8 +79,9 @@ NOT_GENERATED_IAC = (
 # (with or without scheme), a secret-named (percent-decoded) query parameter, or a secret-named
 # ${VAR} branch — never because of how the value looks. The value extent is parsed structurally:
 # every concatenated quoted/bare/${...} segment, so quoting, escaping or concatenation cannot hide
-# part of it. The SAME parsers drive redaction and the final scan, and every redacted string is
-# re-scanned: anything still flagged is replaced whole (fail closed).
+# part of it. Embedded JSON/YAML is resolved BEFORE redaction and re-serialized from the cleaned
+# object. Both the emitted files and embedded documents are parsed again by the final scan;
+# ambiguous/malformed structures are unsafe, never evidence that a value was removed.
 _SECRET_KEY_RE = re.compile(
     r"(?:^|[_\-.])(password|passwd|pwd|passphrase|secret|secrets|token|tokens|api[_-]?key|apikey|"
     r"access[_-]?key|secret[_-]?key|private[_-]?key|client[_-]?secret|cookie|cookies|set[_-]?cookie|"
@@ -144,6 +146,11 @@ def _decode_name(name: str) -> str:
 
 def _is_secret_key(key: Any) -> bool:
     """Secret-named field? Fully percent-decoded and camelCase-split before matching."""
+    if isinstance(key, bytes):
+        try:
+            key = key.decode("utf-8")
+        except UnicodeDecodeError:
+            return False
     if not isinstance(key, str):
         return False
     decoded = _decode_name(key)
@@ -369,45 +376,99 @@ def _redact_secret_field(value: str) -> str:
     return rewritten if _SAFE_SECRET_REF_RE.fullmatch(rewritten) else REDACTED
 
 
-def _embedded_json(text: str) -> Any:
-    """Parse a string that is itself JSON (object/array), else None. Used to re-write it structurally."""
+_MAX_STRUCTURE_DEPTH = 64
+_YAML_KEY_LINE_RE = re.compile(
+    r"(?m)^[ \t]*(?:-[ \t]+)?(?:[^\s{}\[\],:#&*!|>'\"%@`]+|"
+    r"\"(?:\\.|[^\"\\])*\"|'(?:[^']|'')*')[ \t]*:(?=\s|$|[\[\]{},])")
+
+
+@dataclass(frozen=True)
+class _Embedded:
+    value: Any
+    format: str
+    prefix: str = ""
+
+
+def _structure_candidate(text: str) -> bool:
+    s = text.lstrip()
+    return bool(s and (s[0] in "{[\"'!&*|>" or s.startswith(("---", "%YAML", "%TAG", "? ", "- "))
+                       or _YAML_KEY_LINE_RE.search(text)))
+
+
+def _parse_embedded(text: str) -> _Embedded | None:
+    """Resolve embedded documents, distinguish prose from an UNPARSABLE document.
+
+    A prose introduction followed by a YAML document is supported by parsing the entire suffix;
+    its prefix is checked separately. No secret-value extent is inferred from text offsets.
+    Unknown tags, malformed flow/block values and incomplete documents must fail closed. Scalar
+    quotes/tags are also resolved, so an encoded string containing another document is walked.
+    """
     s = text.strip()
-    if not s or s[0] not in "{[":
+    if not s or s == REDACTED or _SAFE_SECRET_REF_RE.fullmatch(s):
         return None
+    if not any(c in text for c in ":\n{[\"'!&*|>%"):
+        return None
+    if s[0] in '{["':
+        try:
+            return _Embedded(json.loads(s), "json")
+        except (ValueError, RecursionError):
+            pass  # A YAML flow collection or quoted scalar can still be valid.
     try:
-        obj = json.loads(s)
-    except ValueError:
-        return None
-    return obj if isinstance(obj, (dict, list)) else None
+        obj = yaml.safe_load(text)
+    except (yaml.YAMLError, ValueError, RecursionError):
+        # Preserve ordinary introductions, but require a complete parse of the following YAML.
+        for match in re.finditer(r"\n(?=\S)", text):
+            suffix = text[match.end():]
+            if not _structure_candidate(suffix):
+                continue
+            try:
+                obj = yaml.safe_load(suffix)
+            except (yaml.YAMLError, ValueError, RecursionError):
+                continue
+            if isinstance(obj, (dict, list)):
+                return _Embedded(obj, "yaml", text[:match.end()])
+        if _structure_candidate(text):
+            raise ExportError("cannot parse embedded JSON/YAML to confirm it is secret-free") from None
+        return None  # Unstructured prose still receives the label/header/URL scan.
+    if isinstance(obj, (dict, list, tuple, set, bytes)) or s[0] in "\"'!&|>" or s.startswith("---"):
+        return _Embedded(obj, "yaml")
+    return None
 
 
 def _embedded_structure(text: str) -> Any:
-    """JSON or (multi-line / key: value) YAML embedded in a string, parsed; else None. For CHECKING:
-    parsing normalises block scalars, folding, quoting and continuations."""
+    """Compatibility helper: a parsed structure (including prose prefix), or known prose only.
+
+    A parse failure for a document candidate raises ExportError; it must never become None.
+    """
     if not isinstance(text, str):
         return None
-    obj = _embedded_json(text)
-    if obj is not None:
-        return obj
-    if "\n" not in text and ": " not in text:
+    parsed = _parse_embedded(text)
+    if parsed is None:
         return None
-    try:
-        obj = yaml.safe_load(text)
-    except Exception:  # not YAML: the text scan still applies
-        return None
-    return obj if isinstance(obj, (dict, list)) else None
+    return [parsed.prefix, parsed.value] if parsed.prefix else parsed.value
 
 
-def _redact_free_string(value: str, env_secrets: list[str]) -> str:
-    embedded = _embedded_json(value)
+def _redact_free_string(value: str, env_secrets: list[str], depth: int = 0) -> str:
+    embedded = _parse_embedded(value)
     if embedded is not None:
-        cleaned = json.dumps(redact(embedded, env_secrets), ensure_ascii=False)
+        obj = redact(embedded.value, env_secrets, _depth=depth + 1)
+        try:
+            body = (json.dumps(obj, ensure_ascii=False) if embedded.format == "json" or isinstance(obj, str)
+                    else yaml.safe_dump(obj, allow_unicode=True, sort_keys=False))
+        except (TypeError, ValueError, yaml.YAMLError, RecursionError):
+            raise ExportError("cannot serialize cleaned embedded JSON/YAML safely") from None
+        prefix = _redact_free_string(embedded.prefix, env_secrets, depth + 1) if embedded.prefix else ""
+        cleaned = prefix + body
+        # Reparse exactly what will be written, including every resolved YAML tag/alias/scalar.
+        resolved = _embedded_structure(cleaned)
+        if resolved is None or find_field_secrets(resolved, _depth=depth + 1) \
+                or find_secrets(cleaned, env_secrets, structural=False):
+            raise ExportError("cannot prove cleaned embedded JSON/YAML is secret-free")
     else:
         cleaned = redact_text(value, env_secrets)
-    # Fail closed per value: if any structural indicator survives (text scan, or a parsed embedded
-    # JSON/YAML structure with a secret-named key holding a real value), drop the whole string.
-    return REDACTED if find_secrets(cleaned, env_secrets) or find_field_secrets(_embedded_structure(cleaned)) \
-        else cleaned
+        if find_secrets(cleaned, env_secrets) or find_field_secrets({"text": cleaned}, _depth=depth + 1):
+            raise ExportError("cannot prove cleaned text is secret-free")
+    return cleaned
 
 
 # Mapping keys allowed to stay as-is INSIDE a secret-named subtree (field names, not data).
@@ -424,13 +485,67 @@ def _key_allowed_under_secret(key: Any) -> bool:
     return isinstance(key, str) and (key.lower() in _BENIGN_SECRET_SUBKEYS or bool(_REDACTED_KEY_RE.fullmatch(key)))
 
 
-def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False) -> Any:
+def _scalar_leaves(obj: Any, under_secret: bool = False, *, depth: int = 0,
+                   active: frozenset[int] = frozenset()):
+    """Walk resolved values AND data keys, retaining their secret-subtree context.
+
+    This also lets us prove a known secret wasn't retained through a public YAML alias/copy.
+    Field names themselves are not secret data merely because they label a secret subtree.
+    """
+    if depth > _MAX_STRUCTURE_DEPTH:
+        raise ExportError("structure too deep to confirm it is secret-free")
+    if isinstance(obj, (dict, list)):
+        if id(obj) in active:
+            raise ExportError("cyclic structure cannot be confirmed secret-free")
+        active = active | {id(obj)}
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                yield from _scalar_leaves(key, under_secret and not _key_allowed_under_secret(key),
+                                          depth=depth + 1, active=active)
+                yield from _scalar_leaves(value, under_secret or _is_secret_key(key),
+                                          depth=depth + 1, active=active)
+        else:
+            for value in obj:
+                yield from _scalar_leaves(value, under_secret, depth=depth + 1, active=active)
+    elif isinstance(obj, (str, bytes)) and obj:
+        yield obj, under_secret
+
+
+def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False,
+           *, _depth: int = 0, _active: frozenset[int] = frozenset()) -> Any:
+    """Redact a resolved object, and refuse if any known secret literal is still retained.
+
+    Aliases may expose the same scalar under both password and an otherwise public field/key.
+    Merely cleaning the password field is insufficient; refuse an ambiguous remaining copy.
+    """
+    known = {value for value, secret in _scalar_leaves(obj, _under_secret) if secret
+             and (not isinstance(value, str) or (value != REDACTED and not _SAFE_SECRET_REF_RE.fullmatch(value)))}
+    cleaned = _redact_value(obj, env_secrets, _under_secret, _depth=_depth, _active=_active)
+    if known:
+        for value, _ in _scalar_leaves(cleaned):
+            if isinstance(value, str) and (value == REDACTED or _SAFE_SECRET_REF_RE.fullmatch(value)):
+                continue
+            if any(type(value) is type(secret) and (value == secret or (len(secret) >= 8 and secret in value))
+                   for secret in known):
+                raise ExportError("cannot prove all copies of a secret-named value were removed")
+    return cleaned
+
+
+def _redact_value(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool = False,
+                  *, _depth: int = 0, _active: frozenset[int] = frozenset()) -> Any:
     """Deep copy with secret-named fields, secret-structured text AND mapping keys redacted.
 
     Inside a secret-named subtree a key is kept only if it is a known field name; any other key
     (which may itself be the credential) becomes ``[REDACTED-key-<n>]``. A string that is itself
-    JSON is parsed and redacted structurally.
+    JSON/YAML is parsed and redacted structurally. Cycles, unsupported collections and excessive
+    nesting are refused rather than skipped, including those introduced by YAML aliases/tags.
     """
+    if _depth > _MAX_STRUCTURE_DEPTH:
+        raise ExportError("structure too deep to confirm it is secret-free")
+    if isinstance(obj, (dict, list)):
+        if id(obj) in _active:
+            raise ExportError("cyclic structure cannot be confirmed secret-free")
+        _active = _active | {id(obj)}
     env_secrets = _env_secret_values() if env_secrets is None else env_secrets
     if isinstance(obj, dict):
         out: dict[Any, Any] = {}
@@ -440,19 +555,22 @@ def redact(obj: Any, env_secrets: list[str] | None = None, _under_secret: bool =
                 if _under_secret and not _key_allowed_under_secret(key):
                     new_key = f"[REDACTED-key-{n}]"
                 else:
-                    new_key = _redact_free_string(key, env_secrets)
+                    new_key = _redact_free_string(key, env_secrets, _depth)
             else:
                 new_key = REDACTED if _under_secret else key
             while new_key in out:
                 new_key = f"[REDACTED-key-{n}-{len(out)}]"
-            out[new_key] = redact(value, env_secrets, _under_secret or secret_key)
+            out[new_key] = _redact_value(value, env_secrets, _under_secret or secret_key,
+                                         _depth=_depth + 1, _active=_active)
         return out
     if isinstance(obj, list):
-        return [redact(v, env_secrets, _under_secret) for v in obj]
+        return [_redact_value(v, env_secrets, _under_secret, _depth=_depth + 1, _active=_active) for v in obj]
     if isinstance(obj, str):
-        return _redact_secret_field(obj) if _under_secret else _redact_free_string(obj, env_secrets)
-    if _under_secret and isinstance(obj, (int, float)) and not isinstance(obj, bool):
+        return _redact_secret_field(obj) if _under_secret else _redact_free_string(obj, env_secrets, _depth)
+    if _under_secret and obj is not None and not isinstance(obj, bool):
         return REDACTED
+    if isinstance(obj, (tuple, set)):
+        raise ExportError("unsupported YAML collection cannot be confirmed secret-free")
     return obj
 
 
@@ -484,41 +602,58 @@ def find_secrets(text: str, env_secrets: list[str] | None = None, *, structural:
     return hits
 
 
-def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "") -> list[str]:
+def find_field_secrets(obj: Any, _under_secret: bool = False, _path: str = "",
+                       *, _depth: int = 0, _active: frozenset[int] = frozenset()) -> list[str]:
     """Field-aware check of parsed JSON/YAML (fail closed).
 
     Under a secret-named key only empty / null / bool / [REDACTED] / bare redacted refs are allowed,
     and only known field names as mapping keys. Every other string (and key) is checked with the
-    structural text scan; a string that is itself JSON is parsed and checked recursively.
+    structural text scan; embedded JSON/YAML is resolved and checked recursively. Failure to
+    resolve a document is a hit, including when a prior text redactor left a safe-looking label.
     """
+    if _depth > _MAX_STRUCTURE_DEPTH:
+        return ["structure too deep to confirm it is secret-free"]
+    if isinstance(obj, (dict, list)):
+        if id(obj) in _active:
+            return ["cyclic structure cannot be confirmed secret-free"]
+        _active = _active | {id(obj)}
     hits: list[str] = []
     if isinstance(obj, dict):
         for n, (key, value) in enumerate(obj.items()):
             if _under_secret and not _key_allowed_under_secret(key):
                 hits.append(f"unredacted mapping key in secret-named field {_path}/#{n}")
-            elif isinstance(key, str) and (find_secrets(key, []) or find_field_secrets(_embedded_structure(key))):
-                hits.append(f"secret material in mapping key {_path}/#{n}")
+            elif isinstance(key, str):
+                hits += find_field_secrets(key, _path=f"{_path}/key#{n}",
+                                           _depth=_depth + 1, _active=_active)
             shown = (isinstance(key, str) and re.fullmatch(r"[A-Za-z0-9_\-]{1,32}", key) is not None
                      and (_key_allowed_under_secret(key) or not _under_secret) and not find_secrets(key, []))
             hits += find_field_secrets(value, _under_secret or _is_secret_key(key),
-                                       f"{_path}/{key if shown else '#' + str(n)}")
+                                       f"{_path}/{key if shown else '#' + str(n)}",
+                                       _depth=_depth + 1, _active=_active)
     elif isinstance(obj, list):
         if _under_secret and obj == ["REDACTED"]:
             return hits  # how YAML parses an unquoted `key: [REDACTED]` marker in free text
         for n, value in enumerate(obj):
-            hits += find_field_secrets(value, _under_secret, f"{_path}/{n}")
+            hits += find_field_secrets(value, _under_secret, f"{_path}/{n}",
+                                       _depth=_depth + 1, _active=_active)
     elif _under_secret:
         if isinstance(obj, str):
             if obj and obj != REDACTED and not _SAFE_SECRET_REF_RE.fullmatch(obj):
                 hits.append(f"unredacted value in secret-named field {_path}")
-        elif obj is not None and not isinstance(obj, bool):
+        elif obj is not None and not isinstance(obj, bool) and obj != b"":
             hits.append(f"unredacted value in secret-named field {_path}")
     elif isinstance(obj, str):
-        if find_secrets(obj, []):
-            hits.append(f"secret-structured text in {_path}")
-        embedded = _embedded_structure(obj)
+        try:
+            embedded = _embedded_structure(obj)
+        except ExportError:
+            return [f"cannot parse embedded JSON/YAML in {_path}"]
         if embedded is not None:
-            hits += find_field_secrets(embedded, False, f"{_path}(embedded)")
+            hits += find_field_secrets(embedded, False, f"{_path}(embedded)",
+                                       _depth=_depth + 1, _active=_active)
+        elif find_secrets(obj, []):
+            hits.append(f"secret-structured text in {_path}")
+    elif isinstance(obj, (tuple, set)):
+        hits.append(f"unsupported YAML collection in {_path}")
     return hits
 
 
@@ -532,11 +667,14 @@ def _file_secrets(path: str, data: bytes, env_secrets: list[str] | None = None) 
     plus literal/pattern checks on the raw text; unparsable => refused. Other files: full
     structural text scan (the compose may hold only the generator's own deploy-time refs).
     """
-    text = data.decode("utf-8", errors="replace")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return [f"cannot decode {path} to confirm it is secret-free"]
     if path != _COMPOSE_PATH and path.endswith((".json", ".yaml", ".yml")):
         try:
             obj = json.loads(text) if path.endswith(".json") else yaml.safe_load(text)
-        except (ValueError, yaml.YAMLError):
+        except (ValueError, yaml.YAMLError, RecursionError):
             return [f"cannot parse {path} to confirm it is secret-free"]
         return find_secrets(text, env_secrets, structural=False) + find_field_secrets(obj)
     return find_secrets(text, env_secrets, compose=(path == _COMPOSE_PATH))
