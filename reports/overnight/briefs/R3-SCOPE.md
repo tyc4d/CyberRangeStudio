@@ -2,7 +2,7 @@
 
 ## Candidate and environment
 
-- Frozen candidate: `agent/acceptance-lead` at `be4947e` (documentation-only commits may follow; product code must remain unchanged during this round).
+- Product-code freeze: `agent/acceptance-lead` at `be4947e`; documentation-only commits may follow. The serving checkout was later verified as `agent/acceptance-lead@a033c53`; no product-code changes occurred between those commits.
 - Real browser URL: `http://127.0.0.1:5199/`; its Vite proxy sends `/api` to candidate API `127.0.0.1:8077`.
 - `http://127.0.0.1:5177/` is an owner-facing read-only preview and rejects non-GET/HEAD requests. Do not use it for state-changing QA steps.
 - Candidate API has live Proxmox selected, but all QA agents must avoid lifecycle writes.

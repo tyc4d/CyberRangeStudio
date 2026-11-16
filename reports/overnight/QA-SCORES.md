@@ -21,7 +21,17 @@
 與 Round 1 相比：講師 43→45、管理者 54→54、UX 53→62。Round 1 的 High（關係被洗成使用者、主機合併、撞埠）已不再出現；Round 2 換了更嚴格的情資（可部署的 Equifax 鏈）後暴露新的 High，見 `qa/round2/TRIAGE.md`。**門檻未達，持續修復。**
 
 ## Round 3
-尚未開始——待 Round 2 問題修復、審查、整合後凍結新版本。
+2026-11-16 已執行範圍受限的 Round 3。測試版本的產品程式凍結點為 `be4947e`；QA 服務實際來自候選 worktree `agent/acceptance-lead@a033c53`（後續提交只改文件）。
+
+| 測試者 | 可觀測分項 | 結論 | 報告 |
+|---|---:|---|---|
+| Instructor（Equifax PDF） | 14/100（非有效總分） | BLOCKED：分析服務金鑰過期，無法建立情境；未完成到 IaC 的主流程。另發現 PDF 匯入成功訊息切英文後仍為中文（Medium）。 | [qa-instructor-r3-round3.md](/home/tyc4d/cr-project/.worktrees/qa-instructor-r3/reports/overnight/worker-reports/qa-instructor-r3-round3.md) |
+| Administrator（Demo benign） | 16/100（非有效總分） | BLOCKED/PARTIAL：新分析失敗；既有情境只作唯讀 UI 呈現檢查。另發現過期認證錯誤只建議重試（Medium）及英文狀態殘留中文（Low）。 | [qa-admin-r3-round3.md](/home/tyc4d/cr-project/.worktrees/qa-admin-r3/reports/overnight/worker-reports/qa-admin-r3-round3.md) |
+| UX（CL0P＋不足情資） | 無有效總分；局部 GUI 7/10、證據 5/5 | BLOCKED：分析服務金鑰過期；完成 100 組雙語／五尺寸空狀態檢查。發現草稿離頁遺失與認證錯誤引導（Medium），手機深連結的目前步驟不在導覽視窗內（Low）。 | [qa-ux-r3-round3.md](/home/tyc4d/cr-project/.worktrees/qa-ux-r3/reports/overnight/worker-reports/qa-ux-r3-round3.md) |
+
+本輪**沒有有效整體分數，不算一輪通過**。分析服務回覆上游 401「API key has expired」，候選 API 使用的本機 `.env` 只有目前這把已失效的 `OPENAI_API_KEY`；未讀出或記錄金鑰內容，也未用錯誤金鑰重試。各 QA 均未部署、未跑 probe，依 R3 範圍標記 NOT TESTED。報告與完整 trace／截圖保留在各 QA worktree 的 `reports/overnight/worker-reports/` 及 `evidence/`。
+
+產品修正後，需在本機更新有效分析服務憑證、重啟候選 API，重新跑成功分析的完整情境流程，才可開始有效評分。整體驗收仍要求連續兩輪總分／Instructor／Administrator ≥90 且無未解 High/Critical。
 
 ## UI 專項：講師部署與連線資訊（Round 3c candidate；獨立於整體 QA）
 
