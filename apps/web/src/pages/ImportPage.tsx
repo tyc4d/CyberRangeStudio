@@ -13,6 +13,15 @@ type Source = { input_kind: string; source_name: string | null; content: string;
 
 type InputKind = "text" | "markdown" | "stix2.1";
 type Method = "single_pass" | "staged" | "staged_review";
+type Draft = { name: string; kind: InputKind; method: Method; content: string; uploadToken: string | null; fromPdf: boolean; fileNote: { key: "imp.loaded" | "imp.extracted"; name: string; n: number; pdf: boolean } | null };
+let importDraft: Draft | null = null;
+let freshDraftLocationKey: string | null = null;
+const isExpiredAnalysisCredential = (error: ApiError | null) => {
+  if (!error) return false;
+  if (error.status !== 502) return false;
+  const detail = error.detail.toLowerCase();
+  return detail.includes("authenticationerror") && detail.includes("401") && (detail.includes("api key") || detail.includes("api_key")) && detail.includes("expired");
+};
 
 const KINDS: { v: InputKind; label: string }[] = live(() => [
   { v: "text", label: t("imp.kind.text") },
@@ -40,12 +49,17 @@ const kindLabel = (k: string) => KINDS.find((x) => x.v === k)?.label ?? k;
 export function ImportPage() {
   const t = useT();
   const nav = useNavigate();
+  const location = useLocation();
   const { id, ir, select } = useScenario();
 
   // When a scenario is already imported, show its original report for review
   // instead of a blank form. "匯入新報告" switches back to the form.
   // The home page's "＋ 新建情境" asks for a blank form explicitly (router state), even while a scenario is selected.
-  const fresh = (useLocation().state as { fresh?: boolean } | null)?.fresh === true;
+  const fresh = (location.state as { fresh?: boolean } | null)?.fresh === true;
+  if (fresh && freshDraftLocationKey !== location.key) {
+    importDraft = null;
+    freshDraftLocationKey = location.key;
+  }
   const [forceNew, setForceNew] = useState(fresh);
   const [source, setSource] = useState<Source | null>(null);
   const [sourceState, setSourceState] = useState<"idle" | "loading" | "missing" | "error">("idle");
@@ -78,19 +92,36 @@ export function ImportPage() {
     if (t && t.seq === r.seq) setTextHit({ evidenceId: t.evidenceId, found: r.found, line: r.line });
   };
 
-  const [name, setName] = useState("");
-  const [kind, setKind] = useState<InputKind>("text");
-  const [method, setMethod] = useState<Method>("single_pass");
-  const [content, setContent] = useState("");
-  const [fileNote, setFileNote] = useState<string | null>(null);
+  const [name, setName] = useState(() => importDraft?.name ?? "");
+  const [kind, setKind] = useState<InputKind>(() => importDraft?.kind ?? "text");
+  const [method, setMethod] = useState<Method>(() => importDraft?.method ?? "single_pass");
+  const [content, setContent] = useState(() => importDraft?.content ?? "");
+  const [fileNote, setFileNote] = useState<Draft["fileNote"]>(() => importDraft?.fileNote ?? null);
   const [fileErr, setFileErr] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   // Token for the uploaded PDF original; sent with analyze so the new scenario keeps the PDF.
-  const [uploadToken, setUploadToken] = useState<string | null>(null);
+  const [uploadToken, setUploadToken] = useState<string | null>(() => importDraft?.uploadToken ?? null);
   /** True while the content shown came from an uploaded PDF, so the format is not mislabelled as plain text. */
-  const [fromPdf, setFromPdf] = useState(false);
+  const [fromPdf, setFromPdf] = useState(() => importDraft?.fromPdf ?? false);
+  const dirty = !!(content.trim() || name.trim() || kind !== "text" || method !== "single_pass" || uploadToken || fromPdf || fileNote);
+  const saveDraft = (patch: Partial<Draft>) => {
+    const previous = importDraft ?? { name, kind, method, content, uploadToken, fromPdf, fileNote };
+    importDraft = { ...previous, ...patch };
+  };
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+  useEffect(() => {
+    importDraft = dirty ? { name, kind, method, content, uploadToken, fromPdf, fileNote } : null;
+  }, [dirty, name, kind, method, content, uploadToken, fromPdf, fileNote]);
   // Average cost per model call so far, to turn "N calls" into a rough amount. Optional: absent when there is no usage yet.
   const [perCall, setPerCall] = useState<number | null>(null);
   useEffect(() => {
@@ -106,6 +137,7 @@ export function ImportPage() {
     const resp = await api.analyze({ input_kind: kind, content, method, name: name.trim() || undefined, upload_token: uploadToken ?? undefined });
     const sid = extractScenarioId(resp);
     if (!sid) throw new ApiError(0, "no scenario id in analyze response", "POST", "/api/ingest/analyze", "error");
+    importDraft = null;
     select(sid, extractIr(resp));
     nav("/analysis");
   });
@@ -127,14 +159,14 @@ export function ImportPage() {
         setKind(KINDS.some((k) => k.v === r.input_kind) ? (r.input_kind as InputKind) : "text");
         setFromPdf(isPdf);
         if (!name.trim()) setName(r.source_name);
-        setFileNote(`${t("imp.extracted", { name: f.name, n: r.chars.toLocaleString() })}${isPdf ? ` ${t("imp.extractedPdf")}` : ""}`);
+        setFileNote({ key: "imp.extracted", name: f.name, n: r.chars, pdf: isPdf });
       } else {
         const text = await f.text();
         setContent(text);
         const k = kindFromName(f.name);
         if (k) setKind(k);
         if (!name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
-        setFileNote(t("imp.loaded", { name: f.name, n: text.length.toLocaleString() }));
+        setFileNote({ key: "imp.loaded", name: f.name, n: text.length, pdf: false });
       }
     } catch (e) {
       { const k = e instanceof ApiError ? knownErrorKey(e) : null; setFileErr(k ? `${t("imp.parseFail", { name: f.name })} ${t(k)}` : t("imp.parseFail", { name: f.name })); }
@@ -278,16 +310,16 @@ export function ImportPage() {
       <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="grid c3">
           <label className="field"><span>{t("imp.name")}</span>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("imp.namePh")} disabled={analyze.busy} />
+            <input value={name} onChange={(e) => { setName(e.target.value); saveDraft({ name: e.target.value }); }} placeholder={t("imp.namePh")} disabled={analyze.busy} />
           </label>
           <label className="field"><span>{t("imp.kind")}</span>
-            <select value={kind} onChange={(e) => setKind(e.target.value as InputKind)} disabled={analyze.busy}
+            <select value={kind} onChange={(e) => { const value = e.target.value as InputKind; setKind(value); saveDraft({ kind: value }); }} disabled={analyze.busy}
               title={fromPdf ? t("imp.fromPdf") : undefined}>
               {KINDS.map((k) => <option key={k.v} value={k.v}>{fromPdf && k.v === "text" ? pdfKindLabel() : k.label}</option>)}
             </select>
           </label>
           <label className="field"><span>{t("imp.method")}</span>
-            <select value={method} onChange={(e) => setMethod(e.target.value as Method)} disabled={analyze.busy}>
+            <select value={method} onChange={(e) => { const value = e.target.value as Method; setMethod(value); saveDraft({ method: value }); }} disabled={analyze.busy}>
               {METHODS.map((m) => <option key={m.v} value={m.v}>{m.label}</option>)}
             </select>
           </label>
@@ -311,7 +343,7 @@ export function ImportPage() {
         >
           <button onClick={() => fileRef.current?.click()} disabled={analyze.busy || extracting}>{t("imp.chooseFile")}</button>
           <span className="muted" style={{ fontSize: 14 }}>
-            {extracting ? <><span className="spinner" /> {t("imp.extracting")}</> : fileNote ?? t("imp.dropHint")}
+            {extracting ? <><span className="spinner" /> {t("imp.extracting")}</> : fileNote ? <>{t(fileNote.key, { name: fileNote.name, n: fileNote.n.toLocaleString() })}{fileNote.pdf && <> {t("imp.extractedPdf")}</>}</> : t("imp.dropHint")}
           </span>
           <input ref={fileRef} type="file" accept=".pdf,.txt,.text,.md,.markdown,.json,.xml" hidden
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void loadFile(f); e.target.value = ""; }} />
@@ -322,7 +354,7 @@ export function ImportPage() {
           <textarea
             className={kind === "stix2.1" ? "mono" : ""}
             rows={12} value={content} disabled={analyze.busy}
-            onChange={(e) => { setContent(e.target.value); setFileNote(null); if (!e.target.value.trim()) { setFromPdf(false); setUploadToken(null); } }}
+            onChange={(e) => { const value = e.target.value; setContent(value); setFileNote(null); saveDraft({ content: value, fileNote: null, ...(value.trim() ? {} : { fromPdf: false, uploadToken: null }) }); if (!value.trim()) { setFromPdf(false); setUploadToken(null); } }}
             placeholder={kind === "stix2.1" ? t("imp.phStix") : t("imp.phText")}
           />
         </label>
@@ -336,7 +368,16 @@ export function ImportPage() {
             {!content.trim() && <span className="muted" style={{ fontSize: 13 }}>{t("imp.needContent")}</span>}
           </div>
         )}
-        <ApiNotice error={analyze.error} what={t("imp.what")} onRetry={canSubmit ? () => analyze.run() : undefined} />
+        {isExpiredAnalysisCredential(analyze.error)
+          ? <Notice kind="err" title={t("notice.failed", { what: t("imp.what") })}>
+              {t("imp.authExpired")}
+              <details className="tech-details">
+                <summary>{t("imp.authDiagnosticTitle")}</summary>
+                <div className="mono muted">{analyze.error?.method} {analyze.error?.path} · {analyze.error?.status}</div>
+                <div className="muted">{t("imp.authDiagnosticClass")}</div>
+              </details>
+            </Notice>
+          : <ApiNotice error={analyze.error} what={t("imp.what")} onRetry={canSubmit ? () => analyze.run() : undefined} />}
         {analyze.error && analyze.error.kind !== "unimplemented" && (
           <div className="muted" style={{ fontSize: 13 }}>{t("imp.kept")}</div>
         )}
