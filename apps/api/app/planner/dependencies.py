@@ -493,7 +493,9 @@ def _answered_host(ir: dict[str, Any], supplement: dict[str, Any]) -> str | None
 
 
 def _user_edited(service: dict[str, Any]) -> bool:
-    return "user" in (service.get("field_sources") or {}).values()
+    # An inventory override is itself a persisted user decision. Planner-generated services
+    # must remain recorded while it exists, or a later dependency run loses the chosen target.
+    return bool(service.get("inventory_override")) or "user" in (service.get("field_sources") or {}).values()
 
 
 def _is_recorded_service(service: dict[str, Any]) -> bool:

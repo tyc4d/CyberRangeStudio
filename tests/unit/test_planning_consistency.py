@@ -178,6 +178,41 @@ class InventoryOverrides(unittest.TestCase):
         self.assertEqual(replanned["cve"], ["CVE-2024-12345"])
         self.assertEqual(replanned["reproduces_cve"], [])
 
+    def test_generated_program_service_override_survives_replanning_and_clear_restores_auto(self):
+        ir = base_ir(
+            actions=[action("a1", "Exploit Apache HTTP Server affected by CVE-2024-12345 on the portal", "h1",
+                            attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "web server", "epistemic_status": "supported", "source": "llm"}],
+        )
+        generated = plan_dependencies(ir)
+        service = generated["services"][0]
+        self.assertEqual(service["source"], "program")
+        self.assertEqual(service["cve"], ["CVE-2024-12345"])
+        service["inventory_override"] = {
+            "action": "replace", "component_id": "vuln-struts2-s2-045",
+            "at": "2026-11-16T00:00:00+00:00",
+        }
+
+        selected = plan_dependencies(generated)
+        chosen = selected["services"][0]
+        self.assertEqual(chosen["source"], "program")
+        self.assertEqual(chosen["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertTrue(chosen["is_substitute"])
+        self.assertEqual(chosen["cve"], ["CVE-2024-12345"])
+        self.assertEqual(chosen["reproduces_cve"], [])
+
+        again = plan_dependencies(selected)
+        self.assertEqual(again["services"][0]["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertEqual(again["services"][0]["cve"], ["CVE-2024-12345"])
+
+        again["services"][0].pop("inventory_override", None)
+        cleared = plan_dependencies(again)
+        restored = cleared["services"][0]
+        self.assertEqual(restored["catalogue_component"], "oss-httpd")
+        self.assertFalse(restored["is_substitute"])
+        self.assertNotIn("substitute_of", restored)
+        self.assertEqual(restored["cve"], ["CVE-2024-12345"])
+
 
 class MentionNaming(unittest.TestCase):
     def test_vulnerability_nickname_and_role_are_not_used_as_software_names(self):

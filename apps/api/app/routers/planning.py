@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from cr_contracts import iter_errors
 
 from app import store
@@ -25,6 +25,8 @@ class ApprovalRequest(BaseModel):
 
 
 class InventoryOverrideRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     ref_id: str = Field(min_length=1)
     action: Literal["accept", "replace", "version", "clear"]
     component_id: str | None = None

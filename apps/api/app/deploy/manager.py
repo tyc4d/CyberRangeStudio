@@ -16,9 +16,10 @@ from typing import Any
 
 import yaml
 
-from app import config
+from app import config, store
 from app.deploy import vm
-from app.iac.generator import PlanError, generated_dir, get_generated, validate_id
+from app.iac.generator import (PlanError, generated_dir, get_generated, inventory_confirmation_message,
+                               unconfirmed_inventory_substitutes, validate_id)
 from app.iac.generator import _PUBLISHED_PORT_MAX, _PUBLISHED_PORT_MIN
 from app.planner.catalogue import load_components
 
@@ -712,6 +713,9 @@ def detect_lan_ipv4() -> str:
 
 def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = None) -> dict[str, Any]:
     scenario_id = validate_id(scenario_id)
+    unconfirmed = unconfirmed_inventory_substitutes(store.get(scenario_id))
+    if unconfirmed:
+        raise PlanError([inventory_confirmation_message(unconfirmed)])
     selected = deploy_backend()
     conflict = _backend_conflict(scenario_id, selected)
     if conflict:

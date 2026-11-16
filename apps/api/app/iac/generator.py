@@ -186,6 +186,44 @@ class PlanError(ValueError):
         self.report = report or {"deployable": False, "components": [], "errors": errors}
 
 
+def unconfirmed_inventory_substitutes(ir: Any) -> list[dict[str, str]]:
+    """Find legacy cross-product choices that have no recorded user confirmation.
+
+    New planning keeps these out of deployable output. Older scenarios may already have an
+    approved topology and a substitute service, so generation and deployment must check the
+    service provenance as well as the current override field.
+    """
+    if not isinstance(ir, dict):
+        return []
+    blocked: list[dict[str, str]] = []
+    for service in ir.get("services", []) or []:
+        if not isinstance(service, dict):
+            continue
+        if service.get("is_substitute") is not True and not str(service.get("substitute_of") or "").strip():
+            continue
+        override = service.get("inventory_override")
+        override_decision = isinstance(override, dict) and override.get("action") in {"accept", "replace"}
+        user_catalogue_choice = (service.get("field_sources") or {}).get("catalogue_component") == "user"
+        supplement_choice = service.get("substitute_basis") == "user_chosen"
+        if override_decision or user_catalogue_choice or supplement_choice:
+            continue
+        name = str(service.get("name") or service.get("id") or "unnamed service")
+        selected = str(service.get("catalogue_component") or "selected substitute")
+        blocked.append({
+            "service_id": str(service.get("id") or ""),
+            "name": name,
+            "selected_component": selected,
+            "message": (f"{name} is mapped to {selected} without a recorded user choice. "
+                        "Open Component inventory and accept or replace the substitute before "
+                        "generating IaC or deploying."),
+        })
+    return blocked
+
+
+def inventory_confirmation_message(blocked: list[dict[str, str]]) -> str:
+    return "Inventory confirmation required: " + " ".join(item["message"] for item in blocked)
+
+
 def validate_id(scenario_id: str) -> str:
     if not _ID_RE.fullmatch(scenario_id):
         raise PlanError(["scenario id must contain only lowercase letters, digits, underscores, or hyphens (max 48 chars)"])
@@ -928,6 +966,12 @@ def generate(scenario_id: str) -> dict[str, Any]:
     ir = store.get(scenario_id)
     if ir is None:
         raise KeyError(scenario_id)
+    unconfirmed = unconfirmed_inventory_substitutes(ir)
+    if unconfirmed:
+        messages = [item["message"] for item in unconfirmed]
+        raise PlanError(messages, {"deployable": False, "components": [], "errors": messages,
+                                   "blockers": [{"code": "inventory_confirmation_required", **item}
+                                                for item in unconfirmed]})
     plan = ir.get("environment_plan")
     _, report = inspect_plan(plan, scenario_id)
     if not report["deployable"]:
@@ -950,6 +994,12 @@ def get_generated(scenario_id: str) -> dict[str, Any]:
     ir = store.get(scenario_id)
     if ir is None:
         raise FileNotFoundError(scenario_id)
+    unconfirmed = unconfirmed_inventory_substitutes(ir)
+    if unconfirmed:
+        messages = [item["message"] for item in unconfirmed]
+        raise PlanError(messages, {"deployable": False, "components": [], "errors": messages,
+                                   "blockers": [{"code": "inventory_confirmation_required", **item}
+                                                for item in unconfirmed]})
     expected = compose_document(ir.get("environment_plan"), scenario_id)
     if content != expected:
         raise PlanError(["generated compose content differs from the current validated environment plan"])

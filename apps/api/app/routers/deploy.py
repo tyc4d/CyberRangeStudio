@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 from app import store
 from app.deploy import manager
-from app.iac.generator import PlanError, validate_id
+from app.iac.generator import PlanError, inventory_confirmation_message, unconfirmed_inventory_substitutes, validate_id
 from app.planner.approval import topology_approval_state
 
 router = APIRouter(prefix="/api/deploy", tags=["deploy"])
@@ -61,6 +61,18 @@ def deploy_up(scenario_id: str, request: UpRequest):
     if request.lan_host is not None and request.expose != "lan":
         raise HTTPException(status_code=400, detail="lan_host is only valid when expose='lan'")
     _require_topology_approval(scenario_id)
+    ir = store.get(scenario_id)
+    unconfirmed = unconfirmed_inventory_substitutes(ir)
+    if unconfirmed:
+        message = inventory_confirmation_message(unconfirmed)
+        manager.record(scenario_id, "up", "rejected", {
+            "reason": "inventory confirmation required", "services": unconfirmed,
+        })
+        raise HTTPException(status_code=409, detail={
+            "code": "inventory_confirmation_required",
+            "message": message,
+            "services": unconfirmed,
+        })
     try:
         result = manager.do_up(scenario_id, request.expose, request.lan_host)
     except PlanError as exc:
