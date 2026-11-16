@@ -3,7 +3,7 @@ import { t } from "../i18n";
 // Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
 // are the frontend's working assumption (see apps/web/README.md). They live only in this file.
 import type {
-  ScenarioIR, ValidationReport,
+  ScenarioIR, ValidationReport, InventoryOverride,
   ValidationPlan, PocManifest, ExecutionResult, ChainValidation, ExportManifest,
 } from "@contracts";
 
@@ -127,13 +127,6 @@ export interface InventoryEntry {
   substitute_for?: { products: string[]; cves: string[]; techniques: string[] };
   obtainability?: { source?: string; pullable?: boolean; est_cost_usd?: number | null; ref?: string; note?: string } | null;
 }
-/** What the user decided for one component. Stored by the backend on the scenario; absent = automatic resolution stands. */
-export interface InventoryOverride {
-  action: "accept" | "replace" | "version";
-  component_id?: string | null;
-  version?: string | null;
-  at?: string;
-}
 /** One extracted component of a scenario and how it resolved. `resolution` is the effective one (after any override). */
 export interface InventoryItem {
   ref_kind: "service" | "host";
@@ -143,6 +136,8 @@ export interface InventoryItem {
   cves?: string[];
   attack_technique?: string | null;
   resolution: InventoryResolution;
+  /** A cross-product substitute is only a recommendation until the user accepts or replaces it. */
+  pending_confirmation?: boolean;
   /** The automatic proposal, when an override changed it (so the UI can show what was replaced). */
   auto_resolution?: InventoryResolution | null;
   override?: InventoryOverride | null;

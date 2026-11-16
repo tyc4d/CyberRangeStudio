@@ -27,6 +27,11 @@ def _norm(text: Any) -> str:
     return " ".join(str(text or "").casefold().replace("_", " ").split())
 
 
+def _product_key(text: Any) -> str:
+    """Drop only a trailing generic ``component`` label from a product identity."""
+    return re.sub(r"\s+component$", "", _norm(text)).strip()
+
+
 def _cve(text: Any) -> str:
     return str(text or "").strip().upper()
 
@@ -152,7 +157,7 @@ def resolve(product_name: str | None, version: str | None = None, cves: list[str
 
     ``user_supplied=True`` marks ``version`` as given by the user rather than stated by the source.
     """
-    name = _norm(product_name)
+    name = _product_key(product_name)
     display = str(product_name or "").strip() or "unnamed component"
     version = str(version).strip() if version not in (None, "") else None
     wanted_cves = list(dict.fromkeys(
@@ -273,6 +278,62 @@ def resolve(product_name: str | None, version: str | None = None, cves: list[str
     return _resolution(None, tier="unavailable", is_substitute=False,
                        version_basis=stated_basis if version else "assumed", reproduces=[], substitute_of=None,
                        reason=reason + cve_note)
+
+
+def resolve_with_override(product_name: str | None, version: str | None = None, cves: list[str] | None = None,
+                          attack_technique: str | None = None,
+                          override: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return the inventory decision after applying a persisted user override.
+
+    The override changes only the lab resolution. ``cves`` remains source evidence; the returned
+    ``reproduces_cve`` is always the intersection of source CVEs and the selected component's
+    declared capability.
+    """
+    automatic = resolve(product_name, version, cves, attack_technique)
+    if not override:
+        return automatic
+
+    action = override.get("action")
+    if action == "clear":
+        return automatic
+    if action == "accept":
+        if not automatic.get("is_substitute") or not automatic.get("component_id"):
+            raise ValueError("accept is valid only when inventory proposes a deployable substitute")
+        return automatic
+    if action == "replace":
+        component_id = str(override.get("component_id") or "").strip()
+        component = next((item for item in load_components() if item.get("id") == component_id), None)
+        if component is None or not _available(component):
+            raise ValueError("component_id must identify a deployable have or obtainable inventory component")
+        name = _product_key(product_name)
+        own = _product_matches(name, version)
+        is_substitute = not _same_product(component, own, name)
+        source_cves = list(dict.fromkeys(_cve(cve) for cve in (cves or []) if _cve(cve)))
+        reproduces = [cve for cve in component.get("reproduces_cve", []) if _cve(cve) in source_cves]
+        display = str(product_name or "").strip() or "unnamed component"
+        return _resolution(
+            component,
+            tier=str(component["tier"]),
+            is_substitute=is_substitute,
+            version_basis="substituted" if is_substitute else "user_supplied",
+            reproduces=reproduces,
+            substitute_of=display if is_substitute else None,
+            reason=(f"User selected {component['id']} for {display}. "
+                    + ("It is a flagged substitute, not the original product." if is_substitute
+                       else "It is the same product family.")),
+        )
+    if action == "version":
+        selected_version = str(override.get("version") or "").strip()
+        if not selected_version:
+            raise ValueError("version must be a non-empty string")
+        chosen = resolve(product_name, selected_version, cves, attack_technique, user_supplied=True)
+        component = next((item for item in load_components() if item.get("id") == chosen.get("component_id")), None)
+        if component is None or chosen.get("needs_question") or chosen.get("is_substitute"):
+            raise ValueError("version does not resolve to one deployable version of the named product")
+        if not _version_matches(component, selected_version):
+            raise ValueError(f"version {selected_version} does not match the pinned inventory release {component.get('version')}")
+        return {**chosen, "version_basis": "user_supplied"}
+    raise ValueError("action must be accept, replace, version, or clear")
 
 
 # ------------------------------------------------------------------ summaries

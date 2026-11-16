@@ -57,11 +57,20 @@ export interface Relation {
   epistemic_reason?: string;
 }
 
+/** User's inventory choice for a service or host; clear removes this object. */
+export interface InventoryOverride {
+  action: "accept" | "replace" | "version";
+  component_id?: string | null;
+  version?: string | null;
+  at?: string;
+}
+
 export interface Host {
   id: string;
   role: string;
   os?: string;
   os_version?: string;
+  inventory_override?: InventoryOverride;
   /** Hostname or label the source gives this machine. */
   name?: string;
   network_placement?: string;
@@ -77,6 +86,7 @@ export interface ServiceItem {
   name: string;
   service_kind?: "software" | "network_listener";
   version?: string;
+  inventory_override?: InventoryOverride;
   cpe?: string;
   cve?: string[];
   catalogue_component?: string;

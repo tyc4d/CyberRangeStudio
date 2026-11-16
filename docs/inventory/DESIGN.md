@@ -44,11 +44,11 @@ Resolution = {
 }
 ```
 Rules:
-- A named vuln/CVE that maps (via the CVE→component index) to a `have`/`obtainable` component → resolve to it
-  (as the product itself if same product, else `is_substitute=true`, `version_basis=substituted`), set
-  `reproduces_cve`, and **do NOT raise a version question** — the component's pinned version IS the vulnerable
-  version. For a substitute, mark the ORIGINAL product not-reproducible (honest degradation) but still deploy +
-  probe the substitute (same CVE/technique). (Owner: auto-propose + flag + overridable.)
+- A named vuln/CVE that maps (via the CVE→component index) to a `have`/`obtainable` component → offer it as a
+  proposal (same product or `is_substitute=true`, `version_basis=substituted`) and **do NOT raise a version
+  question** — the component's pinned version IS the vulnerable version. A cross-product substitute stays out of
+  the deployable plan until the user accepts or replaces it. After confirmation, mark the ORIGINAL product
+  not-reproducible and probe only the selected component. (Owner: propose + flag + require confirmation.)
 - `unavailable` with NO substitute → `needs_question=false` for version (moot); the host/step is marked
   not_reproducible with the reason. Don't ask the version of something we can't deploy.
 - `needs_question=true` ONLY when the product is deployable AND a real version choice changes the lab (e.g. two
@@ -74,8 +74,9 @@ CVEs), so extraction maps to reality instead of guessing. The authoritative mapp
 in a worker's set. A worker needing a change outside its set writes `reports/inventory/requests/<worker>.md`.
 
 ## Acceptance (Lead verifies)
-On `scn_6ad6ad85538c`-like input: Log4Shell/CVE-2021-44228 auto-resolves to the vulhub Log4Shell component as a
-flagged substitute (no version question), the original Horizon host is marked not_reproducible (no version
-question), the chain can deploy+probe the substitute; genuine deployable-version ambiguities still raise a
-question; substitutes are always flagged and never claimed as the original product; no regression in existing
-module 1/2/4 tests. Honest degradation + epistemic_status/version_basis preserved throughout.
+On `scn_6ad6ad85538c`-like input: Log4Shell/CVE-2021-44228 offers the vulhub Log4Shell component as a flagged
+substitute (no version question). It is not part of the deployable plan until the user confirms it; after
+confirmation, the original Horizon host is marked not-reproducible and the selected substitute can be probed.
+Genuine deployable-version ambiguities still raise a question; substitutes are always flagged and never claimed
+as the original product; no regression in existing module 1/2/4 tests. Honest degradation + epistemic_status/
+version_basis are preserved throughout.

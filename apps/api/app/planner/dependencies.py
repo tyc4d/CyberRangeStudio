@@ -8,7 +8,7 @@ from typing import Any
 
 from app.cti.missing import is_attacker_role, is_communication_description, refresh_missing_items
 from app.planner.catalogue import component_by_id, load_components, match_software
-from app.planner.inventory import resolve as resolve_inventory
+from app.planner.inventory import resolve as resolve_inventory, resolve_with_override
 from app.planner.reproducibility import annotate_reproducibility
 
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
@@ -840,8 +840,19 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     for candidate in candidates:
         name = candidate["name"]
         legacy_component, legacy_substitute = _match_component(name)
-        inventory = resolve_inventory(candidate.get("resolution_name") or name, candidate.get("version"), candidate.get("cve", []),
-                                      candidate.get("attack_technique"))
+        existing_user = next((item for item in existing_user_services
+                              if item.get("name", "").casefold() == name.casefold()
+                              and (not item.get("host_ref") or not candidate.get("host_ref")
+                                   or item.get("host_ref") == candidate.get("host_ref"))
+                              and (not item.get("version") or not candidate.get("version")
+                                   or item.get("version") == candidate.get("version"))), None)
+        inventory_override = (existing_user or {}).get("inventory_override")
+        existing_user_choice = bool(existing_user and (
+            (existing_user.get("field_sources") or {}).get("catalogue_component") == "user"
+            or existing_user.get("substitute_basis") == "user_chosen"))
+        inventory = resolve_with_override(candidate.get("resolution_name") or name, candidate.get("version"),
+                                          candidate.get("cve", []), candidate.get("attack_technique"),
+                                          inventory_override)
         # Keep established exact/alias catalogue matches (including family aliases such
         # as "Apache web server"). Inventory CVE/technique decisions take precedence.
         component = component_by_id(inventory.get("component_id"))
@@ -865,15 +876,22 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             inventory = {**inventory, "tier": "have", "component_id": component["id"],
                          "version_basis": "assumed", "reproduces_cve": [], "needs_question": False}
             inventory["tier"] = catalogue_tier
-        existing_user = next((item for item in existing_user_services
-                              if item.get("name", "").casefold() == name.casefold()
-                              and (not item.get("version") or not candidate.get("version")
-                                   or item.get("version") == candidate.get("version"))), None)
-        if component is None and existing_user:
+        if component is None and existing_user and (existing_user_choice or inventory_override):
             component = component_by_id(existing_user.get("catalogue_component"))
             is_substitute = bool(existing_user.get("is_substitute", False))
+        requires_substitute_confirmation = bool(is_substitute and not inventory_override and not existing_user_choice)
+        if requires_substitute_confirmation:
+            # A matching CVE/technique can suggest a teaching image, but only an explicit user
+            # choice makes it part of the deployable plan.
+            suggestion_reason = inventory.get("reason") or f"{name} has a possible substitute."
+            inventory = {**inventory, "tier": "unavailable", "component_id": None,
+                         "is_substitute": False, "version_basis": "stated" if candidate.get("version") else "assumed",
+                         "reproduces_cve": [], "substitute_of": None, "needs_question": False,
+                         "reason": suggestion_reason + " User confirmation is required before it can be deployed."}
+            component, is_substitute = None, False
         function_substitute = False
-        if component is None and existing_user and not candidate.get("from_mention"):
+        if (component is None and existing_user and not candidate.get("from_mention")
+                and not requires_substitute_confirmation):
             component = _generic_function_component(name)
             is_substitute = function_substitute = component is not None
         if component is None:
@@ -887,6 +905,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 retained.update({"tier": "unavailable", "version_basis": inventory["version_basis"],
                                  "reproduces_cve": inventory["reproduces_cve"],
                                  "not_reproducible": True, "not_reproducible_reason": inventory["reason"]})
+                if not existing_user_choice and not inventory_override:
+                    retained.pop("catalogue_component", None)
+                    retained.pop("substitute_basis", None)
+                    retained.pop("substitute_of", None)
                 if retained not in services:
                     services.append(retained)
                     if retained.get("host_ref"):
@@ -917,8 +939,22 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             service_id = existing_user.get("id")
             if service_id not in used_user_ids:
                 service = copy.deepcopy(existing_user)
-                explicit_choice = ((service.get("field_sources") or {}).get("catalogue_component") == "user"
-                                   or service.get("substitute_basis") == "user_chosen")
+                explicit_choice = (not inventory_override and
+                                   ((service.get("field_sources") or {}).get("catalogue_component") == "user"
+                                    or service.get("substitute_basis") == "user_chosen"))
+                if inventory_override:
+                    service["catalogue_component"] = component["id"]
+                    service["is_substitute"] = bool(is_substitute)
+                    service["tier"] = inventory["tier"]
+                    service["version_basis"] = inventory["version_basis"]
+                    service["reproduces_cve"] = list(inventory.get("reproduces_cve", []))
+                    service.pop("no_component", None)
+                    if is_substitute:
+                        service["substitute_of"] = inventory.get("substitute_of") or name
+                    else:
+                        service.pop("substitute_basis", None)
+                        service.pop("substitute_of", None)
+                        service.pop("substitute_supplement_ref", None)
                 if explicit_choice:
                     chosen = component_by_id(service.get("catalogue_component"))
                     if chosen:
@@ -985,7 +1021,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
                 explanation = substitute_info.get("reason") or "This component is a functional substitute and does not fully reproduce the original software."
                 add_missing(f"substitute-{name}", f"exact software fidelity: {name}", explanation,
                             status="substitute_chosen", resolution=f"Using {component['name']} ({component['id']}) as a substitute. It is not a full recreation of {name}.")
-            if (not function_substitute and not candidate.get("version") and not existing_user.get("version")
+            if (not inventory_override and not function_substitute and not candidate.get("version") and not existing_user.get("version")
                     and not version_already_asked(name, service_id)):
                 add_missing(f"version-{name}-{candidate.get('host_ref') or 'unassigned'}",
                             f"version for {name}",
@@ -1170,6 +1206,11 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             continue
         stated = str(service.get("version") or "").strip()
         same = lambda value: bool(value) and (value == pinned or pinned.startswith(value + ".") or value.startswith(pinned + "."))
+        if ((service.get("inventory_override") or {}).get("action") in {"version", "replace"}
+                and not service.get("is_substitute")):
+            service["version_basis"] = "user_supplied"
+            service["deployed_version"] = pinned
+            continue
         if same(stated):
             by_user = (service.get("field_sources") or {}).get("version") == "user" or service.get("source") == "user"
             service["version_basis"] = "user_supplied" if by_user else "stated"

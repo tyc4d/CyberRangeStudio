@@ -1,7 +1,7 @@
 """Offline tests for the inventory data layer and the resolve() contract (docs/inventory/DESIGN.md)."""
 from app.planner.catalogue import load_components, match_software
 from app.planner.inventory import (cve_index, components_for_cve, inventory_entries, inventory_summary,
-                                   resolve)
+                                   resolve, resolve_with_override)
 
 CONTRACT_KEYS = {"tier", "component_id", "is_substitute", "version_basis", "reproduces_cve", "substitute_of",
                  "reason", "needs_question"}
@@ -65,6 +65,17 @@ def test_same_product_with_its_cve():
     assert result["needs_question"] is False
 
 
+def test_trailing_generic_component_suffix_keeps_exact_product_identity():
+    struts = resolve("Apache Struts component", cves=["CVE-2017-5638"])
+    assert struts["component_id"] == "vuln-struts2-s2-045"
+    assert struts["is_substitute"] is False
+    assert struts["version_basis"] == "assumed"
+
+    httpd = resolve("Apache HTTP Server component")
+    assert httpd["component_id"] == "oss-httpd"
+    assert httpd["is_substitute"] is False
+
+
 def test_cve_maps_to_flagged_substitute_without_version_question():
     # scn_6ad6ad85538c: VMware Horizon exploited through Log4Shell.
     result = _check_shape(resolve("VMware Horizon", None, ["CVE-2021-44228"], "T1190"))
@@ -78,6 +89,23 @@ def test_cve_maps_to_flagged_substitute_without_version_question():
         sub = _check_shape(resolve(name, None, cves))
         assert sub["component_id"] == "vuln-log4shell-solr" and sub["is_substitute"] is True, name
         assert sub["needs_question"] is False, name
+
+
+def test_inventory_overrides_keep_source_cves_separate_from_component_capability():
+    accepted = resolve_with_override("VMware Horizon", cves=["CVE-2021-44228"],
+                                     override={"action": "accept"})
+    assert accepted["component_id"] == "vuln-log4shell-solr"
+    assert accepted["is_substitute"] is True
+    assert accepted["reproduces_cve"] == ["CVE-2021-44228"]
+
+    replaced = resolve_with_override("Apache HTTP Server", cves=["CVE-2024-12345"],
+                                     override={"action": "replace", "component_id": "vuln-struts2-s2-045"})
+    assert replaced["component_id"] == "vuln-struts2-s2-045"
+    assert replaced["is_substitute"] is True and replaced["version_basis"] == "substituted"
+    assert replaced["reproduces_cve"] == []
+
+    versioned = resolve_with_override("NGINX", override={"action": "version", "version": "1.31.8"})
+    assert versioned["component_id"] == "oss-nginx" and versioned["version_basis"] == "user_supplied"
 
 
 def test_unavailable_without_substitute_is_moot_not_a_question():

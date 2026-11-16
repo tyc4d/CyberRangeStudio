@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import copy
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from cr_contracts import iter_errors
 
 from app import store
@@ -24,6 +24,13 @@ class ApprovalRequest(BaseModel):
     note: str | None = None
 
 
+class InventoryOverrideRequest(BaseModel):
+    ref_id: str = Field(min_length=1)
+    action: Literal["accept", "replace", "version", "clear"]
+    component_id: str | None = None
+    version: str | None = None
+
+
 def _get_or_404(scenario_id: str) -> dict[str, Any]:
     ir = store.get(scenario_id)
     if ir is None:
@@ -31,12 +38,12 @@ def _get_or_404(scenario_id: str) -> dict[str, Any]:
     return ir
 
 
-def _validated_update(scenario_id: str, ir: dict[str, Any], note: str) -> dict[str, Any]:
+def _validated_update(scenario_id: str, ir: dict[str, Any], note: str, *, bump_version: bool = False) -> dict[str, Any]:
     errors = iter_errors("scenario-ir", ir)
     if errors:
         raise HTTPException(status_code=422, detail={"message": "Scenario IR validation failed", "errors": errors})
     try:
-        return store.update(scenario_id, ir, note=note, bump_version=False)
+        return store.update(scenario_id, ir, note=note, bump_version=bump_version)
     except KeyError:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
@@ -140,20 +147,26 @@ def _inventory_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
         cve = service.get("cve")
         cves = [str(value) for value in cve] if isinstance(cve, list) else ([str(cve)] if cve else [])
         technique = service.get("attack_technique")
+        automatic = _inv.resolve(service.get("name"), service.get("version"), cves, technique)
+        override = service.get("inventory_override")
+        resolution = _inv.resolve_with_override(service.get("name"), service.get("version"), cves, technique, override)
         items.append({
             "ref_kind": "service", "ref_id": service.get("id"), "name": service.get("name"),
             "version": service.get("version"), "cves": cves, "attack_technique": technique,
-            "resolution": _inv.resolve(service.get("name"), service.get("version"), cves, technique),
-            "auto_resolution": None, "override": service.get("inventory_override"),
+            "resolution": resolution,
+            "auto_resolution": automatic if override and resolution != automatic else None,
+            "pending_confirmation": bool(not override and automatic.get("is_substitute")),
+            "override": override,
         })
     for host in ir.get("hosts", []) or []:
         if not isinstance(host, dict) or not host.get("os"):
             continue
+        automatic = _inv.resolve(host.get("os"), host.get("os_version"), None, None)
         items.append({
             "ref_kind": "host", "ref_id": host.get("id"), "name": host.get("os"),
             "version": host.get("os_version"), "cves": [], "attack_technique": None,
-            "resolution": _inv.resolve(host.get("os"), host.get("os_version"), None, None),
-            "auto_resolution": None, "override": host.get("inventory_override"),
+            "resolution": automatic, "auto_resolution": None, "pending_confirmation": False,
+            "override": host.get("inventory_override"),
         })
     return items
 
@@ -168,3 +181,72 @@ def get_inventory():
 def get_scenario_inventory(scenario_id: str):
     """Per-service and host inventory resolution for this scenario."""
     return {"items": _inventory_items(_get_or_404(scenario_id))}
+
+
+@router.post("/{scenario_id}/inventory/override")
+def override_scenario_inventory(scenario_id: str, request: InventoryOverrideRequest):
+    """Persist a user decision for one service and return the effective inventory view."""
+    ir = _get_or_404(scenario_id)
+    ref_id = request.ref_id.strip()
+    if not ref_id:
+        raise HTTPException(status_code=422, detail="ref_id must not be blank")
+    service = next((item for item in ir.get("services", []) or []
+                    if isinstance(item, dict) and item.get("id") == ref_id), None)
+    host = next((item for item in ir.get("hosts", []) or []
+                 if isinstance(item, dict) and item.get("id") == ref_id), None)
+    if service is None and host is None:
+        raise HTTPException(status_code=404, detail=f"Inventory reference {ref_id!r} was not found in this scenario")
+
+    target = service if service is not None else host
+    assert target is not None
+    current = target.get("inventory_override")
+    if request.action in {"accept", "clear"} and (request.component_id is not None or request.version is not None):
+        raise HTTPException(status_code=422, detail=f"{request.action} does not accept component_id or version")
+    if request.action == "replace" and request.version is not None:
+        raise HTTPException(status_code=422, detail="replace does not accept version")
+    if request.action == "version" and request.component_id is not None:
+        raise HTTPException(status_code=422, detail="version does not accept component_id")
+    if host is not None and request.action != "clear":
+        raise HTTPException(status_code=422, detail="Host OS overrides are not supported yet; no host value was changed")
+
+    if request.action == "clear":
+        changed = bool(current)
+        target.pop("inventory_override", None)
+    else:
+        override: dict[str, Any] = {"action": request.action}
+        if request.action == "replace":
+            component_id = str(request.component_id or "").strip()
+            if not component_id:
+                raise HTTPException(status_code=422, detail="component_id is required for replace")
+            override["component_id"] = component_id
+        elif request.action == "version":
+            selected_version = str(request.version or "").strip()
+            if not selected_version:
+                raise HTTPException(status_code=422, detail="version is required for version")
+            override["version"] = selected_version
+
+        if service is not None:
+            cve = service.get("cve")
+            cves = [str(value) for value in cve] if isinstance(cve, list) else ([str(cve)] if cve else [])
+            tech = next((action.get("attack_technique") for action in ir.get("actions", []) or []
+                         if action.get("target_host_ref") == service.get("host_ref") and action.get("attack_technique")), None)
+            try:
+                _inv.resolve_with_override(service.get("name"), service.get("version"), cves, tech, override)
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc))
+        override["at"] = datetime.now(timezone.utc).isoformat()
+        target["inventory_override"] = override
+        changed = True
+
+    if changed:
+        # Component selection can change the deployed image even when topology connections stay
+        # the same. Invalidate approval explicitly and bump the IR version for version-bound plans.
+        plan = ir.get("environment_plan")
+        approval = plan.get("approval") if isinstance(plan, dict) else None
+        if isinstance(approval, dict):
+            approval["approved"] = False
+        updated = _validated_update(scenario_id, ir, "inventory-override", bump_version=True)
+    else:
+        updated = ir
+
+    return {"items": _inventory_items(updated), "scenario": updated}

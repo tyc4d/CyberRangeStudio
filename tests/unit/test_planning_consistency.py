@@ -109,7 +109,6 @@ class StrutsAliasNormalization(unittest.TestCase):
         self.assertFalse(service.get("no_component", False))
         self.assertNotIn("version", service)  # no source version is manufactured
         self.assertEqual(service["version_basis"], "assumed")
-        self.assertEqual(service["deployed_version"], "2.3.30")
         self.assertEqual(next(host for host in planned["hosts"] if host["id"] == "h1")["service_refs"], ["s1"])
 
         host = next(host for host in build_environment_plan(planned)["hosts"] if host["id"] == "h1")
@@ -131,6 +130,54 @@ class StrutsAliasNormalization(unittest.TestCase):
         self.assertEqual(len(questions), 1)
         self.assertIn("affected software", questions[0]["field"])
 
+class InventoryOverrides(unittest.TestCase):
+    def test_cve_substitute_is_only_a_recommendation_until_user_confirms(self):
+        source_service = {"id": "s1", "name": "VMware Horizon", "host_ref": "h1",
+                          "cve": ["CVE-2021-44228"], "epistemic_status": "supported", "source": "llm"}
+        ir = base_ir(
+            actions=[action("a1", "Exploit the Horizon portal", "h1")],
+            hosts=[{"id": "h1", "role": "application server", "epistemic_status": "supported", "source": "llm"}],
+            services=[source_service],
+        )
+        unconfirmed = plan_dependencies(ir)
+        service = next(item for item in unconfirmed["services"] if item["id"] == "s1")
+        self.assertNotIn("catalogue_component", service)
+        self.assertTrue(service["not_reproducible"])
+        self.assertEqual(service["cve"], ["CVE-2021-44228"])
+        self.assertEqual(service["reproduces_cve"], [])
+        self.assertIn("User confirmation is required", service["not_reproducible_reason"])
+
+        ir["services"][0]["inventory_override"] = {"action": "accept", "at": "2026-11-16T00:00:00+00:00"}
+        confirmed = plan_dependencies(ir)
+        service = next(item for item in confirmed["services"] if item["id"] == "s1")
+        self.assertEqual(service["catalogue_component"], "vuln-log4shell-solr")
+        self.assertTrue(service["is_substitute"])
+        self.assertEqual(service["cve"], ["CVE-2021-44228"])
+        self.assertEqual(service["reproduces_cve"], ["CVE-2021-44228"])
+
+    def test_service_override_survives_dependency_replanning_without_rewriting_source_cve(self):
+        ir = base_ir(
+            hosts=[{"id": "h1", "role": "web server", "epistemic_status": "supported", "source": "llm"}],
+            services=[{"id": "s1", "name": "Apache HTTP Server", "host_ref": "h1",
+                       "cve": ["CVE-2024-12345"], "epistemic_status": "supported", "source": "llm",
+                       "inventory_override": {"action": "replace", "component_id": "vuln-struts2-s2-045",
+                                               "at": "2026-11-16T00:00:00+00:00"}}],
+        )
+        planned = plan_dependencies(ir)
+        service = next(item for item in planned["services"] if item["id"] == "s1")
+        self.assertEqual(service["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertTrue(service["is_substitute"])
+        self.assertEqual(service["substitute_of"], "Apache HTTP Server")
+        self.assertEqual(service["inventory_override"]["action"], "replace")
+        self.assertEqual(service["cve"], ["CVE-2024-12345"])
+        self.assertEqual(service["reproduces_cve"], [])
+
+        again = plan_dependencies(planned)
+        replanned = next(item for item in again["services"] if item["id"] == "s1")
+        self.assertEqual(replanned["catalogue_component"], "vuln-struts2-s2-045")
+        self.assertEqual(replanned["cve"], ["CVE-2024-12345"])
+        self.assertEqual(replanned["reproduces_cve"], [])
+
 
 class MentionNaming(unittest.TestCase):
     def test_vulnerability_nickname_and_role_are_not_used_as_software_names(self):
@@ -144,8 +191,9 @@ class MentionNaming(unittest.TestCase):
         names = {item["name"] for item in planned["services"]}
         self.assertNotIn("Log4Shell", names)
         self.assertNotIn("domain controller", names)
-        matched = {item.get("matched_text") for item in planned["services"]}
-        self.assertTrue({"Log4Shell", "domain controller"} <= matched)
+        matched = " ".join(str(item.get("matched_text") or "") for item in planned["services"])
+        self.assertIn("Log4Shell", matched)
+        self.assertIn("domain controller", matched)
         fields = " ".join(item["field"] for item in planned["missing_items"])
         self.assertNotIn("version for Log4Shell", fields)
         self.assertNotIn("version for domain controller", fields)

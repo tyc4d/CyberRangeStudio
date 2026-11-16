@@ -20,11 +20,13 @@ InventoryItem = {
   attack_technique: <technique id> | null,
   resolution: Resolution,                       # EFFECTIVE resolution (after override), exact DESIGN keys
   auto_resolution: Resolution | null,           # the automatic proposal, only when an override changed it
+  pending_confirmation: bool,                    # true when a substitute is only a recommendation and is not deployed
   override: {action, component_id?, version?, at?} | null
 }
 ```
-`resolution` = `resolve(name, version, cves, attack_technique)` with the override applied (see 3). 404 for an
-unknown scenario with a real detail text (not bare "Not Found", which the client reads as "route missing").
+`resolution` = `resolve(name, version, cves, attack_technique)` with the override applied (see 3). If
+`pending_confirmation=true`, it is a proposal only, not an adopted deployment choice. 404 for an unknown
+scenario with a real detail text (not bare "Not Found", which the client reads as "route missing").
 
 ## 3. `POST /api/planning/{scenario_id}/inventory/override`
 Body `{ref_id, action, component_id?, version?}`; response `{"items": [...same as 2...], "scenario": <updated IR>}`
@@ -43,6 +45,9 @@ re-run of dependency analysis (inv-map) and missing items (inv-missing) honour i
 - `clear` — drop the override; back to the automatic resolution.
 
 Validation: unknown `ref_id` → 404 with detail; bad action/missing field → 422 (the UI renders FastAPI 422 lists).
+An unconfirmed substitute remains visible with `pending_confirmation=true` but is not written into the deployable
+dependency plan. Host OS overrides return 422 until the planner can apply them safely; `clear` may remove a stale
+host override.
 
 ## Mount point
 `apps/web/src/pages/DepsPage.tsx`: one import + one line `{has && <InventoryPanel ir={ir} />}` above the catalogue
