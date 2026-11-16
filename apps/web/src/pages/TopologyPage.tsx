@@ -5,68 +5,119 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ReactFlow, { Background, BackgroundVariant, Controls, EdgeLabelRenderer, getBezierPath, Handle, MarkerType, Position, type Edge, type EdgeProps, type Node, type NodeProps } from "reactflow";
 import "reactflow/dist/style.css";
-import type { EnvHost, EnvironmentPlan, EnvNetwork, ScenarioIR } from "@contracts";
+import { Crosshair, Database, Globe, Lock, Monitor, Server, Shield } from "lucide-react";
+import type { EnvHost, EnvNetwork, ScenarioIR } from "@contracts";
 import { api } from "../lib/api";
 import { useAction } from "../lib/hooks";
-import { BARRIER, CANVAS, EDGE, GRID, MEMBER } from "../lib/palette";
+import { BARRIER, TOPO_CANVAS, TOPO_GRID, TOPO_LINK, TOPO_WIRE } from "../lib/palette";
 import type { PlanX } from "../lib/plan";
 import { layeredLayout } from "../lib/layout";
 import { useScenario } from "../lib/scenario";
 import { ApiNotice, Busy, Empty, fmtTime, NextStep, Notice, PageHead, ScenarioGate } from "../components/ui";
 
-function NetworkNode({ data }: NodeProps<{ net: EnvNetwork }>) {
+/** Plan-host fields the backend writes that the shared TS type may not list yet. `ip` is shown only when the plan really carries one. */
+type HostX = EnvHost & { exposure_basis?: string; deployable?: boolean; substitute_for?: string; substitute_basis?: string; ip?: string };
+
+/** A zone groups the hosts whose first network is this one. `net` is absent for hosts the plan places on no known network. */
+function ZoneNode({ data }: NodeProps<{ net?: EnvNetwork; w: number; h: number }>) {
   const n = data.net;
   return (
-    <div className={`gnode net ${n.internal ? "internal" : ""}`}>
-      <div className="t" style={{ marginBottom: 2 }}>{n.id}</div>
-      <div className="muted">{n.segment ?? t("tp.noSeg")} · {n.internal ? t("tp.isolated") : t("tp.external")}</div>
-      <Handle type="source" position={Position.Bottom} id="b" style={{ opacity: 0 }} isConnectable={false} />
+    <div className={`tzone ${n && !n.internal ? "external" : ""}`} style={{ width: data.w, height: data.h }}>
+      <Handle type="target" position={Position.Left} id="l" className="thandle" isConnectable={false} />
+      <Handle type="target" position={Position.Right} id="r" className="thandle" isConnectable={false} />
+      <div className="tzone-chip">
+        <strong>{n ? n.id : t("tp.noSeg")}</strong>
+        {n && <span>{n.internal ? t("tp.isolated") : t("tp.external")}</span>}
+      </div>
     </div>
   );
 }
-/** Plan-host fields the backend writes that the shared TS type may not list yet. */
-type HostX = EnvHost & { exposure_basis?: string; deployable?: boolean; substitute_for?: string; substitute_basis?: string };
+
+/** The planned access boundary: every zone hangs off it, because the plan's access rules decide what crosses between them. */
+function GatewayNode({ data }: NodeProps<{ allow: number }>) {
+  return (
+    <div className="tcore gw">
+      <Handle type="target" position={Position.Left} id="l" className="thandle" isConnectable={false} />
+      <div className="tcore-disc"><Shield size={26} strokeWidth={2.2} /></div>
+      <div className="tcore-label">{t("tp.gw")}</div>
+      <div className="tcore-sub">{t("tp.gw.sub", { n: data.allow })}</div>
+      <Handle type="source" position={Position.Right} id="r" className="thandle" isConnectable={false} />
+    </div>
+  );
+}
+
+/** Shown only when the plan has a network that is not isolated. */
+function OutsideNode() {
+  return (
+    <div className="tcore outside">
+      <div className="tcore-disc"><Globe size={26} strokeWidth={1.8} /></div>
+      <div className="tcore-label">{t("tp.outside")}</div>
+      <Handle type="source" position={Position.Right} id="r" className="thandle" isConnectable={false} />
+    </div>
+  );
+}
+
+const ROLE_ICONS: [RegExp, typeof Server][] = [
+  [/\b(attack(er)?|kali|red[- ]?team)\b/i, Crosshair],
+  [/\b(db|database)\b|sql|mongo|redis|postgres|maria|oracle/i, Database],
+];
+function hostIcon(h: EnvHost) {
+  const hit = ROLE_ICONS.find(([re]) => re.test(`${h.role} ${h.image_hint ?? ""}`));
+  return hit ? hit[1] : h.runtime === "vm" ? Monitor : Server;
+}
+
+/** Status dot: what the plan says about deployability, never whether anything is running (nothing is deployed yet on this page). */
+function hostStatus(h: HostX): { cls: string; title: string } {
+  if (h.deployable === false || h.component_mode === "unsupported") return { cls: "no", title: t("tp.st.no") };
+  if (h.substitute_for || h.component_mode === "substitute") return { cls: "sub", title: t("tp.st.sub") };
+  if (h.component_mode === "real" || h.component_mode === "vm" || h.deployable === true) return { cls: "ok", title: t("tp.st.ok") };
+  return { cls: "unknown", title: t("tp.st.unknown") };
+}
 
 function HostNode({ data }: NodeProps<{ host: EnvHost }>) {
-  const h = data.host;
+  const h = data.host as HostX;
+  const Icon = hostIcon(h);
+  const st = hostStatus(h);
   return (
-    <div style={{ position: "relative" }}>
-      <Handle type="target" position={Position.Top} id="t" style={{ opacity: 0 }} isConnectable={false} />
-      <Handle type="target" position={Position.Left} id="l" isConnectable={false} />
-      <article className="gnode host">
-      <div className="t">{h.role}</div>
-      <div className="mono muted" style={{ marginBottom: 4 }}>{h.id}</div>
-      {h.image_hint && <div className="mono muted" style={{ marginBottom: 4, overflowWrap: "anywhere" }}>{h.image_hint}</div>}
-      <div className="meta">
-        {h.services?.map((s, i) => {
-          const sx = s as { stated_port?: number; port_basis?: string };
-          const moved = sx.port_basis === "substitute_default" && typeof sx.stated_port === "number";
-          return <span key={i} className={`tag ${moved ? "sub" : ""}`} title={moved ? t("tp.portMoved", { stated: sx.stated_port, port: s.port }) : s.protocol ?? "tcp"}>{s.name}:{s.port}{moved && t("tp.portWas", { stated: sx.stated_port })}</span>;
-        })}
-        {(h as HostX).substitute_for && (
-          <span className="tag sub" data-testid="host-substitute" title={t("tp.subTitle", { explain: SUBSTITUTE_BASIS[(h as HostX).substitute_basis ?? ""]?.explain ?? "", orig: (h as HostX).substitute_for })}>
-            {t("tp.sub", { orig: (h as HostX).substitute_for })}
-          </span>
-        )}
-        {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
-        {(h as HostX).exposure_basis === "inferred_entry_point" && <span className="tag sub" title={t("tp.entry.hint")}>{t("tp.entry")}</span>}
-        {(h as HostX).deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title={t("tp.notDeployable.hint")}>{t("tp.notDeployable")}</span>}
-      </div>
+    <div className="thost-wrap">
+      <Handle type="target" position={Position.Left} id="l" className="thandle" isConnectable={false} />
+      <article className="thost">
+        <div className="thost-icon"><Icon size={20} strokeWidth={2} /><span className={`tdot ${st.cls}`} title={st.title} aria-label={st.title} role="img" /></div>
+        <div className="thost-body">
+          <div className="thost-name">{h.role}<span className="thost-id">({h.id})</span></div>
+          {h.ip && <span className="tip"><Lock size={11} strokeWidth={2.4} />{h.ip}</span>}
+          {h.image_hint && <div className="mono thost-img">{h.image_hint}</div>}
+          <div className="meta">
+            {h.services?.map((s, i) => {
+              const sx = s as { stated_port?: number; port_basis?: string };
+              const moved = sx.port_basis === "substitute_default" && typeof sx.stated_port === "number";
+              return <span key={i} className={`tag ${moved ? "sub" : ""}`} title={moved ? t("tp.portMoved", { stated: sx.stated_port, port: s.port }) : s.protocol ?? "tcp"}>{s.name}:{s.port}{moved && t("tp.portWas", { stated: sx.stated_port })}</span>;
+            })}
+            {h.substitute_for && (
+              <span className="tag sub" data-testid="host-substitute" title={t("tp.subTitle", { explain: SUBSTITUTE_BASIS[h.substitute_basis ?? ""]?.explain ?? "", orig: h.substitute_for })}>
+                {t("tp.sub", { orig: h.substitute_for })}
+              </span>
+            )}
+            {(h as Versioned).version_basis && <><BasisTag of={h as Versioned} />{(h as Versioned).deployed_version && <span className="mono muted" style={{ fontSize: 11 }}>{(h as Versioned).deployed_version}</span>}</>}
+            {h.exposure_basis === "inferred_entry_point" && <span className="tag sub" title={t("tp.entry.hint")}>{t("tp.entry")}</span>}
+            {h.deployable === false && <span className="tag" style={{ color: "var(--err, #ff6b6b)" }} title={t("tp.notDeployable.hint")}>{t("tp.notDeployable")}</span>}
+          </div>
+        </div>
       </article>
-      <Handle type="source" position={Position.Right} id="r" isConnectable={false} />
+      <Handle type="source" position={Position.Right} id="r" className="thandle" isConnectable={false} />
     </div>
   );
 }
-const nodeTypes = { network: NetworkNode, host: HostNode };
+const nodeTypes = { zone: ZoneNode, gateway: GatewayNode, outside: OutsideNode, host: HostNode };
 
-function PlannedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, label, data }: EdgeProps<{ draw: boolean }>) {
+function PlannedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, label, data }: EdgeProps<{ draw?: boolean; tone?: string }>) {
   const [d, lx, ly] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
   return (
     <>
       <path id={id} d={d} fill="none" className="react-flow__edge-path" style={style} markerEnd={markerEnd} pathLength={data?.draw ? 1 : undefined} />
       {label && (
         <EdgeLabelRenderer>
-          <div className="edge-label" style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)` }}>{label}</div>
+          <div className={`edge-label topo ${data?.tone ?? ""}`} style={{ transform: `translate(-50%, -50%) translate(${lx}px, ${ly}px)` }}>{label}</div>
         </EdgeLabelRenderer>
       )}
     </>
@@ -74,28 +125,68 @@ function PlannedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, t
 }
 const edgeTypes = { planned: PlannedEdge };
 
+const CARD_W = 270, COL_W = 330, CARD_GAP = 22, ZONE_PAD = 24, ZONE_HEAD = 46, ZONE_GAP = 60, ZONE_X = 560;
+/** Rough rendered height of a host card, so stacked cards never overlap. Over-estimating only adds space. */
+function cardHeight(h: EnvHost): number {
+  const hx = h as HostX;
+  const lines = (text: string, perLine: number) => Math.max(1, Math.ceil([...text].reduce((n, ch) => n + (ch.charCodeAt(0) > 0x2e80 ? 2 : 1), 0) / perLine));
+  const tags = [...(h.services ?? []).map((s) => `${s.name}:${s.port}`), hx.substitute_for ? `xxxxxxxxxx ${hx.substitute_for}` : "", hx.exposure_basis ? "xxxxxxxxxx" : "", hx.deployable === false ? "xxxxxx" : "", (h as Versioned).version_basis ? "xxxxxxxxxxxx" : ""].filter(Boolean);
+  const tagRows = tags.length ? lines(tags.join("  "), 30) : 0;
+  return 24 + lines(`${h.role}(${h.id})`, 24) * 19 + (hx.ip ? 26 : 0) + (h.image_hint ? lines(h.image_hint, 32) * 17 + 3 : 0) + tagRows * 26 + 8;
+}
+
 function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edge[] } {
   const nets = plan.networks ?? [];
   const hosts = plan.hosts ?? [];
-  // Hosts flow left to right along their paths (opened and blocked alike, so refused paths do not loop backwards); each network sits above the middle of its member hosts.
-  const hostPos = layeredLayout(hosts.map((h) => h.id), [...(plan.connections ?? []), ...(plan.verify_blocked ?? [])].map((c) => ({ from: c.from_host, to: c.to_host })), 360, 150);
-  const nodes: Node[] = hosts.map((h) => ({ id: `host:${h.id}`, type: "host", data: { host: h }, position: { x: hostPos[h.id].x, y: hostPos[h.id].y + 170 } }));
-  const placed = nets
-    .map((n) => {
-      const xs = hosts.filter((h) => h.networks?.includes(n.id)).map((h) => hostPos[h.id].x);
-      return { n, x: xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length + 10 : 0 };
-    })
-    .sort((a, b) => a.x - b.x);
-  placed.forEach((p, i) => { if (i > 0) p.x = Math.max(p.x, placed[i - 1].x + 220); });
-  placed.forEach((p) => nodes.push({ id: `net:${p.n.id}`, type: "network", data: { net: p.n }, position: { x: p.x, y: 0 } }));
-
-  const edges: Edge[] = [];
   const netIds = new Set(nets.map((n) => n.id));
+  const paths = [...(plan.connections ?? []), ...(plan.verify_blocked ?? [])].map((c) => ({ from: c.from_host, to: c.to_host }));
+  // Each host sits in the zone of its first known network; any further networks are drawn as thin links to those zones.
+  const home = (h: EnvHost) => h.networks?.find((n) => netIds.has(n)) ?? "";
+  const zones: { key: string; net?: EnvNetwork; hosts: EnvHost[] }[] = [...nets]
+    .sort((a, b) => Number(a.internal !== false) - Number(b.internal !== false)) // the exposed side first, nearest the outside
+    .map((n) => ({ key: n.id, net: n, hosts: hosts.filter((h) => home(h) === n.id) }));
+  const loose = hosts.filter((h) => home(h) === "");
+  if (loose.length) zones.push({ key: "", hosts: loose });
+
+  const nodes: Node[] = [];
+  const children: Node[] = [];
+  let y = 0;
+  zones.forEach((z) => {
+    // Within a zone, hosts flow left to right along their paths (opened and blocked alike); each column stacks by card height.
+    const pos = layeredLayout(z.hosts.map((h) => h.id), paths, COL_W, 1);
+    const colY = new Map<number, number>();
+    const at: Record<string, { x: number; y: number }> = {};
+    z.hosts.forEach((h) => {
+      const x = pos[h.id].x, top = colY.get(x) ?? 0;
+      at[h.id] = { x, y: top };
+      colY.set(x, top + cardHeight(h) + CARD_GAP);
+    });
+    const w = (z.hosts.length ? Math.max(...z.hosts.map((h) => at[h.id].x)) : 0) + CARD_W + ZONE_PAD * 2;
+    const hgt = Math.max(90, (colY.size ? Math.max(...colY.values()) - CARD_GAP : 0) + ZONE_HEAD + ZONE_PAD);
+    const zid = `zone:${z.key}`;
+    nodes.push({ id: zid, type: "zone", data: { net: z.net, w, h: hgt }, position: { x: ZONE_X, y }, style: { width: w, height: hgt }, selectable: false, zIndex: -1 });
+    z.hosts.forEach((h) => children.push({ id: `host:${h.id}`, type: "host", data: { host: h }, parentNode: zid, extent: "parent", position: { x: at[h.id].x + ZONE_PAD, y: at[h.id].y + ZONE_HEAD } }));
+    y += hgt + ZONE_GAP;
+  });
+  const midY = Math.max(0, (y - ZONE_GAP) / 2 - 60);
+  const allow = (plan.access_rules ?? []).filter((r) => r.action === "allow").length;
+  nodes.push({ id: "gw", type: "gateway", data: { allow }, position: { x: 300, y: midY } });
+  const hasOutside = nets.some((n) => n.internal === false);
+  if (hasOutside) nodes.push({ id: "outside", type: "outside", data: {}, position: { x: 30, y: midY } });
+  nodes.push(...children); // parents must precede their children
+
+  const wire = { stroke: TOPO_WIRE, strokeWidth: 1.4 };
+  const edges: Edge[] = [];
+  if (hasOutside) edges.push({ id: "o:gw", source: "outside", sourceHandle: "r", target: "gw", targetHandle: "l", type: "planned", style: wire });
+  zones.forEach((z) => z.net && edges.push({
+    id: `z:${z.key}`, source: "gw", sourceHandle: "r", target: `zone:${z.key}`, targetHandle: "l",
+    type: "planned", label: z.net.segment ?? t("tp.noSeg"), data: { tone: "wire" }, style: wire,
+  }));
   hosts.forEach((h) => h.networks?.forEach((nid) => {
-    if (!netIds.has(nid)) return;
+    if (!netIds.has(nid) || nid === home(h)) return;
     edges.push({
-      id: `m:${nid}:${h.id}`, source: `net:${nid}`, sourceHandle: "b", target: `host:${h.id}`, targetHandle: "t",
-      type: "straight", style: { stroke: MEMBER, strokeWidth: 1 },
+      id: `m:${nid}:${h.id}`, source: `host:${h.id}`, sourceHandle: "r", target: `zone:${nid}`, targetHandle: "r",
+      type: "planned", style: { ...wire, strokeWidth: 1, strokeDasharray: "2 4" }, zIndex: 1,
     });
   }));
   const hostIds = new Set(hosts.map((h) => h.id));
@@ -105,10 +196,10 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
       id: `c:${i}`, source: `host:${c.from_host}`, sourceHandle: "r", target: `host:${c.to_host}`, targetHandle: "l",
       label: c.port ? `${c.protocol ?? "tcp"}/${c.port}` : undefined,
       // Drawn once, right after the plan is produced, then static. It shows a planned rule, never traffic.
-      type: "planned", data: { draw: drawOnce }, className: drawOnce ? "fresh" : undefined,
-      style: { stroke: EDGE, strokeWidth: 1.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: EDGE, width: 16, height: 16 },
-      });
+      type: "planned", data: { draw: drawOnce, tone: "link" }, className: drawOnce ? "fresh" : undefined, zIndex: 1,
+      style: { stroke: TOPO_LINK, strokeWidth: 1.6 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: TOPO_LINK, width: 16, height: 16 },
+    });
   });
   // Paths that must stay shut are drawn too, so the picture shows what is refused as well as what is opened.
   (plan.verify_blocked ?? []).forEach((b, i) => {
@@ -116,8 +207,8 @@ function buildGraph(plan: PlanX, drawOnce: boolean): { nodes: Node[]; edges: Edg
     edges.push({
       id: `b:${i}`, source: `host:${b.from_host}`, sourceHandle: "r", target: `host:${b.to_host}`, targetHandle: "l",
       label: `${t("tp.blocked")}${b.port ? ` ${b.protocol ?? "tcp"}/${b.port}` : ""}`,
+      type: "planned", data: { tone: "barrier" }, zIndex: 1,
       style: { stroke: BARRIER, strokeWidth: 1.5, strokeDasharray: "3 5" },
-      labelStyle: { fill: BARRIER, fontSize: 10, fontWeight: 600 }, labelBgStyle: { fill: CANVAS },
     });
   });
   return { nodes, edges };
@@ -197,22 +288,23 @@ function Body({ ir }: { ir: ScenarioIR }) {
       ) : (
         <>
           <div className="legend">
-            <span><span className="line" />{t("tp.lg.conn")}</span>
+            <span><span className="line" style={{ borderTopColor: TOPO_LINK }} />{t("tp.lg.conn")}</span>
             <span><span className="line" style={{ borderTop: `2px dashed ${BARRIER}` }} />{t("tp.lg.blocked")}</span>
-            <span><span className="line" style={{ borderTop: `1px solid ${MEMBER}` }} />{t("tp.lg.member")}</span>
+            <span><span className="line" style={{ borderTop: `1px solid ${TOPO_WIRE}` }} />{t("tp.lg.member")}</span>
+            <span><span className="tdot ok legend-dot" />{t("tp.lg.status")}</span>
             <span>{t("tp.lg.border")}</span>
             <button className="small" style={{ marginLeft: "auto" }} onClick={() => setStamp((s) => s + 1)}>{t("tp.resetLayout")}</button>
           </div>
-          <div className="canvas card-canvas" style={{ flex: "none" }}>
+          <div className="canvas card-canvas topo" style={{ flex: "none" }}>
             {plan.hosts.length === 0 && plan.networks.length === 0 ? <Empty>{t("tp.emptyPlan")}</Empty> : (
               <ReactFlow
                 key={`${stamp}:${ir.updated_at ?? ""}:${ir.ir_version ?? ""}`}
                 defaultNodes={graph.nodes} defaultEdges={graph.edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
                 nodesConnectable={false} deleteKeyCode={null} elementsSelectable
-                fitView fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }} minZoom={0.2}
+                fitView fitViewOptions={{ padding: 0.12, maxZoom: 1.1 }} minZoom={0.15}
                 proOptions={{ hideAttribution: true }}
               >
-                <Background variant={BackgroundVariant.Lines} color={GRID} gap={32} lineWidth={1} />
+                <Background variant={BackgroundVariant.Dots} color={TOPO_GRID} gap={22} size={1.4} style={{ background: TOPO_CANVAS }} />
                 <Controls showInteractive={false} />
               </ReactFlow>
             )}
