@@ -38,9 +38,14 @@ def test_dependencies_map_supported_services_and_report_unmet_items():
     assert all(service.get("catalogue_component") for service in result["services"])
     assert any(service.get("version") == "1.24" and service.get("cve") == ["CVE-2024-12345"]
                for service in result["services"])
-    assert any(service.get("name") == "IIS" and service.get("is_substitute") is True
-               for service in result["services"])
-    assert any(item.get("status") == "substitute_chosen" and "not a full recreation" in item.get("resolution", "")
+    # IIS is named in the source, but its image is only a role-based substitute. Keep the
+    # source product as an open inventory item until a user confirms a specific replacement.
+    assert not any(service.get("name") == "IIS" and service.get("is_substitute") is True
+                   for service in result["services"])
+    assert any(item.get("field") == "software dependency: IIS 10.0" and item.get("status") == "open"
+               for item in result["missing_items"])
+    assert any(item.get("status") == "substitute_chosen"
+               and "not asserted to be the original software or a full recreation" in item.get("resolution", "")
                for item in result["missing_items"])
     assert any("Microsoft SQL Server" in item.get("field", "") and item.get("status") == "open"
                for item in result["missing_items"])
