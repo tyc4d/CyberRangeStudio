@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import ipaddress
 import os
 import secrets
@@ -56,6 +57,7 @@ def _db() -> sqlite3.Connection:
         )"""
     )
     db.execute("CREATE INDEX IF NOT EXISTS deployment_records_scenario_idx ON deployment_records(scenario_id, id)")
+    db.execute("CREATE INDEX IF NOT EXISTS deployment_records_lifecycle_idx ON deployment_records(scenario_id, action, id)")
     return db
 
 
@@ -78,6 +80,19 @@ def records(scenario_id: str, limit: int = 100) -> list[dict[str, Any]]:
         rows = db.execute(
             "SELECT * FROM deployment_records WHERE scenario_id=? ORDER BY id DESC LIMIT ?",
             (scenario_id, max(1, min(limit, 500))),
+        ).fetchall()
+    return [{"id": row["id"], "scenario_id": row["scenario_id"], "project_name": row["project_name"],
+             "action": row["action"], "state": row["state"], "details": json.loads(row["details"]),
+             "recorded_at": row["recorded_at"]} for row in rows]
+
+
+def _lifecycle_records(scenario_id: str) -> list[dict[str, Any]]:
+    """Read every up/down event so UI audit pagination cannot hide active ownership."""
+    scenario_id = validate_id(scenario_id)
+    with _db() as db:
+        rows = db.execute(
+            "SELECT * FROM deployment_records WHERE scenario_id=? AND action IN ('up','down') ORDER BY id DESC",
+            (scenario_id,),
         ).fetchall()
     return [{"id": row["id"], "scenario_id": row["scenario_id"], "project_name": row["project_name"],
              "action": row["action"], "state": row["state"], "details": json.loads(row["details"]),
@@ -202,240 +217,201 @@ def vm_destroy(scenario_id: str, vm_id: str, *, networks: list[str] | None = Non
     return _vm_audited(scenario_id, "vm_destroy", vm_id, run)
 
 
-def _docker_context_preflight() -> tuple[str | None, str | None]:
-    docker = shutil.which("docker")
-    if not docker:
-        return None, "docker executable is not installed"
-    env = os.environ.copy()
-    host_env = env.get("DOCKER_HOST")
-    if host_env:
-        if not host_env.startswith("unix://"):
-            return None, "refusing non-local Docker host; DOCKER_HOST must use a local unix:// socket"
-        return docker, None
+from app.deploy.backends import local_docker
+
+# Stable manager API; Compose implementation is isolated in its backend module.
+_docker_context_preflight = local_docker._docker_context_preflight
+_compose_prefix = local_docker._compose_prefix
+_run = local_docker._run
+_real_image_refs = local_docker._real_image_refs
+_port_is_free = local_docker._port_is_free
+allocate_host_ports = local_docker.allocate_host_ports
+_compose_command = local_docker._compose_command
+_local_compose_ps_result = local_docker.compose_ps_result
+_local_exec_in_service = local_docker.exec_in_service
+_local_probe_in_service = local_docker.probe_in_service
+_local_container_ipv4_addresses = local_docker.container_ipv4_addresses
+_local_container_ipv4 = local_docker.container_ipv4
+_parse_compose_ps = local_docker._parse_compose_ps
+
+
+def deploy_backend() -> str:
+    """Explicit runtime selection; invalid configuration never implies local fallback."""
+    value = os.getenv("CR_DEPLOY_BACKEND", "local-docker").strip().lower()
+    if value not in {"local-docker", "proxmox"}:
+        raise PlanError(["CR_DEPLOY_BACKEND must be 'local-docker' or 'proxmox'"])
+    return value
+
+
+def _proxmox_backend() -> Any:
+    """Load PVE code/config only when selected; configuration failures stay fail-closed."""
     try:
-        current = subprocess.run([docker, "context", "show"], capture_output=True, text=True, timeout=5, env=env)
-        if current.returncode != 0:
-            return None, f"cannot read Docker context: {current.stderr.strip()[:500]}"
-        context_name = env.get("DOCKER_CONTEXT") or current.stdout.strip()
-        if not context_name or any(ch not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-" for ch in context_name):
-            return None, "invalid Docker context name"
-        inspected = subprocess.run([docker, "context", "inspect", context_name], capture_output=True, text=True,
-                                   timeout=5, env=env)
-        if inspected.returncode != 0:
-            return None, f"cannot inspect Docker context: {inspected.stderr.strip()[:500]}"
-        contexts = json.loads(inspected.stdout)
-        endpoint = contexts[0]["Endpoints"]["docker"]["Host"]
-        if not endpoint.startswith("unix://"):
-            return None, "refusing non-local Docker context; only local unix:// endpoints are allowed"
-    except (OSError, subprocess.TimeoutExpired, ValueError, KeyError, IndexError) as exc:
-        return None, f"Docker local-context check failed: {exc}"
-    return docker, None
+        from app.deploy.backends.proxmox import ProxmoxBackend
+        return ProxmoxBackend.from_env()
+    except Exception as exc:
+        # Do not expose transport details or credentials through API errors.
+        raise PlanError([f"Proxmox backend unavailable: {type(exc).__name__}"]) from None
 
 
-def _compose_prefix(scenario_id: str, docker: str) -> tuple[list[str] | None, str | None]:
-    scenario_id = validate_id(scenario_id)
-    try:
-        get_generated(scenario_id)
-    except FileNotFoundError:
-        return None, "compose file has not been generated"
-    except PlanError as exc:
-        return None, str(exc)
-    compose_file = generated_dir(scenario_id) / "docker-compose.yml"
-    prefix = [docker, "compose", "--env-file", "/dev/null", "-p", project_name(scenario_id), "-f", str(compose_file)]
-    return prefix, None
-
-
-def _run(args: list[str], timeout: int = 60, env_overrides: dict[str, str] | None = None) -> dict[str, Any]:
-    try:
-        env = os.environ.copy()
-        # Buildx records builder activity under its config directory. The worker
-        # sandbox keeps the home directory read-only, so keep that runtime state
-        # under the permitted temporary directory instead.
-        env["BUILDX_CONFIG"] = "/tmp/cr-demo-buildx"
-        if env_overrides:
-            env.update(env_overrides)
-        result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, env=env)
-        return {"returncode": result.returncode, "stdout": result.stdout[-12000:], "stderr": result.stderr[-4000:]}
-    except subprocess.TimeoutExpired as exc:
-        return {"returncode": 124, "stdout": (exc.stdout or "")[-12000:] if isinstance(exc.stdout, str) else "",
-                "stderr": f"command timed out after {timeout}s"}
-    except OSError as exc:
-        return {"returncode": 127, "stdout": "", "stderr": str(exc)}
-
-
-def _real_image_refs(scenario_id: str) -> tuple[list[str] | None, str | None]:
-    """Return only catalogue-pinned images from the validated generated Compose file."""
-    try:
-        generated = get_generated(scenario_id)
-        document = yaml.safe_load(generated["compose"])
-    except (FileNotFoundError, PlanError, yaml.YAMLError) as exc:
-        return None, str(exc)
-    allowed = {entry.get("pinned_image") for entry in load_components()
-               if entry.get("pinned_image") and entry.get("digest")}
-    images: list[str] = []
-    for service_name, service in document.get("services", {}).items():
-        image = service.get("image")
-        if not image or image == _BASE_IMAGE or image.startswith("cr-demo-") and service.get("build"):
+def _active_proxmox_deployment(scenario_id: str) -> dict[str, Any] | None:
+    """Resolve the latest still-live PVE up record; VMID never comes from the UI."""
+    for entry in _lifecycle_records(scenario_id):
+        details = entry.get("details") or {}
+        if details.get("backend") != "proxmox":
             continue
-        if image not in allowed or "@sha256:" not in image:
-            return None, f"refusing to pull non-catalogue or unpinned image for {service_name}: {image!r}"
-        if image not in images:
-            images.append(image)
-    return images, None
+        if entry.get("action") == "down" and entry.get("state") in {"stopped", "removed"}:
+            return None
+        if entry.get("action") == "up" and entry.get("state") == "running":
+            vmid = details.get("vmid")
+            host_id = details.get("host_id")
+            if isinstance(vmid, int) and not isinstance(vmid, bool) and isinstance(host_id, str):
+                return {"vmid": vmid, "host_id": host_id, "details": details}
+        if entry.get("action") == "up" and entry.get("state") == "failed":
+            outcome = details.get("result") or {}
+            orphan = outcome.get("recoverable_orphan") if isinstance(outcome, dict) else None
+            if isinstance(orphan, dict):
+                vmid, host_id = orphan.get("vmid"), orphan.get("host_id")
+                if isinstance(vmid, int) and isinstance(host_id, str):
+                    return {"vmid": vmid, "host_id": host_id, "details": details, "orphan": True}
+    return None
 
 
-def _port_is_free(bind_ip: str, port: int) -> bool:
-    """True when nothing (including a Docker proxy) is listening on bind_ip:port."""
-    for address in {bind_ip, "0.0.0.0"}:
-        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            probe.bind((address, port))
-        except OSError:
-            return False
-        finally:
-            probe.close()
-    return True
+def _recorded_active_backend(scenario_id: str) -> str | None:
+    """Find the latest active up/down state per backend, including legacy local records."""
+    resolved: dict[str, bool] = {}
+    for entry in _lifecycle_records(scenario_id):
+        details = entry.get("details") or {}
+        backend = details.get("backend") or "local-docker"
+        if backend in resolved:
+            continue
+        if entry.get("action") == "down" and entry.get("state") in {"stopped", "removed"}:
+            resolved[backend] = False
+        elif entry.get("action") == "up" and entry.get("state") == "running":
+            resolved[backend] = True
+        elif entry.get("action") == "up" and entry.get("state") == "failed":
+            outcome = details.get("result") or {}
+            resolved[backend] = bool(isinstance(outcome, dict) and outcome.get("recoverable_orphan"))
+    active = [backend for backend, is_active in resolved.items() if is_active]
+    return active[0] if len(active) == 1 else ("conflict" if len(active) > 1 else None)
 
 
-def allocate_host_ports(scenario_id: str, bind_ip: str = "127.0.0.1",
-                        avoid: set[int] | None = None) -> dict[str, str]:
-    """Pick a free host port in the allowed range for every published service.
+def _backend_conflict(scenario_id: str, selected: str) -> str | None:
+    active = _recorded_active_backend(scenario_id)
+    if active and active != selected:
+        return f"scenario has an active {active} deployment; select that backend to inspect or stop it"
+    return None
 
-    The generated Compose file only carries defaults (42000, 42001, ...); two scenarios
-    deployed at the same time would otherwise fight over the same ports.
-    """
+
+def _pve_result(result: Any) -> dict[str, Any]:
+    """Normalize QGA process output to the manager's command-result shape."""
+    if not isinstance(result, dict):
+        return {"returncode": 127, "stdout": "", "stderr": "invalid PVE guest result"}
+    return {"returncode": int(result.get("exitcode", result.get("returncode", 1))),
+            "stdout": str(result.get("stdout", "")), "stderr": str(result.get("stderr", ""))}
+
+
+def _pve_isolation_confirmed(report: Any) -> bool:
+    return bool(isinstance(report, dict) and report.get("checked") is True
+                and report.get("isolated") is True and report.get("evidence"))
+
+
+def _pve_guest_exec(scenario_id: str, command: list[str], timeout: int, *,
+                    require_isolation: bool = False) -> dict[str, Any]:
+    deployment = _active_proxmox_deployment(scenario_id)
+    if deployment is None:
+        return {"returncode": 127, "stdout": "", "stderr": "no owned Proxmox worker is recorded"}
     try:
-        mappings = get_generated(scenario_id)["report"].get("host_port_mappings", [])
-    except (FileNotFoundError, PlanError):
-        return {}
-    taken = set(avoid or ())
-    span = _PUBLISHED_PORT_MAX - _PUBLISHED_PORT_MIN + 1
-    start = secrets.randbelow(span)
-    assigned: dict[str, str] = {}
-    for mapping in mappings:
-        chosen = None
-        for offset in range(span):
-            candidate = _PUBLISHED_PORT_MIN + (start + offset) % span
-            if candidate not in taken and _port_is_free(bind_ip, candidate):
-                chosen = candidate
-                break
-        if chosen is None:
-            raise PlanError(["no free host port is available in 42000-42999"])
-        taken.add(chosen)
-        start = (chosen - _PUBLISHED_PORT_MIN + 1) % span
-        assigned[mapping["env"]] = str(chosen)
-    return assigned
-
-
-def _compose_command(scenario_id: str, operation: str, extra: list[str] | None = None,
-                     timeout: int = 60, *, expose: str = "internal", lan_host: str | None = None,
-                     pg_password: str | None = None,
-                     host_ports: dict[str, str] | None = None) -> dict[str, Any]:
-    docker, error = _docker_context_preflight()
-    if error:
-        return {"returncode": 127, "stdout": "", "stderr": error}
-    assert docker
-    if operation in _PROJECT_ONLY_OPERATIONS:
-        # Looking at or removing a deployment must not depend on the generated file: it
-        # may never have existed, or the plan may have changed since. Compose finds the
-        # project's containers and networks by label.
-        return _run([docker, "compose", "-p", project_name(scenario_id), operation] + (extra or []), timeout=timeout)
-    prefix, error = _compose_prefix(scenario_id, docker)
-    if error:
-        return {"returncode": 2, "stdout": "", "stderr": error}
-    assert prefix
-    bind_ip = "127.0.0.1"
-    # Compose requires a non-empty value for interpolation even in internal mode.
-    # Internal PostgreSQL still uses trust auth and this throwaway value is never persisted.
-    generated_secret = pg_password or secrets.token_urlsafe(24)
-    env_overrides = {"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "trust",
-                     "CR_PG_PASSWORD": generated_secret, "CR_DB_PASSWORD": generated_secret}
-    if expose == "lan":
-        bind_ip = lan_host or detect_lan_ipv4()
-        env_overrides.update({"CR_BIND_IP": bind_ip, "CR_PG_AUTH_METHOD": "scram-sha-256"})
-    if host_ports:
-        env_overrides.update(host_ports)
-    config_check = _run(prefix + ["config", "--quiet"], timeout=15, env_overrides=env_overrides)
-    if config_check["returncode"] != 0:
-        return {"returncode": config_check["returncode"], "stdout": config_check["stdout"],
-                "stderr": f"compose configuration rejected: {config_check['stderr']}"}
-    if operation == "up":
-        helper_pull = _run([docker, "pull", _BASE_IMAGE], timeout=300)
-        if helper_pull["returncode"] != 0:
-            return {"returncode": helper_pull["returncode"], "stdout": helper_pull["stdout"],
-                    "stderr": f"could not pull pinned local demo/probe base image {_BASE_IMAGE}: {helper_pull['stderr']}"}
-        real_images, image_error = _real_image_refs(scenario_id)
-        if image_error:
-            return {"returncode": 2, "stdout": "", "stderr": image_error}
-        for image in real_images or []:
-            pulled = _run([docker, "pull", image], timeout=900)
-            if pulled["returncode"] != 0:
-                return {"returncode": pulled["returncode"], "stdout": pulled["stdout"],
-                        "stderr": f"could not pull pinned catalogue image {image}: {pulled['stderr']}"}
-    command = prefix + [operation] + (extra or [])
-    return _run(command, timeout=timeout, env_overrides=env_overrides)
+        backend = _proxmox_backend()
+        result = backend.guest_exec(scenario_id, vmid=deployment["vmid"],
+                                   host_id=deployment["host_id"], command=command,
+                                   timeout=timeout, require_isolation=require_isolation)
+        return _pve_result(result)
+    except Exception as exc:
+        return {"returncode": 127, "stdout": "", "stderr": f"Proxmox guest operation unavailable: {type(exc).__name__}"}
 
 
 def compose_ps_result(scenario_id: str) -> dict[str, Any]:
-    return _compose_command(scenario_id, "ps", ["--all", "--format", "json"], timeout=20)
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"returncode": 127, "stdout": "", "stderr": conflict, "backend": selected}
+    if selected == "local-docker":
+        return _local_compose_ps_result(scenario_id)
+    deployment = _active_proxmox_deployment(scenario_id)
+    if deployment is None:
+        return {"returncode": 0, "stdout": "", "stderr": ""}
+    try:
+        backend = _proxmox_backend()
+        result = backend.status(scenario_id, vmid=deployment["vmid"], host_id=deployment["host_id"])
+        vm_state = result.get("state", "unknown")
+        compose = result.get("compose") or {}
+        normalized = _pve_result(compose)
+        normalized["vm_state"] = vm_state
+        normalized["backend"] = "proxmox"
+        if isinstance(result.get("placement"), dict):
+            normalized["placement"] = result["placement"]
+        return normalized
+    except Exception as exc:
+        return {"returncode": 127, "stdout": "", "stderr": f"Proxmox status unavailable: {type(exc).__name__}",
+                "vm_state": "unknown", "backend": "proxmox"}
 
 
 def exec_in_service(scenario_id: str, service_id: str, command: list[str], timeout: int = 10) -> dict[str, Any]:
     validate_id(service_id)
     if not command or any(not isinstance(arg, str) or "\x00" in arg for arg in command):
         return {"returncode": 2, "stdout": "", "stderr": "invalid internal check command"}
-    return _compose_command(scenario_id, "exec", ["-T", service_id, *command], timeout=timeout)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"returncode": 127, "stdout": "", "stderr": conflict}
+    if selected == "local-docker":
+        return _local_exec_in_service(scenario_id, service_id, command, timeout)
+    project = project_name(scenario_id)
+    return _pve_guest_exec(scenario_id, ["/usr/bin/docker", "compose", "--env-file",
+                                        "/opt/cr-runtime/compose.env", "--project-name", project,
+                                        "--file", "/opt/cr-runtime/docker-compose.yml", "exec", "-T",
+                                        service_id, *command], timeout, require_isolation=True)
 
 
 def probe_in_service(scenario_id: str, service_id: str, python_script: str, timeout: int = 10) -> dict[str, Any]:
-    """Run a network probe inside the source container's network namespace.
-
-    The source image may be nginx/httpd/PostgreSQL and need not contain Python or a
-    network utility. A short-lived, non-root pinned Python helper shares only that
-    service's network namespace and is removed immediately after the probe.
-    """
-    scenario_id = validate_id(scenario_id)
-    validate_id(service_id)
+    scenario_id, service_id = validate_id(scenario_id), validate_id(service_id)
     if not isinstance(python_script, str) or not python_script or "\x00" in python_script:
         return {"returncode": 2, "stdout": "", "stderr": "invalid internal network probe"}
-    docker, error = _docker_context_preflight()
-    if error or not docker:
-        return {"returncode": 127, "stdout": "", "stderr": error or "docker executable is not installed"}
-    _, error = _compose_prefix(scenario_id, docker)
-    if error:
-        return {"returncode": 2, "stdout": "", "stderr": error}
-    source_container = f"{project_name(scenario_id)}-{service_id}"
-    command = [
-        docker, "run", "--rm", "--pull=never", "--network", f"container:{source_container}",
-        "--read-only", "--cap-drop=ALL", "--security-opt", "no-new-privileges:true",
-        "--user", "65532:65532", "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
-        _BASE_IMAGE, "python", "-c", python_script,
-    ]
-    return _run(command, timeout=timeout)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"returncode": 127, "stdout": "", "stderr": conflict}
+    if selected == "local-docker":
+        return _local_probe_in_service(scenario_id, service_id, python_script, timeout)
+    source = f"{project_name(scenario_id)}-{service_id}"
+    command = ["/usr/bin/docker", "run", "--rm", "--pull=never", "--network", f"container:{source}",
+               "--read-only", "--cap-drop=ALL", "--security-opt", "no-new-privileges:true",
+               "--user", "65532:65532", "--tmpfs", "/tmp:rw,noexec,nosuid,size=16m",
+               "--memory", "256m", "--cpus", "1", "--pids-limit", "128",
+               local_docker._BASE_IMAGE, "python", "-c", python_script]
+    return _pve_guest_exec(scenario_id, command, timeout, require_isolation=True)
 
 
 def container_ipv4_addresses(scenario_id: str, service_id: str) -> list[dict[str, str]]:
-    """IPv4 addresses of a running container on the networks declared in the plan.
-
-    The generated ``edge`` network is deliberately excluded: it exists only to publish a
-    host port, inter-container traffic on it is disabled, and no other host's declared
-    path runs through it. Probing an edge address says nothing about plan segmentation.
-    Result is sorted by network id so callers get a stable order.
-    """
-    scenario_id = validate_id(scenario_id)
-    validate_id(service_id)
-    docker, error = _docker_context_preflight()
-    if error or not docker:
+    scenario_id, service_id = validate_id(scenario_id), validate_id(service_id)
+    selected = deploy_backend()
+    if _backend_conflict(scenario_id, selected):
         return []
-    prefix = project_name(scenario_id) + "-"
-    result = _run([docker, "inspect", "-f", "{{json .NetworkSettings.Networks}}", prefix + service_id], timeout=15)
+    if selected == "local-docker":
+        return _local_container_ipv4_addresses(scenario_id, service_id)
+    result = _pve_guest_exec(scenario_id, ["/usr/bin/docker", "inspect", "-f",
+                                           "{{json .NetworkSettings.Networks}}",
+                                           f"{project_name(scenario_id)}-{service_id}"], 15,
+                             require_isolation=True)
     if result["returncode"] != 0:
         return []
     try:
         networks = json.loads(result["stdout"])
     except json.JSONDecodeError:
         return []
-    addresses: list[dict[str, str]] = []
+    prefix = project_name(scenario_id) + "-"
+    addresses = []
     for name, settings in sorted((networks or {}).items()):
         if not name.startswith(prefix) or name == prefix + "edge":
             continue
@@ -449,15 +425,6 @@ def container_ipv4_addresses(scenario_id: str, service_id: str) -> list[dict[str
 
 
 def container_ipv4(scenario_id: str, service_id: str, from_service: str | None = None) -> str | None:
-    """Return the target's IPv4 on a plan network, for IP-based probing.
-
-    Used by segmentation checks so a blocked path is proven by an actual TCP outcome
-    to the target IP, never by a hostname that merely failed to resolve. The address is
-    never taken from the publishing-only ``edge`` network. When ``from_service`` is
-    given and it shares a plan network with the target, the address on that shared
-    network is returned, so a closed port on a reachable host shows up as a refusal
-    rather than as "network unreachable".
-    """
     addresses = container_ipv4_addresses(scenario_id, service_id)
     if not addresses:
         return None
@@ -468,44 +435,13 @@ def container_ipv4(scenario_id: str, service_id: str, from_service: str | None =
                 return item["ip"]
     return addresses[0]["ip"]
 
-
-def _parse_compose_ps(output: str) -> list[dict[str, Any]]:
-    if not output.strip():
-        return []
-    try:
-        decoded = json.loads(output)
-        rows = decoded if isinstance(decoded, list) else [decoded]
-    except json.JSONDecodeError:
-        rows = []
-        for line in output.splitlines():
-            try:
-                rows.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-    containers = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        containers.append({
-            "service": row.get("Service") or row.get("Name", ""),
-            "name": row.get("Name", ""),
-            "id": row.get("ID", ""),
-            "state": row.get("State", "unknown").lower(),
-            "status": row.get("Status", ""),
-            "health": row.get("Health", "").lower(),
-            "exit_code": row.get("ExitCode"),
-            "ports": [{"host_ip": pub.get("URL"), "host_port": pub.get("PublishedPort"),
-                       "container_port": pub.get("TargetPort"), "protocol": pub.get("Protocol")}
-                      for pub in (row.get("Publishers") or []) if pub.get("PublishedPort")],
-        })
-    return containers
-
-
 def live_containers(scenario_id: str) -> dict[str, Any]:
     result = compose_ps_result(scenario_id)
     containers = _parse_compose_ps(result["stdout"]) if result["returncode"] == 0 else []
     states = [c["state"] for c in containers]
-    if result["returncode"] != 0:
+    if result.get("backend") == "proxmox" and result.get("vm_state") != "running":
+        state = "stopped" if result.get("vm_state") == "stopped" else "error"
+    elif result["returncode"] != 0:
         state = "error"
     elif not containers:
         state = "not_created"
@@ -518,7 +454,9 @@ def live_containers(scenario_id: str) -> dict[str, Any]:
     live = {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
             "state": state, "containers": containers, "error": (result["stderr"] or None) if state == "error" else None}
     live["iac"] = iac_state(scenario_id)
-    live["published_ports"] = published_ports(scenario_id, containers)
+    live["published_ports"] = [] if deploy_backend() == "proxmox" else published_ports(scenario_id, containers)
+    if isinstance(result.get("placement"), dict):
+        live["placement"] = result["placement"]
     return live
 
 
@@ -539,6 +477,8 @@ def published_ports(scenario_id: str, containers: list[dict[str, Any]]) -> list[
     Read from the running gateway container, so every screen that shows a port can use
     this one list instead of remembering what an earlier deploy call returned.
     """
+    if deploy_backend() == "proxmox":
+        return []
     gateway = next((c for c in containers if c.get("service") == "cr-gateway"), None)
     if not gateway or gateway.get("state") != "running":
         return []
@@ -580,6 +520,38 @@ def callback_events(scenario_id: str, since: str | None = None) -> dict[str, Any
     scenario_id = validate_id(scenario_id)
     listener = callback_listener(scenario_id)
     result: dict[str, Any] = {"listener": listener, "running": False, "events": []}
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        result["error"] = conflict
+        return result
+    if selected == "proxmox":
+        if not listener:
+            result["error"] = "this scenario has no callback listener"
+            return result
+        container = f"{project_name(scenario_id)}-{listener['id']}"
+        state = _pve_guest_exec(scenario_id, ["/usr/bin/docker", "inspect", "-f", "{{.State.Running}}", container],
+                                15, require_isolation=True)
+        result["running"] = state["returncode"] == 0 and state["stdout"].strip() == "true"
+        if not result["running"]:
+            result["error"] = state["stderr"] or "listener container is not running"
+            return result
+        logs = _pve_guest_exec(scenario_id, ["/usr/bin/docker", "logs", container], 20, require_isolation=True)
+        owners = {address["ip"]: host_id for component in get_generated(scenario_id)["report"].get("components", [])
+                  for host_id in [component["host_id"]]
+                  for address in container_ipv4_addresses(scenario_id, host_id)}
+        for line in (logs.get("stdout", "") + logs.get("stderr", "")).splitlines():
+            if not line.startswith("CALLBACK "):
+                continue
+            try:
+                event = json.loads(line[len("CALLBACK "):])
+            except json.JSONDecodeError:
+                continue
+            if since and str(event.get("ts", "")) <= since:
+                continue
+            event["peer_host"] = owners.get(event.get("peer_ip"))
+            result["events"].append(event)
+        return result
     docker, error = _docker_context_preflight()
     if not listener or error or not docker:
         result["error"] = error if listener else "this scenario has no callback listener"
@@ -637,6 +609,11 @@ def capacity_preflight(scenario_id: str) -> dict[str, Any]:
     Requirements are the sum of the per-container limits in the generated file (the most
     the environment is allowed to use). Memory is a hard check; CPU and disk are reported.
     """
+    if deploy_backend() == "proxmox":
+        try:
+            return _proxmox_backend().preflight()
+        except PlanError as exc:
+            return {"ok": False, "checked": True, "state": "unavailable", "reason": "; ".join(exc.errors)}
     report: dict[str, Any] = {"ok": True, "checked": False}
     try:
         document = yaml.safe_load(get_generated(scenario_id)["compose"])
@@ -697,6 +674,18 @@ def capacity_preflight(scenario_id: str) -> dict[str, Any]:
 
 def deploy_preflight(scenario_id: str) -> dict[str, Any]:
     """Everything a person should see before pressing deploy. Read-only."""
+    if deploy_backend() == "proxmox":
+        conflict = _backend_conflict(scenario_id, "proxmox")
+        if conflict:
+            return {"scenario_id": validate_id(scenario_id), "backend": "proxmox", "ok": False,
+                    "current_state": "backend_conflict", "error": conflict}
+        live = live_containers(scenario_id)
+        capacity = capacity_preflight(scenario_id)
+        return {"scenario_id": validate_id(scenario_id), "backend": "proxmox", "iac": live["iac"],
+                "current_state": live["state"], "isolation": capacity, "capacity": capacity,
+                "would_change_running_environment": (live["state"] == "running" and
+                    (_active_proxmox_deployment(scenario_id) or {}).get("details", {}).get("compose_source_sha256")
+                    != compose_fingerprint(scenario_id))}
     live = live_containers(scenario_id)
     return {"scenario_id": validate_id(scenario_id), "iac": live["iac"], "current_state": live["state"],
             "isolation": isolation_preflight(scenario_id), "capacity": capacity_preflight(scenario_id),
@@ -722,6 +711,91 @@ def detect_lan_ipv4() -> str:
 
 
 def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = None) -> dict[str, Any]:
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        raise PlanError([conflict])
+    if selected == "proxmox":
+        if expose != "internal" or lan_host is not None:
+            raise PlanError(["Proxmox deployment only supports expose='internal'; no host LAN publishing is available"])
+        try:
+            generated = get_generated(scenario_id)
+        except (FileNotFoundError, PlanError) as exc:
+            raise PlanError(["generate IaC before deploying to Proxmox"]) from exc
+        compose = generated["compose"]
+        source_digest = hashlib.sha256(compose.encode("utf-8")).hexdigest()
+        existing = _active_proxmox_deployment(scenario_id)
+        if existing:
+            existing_isolation = host_isolation_report(scenario_id)
+            if not _pve_isolation_confirmed(existing_isolation):
+                audit = record(scenario_id, "up", "isolation_failed",
+                               {"backend": "proxmox", "vmid": existing["vmid"],
+                                "host_id": existing["host_id"], "isolation": existing_isolation,
+                                "result": {"recoverable_orphan": {"vmid": existing["vmid"],
+                                                                     "host_id": existing["host_id"]}}})
+                return {"scenario_id": scenario_id, "project_name": project_name(scenario_id),
+                        "backend": "proxmox", "state": "error", "ok": False,
+                        "error": existing_isolation.get("error") or "PVE worker isolation was not confirmed",
+                        "host_isolation": existing_isolation, "deployment_record": audit}
+            live = live_containers(scenario_id)
+            if (live["state"] == "running" and
+                    existing["details"].get("compose_source_sha256") == source_digest):
+                audit = record(scenario_id, "up", "running", {**existing["details"], "already_running": True,
+                                                                 "isolation": existing_isolation})
+                return {**live, "ok": True, "already_running": True, "backend": "proxmox",
+                        "deployment_record": audit, "host_isolation": existing_isolation,
+                        "command_result": {"returncode": 0, "stdout": "", "stderr": "already running"}}
+            return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": "proxmox",
+                    "state": "error", "ok": False, "containers": [],
+                    "error": "an owned Proxmox deployment already exists; stop it before replacing its Compose plan",
+                    "command_result": {"returncode": 2, "stdout": "", "stderr": "existing deployment must be stopped first"}}
+        backend = _proxmox_backend()
+        try:
+            outcome = backend.up(scenario_id, compose, host_id="worker", attach_lab_network=False,
+                                 compose_sha256=source_digest)
+        except Exception as exc:
+            outcome = {"ok": False, "state": "failed", "error": f"Proxmox deployment failed: {type(exc).__name__}"}
+        success = outcome.get("ok") is True and outcome.get("state") == "running"
+        isolation = None
+        if success:
+            isolation = _proxmox_isolation_report(scenario_id, outcome.get("vmid"), "worker", backend=backend)
+            outcome["isolation"] = isolation
+            if not isolation["isolated"]:
+                success = False
+                outcome.update(ok=False, state="failed", error="Proxmox worker isolation was not confirmed")
+                try:
+                    cleanup = backend.down(scenario_id, vmid=outcome["vmid"], host_id="worker")
+                    outcome["cleanup"] = cleanup
+                    if not cleanup.get("ok"):
+                        outcome["recoverable_orphan"] = {"vmid": outcome["vmid"], "scenario_id": scenario_id,
+                                                         "host_id": "worker", "state": "isolation_unconfirmed"}
+                except Exception as exc:
+                    outcome["cleanup"] = {"ok": False, "error": type(exc).__name__}
+                    outcome["recoverable_orphan"] = {"vmid": outcome["vmid"], "scenario_id": scenario_id,
+                                                     "host_id": "worker", "state": "isolation_unconfirmed"}
+        state = "running" if success else str(outcome.get("state") or "failed")
+        details = {"backend": "proxmox", "vmid": outcome.get("vmid"), "host_id": "worker",
+                   "compose_sha256": source_digest, "compose_source_sha256": source_digest,
+                   "proxmox_compose_sha256": outcome.get("compose_sha256"),
+                   "isolation": isolation or outcome.get("isolation"),
+                   "result": outcome, "published_ports": []}
+        audit = record(scenario_id, "up", state, details)
+        raw_containers = outcome.get("containers")
+        if success and isinstance(raw_containers, dict):
+            parsed_containers = _pve_result(raw_containers)
+            containers = (_parse_compose_ps(parsed_containers["stdout"])
+                          if parsed_containers["returncode"] == 0 else [])
+        else:
+            containers = raw_containers if success and isinstance(raw_containers, list) else []
+        return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": "proxmox",
+                "state": "running" if success else ("planned" if state == "planned" else "error"),
+                "containers": containers, "published_ports": [], "ok": bool(outcome.get("ok")),
+                "already_running": False, "compose_sha256": source_digest,
+                "error": None if success or state == "planned" else outcome.get("error"),
+                "command_result": {"returncode": 0 if outcome.get("ok") else 2,
+                                   "stdout": "", "stderr": "" if outcome.get("ok") else str(outcome.get("error", state))},
+                "deployment_record": audit, "preflight": outcome.get("preflight"), "host_isolation": isolation}
     if expose not in {"internal", "lan"}:
         raise PlanError(["expose must be 'internal' or 'lan'"])
     resolved_host = None
@@ -830,6 +904,7 @@ def do_up(scenario_id: str, expose: str = "internal", lan_host: str | None = Non
     if not success:
         live = {**live, "state": "error", "error": result["stderr"] or live.get("error")}
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
+               "backend": "local-docker",
                "expose": expose, "password_set": password is not None, "attempts": attempts,
                "host_isolation": isolation, "compose_sha256": fingerprint if success else None,
                "replaced_existing_environment": replacing, **live, "published_ports": published}
@@ -870,25 +945,47 @@ def _bridge_ipv4(interface: str) -> str | None:
         probe.close()
 
 
-def vulnerable_hosts(scenario_id: str) -> list[str]:
-    """Host ids that the generated report marks as deliberately vulnerable images."""
+def _proxmox_isolation_report(scenario_id: str, vmid: Any, host_id: str, *, backend: Any = None) -> dict[str, Any]:
+    """Ask only the selected PVE backend for guest-side isolation evidence; absence fails closed."""
+    unavailable = {"isolated": False, "checked": False, "evidence": None}
+    if isinstance(vmid, bool) or not isinstance(vmid, int) or not host_id:
+        return {**unavailable, "error": "invalid Proxmox deployment identity for isolation check"}
     try:
-        components = get_generated(scenario_id)["report"].get("components", [])
-    except (FileNotFoundError, PlanError):
-        return []
-    return [component["host_id"] for component in components if component.get("vulnerable")]
+        backend = backend or _proxmox_backend()
+        reporter = getattr(backend, "isolation_report", None)
+        if not callable(reporter):
+            return {**unavailable, "error": "Proxmox backend does not provide isolation_report"}
+        report = reporter(validate_id(scenario_id), vmid=vmid, host_id=host_id)
+        if not isinstance(report, dict):
+            return {**unavailable, "error": "Proxmox isolation_report returned invalid data"}
+        evidence = report.get("evidence", report.get("details"))
+        checked = report.get("checked") is True
+        isolated = report.get("isolated") is True and checked and bool(evidence)
+        return {**report, "checked": checked, "evidence": evidence, "isolated": isolated,
+                **({} if isolated else {"error": report.get("error") or
+                                       "Proxmox isolation evidence is missing or does not confirm isolation"})}
+    except Exception as exc:
+        return {**unavailable, "error": f"Proxmox isolation check unavailable: {type(exc).__name__}"}
+
+
+def vulnerable_hosts(scenario_id: str) -> list[str]:
+    return local_docker.vulnerable_hosts(scenario_id)
 
 
 def isolation_preflight(scenario_id: str) -> dict[str, Any]:
-    """Before deploying: can this Docker engine isolate lab networks from the host?
+    """Check Docker readiness and enforce D6 before any Docker or isolation checks.
 
-    Gateway mode ``isolated`` (no host-side bridge address) exists from Docker Engine 28.
-    Older engines would silently create ordinary internal networks whose containers can
-    reach every service the host binds on all interfaces, so vulnerable images are refused.
+    For non-vulnerable plans the Docker Engine 28 isolation check is unchanged.
     """
-    docker, error = _docker_context_preflight()
+    if deploy_backend() == "proxmox":
+        return _proxmox_backend().preflight()
     vulnerable = vulnerable_hosts(scenario_id)
     result: dict[str, Any] = {"ok": True, "vulnerable_hosts": vulnerable, "docker_version": None}
+    if vulnerable:
+        return {**result, "ok": False, "reason":
+                "local Docker is restricted to non-attack QA and refuses deliberately vulnerable images: "
+                + ", ".join(vulnerable)}
+    docker, error = _docker_context_preflight()
     if error or not docker:
         return {**result, "ok": False, "reason": error or "docker executable is not installed"}
     version = _run([docker, "version", "--format", "{{.Server.Version}}"], timeout=10)
@@ -902,14 +999,21 @@ def isolation_preflight(scenario_id: str) -> dict[str, Any]:
     if major < 28:
         result["risk"] = ("this Docker engine cannot create address-less internal bridges; lab containers could "
                           "reach host services bound on all interfaces")
-        if vulnerable:
-            result.update(ok=False, reason="refusing to deploy deliberately vulnerable images "
-                          f"({', '.join(vulnerable)}): {result['risk']}. Upgrade Docker Engine to 28 or later.")
     return result
 
 
 def host_isolation_report(scenario_id: str) -> dict[str, Any]:
     """After deploying: verify on the real host that no plan network bridge has a host address."""
+    scenario_id = validate_id(scenario_id)
+    if deploy_backend() == "proxmox":
+        conflict = _backend_conflict(scenario_id, "proxmox")
+        if conflict:
+            return {"isolated": False, "checked": False, "evidence": None, "error": conflict}
+        deployment = _active_proxmox_deployment(scenario_id)
+        if deployment is None:
+            return {"isolated": False, "checked": False, "evidence": None,
+                    "error": "no owned Proxmox worker is recorded"}
+        return _proxmox_isolation_report(scenario_id, deployment["vmid"], deployment["host_id"])
     docker, error = _docker_context_preflight()
     project = project_name(scenario_id)
     report: dict[str, Any] = {"isolated": False, "networks": []}
@@ -934,6 +1038,8 @@ def host_isolation_report(scenario_id: str) -> dict[str, Any]:
             all_isolated = False
         report["networks"].append(entry)
     report["isolated"] = all_isolated and bool(report["networks"])
+    report["checked"] = bool(report["networks"])
+    report["evidence"] = report["networks"]
     return report
 
 
@@ -992,7 +1098,7 @@ def _cleanup_failed_up(scenario_id: str) -> dict[str, Any]:
 
 def do_status(scenario_id: str) -> dict[str, Any]:
     # Read-only poll: must NOT write an audit record (GUI polls this often).
-    return live_containers(scenario_id)
+    return {**live_containers(scenario_id), "backend": deploy_backend()}
 
 
 def do_health(scenario_id: str) -> dict[str, Any]:
@@ -1015,13 +1121,69 @@ def do_health(scenario_id: str) -> dict[str, Any]:
 
 
 def do_down(scenario_id: str) -> dict[str, Any]:
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": selected,
+                "state": "failed", "ok": False,
+                "command_result": {"returncode": 2, "stdout": "", "stderr": conflict}}
+    if selected == "proxmox":
+        existing = _active_proxmox_deployment(scenario_id)
+        if existing is None:
+            audit = record(scenario_id, "down", "stopped", {"backend": "proxmox", "already_stopped": True})
+            return {"scenario_id": scenario_id, "project_name": project_name(scenario_id),
+                    "backend": "proxmox", "state": "stopped", "ok": True,
+                    "command_result": {"returncode": 0, "stdout": "", "stderr": "no active Proxmox worker"},
+                    "deployment_record": audit}
+        try:
+            outcome = _proxmox_backend().down(scenario_id, vmid=existing["vmid"], host_id=existing["host_id"])
+        except Exception as exc:
+            outcome = {"ok": False, "state": "failed", "error": f"Proxmox cleanup failed: {type(exc).__name__}"}
+        success = outcome.get("ok") is True
+        audit = record(scenario_id, "down", "stopped" if success else "failed",
+                       {"backend": "proxmox", "vmid": existing["vmid"], "host_id": existing["host_id"],
+                        "result": outcome})
+        return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": "proxmox",
+                "state": "stopped" if success else "failed", "ok": success,
+                "command_result": {"returncode": 0 if success else 2, "stdout": "",
+                                   "stderr": "" if success else str(outcome.get("error", "Proxmox cleanup failed"))},
+                "deployment_record": audit}
     result = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
     state = "stopped" if result["returncode"] == 0 else "failed"
     removed_images = _remove_local_images(scenario_id) if result["returncode"] == 0 else []
     details = {"exit_code": result["returncode"], "stdout": result["stdout"], "stderr": result["stderr"],
-               "removed_local_images": removed_images}
+               "backend": "local-docker", "removed_local_images": removed_images}
     audit = record(scenario_id, "down", state, details)
     return {"scenario_id": validate_id(scenario_id), "project_name": project_name(scenario_id),
             "state": state, "ok": result["returncode"] == 0, "command_result": result,
+            "deployment_record": audit}
+
+
+def do_reset(scenario_id: str) -> dict[str, Any]:
+    """Reset the active Proxmox worker to its approved deployed snapshot."""
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    if selected != "proxmox":
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": "reset is supported only for an active Proxmox worker"}
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": conflict}
+    existing = _active_proxmox_deployment(scenario_id)
+    if existing is None or existing.get("orphan"):
+        return {"scenario_id": scenario_id, "backend": selected, "state": "failed", "ok": False,
+                "error": "active owned Proxmox worker deployment is required for reset"}
+    try:
+        outcome = _proxmox_backend().reset(scenario_id, vmid=existing["vmid"], host_id=existing["host_id"])
+    except Exception as exc:
+        outcome = {"ok": False, "state": "failed", "error": f"Proxmox reset failed: {type(exc).__name__}"}
+    success = outcome.get("ok") is True
+    audit = record(scenario_id, "reset", "running" if success else "failed",
+                   {"backend": "proxmox", "vmid": existing["vmid"], "host_id": existing["host_id"],
+                    "result": outcome})
+    return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": selected,
+            "state": "running" if success else "failed", "ok": success, "result": outcome,
             "deployment_record": audit}
 

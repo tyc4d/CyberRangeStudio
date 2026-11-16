@@ -15,7 +15,22 @@ SCHEMAS = {
     "scenario-ir": "scenario-ir.schema.json",
     "environment-plan": "environment-plan.schema.json",
     "validation-report": "validation-report.schema.json",
+    "poc-validation": "poc-validation.schema.json",
 }
+
+# Module 9 shapes all live inside poc-validation.schema.json under /definitions.
+# Map each public shape name to its definition so a worker can validate one shape
+# directly, e.g. iter_errors_shape("PocManifest", obj).
+POC_SHAPES = (
+    "ValidationPlan",
+    "ValidationItem",
+    "PocCandidate",
+    "PocManifest",
+    "ExecutionResult",
+    "Evidence",
+    "ChainValidation",
+    "ExportManifest",
+)
 
 
 @lru_cache(maxsize=None)
@@ -49,4 +64,35 @@ def iter_errors(name: str, instance: dict[str, Any]) -> list[str]:
     return [f"{'/'.join(map(str, e.path))}: {e.message}" for e in v.iter_errors(instance)]
 
 
-__all__ = ["load_schema", "validate", "iter_errors", "SCHEMAS"]
+def _shape_validator(shape: str) -> Draft7Validator:
+    if shape not in POC_SHAPES:
+        raise KeyError(f"unknown poc shape {shape!r}; one of {POC_SHAPES}")
+    base = load_schema("poc-validation")
+    schema = {**base, "allOf": [{"$ref": f"#/definitions/{shape}"}]}
+    return Draft7Validator(schema, resolver=_resolver("poc-validation"))
+
+
+def iter_errors_shape(shape: str, instance: dict[str, Any]) -> list[str]:
+    """Validate `instance` against a single Module 9 shape (see POC_SHAPES).
+
+    Returns human-readable error strings (empty = valid). Use this rather than
+    iter_errors("poc-validation", obj) when the object is not a ValidationPlan.
+    """
+    v = _shape_validator(shape)
+    return [f"{'/'.join(map(str, e.path))}: {e.message}" for e in v.iter_errors(instance)]
+
+
+def validate_shape(shape: str, instance: dict[str, Any]) -> None:
+    """Raise jsonschema.ValidationError if `instance` does not match the shape."""
+    _shape_validator(shape).validate(instance)
+
+
+__all__ = [
+    "load_schema",
+    "validate",
+    "iter_errors",
+    "iter_errors_shape",
+    "validate_shape",
+    "SCHEMAS",
+    "POC_SHAPES",
+]

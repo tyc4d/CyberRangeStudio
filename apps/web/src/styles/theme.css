@@ -509,3 +509,164 @@ a.next-action-link { display: block; } a.next-action-link:hover { text-decoratio
   .progress::after { animation: none; width: 100%; opacity: .5; }
   .spinner { animation-duration: 2.4s; }
 }
+
+/* ---------- shared additions: language switch, technical details, stacked tables ---------- */
+.lang-switch { flex: none; }
+/* Raw server or runtime facts for an operator. Folded so the page body keeps only the plain message. */
+.tech-details { margin-top: 6px; font-size: 12px; }
+.tech-details > summary { cursor: pointer; color: var(--text-dim); width: fit-content; }
+.tech-details > summary:hover { color: var(--text); }
+.tech-details > :not(summary) { margin-top: 6px; }
+.deploy-more > summary .muted { margin-left: 6px; font-weight: 400; }
+details.card > summary { cursor: pointer; }
+details.card.deploy-more > summary { padding: 13px 16px; font-size: 14px; }
+details.card.deploy-more[open] > summary { border-bottom: 1px solid var(--border); }
+details.card.deploy-more:not(.flush) { padding: 0; }
+details.card.deploy-more:not(.flush) > :not(summary) { margin: 12px 16px; }
+
+/* ---------- phones (360–430 px wide) ----------
+   One column, readable type, 44 px touch targets, no sideways page scroll. Desktop rules above stay as they are. */
+@media (max-width: 760px) {
+  body { font-size: 15px; line-height: 1.65; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 17px; }
+  h3 { font-size: 14px; }
+  button { min-height: 44px; padding: 10px 14px; font-size: 15px; }
+  button.small { min-height: 40px; padding: 7px 12px; font-size: 14px; }
+  button.icon { width: 44px; height: 44px; }
+  button.link { min-height: 0; }
+  /* 16 px stops iOS Safari from zooming into a focused field. */
+  input, textarea, select { min-height: 44px; font-size: 16px; }
+  input[type="checkbox"] { width: 20px; height: 20px; }
+  label.field { font-size: 14px; }
+  .badge, .tag { font-size: 12px; padding: 3px 8px; }
+  .mono { font-size: 13px; }
+  .notice { font-size: 14px; flex-wrap: wrap; padding: 12px 14px; }
+  .notice .body { flex-basis: 100%; }
+  .empty { font-size: 14px; }
+  .pdf-hint { font-size: 13px; }
+  /* Many secondary lines set 11–12 px inline. On a phone they are raised to a readable minimum. */
+  .main [style*="font-size: 11px"], .main [style*="font-size: 12px"] { font-size: 13px !important; }
+  .main [style*="font-size: 13px"] { font-size: 14px !important; }
+
+  /* shell */
+  .app-shell { min-width: 0; }
+  .topbar { height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px 10px; padding: 8px 12px; }
+  .studio-brand strong, .header-separator, .budget, .topbar > .badge:not(.pending):not(.approved):not(.validated) { display: none; }
+  .brand-mark { font-size: 15px; padding: 5px 0; }
+  .document-title { flex: 1 1 0; max-width: none; font-size: 15px; }
+  .topbar > .badge { font-size: 12px; }
+  .topbar-actions { order: 10; flex: 1 1 100%; margin-left: 0; flex-wrap: wrap; }
+  .topbar-actions:empty { display: none; }
+  .topbar-actions input { width: auto; flex: 1 1 100%; }
+  .topbar-actions button { flex: 1 1 auto; }
+  .lang-switch { min-width: 64px; }
+  .stages { padding: 0 6px; scroll-snap-type: x proximity; }
+  .stages a { min-height: 48px; padding: 10px 12px; font-size: 14px; scroll-snap-align: start; }
+  .stages .num { width: 22px; height: 22px; font-size: 12px; }
+  .stages .state { font-size: 12px; }
+  .main { padding: 16px 16px 32px; }
+  .page { gap: 14px; max-width: none !important; }
+  .page-head { flex-direction: column; gap: 10px; }
+  .page-head .desc { font-size: 14px; }
+  .page-head .actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .page-head .actions > *, .page-head .actions button { flex: 1 1 auto; }
+  .footer-nav { flex-wrap: wrap; gap: 12px; }
+  .footer-nav > a:last-child { flex: 1 1 100%; }
+  .footer-nav button { width: 100%; }
+
+  /* cards, grids, tables */
+  .card { padding: 14px; }
+  .card.flush { overflow-x: auto; }
+  .card-head { flex-wrap: wrap; padding: 12px 14px; }
+  .card-head .right { flex-wrap: wrap; }
+  .grid.c2, .grid.c3 { grid-template-columns: minmax(0, 1fr); }
+  .grid.c4 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .metric .v { font-size: 22px; }
+  .metric .k { font-size: 13px; }
+  table.tbl { font-size: 14px; }
+  table.tbl th { font-size: 12px; padding: 8px 10px; }
+  table.tbl td { padding: 10px; }
+  .kv { grid-template-columns: minmax(0, 38%) minmax(0, 1fr); font-size: 14px; }
+  .kv dt { overflow-wrap: anywhere; }
+  .hide-sm { display: none; }
+  /* Rows become small cards: each cell on its own line, labelled by its column name. */
+  table.tbl-stack, .tbl-stack tbody, .tbl-stack tr, .tbl-stack td { display: block; width: 100%; }
+  .tbl-stack thead { display: none; }
+  .tbl-stack tr { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .tbl-stack tr:last-child { border-bottom: 0; }
+  .tbl-stack td { border: 0; padding: 3px 14px; }
+  .tbl-stack td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: var(--text-dim); }
+  .tbl-stack td:last-child:has(> button) { text-align: left !important; padding-top: 8px; }
+  .check-table colgroup { display: none; }
+  .seg { display: flex; flex-wrap: wrap; width: 100%; margin-left: 0 !important; }
+  .seg button { flex: 1 1 auto; min-height: 44px; }
+  .row { gap: 10px; }
+
+  /* home */
+  .rangeline { padding: 20px 16px; }
+  .rangeline h2 { font-size: 24px; }
+  .rangeline p { font-size: 14px; }
+  .rangeline .track { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 16px; margin-top: 24px; }
+  .rangeline .stop { font-size: 14px; }
+  .rangeline .stop .s { font-size: 12px; }
+
+  /* flow editor: canvas first, then the inspector, then the parts list */
+  .main:has(> .workspace) { overflow: auto; }
+  .workspace { height: auto; grid-template-columns: minmax(0, 1fr); }
+  .workspace > .canvas-col { order: -1; height: 72dvh; min-height: 420px; }
+  .library { border-right: 0; border-top: 1px solid var(--border); }
+  .context-dock { border-left: 0; border-top: 1px solid var(--border); }
+  .context-dock .swap { padding: 18px 16px; }
+  .canvas-tools { top: 8px; left: 8px; max-width: calc(100% - 16px); flex-wrap: nowrap; overflow-x: auto; }
+  .canvas-tools button { min-height: 40px; flex: none; }
+  .canvas-tools .canvas-label, .canvas-tools .badge { flex: none; white-space: nowrap; }
+  .canvas-status { left: 8px; bottom: 8px; font-size: 12px; }
+  .feedback { max-width: 92%; bottom: 56px; font-size: 14px; }
+  .legend { font-size: 13px; gap: 10px; }
+  /* Flow canvas: the legend sits beside the zoom buttons as a compact block, and the minimap is dropped, so nodes stay visible. */
+  .canvas [data-testid="flow-legend"] { left: auto !important; right: 8px; bottom: 8px !important; max-width: calc(100% - 72px) !important; font-size: 12px; gap: 2px 10px !important; padding: 6px 8px !important; }
+  .canvas [data-testid="flow-legend"] .line { width: 16px; margin-right: 4px; }
+  .canvas .react-flow__minimap, .canvas-status { display: none; }
+  .react-flow__panel { margin: 8px; }
+  .console-toggle strong { font-size: 14px; }
+  .console-toggle .muted { display: none; }
+  .finding .text { font-size: 14px; }
+  .library-item { min-height: 44px; }
+  .library .note, .dock-hint { font-size: 13px; }
+  .design-route li { font-size: 14px; }
+  .capability-note p { font-size: 14px; }
+  .btn-label { white-space: nowrap; }
+  /* small labels that keep their own size on desktop */
+  .chip, .rangeline .stop .node, .library-item .ico, .library-item .port, .path .wire, .edge-chip, .finding small, .gnode .node-bottom, .fnode .kind, .placement-zone__kicker { font-size: 12px; }
+  .chip { padding: 4px 8px !important; }
+  .design-route li small, .design-route li > span:first-child { font-size: 12px; }
+  /* flow nodes: the canvas is zoomed out to fit a phone, so node text starts larger */
+  .gnode .node-number, .start-flag, .fnode .kind, .fnode.op small, .fnode.cond .branch { font-size: 12px; }
+  .gnode .node-bottom, .gnode .node-target, .gnode .node-field, .fnode .text { font-size: 13px; }
+  .gnode > strong { font-size: 17px; }
+  .edge-label { font-size: 13px; }
+  .react-flow__edge-text { font-size: 13px; }
+  /* DataView key-value tables inside a stacked row stay compact */
+  .tbl-stack td > .kv { font-size: 13px; }
+
+  /* topology */
+  .card-canvas { height: 60dvh; min-height: 360px; }
+  .gate-head { padding: 14px 24px 14px 14px; flex-wrap: wrap; }
+  .gate-cols { grid-template-columns: minmax(0, 1fr); }
+  .gate-col { padding: 14px; }
+  .gate-col + .gate-col { border-left: 0; border-top: 1px solid var(--border); }
+  .path { grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr); font-size: 14px; }
+  .path .why { font-size: 13px; }
+  .gate-foot { padding: 14px; }
+  .approve-row { flex-wrap: wrap; }
+  .approve-row input { max-width: none !important; flex: 1 1 100%; }
+  .approve-row button { flex: 1 1 100%; }
+}
+/* the narrowest phones (360 px): fewer columns still */
+@media (max-width: 400px) {
+  .main { padding: 14px 12px 28px; }
+  .rangeline .track { grid-template-columns: minmax(0, 1fr); }
+  .path { grid-template-columns: minmax(0, 1fr); }
+  .path .to { text-align: left; }
+}

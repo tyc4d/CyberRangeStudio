@@ -24,8 +24,11 @@ def classify_action(action: dict[str, Any], ir: dict[str, Any]) -> tuple[str, st
     hosts = {str(h.get("id")): h for h in ir.get("hosts", []) if isinstance(h, dict)}
     target = hosts.get(str(action.get("target_host_ref")), {})
     context = " ".join(str(target.get(k, "")) for k in ("os", "os_version", "name", "role"))
+    _ref_ids = {str(r) for r in (target.get("service_refs") or [])}
     services = [s for s in ir.get("services", []) if isinstance(s, dict)
-                and (not action.get("target_host_ref") or s.get("host_ref") == action.get("target_host_ref"))]
+                and (not action.get("target_host_ref")
+                     or s.get("host_ref") == action.get("target_host_ref")
+                     or str(s.get("id")) in _ref_ids)]
     service_text = " ".join(" ".join(str(s.get(k, "")) for k in ("name", "version", "catalogue_component")) for s in services)
     combined = " ".join((text, context, service_text))
 

@@ -1,0 +1,464 @@
+"""Sandbox runner for pinned, ownership-gated PoC payloads."""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import time
+import uuid
+from dataclasses import asdict, replace
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+from app import config, store as scenario_store
+from app.deploy import manager
+from app.poc import store as poc_store
+from app.poc.chain.evidence import execution_log, scenario_digest
+from app.poc.models import Evidence, ExecStages, ExecutionResult
+
+from .adapters import get_adapter
+from .guard import TargetBlocked, assert_target_owned
+from .models import AdapterInput, ExecutionRequest
+from .payloads import KNOWN_POC_PROOFS, verifies_effect
+
+_MAX_TIMEOUT = 300
+_HELPER_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
+_SECRET_RE = re.compile(r"(?i)(authorization\s*[:=]\s*|password\s*[:=]\s*|token\s*[:=]\s*)([^\s,;]+)")
+_NON_EFFECT_MARKER = re.compile(
+    r"(?i)^(?:\d{3}|http[_ -]?status\s*[:= ]\s*\d{3}|status\s*200|ok|up|healthy|ready|success|pass)$"
+)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _cancelled(cancel: Any) -> bool:
+    if isinstance(cancel, bool):
+        return cancel
+    return bool(getattr(cancel, "is_set", lambda: False)())
+
+
+def _redact(text: str) -> str:
+    return _SECRET_RE.sub(r"\1[REDACTED]", text)
+
+
+def _redact_url(url: str) -> str:
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname or ""
+        if parts.port:
+            host = f"{host}:{parts.port}"
+        if parts.username is not None or parts.password is not None:
+            host = f"[REDACTED]@{host}"
+        query = [(key, "[REDACTED]" if re.search(r"(?i)token|password|secret|key|auth", key) else value)
+                 for key, value in parse_qsl(parts.query, keep_blank_values=True)]
+        return urlunsplit((parts.scheme, host, parts.path, urlencode(query), ""))
+    except (TypeError, ValueError):
+        return "[REDACTED_URL]"
+
+
+def _write_artifact(path: Path, content: str) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _run_context(request: ExecutionRequest, run_id: str,
+                 ownership: dict[str, Any] | None) -> dict[str, Any]:
+    """Bind hashed log evidence to this attempt, IR snapshot, and deployment."""
+    ir = scenario_store.get(request.scenario_id)
+    context: dict[str, Any] = {"run_id": run_id, "scenario_id": request.scenario_id}
+    if request.job_id is not None:
+        context["job_id"] = request.job_id
+    if isinstance(ir, dict):
+        context["scenario_sha256"] = scenario_digest(ir)
+    deployment_id = (ownership or {}).get("deployment_record_id")
+    if type(deployment_id) is int and deployment_id > 0:
+        context["deployment_record_id"] = deployment_id
+    return context
+
+
+def _record_result(request: ExecutionRequest, result: ExecutionResult, context: dict[str, Any],
+                   ownership: dict[str, Any] | None, output: str,
+                   cleanup_note: str | None = None) -> ExecutionResult:
+    """Hash the completed attempt and bind its effects before adding the log's own hash."""
+    log = {"action_id": result.action_id, "status": result.status,
+           "started_at": result.started_at, "ended_at": result.ended_at,
+           "payload_sha256": result.payload_sha256, "proof_id": request.proof_id,
+           "context": context, "ownership": ownership,
+           "evidence": [asdict(item) for item in result.evidence],
+           "output": output, "reason": result.failure_reason, "cleanup": cleanup_note}
+    digest = _write_artifact(config.DATA_DIR / result.logs_path,
+                             json.dumps(log, ensure_ascii=False, sort_keys=True))
+    result.evidence.append(Evidence("log", result.logs_path, digest, True, "redacted runner log"))
+    return result
+
+
+def _result_dict(result: ExecutionResult) -> dict[str, Any]:
+    # Shared model versions before to_dict still serialize safely during worker
+    # integration. Never emit null for optional fields in the frozen contract.
+    serializer = getattr(result, "to_dict", None)
+    if callable(serializer):
+        return serializer()
+    return asdict(result, dict_factory=lambda items: {key: value for key, value in items if value is not None})
+
+
+def _emit_progress(request: ExecutionRequest, stages: ExecStages) -> None:
+    if request.on_progress:
+        try:
+            request.on_progress(asdict(stages))
+        except Exception:
+            # Progress reporting must never change the execution verdict or skip cleanup.
+            pass
+
+
+def _command_result(scenario_id: str, argv: list[str], timeout: int = 10) -> dict[str, Any]:
+    """Run a fixed Docker inspection/cleanup command in the selected runtime."""
+    if manager.deploy_backend() == "proxmox":
+        return manager._pve_guest_exec(scenario_id, ["/usr/bin/docker", *argv], timeout,
+                                       require_isolation=True)
+    docker, error = manager._docker_context_preflight()
+    if error or not docker:
+        return {"returncode": 127, "stdout": "", "stderr": error or "Docker unavailable"}
+    return manager._run([docker, *argv], timeout=timeout)
+
+
+def _cleanup_probe(scenario_id: str, service: str, payload: str, started_epoch: float) -> str:
+    """Emergency cleanup of every helper whose owned identity is verified.
+
+    This scan is not a launch fence and cannot authorize attack execution.
+    """
+    target_name = f"cr-demo-{scenario_id}-{service}"
+    target_inspect = _command_result(scenario_id, ["inspect", "-f", "{{.Id}}", target_name], 10)
+    target_id = target_inspect.get("stdout", "").strip()
+    if target_inspect.get("returncode") != 0 or not re.fullmatch(r"[0-9a-f]{12,64}", target_id):
+        return "cleanup could not verify the owned target container"
+    listed = _command_result(scenario_id, ["ps", "-q", "--filter", f"ancestor={_HELPER_IMAGE}"], 10)
+    if listed.get("returncode") != 0:
+        return "cleanup could not list sandbox helpers"
+    ids = [line.strip() for line in listed.get("stdout", "").splitlines() if re.fullmatch(r"[0-9a-f]{12,64}", line.strip())]
+    matching: list[str] = []
+    for container_id in ids[:100]:
+        inspected = _command_result(scenario_id, ["inspect", container_id], 10)
+        try:
+            info = json.loads(inspected.get("stdout", ""))[0]
+        except (json.JSONDecodeError, IndexError, TypeError):
+            continue
+        cfg, host = info.get("Config") or {}, info.get("HostConfig") or {}
+        created_text = str(info.get("Created", ""))
+        try:
+            created = datetime.fromisoformat(created_text.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            continue
+        network_mode = str(host.get("NetworkMode", ""))
+        command = cfg.get("Cmd") or []
+        if (cfg.get("Image") == _HELPER_IMAGE and cfg.get("User") == "65532:65532"
+                and host.get("ReadonlyRootfs") is True and "ALL" in (host.get("CapDrop") or [])
+                and network_mode in {f"container:{target_name}", f"container:{target_id}"}
+                and created >= started_epoch - 2 and "-c" in command and payload in command):
+            matching.append(str(info.get("Id") or container_id))
+    if not matching:
+        return "cleanup did not find a helper with verified ownership"
+    failed = False
+    for helper in matching:
+        removed = _command_result(scenario_id, ["rm", "-f", helper], 10)
+        failed = failed or removed.get("returncode") != 0
+    return "best-effort helper removal failed" if failed else "verified sandbox helpers removed"
+
+
+def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> tuple[dict[str, Any], str | None]:
+    """Refuse attacks until the transport can guarantee cancellation and cleanup.
+
+    The existing synchronous manager API exposes neither its pending launch nor
+    the QGA process handle. A thread around it cannot stop a delayed launch, and a
+    one-time Docker scan is insufficient. Do not invoke it, including on PVE.
+    """
+    if manager.deploy_backend() == "local-docker":
+        reason = "D6: local Docker is restricted to non-attack QA; PoC payload execution is forbidden"
+    elif _cancelled(request.cancel):
+        return {"returncode": 125, "stdout": "", "stderr": "cancelled before payload delivery"}, None
+    else:
+        reason = ("attack execution requires a guaranteed-cancel transport handle with a launch fence, "
+                  "finally-kill and join; no helper was started")
+    return {"returncode": 127, "stdout": "", "stderr": reason}, None
+
+
+class SandboxRunner:
+    """Execute one adapter payload inside the target's isolated network namespace."""
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        started = _now()
+        stages = ExecStages()
+        evidence: list[Evidence] = []
+        payload_hash = hashlib.sha256(request.payload.encode("utf-8")).hexdigest()
+        ref = dict(request.ref or {})
+        safe_scenario = hashlib.sha256(request.scenario_id.encode("utf-8")).hexdigest()[:16]
+        run_id = uuid.uuid4().hex
+        run_directory = f"poc-runs/{safe_scenario}/{run_id}"
+        logs_path = f"{run_directory}/output.log"
+        poc = {"source_url": _redact_url(request.source_url),
+               "ref": {key: _redact(str(value)) for key, value in ref.items()},
+               "sha256": request.sha256}
+        ownership: dict[str, Any] | None = None
+        status = "BLOCKED"
+        reason: str | None = None
+        exit_code: int | None = None
+        confidence = 0.0
+        output = ""
+        cleanup_note: str | None = None
+
+        # This guard is deliberately the first operation with deployment context. A
+        # blocked target never reaches adapter construction or the execution call.
+        try:
+            ownership = assert_target_owned(request.scenario_id, {
+                "service_ref": request.service_ref, "target_host_ref": request.target_host_ref,
+            })
+        except TargetBlocked as exc:
+            reason = str(exc)
+            output = "BLOCKED: ownership/isolation not verified; payload was not executed."
+            result = ExecutionResult(request.action_id, poc, "BLOCKED", stages, logs_path, confidence,
+                                     False, payload_hash, started, _now(), failure_reason=reason)
+            return _record_result(request, result, _run_context(request, run_id, None), None, output)
+
+        context = _run_context(request, run_id, ownership)
+        stages.started = True
+        _emit_progress(request, stages)
+        adapter = get_adapter(request.exec_method)
+        verifier = KNOWN_POC_PROOFS.get(request.proof_id or "")
+        if not adapter:
+            status, reason = "BLOCKED", f"unsupported execution method: {request.exec_method}"
+        elif (not verifier or request.exec_method != verifier["exec_method"]
+              or request.source_url != verifier["source_url"]
+              or request.payload != verifier["payload"]
+              or request.expected_marker != verifier["expected_marker"]):
+            status, reason = "BLOCKED", "no runner-owned exploit-effect verifier is registered for this payload"
+        elif not request.expected_marker or _NON_EFFECT_MARKER.fullmatch(request.expected_marker.strip()):
+            status, reason = "BLOCKED", "expected evidence must identify a concrete exploit effect, not liveness or HTTP status"
+        elif request.exec_method in {"python", "http_seq"}:
+            if len(request.sha256) != 64 or any(c not in "0123456789abcdef" for c in request.sha256.lower()):
+                status, reason = "BLOCKED", "payload SHA-256 must be recorded as a 64-character digest"
+            elif hashlib.sha256(request.payload.encode("utf-8")).hexdigest() != request.sha256.lower():
+                status, reason = "BLOCKED", "payload SHA-256 does not match the supplied payload"
+            elif request.sha256.lower() != verifier["sha256"]:
+                status, reason = "BLOCKED", "payload is not the runner-owned SHA-pinned exploit with a registered evidence verifier"
+            elif request.source_url.startswith(("https://github.com/", "http://github.com/")) and not re.fullmatch(
+                    r"[0-9a-f]{40,64}", ref.get("commit_sha", "")):
+                status, reason = "BLOCKED", "GitHub PoCs must be pinned to a full commit SHA"
+            elif _cancelled(request.cancel):
+                status, reason = "BLOCKED", "execution cancelled before payload delivery"
+            else:
+                prepared = adapter.prepare(AdapterInput(request.payload))
+                if prepared.blocked_reason:
+                    status, reason = "BLOCKED", prepared.blocked_reason
+                else:
+                    timeout = max(1, min(int(request.timeout), _MAX_TIMEOUT))
+                    try:
+                        result, cleanup_note = _probe_with_cancel(request, prepared.payload, timeout)
+                        exit_code = int(result.get("returncode", 2))
+                        output = _redact((result.get("stdout", "") + result.get("stderr", ""))[-12000:])
+                        # Wrapper errors/cancellation do not attest target delivery
+                        # or a target response. Preserve BLOCKED through roll-up.
+                        stages.delivered = exit_code not in {2, 124, 125, 127}
+                        stages.responded = stages.delivered and bool(output)
+                        _emit_progress(request, stages)
+                        if exit_code == 124:
+                            status, reason = "BLOCKED", f"sandbox timed out after {timeout}s"
+                            cleanup_note = cleanup_note or _cleanup_probe(
+                                request.scenario_id, request.service_ref, prepared.payload, time.time() - timeout)
+                        elif exit_code == 125:
+                            status, reason = "BLOCKED", "execution cancelled; sandbox cleanup was attempted"
+                        elif _cancelled(request.cancel):
+                            status, reason = "BLOCKED", "execution cancelled; helper was asked to stop"
+                        elif exit_code in {2, 127}:
+                            status, reason = "BLOCKED", output[:500] or "sandbox could not start safely"
+                        else:
+                            marker = request.expected_marker
+                            reproduced = verifies_effect(verifier, result)
+                            status = "PASS" if reproduced else "FAIL"
+                            stages.vuln_behavior = reproduced
+                            stages.state_change = reproduced
+                            stages.action_complete = True
+                            _emit_progress(request, stages)
+                            confidence = 0.99 if reproduced else 0.0
+                            if reproduced:
+                                evidence_text = _redact(f"Expected exploit-effect marker observed: {marker}\n")
+                                effect_path = config.DATA_DIR / run_directory / "effect.txt"
+                                digest = _write_artifact(effect_path, evidence_text)
+                                evidence.append(Evidence("exploit_effect", str(effect_path.relative_to(config.DATA_DIR)),
+                                                         digest, True,
+                                                         _redact(f"concrete response marker observed: {marker}")))
+                            else:
+                                reason = "real payload completed without the expected exploit effect"
+                    except (TimeoutError, OSError) as exc:
+                        status, reason = "BLOCKED", f"sandbox execution error: {type(exc).__name__}"
+        else:
+            prepared = adapter.prepare(AdapterInput(request.payload))
+            status, reason = "BLOCKED", prepared.blocked_reason or "adapter is not supported by the pinned sandbox"
+
+        result = ExecutionResult(request.action_id, poc, status, stages, logs_path, confidence,
+                                 True, payload_hash, started, _now(), evidence=evidence,
+                                 exit_code=exit_code, failure_reason=reason)
+        return _record_result(request, result, context, ownership, output, cleanup_note)
+
+
+class _JobCancellation:
+    def __init__(self, job_id: str):
+        self.job_id = job_id
+
+    def is_set(self) -> bool:
+        return poc_store.is_cancelled(self.job_id)
+
+
+def _blocked_predecessor_result(request: ExecutionRequest, unmet: list[str]) -> ExecutionResult:
+    """Record an unmet prerequisite without inspecting a target or preparing a payload."""
+    started = _now()
+    run_id = uuid.uuid4().hex
+    safe_scenario = hashlib.sha256(request.scenario_id.encode("utf-8")).hexdigest()[:16]
+    logs_path = f"poc-runs/{safe_scenario}/{run_id}/output.log"
+    poc = {"source_url": _redact_url(request.source_url),
+           "ref": {key: _redact(str(value)) for key, value in (request.ref or {}).items()},
+           "sha256": request.sha256}
+    reason = f"required predecessor(s) {unmet} did not PASS in this job; dependent not executed"
+    result = ExecutionResult(
+        request.action_id, poc, "BLOCKED", ExecStages(), logs_path, 0.0, False,
+        hashlib.sha256(request.payload.encode("utf-8")).hexdigest(), started, _now(),
+        failure_reason=reason,
+    )
+    return _record_result(request, result, _run_context(request, run_id, None), None,
+                          "BLOCKED: required predecessors were not verified in this execution job.")
+
+
+def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float | None = None) -> list[dict[str, Any]]:
+    """Run one ordered batch, gating prerequisites and cancellation within its single job.
+
+    Only a predecessor's completed PASS in this batch can permit its dependent.
+    Missing, later, and previous-job predecessors do not satisfy a requirement.
+    """
+    if any(request.scenario_id != scenario_id for request in requests):
+        raise ValueError("every execution request must belong to the job scenario")
+    job_id = uuid.uuid4().hex
+    poc_store.create_job(job_id, scenario_id, "execute", timeout_s=timeout_s)
+    cancellation = _JobCancellation(job_id)
+    results: list[dict[str, Any]] = []
+    statuses: dict[str, str] = {}
+    poc_store.set_job_state(job_id, "running", json.dumps({"current_action_id": None, "stages": {}}))
+    deadline = time.monotonic() + timeout_s if timeout_s else None
+    try:
+        for request in requests:
+            if cancellation.is_set():
+                break
+            initial = asdict(ExecStages())
+            detail = {"current_action_id": request.action_id, "stages": initial}
+            poc_store.set_job_state(job_id, "running", json.dumps(detail))
+
+            def report_progress(stages: dict[str, bool], action_id: str = request.action_id) -> None:
+                poc_store.set_job_state(job_id, "running", json.dumps(
+                    {"current_action_id": action_id, "stages": stages}))
+
+            remaining = int(deadline - time.monotonic()) if deadline else request.timeout
+            if deadline and remaining <= 0:
+                poc_store.request_cancel(job_id)
+                break
+            current = replace(request, timeout=max(1, min(request.timeout, remaining)),
+                              cancel=cancellation, on_progress=report_progress, job_id=job_id)
+            unmet = [predecessor for predecessor in current.required_predecessors
+                     if statuses.get(predecessor) != "PASS"]
+            result = (_blocked_predecessor_result(current, unmet) if unmet
+                      else SandboxRunner().execute(current))
+            serialized = _result_dict(result)
+            results.append(serialized)
+            poc_store.save_run(scenario_id, serialized)
+            statuses[request.action_id] = result.status
+            if deadline and time.monotonic() >= deadline:
+                poc_store.request_cancel(job_id)
+        if cancellation.is_set() or (deadline and time.monotonic() >= deadline):
+            poc_store.set_job_state(job_id, "cancelled", json.dumps({"completed_actions": len(results)}))
+        else:
+            poc_store.set_job_state(job_id, "done", json.dumps({"completed_actions": len(results)}))
+    except Exception as exc:
+        poc_store.set_job_state(job_id, "error", f"execution job failed: {type(exc).__name__}")
+        raise
+    return results
+
+
+def execution_status(scenario_id: str) -> dict[str, Any]:
+    """Return selected-job results plus the identities/states of overlapping jobs.
+
+    job_state is the scenario's activity summary for existing polling clients;
+    selected_job_state always names the selected job's actual persisted state.
+    A cancel flag is only a request: that job stays active until its state changes.
+    """
+    db = poc_store._conn()
+    try:
+        # Keep selected job, active jobs and result rows in one database snapshot.
+        # Artifact verification below happens after this short read transaction.
+        db.execute("BEGIN")
+        job_rows = db.execute(
+            "SELECT * FROM poc_jobs WHERE scenario_id=? AND kind='execute' "
+            "ORDER BY created_at DESC, rowid DESC",
+            (scenario_id,),
+        ).fetchall()
+        if not job_rows:
+            return {"job_id": None, "job_state": "idle", "selected_job_state": "idle",
+                    "jobs": [], "active_jobs": [], "per_action": [], "logs_tail": ""}
+        job = dict(job_rows[0])
+        jobs = [{"job_id": row["id"], "state": row["state"], "cancel_requested": bool(row["cancel"])}
+                for row in job_rows]
+        active_jobs = [entry for entry in jobs if entry["state"] in {"pending", "running"}]
+        rows = db.execute(
+            "SELECT result FROM poc_runs WHERE scenario_id=? ORDER BY id",
+            (scenario_id,),
+        ).fetchall()
+    finally:
+        db.close()
+    per_action = []
+    latest_log: dict[str, Any] | None = None
+    for row in rows:
+        try:
+            result = json.loads(row["result"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if not isinstance(result, dict):
+            continue
+        # The frozen result shape has no job_id column/field. Its immutable,
+        # hash-verified log is the persisted source of batch identity. A later
+        # saved row may belong to an older overlapping job; timestamps cannot
+        # associate that row with the selected job.
+        log = execution_log(result)
+        if (not log or log["context"].get("job_id") != job["id"]
+                or log["context"].get("scenario_id") != scenario_id):
+            continue
+        latest_log = log
+        per_action.append({"action_id": result.get("action_id"), "stages": result.get("stages") or {}})
+    try:
+        detail = json.loads(job.get("detail") or "{}")
+    except json.JSONDecodeError:
+        detail = {}
+    current_id = detail.get("current_action_id")
+    if current_id and not any(item.get("action_id") == current_id for item in per_action):
+        per_action.append({"action_id": current_id, "stages": detail.get("stages") or asdict(ExecStages())})
+    logs_tail = (_redact(json.dumps(latest_log, ensure_ascii=False, sort_keys=True)[-4000:])
+                 if latest_log is not None else "")
+    job_state = ("running" if any(entry["state"] == "running" for entry in active_jobs)
+                 else "pending" if active_jobs else job["state"])
+    return {"job_id": job["id"], "selected_job_state": job["state"], "job_state": job_state,
+            "jobs": jobs, "active_jobs": active_jobs, "per_action": per_action, "logs_tail": logs_tail}
+
+
+def cancel_execution(scenario_id: str) -> dict[str, bool]:
+    """Atomically flag every active execution job belonging to this scenario."""
+    db = poc_store._conn()
+    try:
+        updated = db.execute(
+            "UPDATE poc_jobs SET cancel=1, updated_at=? "
+            "WHERE scenario_id=? AND kind='execute' AND state IN ('pending','running')",
+            (time.time(), scenario_id),
+        )
+        flagged = updated.rowcount > 0
+        db.commit()
+    finally:
+        db.close()
+    return {"cancelled": flagged}

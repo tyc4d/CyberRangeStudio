@@ -518,7 +518,21 @@ def run(scenario_id: str) -> dict[str, Any]:
     evidence_path = f"validation-runs/{scenario_id}/{run_id}.json"
 
     vm_hosts = [host for host in plan.get("hosts", []) if host.get("runtime") == "vm"]
-    ps = manager.compose_ps_result(scenario_id) if not vm_hosts else {"returncode": 0, "stdout": "", "stderr": ""}
+    # Approved D6 policy: do not query Compose or dispatch local probes for vulnerable plans.
+    selected_backend = manager.deploy_backend()
+    local_docker_blocked = selected_backend == "local-docker" and bool(manager.vulnerable_hosts(scenario_id))
+    # PVE may mix a worker's Compose services with separately managed VM targets; always
+    # query the selected backend there. Local libvirt-only plans retain their old path.
+    query_compose = selected_backend == "proxmox" or not vm_hosts
+    pve_isolation = (manager.host_isolation_report(scenario_id) if selected_backend == "proxmox" else None)
+    pve_probes_allowed = (selected_backend != "proxmox" or
+                          bool(pve_isolation and pve_isolation.get("isolated") is True
+                               and pve_isolation.get("checked") is True and pve_isolation.get("evidence")))
+    pve_isolation_note = (str((pve_isolation or {}).get("error") or "PVE worker isolation was not confirmed")
+                          if not pve_probes_allowed else "")
+    ps = (manager.compose_ps_result(scenario_id) if query_compose and not local_docker_blocked else
+          {"returncode": 127 if local_docker_blocked else 0, "stdout": "",
+           "stderr": "local Docker QA is disabled for vulnerable plans" if local_docker_blocked else ""})
     containers = manager._parse_compose_ps(ps["stdout"]) if ps["returncode"] == 0 else []
     container_by_service = {container.get("service"): container for container in containers}
     for host in hosts:
@@ -534,7 +548,8 @@ def run(scenario_id: str) -> dict[str, Any]:
     for host in hosts:
         host_id = host["id"]
         if host.get("runtime") == "vm":
-            state = manager.vm_status(scenario_id, host_id)
+            state = (manager.vm_status(scenario_id, host_id) if selected_backend != "proxmox" else
+                     {"state": "unavailable", "error": "PVE VM host adapter is not configured"})
             running = state.get("state") == "running"
             status = "PASS" if running else "NOT_TESTED" if state.get("state") in {"unavailable", "absent", "unverified"} else "FAIL"
             observed = f"VM hypervisor state={state.get('state')}"
@@ -581,6 +596,13 @@ def run(scenario_id: str) -> dict[str, Any]:
     for host in hosts:
         host_id = host["id"]
         if host.get("runtime") == "vm":
+            if selected_backend == "proxmox":
+                check = _check(f"os-{host_id}", f"{host_id} Windows 版本與主機名稱", "os_identity", "NOT_TESTED",
+                               "read-only Windows version and hostname",
+                               "PVE runtime VM identity adapter is not configured")
+                check["evidence"] = evidence_path
+                checks.append(check)
+                continue
             state = manager.vm_status(scenario_id, host_id)
             if state.get("state") != "running":
                 check = _check(f"os-{host_id}", f"{host_id} Windows 版本與主機名稱", "os_identity", "NOT_TESTED",
@@ -594,10 +616,18 @@ def run(scenario_id: str) -> dict[str, Any]:
             check["evidence"] = evidence_path
             checks.append(check)
             continue
-        if not container_by_service.get(host_id) or container_by_service[host_id].get("state") != "running":
-            continue
         resolved = component_by_id[host_id]
         component_id = resolved.get("catalogue", {}).get("id") if resolved.get("catalogue") else None
+        if selected_backend == "proxmox" and not pve_probes_allowed:
+            expected_component = "dependency_present" if resolved["runtime_component"] in {"demo-api", "demo-client"} else "version"
+            version = str(resolved.get("version") or "")
+            check = _check(f"pve-check-{host_id}", f"{host_id} 檢查（PVE 隔離未確認）", expected_component,
+                           "NOT_TESTED", version or "worker isolation evidence", pve_isolation_note)
+            check["evidence"] = evidence_path
+            checks.append(check)
+            continue
+        if not container_by_service.get(host_id) or container_by_service[host_id].get("state") != "running":
+            continue
         if resolved["runtime_component"] in {"demo-api", "demo-client"}:
             result = manager.exec_in_service(
                 scenario_id, host_id,
@@ -683,11 +713,17 @@ def run(scenario_id: str) -> dict[str, Any]:
         target_host = next((h for h in hosts if h["id"] == target), {})
         source_vm = source_host.get("runtime") == "vm"
         target_vm = target_host.get("runtime") == "vm"
-        source_running = (manager.vm_status(scenario_id, source).get("state") == "running" if source_vm else
+        source_running = (manager.vm_status(scenario_id, source).get("state") == "running"
+                          if source_vm and selected_backend != "proxmox" else
+                          False if source_vm else
                           bool(container_by_service.get(source) and container_by_service[source].get("state") == "running"))
-        target_running = (manager.vm_status(scenario_id, target).get("state") == "running" if target_vm else
+        target_running = (manager.vm_status(scenario_id, target).get("state") == "running"
+                          if target_vm and selected_backend != "proxmox" else
+                          False if target_vm else
                           bool(container_by_service.get(target) and container_by_service[target].get("state") == "running"))
-        if protocol != "tcp" or port is None:
+        if selected_backend == "proxmox" and not pve_probes_allowed:
+            connectivity_status, connectivity_observed = "NOT_TESTED", pve_isolation_note
+        elif protocol != "tcp" or port is None:
             connectivity_status, connectivity_observed = "NOT_TESTED", "only declared TCP service ports are probed"
         elif not source_running or not target_running:
             connectivity_status = "NOT_TESTED" if docker_unavailable else "NOT_TESTED"
@@ -717,7 +753,9 @@ def run(scenario_id: str) -> dict[str, Any]:
         if not target_vm and (target_component in {"oss-nginx", "oss-httpd", "oss-postgres"}
                               or resolved_target["runtime_component"] == "demo-api"):
             if target_component == "oss-postgres":
-                if target_running:
+                if selected_backend == "proxmox" and not pve_probes_allowed:
+                    live_status, live_observed = "NOT_TESTED", pve_isolation_note
+                elif target_running:
                     live_result = manager.exec_in_service(
                         scenario_id, target,
                         ["pg_isready", "-h", "127.0.0.1", "-p", str(int(port or 5432)), "-U", "postgres", "-d", "postgres"],
@@ -730,7 +768,10 @@ def run(scenario_id: str) -> dict[str, Any]:
                 live_expected = "pg_isready reports accepting connections"
             else:
                 behavior_path = "/demo" if resolved_target["runtime_component"] == "demo-api" else "/"
-                if source_running and target_running and connectivity_status == "PASS":
+                if selected_backend == "proxmox" and not pve_probes_allowed:
+                    live_status, live_observed = "NOT_TESTED", pve_isolation_note
+                    live_expected = "service answers with its expected benign response"
+                elif source_running and target_running and connectivity_status == "PASS":
                     live_result = manager.probe_in_service(
                         scenario_id, source, _http_probe_script(target, int(port), behavior_path), timeout=10)
                     live_observed = _result_output(live_result)
@@ -757,7 +798,10 @@ def run(scenario_id: str) -> dict[str, Any]:
         explicit_refs_by_index[index] = explicit_refs
         mapped_actions = explicit_refs or actions_by_host.get(target, [])
         attack = None
-        if target_component in _ATTACK_PROBES and source_running and target_running and connectivity_status == "PASS":
+        if target_component in _ATTACK_PROBES and selected_backend == "proxmox" and not pve_probes_allowed:
+            attack = _check(f"attack-{index}", f"{target} 攻擊行為（PVE 隔離未確認，未執行）", "behavior",
+                            "NOT_TESTED", "action-specific attack probe", pve_isolation_note, action_ref)
+        elif target_component in _ATTACK_PROBES and source_running and target_running and connectivity_status == "PASS":
             if source not in isolation_cache:
                 isolation_cache[source] = _attack_isolation_ok(scenario_id, source)
             isolated, iso_note = isolation_cache[source]
@@ -828,7 +872,9 @@ def run(scenario_id: str) -> dict[str, Any]:
         protocol = blocked.get("protocol", "tcp")
         source_running = bool(container_by_service.get(source) and container_by_service[source].get("state") == "running")
         target_running = bool(container_by_service.get(target) and container_by_service[target].get("state") == "running")
-        if protocol != "tcp" or port is None:
+        if selected_backend == "proxmox" and not pve_probes_allowed:
+            status, observed = "NOT_TESTED", pve_isolation_note
+        elif protocol != "tcp" or port is None:
             status, observed = "NOT_TESTED", "only blocked TCP paths with a declared port are probed"
         elif not source_running or not target_running:
             status, observed = "NOT_TESTED", "source or target container is not running; this path was not probed"

@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-11-16",
+  "candidate_branch": "agent/acceptance-lead",
+  "scenario_id": "scn_2acb1b9c902c",
+  "safety": "approved synthetic NGINX/Alpine worker only; no vulnerable image, attack probe, or PVE network change",
+  "injection": {
+    "method": "through owned-worker QGA, stop docker.socket and docker.service",
+    "exitcode": 0,
+    "purpose": "force the guest Compose down cleanup command to fail"
+  },
+  "lifecycle": {
+    "up": {
+      "http_status": 200,
+      "record_id": 130,
+      "vmid": 900101,
+      "state": "running",
+      "isolation": true,
+      "v1_preflight_before_after": [true, true, true]
+    },
+    "down": {
+      "http_status": 200,
+      "record_id": 131,
+      "state": "stopped",
+      "ok": true,
+      "guest_compose_exitcode": 1,
+      "guest_compose_cleanup_error": "guest Compose down returned a nonzero exit code",
+      "worker_vm_removed": true,
+      "reservation_released": true,
+      "recoverable_orphan": null
+    }
+  },
+  "postcheck": {
+    "scenario_state": "not_created",
+    "scenario_containers": 0,
+    "capacity_state": "ready",
+    "worker_vmid_count": 1,
+    "node_memory_free_mib": 18930,
+    "reservations": [
+      {"vmid": 900100, "scenario_id": "scn_db358a6d2c07", "state": "active"}
+    ],
+    "temporary_api_port_8294": "stopped"
+  }
+}

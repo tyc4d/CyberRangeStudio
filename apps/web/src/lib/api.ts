@@ -1,7 +1,11 @@
+import { t } from "../i18n";
 // Thin API client. All backend calls go through here. Never touches API keys.
 // Endpoint paths other than health/budget/_routers, /scenario/list, /scenario/{id} and /ingest/analyze
 // are the frontend's working assumption (see apps/web/README.md). They live only in this file.
-import type { ScenarioIR, ValidationReport } from "@contracts";
+import type {
+  ScenarioIR, ValidationReport,
+  ValidationPlan, PocManifest, ExecutionResult, ChainValidation, ExportManifest,
+} from "@contracts";
 
 export interface Budget {
   est_total_usd: number;
@@ -29,7 +33,7 @@ export class ApiError extends Error {
     /** Structured error payload (e.g. validation errors, a failed deploy result), when the backend sent one. */
     public data?: unknown,
   ) {
-    super(`${status || "網路錯誤"} ${detail}`);
+    super(`${status || t("api.networkError")} ${detail}`);
   }
 }
 
@@ -50,12 +54,12 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     // The connection failed before any answer arrived. Browsers cancel in-flight requests when the machine's
     // network interfaces change, which a deploy or teardown on the same host causes (Docker networks come and go).
     // A read is safe to send again once; anything that changes state (POST/PUT/DELETE) is never re-sent.
-    if (method !== "GET") throw new ApiError(0, e instanceof Error ? e.message : "無法連線", method, path, "offline");
+    if (method !== "GET") throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), method, path, "offline");
     await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
     try {
       r = await send();
     } catch (e2) {
-      throw new ApiError(0, e2 instanceof Error ? e2.message : "無法連線", method, path, "offline");
+      throw new ApiError(0, e2 instanceof Error ? e2.message : t("api.offline"), method, path, "offline");
     }
   }
   const text = await r.text();
@@ -180,7 +184,7 @@ export const api = {
     try {
       r = await fetch(path);
     } catch (e) {
-      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "GET", path, "offline");
+      throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "GET", path, "offline");
     }
     if (r.status === 404) return null;
     if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
@@ -199,7 +203,7 @@ export const api = {
       // No Content-Type header: the browser sets the multipart boundary itself.
       r = await fetch("/api/ingest/extract", { method: "POST", body: fd });
     } catch (e) {
-      throw new ApiError(0, e instanceof Error ? e.message : "無法連線", "POST", "/api/ingest/extract", "offline");
+      throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "POST", "/api/ingest/extract", "offline");
     }
     const text = await r.text();
     let body: any; try { body = text ? JSON.parse(text) : undefined; } catch { /* non-JSON */ }
@@ -239,6 +243,7 @@ export const api = {
   deployUp: (id: string) => post<any>(`/api/deploy/${enc(id)}/up`, { test_approved: true }),
   deployDown: (id: string) => post<any>(`/api/deploy/${enc(id)}/down`),
   deployStatus: (id: string) => req<any>(`/api/deploy/${enc(id)}/status`),
+  deployPreflight: (id: string) => req<any>(`/api/deploy/${enc(id)}/preflight`),
   deployHealth: (id: string) => req<any>(`/api/deploy/${enc(id)}/health`),
   /** Audit trail of up/down attempts (including refused ones), newest first. */
   deployRecords: (id: string) => req<any>(`/api/deploy/${enc(id)}/records`),
@@ -246,4 +251,41 @@ export const api = {
   // module 8 validation
   getReport: (id: string) => req<ValidationReport | any>(`/api/validate/${enc(id)}/report`),
   runValidation: (id: string) => post<ValidationReport | any>(`/api/validate/${enc(id)}/run`),
+
+  // module 9 — PoC discovery, exploit validation & environment export (CONTRACT.md §HTTP API, prefix /api/poc).
+  // All six frozen routes. The /report response shape is not yet a @contracts type (m9-chain owns it), so it is
+  // typed loosely; the GUI derives its five separate fidelity metrics defensively. See requests/m9-gui.md.
+  poc: {
+    plan: (id: string) => post<ValidationPlan>(`/api/poc/${enc(id)}/plan`),
+    discover: (id: string) => post<PocManifest>(`/api/poc/${enc(id)}/discover`),
+    /** Real, ownership-gated payload execution. `signal` also aborts the client wait if the backend is unreachable. */
+    execute: (id: string, actionIds?: string[], signal?: AbortSignal) =>
+      req<ExecutionResult[]>(`/api/poc/${enc(id)}/execute`, {
+        method: "POST",
+        body: JSON.stringify(actionIds && actionIds.length ? { action_ids: actionIds } : {}),
+        signal,
+      }),
+    /** Live job state while a run is in flight: job state + per-action stages, for the GUI to poll. */
+    executeStatus: (id: string) => req<any>(`/api/poc/${enc(id)}/execute/status`),
+    /** Ask the backend to cancel the in-flight run (cancel flag + finally-kill + cleanup). */
+    executeCancel: (id: string) => post<any>(`/api/poc/${enc(id)}/execute/cancel`),
+    chain: (id: string) => post<ChainValidation>(`/api/poc/${enc(id)}/chain`),
+    report: (id: string) => req<any>(`/api/poc/${enc(id)}/report`),
+    /** `format` is additive (CONTRACT has no field yet; a backend may ignore it). */
+    export: (id: string, format?: string) =>
+      post<{ bundle_path: string; manifest: ExportManifest }>(`/api/poc/${enc(id)}/export`, format ? { format } : {}),
+    /** Fetch the built ZIP bytes. No frozen route yet (see requests/m9-gui.md); resolves null on 404/501. */
+    exportDownload: async (id: string): Promise<{ data: ArrayBuffer; contentType: string } | null> => {
+      const path = `/api/poc/${enc(id)}/export/download`;
+      let r: Response;
+      try {
+        r = await fetch(path);
+      } catch (e) {
+        throw new ApiError(0, e instanceof Error ? e.message : t("api.offline"), "GET", path, "offline");
+      }
+      if (r.status === 404 || r.status === 501) return null;
+      if (!r.ok) throw new ApiError(r.status, r.statusText, "GET", path, r.status >= 500 ? "offline" : "error");
+      return { data: await r.arrayBuffer(), contentType: r.headers.get("content-type") ?? "" };
+    },
+  },
 };

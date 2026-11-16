@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import type { ScenarioIR } from "@contracts";
 import { Notice } from "./ui";
+import { joinList, t } from "../i18n";
 
 export interface RefIssues {
   /** Actions whose target host id is not one of the scenario's hosts. */
@@ -29,7 +30,7 @@ export function findRefIssues(ir: ScenarioIR): RefIssues {
   };
 }
 
-const few = (xs: string[], n = 4) => (xs.length > n ? `${xs.slice(0, n).join("、")} 等 ${xs.length} 項` : xs.join("、"));
+const few = (xs: string[], n = 4) => (xs.length > n ? t("list.more", { list: joinList(xs.slice(0, n)), n: xs.length, more: xs.length - n }) : joinList(xs));
 
 /** Shown on the dependency / topology / IaC pages when the IR's host references do not line up. Renders nothing when they do. */
 export function RefIssuesNotice({ ir, context }: { ir: ScenarioIR; context: "deps" | "topology" | "iac" }) {
@@ -38,25 +39,25 @@ export function RefIssuesNotice({ ir, context }: { ir: ScenarioIR; context: "dep
   if (!actionFix && !unplacedServices.length) return null;
   const refs = [...new Set(danglingActions.map((a) => a.ref))];
   return (
-    <Notice kind="warn" title="主機參照不一致：服務會被排除，連線無法開通"
-      action={actionFix ? <Link to="/flow"><button className="small">前往攻擊流程</button></Link> : undefined}>
+    <Notice kind="warn" title={t("ref.title")}
+      action={actionFix ? <Link to="/flow"><button className="small">{t("ref.toFlow")}</button></Link> : undefined}>
       <div data-testid="ref-issues">
         <ul style={{ margin: "4px 0", paddingLeft: 18 }}>
           {placeholderActions.length > 0 && (
-            <li>{placeholderActions.length} 個攻擊行為的「目標主機」是未指明的主機（<span className="mono">unknown</span>）：{few(placeholderActions.map((a) => a.name || a.id))}。分析沒有把它們對到主機清單中的任何一台。</li>
+            <li>{t("ref.placeholder", { n: placeholderActions.length, names: few(placeholderActions.map((a) => a.name || a.id)) })}</li>
           )}
           {danglingActions.length > 0 && (
-            <li>{danglingActions.length} 個攻擊行為的「目標主機」指向主機清單裡沒有的名稱（<span className="mono">{few(refs)}</span>）：{few(danglingActions.map((a) => a.name || a.id))}。</li>
+            <li>{t("ref.dangling", { n: danglingActions.length, refs: few(refs), names: few(danglingActions.map((a) => a.name || a.id)) })}</li>
           )}
           {unplacedServices.length > 0 && (
-            <li>{unplacedServices.length} 個服務沒有歸屬任何主機：{few(unplacedServices.map((s) => s.name || s.id))}。規劃時這些服務不會放進任何主機，也不會為它們開通連線{context === "iac" ? "，IaC 因此可能無法生成" : ""}。</li>
+            <li>{t("ref.unplaced", { n: unplacedServices.length, names: few(unplacedServices.map((s) => s.name || s.id)) })}{context === "iac" ? ` ${t("ref.unplacedIac")}` : ""}</li>
           )}
         </ul>
         {actionFix && (
-          <div>可以補正的部分：到「攻擊流程」點開上述行為，把「目標主機」改選為主機清單中正確的主機並儲存新版本，再回「軟體依賴」重新分析{context !== "deps" && "、到「拓樸」重新規劃並重新核准"}。</div>
+          <div>{t("ref.fix")}{context !== "deps" && ` ${t("ref.fixMore")}`}</div>
         )}
         {unplacedServices.length > 0 && (
-          <div style={{ marginTop: 4 }}>目前的限制：畫面上還沒有「指定服務屬於哪台主機」的操作，重新分析也不一定會補上歸屬。服務仍未歸屬時，這個情境無法部署出可用的連線；系統不會自行猜測歸屬，也不會把它顯示成可部署。</div>
+          <div style={{ marginTop: 4 }}>{t("ref.limit")}</div>
         )}
       </div>
     </Notice>

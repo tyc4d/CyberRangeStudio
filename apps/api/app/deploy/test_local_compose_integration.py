@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app import config, store
 from app.deploy import manager
+from app.deploy.backends import local_docker
 from app.iac.generator import generated_dir
 from app.main import app
 
@@ -133,12 +134,12 @@ class PinnedImagePreparationTests(unittest.TestCase):
             calls.append(args)
             return {"returncode": 0, "stdout": "", "stderr": ""}
 
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_compose_prefix", return_value=(
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_compose_prefix", return_value=(
                     ["docker", "compose", "-p", "cr-demo-image-test"], None)), \
-                patch.object(manager, "_real_image_refs", return_value=([pinned], None)), \
-                patch.object(manager, "_run", side_effect=fake_run):
-            result = manager._compose_command("image-test", "up", ["-d", "--pull", "never"])
+                patch.object(local_docker, "_real_image_refs", return_value=([pinned], None)), \
+                patch.object(local_docker, "_run", side_effect=fake_run):
+            result = local_docker._compose_command("image-test", "up", ["-d", "--pull", "never"])
 
         self.assertEqual(result["returncode"], 0)
         pull_index = next(index for index, args in enumerate(calls) if args[:3] == ["docker", "pull", pinned])
@@ -155,12 +156,12 @@ class PinnedImagePreparationTests(unittest.TestCase):
                 return {"returncode": 1, "stdout": "", "stderr": "pull denied"}
             return {"returncode": 0, "stdout": "", "stderr": ""}
 
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_compose_prefix", return_value=(
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_compose_prefix", return_value=(
                     ["docker", "compose", "-p", "cr-demo-image-test"], None)), \
-                patch.object(manager, "_real_image_refs", return_value=([pinned], None)), \
-                patch.object(manager, "_run", side_effect=fake_run):
-            result = manager._compose_command("image-test", "up", ["-d", "--pull", "never"])
+                patch.object(local_docker, "_real_image_refs", return_value=([pinned], None)), \
+                patch.object(local_docker, "_run", side_effect=fake_run):
+            result = local_docker._compose_command("image-test", "up", ["-d", "--pull", "never"])
 
         self.assertEqual(result["returncode"], 1)
         self.assertIn("could not pull pinned catalogue image", result["stderr"])
@@ -175,11 +176,13 @@ class PinnedImagePreparationTests(unittest.TestCase):
             return {"returncode": 0, "stdout": "", "stderr": ""}
 
         with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_compose_prefix", return_value=(
-                    ["docker", "compose", "-p", "cr-demo-lan-test"], None)), \
-                patch.object(manager, "_real_image_refs", return_value=([], None)), \
                 patch.object(manager, "_run", side_effect=fake_run), \
-                patch("app.deploy.manager.secrets.token_urlsafe", return_value=password), \
+                patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_compose_prefix", return_value=(
+                    ["docker", "compose", "-p", "cr-demo-lan-test"], None)), \
+                patch.object(local_docker, "_real_image_refs", return_value=([], None)), \
+                patch.object(local_docker, "_run", side_effect=fake_run), \
+                patch("app.deploy.backends.local_docker.secrets.token_urlsafe", return_value=password), \
                 patch.object(manager, "record", side_effect=lambda scenario, action, state, details: {
                     "details": details, "action": action, "state": state,
                 }), \
@@ -219,8 +222,8 @@ class NetworkAddressSelectionTests(unittest.TestCase):
 
     def test_edge_address_is_never_returned(self):
         only_edge_first = {"cr-demo-seg-web": self.NETWORKS}
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_run", side_effect=self._inspect(only_edge_first)):
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_run", side_effect=self._inspect(only_edge_first)):
             addresses = manager.container_ipv4_addresses("seg", "web")
             self.assertEqual(addresses, [{"network": "inner", "ip": "172.27.0.2"},
                                          {"network": "outer", "ip": "172.26.0.2"}])
@@ -229,14 +232,14 @@ class NetworkAddressSelectionTests(unittest.TestCase):
     def test_address_on_the_network_shared_with_the_source_is_preferred(self):
         containers = {"cr-demo-seg-web": self.NETWORKS,
                       "cr-demo-seg-attacker": {"cr-demo-seg-outer": {"IPAddress": "172.26.0.9"}}}
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_run", side_effect=self._inspect(containers)):
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_run", side_effect=self._inspect(containers)):
             self.assertEqual(manager.container_ipv4("seg", "web", from_service="attacker"), "172.26.0.2")
 
     def test_host_with_only_an_edge_address_has_no_plan_address(self):
         containers = {"cr-demo-seg-web": {"cr-demo-seg-edge": {"IPAddress": "192.168.48.2"}}}
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_run", side_effect=self._inspect(containers)):
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_run", side_effect=self._inspect(containers)):
             self.assertIsNone(manager.container_ipv4("seg", "web"))
 
 
@@ -302,7 +305,7 @@ class HostPortAllocationTests(unittest.TestCase):
         finally:
             busy.close()
         report = {"report": {"host_port_mappings": [{"env": "CR_HOSTPORT_0"}, {"env": "CR_HOSTPORT_1"}]}}
-        with patch.object(manager, "get_generated", return_value=report):
+        with patch.object(local_docker, "get_generated", return_value=report):
             assigned = manager.allocate_host_ports("ports", "127.0.0.1")
         self.assertEqual(set(assigned), {"CR_HOSTPORT_0", "CR_HOSTPORT_1"})
         values = [int(v) for v in assigned.values()]
@@ -313,7 +316,7 @@ class HostPortAllocationTests(unittest.TestCase):
 class IsolationPreflightTests(unittest.TestCase):
     def _preflight(self, version, vulnerable):
         with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "vulnerable_hosts", return_value=vulnerable), \
+                patch.object(local_docker, "vulnerable_hosts", return_value=vulnerable), \
                 patch.object(manager, "_run", return_value={"returncode": 0, "stdout": version + "\n", "stderr": ""}):
             return manager.isolation_preflight("pre")
 
@@ -326,10 +329,10 @@ class IsolationPreflightTests(unittest.TestCase):
         self.assertFalse(warned["host_isolation_supported"])
         self.assertIn("risk", warned)
 
-    def test_current_engine_allows_vulnerable_images(self):
-        allowed = self._preflight("29.5.2", ["portal"])
-        self.assertTrue(allowed["ok"])
-        self.assertTrue(allowed["host_isolation_supported"])
+    def test_current_engine_still_refuses_vulnerable_images(self):
+        refused = self._preflight("29.5.2", ["portal"])
+        self.assertFalse(refused["ok"])
+        self.assertIn("portal", refused["reason"])
 
     def test_up_is_rejected_before_any_container_is_created(self):
         calls = []
@@ -476,11 +479,11 @@ class ProjectOnlyOperationTests(unittest.TestCase):
             calls.append(args)
             return {"returncode": 0, "stdout": "", "stderr": ""}
 
-        with patch.object(manager, "_docker_context_preflight", return_value=("docker", None)), \
-                patch.object(manager, "_compose_prefix", side_effect=AssertionError("must not be consulted")), \
-                patch.object(manager, "_run", side_effect=fake_run):
+        with patch.object(local_docker, "_docker_context_preflight", return_value=("docker", None)), \
+                patch.object(local_docker, "_compose_prefix", side_effect=AssertionError("must not be consulted")), \
+                patch.object(local_docker, "_run", side_effect=fake_run):
             for operation in ("ps", "down"):
-                self.assertEqual(manager._compose_command("nofile", operation, ["-v"])["returncode"], 0)
+                self.assertEqual(local_docker._compose_command("nofile", operation, ["-v"])["returncode"], 0)
         self.assertEqual(calls, [["docker", "compose", "-p", "cr-demo-nofile", "ps", "-v"],
                                  ["docker", "compose", "-p", "cr-demo-nofile", "down", "-v"]])
 
