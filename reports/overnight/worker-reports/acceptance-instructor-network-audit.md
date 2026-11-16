@@ -24,3 +24,9 @@
 現有 API 權限不能新增外部 bridge、SDN zone/VNet 或 firewall rule。直接修改 PVE 節點網路需要 `Sys.Modify`，而錯誤套用可能讓節點失聯；Proxmox 管理指南也明確提示網路配置錯誤可能使節點無法連線（[PVE Administration Guide](https://pve.proxmox.com/pve-docs/pve-admin-guide.pdf)）。目前無具備此權限且可安全映射到外側實體網路的既有 bridge，因此不能以建立未連線的第二個隔離 bridge 假稱完成講師入口。
 
 我沒有用 runtime/build token 嘗試寫入，也沒有建立無法實際連外的跳板 VM。入口的安全需求與預設 source range 已記錄在 `docs/approved-scope.md`；需先配置受控的外側 bridge/SDN 並授予最小必要 ACL，之後才能部署跳板、指定 firewall allowlist、再驗收外部可達性。這是 P5 的明確阻塞，不影響目前唯讀 QA 預覽。
+
+## 使用者提供 Network 畫面後的核對（2026-11-16）
+
+使用者提供的截圖顯示 `vmbr0` 接 `nic0`，有管理位址 `192.168.16.214/24` 與 gateway `192.168.16.1`；`vmbr1` 標註 `ctf1`，畫面上未列 Ports/Slaves、CIDR 或 Gateway。截圖沒有顯示 node 標題。
+
+我以 `.env` 的 runtime 與 build token，分別從釘選 TLS client 對同一管理 URL 與 node 再做 GET。兩次 HTTP 200 都只列 `nic0`、`nic1`、`wlp7s0`、`vmbr990`；未列 `vmbr0` 或 `vmbr1`。新證據：`reports/overnight/evidence/pve-network-screenshot-reconcile-20261116.json`。因此前一節「沒有外部 bridge」只能描述當時 API 清單；目前仍有截圖與 API 的設定差異待核實。`vmbr0` 是管理 LAN，不能直接接靶場服務；`vmbr1` 即使為內部 bridge，畫面也不能證明它有 uplink、ACL 或講師可達性。未做 PVE 寫入，也未變更任何 VM 網卡。
