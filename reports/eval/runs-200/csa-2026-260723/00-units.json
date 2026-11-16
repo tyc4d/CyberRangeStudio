@@ -1,0 +1,462 @@
+[
+ {
+  "id": "p1",
+  "text": "# Russian State-Supported Cyber Actors Conduct Phishing Campaign Targeting Users of Zimbra Collaboration Suite"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-07-23\n> - URL: https://www.ic3.gov/CSA/2026/260723.pdf\n> - PDF SHA-256: 97805a057e1217acdf8a1c21f3852994c550b2b9fe094af270bd1bb6e24e8c76 (`source.pdf`, 31 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (153 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Joint Cybersecurity Advisory"
+ },
+ {
+  "id": "p4",
+  "text": "Russian State-Supported Cyber Actors Conduct\nPhishing Campaign Targeting Users of Zimbra\nCollaboration Suite"
+ },
+ {
+  "id": "p5",
+  "text": "Executive summary\nA group of Russian state-supported cyber actors has been targeting and compromising\nvarious Western government and commercial organizations using the Zimbra\nCollaboration Suite (ZCS) software since at least July 2025. The Russian state-\nsupported advanced persistent threat (APT) group’s activity is tracked in the\ncybersecurity community under several names (see Cybersecurity industry tracking),\nprimarily as “LAUNDRY BEAR,” a name initially coined by the Netherlands General\nIntelligence and Security Service (AIVD) and Defence Intelligence and Security Service\n(MIVD) [1]."
+ },
+ {
+  "id": "p6",
+  "text": "This document is marked TLP:CLEAR. Recipients may share this information without restriction. Information is subject to\nstandard copyright rules."
+ },
+ {
+  "id": "p7",
+  "text": "LAUNDRY BEAR’s targeting is almost certainly to gather sensitive information for the\n Russian Federation, with these actors primarily focusing on the covert acquisition of\n email data. Previous campaigns indicated LAUNDRY BEAR relied on unsophisticated\n initial access techniques—including password spraying, phishing, and pass-the-\n cookie—allowing the group to successfully run high-volume operations. The latest\n campaign targeting ZCS uses a novel exploit that was a zero-day vulnerability when first\n exploited and continues to be successfully exploited. The vulnerability, Common\n Vulnerabilities and Exposures (CVE) CVE-2025-66376, was patched in November\n 2025. This demonstrates LAUNDRY BEAR’s intent and ability to deploy increasingly\n sophisticated technical capabilities."
+ },
+ {
+  "id": "p8",
+  "text": "Unlike traditional phishing campaigns that persuade a user into taking an action, such\n as clicking a link or opening a file, LAUNDRY BEAR’s latest campaign leverages a\n view-based exploit that only requires a user to view a malicious email within a\n vulnerable version of the webmail service. Once viewed, the exploit attempts to\n exfiltrate the victim’s last 90 days of email communications, the organization email\n directory (i.e., Global Address List [GAL]), and other sensitive information to servers\n controlled by LAUNDRY BEAR. The exploit also attempts to establish persistent access\n to victim accounts through a variety of means as detailed in the Persistence and\n credential access section.\n This Cybersecurity Advisory (CSA) warns of this ongoing malicious threat activity and\n urges organizations to update their vulnerable software and implement additional\n mitigations to thwart these Russian state-supported actors’ continued success. The\n CSA is being released by the following authoring and co-sealing agencies:"
+ },
+ {
+  "id": "p9",
+  "text": "•     United States National Security Agency (NSA)\n      •     United States Federal Bureau of Investigation (FBI)\n      •     Netherlands Defence Intelligence and Security Service (MIVD)\n      •     Netherlands General Intelligence and Security Service (AIVD)\n      •     United States Cybersecurity and Infrastructure Security Agency (CISA)\n      •     United States Defense Counterintelligence and Security Agency (DCSA)\n      •     United States Department of Defense Cyber Crime Center (DC3)\n      •     United States Department of the Treasury\n      •     United States Naval Criminal Investigative Service (NCIS)\n      •     Australian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC)"
+ },
+ {
+  "id": "p10",
+  "text": "•     Communications Security Establishment Canada’s (CSE’s) Canadian Centre for\n            Cyber Security (Cyber Centre)\n      •     New Zealand National Cyber Security Centre (NCSC-NZ)\n      •     United Kingdom National Cyber Security Centre (NCSC-UK)\n      •     Czech Republic National Cyber and Information Security Agency (NÚKIB)1\n      •     Danish Defence Intelligence Service (DDIS)2\n      •     Estonian Foreign Intelligence Service (EFIS)3\n      •     Finnish Defence Intelligence (FDI)4\n      •     Finnish Security and Intelligence Service (SUPO)5\n      •     French General Directorate for Internal Security (DGSI)6\n      •     French National Cybersecurity Agency (ANSSI)7\n      •     Italian External Intelligence and Security Agency (AISE)8\n      •     Italian Internal Intelligence and Security Agency (AISI)9\n      •     Security and Intelligence Service of the Republic of Moldova (SIS RM) 10\n      •     Polish Foreign Intelligence Agency (AW)11\n      •     The Military Counterintelligence Service of Poland (SKW)12\n      •     Spain National Intelligence Centre (CNI)13\n      •     Sweden National Cyber Security Centre (NCSC-SE)14\n The authoring agencies urge any organizations using ZCS to implement the\n recommendations listed within the Mitigations section of this advisory to reduce the risk\n associated with this activity. This CSA also includes specific remediations for\n organizations to implement if they discover the presence of the listed Indicators of\n compromise (IOCs).\n As more organizations update their ZCS software based on this CSA, LAUNDRY BEAR\n may discontinue the current campaign exploiting this vulnerability; however, based on"
+ },
+ {
+  "id": "p11",
+  "text": "1 Národní úřad pro kybernetickou a informační bezpečnost\n 2 Forsvarets Efterretningstjeneste\n 3 Välisluureamet\n 4 Sotilastiedustelu\n 5 Suojelupoliisi\n 6 Direction générale de la sécurité intérieure\n 7 Agence nationale de la sécurité des systèmes d’information\n 8 Agenzia Informazioni e Sicurezza Esterna\n 9 Agenzia Informazioni e Sicurezza Interna\n 10 Serviciul de Informații și Securitate al Republicii Moldova\n 11 Agencja Wywiadu\n 12 Służba Kontrwywiadu Wojskowego\n 13 Centro Nacional de Inteligencia\n 14 Nationellt Cybersäkerhetscenter"
+ },
+ {
+  "id": "p12",
+  "text": "the success of this and previous campaigns, it is very likely that the group will continue\n to target ZCS and other email systems used by organizations in Western countries. The\n actors will almost certainly continue to rely on email to engage potential victims by\n exploiting novel vulnerabilities and, when necessary, use social engineering techniques\n to assist with their efforts. The authoring agencies recommend organizations regularly\n update their mail service software and continuously monitor their email systems and\n emails for malicious activity.\n For a downloadable list of IOCs, see:\n      •     AA26-204A.stix.xml (STIX XML)\n      •     AA26-204A.stix.json (STIX JSON)"
+ },
+ {
+  "id": "p13",
+  "text": "Cybersecurity industry tracking\n The cybersecurity industry provides overlapping cyber threat intelligence, indicators of\n compromise (IOCs), and mitigation recommendations related to these Russian state-\n supported cyber actors. While not exhaustive, the following are threat group names\n commonly used for these actors within the cybersecurity community:"
+ },
+ {
+  "id": "p14",
+  "text": "•     LAUNDRY BEAR\n      •     Void Blizzard [2]\n      •     CL-STA-1114 [3]\n      •     TA488 (formerly UNK_PitStop) [4]"
+ },
+ {
+  "id": "p15",
+  "text": "Note: Cybersecurity companies have different methods of tracking and attributing cyber\n actors, and this may not be a 1:1 correlation to the U.S. government’s understanding for\n all activity related to these groupings."
+ },
+ {
+  "id": "p16",
+  "text": "Background\n Public advisories from Netherlands General Intelligence and Security Service (AIVD),\n Netherlands Defence Intelligence and Security Service (MIVD), and Microsoft\n highlighted these Russian state-supported advanced persistent threat (APT) actors in\n May 2025, calling them LAUNDRY BEAR and Void Blizzard respectively [1] [2]. Both\n advisories assessed that the group was engaged in malicious cyber activity as early as\n April 2024."
+ },
+ {
+  "id": "p17",
+  "text": "The May 2025 advisories highlighted a cluster of activity targeting cloud-based email\n environments, including Microsoft Exchange in particular, and abusing legitimate APIs"
+ },
+ {
+  "id": "p18",
+  "text": "to perform data exfiltration in bulk [T1114.002]. The group relied on unsophisticated\n means of initial access, including procuring stolen credentials on criminal marketplaces\n [T1078], and using social engineering techniques to lure targets into interacting with a\n malicious site masquerading as a legitimate one. As of April 2025, one of these sites\n resembled a European Defence & Security Summit registration portal that required\n registrants to sign in to their Microsoft account to view. Once a user entered their\n Microsoft credentials into this malicious site, LAUNDRY BEAR’s modified version of the\n open source adversary emulation toolkit, Evilginx, intercepted the user’s credentials.\n LAUNDRY BEAR then used this authentication data, including passwords and session\n tokens, to access the compromised account and conduct mass email exfiltration, as well\n as harvest other information. This method of compromise is commonly known as an\n adversary-in-the-middle (AiTM) technique [T1557]."
+ },
+ {
+  "id": "p19",
+  "text": "Beginning around July 2025, LAUNDRY BEAR shifted toward a more technical method\n of email compromise, highlighting their continued efforts to covertly acquire email\n communications from a variety of Western organizations of interest and deliver them to\n the Russian Federation. Using a custom-developed capability [T1587.001] named\n “Улей” or “Ulej” (Russian for beehive), LAUNDRY BEAR successfully targeted and\n exfiltrated sensitive user information from organizations who use the Zimbra\n Collaboration Suite (ZCS) product [T1114]. Data LAUNDRY BEAR attempted to\n exfiltrate from compromised accounts included:\n     • Last 90 days of emails,\n     • Email address,\n     • Password [T1589.001],\n     • Global Address List (GAL) [T1087],\n     • Two-factor authentication (2FA) tokens, and\n     • Newly-created Application Passcode [T1098]."
+ },
+ {
+  "id": "p20",
+  "text": "The covert and persistent nature of this activity, along with the absence of any known\n financial extortion, almost certainly indicates this group’s involvement in espionage\n activities with Russian government backing. Additionally, extensive Ukrainian targeting,\n prior to use against U.S. and other NATO allies, outlines an increasing trend within\n Russian cyber threat groups to target Ukrainian users first—both as a priority target and\n as a testbench for malicious cyber techniques before broader global deployment."
+ },
+ {
+  "id": "p21",
+  "text": "Targeting details\n LAUNDRY BEAR has targeted and compromised users in various organizations,\n including those associated with:\n      •     the Defense Industrial Base (DIB),\n      •     the federal and local government,\n      •     education,\n      •     energy,\n      •     law enforcement,\n      •     media,\n      •     non-governmental organizations, and\n      •     technology."
+ },
+ {
+  "id": "p22",
+  "text": "Technical details\n Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version\n 19. This advisory also uses MITRE D3FENDTM version 1.4.015. See Appendix A and\n Appendix B for tables of the activity mapped to MITRE ATT&CK and D3FEND tactics,\n techniques, and countermeasures.\n Ulej is a novel data exfiltration and aggregation capability, that currently (as of the\n publication of this report) supports a campaign specifically targeting users of ZCS\n webmail servers. This capability is used to exploit CVE-2025-66376 [Common\n Weakness Enumeration (CWE) CWE-79: Improper Neutralization of Input During Web\n Page Generation ('Cross-site Scripting')], but likely could be adapted to exploit other\n vulnerabilities. It exfiltrates emails and other sensitive user data from a victim’s system\n immediately after exploitation and stores the data in an actor-controlled unattributable\n virtual private server (VPS) [T1074.002] running LAUNDRY BEAR’s “Flowerbed”\n collection framework. The collected data is almost certainly further exfiltrated to internal\n network resources for review and long-term retention."
+ },
+ {
+  "id": "p23",
+  "text": "Reconnaissance\n LAUNDRY BEAR uses the Ulej capability to exploit the CVE-2025-66376 vulnerability in\n organizations using ZCS. This campaign’s targeted victimology and limited exploitation\n capabilities likely indicate this group manually identifies and targets the victim"
+ },
+ {
+  "id": "p24",
+  "text": "15 MITRE and ATT&CK are registered trademarks of The MITRE Corporation. MITRE D3FEND is a trademark of The MITRE Corporation."
+ },
+ {
+  "id": "p25",
+  "text": "organizations. LAUNDRY BEAR likely identifies organizations with public-facing Zimbra\n infrastructure by port scanning [T1595] and fingerprinting datasets easily procured\n through various commercial vendors [T1596.005].\n After identifying a target organization, the group likely compiles email addresses for\n individual users to target with the exploit [T1589.002] from datasets offered by\n commercial vendors [T1597.002], open source intelligence [T1593], or previously\n exfiltrated data [T1597]."
+ },
+ {
+  "id": "p26",
+  "text": "Resource development\n The actors procure VPSs from a variety of providers [T1583.003], including those with\n Know Your Customer (KYC) requirements, and often use fabricated identities.\n LAUNDRY BEAR primarily uses Mullvad VPN [T1583] when interacting with these\n servers, further demonstrating the group’s intent to mask their identity and maintain\n operations security (OPSEC). After the server is provisioned, an automated process\n deploys the Docker containers necessary for Ulej’s Flowerbed framework [T1608],\n which then receives and aggregates the data Ulej exfiltrates. These servers are typically\n only used for 7-60 days before moving to new infrastructure."
+ },
+ {
+  "id": "p27",
+  "text": "Flowerbed framework\n Flowerbed is a Python project that uses Docker for containerization. The project\n includes four different Docker containers:"
+ },
+ {
+  "id": "p28",
+  "text": "•     Catcher,\n      •     Certbot,\n      •     Nginx, and\n      •     Gardener.\n Catcher acts as both a DNS and HTTP server to receive and aggregate exfiltrated\n victim information [T1048]. For additional information on Catcher, refer to the Exfiltration\n section of this advisory. Flowerbed’s next container, Certbot, is based on one of the\n official Certbot containers, which allows for automated generation of Let’s Encrypt\n certificates using DNS challenges through Cloudflare. This certificate can then be used\n by the Nginx container, which serves as an HTTPS reverse proxy for Catcher, enabling\n Flowerbed to disguise some of its exfiltration activity through an encrypted\n communications channel [T1048.002]. The Nginx reverse proxy also validates that the\n Server Name Indicator (SNI) value contains “*.i.*” prior to forwarding the traffic to"
+ },
+ {
+  "id": "p29",
+  "text": "Catcher. If the SNI does not contain that string, the Nginx server returns a 444 error to\n the client. This is likely an attempt to reject non-Ulej connections. Finally, the Gardener\n container functions as a health check for the Catcher service. Gardener is a simple\n Python script that validates Catcher correctly receives and processes data."
+ },
+ {
+  "id": "p30",
+  "text": "The simplistic Flowerbed codebase has indications that artificial intelligence (AI) played\n a role in its development. This highlights how AI is increasingly being used to develop\n malicious capabilities [T1588.007]. The dependence on AI for a simple capability, such\n as Flowerbed, alongside a previous reliance on open source capabilities, such as\n Evilginx2 [T1588.002], likely indicates a lack of advanced technical knowledge within\n LAUNDRY BEAR, especially in relation to true software development capabilities."
+ },
+ {
+  "id": "p31",
+  "text": "Initial access\n To gain initial access, LAUNDRY BEAR sends an email containing a malicious\n JavaScript payload to the target [T1566]. Through exploitation of CVE-2025-66376, this\n JavaScript payload is immediately executed once the user views the malicious email\n [T1203], such as the one shown in Figure 1, in the ZCS webmail platform. Since at\n least November 2025, LAUNDRY BEAR began sending these phishing emails from\n victim infrastructure through compromised accounts [T1199], as shown in the email\n metadata in Figure 2. These compromised accounts were likely previous victims of this,\n or another LAUNDRY BEAR, campaign and their use is intended to further obfuscate\n and frustrate anti-phishing tools and training."
+ },
+ {
+  "id": "p32",
+  "text": "Figure 1: Example of malicious email"
+ },
+ {
+  "id": "p33",
+  "text": "Figure 2: Headers from an example malicious email"
+ },
+ {
+  "id": "p34",
+  "text": "According to the National Vulnerability Database (NVD), CVE-2025-66376 was initially\n published on 5 January 2026. This vulnerability allows for execution of a JavaScript\n payload included in email content due to improper sanitization of Cascading Style\n Sheet’s (CSS) @import directives within an email [5]. Because the activity attributed to\n this campaign began in July 2025—months before Synacor released a patch and the\n CVE was published—the payload initially exploited a zero-day vulnerability at that time\n [T1587.004]."
+ },
+ {
+  "id": "p35",
+  "text": "Hidden in LAUNDRY BEAR’s\n   Utilization of a zero-day exploit within                               email is a Base64 encoded\n   this campaign demonstrates the                                         payload within the “onload”\n   ability for even emerging threat                                       field of a Scalable Vector\n                                                             Graphics (SVG) element\n   groups like LAUNDRY BEAR to\n                                                             [T1027.017], as shown in\n   operationalize novel exploits into a                      Figure 3. Leading up to the\n   highly successful capability.                             inclusion of this payload in the\n                                                             SVG element are various\n instances of @import directives, as required to leverage CVE-2025-66376. This payload\n includes an XOR encrypted final script encoded in a Base64 inner payload (see Figure\n 3) [T1027.013]. The outer payload decodes and decrypts the inner payload using an\n XOR function and a hardcoded key and then executes the script contained within the\n inner payload containing the collection and exfiltration logic. By changing the key used\n for the XOR encryption of the inner payload or adding additional @import directives with\n non-functional code [T1027.010], LAUNDRY BEAR can easily generate new payloads\n that bypass basic threat detection signatures. This malicious payload attempts to collect\n and exfiltrate information in 12 asynchronous stages [T1119]. The stages in order of\n appearance within the payload are as follows:\n     1. sendStartPing,\n     2. gather_email,"
+ },
+ {
+  "id": "p36",
+  "text": "3. gather_environment,\n      4. gather_2fa_codes,\n      5. gather_app_password,\n      6. gather_device_status,\n      7. gather_oauth_consumers,\n      8. gather_autocomplete_password,\n      9. enable_mail_protocols,\n      10. gather_gal,\n      11. sendArchives, and\n      12. sendFinishPing."
+ },
+ {
+  "id": "p37",
+  "text": "[Abbreviated for brevity]"
+ },
+ {
+  "id": "p38",
+  "text": "Figure 3: Malicious payload of example email"
+ },
+ {
+  "id": "p39",
+  "text": "Use of a zero-day exploit within this campaign demonstrates the ability for even\n emerging threat groups like LAUNDRY BEAR to operationalize novel exploits into a\n highly successful capability [T1587]."
+ },
+ {
+  "id": "p40",
+  "text": "Persistence and credential access\n To establish sustained persistence into the victim’s email account, the script attempts to\n modify account preferences and collect authentication information. Any collected\n credentials are later exfiltrated, as further described in the Exfiltration section below.\n Other campaigns attributed to LAUNDRY BEAR also demonstrated the group’s ability to\n circumvent multi-factor authentication through session token replay [T1550.004], and\n the Zimbra campaign follows a similar trend."
+ },
+ {
+  "id": "p41",
+  "text": "The script used in this campaign tries to discover the victim’s email address during the\n gather_email stage [T1087]. The script searches for this email address in two ways.\n First, it examines the batchInfoResponse variable, which an HTML script element on the\n webpage can define, for an email address. Even if the script finds an email address\n there, it also checks whether it acquired a Cross-Site Request Forgery (CSRF) token as\n described later in the Collection section of this advisory. If so, the script uses the\n “GetIdentitiesRequest” Simple Object Access Protocol (SOAP) command under the\n “zimbraAccount” namespace to determine the victim’s email address [T1185] and then\n exfiltrates it. However, if the script does not have a CSRF token or the SOAP request\n fails, the script exfiltrates the email value recovered from the first method instead. If both\n attempts fail to capture the victim’s email, the script sends a JavaScript Object Notation\n (JSON) payload with a key of “email” and value of null over HTTPS and does not\n attempt DNS exfiltration."
+ },
+ {
+  "id": "p42",
+  "text": "During the gather_autocomplete_password stage, the script attempts to collect the\n victim’s saved password via the autocomplete feature of the victim’s password\n manager. The script injects two HTML div elements requesting login credentials onto\n the page outside of the victim’s view, as shown in Figure 4 and Figure 5. After waiting\n five seconds, the script then attempts to extract the password provided automatically by\n the password manager from the input element shown in Figure 4. If there is no value in\n that input field, it checks the password input field shown in Figure 5. If neither input field\n contains a value, a JSON payload with a key of “autocomplete_password” and value of\n null is sent over HTTPS and DNS exfiltration is not attempted."
+ },
+ {
+  "id": "p43",
+  "text": "<div style=\"position: absolute; left: -9999px;\">\n            <input type=\"text\" name=\"username\" autocomplete=\"username\">\n            <input type=\"password\" name=\"password\" autocomplete=\"current-password\">\n           </div>\n                                        Figure 4: First illegitimate login HTML element"
+ },
+ {
+  "id": "p44",
+  "text": "<input id=\"password\" name=\"password\" type=\"password\" tabindex=\"2\"\n                                   style=\"position:absolute;left:-9998px;\">"
+ },
+ {
+  "id": "p45",
+  "text": "Figure 5: Second illegitimate login HTML element"
+ },
+ {
+  "id": "p46",
+  "text": "LAUNDRY BEAR almost certainly relies on a mail client using the Internet Message\n Access Protocol (IMAP) for persistent access to the victim’s mailbox. During the\n enable_mail_protocols stage, a SOAP request leveraging the “ModifyPrefsRequest”\n command under the “zimbraAccount” namespace is sent. This request attempts to set\n the “zimbraPrefImapEnabled” preference to TRUE. While the default setting for\n “zimbraPrefImapEnabled” is not well documented, this action is almost certainly\n intended to ensure that IMAP access to the victim’s mailbox is enabled."
+ },
+ {
+  "id": "p47",
+  "text": "ZCS does not support 2FA for some mail clients, including IMAP. To support users who\n rely on IMAP clients, ZCS allows for the generation of Application Passcodes.\n Application Passcodes are randomly generated passwords that can be used for clients\n that cannot support the normal 2FA process to authenticate. During the\n gather_app_password stage, the script makes a SOAP request using the\n “CreateAppSpecificPasswordRequest” command under the “zimbraAccount”\n namespace to create a new Application Passcode [T1556.006]. The SOAP request\n uses “ZimbraWeb” as the name of the application."
+ },
+ {
+  "id": "p48",
+  "text": "Additionally, the script also attempts to collect 2FA tokens. During the gather_2fa_codes\n stage, the script makes a SOAP request using the “GetScratchCodesRequest”\n command under the “zimbraAccount” namespace. The script then attempts to exfiltrate\n any non-null 2FA codes collected this way. The number of codes can vary, and each\n code is exfiltrated to Flowerbed individually."
+ },
+ {
+  "id": "p49",
+  "text": "Collection\n As demonstrated in the Persistence and credential access section, this script relies\n heavily on SOAP requests to collect victim information. To make these requests, the"
+ },
+ {
+  "id": "p50",
+  "text": "script aims to acquire the victim’s current CSRF token, which it attempts to access\n within the webpage’s local storage using localStorage.getItem(\"csrfToken\"). If the script\n is unable to acquire this CSRF token, it will be unable to make any SOAP requests. In\n addition to the SOAP commands documented in the Persistence and credential access\n section, other SOAP commands executed to collect victim information are shown in\n Table 1.\n                                           Table 1: Additional SOAP commands used\n                      SOAP Command                             Namespace       Stage\n                      GetInfoRequest                           zimbraAccount   gather_environment\n                      GetDeviceStatusRequest                   zimbraSync      gather_device_status\n                      GetOAuthConsumersRequest                 zimbraAccount   gather_oauth_consumers\n                      SearchGalRequest                         zimbraAccount   gather_gal"
+ },
+ {
+  "id": "p51",
+  "text": "The script attempts to collect the victim’s GAL through brute force by searching for each\n two-character combination from a character set of\n “abcdefghijklmnopqrstuvwxyz1234567890.-_”. These queries are conducted using 20\n batches of SOAP requests with 77 “SearchGalRequest” SOAP commands in each\n batch except for the last request containing only 58."
+ },
+ {
+  "id": "p52",
+  "text": "During the gather_environment stage, the script attempts to determine which type of\n ZCS webmail client the victim is using. The script checks the user’s current URL to\n determine the client type being used, checking for certain indicators (shown in Table 2)\n to determine the client type. The corresponding value is then used as the payload when\n exfiltrating the client type.\n                                                    Table 2: ZCS webmail client types\n                                Indicator                  Client Type     Associated Value\n                                ?client=advanced           Advanced        c\n                                /h/                        Standard        h\n                                /modern/                   Modern          m"
+ },
+ {
+  "id": "p53",
+  "text": "As part of collection, the script attempts to harvest any emails not marked as “junk” from\n the last 90 days from the victim’s account. Emails are collected daily by an HTTP GET\n request to the URL path, “/home/~/?fmt=tgz&meta=0&query=date:-{DAY_OFFSET}d\n AND (not in:junk)”. The {DAY_OFFSET} value would be between 0 and 89 representing\n how many days ago the email was sent or received. To prevent redundant collection\n and exfiltration of emails, a variable with a name based on the email date being queried,\n using a format of zd_comp_YYYY-MM-DD, and value of true, is saved to the"
+ },
+ {
+  "id": "p54",
+  "text": "window.top.localStorage property. This variable is saved regardless of whether the\n email is successfully exfiltrated."
+ },
+ {
+  "id": "p55",
+  "text": "According to Mozilla documentation, if the user is not in a private browsing session, any\n data stored to localStorage does not typically expire. This means that if the user\n happens to execute the script again from the same computer, the script avoids\n attempting to re-exfiltrate previously captured emails. However, the script always\n attempts to pull any emails with a {DAY_OFFSET} of zero. In other words, the script\n always pulls emails sent or received the same day it is run. After email results are\n returned from the query for each day of email activity, those results are then passed to\n Flowerbed as described in the Exfiltration section."
+ },
+ {
+  "id": "p56",
+  "text": "The script also provides LAUNDRY BEAR with telemetry on any errors that occur during\n the collection process. This is accomplished by executing any collection or exfiltration\n code through helper functions that contain error handling logic. If an error occurs, a\n payload containing information on the error itself, the context of the error happening,\n and the stage in which the error occurred is sent to Flowerbed as described in the\n Exfiltration section below. For cases where the error occurs within a SOAP request,\n “:api” is concatenated to the stage value in the payload. If an error occurs during the\n batch SOAP requests that occur when collecting the GAL of the victim, the stage value\n will use a format of gather_gal:{VAL}:api. The {VAL} placeholder indicates which batch\n request, a number from 0 to 19, the error occurred in. Errors that occur during the\n password autocomplete interception process will use\n “gather_autocomplete_password:dom” for the stage value. Finally, if an error occurs\n when attempting to collect or exfiltrate a specific day’s emails, the stage will include\n which day the error occurred on, using the previously defined placeholder\n {DAY_OFFSET}, with a format of sendArchive:day-{DAY_OFFSET}."
+ },
+ {
+  "id": "p57",
+  "text": "Exfiltration\n At the end of each stage in the collection process, the script attempts to exfiltrate\n acquired information to Flowerbed. The script primarily relies on two forms of data\n exfiltration: DNS [T1048.003] and HTTPS. Some information is exfiltrated over both the\n DNS and HTTPS channels."
+ },
+ {
+  "id": "p58",
+  "text": "Prior to exfiltration, a randomized 10- or 11-character alphanumeric string is generated\n as an identifier for the victim. This identifier is included in the URL of both the DNS- and\n HTTPS-based exfiltration."
+ },
+ {
+  "id": "p59",
+  "text": "DNS exfiltration\n DNS exfiltration occurs through DNS A record queries. To ensure data exfiltrated\n through DNS is not corrupted when traversing through non-actor-controlled DNS\n infrastructure, Ulej maintains compliance with RFC 1035, Domain Names -\n Implementation and Specification, specifically accounting for the case insensitivity and\n subdomain length requirements. Base32 encoding is used to create a case-insensitive\n payload. Once the payload is encoded, a period (“.”) is added every 60 characters to\n ensure each subdomain is under 63 characters long. The script then creates a new\n image object sourced from a URL with the scheme defined in Figure 6. Any traffic\n involving DNS exfiltration will have “d-“ prefixing the victim identifier, and the subdomain\n immediately following indicates the type of information being exfiltrated."
+ },
+ {
+  "id": "p60",
+  "text": "https://d-{IDENTIFIER}.{DATA_TYPE}.{BASE32_ ENCODED_DATA}.i.{DOMAIN}/pixel.gif\n                                   Figure 6: Structure for information exfiltrated by DNS"
+ },
+ {
+  "id": "p61",
+  "text": "When the script generates an image object, the browser tries to retrieve the complete\n domain of the URL specified as the source of the image. This triggers a DNS request\n sent to the actor-controlled server and processed by Flowerbed. Table 3 lists both the\n information exfiltrated via DNS and their corresponding data type identifiers in the DNS\n queries.\n                                                    Table 3: DNS exfiltration\n            Type of Information                              Exfiltration Stage             Data Type\n            Victim’s Email Address                           gather_email                   e\n            Client Type                                      gather_environment             c\n            Zimbra Version                                   gather_environment             v\n            URL at Time of Exploitation                      gather_environment             url\n            2FA Scratch Codes                                gather_2fa_codes               2fa\n            Newly Created Application Password               gather_app_password            pa\n            Harvested Autocomplete Password                  gather_autocomplete_password   pw"
+ },
+ {
+  "id": "p62",
+  "text": "HTTPS exfiltration\n Any information exfiltrated via DNS is also exfiltrated through HTTPS, as well as\n additional data including email content, contacts, attachments, and error logging"
+ },
+ {
+  "id": "p63",
+  "text": "information. By using Let’s Encrypt certificates, this group can quickly deploy new\n infrastructure and leverage encrypted HTTPS communications with valid server\n certificates when exfiltrating information from the victim’s environment. The HTTPS\n exfiltration capability only uses two HTTP content types, defined in Table 4. Traffic\n associated with HTTPS exfiltration will use the URL scheme shown in Figure 7."
+ },
+ {
+  "id": "p64",
+  "text": "Table 4: HTTPS exfiltration types\n                                               Content Type                URL Path\n                                               application/json            /v/p\n                                               application/octet-stream    /v/d"
+ },
+ {
+  "id": "p65",
+  "text": "https://js-{IDENTIFIER}.i.{DOMAIN}/{URL_PATH}\n                                 Figure 7: Structure for information exfiltrated by HTTPS"
+ },
+ {
+  "id": "p66",
+  "text": "Some of the data transmitted via HTTPS uses the standard JSON content type format.\n The script includes the information in a POST request to actor-controlled infrastructure."
+ },
+ {
+  "id": "p67",
+  "text": "Table 5 provides a summary of the JSON-based exfiltration.\n                                                    Table 5: HTTPS JSON exfiltration\n   Type of Information                                       Exfiltration Stage             JSON Key(s)\n   Victim’s Email Address                                    gather_email                   email\n   Client Type, Version, and Current URL                     gather_environment             client, version, full_url\n   Newly Created Application Password                        gather_app_password            app_password\n   Harvested Autocomplete Password                           gather_autocomplete_password   autocomplete_password"
+ },
+ {
+  "id": "p68",
+  "text": "The script transmits all HTTPS exfiltration not identified in Table 5 using the Octet-\n Stream content type as binary data. The POST requests for this method include a\n filename in the “X-Filename” header. Traditionally, developers use headers prefixed\n with “X-” to denote custom headers that do not follow a defined standard. The purpose\n of including this header remains unclear since the Catcher capability ignores the\n provided filename when saving the data. Table 6 summarizes the data exfiltrated in this\n format."
+ },
+ {
+  "id": "p69",
+  "text": "Table 6: HTTPS binary exfiltration\n  Type of Information                                        Exfiltration Stage          X-Filename Header\n  SOAP request for GetInfoRequest                            gather_environment          zimbra_batch_analytics.json\n  SOAP request for\n                                                             gather_2fa_codes            zimbra_batch_analytics.json\n  GetScratchCodesRequest\n  SOAP request for\n                                                             gather_device_status        zimbra_batch_analytics.json\n  GetDeviceStatusRequest\n  SOAP request for\n                                                             gather_oauth_consumers      zimbra_batch_analytics.json\n  GetOAuthConsumersRequest\n  Victim Organization’s Global Address List                  gather_gal                  telemetry_{1-20}.json\n  Last 90 Days of Victim’s Emails                            sendArchives                telemetryData_{0-89}.json"
+ },
+ {
+  "id": "p70",
+  "text": "The script sends all exfiltrated data identified in Table 6 to the Catcher service exactly\n as received from the SOAP request in a JSON payload, except for email exfiltration. For\n email exfiltration, the script sends it as a GZIP compressed archive [T1560]. Although\n most of the exfiltration consists of valid JSON, the script still attempts to exfiltrate all\n information identified in Table 6 using the application/octet-stream content typing rather\n than application/json."
+ },
+ {
+  "id": "p71",
+  "text": "At the beginning and end of the collection and exfiltration activity, during the\n sendStartPing and sendFinishPing stages respectively, the script submits a POST\n request with a JSON payload to indicate that the script is starting or finishing execution.\n Throughout execution, the script also logs error events and send the logs using similar\n JSON payloads. The script sends the JSON in a POST request to the URL documented\n in Figure 2, using a URL path of “/v/p” and with a “subtype” key that shows which type\n of action it logged (start, finish, or error)."
+ },
+ {
+  "id": "p72",
+  "text": "Catcher\n Ulej exfiltrates information to Flowerbed to be handled by a service named Catcher.\n Catcher is a containerized Python application, running in Docker as part of Flowerbed,\n which is detailed in the Resource development section. It receives exfiltrated data and\n temporarily stores it, enabling its eventual transfer to infrastructure designed for long-\n term, secure storage.\n Catcher acts as an HTTP server over port 8000 and a DNS server on port 53. As\n described in the Resource development section, the Flowerbed project uses an\n additional Docker container running an Nginx reverse proxy to enable HTTPS support.\n This reverse proxy uses a certificate generated by Let’s Encrypt and forwards all traffic\n with an SNI containing “*.i.*” to port 8000 within the Catcher container."
+ },
+ {
+  "id": "p73",
+  "text": "The DNS service can accept A, AAAA, MX, TXT, and CAA queries. For any MX, AAAA,\n or CAA queries, the server will always provide an empty response. The system only\n supports TXT records as needed to process Automatic Certificate Management\n Environment (ACME) requests, which enable the assignment of Let’s Encrypt\n certificates. If the server receives an A query, Catcher will always respond with the\n public IP address of the Flowerbed server."
+ },
+ {
+  "id": "p74",
+  "text": "However, if a query includes a domain formatted as shown in Figure 6 and Figure 7,\n the service saves a log file in JSON format to disk containing the following details of the\n DNS query:"
+ },
+ {
+  "id": "p75",
+  "text": "•     Time of query,\n      •     Source IP address for query,\n      •     Queried domain, and\n      •     Type of query.\n The HTTP server typically responds with OK, except in cases where the path is\n “pixel.gif” when the response contains a 1x1 gif image with a SHA-256 hash of\n ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629. Like the\n DNS service, the HTTP service will only log entries when the domain found in the host\n header of the request follows the expected formatting as seen in Figure 6 and Figure 7.\n As the HTTPS exfiltration uses non-standardized binary and JSON-formatted payloads\n when exfiltrating to Catcher, Catcher will check the content type of the request. If the\n content type is set to “application/json”, Catcher encodes the data in Base64 and\n includes it in the JSON log entry written to disk. If the content type is set to any other\n value, Catcher leaves the Base64 payload in the JSON log entry blank and saves the\n payload to a separate file with the same filename as the JSON log entry with a “.bin” file\n extension. An HTTPS exfiltration event causes Catcher to save a JSON formatted log\n file to disk containing the following information from the HTTP request:"
+ },
+ {
+  "id": "p76",
+  "text": "•     Time,\n      •     Source IP address,\n      •     Request method,\n      •     Host,\n      •     Path,\n      •     Query string,\n      •     Headers, and\n      •     Base64 payload."
+ },
+ {
+  "id": "p77",
+  "text": "These JSON event log files and binary output files are then initially saved to the\n directory /root/hits/tmp and later moved to the /root/hits/ready directory once processed.\n This prevents incomplete files, which are still being uploaded to Catcher, from\n premature exfiltration from the server. Approximately every 60 seconds, a likely\n automated workflow establishes a Secure Shell (SSH) connection with the server\n hosting Flowerbed for a few seconds, almost certainly exfiltrating the data processed by\n Catcher to non-public-facing infrastructure. The command in Figure 8 also executes\n hourly to remove all files last modified at least two days ago from the /root/hits/ready\n directory."
+ },
+ {
+  "id": "p78",
+  "text": "find /root/hits/ready -type f -mtime +1 -delete\n                               Figure 8: Command used for automated directory cleanup"
+ },
+ {
+  "id": "p79",
+  "text": "Response strategies"
+ },
+ {
+  "id": "p80",
+  "text": "Mitigations\n In many cases, by the time an organization identifies a compromise related to this\n campaign, numerous sensitive and proprietary emails have already been exfiltrated.\n The significant risk posed by this cyber threat emphasizes the importance for\n organizations that use ZCS and other similar webmail solutions to take proactive steps\n to mitigate this risk."
+ },
+ {
+  "id": "p81",
+  "text": "All organizations that use the ZCS webmail service should immediately prioritize\n ensuring that their ZCS is not running a vulnerable version. A patch for CVE-2025-\n 66376 was released for both 10.1.13 and 10.0.18 versions of ZCS [D3-AH]. If\n immediate patching is not feasible, organizations should advise employees to use\n alternative mail clients to access email and avoid using the Classic ZCS webmail client\n until ZCS is updated to a non-vulnerable version [d3f:Isolate]."
+ },
+ {
+  "id": "p82",
+  "text": "System administrators should closely monitor any Internet-connected ZCS or other\n email systems and the workstations that access those systems and promptly apply\n available software updates [D3-AH]. Administrators can maintain awareness of active\n vulnerability exploitation by referencing open source resources, including CISA’s Known\n Exploited Vulnerabilities Catalog and NCSC-UK’s Responding to active exploitation of\n vulnerabilities guidance."
+ },
+ {
+  "id": "p83",
+  "text": "Organizations should consider using a third-party authentication service that supports\n passkeys for authentication to mediate access to ZCS and other services that do not\n natively support passkeys. By doing so, organizations can work to eliminate the\n possibility of automated password collection from autocomplete or password reuse [D3-\n CH]. However, Application Passcodes may still be necessary and should be monitored\n closely."
+ },
+ {
+  "id": "p84",
+  "text": "Organizations should implement network monitoring capabilities with collection and\n short-term retention of packet capture or NetFlow data and maintain log collection and\n storage [CPG 3.Q]. This will allow organizations to monitor for and identify suspicious\n network activity [CPG 4.B], such as:"
+ },
+ {
+  "id": "p85",
+  "text": "•     Significant amounts of outbound data being sent to IPs associated with VPS\n            providers not used by the organization [D3-NTA];\n      •     Frequent DNS queries for a suspicious domain with seemingly random\n            subdomains [D3-DNSTA];\n      •     A sudden spike of connections to a server associated with a recently established\n            domain [D3-NTCD]; and\n      •     Connections to internal services, such as webmail, from VPN providers\n            frequently leveraged by this group for nefarious activity, such as Mullvad VPN\n            [D3-NTCD].\n Additionally, for organizations that can inspect the content of outbound HTTPS\n connections via break-and-inspect infrastructure, security teams should identify traffic\n matching the characteristics described in the Exfiltration section of this advisory."
+ },
+ {
+  "id": "p86",
+  "text": "Indicators of compromise (IOCs)"
+ },
+ {
+  "id": "p87",
+  "text": "Flowerbed infrastructure\n The following indicators have been attributed to use by LAUNDRY BEAR for their\n campaign targeting ZCS’s webmail service as of the publication of this advisory.\n (Disclaimer: Due to the frequency of operational structure changes by this group, these\n indicators are intended solely for historic attribution purposes. Some indicators, such as\n IPs, compromised emails, and domains, may be outdated, so organizations should\n check for current activity before acting on these IOCs.) Table 7 provides details about\n the server infrastructure used to host Flowerbed, and Table 8 lists the corresponding\n SHA-1 hash values for the Let’s Encrypt certificates used by that infrastructure [D3-IAA]."
+ },
+ {
+  "id": "p88",
+  "text": "Table 7: Flowerbed server infrastructure\n         Domain                                        IP Address          First Seen            Last Seen\n         zmailanalytics[.]com                          216.252.238[.]104   8 July 2025           15 October 2025\n         zimbra-metadata[.]com                         216.252.238[.]18    20 August 2025        14 October 2025\n         analyticemailmeter[.]com                      37.120.247[.]228    24 September 2025     18 March 2026\n         emailanalytics.com[.]ua                       185.86.79[.]95      24 September 2025     18 March 2026\n         mailnalysis[.]com                             104.248.134[.]194   11 November 2025      17 February 2026\n         zimbrastat[.]com                              64.226.124[.]190    18 December 2025      18 March 2026\n         zimbrasoft.com[.]ua                           193.238.152[.]66    20 January 2026       18 March 2026\n         synacorzimbra[.]nl                            216.252.238[.]64    3 February 2026       30 March 2026\n         istc-cloud[.]com                              194.156.103[.]193   5 February 2026       30 March 2026"
+ },
+ {
+  "id": "p89",
+  "text": "Table 8: Flowerbed X.509 certificate SHA-1 hashes\nAssociated Domain                        X.509 SHA-1 Hash                                      First Seen    Last Seen\nzmailanalytics[.]com                     2e4f314bc9943cab5005d6fde0b271c74d47bc9d              8 Jul 2025    6 Aug 2025\n*.i.zmailanalytics[.]com                 50a87d926621dd06389ba50d86e0ff574ed713a8              6 Aug 2025    13 Oct 2025\n*.i.zimbra-metadata[.]com                c5a72420e7bb308d078e62128430897f82194c95              20 Aug 2025   14 Oct 2025\n*.i.analyticemailmeter[.]com             8959c4d29e29f02ea94ea8bb21c8df2594c5549d              24 Sep 2025   8 Nov 2025\n*.i.emailanalytics.com[.]ua              62eb76432597694edb01c1fe57aab0cfe03a7178              25 Sep 2025   27 Sep 2025\n*.i.mailnalysis[.]com                    cddf5c3be1e07f28140aed165b929bf2d614922a              12 Nov 2025   17 Dec 2025\n*.i.zimbrastat[.]com                     18b3ad442ce73cc8656d51d75bbd7c855f2cb7e8              18 Dec 2025   28 Dec 2025\n*.i.zimbrasoft.com[.]ua                  1b25041ececf2457eef0270fc1d785cec8ec9ded              21 Jan 2026   10 Feb 2026\n*.i.synacorzimbra[.]nl                   e4fe6466a4f9a4249fe330651e914e45bbdca44a              5 Feb 2026    22 Mar 2026\n*.i.istc-cloud[.]com                     b6b77c9a455225d525834a403ca9ef5481ed0447              12 Feb 2026   30 Mar 2026"
+ },
+ {
+  "id": "p90",
+  "text": "LAUNDRY BEAR has used the following email addresses to procure resources used for\n    this campaign:"
+ },
+ {
+  "id": "p91",
+  "text": "•     ivanka.zurabishvili@proton[.]me,\n         •     zmul1@buildandconsulting[.]com,\n         •     garrysmithme@pinmx[.]net, and\n         •     hostingclient@pinmx[.]net."
+ },
+ {
+  "id": "p92",
+  "text": "Phishing distribution\n    LAUNDRY BEAR primarily relied on ProtonMail for distribution of malicious email.\n    However, as stated above, LAUNDRY BEAR’s more recent efforts likely have shifted to\n    distributing the payload through previous victims.\n    The following email addresses have distributed payloads attributed to this campaign:\n         •     c.laurent.ejfa@proton[.]me,\n         •     j.moreau.epsc@proton[.]me,"
+ },
+ {
+  "id": "p93",
+  "text": "•     liberty.insights@proton[.]me,\n      •     certain email addresses (presumably compromised) at the isofts.kiev[.]ua domain\n            (i.e., ending with @isofts.kiev[.]ua), and\n      •     certain email addresses (presumably compromised) at the navs.edu[.]ua domain\n            (i.e., ending with @navs.edu[.]ua).\n Additionally, the following are SHA-256 hashes of email samples containing the\n malicious payload attributed to this campaign:\n   • 98df604ecc57f884a2e6ce3266a0013ad64455cac48442c2312cfa4765007aaf,\n      •     60db9abae75cd8ccc49dd7ea5feb41677566dcd442f12ebc5745ffd2810fb874,\n      •     b1f5beb1175fc5c7d1806a2f0d900eb124c54f0286c5c52b66eea7a6633adb1d,\n            and\n      •     1517b3caa495f6c4e832df9c75fc94667e3c233773f7fa4e056d5e30e5ead760."
+ },
+ {
+  "id": "p94",
+  "text": "Post-compromise artifacts\n Currently, the script does not remove artifacts. This leaves additional opportunities to\n identify victims of this activity. While emphasis should always be placed on consistent\n monitoring of network traffic and endpoint activity, there are a variety of persistent\n artifacts described below that can be used to identify victims of this campaign."
+ },
+ {
+  "id": "p95",
+  "text": "This Ulej capability relies on creating a significant number of SOAP requests to collect\n account information for exfiltration. ZCS logs from these requests are stored, by default,\n in the /opt/zimbra/log/mailbox.log file [D3-PA]. A significant amount of SOAP request\n activity that aligns with what was described in the Persistence and credential access\n and Collection sections of this advisory could indicate a potential compromise. Specific\n examples of high-risk SOAP request activity might include:\n      •     Many SearchGalRequest command requests from a single user over a short\n            period of time;\n      •     Use of the CreateAppSpecificPasswordRequest command, especially in cases\n            where it is creating an Application Passcode named “ZimbraWeb”; and\n      •     Use of the GetScratchCodesRequest command.\n While LAUNDRY BEAR uses the localStorage property to track what days had emails\n previously exfiltrated, defenders can use this property to identify victims of this\n campaign and determine the scope of exfiltrated information [D3-PA]. Review of the\n items stored in that property for an organization’s ZCS webmail client page on an"
+ },
+ {
+  "id": "p96",
+  "text": "endpoint device could indicate compromise if there are items named with a format of\n zd_comp_YYYY-MM-DD, as explained in the Collection section of this advisory."
+ },
+ {
+  "id": "p97",
+  "text": "While Application Passcodes have non-malicious purposes, in this case instances of\n these passcodes with the name “ZimbraWeb” are almost certainly malicious. The ZCS\n webmail application can support 2FA natively and does not require the use of an\n Application Passcode, so there is no reason that there should be one named\n “ZimbraWeb.”\n In instances where organizations identify victims of this campaign, they should also\n examine the inbox of the suspected victim for the original phishing email [D3-MA]. If an\n email that has a payload exploiting CVE-2025-66376 is discovered, steps should be\n taken immediately to identify and quarantine other instances of emails with\n similar body content, senders, and subject lines to prevent further exploitation\n and exfiltration."
+ },
+ {
+  "id": "p98",
+  "text": "Remediation\n In the event an organization identifies activity associated with this campaign, that\n organization should take steps to minimize further exploitation. The organization should\n consider requesting that employees minimize use of the ZCS webmail client until the\n organization updates to a patched version that is not vulnerable to CVE-2025-66376.\n Organizations should use identifiers from the IOCs section of this report to identify any\n individuals compromised by this campaign and record the date(s) of compromise(s) to\n determine the scale and scope of emails exfiltrated."
+ },
+ {
+  "id": "p99",
+  "text": "All users from the organization should have all Application Passcodes and 2FA scratch\n keys revoked. Affected organizations should require all employees to change\n passwords in line with establishing minimum password strength requirements [CPG 3.B]\n and creating unique credentials [CPG 3.C], specifically noting that compromised\n employees might have had any password stored in a password manager exfiltrated."
+ },
+ {
+  "id": "p100",
+  "text": "Works cited\n      [1] Netherlands General Intelligence and Security Service (AIVD) and Netherlands Defence\n          Intelligence and Security Service (MIVD). AIVD and MIVD identify a new Russian cyber threat\n          actor. 2025. https://www.aivd.nl/site/binaries/site-content/collections/documents/2025/05/27/aivd-\n          en-mivd-onderkennen-nieuwe-russische-\n          cyberactor/Advisory+AIVD+en+MIVD+Public+report+on+new+cyber+actor.pdf"
+ },
+ {
+  "id": "p101",
+  "text": "[2] Microsoft Corporation. New Russia-affiliated actor Void Blizzard targets critical sectors for\n          espionage. 2025. https://www.microsoft.com/en-us/security/blog/2025/05/27/new-russia-affiliated-\n          actor-void-blizzard-targets-critical-sectors-for-espionage/\n      [3] Palo Alto Networks Unit 42. Russian Global Webmail Espionage. 2026.\n          https://unit42.paloaltonetworks.com/russian-webmail-espionage/\n      [4] Proofpoint. TA488 Targets Zimbra Mailservers with Half-Click Exploits. 2026.\n          https://www.proofpoint.com/us/blog/threat-insight/ta488-zcs-exploit\n      [5] Seqrite. Operation GhostMail: Russian APT exploits Zimbra Webmail to Target Ukraine State\n          Agency. 2026. https://www.seqrite.com/blog/operation-ghostmail-zimbra-xss-russian-apt-ukraine/"
+ },
+ {
+  "id": "p102",
+  "text": "Acknowledgements\n The authoring agencies acknowledge the contributions to this advisory from Palo Alto\n Networks Unit 42 and Proofpoint."
+ },
+ {
+  "id": "p103",
+  "text": "Disclaimer of endorsement\n The information and opinions contained in this document are provided \"as is\" and without any warranties or\n guarantees. Reference herein to any specific commercial products, process, or service by trade name, trademark,\n manufacturer, or otherwise, does not constitute or imply its endorsement, recommendation, or favoring by the United\n States Government, and this guidance shall not be used for advertising or product endorsement purposes."
+ },
+ {
+  "id": "p104",
+  "text": "Organizations have no obligation to respond or provide information back to the authoring organizations in response to\n this joint advisory. If, after reviewing the information provided, an organization decides to provide information to the\n authoring organizations, reporting must be consistent with all applicable laws and policies."
+ },
+ {
+  "id": "p105",
+  "text": "Purpose\n This document was developed in furtherance of the authoring agencies’ cybersecurity missions, including their\n responsibilities to identify and disseminate threats, and to develop and issue cybersecurity specifications and\n mitigations. This information may be shared broadly to reach all appropriate stakeholders."
+ },
+ {
+  "id": "p106",
+  "text": "Contact\n United States organizations\n  • National Security Agency\n    Cybersecurity Report Feedback: CybersecurityReports@nsa.gov\n    Defense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\n    Media Inquiries / Press Desk: NSA Media Relations: 443-634-0721, MediaRelations@nsa.gov\n  • Cybersecurity and Infrastructure Security Agency\n    CISA’s 24/7 Operations Center (contact@cisa.dhs.gov), or by calling 1-844-Say-CISA (1-844-729-2472).\n  • Federal Bureau of Investigation\n    If you or someone you know has fallen victim to this campaign, file a complaint with IC3.\n  • Defense Counterintelligence and Security Agency\n    DCSA Counterintelligence, Cyber Mission Center, Cyber Threat Operations Branch:\n    DCSA.CI.CyberOps@mail.mil\n    Cleared Contactors (CCs) should contact their DCSA Counterintelligence Special Agent to report information\n    pertaining to suspicious contacts or physical/digital efforts to obtain illegal or unauthorized access to the CC’s\n    cleared facility/information, as required by 32 CFR 117.\n    Media/Public Inquiries: dcsa.quantico.dcsa-hq.mbx.pa@mail.mil"
+ },
+ {
+  "id": "p107",
+  "text": "• Department of Defense Cyber Crime Center\n    Defense Industrial Base Inquiries and Cybersecurity Services: DC3.DCISE@us.af.mil\n    Defense Industrial Base mandatory cyber incident reporting as required by 10 U.S. Code Sections 391 and 393\n    and Defense Federal Acquisition Regulation Supplement (DFARS) 252.204-7012 is submitted at\n    https://dibnet.dod.mil\n    Media Inquiries / Press Desk: DC3.Information@us.af.mil\n  • Naval Criminal Investigative Service\n    To report criminal activity impacting the United States Navy, go to www.ncis.navy.mil and click “Submit a Tip”\n Dutch organizations\n  • Defence Intelligence and Security Service (MIVD): https://www.defensie.nl/onderwerpen/m/militaire-inlichtingen-\n    en-veiligheid\n  • General Intelligence and Security Service (AIVD): https://www.aivd.nl\n Australian organizations\n  • Australian Signals Directorate\n    Visit cyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report cybersecurity incidents and access alerts and\n    advisories.\n Canadian organizations\n  • The Canadian Centre for Cyber Security (Cyber Centre), part of the Communications Security Establishment,\n    encourages Canadian organizations to report cyber incidents and to strengthen the security of their networking\n    devices.\n    Report an incident or suspicious activity to the Cyber Centre by email at contact@cyber.gc.ca, online via the\n    reporting tool Report a cyber incident - Canadian Centre for Cyber Security or by phone at 1-833-CYBER-88 (1-\n    833-292-3788).\n New Zealand organizations\n  • New Zealand National Cyber Security Centre (NCSC-NZ): info@ncsc.govt.nz"
+ },
+ {
+  "id": "p108",
+  "text": "United Kingdom organizations\n  • Report significant cyber security incidents to ncsc.gov.uk/report-an-incident (monitored 24/7)\n Estonia organizations\n  • Estonian Foreign Intelligence Service (EFIS): info@valisluureamet.ee\n Finnish organizations\n  • Finnish Security and Intelligence Service: supo.fi/en/contact\n French organizations\n  • French organizations are encouraged to report suspicious activity or incident related information found in this\n    advisory by contacting ANSSI/CERT-FR at: cert-fr@ssi.gouv.fr or by phone at: 3218 or +33 9 70 83 32 18.\n Italian Organizations\n  • Italian External Intelligence and Security Agency (AISE):\n       Visit https://www.sicurezzanazionale.gov.it/\n  • Italian Internal Intelligence and Security Agency (AISI):\n        Visit https://www.sicurezzanazionale.gov.it/\n Moldovan organizations\n  • Security and Intelligence Service of the Republic of Moldova (SIS RM): cybersec@sis.md\n Polish organizations\n  • Polish Foreign Intelligence Agency (AW): ctiteam@aw.gov.pl"
+ },
+ {
+  "id": "p109",
+  "text": "Appendix A: MITRE ATT&CK tactics and techniques\n See Table 9 through Table 19 for all the threat actor tactics and techniques referenced\n in this advisory.\n                                                       Table 9: Reconnaissance\n       Technique Title                                 ID                            Use\nGather Victim Identity                                           The payload attempts to intercept a victim’s\n                                              T1589.001\nInformation: Credentials                                         password from their password manager.\nGather Victim Identity\n                                                                 The payload attempts to grab the victim’s\nInformation: Email                            T1589.002\n                                                                 email address from various data stores.\nAddresses\nSearch Open                                                      This group likely leverages public\n                                              T1593\nWebsites/Domains                                                 information to support target development.\n                                                                 Port scanning can be used by this group to\nActive Scanning                               T1595              assist with determining exploitability of\n                                                                 identified targets.\nSearch Open Technical                                            Various public datasets can provide\nDatabases: Scan                               T1596.005          information to support discovery of\nDatabases                                                        exploitable targets.\n                                                                 Previously exfiltrated data can be used to\nSearch Closed Sources                         T1597\n                                                                 enhance target development efforts.\nSearch Closed Sources:\n                                                                 Commercial datasets can also be used to\nPurchase Technical                            T1597.002\n                                                                 support target development efforts.\nData\n                                                    Table 10: Resource Development\n       Technique Title                                 ID                            Use\n                                                                 This group used Mullvad VPN to anonymize\nAcquire Infrastructure                        T1583\n                                                                 traffic sent to operational infrastructure.\nAcquire Infrastructure:                                          This group procured VPS servers from a\n                                              T1583.003\nVirtual Private Server                                           variety of vendors.\n                                                                 The Ulej capability was developed likely for\nDevelop Capabilities                          T1587              use by this group to conduct spear phishing\n                                                                 campaigns.\n                                                                 Development of a novel payload that steals\nDevelop Capabilities:\n                                              T1587.001          a victim’s emails and other sensitive\nMalware\n                                                                 account information."
+ },
+ {
+  "id": "p110",
+  "text": "Development of a novel, at the time, cross-\nDevelop Capabilities:\n                                              T1587.004          site-scripting (XSS) exploit that enables\nExploits\n                                                                 execution of arbitrary JavaScript.\n                                                                 Open source tools, such as Evilginx2, have\nObtain Capabilities: Tool                     T1588.002\n                                                                 also been used by the group.\nObtain Capabilities:                                             The group appears to have leveraged AI to\n                                              T1588.007\nArtificial Intelligence                                          support development efforts.\n                                                                 Flowerbed is deployed to a procured server\nStage Capabilities                            T1608\n                                                                 in the cloud.\n                                                      Table 11: Initial Access\n       Technique Title                              ID                              Use\n                                                                 This actor has used commercial datasets to\n                                                                 acquire account credentials and gain\n                                                                 unauthorized access to accounts.\nValid Accounts                                T1078\n                                                                 Additionally, this actor is believed to use\n                                                                 previously compromised accounts to\n                                                                 conduct spear phishing.\n                                                                 The group sends malicious payloads to\n                                                                 targeted individuals using previously\nTrusted Relationship                          T1199\n                                                                 compromised accounts that might have an\n                                                                 established relationship with the target.\n                                                                 The actors used spear phishing to lure\nPhishing                                      T1566\n                                                                 users into opening malicious email.\n                                                         Table 12: Execution\n       Technique Title                              ID                              Use\nExploitation for Client                                          An XSS vulnerability was leveraged to\n                                              T1203\nExecution                                                        execute the JavaScript payload.\n                                                      Table 13: Persistence\n       Technique Title                              ID                              Use\n                                                                 Enabling IMAP and Application Passcodes\nAccount Manipulation                          T1098              provides persistent access to the\n                                                                 compromised account.\nModify Authentication                                            Creating Application Passcodes to bypass\nProcess: Multi-Factor                         T1556.006          2FA and stealing a user’s “Scratch Keys,”\nAuthentication                                                   which can be used in place of a 2FA token."
+ },
+ {
+  "id": "p111",
+  "text": "Table 14: Privilege Escalation\n       Technique Title                               ID                                Use\n                                                                  This actor has used commercial datasets to\nValid Accounts                                T1078               acquire account credentials and gain\n                                                                  unauthorized privileged access to accounts.\n                                                           Table 15: Stealth\n       Technique Title                               ID                                Use\nObfuscated Files or\n                                                                  Obfuscated JavaScript payload sent to\nInformation: Command                          T1027.010\n                                                                  targets to exploit the XSS vulnerability.\nObfuscation\nObfuscated Files or                                               The JavaScript payload included both a\nInformation:                                  T1027.013           Base64-encoded and XOR-encrypted inner\nEncrypted/Encoded File                                            payload.\nObfuscated Files or                                               The payload was contained in an “onload”\nInformation: SVG                              T1027.017           attribute within an SVG image included in\nSmuggling                                                         the malicious email.\nUse Alternate                                                     Previous campaigns using AiTM leveraged\nAuthentication Material:                      T1550.004           stealing and use of a victim’s session\nWeb Session Cookie                                                cookies to authenticate.\n                                                    Table 16: Credential Access\n       Technique Title                               ID                                Use\nModify Authentication                                             Creating Application Passcodes to bypass\nProcess: Multi-Factor                        T1556.006            2FA and stealing a user’s “Scratch Keys,”\nAuthentication                                                    which can be used in place of a 2FA token.\n                                                                  Previous campaigns used Evilginx2 as an\nAdversary-in-the-Middle                      T1557                AiTM toolkit to intercept credentials and\n                                                                  session cookies.\n                                                          Table 17: Collection\n       Technique Title                               ID                                Use\n                                                                  Exfiltrated data was sent to an actor-\nData Staged: Remote\n                                              T1074.002           controlled VPS prior to assumed long-term\nData Staging\n                                                                  storage solutions.\n                                                                  This group has emphasized collection of\nEmail Collection                              T1114\n                                                                  emails."
+ },
+ {
+  "id": "p112",
+  "text": "Technique Title                              ID                               Use\n                                                                 Emails are collected via API calls to the\nEmail Collection:\n                                              T1114.002          ZCS mail server and are not collected from\nRemote Email Collection\n                                                                 emails stored directly on the victim’s device.\n                                                                 Upon execution, the JavaScript payload\nAutomated Collection                          T1119              automatically collects all relevant\n                                                                 information in stages.\n                                                                 The JavaScript payload leverages the\nBrowser Session\n                                              T1185              user’s authenticated browser session to\nHijacking\n                                                                 make API requests as the user.\n                                                                 Emails are exfiltrated with GZIP\nArchive Collected Data                        T1560\n                                                                 compression.\n                                                         Table 18: Discovery\n       Technique Title                              ID                               Use\n                                                                 Stolen Global Access Lists provide the\nAccount Discovery                             T1087\n                                                                 group with new users to target.\n                                                      Table 19: Exfiltration\n       Technique Title                              ID                               Use\nExfiltration Over                                                Victim information was exfiltrated over both\n                                              T1048\nAlternative Protocol                                             HTTPS and DNS.\nExfiltration Over\nAlternative Protocol:                                            Some payloads, especially ones with large\nExfiltration Over                             T1048.002          amounts of data, were exfiltrated over\nAsymmetric Encrypted                                             HTTPS.\nNon-C2 Protocol\nExfiltration Over\nAlternative Protocol:                                            Some smaller bandwidth payloads were\nExfiltration Over                             T1048.003          exfiltrated over DNS using Base32\nUnencrypted Non-C2                                               encoding.\nProtocol"
+ },
+ {
+  "id": "p113",
+  "text": "Appendix B: MITRE D3FEND countermeasures\n See Table 20 for a mapping of several of the cybersecurity countermeasures mentioned\n in this advisory.\n                                          Table 20: MITRE D3FEND Countermeasures"
+ },
+ {
+  "id": "p114",
+  "text": "Countermeasure Title                               ID                      Description\n                                                            • Organizations should immediately\n                                                              prioritize patching CVE-2025-66376.\nApplication Hardening                         D3-AH\n                                                            • Organizations should promptly apply\n                                                              software updates to all email systems.\n                                                            Organizations that cannot feasibly patch\nIsolate                                       d3f:Isolate\n                                                            should use alternative mail clients.\n                                                            Organizations should consider using a\n                                                            third-party authentication service that\nCredential Hardening                          D3-CH         supports passkeys to mediate access to\n                                                            ZCS and other services that do not natively\n                                                            support passkeys.\n                                                            Organizations should monitor for significant\n                                                            amounts of outbound data being sent to IPs\nNetwork Traffic Analysis                      D3-NTA\n                                                            associated with VPS providers not used by\n                                                            the organization.\n                                                            Organizations should monitor for frequent\nDNS Traffic Analysis                          D3-DNSTA      DNS queries to a suspicious domain for\n                                                            seemingly random subdomains.\n                                                            • Organizations should monitor for a sudden\n                                                              spike of connections to a server\n                                                              associated with a recently established\nNetwork Traffic\n                                              D3-NTCD         domain.\nCommunity Deviation\n                                                            • Organizations should monitor for\n                                                              connections to internal services, such as\n                                                              webmail, from VPN providers.\nIdentifier Activity                                         Organizations should search for the listed\n                                              D3-IAA\nAnalysis                                                    known IOCs.\n                                                            • Organizations should search ZCS log files\nProcess Analysis                              D3-PA          for specific commands used by the\n                                                             malicious script."
+ },
+ {
+  "id": "p115",
+  "text": "• Organizations should search the\n                                                       localStorage property in web browsers for\n                                                       the ZCS webmail client for “ZimbraWeb”\n                                                       Application Passcodes.\n                                                      Organizations that suspect they have\n                                                      victims of this campaign should search for\nMessage Analysis                              D3-MA\n                                                      emails with a malicious payload to identify\n                                                      other victims."
+ }
+]

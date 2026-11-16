@@ -1,0 +1,74 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Water and Wastewater Systems (WWS) HMIs",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "VNC Protocol",
+     "port": 5900,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 VNC Protocol 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a7 require access to VNC Protocol.",
+   "port": 5900,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 5900
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

@@ -1,0 +1,1194 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-211117-2",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "b678d89f77c614616ebb53cc17e6203c8a22d08efabbbf782eb0cdfe22377ba5",
+  "source_name": "csa-2021-211117-2"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit 0-day vulnerability in FatPipe MPVPN device software",
+   "source": "llm",
+   "description": "Exploit a 0-day vulnerability in the FatPipe MPVPN device software to gain access to an unrestricted file upload function.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Drop webshell /fpui/img/1.jsp with root privileges",
+   "source": "llm",
+   "description": "Drop a webshell at /fpui/img/1.jsp with root privileges via the unrestricted file upload function.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Send GET request to /RELEASE-NOTES.txt",
+   "source": "llm",
+   "description": "Send a GET request to /RELEASE-NOTES.txt as part of initial exploitation.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+   "source": "llm",
+   "description": "Send a POST request to /fpui/uploadConfigServlet?fileNumber=undefined as part of initial exploitation.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Download malicious sshd_config and authorized_keys files",
+   "source": "llm",
+   "description": "Download malicious sshd_config and authorized_keys files from attacker IP.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Backup legitimate sshd_config and authorized_keys files",
+   "source": "llm",
+   "description": "Backup the system's current SSHd configuration file and root user's authorized_keys file.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Overwrite sshd_config and authorized_keys with malicious versions",
+   "source": "llm",
+   "description": "Overwrite the legitimate sshd_config and root user’s authorized_keys files with malicious versions.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Restart SSHd service",
+   "source": "llm",
+   "description": "Restart the SSHd service to apply malicious configuration.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "Use new SSH access to route malicious traffic and target additional infrastructure",
+   "source": "llm",
+   "description": "Use the new SSH access to route malicious traffic through the device and target additional U.S. infrastructure.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a10",
+   "name": "Restore original sshd_config and authorized_keys files and delete malicious copies",
+   "source": "llm",
+   "description": "Restore original sshd_config and authorized_keys files and delete the malicious copies as part of cleanup.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "Overwrite btmp, wtmp, and lastlog entries to hide session activity",
+   "source": "llm",
+   "description": "Overwrite the btmp, wtmp, and lastlog entries to hide session activity as part of cleanup.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "Restart SSHd service after cleanup",
+   "source": "llm",
+   "description": "Restart the SSHd service after restoring original files and hiding session activity.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "Delete webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp",
+   "source": "llm",
+   "description": "Delete the webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp as part of cleanup.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the webshell is dropped by exploiting the 0-day vulnerability",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "POST request follows GET request",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "downloads observed immediately after POST request",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "backup occurs after downloads",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "overwrite uses the backed up legitimate files",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "restart SSHd service after overwriting config files",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "new SSH access used to route malicious traffic",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "cleanup observed after exploitation activity was complete",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r9",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "overwrite log entries part of cleanup process after restoring files",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "restart SSHd service after log overwrite",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r11",
+   "from_action": "a12",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "delete webshell after restarting SSHd service in cleanup",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "FatPipe MPVPN device software",
+   "source": "llm",
+   "name": "FatPipe MPVPN device",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "FatPipe MPVPN device software",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "SSHd service",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Tomcat",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "/fpui/img/1.jsp",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "sshd_config",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "authorized_keys",
+   "type": "file",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "btmp, wtmp, and lastlog entries",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "1.jsp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "sshd_config.bak",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "fatpipeinc.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "cve-list.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "As of November 2021, FBI forensic analysis indicated exploitation of a 0-day vulnerability in the FatPipe MPVPN® device software1 going back to at least May 2021. The vulnerability allowed APT actors to gain access to an unrestricted file upload function",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "As of November 2021, FBI forensic analysis indicated exploitation of a 0 day vulnerability in the FatPipe MPVPN® device software1 going back to at least May 202"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The compromise of affected systems running FatPipe MPVPN software involves exploiting a servlet at the URL path /fpui/uploadConfigServlet and dropping a webshell /fpui/img/1.jsp with root privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The compromise of affected systems running FatPipe MPVPN software involves exploiting a\nservlet at the URL path /fpui/uploadConfigServlet and dropping a webshel"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The following was executed for initial exploitation:\n    GET request to /RELEASE-NOTES.txt",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The following was executed for initial exploitation:  GET request to /RELEASE NOTES.txt"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The following was executed for initial exploitation:\n    POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "  POST request to /fpui/uploadConfigServlet?fileNumber=undefined"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Immediately after the POST request, the following activity was observed:\n    Download <attacker_ip>/sshd_config\n    Download <attacker_ip>/authorized_keys",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Immediately after the POST request, the following activity was observed:  Download <attacker_ip>/sshd_config  Download <attacker_ip>/authorized_keys"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Backup the system's current SSHd configuration file, sshd_config, and the \"root\" user’s SSH authorized keys file, /root/.ssh/authorized_keys",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Backup the system's current SSHd configuration file, sshd_config, and the \"root\" user’s SSH authorized keys file, /root/.ssh/authorized_keys"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Overwrite the legitimate sshd_config and root user’s authorized_keys files with the actor’s malicious versions",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Overwrite the legitimate sshd_config and root user’s authorized_keys files with the actor’s malicious versions"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Restart the SSHd service",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restart the SSHd service"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "During a varying length of time while the webshell was available, the actor(s) used the new SSH access to route malicious traffic through the device and target additional U.S. infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During a varying length of time while the webshell was available, the actor(s) used the new SSH access to route malicious traffic through the device and target "
+  },
+  {
+   "id": "evidence-10",
+   "quote": "In most cases, after the exploitation activity was complete, the following activity was observed as part of a \"clean-up\" process to hide the malicious actor’s activity and to protect their exploit until a later date:\n    Restore original sshd_config and authorized_keys files and delete the malicious copies",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7097,
+   "matched_text": "In most cases, after the exploitation activity was complete, the following activity was observed as part of a \"clean up\" process to hide the malicious actor’s a"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Restore original sshd_config and authorized_keys files and delete the malicious copies",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restore original sshd_config and authorized_keys files and delete the malicious copies"
+  },
+  {
+   "id": "evidence-12",
+   "quote": " Overwrite the btmp, wtmp, and lastlog entries to hide their session activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": " Overwrite the btmp, wtmp, and lastlog entries to hide their session activity"
+  },
+  {
+   "id": "evidence-13",
+   "quote": " Restart the SSHd service",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": " Restart the SSHd service"
+  },
+  {
+   "id": "evidence-14",
+   "quote": " Delete the webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": " Delete the webshell at <tomcat installation path>/webapps/fpui/img/1.jsp"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The following was executed for initial exploitation:\n   \u001f GET request to /RELEASE-NOTES.txt\n   \u001f POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " POST request to /fpui/uploadConfigServlet?fileNumber=undefined"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Immediately after the POST request, the following activity was observed:\n   \u001f Download <attacker_ip>/sshd_config\n   \u001f Download <attacker_ip>/authorized_keys",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Immediately after the POST request, the following activity was observed: "
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Immediately after the POST request, the following activity was observed:\n   \u001f Backup the system's current SSHd configuration file, sshd_config, and the \"root\"\n        user\u001fs SSH authorized keys file, /root/.ssh/authorized_keys",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9231,
+   "matched_text": " Backup the system's current SSHd configuration file, sshd_config, and the \"root\" user"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Overwrite the legitimate sshd_config and root user\u001fs authorized_keys files with the actor\u001fs malicious versions",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7143,
+   "matched_text": "Overwrite the legitimate sshd_config and root user"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Immediately after the POST request, the following activity was observed:\n   \u001f Restart the SSHd service",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Immediately after the POST request, the following activity was observed: "
+  },
+  {
+   "id": "evidence-20",
+   "quote": "In most cases, after the exploitation activity was complete, the following activity was observed as part of a \"clean-up\" process to hide the malicious actor\u001fs activity and to protect their exploit until a later date:\n   \u001f Restore original sshd_config and authorized_keys files and delete the malicious copies",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7188,
+   "matched_text": "In most cases, after the exploitation activity was complete, the following activity was observed as part of a \"clean up\" process to hide the malicious actor"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Overwrite the btmp, wtmp, and lastlog entries to hide their session activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Overwrite the btmp, wtmp, and lastlog entries to hide their session activity"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Restart the SSHd service",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restart the SSHd service"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Delete the webshell at <tomcat-installation-\n       path>/webapps/fpui/img/1.jsp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Delete the webshell at <tomcat installation path>/webapps/fpui/img/1.jsp"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "exploitation of a 0-day vulnerability in the FatPipe MPVPN® device software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "exploitation of a 0 day vulnerability in the FatPipe MPVPN® device software"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "dropping a webshell /fpui/img/1.jsp with root privileges",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dropping a webshell /fpui/img/1.jsp with root privileges"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Backup the system's current SSHd configuration file, sshd_config",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Backup the system's current SSHd configuration file, sshd_config"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Overwrite the btmp, wtmp, and lastlog entries to hide their session activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Overwrite the btmp, wtmp, and lastlog entries to hide their session activity"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "1.jsp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1.jsp"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "sshd_config.bak",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "sshd_config.bak"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "fatpipeinc.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fatpipeinc.com"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "cve-list.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cve list.php"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "FatPipe MPVPN device — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "FatPipe MPVPN device 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — FatPipe MPVPN device",
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software",
+    "action:a2 — Drop webshell /fpui/img/1.jsp with root privileges",
+    "action:a3 — Send GET request to /RELEASE-NOTES.txt",
+    "action:a4 — Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+    "action:a6 — Backup legitimate sshd_config and authorized_keys files",
+    "action:a7 — Overwrite sshd_config and authorized_keys with malicious versions",
+    "action:a8 — Restart SSHd service",
+    "action:a10 — Restore original sshd_config and authorized_keys files and delete malicious copies",
+    "action:a11 — Overwrite btmp, wtmp, and lastlog entries to hide session activity",
+    "action:a12 — Restart SSHd service after cleanup",
+    "action:a13 — Delete webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FatPipe MPVPN device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-2",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "FatPipe MPVPN device — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "FatPipe MPVPN device 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — FatPipe MPVPN device",
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software",
+    "action:a2 — Drop webshell /fpui/img/1.jsp with root privileges",
+    "action:a3 — Send GET request to /RELEASE-NOTES.txt",
+    "action:a4 — Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+    "action:a6 — Backup legitimate sshd_config and authorized_keys files",
+    "action:a7 — Overwrite sshd_config and authorized_keys with malicious versions",
+    "action:a8 — Restart SSHd service",
+    "action:a10 — Restore original sshd_config and authorized_keys files and delete malicious copies",
+    "action:a11 — Overwrite btmp, wtmp, and lastlog entries to hide session activity",
+    "action:a12 — Restart SSHd service after cleanup",
+    "action:a13 — Delete webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FatPipe MPVPN device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-2",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "FatPipe MPVPN device — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "FatPipe MPVPN device 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — FatPipe MPVPN device",
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software",
+    "action:a2 — Drop webshell /fpui/img/1.jsp with root privileges",
+    "action:a3 — Send GET request to /RELEASE-NOTES.txt",
+    "action:a4 — Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+    "action:a6 — Backup legitimate sshd_config and authorized_keys files",
+    "action:a7 — Overwrite sshd_config and authorized_keys with malicious versions",
+    "action:a8 — Restart SSHd service",
+    "action:a10 — Restore original sshd_config and authorized_keys files and delete malicious copies",
+    "action:a11 — Overwrite btmp, wtmp, and lastlog entries to hide session activity",
+    "action:a12 — Restart SSHd service after cleanup",
+    "action:a13 — Delete webshell at <tomcat-installation-path>/webapps/fpui/img/1.jsp"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FatPipe MPVPN device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-2",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "FatPipe MPVPN device software — 版本",
+   "category": "version",
+   "reason": "IR 指出 FatPipe MPVPN device software，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 FatPipe MPVPN device software 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — FatPipe MPVPN device software",
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "FatPipe MPVPN device software",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1, a2, a4, a5 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software",
+    "action:a2 — Drop webshell /fpui/img/1.jsp with root privileges",
+    "action:a4 — Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+    "action:a5 — Download malicious sshd_config and authorized_keys files"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Exploit 0-day vulnerability in FatPipe MPVPN device software",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Drop webshell /fpui/img/1.jsp with root privileges",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download malicious sshd_config and authorized_keys files",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：FatPipe MPVPN device software, SSHd service, Tomcat。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a1 — Exploit 0-day vulnerability in FatPipe MPVPN device software",
+    "action:a3 — Send GET request to /RELEASE-NOTES.txt",
+    "action:a4 — Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+    "host:h1 — FatPipe MPVPN device"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Exploit 0-day vulnerability in FatPipe MPVPN device software",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Send GET request to /RELEASE-NOTES.txt",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Send POST request to /fpui/uploadConfigServlet?fileNumber=undefined",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.75,
+  "unsupported_claim_count": 11,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a14",
+    "name": "Search Tomcat access logs for POST requests to /fpui/uploadConfigServlet?fileNumber=undefined and GET requests to /fpui/img/1.jsp",
+    "actor": "defender"
+   },
+   {
+    "id": "a15",
+    "name": "Search SSH access/secure logs for successful SSH connections via public key from unknown IP addresses",
+    "actor": "defender"
+   },
+   {
+    "id": "a16",
+    "name": "Search wtmp and lastlog files for sessions from unknown IP addresses",
+    "actor": "defender"
+   },
+   {
+    "id": "a17",
+    "name": "Search Tomcat error logs for specific caught exception",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

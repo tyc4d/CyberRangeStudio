@@ -1,0 +1,66 @@
+[
+ {
+  "id": "p1",
+  "text": "# Enhanced Monitoring to Detect APT Activity Targeting Outlook Online"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-193A\n> - Date: 2023-07-12\n> - URL: https://www.ic3.gov/CSA/2023/230712.pdf\n> - PDF SHA-256: 38661003fd8970120e483c215e2e52d594859a846eb713cfdec9f14a9e7a1b5f (`source.pdf`, 4 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (9 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "TLP:CLEAR            Product ID: AA23-193A\n                                                                                                               July 12, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Enhanced Monitoring to Detect APT Activity\nTargeting Outlook Online\nSUMMARY\nIn June 2023, a Federal Civilian Executive Branch (FCEB) agency identified suspicious activity in\ntheir Microsoft 365 (M365) cloud environment. The agency reported the activity to Microsoft and the\nCybersecurity and Infrastructure Security Agency (CISA), and Microsoft determined that advanced\npersistent threat (APT) actors accessed and exfiltrated unclassified Exchange Online Outlook data.\nCISA and the Federal Bureau of Investigation (FBI) are releasing this joint Cybersecurity Advisory to\nprovide guidance to critical infrastructure organizations on enhancing monitoring of Microsoft\nExchange Online environments. Organizations can enhance their cyber posture and position\nthemselves to detect similar malicious activity by implementing logging recommendations in this\nadvisory. Organizations that identify suspicious, anomalous activity should contact Microsoft for\nproceeding with mitigation actions due to the cloud-based infrastructure affected, as well as report to\nCISA and the FBI."
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\nIn Mid-June 2023, an FCEB agency observed MailItemsAccessed events with an unexpected\nClientAppID and AppID in M365 Audit Logs. The MailItemsAccessed event is generated when\nlicensed users access items in Exchange Online mailboxes using any connectivity protocol from any\nclient. The FCEB agency deemed this activity suspicious because the observed AppId did not\nnormally access mailbox items in their environment. The agency reported the activity to Microsoft and\nCISA.\nMicrosoft determined that APT actors accessed and exfiltrated unclassified Exchange Online Outlook\ndata from a small number of accounts. The APT actors used a Microsoft account (MSA) consumer\nkey to forge tokens to impersonate consumer and enterprise users. Microsoft remediated the issue by\nfirst blocking tokens issued with the acquired key and then replacing the key to prevent continued\nmisuse.[1]\nThe affected FCEB agency identified suspicious activity by leveraging enhanced logging—specifically\nof MailItemsAccessed events—and an established baseline of normal Outlook activity (e.g.,\nexpected AppID). The MailItemsAccessed event enables detection of otherwise difficult to detect\nadversarial activity.\nTo report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\nyour local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\navailable, please include the following information regarding the incident: date, time, and location of the incident;\ntype of activity; number of people affected; type of equipment used for the activity; the name of the submitting\ncompany or organization; and a designated point of contact.\nThis document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\ncarries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\nrelease. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\nmore information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p6",
+  "text": "CISA and FBI are not aware of other audit logs or events that would have detected this activity.\n       Critical infrastructure organizations are strongly urged to implement the logging recommendations in\n       this advisory to enhance their cybersecurity posture and position themselves to detect similar\n       malicious activity."
+ },
+ {
+  "id": "p7",
+  "text": "LOGGING\n       CISA and the FBI strongly encourage critical infrastructure organizations to ensure audit logging is\n       enabled. Note: Per CISA’s Microsoft Exchange Online Microsoft 365 Minimum Viable Secure\n       Configuration Baselines, FCEB agencies shall enable audit logging. These minimum viable secure\n       configuration baselines are part of CISA’s Secure Cloud Business Applications (SCuBA) Project,\n       which provides guidance for FCEB agencies securing their cloud business application environments\n       and protecting federal information created, accessed, shared, and stored in those environments.\n       Although tailored to FCEB agencies, the project provides security guidance applicable to all\n       organizations with cloud environments. The Office of Management and Budget (OMB) M-21-31\n       requires Microsoft audit logs be retained for at least twelve months in active storage and an additional\n       eighteen months in cold storage. This can be accomplished either by offloading the logs out of the\n       cloud environment or natively through Microsoft by creating an audit log retention policy.\n       In addition to enabling audit logging, CISA and FBI strongly encourage organizations to:\n           •    Enable Purview Audit (Premium) logging. This logging requires licensing at the G5/E5\n                level. See Microsoft’s guidance on Assigning Microsoft 365 Licenses to Users for additional\n                information.\n           •    Ensure logs are searchable by operators. The relevant logs need to be accessible to\n                operational teams in a platform (e.g., security operations center [SOC] tooling) that enables\n                hunting for this activity and distinguishing it from expected behavior within the environment.\n           •    Enable Microsoft 365 Unified Audit Logging (UAL). UAL should be enabled by default, but\n                organizations are encouraged to validate these settings.\n           •    Understand your organization’s cloud baseline. Organizations are encouraged to look for\n                outliers and become familiar with baseline patterns to better understand abnormal versus\n                normal traffic."
+ },
+ {
+  "id": "p8",
+  "text": "GENERAL CLOUD MITIGATIONS\n       All mitigation actions for this activity are the responsibility of Microsoft due to the cloud-based\n       infrastructure affected; however, CISA and the FBI recommend that critical infrastructure\n       organizations implement the following to harden their cloud environments. Although, these mitigations\n       will not prevent this or related activity where actors leverage compromised consumer keys, they will\n       reduce the impact of less sophisticated malicious activity targeting cloud environments. Note: These\n       mitigations align with CISA’s SCuBA Technical Reference Architecture (TRA), which describes\n       essential components of security services and capabilities to secure and harden cloud business\n       applications, including the platforms hosting the applications."
+ },
+ {
+  "id": "p9",
+  "text": "TLP:CLEAR                                                                                                  CISA | FBI"
+ },
+ {
+  "id": "p10",
+  "text": "•    Apply CISA’s recommended baseline security configurations for Microsoft Defender for\n                Office 365, Azure Active Directory, Exchange Online, OneDrive for Business, Power BI, Power\n                Platform, SharePoint Online, and Teams [SCuBA TRA Section 6.6].\n           •    Separate administrator accounts from user accounts according to the National Institute of\n                Standards and Technology’s (NIST’s) guidance, AC-5: Separation of Duties. Only allow\n                designated administrator accounts to be used for administration purposes. If an individual user\n                requires administrative rights over their workstation, use a separate account without\n                administrative access to other hosts.\n           •    Collect and store access and security logs for secure cloud access (SCA) solutions,\n                endpoint solutions, cloud applications/platforms and security services, such as firewalls, data\n                loss prevention systems, and intrusion detection systems [SCuBA TRA Section 6.8.1].\n           •    Use a telemetry hosting solution (e.g., SIEM solution) that aggregates logs and telemetry\n                data to facilitate internal organization monitoring, auditing, alerting, and threat detection\n                activities [SCuBA TRA Section 6.8.1].\n           •    Review contractual relationships with all Cloud Service Providers (CSPs) and ensure\n                contracts include:\n                o Security controls the customer deems appropriate.\n                o Appropriate monitoring and logging of provider-managed customer systems.\n                o Appropriate monitoring of the service provider’s presence, activities, and connections to\n                    the customer network.\n                o Notification of confirmed or suspected activity."
+ },
+ {
+  "id": "p11",
+  "text": "REPORTING SUSPICIOUS ACTIVITY\n       Organizations are encouraged to report suspicious activity to CISA via CISA’s 24/7 Operations Center\n       (report@cisa.gov or 888-282-0870). The FBI encourages recipients of this document to report\n       information concerning suspicious or criminal activity to their local FBI field office or IC3.gov."
+ },
+ {
+  "id": "p12",
+  "text": "RESOURCES\n           •    CISA: Microsoft Exchange Online Microsoft 365 Minimum Viable Secure Configuration\n                Baselines\n           •    CISA: SCuBA Project\n           •    Microsoft: Assigning Microsoft 365 Licenses to Users\n           •    CISA: SCuBA TRA\n           •    CISA: Recommended Baseline Security Configurations (Microsoft)\n                   o Defender for Office 365\n                   o Azure Active Directory\n                   o Exchange Online\n                   o OneDrive for Business\n                   o Power BI\n                   o Power Platform\n                   o SharePoint Online\n                   o Teams"
+ },
+ {
+  "id": "p13",
+  "text": "•    NIST: AC-5: Separation of Duties"
+ },
+ {
+  "id": "p14",
+  "text": "REFERENCES\n       [1] Microsoft Security Response Center (MSRC) blog: Microsoft mitigates China-based threat actor\n       Storm-0558 targeting of customer email"
+ },
+ {
+  "id": "p15",
+  "text": "ACKNOWLEDGEMENTS\n       Microsoft contributed to this CSA."
+ },
+ {
+  "id": "p16",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. The FBI, and\n       CISA do not endorse any commercial product or service, including any subjects of analysis. Any\n       reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by the FBI and CISA."
+ }
+]

@@ -1,0 +1,820 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-231201",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "5e60266415f531f7937687ee7e07a17db7c7bfa16c651e6cb3a8fed2a5100c96",
+  "source_name": "csa-2023-231201"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Rename the compromised devices to delay device operators from accessing the devices remotely",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1531",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Set the software version of their ladder logic file to an older version to prevent communication with the PLC using engineering workstation",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1531",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Change the default port number for communicating remotely with the PLC device from 20256 to 20257",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1499",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1491.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Display a text file with defacement message on an older device that could not display a graphic image",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the ladder logic file downloaded depends on compromising the device first",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "renaming the compromised devices depends on having compromised them first",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "setting the software version of the ladder logic file depends on having compromised the device",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a1",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "disabling upload/download functions and enabling password protection depends on compromising the device",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a1",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "changing the default port number depends on compromising the device",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a1",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "uploading a splash page depends on having compromised the device",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "displaying a text file on an older device is described as an instance following the splash page upload",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "programmable logic controllers (PLCs) targeted and compromised by IRGC-affiliated cyber actors",
+   "source": "llm",
+   "name": "Unitronics Vision Series PLC devices",
+   "network_placement": "internet-connected devices",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "PLCs with human machine interfaces (HMIs) targeted by IRGC-affiliated cyber actors",
+   "source": "llm",
+   "name": "HMI-capable Unitronics Vision Series PLCs",
+   "network_placement": "used in Water and Wastewater Systems (WWS) Sector and other industries",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Unitronics Vision Series PLC communication service",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "port": 20256,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Unitronics Vision Series PLC communication service",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "port": 20257,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "custom ladder logic files",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "splash page with defacement message",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "text file with defacement message",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "report.ncsc.gov.uk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-9"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The actors compromised multiple Unitronics Vision Series devices by authenticating to internet-connected devices with communications set to the default TCP port 20256. These devices either had a default password in place or no password.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors compromised multiple Unitronics Vision Series devices by authenticating to internet connected devices with communications set to the default TCP port"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actors erased the original ladder logic file on the device and downloaded their own. Their ladder logic file contained no inputs or outputs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors erased the original ladder logic file on the device and downloaded their own. Their ladder logic file contained no inputs or outputs."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The actors renamed the compromised devices, which delayed the device operators from accessing the devices remotely as the device name was a required field for facilitating remote connections.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors renamed the compromised devices, which delayed the device operators from accessing the devices remotely as the device name was a required field for f"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The actors set the software version of their ladder logic file to an older version. Resetting the software version prevented the device operators from communicating with the PLC using their engineering workstation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors set the software version of their ladder logic file to an older version. Resetting the software version prevented the device operators from communica"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The actors disabled the upload and download functions of the PLC device to prevent the device operators from taking down the splash page. Additionally, the actors enabled password protection for the upload settings, preventing device operators from changing the programming remotely.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors disabled the upload and download functions of the PLC device to prevent the device operators from taking down the splash page. Additionally, the acto"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The actors changed the default port number for communicating remotely with the PLC device (from 20256 to 20257).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors changed the default port number for communicating remotely with the PLC device (from 20256 to 20257)."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The actors uploaded a splash page with the aforementioned defacement message to the HMI screen, which prevented operators from reading anything the display screen would normally show, such as input and output readings.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors uploaded a splash page with the aforementioned defacement message to the HMI screen, which prevented operators from reading anything the display scre"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "In at least one instance the actors displayed a text file with the same message on an older device that could not display a graphic image.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In at least one instance the actors displayed a text file with the same message on an older device that could not display a graphic image."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "report.ncsc.gov.uk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "report.ncsc.gov.uk"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Unitronics Vision Series PLC devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Unitronics Vision Series PLC devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Unitronics Vision Series PLC devices",
+    "action:a1 — Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+    "action:a2 — Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+    "action:a3 — Rename the compromised devices to delay device operators from accessing the devices remotely",
+    "action:a4 — Set the software version of their ladder logic file to an older version to prevent communication with the PLC using engineering workstation",
+    "action:a5 — Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+    "action:a6 — Change the default port number for communicating remotely with the PLC device from 20256 to 20257"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Unitronics Vision Series PLC devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Unitronics Vision Series PLC devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Unitronics Vision Series PLC devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Unitronics Vision Series PLC devices",
+    "action:a1 — Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+    "action:a2 — Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+    "action:a3 — Rename the compromised devices to delay device operators from accessing the devices remotely",
+    "action:a4 — Set the software version of their ladder logic file to an older version to prevent communication with the PLC using engineering workstation",
+    "action:a5 — Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+    "action:a6 — Change the default port number for communicating remotely with the PLC device from 20256 to 20257"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Unitronics Vision Series PLC devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Unitronics Vision Series PLC devices — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Unitronics Vision Series PLC devices 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Unitronics Vision Series PLC devices",
+    "action:a1 — Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+    "action:a2 — Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+    "action:a3 — Rename the compromised devices to delay device operators from accessing the devices remotely",
+    "action:a4 — Set the software version of their ladder logic file to an older version to prevent communication with the PLC using engineering workstation",
+    "action:a5 — Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+    "action:a6 — Change the default port number for communicating remotely with the PLC device from 20256 to 20257"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Unitronics Vision Series PLC devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-connected devices",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "HMI-capable Unitronics Vision Series PLCs — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "HMI-capable Unitronics Vision Series PLCs 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — HMI-capable Unitronics Vision Series PLCs",
+    "action:a7 — Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information",
+    "action:a8 — Display a text file with defacement message on an older device that could not display a graphic image"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "HMI-capable Unitronics Vision Series PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "HMI-capable Unitronics Vision Series PLCs — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "HMI-capable Unitronics Vision Series PLCs 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — HMI-capable Unitronics Vision Series PLCs",
+    "action:a7 — Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information",
+    "action:a8 — Display a text file with defacement message on an older device that could not display a graphic image"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "HMI-capable Unitronics Vision Series PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "HMI-capable Unitronics Vision Series PLCs — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "HMI-capable Unitronics Vision Series PLCs 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — HMI-capable Unitronics Vision Series PLCs",
+    "action:a7 — Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information",
+    "action:a8 — Display a text file with defacement message on an older device that could not display a graphic image"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "HMI-capable Unitronics Vision Series PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "used in Water and Wastewater Systems (WWS) Sector and other industries",
+     "source_ref": "hosts:h2.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2, a5, a7 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a2 — Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+    "action:a5 — Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+    "action:a7 — Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Erase the original ladder logic file on the device and download their own ladder logic file containing no inputs or outputs",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Upload a splash page with defacement message to the HMI screen to prevent operators from reading normal display information",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a1 — Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+    "action:a5 — Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+    "host:h1 — Unitronics Vision Series PLC devices"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Compromise multiple Unitronics Vision Series PLC devices by authenticating to internet-connected devices with default or no passwords",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Disable the upload and download functions of the PLC device and enable password protection for upload settings",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 7,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

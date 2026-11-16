@@ -1,0 +1,68 @@
+# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
+name: cr-demo-evidence
+x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
+services:
+  h4:
+    container_name: cr-demo-evidence-h4
+    networks:
+    - scenario-internal
+    - external
+    read_only: false
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: vulhub/struts2:2.3.30@sha256:b992e080d8e5ad332bf526ae26124d28f56ca4fc9e0eaa91510dbee9870eb2c8
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - -o
+      - /dev/null
+      - http://127.0.0.1:8080/
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 60s
+    mem_limit: 1g
+    cpus: 2.0
+    pids_limit: 512
+  attacker:
+    container_name: cr-demo-evidence-attacker
+    networks:
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+    user: 65532:65532
+    command:
+    - sh
+    - -c
+    - sleep 2147483647
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+    depends_on:
+      h4:
+        condition: service_healthy
+networks:
+  external:
+    name: cr-demo-evidence-external
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  scenario-internal:
+    name: cr-demo-evidence-scenario-internal
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated

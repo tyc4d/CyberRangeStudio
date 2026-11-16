@@ -1,0 +1,2127 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-200707-2",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "8a34eafd8115ab71aae10bca18225b6e234169d6399fdbd241b3d92bf103a72b",
+  "source_name": "csa-2020-200707-2"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares",
+   "source": "llm",
+   "description": "Upon successful infection, the Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0008",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "Kwampirs RAT maintains persistence by dropping a binary and creating a malicious Windows system service set to auto start",
+   "source": "llm",
+   "description": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to auto start upon reboot.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0003",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Kwampirs RAT malicious service scans and catalogs host configuration, encrypts data, and transmits it to external C2 server via HTTP GET on port 80",
+   "source": "llm",
+   "description": "The new malicious service scans and catalogs the host configuration, encrypts the data, and transmits it to an external Command and Control (C2) server via an HTTP GET request on port 80.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0011",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "Module 2 executes additional Kwampirs RAT modular components on infected hosts",
+   "source": "llm",
+   "description": "Module 2 executes additional Kwampirs RAT modular components on the infected host(s). These malicious components can allow for additional detailed collection of system and network interface configuration.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0009",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "Kwampirs RAT secondary module commands executed on critical business and network hosts",
+   "source": "llm",
+   "description": "Secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, including Primary Domain Controllers, Secondary Domain Controllers, Engineering & Quality Assurance / Testing workstations, and Primary Source Code servers.",
+   "target_host_ref": "h5",
+   "attack_tactic": "TA0009",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "Kwampirs RAT executes commands for deep reconnaissance on infected hosts",
+   "source": "llm",
+   "description": "Secondary Modules executed on the victim host(s) include commands such as querying hostname, MAC address, version number, ARP cache, system info, tasklist, netstat, and WMIC commands for detailed system information.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0007",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to auto start upon reboot.",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The new malicious service scans and catalogs the host configuration, encrypts the data, and transmits it to an external Command and Control (C2) server via an HTTP GET request on port 80.",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Module 2 executes additional Kwampirs RAT modular components on the infected host(s).",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The FBI has observed secondary module commands, to be highly targeted, and executed on critical business and / or network hosts.",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Secondary Modules executed on the victim host(s), include the following additional commands being executed, resulting in much deeper and thorough reconnaissance on the targeted entity.",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "infected Windows host",
+   "source": "llm",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1",
+    "s2",
+    "s3"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "Primary Domain Controllers",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  },
+  {
+   "id": "h3",
+   "role": "Secondary Domain Controllers",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  },
+  {
+   "id": "h4",
+   "role": "Engineering & Quality Assurance / Testing workstations",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  },
+  {
+   "id": "h5",
+   "role": "Primary Source Code servers",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "SMB",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Windows system service",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "HTTP",
+   "source": "llm",
+   "host_ref": "h1",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "catalogue_component": "oss-nginx",
+   "is_substitute": true,
+   "cve": []
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Kwampirs RAT",
+   "type": "malware",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "WmiApSrvEx",
+   "type": "service",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "wmiaprvse.exe",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "wmiapsrve.exe",
+   "type": "file",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "wmiapsvrce.exe",
+   "type": "file",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "wmipadp.dll",
+   "type": "file",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "wmiassn.dll",
+   "type": "file",
+   "id": "a7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "wmipdpa.dll",
+   "type": "file",
+   "id": "a8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "mtmndkb32.pnf",
+   "type": "file",
+   "id": "a9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "digirps.pnf",
+   "type": "file",
+   "id": "a10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "mkdiawb3.pnf",
+   "type": "file",
+   "id": "a11",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ie11.pnf",
+   "type": "file",
+   "id": "a12",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"hostname\" 2>nul Query infected system’s hostname",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"getmac\" 2>nul Query infected system’s MAC address",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "command-3",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"ver\" 2>nul Query infected system’s version number",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "command-4",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"arp -a\" 2>nul View the current ARP cache Display detailed configuration information, product ID, and",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "command-5",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"systeminfo\" 2>nul hardware properties",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "command-6",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"tasklist /v\" 2>nul Display the currently-running tasks in a verbose format Display the currently-running tasks with services hosted in",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "command-7",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"tasklist /svc\" 2>nul each process Deliver basic statistics on all network activities. (-n=Numerical display of address and port numbers, -a=Display all active",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "command-8",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"netstat -nab\" 2>nul ports, -b=Display execuatable file of a connection or listening port)",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "command-9",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic nic get Query infected system’s network interface card type and",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "command-10",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic timezone get Query infected system’s timezone",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "command-11",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic IRQ get caption, Query the infected system’s Interrupt ReQuest setting in the",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "command-12",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic port get Identify open and closed ports on an infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "command-13",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic csproduct\" 2>nul Aquire the computer model of the infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "command-14",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic computerSystem\" Aquire the computer manufacturer and model, to include 2>nul (32bit/64bit) architecture information Aquire motherboard manufacturer, model number, and",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "command-15",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic baseboard\" 2>nul serial number",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "command-16",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic cpu\" 2>nul Aquire the current CPU settings for the infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "command-17",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic partition\" 2>nul Identify disk partitions on the infected system Determine the current BIOS configuration for the infected",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "command-18",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic bios\" 2>nul system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "command-19",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic startup\" 2>nul List programs that run on startup on the infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "command-20",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic netlogin\" 2>nul Display login sessions on an infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "command-21",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic portconnector\" Identify open ports on the infected system 2>nul",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "command-22",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic memphysical\" Display the amount of physical memory that the infected 2>nul system has",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "command-23",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic share\" 2>nul Display all shared resources Display what username is currently logged onto the infected",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "command-24",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic logon\" 2>nul system Determine the current operating system type for the",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "command-25",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic OS\" 2>nul infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "command-26",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic logicaldisk get Determine the current disk space, type, and manufacturer",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "command-27",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic desktop\" 2>nul system's desktop management software",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "command-28",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"wmic process get Generate process list of current infected system",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Upon successful infection, the Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Upon successful infection, the Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to auto start upon reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to aut"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The new malicious service scans and catalogs the host configuration, encrypts the data, and transmits it to an external Command and Control (C2) server via an HTTP GET request on port 80.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The new malicious service scans and catalogs the host configuration, encrypts the data, and transmits it to an external Command and Control (C2) server via an H"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Module 2 executes additional Kwampirs RAT modular components on the infected host(s). These malicious components can allow for additional detailed collection of system and network interface configuration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Module 2 executes additional Kwampirs RAT modular components on the infected host(s). These malicious components can allow for additional detailed collection of"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The FBI has observed secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, to include the following:\n   Primary Domain Controllers\n      Secondary Domain Controllers\n      Engineering & Quality Assurance / Testing workstations\n      Primary Source Code servers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The FBI has observed secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, to include the following:"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Secondary Modules executed on the victim host(s), include the following additional commands being executed, resulting in much deeper and thorough reconnaissance on the targeted entity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Secondary Modules executed on the victim host(s), include the following additional commands being\nexecuted, resulting in much deeper and thorough reconnaissance"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "cmd.exe /c \"hostname\" 2>nul               Query infected system’s hostname\n cmd.exe /c \"getmac\" 2>nul                 Query infected system’s MAC address\n cmd.exe /c \"ver\" 2>nul                    Query infected system’s version number\n cmd.exe /c \"arp -a\" 2>nul                 View the current ARP cache\n                                           Display detailed configuration information, product ID, and\n cmd.exe /c \"systeminfo\" 2>nul\n                                           hardware properties\n cmd.exe /c \"tasklist /v\" 2>nul            Display the currently-running tasks in a verbose format\n                                           Display the currently-running tasks with services hosted in\n cmd.exe /c \"tasklist /svc\" 2>nul\n                                           each process\n                                           Deliver basic statistics on all network activities. (-n=Numerical\n                                           display of address and port numbers, -a=Display all active\n cmd.exe /c \"netstat -nab\" 2>nul\n                                           ports, -b=Display execuatable file of a connection or listening\n                                           port)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"hostname\" 2>nul Query infected system’s hostname cmd.exe /c \"getmac\" 2>nul Query infected system’s MAC address cmd.exe /c \"ver\" 2>nul Query infected"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "cmd.exe /c \"wmic nic get               Query infected system’s network interface card type and\ncaption,AdapterType,                   manufacturer\nManufacturer\" 2>nul\ncmd.exe /c \"wmic timezone get          Query infected system’s timezone\ncaption\" 2>nul\ncmd.exe /c \"wmic IRQ get caption,      Query the infected system’s Interrupt ReQuest setting in the\nIRQNumber\" 2>nul                       system’s BIOS\ncmd.exe /c \"wmic port get              Identify open and closed ports on an infected system\nStartingAddress, EndingAddress\"\n 2>nul\ncmd.exe /c \"wmic csproduct\" 2>nul      Aquire the computer model of the infected system\ncmd.exe /c \"wmic computerSystem\"       Aquire the computer manufacturer and model, to include\n 2>nul                                 (32bit/64bit) architecture information\n                                       Aquire motherboard manufacturer, model number, and\ncmd.exe /c \"wmic baseboard\" 2>nul\n                                       serial number\ncmd.exe /c \"wmic cpu\" 2>nul            Aquire the current CPU settings for the infected system\ncmd.exe /c \"wmic partition\"    2>nul   Identify disk partitions on the infected system\n                                       Determine the current BIOS configuration for the infected\ncmd.exe /c \"wmic bios\" 2>nul\n                                       system\ncmd.exe /c \"wmic startup\" 2>nul        List programs that run on startup on the infected system\ncmd.exe /c \"wmic netlogin\" 2>nul       Display login sessions on an infected system\ncmd.exe /c \"wmic portconnector\"        Identify open ports on the infected system\n 2>nul\ncmd.exe /c \"wmic memphysical\"          Display the amount of physical memory that the infected\n 2>nul                                 system has\ncmd.exe /c \"wmic share\" 2>nul          Display all shared resources\n                                       Display what username is currently logged onto the infected\ncmd.exe /c \"wmic logon\" 2>nul\n                                       system\n                                       Determine the current operating system type for the\ncmd.exe /c \"wmic OS\" 2>nul\n                                       infected system\ncmd.exe /c \"wmic logicaldisk get       Determine the current disk space, type, and manufacturer\ncaption,description,size,\nprovidername\" 2>nul\n                                       Query desktop configuration settings through the infected\ncmd.exe /c \"wmic desktop\" 2>nul\n                                       system's desktop management software\ncmd.exe /c \"wmic process get           Generate process list of current infected system\ncaption,commandline\" 2>nul",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic nic get Query infected system’s network interface card type and caption,AdapterType, manufacturer Manufacturer\" 2>nul cmd.exe /c \"wmic timezone"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Upon successful infection, the Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$. The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to auto start upon reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Upon successful infection, the Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$. "
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to auto start upon reboot. The new malicious service scans and catalogs the host configuration, encrypts the data, and transmits it to an external Command and Control (C2) server via an HTTP GET request on port 80.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware maintains persistence on the infected Windows host by dropping a binary to the hard drive and creating a malicious Windows system service set to aut"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The FBI has observed secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, to include the following:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI has observed secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, to include the following:"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, including Primary Domain Controllers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " Primary Domain Controllers"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, including Secondary Domain Controllers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " Secondary Domain Controllers"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, including Engineering & Quality Assurance / Testing workstations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " Engineering & Quality Assurance / Testing workstations"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Secondary module commands, to be highly targeted, and executed on critical business and / or network hosts, including Primary Source Code servers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " Primary Source Code servers"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT propagates laterally across the targeted network via SMB port 445, using hidden admin shares such as ADMIN$ and C$."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Since at least 2016, an ongoing campaign using the Kwampirs Remote Access Trojan (RAT) targeted several global industries",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "3"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Since at least 2016, an ongoing campaign using the Kwampirs Remote Access Trojan (RAT) targeted several global industries"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Service name:           WmiApSrvEx\n Service display name:   WMI Performance Adapter Extension",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Service name: WmiApSrvEx Service display name: WMI Performance Adapter Extension"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Kwampirs RAT Executable Files - Found in: c:\\windows\\system32\\\n wmiaprvse.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT Executable Files Found in: c:\\windows\\system32\\ wmiaprvse.exe"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Kwampirs RAT Executable Files - Found in: c:\\windows\\system32\\\n wmiapsrve.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT Executable Files Found in: c:\\windows\\system32\\ wmiap"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Kwampirs RAT Executable Files - Found in: c:\\windows\\system32\\\n wmiapsvrce.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT Executable Files Found in: c:\\windows\\system32\\ wmiap"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Kwampirs RAT DLL files dropped to disk\n Files identified in c:\\windows\\syswow64\\\n wmipadp.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT DLL files dropped to disk Files identified in c:\\windows\\syswow64\\ wmipadp.dll"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Kwampirs RAT DLL files dropped to disk\n Files identified in c:\\windows\\syswow64\\\n wmiassn.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT DLL files dropped to disk Files identified in c:\\windows\\syswow64\\ wmi"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Kwampirs RAT DLL files dropped to disk\n Files identified in c:\\windows\\syswow64\\\n wmipdpa.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Kwampirs RAT DLL files dropped to disk Files identified in c:\\windows\\syswow64\\ wmip"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/\n mtmndkb32.pnf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/ mtmndkb32.pnf"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/\n digirps.pnf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/ "
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/\n mkdiawb3.pnf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/ m"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/\n ie11.pnf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Other files created by the Kwampirs RAT Found in: %SystemRoot%/inf/ "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "cmd.exe /c \"hostname\" 2>nul Query infected system’s hostname",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"hostname\" 2>nul Query infected system’s hostname"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "cmd.exe /c \"getmac\" 2>nul Query infected system’s MAC address",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"getmac\" 2>nul Query infected system’s MAC address"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "cmd.exe /c \"ver\" 2>nul Query infected system’s version number",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"ver\" 2>nul Query infected system’s version number"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "cmd.exe /c \"arp -a\" 2>nul View the current ARP cache Display detailed configuration information, product ID, and",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"arp a\" 2>nul View the current ARP cache Display detailed configuration information, product ID, and"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "cmd.exe /c \"systeminfo\" 2>nul hardware properties",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"systeminfo\" 2>nul hardware properties"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "cmd.exe /c \"tasklist /v\" 2>nul Display the currently-running tasks in a verbose format Display the currently-running tasks with services hosted in",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"tasklist /v\" 2>nul Display the currently running tasks in a verbose format Display the currently running tasks with services hosted in"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "cmd.exe /c \"tasklist /svc\" 2>nul each process Deliver basic statistics on all network activities. (-n=Numerical display of address and port numbers, -a=Display all active",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"tasklist /svc\" 2>nul each process Deliver basic statistics on all network activities. ( n=Numerical display of address and port numbers, a=Display a"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "cmd.exe /c \"netstat -nab\" 2>nul ports, -b=Display execuatable file of a connection or listening port)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"netstat nab\" 2>nul ports, b=Display execuatable file of a connection or listening port)"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "cmd.exe /c \"wmic nic get Query infected system’s network interface card type and",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic nic get Query infected system’s network interface card type and"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "cmd.exe /c \"wmic timezone get Query infected system’s timezone",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic timezone get Query infected system’s timezone"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "cmd.exe /c \"wmic IRQ get caption, Query the infected system’s Interrupt ReQuest setting in the",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic IRQ get caption, Query the infected system’s Interrupt ReQuest setting in the"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "cmd.exe /c \"wmic port get Identify open and closed ports on an infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic port get Identify open and closed ports on an infected system"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "cmd.exe /c \"wmic csproduct\" 2>nul Aquire the computer model of the infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic csproduct\" 2>nul Aquire the computer model of the infected system"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "cmd.exe /c \"wmic computerSystem\" Aquire the computer manufacturer and model, to include 2>nul (32bit/64bit) architecture information Aquire motherboard manufacturer, model number, and",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic computerSystem\" Aquire the computer manufacturer and model, to include 2>nul (32bit/64bit) architecture information Aquire motherboard manufact"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "cmd.exe /c \"wmic baseboard\" 2>nul serial number",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic baseboard\" 2>nul serial number"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "cmd.exe /c \"wmic cpu\" 2>nul Aquire the current CPU settings for the infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic cpu\" 2>nul Aquire the current CPU settings for the infected system"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "cmd.exe /c \"wmic partition\" 2>nul Identify disk partitions on the infected system Determine the current BIOS configuration for the infected",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic partition\" 2>nul Identify disk partitions on the infected system Determine the current BIOS configuration for the infected"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "cmd.exe /c \"wmic bios\" 2>nul system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic bios\" 2>nul system"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "cmd.exe /c \"wmic startup\" 2>nul List programs that run on startup on the infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic startup\" 2>nul List programs that run on startup on the infected system"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "cmd.exe /c \"wmic netlogin\" 2>nul Display login sessions on an infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic netlogin\" 2>nul Display login sessions on an infected system"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "cmd.exe /c \"wmic portconnector\" Identify open ports on the infected system 2>nul",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic portconnector\" Identify open ports on the infected system 2>nul"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "cmd.exe /c \"wmic memphysical\" Display the amount of physical memory that the infected 2>nul system has",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic memphysical\" Display the amount of physical memory that the infected 2>nul system has"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "cmd.exe /c \"wmic share\" 2>nul Display all shared resources Display what username is currently logged onto the infected",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic share\" 2>nul Display all shared resources Display what username is currently logged onto the infected"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "cmd.exe /c \"wmic logon\" 2>nul system Determine the current operating system type for the",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic logon\" 2>nul system Determine the current operating system type for the"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "cmd.exe /c \"wmic OS\" 2>nul infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic OS\" 2>nul infected system"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "cmd.exe /c \"wmic logicaldisk get Determine the current disk space, type, and manufacturer",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic logicaldisk get Determine the current disk space, type, and manufacturer"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "cmd.exe /c \"wmic desktop\" 2>nul system's desktop management software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic desktop\" 2>nul system's desktop management software"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "cmd.exe /c \"wmic process get Generate process list of current infected system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"wmic process get Generate process list of current infected system"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "infected Windows host — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "infected Windows host 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — infected Windows host",
+    "action:a1 — Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares",
+    "action:a2 — Kwampirs RAT maintains persistence by dropping a binary and creating a malicious Windows system service set to auto start",
+    "action:a3 — Kwampirs RAT malicious service scans and catalogs host configuration, encrypts data, and transmits it to external C2 server via HTTP GET on port 80",
+    "action:a4 — Module 2 executes additional Kwampirs RAT modular components on infected hosts",
+    "action:a6 — Kwampirs RAT executes commands for deep reconnaissance on infected hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "infected Windows host",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "infected Windows host — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "infected Windows host 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — infected Windows host",
+    "action:a1 — Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares",
+    "action:a2 — Kwampirs RAT maintains persistence by dropping a binary and creating a malicious Windows system service set to auto start",
+    "action:a3 — Kwampirs RAT malicious service scans and catalogs host configuration, encrypts data, and transmits it to external C2 server via HTTP GET on port 80",
+    "action:a4 — Module 2 executes additional Kwampirs RAT modular components on infected hosts",
+    "action:a6 — Kwampirs RAT executes commands for deep reconnaissance on infected hosts"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "infected Windows host",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Primary Domain Controllers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Domain Controllers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Primary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Primary Domain Controllers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Domain Controllers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Primary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Primary Domain Controllers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Domain Controllers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Primary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Secondary Domain Controllers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Secondary Domain Controllers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Secondary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Secondary Domain Controllers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Secondary Domain Controllers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Secondary Domain Controllers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Secondary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Secondary Domain Controllers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Secondary Domain Controllers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Secondary Domain Controllers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Secondary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Secondary Domain Controllers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "Engineering & Quality Assurance / Testing workstations — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering & Quality Assurance / Testing workstations 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — Engineering & Quality Assurance / Testing workstations"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering & Quality Assurance / Testing workstations",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "Engineering & Quality Assurance / Testing workstations — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering & Quality Assurance / Testing workstations 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — Engineering & Quality Assurance / Testing workstations"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering & Quality Assurance / Testing workstations",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "Engineering & Quality Assurance / Testing workstations — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering & Quality Assurance / Testing workstations 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — Engineering & Quality Assurance / Testing workstations"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering & Quality Assurance / Testing workstations",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "Primary Source Code servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Source Code servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — Primary Source Code servers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Source Code servers",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "Primary Source Code servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Source Code servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — Primary Source Code servers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Source Code servers",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "Primary Source Code servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Primary Source Code servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — Primary Source Code servers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Primary Source Code servers",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s2-configuration",
+   "field": "Windows system service — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a2 使用 Windows system service，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2 依賴 Windows system service。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s2 — Windows system service",
+    "action:a2 — Kwampirs RAT maintains persistence by dropping a binary and creating a malicious Windows system service set to auto start"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Windows system service",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Kwampirs RAT maintains persistence by dropping a binary and creating a malicious Windows system service set to auto start",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 涉及 Active Directory（h2 (Primary Domain Controllers), h3 (Secondary Domain Controllers)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h2 — Primary Domain Controllers",
+    "host:h3 — Secondary Domain Controllers",
+    "action:a5 — Kwampirs RAT secondary module commands executed on critical business and network hosts"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Primary Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12"
+     ]
+    },
+    {
+     "field": "主機角色",
+     "value": "Secondary Domain Controllers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Kwampirs RAT secondary module commands executed on critical business and network hosts",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a3 — Kwampirs RAT malicious service scans and catalogs host configuration, encrypts data, and transmits it to external C2 server via HTTP GET on port 80"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Kwampirs RAT malicious service scans and catalogs host configuration, encrypts data, and transmits it to external C2 server via HTTP GET on port 80",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "Kwampirs RAT propagates laterally across the targeted network via SMB port 445 using hidden admin shares",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-smb",
+   "field": "software dependency: SMB",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "SMB 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-windows-system-service",
+   "field": "software dependency: Windows system service",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Windows system service 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_role-substitute-h1-oss-nginx",
+   "field": "Exact software and version for HTTP on host h1",
+   "category": "software",
+   "reason": "The source names only the function (HTTP), not the product or version that provided it.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Used NGINX (oss-nginx) as a function-based substitute. This is not asserted to be the original software or a full recreation."
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.7895,
+  "unsupported_claim_count": 12,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

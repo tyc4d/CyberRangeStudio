@@ -1,0 +1,746 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: Interlock"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA25-203A\n> - Date: 2025-07-22\n> - URL: https://www.ic3.gov/CSA/2025/250722.pdf\n> - PDF SHA-256: 41e9fbea33e37230293ecd7af46bf31237742d1606bd1e0d9098e7cff175ea68 (`source.pdf`, 19 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (74 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                      Product ID: AA25-203A\n                                                                                                                             July 22, 2025"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: Interlock\n              Actions for Organizations to Take Today to Mitigate Cyber Threats Related to Interlock\n                                              Ransomware Activity"
+ },
+ {
+  "id": "p5",
+  "text": " Prevent initial access by implementing domain name system (DNS) filtering and web access\n                    firewalls, and training users to spot social engineering attempts.\n                   Mitigate known vulnerabilities by ensuring operating systems, software, and firmware are\n                    patched and up to date.\n                   Segment networks to restrict lateral movement from initial infected devices and other devices in\n                    the same organization.\n                   Implement identity, credential, and access management (ICAM) policies across the organization\n                    and then require multifactor authentication (MFA) for all services to the extent possible."
+ },
+ {
+  "id": "p6",
+  "text": "Summary\n       Note: This joint Cybersecurity Advisory is part of an ongoing #StopRansomware effort to publish advisories\n       for network defenders that detail various ransomware variants and ransomware threat actors. These\n       #StopRansomware advisories include recently and historically observed tactics, techniques, and\n       procedures (TTPs) and indicators of compromise (IOCs) to help organizations protect against ransomware.\n       Visit stopransomware.gov to see all #StopRansomware advisories and to learn more about other\n       ransomware threats and no-cost resources.\n       The Federal Bureau of Investigation (FBI), Cybersecurity and Infrastructure Security Agency (CISA),\n       Department of Health and Human Services (HHS), and Multi-State Information Sharing and Analysis Center\n       (MS-ISAC)—hereafter referred to as “the authoring agencies”—are releasing this joint advisory to"
+ },
+ {
+  "id": "p7",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact your\n       local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When available, please\n       include the following information regarding the incident: date, time, and location of the incident; type of activity; number\n       of people affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n       designated point of contact.\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\n       minimal or no forseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject\n       to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information on the\n       Traffic Light Protocol, see Traffic Light Protocol (TLP) Definitions and Usage."
+ },
+ {
+  "id": "p8",
+  "text": "disseminate known Interlock ransomware IOCs and TTPs identified through FBI investigations (as recently\n        as June 2025) and trusted third-party reporting.\n        The Interlock ransomware variant was first observed in late September 2024, targeting various business,\n        critical infrastructure, and other organizations in North America and Europe. FBI maintains these actors\n        target their victims based on opportunity, and their activity is financially motivated. FBI is aware of Interlock\n        ransomware encryptors designed for both Windows and Linux operating systems; these encryptors have\n        been observed encrypting virtual machines (VMs) across both operating systems. FBI observed actors\n        obtaining initial access via drive-by download from compromised legitimate websites, which is an\n        uncommon method among ransomware groups. Actors were also observed using the ClickFix social\n        engineering technique for initial access, in which victims are tricked into executing a malicious payload\n        under the guise of fixing an issue on the victim’s system. Actors then use various methods for discovery,\n        credential access, and lateral movement to spread to other systems on the network.\n        Interlock actors employ a double extortion model in which actors encrypt systems after exfiltrating data,\n        which increases pressure on victims to pay the ransom to both get their data decrypted and prevent it from\n        being leaked.\n        FBI, CISA, HHS, and MS-ISAC encourage organizations to implement the recommendations in the\n        Mitigations section of this advisory to reduce the likelihood and impact of Interlock ransomware incidents.\n        For a downloadable copy of IOCs, see:\n                AA25-203A STIX XML (63KB)\n                AA25-203A STIX JSON (57KB)"
+ },
+ {
+  "id": "p9",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 17. See the MITRE\n        ATT&CK Tactics and Techniques section of this advisory for tables mapped to the threat actors’ activity."
+ },
+ {
+  "id": "p10",
+  "text": "Overview\n        Since September 2024, Interlock ransomware actors have impacted a wide range of businesses and\n        critical infrastructure sectors in North America and Europe. These actors are opportunistic and financially\n        motivated in nature and employ tactics to infiltrate and disrupt the victim’s ability to provide their essential\n        services.\n        Interlock actors leverage a double extortion model, in which they both encrypt and exfiltrate victim data.\n        Ransom notes do not include an initial ransom demand or payment instructions; instead, victims are\n        provided with a unique code and are instructed to contact the ransomware group via a .onion URL\n        through the Tor browser. To date, Interlock actors have been observed encrypting VMs, leaving hosts,\n        workstations, and physical servers unaffected; however, this does not mean they will not expand to these\n        systems in the future. To counter Interlock actors’ threat to VMs, enterprise defenders should implement\n        robust endpoint detection and response (EDR) tooling and capabilities."
+ },
+ {
+  "id": "p11",
+  "text": "The authoring agencies are aware of emerging open-source reporting detailing similarities between the\n        Rhysida and Interlock ransomware variants. 1 For additional information on Rhysida ransomware, see the\n                                                      0F"
+ },
+ {
+  "id": "p12",
+  "text": "joint advisory, #StopRansomware: Rhysida Ransomware."
+ },
+ {
+  "id": "p13",
+  "text": "Initial Access\n        FBI has observed Interlock actors obtaining initial access [TA0001] via drive-by download [T1189] from\n        compromised legitimate websites, an atypical method for ransomware actors. Interlock ransomware\n        methods for initial access have previously disguised malicious payloads as fake Google Chrome or\n        Microsoft Edge browser updates, though a cybersecurity company recently reported a shift to payload\n        filenames masquerading as updates for common security software (see Table 3 and Table 4 for a list of\n        filenames). 21F"
+ },
+ {
+  "id": "p14",
+  "text": "In some instances, FBI has observed Interlock actors using the ClickFix social engineering technique, in\n        which unsuspecting users are prompted to execute a malicious payload by clicking a fake Completely\n        Automated Public Turing test to tell Computers and Humans Apart (CAPTCHA) [T1189]. The CAPTCHA\n        contains instructions for users to open the Windows Run window, paste the clipboard contents, and then\n        execute a malicious Base64-encoded PowerShell process [T1204.004]. 3      2F"
+ },
+ {
+  "id": "p15",
+  "text": "Note: This ClickFix technique has been used in several other malware campaigns, including Lumma Stealer\n        and DarkGate. 4   3F"
+ },
+ {
+  "id": "p16",
+  "text": "Execution and Persistence\n        Based on FBI investigations, the fake Google Chrome browser executable functions as a remote access\n        trojan (RAT) [T1105] designed to execute a PowerShell script [T1059.001] that drops a file into the\n        Windows Startup folder. From there, the file is designed to run the RAT every time the victim logs in\n        [T1547.001], establishing persistence [TA0003].\n        FBI also observed instances in which Interlock actors executed a PowerShell command designed to\n        establish persistence via a Windows Registry key modification [T1547.001]. To do so, Interlock actors used\n        a PowerShell command [T1059.001] designed to add a run key value named “Chrome Updater”\n        [T1036.005] that uses a specific log file as an argument upon user login."
+ },
+ {
+  "id": "p17",
+  "text": "Reconnaissance\n        To facilitate reconnaissance, a PowerShell script executes a series of commands [T1059.001] designed to\n        gather information on victim machines (see Table 1)."
+ },
+ {
+  "id": "p18",
+  "text": "Table 1. PowerShell Commands for Reconnaissance"
+ },
+ {
+  "id": "p19",
+  "text": "PowerShell Command                                          Description"
+ },
+ {
+  "id": "p20",
+  "text": "Returns a WindowsIdentity object that represents the current Windows user\n          WindowsIdentity.GetCurrent()\n                                          [T1033]."
+ },
+ {
+  "id": "p21",
+  "text": "PowerShell Command                                           Description"
+ },
+ {
+  "id": "p22",
+  "text": "Displays detailed configuration information [T1082] about a computer and its\n          systeminfo                    operating system, including operating system configuration, security\n                                        information, product ID, and hardware properties."
+ },
+ {
+  "id": "p23",
+  "text": "Lists unabridged service information [T1007] for each process currently\n          tasklist/svc\n                                        running on the local computer."
+ },
+ {
+  "id": "p24",
+  "text": "Gets objects that represent the services [T1007] on a computer, including\n          Get-Service\n                                        running and stopped services."
+ },
+ {
+  "id": "p25",
+  "text": "Gets the drives [T1082] in the current session, such as:\n                                           Windows logical drives on the computer, including drives mapped to\n                                            network shares.\n          Get-PSDrive\n                                           Drives exposed by PowerShell providers.\n                                           Session-specified temporary drives and persistent mapped network\n                                            drives."
+ },
+ {
+  "id": "p26",
+  "text": "Displays and modifies entries in the Address Resolution Protocol (ARP) cache\n          arp -a                        table [T1016], which contains entries on the IPv4 and IPv6 addresses on host\n                                        endpoints."
+ },
+ {
+  "id": "p27",
+  "text": "Command and Control\n        FBI observed Interlock actors using command and control (C2) [TA0011] applications like Cobalt Strike and\n        SystemBC. Interlock actors also used Interlock RAT 5 and NodeSnake RAT (as of March 2025) 6 for C2 and\n                                                            4F                                           5F"
+ },
+ {
+  "id": "p28",
+  "text": "executing commands."
+ },
+ {
+  "id": "p29",
+  "text": "Credential Access, Lateral Movement, and Privilege Escalation\n        FBI observed that once Interlock actors establish remote control of a compromised system, they use a\n        series of PowerShell commands to download a credential stealer (cht.exe) [TA0006] and keylogger binary\n        (klg.dll) [T1056.001][T1105]. According to open source reporting, the credential stealer collects login\n        information and associated URLs for victims’ online accounts [T1555.003], while the keylogger dynamic\n        link library (DLL) logs users’ keystrokes in a file named conhost.txt [T1036.005]. 7 As of February 2025,\n                                                                                              6F"
+ },
+ {
+  "id": "p30",
+  "text": "private cybersecurity analysts also observed Interlock ransomware infections executing different versions\n        of information stealers [TA0006], including Lumma Stealer 8 and Berserk Stealer, to harvest credentials for\n                                                                      7F"
+ },
+ {
+  "id": "p31",
+  "text": "lateral movement and privilege escalation [T1078]. 9     8F"
+ },
+ {
+  "id": "p32",
+  "text": "Interlock actors leverage compromised credentials and Remote Desktop Protocol (RDP) 10 [T1021.001] to\n                                                                                                   9F"
+ },
+ {
+  "id": "p33",
+  "text": "move between systems. They also use tools like AnyDesk to enable remote connectivity and PuTTY to\n        assist with lateral movement [T1219]. 11 In addition to stealing users’ online credentials, Interlock actors\n                                              10F"
+ },
+ {
+  "id": "p34",
+  "text": "have compromised domain administrator accounts (possibly by using a Kerberoasting attack\n        [T1558.003]) 12 to gain additional privileges [T1078.002].\n                         11F"
+ },
+ {
+  "id": "p35",
+  "text": "Collection and Exfiltration\n        Interlock actors leverage Azure Storage Explorer (StorageExplorer.exe) to navigate victims’ Microsoft\n        Azure Storage accounts [T1530] prior to exfiltrating data. According to open source reporting, Interlock\n        actors execute AzCopy to exfiltrate data by uploading it to the Azure storage blob [T1567.002]. 13 Interlock\n                                                                                                            12F"
+ },
+ {
+  "id": "p36",
+  "text": "actors also exfiltrate data over file transfer tools, including WinSCP [T1048]."
+ },
+ {
+  "id": "p37",
+  "text": "Impact\n        Following data exfiltration, Interlock actors deploy the encryption binary as a 64-bit executable named\n        conhost.exe [T1486] [T1036.005]. FBI has observed Interlock ransomware encryptors for both Windows\n        and Linux operating systems. Encryptors are designed to encrypt files using a combined Advanced\n        Encryption Standard (AES) and Rivest-Shamir-Adleman (RSA) algorithm. In addition, cybersecurity\n        researchers have identified Interlock ransomware samples using a FreeBSD ELF encryptor [T1486], a\n        departure from usual Linux encryptors designed for VMware ESXi servers and VMs. 14     13F"
+ },
+ {
+  "id": "p38",
+  "text": "A cybersecurity company identified a DLL binary named tmp41.wasd—executed after encryption using\n        rundll32.exe [T1218.011]—which uses the remove() function to delete the encryption binary\n        [T1070.004]; 15 on Linux machines, the encryptor uses a similar technique to execute the removeme\n                        14F"
+ },
+ {
+  "id": "p39",
+  "text": "function.\n        Encrypted files are appended with either a .interlock or .1nt3rlock file extension, alongside a ransom\n        note titled !__README__!.txt delivered via group policy object (GPO). Interlock actors use a double-\n        extortion model [T1657], encrypting systems after exfiltrating data. The ransom note provides each victim\n        with a unique code and instructions to contact the ransomware actors via a .onion URL.\n        Interlock actors do not leave an initial ransom demand or payment instructions on compromised networks,\n        and do not relay this information until contacted by the victim. The actors instruct victims to make ransom\n        payments in Bitcoin to cryptocurrency wallet addresses provided by the actors. The actors threaten to\n        publish the victim’s exfiltrated data to their leak site on the Tor network unless the victim pays the ransom\n        demand; the actors have previously followed through on this threat. 16  15F"
+ },
+ {
+  "id": "p40",
+  "text": "Leveraged Tools\n        See Table 2 for publicly available tools and applications used by Interlock ransomware actors. This\n        includes legitimate tools repurposed for their operations.\n        Disclaimer: Use of these tools and applications should not be attributed as malicious without analytical\n        evidence to support threat actor use and/or control."
+ },
+ {
+  "id": "p41",
+  "text": "Table 2. Tools Used by Interlock Ransomware Actors"
+ },
+ {
+  "id": "p42",
+  "text": "Tool Name                                                Description"
+ },
+ {
+  "id": "p43",
+  "text": "A common legitimate remote monitoring and management (RMM) tool maliciously used by\n          AnyDesk             Interlock actors to obtain remote access and maintain persistence. AnyDesk also supports\n                              remote file transfer."
+ },
+ {
+  "id": "p44",
+  "text": "Tool Name                                                  Description"
+ },
+ {
+  "id": "p45",
+  "text": "A penetration testing tool used by security professionals to test the security of networks and\n          Cobalt Strike\n                              systems."
+ },
+ {
+  "id": "p46",
+  "text": "A cross-platform task automation solution made up of a command-line shell, a scripting\n          PowerShell          language, and a configuration management framework, which runs on Windows, Linux, and\n                              macOS."
+ },
+ {
+  "id": "p47",
+  "text": "PSExec              A tool designed to run programs and execute commands on remote systems."
+ },
+ {
+  "id": "p48",
+  "text": "An open source file transfer application commonly used to remotely connect to systems via\n          PuTTY.exe           Secure Shell (SSH). PuTTY also supports file transfer protocols like Secure File Transfer\n                              Protocol (SFTP) and Secure Copy Protocol (SCP)."
+ },
+ {
+  "id": "p49",
+  "text": "A remote support, access, and meeting software that allows users to control devices\n                              remotely over the internet. CISA observed Interlock actors using a cracked version of this\n          ScreenConnect       software in at least one incident. These versions may be standalone versions not\n                              connecting to ScreenConnect’s official cloud domains (domains available upon request\n                              from ConnectWise)."
+ },
+ {
+  "id": "p50",
+  "text": "Enables Interlock actors to compromise systems, run commands, download malicious\n          SystemBC\n                              payloads, and act as a proxy tool to the actors’ C2 servers."
+ },
+ {
+  "id": "p51",
+  "text": "Windows             Windows Console Host (conhost.exe) manages the user interface for command-line\n          Console Host        applications in Windows, including Command Prompt and PowerShell."
+ },
+ {
+  "id": "p52",
+  "text": "A free and open source SSH File Transfer Protocol (FTP), WebDAV, Amazon S3, and secure\n          WinSCP\n                              copy protocol client."
+ },
+ {
+  "id": "p53",
+  "text": "Leveraged Files\n        See Table 3 and Table 4 for files used by Interlock ransomware actors. These were obtained from FBI\n        investigations as recently as June 2025.\n        Disclaimer: Some of the hashes are for legitimate tools and applications and should not be attributed as\n        malicious without analytical evidence to support threat actor use and/or control. The authoring agencies\n        recommend organizations investigate or vet these hashes prior to taking action, such as blocking."
+ },
+ {
+  "id": "p54",
+  "text": "Table 3. Files Used by Interlock Ransomware Actors (SHA-256)"
+ },
+ {
+  "id": "p55",
+  "text": "File Name                                                    Hash"
+ },
+ {
+  "id": "p56",
+  "text": "1.ps1                   fba4883bf4f73aa48a957d894051d78e0085ecc3170b1ff50e61ccec6aeee2cd"
+ },
+ {
+  "id": "p57",
+  "text": "File Name                                          Hash"
+ },
+ {
+  "id": "p58",
+  "text": "advanced_port_sc\n                                  4b036cc9930bb42454172f888b8fde1087797fc0c9d31ab546748bd2496bd3e5\n          anner.exe"
+ },
+ {
+  "id": "p59",
+  "text": "Aisa.exe                18a507bf1c533aad8e6f2a2b023fbbcac02a477e8f05b095ee29b52b90d47421"
+ },
+ {
+  "id": "p60",
+  "text": "AnyDesk.exe             1a70f4eef11fbecb721b9bab1c9ff43a8c4cd7b2cafef08c033c77070c6fe069"
+ },
+ {
+  "id": "p61",
+  "text": "autoservice.dll         a4069aa29628e64ea63b4fb3e29d16dcc368c5add304358a47097eedafbbb565"
+ },
+ {
+  "id": "p62",
+  "text": "Autostart.exe           d535bdc9970a3c6f7ebf0b229c695082a73eaeaf35a63cd8a0e7e6e3ceb22795"
+ },
+ {
+  "id": "p63",
+  "text": "cht                     FAFCD5404A992850FFCFFEE46221F9B2FF716006AECB637B80E5CD5AA112D79C"
+ },
+ {
+  "id": "p64",
+  "text": "cht.exe                 C20BABA26EBB596DE14B403B9F78DDC3C13CE9870EEA332476AC2C1DD582AA07"
+ },
+ {
+  "id": "p65",
+  "text": "cleanup.dll\n                                  1845a910dcde8c6e45ad2e0c48439e5ab8bbbeb731f2af11a1b7bbab3bfe0127\n          (SystemBC)"
+ },
+ {
+  "id": "p66",
+  "text": "conhost                 44887125aa2df864226421ee694d51e5535d8c6f70e327e9bcb366e43fd892c1"
+ },
+ {
+  "id": "p67",
+  "text": "conhost.dll             a70af759e38219ca3a7f7645f3e103b13c9fb1db6d13b68f3d468b7987540ddf"
+ },
+ {
+  "id": "p68",
+  "text": "conhost.dll             96babe53d6569ee3b4d8fc09c2a6557e49ebc2ed1b965abda0f7f51378557eb1"
+ },
+ {
+  "id": "p69",
+  "text": "difxepi.dll\n                                  1845a910dcde8c6e45ad2e0c48439e5ab8bbbeb731f2af11a1b7bbab3bfe0127\n          (SystemBC)"
+ },
+ {
+  "id": "p70",
+  "text": "iexplore.exe            d0c1662ce239e4d288048c0e3324ec52962f6ddda77da0cb7af9c1d9c2f1e2eb"
+ },
+ {
+  "id": "p71",
+  "text": "klg.dll                 A4F0B68052E8DA9A80B70407A92400C6A5DEF19717E0240AC608612476E1137E"
+ },
+ {
+  "id": "p72",
+  "text": "68A49D5A097E3850F3BB572BAF2B75A8E158DADB70BADDC205C2628A9B660E7\n          !!!OPEN_ME!!!.txt\n                                  A"
+ },
+ {
+  "id": "p73",
+  "text": "processhacker-\n                                  88f26f3721076f74996f8518469d98bf9be0eaee5b9eccc72867ebfc25ea4e83\n          2.39-bin.zip"
+ },
+ {
+  "id": "p74",
+  "text": "PsExec.exe              078163d5c16f64caa5a14784323fd51451b8c831c73396b967b4e35e6879937b"
+ },
+ {
+  "id": "p75",
+  "text": "putty.exe               7a43789216ce242524e321d2222fa50820a532e29175e0a2e685459a19e09069"
+ },
+ {
+  "id": "p76",
+  "text": "puttyportable.exe       97931d2e2e449ac3691eb526f6f60e2f828de89074bdac07bd7dbdfd51af9fa0"
+ },
+ {
+  "id": "p77",
+  "text": "PuTTYPortable.zip       ff7ad2376ae01e4b3f1e1d7ae630f87b8262b5c11bc5d953e1ac34ffe81401b5"
+ },
+ {
+  "id": "p78",
+  "text": "File Name                                                   Hash"
+ },
+ {
+  "id": "p79",
+  "text": "qrpce91.exe.asd         64a0ab00d90682b1807c5d7da1a4ae67cde4c5757fc7d995d8f126f0ec8ae983"
+ },
+ {
+  "id": "p80",
+  "text": "ScreenConnect.Cli\n                                  2814b33ce81d2d2e528bb1ed4290d665569f112c9be54e65abca50c41314d462\n          entService.exe"
+ },
+ {
+  "id": "p81",
+  "text": "SophosendpointAg\n                                  f51b3d054995803d04a754ea3ff7d31823fab654393e8054b227092580be43db\n          ent.exe"
+ },
+ {
+  "id": "p82",
+  "text": "SophosScaner.exe        dfb5ba578b81f05593c047f2c822eeb03785aecffb1504dcb7f8357e898b5024"
+ },
+ {
+  "id": "p83",
+  "text": "Starship.exe            94bf0aba5f9f32b9c35e8dfc70afd8a35621ed6ef084453dc1b10719ae72f8e2"
+ },
+ {
+  "id": "p84",
+  "text": "start                   28c3c50d115d2b8ffc7ba0a8de9572fbe307907aaae3a486aabd8c0266e9426f"
+ },
+ {
+  "id": "p85",
+  "text": "start.exe               70bb799557da5ac4f18093decc60c96c13359e30f246683815a512d7f9824c8f"
+ },
+ {
+  "id": "p86",
+  "text": "StorageExplorer.\n                                  73a9a1e38ff40908bcc15df2954246883dadfb991f3c74f6c514b4cffdabde66\n          exe"
+ },
+ {
+  "id": "p87",
+  "text": "Sysmon.sys              1d04e33009bcd017898b9e1387e40b5c04279c02ebc110f12e4a724ccdb9e4fb"
+ },
+ {
+  "id": "p88",
+  "text": "upd_2327991.exe         7b9e12e3561285181634ab32015eb653ab5e5cfa157dd16cdd327104b258c332"
+ },
+ {
+  "id": "p89",
+  "text": "webujgd.lnk             70EE22D394E107FBB807D86D187C216AD66B8537EDC67931559A8AEF18F6B5B3"
+ },
+ {
+  "id": "p90",
+  "text": "WinSCP-6.3.5-\n                                  8eb7e3e8f3ee31d382359a8a232c984bdaa130584cad11683749026e5df1fdc3\n          Setup.exe"
+ },
+ {
+  "id": "p91",
+  "text": "Proxy Tool              e4d6fe517cdf3790dfa51c62457f5acd8cb961ab1f083de37b15fd2fddeb9b8f"
+ },
+ {
+  "id": "p92",
+  "text": "Encryptor               e86bb8361c436be94b0901e5b39db9b6666134f23cce1e5581421c2981405cb1"
+ },
+ {
+  "id": "p93",
+  "text": "Encryptor               c733d85f445004c9d6918f7c09a1e0d38a8f3b37ad825cd544b865dba36a1ba6"
+ },
+ {
+  "id": "p94",
+  "text": "Encryptor               28c3c50d115d2b8ffc7ba0a8de9572fbe307907aaae3a486aabd8c0266e9426f"
+ },
+ {
+  "id": "p95",
+  "text": "Table 4. Files Used by Interlock Ransomware Actors (SHA-1)"
+ },
+ {
+  "id": "p96",
+  "text": "File Name                                                   Hash"
+ },
+ {
+  "id": "p97",
+  "text": "autorun.log             514946a8fc248de1ccf0dbeee2108a3b4d75b5f6"
+ },
+ {
+  "id": "p98",
+  "text": "jar.jar                 b625cc9e4024d09084e80a4a42ab7ccaa6afb61d"
+ },
+ {
+  "id": "p99",
+  "text": "File Name                                                  Hash"
+ },
+ {
+  "id": "p100",
+  "text": "pack.jar                 3703374c9622f74edc9c8e3a47a5d53007f7721e"
+ },
+ {
+  "id": "p101",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 5 through Table 16 for all referenced threat actor tactics and techniques in this advisory. For\n        assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE\n        ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p102",
+  "text": "Table 5. Initial Access"
+ },
+ {
+  "id": "p103",
+  "text": "Technique Title             ID                                        Use"
+ },
+ {
+  "id": "p104",
+  "text": "Interlock actors obtain initial access by compromising a legitimate\n                                                   website that network users visit, or by disguising malicious payloads\n                                                   as fake browser updates or common security software, including the\n                                                   following: 17\n                                                            16F"
+ },
+ {
+  "id": "p105",
+  "text": " FortiClient.exe\n                                                      Ivanti-Secure-Access-Client.exe\n                                                      GlobalProtect.exe\n          Drive-By Compromise           T1189         Webex.exe\n                                                      AnyConnectVPN.exe\n                                                      Cisco-Secure-Client.exe\n                                                      zyzoom_antimalware.exe\n                                                   Interlock actors also gain access via the ClickFix social engineering\n                                                   technique, in which users are tricked into executing a malicious\n                                                   payload by clicking on a fake CAPTCHA that prompts users to\n                                                   execute a malicious PowerShell script."
+ },
+ {
+  "id": "p106",
+  "text": "Table 6. Execution"
+ },
+ {
+  "id": "p107",
+  "text": "Technique Title             ID                                        Use"
+ },
+ {
+  "id": "p108",
+  "text": "Interlock actors implement PowerShell scripts to drop a malicious\n                                                   file into the Windows Startup folder.\n          Command and\n                                                   Interlock actors execute a PowerShell command for registry key\n          Scripting Interpreter:       T1059.001\n                                                   modification.\n          PowerShell\n                                                   Interlock actors use a PowerShell script to execute a series of\n                                                   commands to facilitate reconnaissance."
+ },
+ {
+  "id": "p109",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p110",
+  "text": "Via the ClickFix social engineering technique, users are tricked into\n                                                    clicking a fake CAPTCHA and prompted into executing a malicious\n          User Execution:\n                                                    Base64-encoded PowerShell process by following instructions to\n          Malicious Copy and            T1204.004\n                                                    open a Windows Run window (Windows Button + R), pasting\n          Paste\n                                                    clipboard contents (“CTRL + V”), and then executing the malicious\n                                                    script (“Enter”)."
+ },
+ {
+  "id": "p111",
+  "text": "Table 7. Persistence"
+ },
+ {
+  "id": "p112",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p113",
+  "text": "Interlock actors establish persistence by adding a file into a Windows\n          Boot or Logon                             StartUp folder that executes a RAT every time a user logs in.\n          Autostart Execution:                      Interlock actors also implement registry key modification by using a\n                                        T1547.001\n          Registry Run                              PowerShell command to add a run key value (named “Chrome\n          Keys/Startup Folder                       Updater”) that uses a log file as an argument every time a user logs\n                                                    in."
+ },
+ {
+  "id": "p114",
+  "text": "Table 8. Privilege Escalation"
+ },
+ {
+  "id": "p115",
+  "text": "Technique Title               ID                                         Use"
+ },
+ {
+  "id": "p116",
+  "text": "Valid Accounts:                            Interlock actors compromise domain administrator accounts to gain\n                                        T1078.002\n          Domain Accounts                            additional privileges."
+ },
+ {
+  "id": "p117",
+  "text": "Table 9. Defense Evasion"
+ },
+ {
+  "id": "p118",
+  "text": "Technique Title               ID                                         Use"
+ },
+ {
+  "id": "p119",
+  "text": "Interlock actors execute the removeme function on Linux systems to\n          Defense Evasion                TA0005\n                                                     delete the encryption binary for defense evasion."
+ },
+ {
+  "id": "p120",
+  "text": "Interlock actors disguise a malicious run key value by naming it\n                                                     “Chrome Updater”; the run key value uses a specific log file as an\n                                                     argument upon user login.\n          Masquerading:\n                                                     Interlock actors disguise files of keystrokes logged by one of their\n          Match Legitimate\n                                        T1036.005    credential stealers with a legitimate Windows filename:\n          Resource Name or\n                                                     conhost.txt.\n          Location\n                                                     Interlock actors disguise an encryption binary, a 64-bit executable,\n                                                     by giving it the same name as the legitimate Console Windows Host\n                                                     executable: conhost.exe"
+ },
+ {
+  "id": "p121",
+  "text": "Technique Title               ID                                         Use"
+ },
+ {
+  "id": "p122",
+  "text": "System Binary Proxy                        Interlock actors use rundll32.exe to proxy execution of a\n                                        T1218.011\n          Execution: Rundll32                        malicious DLL binary tmp41.wasd."
+ },
+ {
+  "id": "p123",
+  "text": "Interlock actors execute a DLL binary tmp41.wasd that uses the\n          Indicator Removal:\n                                        T1070.004    remove() function to delete their encryption binary for defense\n          File Deletion\n                                                     evasion."
+ },
+ {
+  "id": "p124",
+  "text": "Table 10. Credential Access"
+ },
+ {
+  "id": "p125",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p126",
+  "text": "Interlock actors download credential stealer cht.exe and execute\n          Credential Access              TA0006      other versions information stealers (including Lumma Stealer and\n                                                     Berserk Stealer) to harvest credentials."
+ },
+ {
+  "id": "p127",
+  "text": "Credentials from\n          Password Stores:                           Interlock actors download a credential stealer that collects login\n                                        T1555.003\n          Credentials from                           information and associated URLs for victims’ online accounts.\n          Web Browsers"
+ },
+ {
+  "id": "p128",
+  "text": "Interlock actors execute Lumma Stealer and Berserk Stealer\n          Input Capture                  T1056\n                                                     information stealers on victim systems."
+ },
+ {
+  "id": "p129",
+  "text": "Interlock actors download klg.dll, a keylogger binary, onto\n          Input Capture:\n                                        T1056.001    compromised systems, where it logs users’ keystrokes in a file\n          Keylogging\n                                                     named conhost.txt."
+ },
+ {
+  "id": "p130",
+  "text": "Steal or Forge\n                                                     Interlock actors possibly use a Kerberoasting attack to compromise\n          Kerberos Tickets:             T1558.003\n                                                     domain administrator accounts.\n          Kerberoasting"
+ },
+ {
+  "id": "p131",
+  "text": "Table 11. Discovery"
+ },
+ {
+  "id": "p132",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p133",
+  "text": "Interlock actors execute a PowerShell command\n          System Owner/User\n                                         T1033       WindowsIdentity.GetCurrent() on victim systems to retrieve a\n          Discovery\n                                                     WindowsIdentity object that represents the current Windows user."
+ },
+ {
+  "id": "p134",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p135",
+  "text": "Interlock actors execute a PowerShell command systeminfo on\n                                                     victim systems to access detailed configuration information about\n                                                     the system, including OS configuration, security information,\n                                                     product ID, and hardware properties.\n                                                     Interlock actors execute a PowerShell command Get-PSDrive on\n          System Information                         victim systems to discover the drives in the current session, such\n                                         T1082\n          Discovery                                  as:\n                                                        Windows logical drives on the computer, including drives\n                                                         mapped to network shares.\n                                                        Drives exposed by PowerShell providers.\n                                                        Session-specified temporary drives and persistent mapped\n                                                         network drives."
+ },
+ {
+  "id": "p136",
+  "text": "Interlock actors execute a PowerShell command tasklist /svc\n                                                     on victim systems that lists service information for each process\n          System Service                             currently running on the system.\n                                         T1007\n          Discovery                                  Actors also execute a PowerShell command Get-Service on victim\n                                                     systems that retrieves objects that represent the services (including\n                                                     running and stopped services) on the system."
+ },
+ {
+  "id": "p137",
+  "text": "Interlock actors execute a PowerShell command arp -a on victim\n          System Network\n                                                     systems that displays and modifies entries in the Address\n          Configuration                  T1016\n                                                     Resolution Protocol (ARP) cache table (which contains entries on\n          Discovery\n                                                     the IPv4 and IPv6 addresses on host endpoints)."
+ },
+ {
+  "id": "p138",
+  "text": "Table 12. Lateral Movement"
+ },
+ {
+  "id": "p139",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p140",
+  "text": "Interlock actors harvest and abuse valid credentials for lateral\n          Valid Accounts                 T1078\n                                                     movement and privilege escalation."
+ },
+ {
+  "id": "p141",
+  "text": "Remote Services:\n                                                     Interlock actors use RDP and valid credentials to move laterally\n          Remote Desktop                T1021.001\n                                                     between systems.\n          Protocol"
+ },
+ {
+  "id": "p142",
+  "text": "Table 13. Collection"
+ },
+ {
+  "id": "p143",
+  "text": "Technique Title                ID                                          Use"
+ },
+ {
+  "id": "p144",
+  "text": "Interlock actors use StorageExplorer.exe, the cloud storage\n          Data from Cloud\n                                           T1530       solution Azure Storage Explorer, to explore Microsoft Azure Storage\n          Storage\n                                                       accounts."
+ },
+ {
+  "id": "p145",
+  "text": "Table 14. Command and Control"
+ },
+ {
+  "id": "p146",
+  "text": "Technique Title                ID                                           Use"
+ },
+ {
+  "id": "p147",
+  "text": "Command and\n                                         TA0011       Interlock actors use applications Cobalt Strike and SystemBC for C2.\n          Control"
+ },
+ {
+  "id": "p148",
+  "text": "Interlock actors use a fake Google Chrome or Microsoft Edge\n                                                      browser update to cause users to execute a RAT on the victimized\n          Ingress Tool                                system.\n                                         T1105\n          Transfer                                    Interlock actors download credential stealers (cht.exe) and\n                                                      keylogger binaries (klg.dll) once actors establish remote control of\n                                                      a compromised system."
+ },
+ {
+  "id": "p149",
+  "text": "Interlock actors use legitimate remote access tools such as AnyDesk\n          Remote Access\n                                         T1219        to enable remote connectivity and PuTTY to assist with lateral\n          Tools\n                                                      movement."
+ },
+ {
+  "id": "p150",
+  "text": "Table 15. Exfiltration"
+ },
+ {
+  "id": "p151",
+  "text": "Technique Title                ID                                           Use"
+ },
+ {
+  "id": "p152",
+  "text": "Exfiltration Over\n          Web Service:                                Interlock actors exfiltrate data to cloud storage by executing AzCopy\n                                        T1567.002\n          Exfiltration to Cloud                       to upload data to the Azure storage blob.\n          Storage"
+ },
+ {
+  "id": "p153",
+  "text": "Exfiltration Over\n                                         T1048        Interlock actors use file transfer tools like WinSCP to exfiltrate data.\n          Alternative Protocol"
+ },
+ {
+  "id": "p154",
+  "text": "Table 16. Impact"
+ },
+ {
+  "id": "p155",
+  "text": "Technique Title              ID                                          Use"
+ },
+ {
+  "id": "p156",
+  "text": "Interlock actors encrypt victim data using a combined AES and RSA\n                                                   algorithm on compromised systems to interrupt availability to system\n                                                   and network resources. Actors code encryptors using C/C++.\n          Data Encrypted for                       Interlock actors use encryptors for both Windows and Linux\n                                        T1486\n          Impact                                   operating systems.\n                                                   Interlock actors also use a FreeBSD ELF encryptor to encrypt victim\n                                                   data."
+ },
+ {
+  "id": "p157",
+  "text": "Interlock actors deliver a ransom note titled !__README__!.txt via\n                                                   a GPO which provides victims with instructions to use a .onion URL\n          Financial Theft               T1657      to contact the actors over the Tor network. Actors use a double-\n                                                   extortion model, both encrypting victim data and threatening release\n                                                   of victim data on their Tor network leak site if the ransom is not paid."
+ },
+ {
+  "id": "p158",
+  "text": "Mitigations\n        The authoring agencies recommend organizations implement the mitigations below to improve your\n        organization’s cybersecurity posture on the basis of the Interlock ransomware actors’ activity. These\n        mitigations align with the Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the\n        National Institute of Standards and Technology (NIST). The CPGs provide a minimum set of practices and\n        protections that CISA and NIST recommend all organizations implement. CISA and NIST based the CPGs on\n        existing cybersecurity frameworks and guidance to protect against the most common and impactful threats\n        and TTPs. Visit CISA’s CPGs webpage for more information on the CPGs, including additional recommended\n        baseline protections.\n        In addition to the below mitigations, Healthcare and Public Health (HPH) organizations should use HPH\n        Sector CPGs to implement cybersecurity protections to address the most common threats and TTPs used\n        against this sector.\n        At-risk organizations should implement the following mitigations:\n                Prevent Interlock ransomware actors from obtaining initial access:\n                 o    Implement domain name system (DNS) filtering to block users from accessing malicious sites\n                      and applications.\n                 o    Implement web access firewalls to mitigate and prevent unknown commands or process\n                      injection from malicious domains or websites.\n                 o    Train users [CPG 2.I] to identify, avoid, and report social engineering attempts.\n                Implement a recovery plan [CPG 5.A] to maintain and retain multiple copies of sensitive or\n                 proprietary data and servers in a physically separate, segmented, and secure location (e.g., hard\n                 drive, storage device, the cloud) [CPG 2.R]."
+ },
+ {
+  "id": "p159",
+  "text": "   Require all accounts with password logins (e.g., service accounts, admin accounts, and domain\n                 admin accounts) to comply with NIST password standards.\n                 o    Require employees to use long passwords [CPG 2.B] and consider not requiring recurring\n                      password changes, as these can weaken security.\n                Require MFA [CPG 2.H] for all services to the extent possible, particularly for webmail, virtual\n                 private networks (VPNs), and accounts that access critical systems.\n                 o    Implement ICAM policies across the organization as a precursor to MFA.\n                Keep all operating systems, software, and firmware up to date; prioritize patching known exploited\n                 vulnerabilities in internet-facing systems [CPG 1.E].\n                 o    Timely patching is efficient and cost effective for minimizing an organization’s exposure to\n                      cybersecurity threats.\n                Implement robust EDR capabilities on VMs, systems, and networks.\n                Segment networks [CPG 2.F] to prevent the spread of ransomware.\n                 o    Network segmentation can help prevent the spread of ransomware by controlling traffic flows\n                      between—and access to—various subnetworks and by restricting adversary lateral movement.\n                Identify, detect, and investigate abnormal activity and potential traversal of the indicated\n                 ransomware [CPG 3.A] with a networking monitoring tool [CPG 2.T].\n                 o    To aid in detecting ransomware, implement a tool that logs and reports all network traffic,\n                      including lateral movement activity on a network.\n                 o    Implement EDR tools; these are useful for detecting lateral connections as they provide insight\n                      into common and uncommon network connections for each host.\n                Filter network traffic by preventing unknown or untrusted origins from accessing remote services\n                 on internal systems.\n                 o    This prevents threat actors from directly connecting to remote access services that they have\n                      established for persistence.\n                Install, regularly update, and enable real time detection for antivirus software on all hosts.\n                Review domain controllers, servers, workstations, and active directories for new and/or\n                 unrecognized accounts.\n                Audit user accounts with administrative privileges and configure access controls according to the\n                 principle of least privilege [CPG 2.E].\n                Disable unused ports.\n                Consider adding an email banner to emails received from outside of your organization [CPG 2.M].\n                Disable hyperlinks in received emails.\n                Implement time-based access for accounts set at the admin level and higher; for example, the just-\n                 in-time (JIT) access method provisions privileged access when needed and can support\n                 enforcement of the principle of least privilege (as well as the Zero Trust model):\n                 o    This is a process where a network-wide policy is set in place to automatically disable admin\n                      accounts at the Active Directory level when the account is not in direct need."
+ },
+ {
+  "id": "p160",
+  "text": "o    Individual users may submit their requests through an automated process that grants them\n                      access to a specified system for a set timeframe when they need to support the completion of\n                      a certain task.\n                Disable command line and scripting activities and permissions [CPG 2.N].\n                 o    Disabling software utilities that run from the command line makes it more difficult for threat\n                      actors to escalate privileges and move laterally.\n                Maintain offline backups of data and regularly maintain backups and restorations [CPG 2.R]; this\n                 avoids severe service interruption and irretrievable data in the event of a compromise.\n                Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and covers the\n                 entire organization’s data infrastructure [CPG 2.R]."
+ },
+ {
+  "id": "p161",
+  "text": "Validate Security Controls\n        In addition to applying mitigations, the authoring agencies recommend exercising, testing, and validating\n        your organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n        Enterprise framework in this advisory. The authoring agencies recommend testing your existing security\n        controls inventory to assess how they perform against the ATT&CK techniques described in this advisory.\n        To get started:\n             1. Select an ATT&CK technique described in this advisory (see Table 5 through Table 16).\n             2. Align your security technologies against the technique.\n             3. Test your technologies against the technique.\n             4. Analyze your detection and prevention technologies’ performance.\n             5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n                data.\n             6. Tune your security program, including people, processes, and technologies, based on the data\n                generated by this process.\n        The authoring agencies recommend continually testing your security program, at scale, in a production\n        environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n        advisory."
+ },
+ {
+  "id": "p162",
+  "text": "Resources\n                Stopransomware.gov: Whole-of-government, central location for ransomware resources and alerts.\n                HHS Cyber Gateway: Contains key resources for HPH entities to bolster their cyber resilience.\n                #StopRansomware Guide: Resource to mitigate a ransomware attack.\n                Cyber Hygiene Services, Ransomware Readiness Assessment: CISA’s no-cost cyber hygiene\n                 services.\n                MS-ISAC Services: MS-ISAC’s no-cost cybersecurity services for state, local, tribal, and territorial\n                 (SLTT) entities."
+ },
+ {
+  "id": "p163",
+  "text": "   Ransomware Defense-in-Depth: MS-ISAC guidance for SLTT entities to mitigate the threat of\n                 ransomware using a defense-in-depth strategy.\n                Combatting Ransomware: MS-ISAC guidance on ransomware mitigation strategies aligned with\n                 recommendations from NIST and CSF."
+ },
+ {
+  "id": "p164",
+  "text": "Reporting\n        Your organization has no obligation to respond or provide information back to FBI in response to this joint\n        advisory. If, after reviewing the information provided, your organization decides to provide information to\n        FBI, reporting must be consistent with applicable state and federal laws.\n        FBI is interested in any information that can be shared, to include boundary logs showing communication\n        to and from foreign IP addresses, a sample ransom note, communications with threat actors, Bitcoin wallet\n        information, decryptor files, and/or a benign sample of an encrypted file.\n        Additional details of interest include a targeted company point of contact, status and scope of infection,\n        estimated loss, operational impact, transaction IDs, date of infection, date detected, initial attack vector,\n        and host- and network-based indicators.\n        The authoring agencies do not encourage paying ransom as payment does not guarantee victim files will\n        be recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n        encourage other criminal actors to engage in the distribution of ransomware, and/or fund illicit activities.\n        Regardless of whether you or your organization have decided to pay the ransom, FBI and CISA urge you to\n        promptly report ransomware incidents to FBI’s Internet Crime Complain Center (IC3), a local FBI Field\n        Office, or CISA via the agency’s Incident Reporting System or its 24/7 Operations Center\n        (contact@mail.cisa.dhs.gov) or by calling 1-844-Say-CISA (1-844-729-2472).\n        State, local, tribal, and territorial governments should report incidents to the MS-ISAC (SOC@cisecurity.org\n        or 866-787-4722).\n        HPH Sector organizations should report incidents to FBI or CISA but also can reach out to HHS at\n        HHScyber@hhs.gov for cyber incident support focused on mitigating adverse patient impacts."
+ },
+ {
+  "id": "p165",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. The authoring\n        agencies do not endorse any commercial entity, product, company, or service, including any entities,\n        products, or services linked within this document. Any reference to specific commercial entities, products,\n        processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n        imply endorsement, recommendation, or favor by the authoring agencies."
+ },
+ {
+  "id": "p166",
+  "text": "Acknowledgements\n        Cisco Talos contributed to this advisory."
+ },
+ {
+  "id": "p167",
+  "text": "Version History\n        July 22, 2025: Initial version."
+ },
+ {
+  "id": "p168",
+  "text": "Notes"
+ },
+ {
+  "id": "p169",
+  "text": "1 Elio Biasiotto, et. al., “Unwrapping the Emerging Interlock Ransomware Attack,” Talos Intelligence (blog),"
+ },
+ {
+  "id": "p170",
+  "text": "Cisco Talos, last modified November 7, 2024, https://blog.talosintelligence.com/emerging-interlock-\n        ransomware/.\n        2 Sekoia Threat Detection and Research team, “Interlock Ransomware Evolving Under the Radar,” Sekoia"
+ },
+ {
+  "id": "p171",
+  "text": "(blog), Sekoia, last modified April 16, 2025, https://blog.sekoia.io/interlock-ransomware-evolving-under-\n        the-radar/.\n        3 Yashvi Shah and Vignesh Dhatchanamoorthy, “ClickFix Deception: A Social Engineering Tactic to Deploy"
+ },
+ {
+  "id": "p172",
+  "text": "Malware,” McAfee Labs (blog), McAfee, last modified June 11, 2024,\n        https://www.mcafee.com/blogs/other-blogs/mcafee-labs/clickfix-deception-a-social-engineering-tactic-to-\n        deploy-malware/ and “HC3 Sector Alert: ClickFix Attacks,” Health Sector Cybersecurity Coordination Center,\n        Department of Health and Human Services, last modified October 29, 2024,\n        https://www.hhs.gov/sites/default/files/clickfix-attacks-sector-alert-tlpclear.pdf.\n        4 Shah, “ClickFix Deception: A Social Engineering Tactic to Deploy Malware.”"
+ },
+ {
+  "id": "p173",
+  "text": "5 Sekoia Threat Detection and Research team, “Interlock Ransomware Evolving Under the Radar.”"
+ },
+ {
+  "id": "p174",
+  "text": "6 Bill Toulas, “Interlock Ransomware Gang Deploys New NodeSnake RAT on Universities,“ Bleeping"
+ },
+ {
+  "id": "p175",
+  "text": "Computer, May 28, 2025, https://www.bleepingcomputer.com/news/security/interlock-ransomware-gang-\n        deploys-new-nodesnake-rat-on-universities/.\n        7 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p176",
+  "text": "8 International law-enforcement and Microsoft took down the Lumma Stealer malware in May 2025 by"
+ },
+ {
+  "id": "p177",
+  "text": "seizing internet domains the actors used to distribute the malware to actors and taking down domains that\n        hosted the malware’s infrastructure. For more information, see Tara Seals, “Lumma Stealer Takedown\n        Reveals Sprawling Operation,” Dark Reading, May 21, 2025, https://www.darkreading.com/cybersecurity-\n        operations/lumma-stealer-takedown-sprawling-operation, and Steven Masada, “Disrupting Lumma Stealer:\n        Microsoft Leads Global Action Against Favored Cybercrime Tool,” Microsoft On the Issues (blog), Microsoft,\n        last modified May 21, 2025, https://blogs.microsoft.com/on-the-issues/2025/05/21/microsoft-leads-\n        global-action-against-favored-cybercrime-tool/.\n        9 Sekoia Threat Detection and Research team, “Interlock Ransomware Evolving Under the Radar.”"
+ },
+ {
+  "id": "p178",
+  "text": "10 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p179",
+  "text": "11 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p180",
+  "text": "12 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p181",
+  "text": "13 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p182",
+  "text": "14 Lawrence Abrams, “Meet Interlock — The New Ransomware Targeting FreeBSD Servers,” Bleeping"
+ },
+ {
+  "id": "p183",
+  "text": "Computer, November 3, 2024, https://www.bleepingcomputer.com/news/security/meet-interlock-the-new-\n        ransomware-targeting-freebsd-servers/."
+ },
+ {
+  "id": "p184",
+  "text": "15 Biasiotto, “Unwrapping the Emerging Interlock Ransomware Attack.”"
+ },
+ {
+  "id": "p185",
+  "text": "16 Graham Cluley, “Interlock Ransomware: What You Need to Know,” Fortra (blog), Fortra, last modified"
+ },
+ {
+  "id": "p186",
+  "text": "May 30, 2025, https://www.tripwire.com/state-of-security/interlock-ransomware-what-you-need-know.\n        17 Sekoia Threat Detection and Research team, “Interlock Ransomware Evolving Under the Radar.”"
+ }
+]

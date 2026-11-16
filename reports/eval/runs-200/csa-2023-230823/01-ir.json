@@ -1,0 +1,875 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230823",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "a24e9e48a681beac3dfc387cf3ab98b339e4ea8dae7da178c350238ac96b6c15",
+  "source_name": "csa-2023-230823"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit CVE-2023-2868 vulnerability in Barracuda ESG appliances",
+   "source": "llm",
+   "description": "Suspected PRC cyber actors exploited a remote command injection vulnerability (CVE-2023-2868) in Barracuda ESG appliances by sending specially formatted TAR file attachments to email addresses affiliated with domains connected to ESG appliances, triggering command injection during email attachment scanning.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
+  },
+  {
+   "id": "a2",
+   "name": "Establish reverse shell on compromised ESG appliance",
+   "source": "llm",
+   "description": "Malicious email attachments initiated a connection to a domain or IP address controlled by the cyber actors and established a reverse shell, allowing execution of further commands on the ESG device.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Drop malicious payloads on compromised ESG appliances",
+   "source": "llm",
+   "description": "After compromising the ESG device, the cyber actors dropped various malicious payloads onto the vulnerable machines to enable persistent access, email scanning, credential harvesting, and data exfiltration.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
+  },
+  {
+   "id": "a4",
+   "name": "Use ESG appliance as entry point for lateral movement and further email attacks",
+   "source": "llm",
+   "description": "In some cases, the actors used initial access to the ESG appliance as an entry point to the rest of the victim’s network or sent emails to other victim appliances.",
+   "target_host_ref": "h1",
+   "attack_tactic": "lateral-movement",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Obfuscate actions with counter-forensic techniques",
+   "source": "llm",
+   "description": "The cyber actors obfuscated their actions with counter-forensic techniques, making detection of compromise difficult through only scanning the appliance itself for indicators of compromise.",
+   "target_host_ref": "h1",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the reverse shell is established using the malicious email attachments that exploit the vulnerability",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "dropping malicious payloads occurs after compromising the device via reverse shell",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using initial access to ESG appliance (established by payloads) as entry point for lateral movement and further email attacks",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "obfuscation of actions occurs after other attacker actions to avoid detection",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Email Security Gateway (ESG) appliance",
+   "source": "llm",
+   "name": "Barracuda ESG appliance",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Email Security Gateway (ESG) appliance email attachment scanning process",
+   "source": "llm",
+   "version": "5.1.3.001-9.2.0.006",
+   "cve": [
+    "CVE-2023-2868"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Barracuda ESG Email Security Gateway appliance",
+   "type": "tool",
+   "id": "artifact-1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Malicious TAR file attachments",
+   "type": "file",
+   "id": "artifact-2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-2868",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-17"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "url",
+   "value": "https://go.fbinet.fbi/news/Pages/Bringing-Private-Sector-to-the-Fight-Against-Cyber-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "go.fbinet.fbi",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "bestfindthetruth[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "goldenunder[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "singamofing[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "togetheroffway[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "gesturefavour[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "singnode[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "fessionalwork[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "CVE-2023-2868 is a remote command injection vulnerability that allows for unauthorized execution of system commands with administrator privileges on the ESG product. ... The vulnerability allows cyber actors to format TAR file attachments in a particular manner and send them to an email address affiliated with a domain that has an ESG appliance connected to it. The malicious file’s formatting, when scanned, results in a command injection into the ESG that leads to system commands being executed with the privileges of the ESG.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868 is a remote command injection vulnerability that allows for unauthorized execution of system commands with administrator privileges on the ESG pro"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Initially, suspected PRC cyber actors sent emails to victims containing TAR file attachments designed to exploit the vulnerability.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Initially, suspected PRC cyber actors sent emails to victims containing TAR file attachments designed to exploit the vulnerability."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The malicious email attachments contained files that initiated a connection to a domain or IP address controlled by the cyber actors and established a reverse shell at that domain or IP address, allowing the actors to execute further commands on the ESG device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malicious email attachments contained files that initiated a connection to a domain or IP address controlled by the cyber actors and established a reverse s"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "After the suspected PRC cyber actors compromised the device, they were observed dropping various malicious payloads into the vulnerable machines and aggressively targeted specific data for exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the suspected PRC cyber actors compromised the device, they were observed dropping various malicious payloads into the vulnerable machines and aggressivel"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Based on the FBI’s investigation to date, the cyber actors exploited this vulnerability in a significant number of ESG appliances and injected multiple malicious payloads that enabled persistent access, email scanning, credential harvesting, and data exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Based on the FBI’s investigation to date, the cyber actors exploited this vulnerability in a significant number of ESG appliances and injected multiple maliciou"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "In some cases, the actors used initial access to the ESG appliance as an entry point to the rest of the victim’s network or sent emails to other victim appliances.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In some cases, the actors used initial access to the ESG appliance as an entry point to the rest of the victim’s network or sent emails to other victim applianc"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "In many cases, the cyber actors obfuscated their actions with counter-forensic techniques, making detection of compromise difficult through only scanning the appliance itself for indicators of compromise.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In many cases, the cyber actors obfuscated their actions with counter forensic techniques, making detection of compromise difficult through only scanning the ap"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "CVE-2023-2868 is a remote command injection vulnerability that allows for unauthorized execution of system commands with administrator privileges on the ESG product. This vulnerability is present in the Barracuda ESG (appliance form factor only) versions 5.1.3.001-9.2.0.006",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868 is a remote command injection vulnerability that allows for unauthorized execution of system commands with administrator privileges on the ESG pro"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "the vulnerability exists in the scanning process, emails only need to be received by the ESG to trigger the vulnerability",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the vulnerability exists in the scanning process, emails only need to be received by the ESG to trigger the vulnerability"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "the cyber actors exploited this vulnerability in a significant number of ESG appliances and injected multiple malicious payloads that enabled persistent access, email scanning, credential harvesting, and data exfiltration",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the cyber actors exploited this vulnerability in a significant number of ESG appliances and injected multiple malicious payloads that enabled persistent access,"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "This vulnerability is present in the Barracuda ESG (appliance form factor only) versions 5.1.3.001-9.2.0.006, and relates to a process that occurs when the appliance screens email attachments.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This vulnerability is present in the Barracuda ESG (appliance form factor only) versions 5.1.3.001 9.2.0.006, and relates to a process that occurs when the appl"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The vulnerability allows cyber actors to format TAR file attachments in a particular manner and send them to an email address affiliated with a domain that has an ESG appliance connected to it. The malicious file’s formatting, when scanned, results in a command injection into the ESG",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The vulnerability allows cyber actors to format TAR file attachments in a particular manner and send them to an email address affiliated with a domain that has "
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CVE-2023-2868, a zero-day vulnerability in Barracuda Network’s Email Security Gateway (ESG) appliances",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868, a zero day vulnerability in Barracuda Network’s Email Security Gateway (ESG) appliances"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "The vulnerability allows cyber actors to format TAR file attachments in a particular manner and send them to an email address affiliated with a domain that has an ESG appliance connected to it.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The vulnerability allows cyber actors to format TAR file attachments in a particular manner and send them to an email address affiliated with a domain that has "
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2023-2868",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2023-2868",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2023-2868",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "https://go.fbinet.fbi/news/Pages/Bringing-Private-Sector-to-the-Fight-Against-Cyber-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://go.fbinet.fbi/news/Pages/Bringing Private Sector to the Fight Against Cyber"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "go.fbinet.fbi",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "go.fbinet.fbi"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "bestfindthetruth[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bestfindthetruth[.]com"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "goldenunder[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "goldenunder[.]com"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "singamofing[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "singamofing[.]com"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "togetheroffway[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "togetheroffway[.]com"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "gesturefavour[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gesturefavour[.]com"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "singnode[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "singnode[.]com"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "fessionalwork[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fessionalwork[.]com"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Barracuda ESG appliance — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Barracuda ESG appliance 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Barracuda ESG appliance",
+    "action:a1 — Exploit CVE-2023-2868 vulnerability in Barracuda ESG appliances",
+    "action:a2 — Establish reverse shell on compromised ESG appliance",
+    "action:a3 — Drop malicious payloads on compromised ESG appliances",
+    "action:a4 — Use ESG appliance as entry point for lateral movement and further email attacks",
+    "action:a5 — Obfuscate actions with counter-forensic techniques"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Barracuda ESG appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Barracuda ESG appliance — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Barracuda ESG appliance 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Barracuda ESG appliance",
+    "action:a1 — Exploit CVE-2023-2868 vulnerability in Barracuda ESG appliances",
+    "action:a2 — Establish reverse shell on compromised ESG appliance",
+    "action:a3 — Drop malicious payloads on compromised ESG appliances",
+    "action:a4 — Use ESG appliance as entry point for lateral movement and further email attacks",
+    "action:a5 — Obfuscate actions with counter-forensic techniques"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Barracuda ESG appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Barracuda ESG appliance — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Barracuda ESG appliance 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Barracuda ESG appliance",
+    "action:a1 — Exploit CVE-2023-2868 vulnerability in Barracuda ESG appliances",
+    "action:a2 — Establish reverse shell on compromised ESG appliance",
+    "action:a3 — Drop malicious payloads on compromised ESG appliances",
+    "action:a4 — Use ESG appliance as entry point for lateral movement and further email attacks",
+    "action:a5 — Obfuscate actions with counter-forensic techniques"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Barracuda ESG appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a3 — Drop malicious payloads on compromised ESG appliances",
+    "host:h1 — Barracuda ESG appliance"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Drop malicious payloads on compromised ESG appliances",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a3 — Drop malicious payloads on compromised ESG appliances",
+    "host:h1 — Barracuda ESG appliance"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Drop malicious payloads on compromised ESG appliances",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 2,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a1",
+    "technique": "T1203"
+   },
+   {
+    "action": "a2",
+    "technique": "T1059"
+   },
+   {
+    "action": "a3",
+    "technique": "T1105"
+   }
+  ]
+ },
+ "id": "scn_evidence"
+}

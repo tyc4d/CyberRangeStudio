@@ -1,0 +1,4011 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-241016",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "bd17ebc658306a13bd15a803ebcaf6fd22940fccf329bacd08d4f47b89eab596",
+  "source_name": "csa-2024-241016"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Conduct reconnaissance to gather victim identity information",
+   "source": "llm",
+   "description": "The actors likely conduct reconnaissance operations to gather victim identity information.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1589",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a2",
+   "name": "Gain persistent access via brute force",
+   "source": "llm",
+   "description": "The actors gain persistent access to victim networks frequently via brute force.",
+   "target_host_ref": "h4",
+   "attack_technique": "T1110",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Use brute force password spraying to obtain valid user and group email account credentials",
+   "source": "llm",
+   "description": "The actors used password spraying to obtain valid user and group email account credentials, allowing them access to the network.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1078",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a4",
+   "name": "Use valid accounts hosted on Microsoft 365, Azure, and Okta cloud environments for initial access",
+   "source": "llm",
+   "description": "The actors used accounts hosted on Microsoft 365, Azure, and Okta cloud environments as additional methods for initial access.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1078.004",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a5",
+   "name": "Exploit Citrix external-facing remote services for initial access",
+   "source": "llm",
+   "description": "The actors exploited Citrix systems’ external-facing remote services as another method for gaining initial access to the system.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1133",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "Send MFA push notifications to legitimate users to gain access (MFA fatigue / push bombing)",
+   "source": "llm",
+   "description": "The actors send MFA requests to legitimate users seeking acceptance of the request, bombarding users with mobile phone push notifications until the user either approves the request by accident or stops the notifications.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1621",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a7",
+   "name": "Register attacker devices with MFA using compromised user accounts",
+   "source": "llm",
+   "description": "The actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment via the valid account.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1098.005",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a8",
+   "name": "Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+   "source": "llm",
+   "description": "The actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords and then registered MFA through Okta for compromised accounts without MFA already enabled.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1484.002",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "target_host_ref_source": "program",
+   "target_host_ref_epistemic_status": "inferred",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "Use VPN service for conducting activity",
+   "source": "llm",
+   "description": "The actors frequently conduct their activity using a virtual private network (VPN) service. Several of the IP addresses in the actors’ malicious activity originate from exit nodes tied to the Private Internet Access VPN service.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1572",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a10",
+   "name": "Use Microsoft Word to open PowerShell to launch RDP binary mstsc.exe for lateral movement",
+   "source": "llm",
+   "description": "The actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe for lateral movement.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1021.001",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a11",
+   "name": "Perform Kerberos Service Principal Name (SPN) enumeration and receive Kerberos tickets",
+   "source": "llm",
+   "description": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1558.003",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a12",
+   "name": "Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+   "source": "llm",
+   "description": "The actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD accounts.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a13",
+   "name": "Import DomainPasswordSpray.ps1 tool from GitHub to conduct password spraying",
+   "source": "llm",
+   "description": "The actors imported the tool DomainPasswordSpray.ps1, which is openly available on GitHub, likely to conduct password spraying.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1105",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "target_host_ref_source": "program",
+   "target_host_ref_epistemic_status": "inferred",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a14",
+   "name": "Use Cmdkey /list command to display usernames and credentials",
+   "source": "llm",
+   "description": "The actors used the command Cmdkey /list, likely to display usernames and credentials.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1555",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a15",
+   "name": "Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+   "source": "llm",
+   "description": "The actors attempted impersonation of the domain controller, likely by exploiting Microsoft’s Netlogon (also known as “Zerologon”) privilege escalation vulnerability (CVE-2020-1472).",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1068",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated Windows AD DC/member VM fixture and native health checks; this deployment environment has no VM backend/image configured."
+  },
+  {
+   "id": "a16",
+   "name": "Use living off the land (LOTL) Windows command-line tools for discovery",
+   "source": "llm",
+   "description": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks using Windows command-line tools such as nltest and net group commands.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1018",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a17",
+   "name": "Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names",
+   "source": "llm",
+   "description": "The actors used an LDAP query in PowerShell to search the AD for computer display names, operating systems, descriptions, and distinguished names.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1059.001",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a18",
+   "name": "Make outbound connections using msedge.exe likely to Cobalt Strike Beacon C2 infrastructure",
+   "source": "llm",
+   "description": "Using msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1071.001",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a19",
+   "name": "Download files related to remote access methods and organization’s inventory",
+   "source": "llm",
+   "description": "While logged in to victim accounts, the actors downloaded files related to gaining remote access to the organization and to the organization’s inventory, likely exfiltrating the files.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1005",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that reconnaissance is conducted first, then persistent access is gained via brute force.",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Valid user and group email accounts obtained via brute force password spraying are used for initial access to cloud environments.",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Valid accounts obtained via brute force password spraying are used to gain initial access to Citrix systems.",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "MFA push notifications are sent to legitimate users to gain access to accounts hosted on cloud environments.",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a4",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "After gaining access via valid accounts hosted on cloud environments, attackers register their own devices with MFA using compromised user accounts.",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r6",
+   "from_action": "a8",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Using the self-service password reset tool to reset expired passwords enables registration of MFA for compromised accounts.",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Password spraying is a form of brute force used to obtain credentials after gaining persistent access.",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r8",
+   "from_action": "a13",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The imported DomainPasswordSpray.ps1 tool is used to conduct password spraying to obtain credentials.",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r9",
+   "from_action": "a10",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r10",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The actors performed Kerberos SPN enumeration and then used Microsoft Graph API PowerShell to dump AD accounts.",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r11",
+   "from_action": "a16",
+   "to_action": "a17",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The actors used living off the land Windows command-line tools for discovery, next used LDAP query in PowerShell to search Active Directory.",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r12",
+   "from_action": "a18",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r13",
+   "from_action": "a19",
+   "to_action": "a18",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "cloud environments hosting valid user and group email accounts used for initial access",
+   "source": "llm",
+   "name": "Microsoft 365, Azure, and Okta cloud environments",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s2",
+    "s3"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "external-facing remote services exploited for initial access",
+   "source": "llm",
+   "name": "Citrix systems",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s4"
+   ]
+  },
+  {
+   "id": "h3",
+   "role": "public facing service used for self-service password reset and MFA registration",
+   "source": "llm",
+   "name": "Active Directory Federation Service (ADFS)",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s5"
+   ]
+  },
+  {
+   "id": "h4",
+   "role": "target networks where actors conduct reconnaissance, lateral movement, credential access, and data exfiltration",
+   "source": "llm",
+   "name": "Victim networks",
+   "evidence_refs": [
+    "evidence-31",
+    "evidence-32"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s6",
+    "s7",
+    "s8",
+    "s9",
+    "s10",
+    "s11",
+    "s12"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Microsoft 365",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Azure",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "Okta",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "Citrix external-facing remote services",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s5",
+   "name": "Active Directory Federation Service (ADFS)",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s6",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-35",
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s7",
+   "name": "Active Directory (AD) Microsoft Graph API PowerShell application",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s8",
+   "name": "Kerberos authentication",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-38"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s9",
+   "name": "PowerShell",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-39",
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s10",
+   "name": "LDAP query",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s11",
+   "name": "msedge.exe",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-41"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s12",
+   "name": "Virtual Private Network (VPN) service",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "svc-unsupported-ad-ds",
+   "name": "Active Directory",
+   "cve": [
+    "CVE-2020-1472"
+   ],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6",
+   "s7",
+   "s8",
+   "s9",
+   "s10",
+   "s11",
+   "s12"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "DomainPasswordSpray.ps1",
+   "type": "tool",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Cmdkey /list command",
+   "type": "tool",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-44"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "MFA push notifications",
+   "type": "other",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Self-service password reset (SSPR) tool",
+   "type": "tool",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-46"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "MFA registered attacker devices",
+   "type": "account",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-47"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2020-1472",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49",
+    "evidence-50",
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "1F96D15B26416B2C7043EE7172357AF3AFBB002A",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "3D3CDF7CFC881678FEBCAFB26AE423FE5AA4EFEC",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "95.181.234[.]12",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "95.181.234[.]25",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "173.239.232[.]20",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "172.98.71[.]191",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "102.129.235[.]127",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "188.126.94[.]60",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "149.40.50[.]45",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "181.214.166[.]59",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "212.102.39[.]212",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "149.57.16[.]134",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "149.57.16[.]137",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "102.129.235[.]186",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "46.246.8[.]138",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "149.57.16[.]160",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "149.57.16[.]37",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "ip",
+   "value": "46.246.8[.]137",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "212.102.57[.]29",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "ip",
+   "value": "46.246.8[.]82",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "95.181.234[.]15",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "ip",
+   "value": "45.88.97[.]225",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "ip",
+   "value": "84.239.45[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "178.131.168[.]242",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "ip",
+   "value": "46.246.8[.]62",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "ip",
+   "value": "212.102.57[.]214",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "ip",
+   "value": "179.61.228[.]35",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "ip",
+   "value": "46.246.41[.]165",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "ip",
+   "value": "154.16.192[.]104",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "ip",
+   "value": "46.246.8[.]104",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "ip",
+   "value": "37.46.113[.]206",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "ip",
+   "value": "46.246.3[.]186",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "ip",
+   "value": "46.246.8[.]141",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "ip",
+   "value": "46.246.8[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "ip",
+   "value": "37.19.197[.]182",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "ip",
+   "value": "154.16.192[.]38",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "ip",
+   "value": "102.165.16[.]127",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "ip",
+   "value": "46.246.8[.]47",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "ip",
+   "value": "46.246.3[.]225",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "ip",
+   "value": "46.246.3[.]226",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "ip",
+   "value": "46.246.3[.]240",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "ip",
+   "value": "191.101.217[.]10",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "ip",
+   "value": "102.129.153[.]182",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "ip",
+   "value": "46.246.3[.]196",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "ip",
+   "value": "102.129.152[.]60",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "ip",
+   "value": "156.146.60[.]74",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "ip",
+   "value": "191.96.227[.]113",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "ip",
+   "value": "191.96.227[.]122",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "ip",
+   "value": "181.214.166[.]132",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "ip",
+   "value": "188.126.94[.]57",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "ip",
+   "value": "154.6.13[.]144",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "ip",
+   "value": "154.6.13[.]151",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "ip",
+   "value": "188.126.94[.]166",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "ip",
+   "value": "89.149.38[.]204",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-57",
+   "type": "ip",
+   "value": "46.246.8[.]67",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-58",
+   "type": "ip",
+   "value": "46.246.8[.]53",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-59",
+   "type": "ip",
+   "value": "154.16.192[.]37",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-60",
+   "type": "ip",
+   "value": "191.96.150[.]14",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-61",
+   "type": "ip",
+   "value": "191.96.150[.]96",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-62",
+   "type": "ip",
+   "value": "46.246.8[.]10",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-63",
+   "type": "ip",
+   "value": "84.239.25[.]13",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-64",
+   "type": "ip",
+   "value": "154.6.13[.]139",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113"
+   ]
+  },
+  {
+   "id": "indicator-65",
+   "type": "ip",
+   "value": "191.96.106[.]33",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-66",
+   "type": "ip",
+   "value": "191.96.227[.]159",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-67",
+   "type": "ip",
+   "value": "149.57.16[.]150",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-68",
+   "type": "ip",
+   "value": "191.96.150[.]21",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-69",
+   "type": "ip",
+   "value": "46.246.8[.]84",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-70",
+   "type": "ip",
+   "value": "95.181.235[.]8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-71",
+   "type": "ip",
+   "value": "191.96.227[.]102",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-72",
+   "type": "ip",
+   "value": "46.246.122[.]185",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-73",
+   "type": "ip",
+   "value": "146.70.102[.]3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-74",
+   "type": "ip",
+   "value": "46.246.3[.]233",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-75",
+   "type": "ip",
+   "value": "46.246.3[.]239",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-76",
+   "type": "ip",
+   "value": "188.126.89[.]35",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-77",
+   "type": "ip",
+   "value": "46.246.3[.]223",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126"
+   ]
+  },
+  {
+   "id": "indicator-78",
+   "type": "ip",
+   "value": "46.246.3[.]245",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-79",
+   "type": "ip",
+   "value": "191.96.150[.]50",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The actors likely conduct reconnaissance operations to gather victim identity information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors likely conduct reconnaissance operations to gather victim identity information."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Once obtained, the actors gain persistent access to victim networks frequently via brute force.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once obtained, the actors gain persistent access to victim networks frequently via brute force."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The actors used password spraying to obtain valid user and group email account credentials, allowing them access to the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors used password spraying to obtain valid user and group "
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The actors use valid user and group email accounts, frequently obtained via brute force such as password spraying",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors use valid user and group email accounts, frequently obtained via brute force such as password spraying"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The actors used accounts hosted on Microsoft 365, Azure, and Okta cloud environments as additional methods for initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors used accounts hosted on Microsoft 365, Azure, and Okta "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The actors use valid user and group email accounts, frequently obtained via brute force such as password spraying although other times via unknown methods, to obtain initial access to Microsoft 365, Azure, and Citrix systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors use valid user and group email accounts, frequently obtained via brute force such as password spraying although other times via unknown methods, to o"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The actors exploited Citrix systems’ external-facing remote services as another method for gaining initial access to the system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors exploited Citrix systems’ external facing remote services "
+  },
+  {
+   "id": "evidence-8",
+   "quote": "In some cases where push notification-based MFA was enabled, the actors send MFA requests to legitimate users seeking acceptance of the request. This technique—bombarding users with mobile phone push notifications until the user either approves the request by accident or stops the notifications— is known as “MFA fatigue” or “push bombing”.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In some cases where push notification based MFA was enabled, the actors send MFA requests to legitimate users seeking acceptance of the request. This technique "
+  },
+  {
+   "id": "evidence-9",
+   "quote": "In two confirmed compromises, the actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In two confirmed compromises, the actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "In another confirmed compromise, the actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords and then registered MFA through Okta for compromised accounts without MFA already enabled.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In another confirmed compromise, the actors used a self service password reset (SSPR) tool associated with a public facing Active Directory Federation Service ("
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The actors frequently conduct their activity using a virtual private network (VPN) service. Several of the IP addresses in the actors’ malicious activity originate from exit nodes tied to the Private Internet Access VPN service.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors frequently conduct their activity using a virtual private network (VPN) service. Several of the IP addresses in the actors’ malicious activity origin"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "In one instance, the actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one instance, the actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "In one instance, the actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one instance, the actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a direct"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Also, the actors imported the tool DomainPasswordSpray.ps1, which is openly available on GitHub, likely to conduct password spraying.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Also, the actors imported the tool DomainPasswordSpray.ps1, which is openly available on GitHub, likely to conduct password spraying."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The actors also used the command Cmdkey /list, likely to display usernames and credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also used the command Cmdkey /list, likely to display usernames and credentials."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "In one instance, the actors attempted impersonation of the domain controller, likely by exploiting Microsoft’s Netlogon (also known as “Zerologon”) privilege escalation vulnerability (CVE-2020-1472)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one instance, the actors attempted impersonation of the domain controller, likely by exploiting Microsoft’s Netlogon (also known as “Zerologon”) privilege es"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks. The actors used the following Windows command-line tools to gather information about domain controllers, trusted domains, lists of domain administrators, and enterprise administrators: Nltest /dclist, Nltest /domain_trusts, Nltest /domain_trusts/all_trusts, Net group “Enterprise admins” /domain, Net group “Domain admins” /domain",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks. The actors used the following Windows command l"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Next, the actors used the following Lightweight Directory Access Protocol (LDAP) query in PowerShell to search the AD for computer display names, operating systems, descriptions, and distinguished names.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Next, the actors used the following Lightweight Directory Access Protocol (LDAP) query in PowerShell to search the AD for computer display names, operating syst"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "$s = [adsisearcher]$str ... Foreach ($CA in $s.FindAll()) { Write-Host $CA.Properties.Item('cn') ... Write-host Total servers: $i",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "$s = [adsisearcher]$str … Foreach ($CA in $s.FindAll()) { Write Host $CA.Properties.Item('cn') … Write host Total servers: $i"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "On one occasion, using msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "On one occasion, using msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "In a couple instances, while logged in to victim accounts, the actors downloaded files related to gaining remote access to the organization and to the organization’s inventory, likely exfiltrating the files to further persist in the victim network or to sell the information online.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In a couple instances, while logged in to victim accounts, the actors downloaded files related to gaining remote access to the organization and to the organizat"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The actors likely conduct reconnaissance operations to gather victim identity information. Once obtained, the actors gain persistent access to victim networks frequently via brute force.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors likely conduct reconnaissance operations to gather victim identity information. Once obtained, the actors gain persistent access to victim networks f"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Once the threat actors gain access to an account, they frequently register their devices with MFA to protect their access to the environment via the valid account: In two confirmed compromises, the actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Once the threat actors gain access to an account, they frequently register their devices with MFA to protect their access to the environment via the valid accou"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "The actors used password spraying to obtain valid user and group email account credentials, allowing them access to the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a3"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-26",
+   "quote": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets. In one instance, the actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets. In one instance, the actors us"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks. The actors used the following Windows command-line tools to gather information about domain controllers, trusted domains, lists of domain administrators, and enterprise administrators: ... Next, the actors used the following Lightweight Directory Access Protocol (LDAP) query in PowerShell to search the AD for computer display names, operating systems, descriptions, and distinguished names.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks. The actors used the following Windows command l"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "The actors used accounts hosted on Microsoft 365, Azure, and Okta cloud environments as additional methods for initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7143,
+   "matched_text": " Microsoft 365, Azure, and "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "The actors exploited Citrix systems’ external-facing remote services as another method for gaining initial access to the system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " initial access to "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "The actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords and then registered MFA through Okta for compromised accounts without MFA already enabled.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors used a self service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with e"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "The actors likely conduct reconnaissance operations to gather victim identity information. Once obtained, the actors gain persistent access to victim networks frequently via brute force.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors likely conduct reconnaissance operations to gather victim identity information. Once obtained, the actors gain persistent access to victim networks f"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "The actors also move laterally and download information that could assist other actors with access and exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also move laterally and download information that could assist other actors with access and exploitation."
+  },
+  {
+   "id": "evidence-33",
+   "quote": "then registered MFA through Okta for compromised accounts without MFA already enabled.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "then registered MFA through Okta for compromised accounts without MFA already enabled."
+  },
+  {
+   "id": "evidence-34",
+   "quote": "The actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors used a self service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with e"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "The actors use Remote Desktop Protocol (RDP) for lateral movement.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors use Remote Desktop Protocol (RDP) for lateral movement."
+  },
+  {
+   "id": "evidence-36",
+   "quote": "The actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe for lateral movement.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "The actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets."
+  },
+  {
+   "id": "evidence-39",
+   "quote": "The actors used PowerShell commands to maintain and expand access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors used PowerShell commands to maintain and expand "
+  },
+  {
+   "id": "evidence-40",
+   "quote": "The actors used an LDAP query in PowerShell to search the AD for computer display names, operating systems, descriptions, and distinguished names.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " query in PowerShell to search the AD for computer display names, operating systems, descriptions, and distinguished names."
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Using msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "sing msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure."
+  },
+  {
+   "id": "evidence-42",
+   "quote": "The actors frequently conduct their activity using a virtual private network (VPN) service.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors frequently conduct their activity using a virtual private network (VPN) service."
+  },
+  {
+   "id": "evidence-43",
+   "quote": "The actors imported the tool DomainPasswordSpray.ps1, which is openly available on GitHub, likely to conduct password spraying.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors imported the tool DomainPasswordSpray.ps1, which is openly available on GitHub, likely to conduct password spraying."
+  },
+  {
+   "id": "evidence-44",
+   "quote": "The actors used the command Cmdkey /list, likely to display usernames and credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " used the command Cmdkey /list, likely to display usernames and credentials."
+  },
+  {
+   "id": "evidence-45",
+   "quote": "The actors send MFA requests to legitimate users seeking acceptance of the request, bombarding users with mobile phone push notifications until the user either approves the request by accident or stops the notifications.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " bombarding users with mobile phone push notifications until the user either approves the request by accident or stops the notifications"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "The actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors used a self service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with e"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "The actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment via the valid account.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors leveraged a compromised user’s open registration for MFA to register the actor’s own device to access the environment"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "50"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "1F96D15B26416B2C7043EE7172357AF3AFBB002A",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "80"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1F96D15B26416B2C7043EE7172357AF3AFBB002A"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "3D3CDF7CFC881678FEBCAFB26AE423FE5AA4EFEC",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "81"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3D3CDF7CFC881678FEBCAFB26AE423FE5AA4EFEC"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "95.181.234[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "84"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.181.234[.]12"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "95.181.234[.]25",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.181.234[.]25"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "173.239.232[.]20",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "86"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "173.239.232[.]20"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "172.98.71[.]191",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "172.98.71[.]191"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "102.129.235[.]127",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.129.235[.]127"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "188.126.94[.]60",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.126.94[.]60"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "149.40.50[.]45",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "90"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.40.50[.]45"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "181.214.166[.]59",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "91"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "181.214.166[.]59"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "212.102.39[.]212",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "92"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "212.102.39[.]212"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "149.57.16[.]134",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.57.16[.]134"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "149.57.16[.]137",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.57.16[.]137"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "102.129.235[.]186",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.129.235[.]186"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "46.246.8[.]138",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]138"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "149.57.16[.]160",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.57.16[.]160"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "149.57.16[.]37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.57.16[.]37"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "46.246.8[.]137",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "99"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]137"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "212.102.57[.]29",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "100"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "212.102.57[.]29"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "46.246.8[.]82",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]82"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "95.181.234[.]15",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "102"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.181.234[.]15"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "45.88.97[.]225",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.88.97[.]225"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "84.239.45[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "104"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.239.45[.]17"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "178.131.168[.]242",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "106"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "178.131.168[.]242"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "46.246.8[.]62",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]62"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "212.102.57[.]214",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "108"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "212.102.57[.]214"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "179.61.228[.]35",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "109"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "179.61.228[.]35"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "46.246.41[.]165",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "110"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.41[.]165"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "154.16.192[.]104",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "111"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.16.192[.]104"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "46.246.8[.]104",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "112"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]104"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "37.46.113[.]206",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "113"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37.46.113[.]206"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "46.246.3[.]186",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "114"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]186"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "46.246.8[.]141",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "115"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]141"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "46.246.8[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]17"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "37.19.197[.]182",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37.19.197[.]182"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "154.16.192[.]38",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "118"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.16.192[.]38"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "102.165.16[.]127",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "119"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.165.16[.]127"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "46.246.8[.]47",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "120"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]47"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "46.246.3[.]225",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "121"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]225"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "46.246.3[.]226",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]226"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "46.246.3[.]240",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]240"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "191.101.217[.]10",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.101.217[.]10"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "102.129.153[.]182",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "125"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.129.153[.]182"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "46.246.3[.]196",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "126"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]196"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "102.129.152[.]60",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "128"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.129.152[.]60"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "156.146.60[.]74",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "129"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "156.146.60[.]74"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "191.96.227[.]113",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "130"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.227[.]113"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "191.96.227[.]122",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "131"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.227[.]122"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "181.214.166[.]132",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "132"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "181.214.166[.]132"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "188.126.94[.]57",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "133"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.126.94[.]57"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "154.6.13[.]144",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "134"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.13[.]144"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "154.6.13[.]151",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "135"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.13[.]151"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "188.126.94[.]166",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "136"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.126.94[.]166"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "89.149.38[.]204",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "137"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.149.38[.]204"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "46.246.8[.]67",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "138"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]67"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "46.246.8[.]53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "139"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]53"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "154.16.192[.]37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "140"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.16.192[.]37"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "191.96.150[.]14",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "141"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.150[.]14"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "191.96.150[.]96",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "142"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.150[.]96"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "46.246.8[.]10",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "143"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]10"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "84.239.25[.]13",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.239.25[.]13"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "154.6.13[.]139",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "145"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.13[.]139"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "191.96.106[.]33",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "146"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.106[.]33"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "191.96.227[.]159",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "147"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.227[.]159"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "149.57.16[.]150",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "148"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.57.16[.]150"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "191.96.150[.]21",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "149"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.150[.]21"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "46.246.8[.]84",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "151"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.8[.]84"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "95.181.235[.]8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "152"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.181.235[.]8"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "191.96.227[.]102",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "153"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.227[.]102"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "46.246.122[.]185",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "154"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.122[.]185"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "146.70.102[.]3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "155"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "146.70.102[.]3"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "46.246.3[.]233",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "156"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]233"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "46.246.3[.]239",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "157"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]239"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "188.126.89[.]35",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "158"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.126.89[.]35"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "46.246.3[.]223",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "159"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]223"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "46.246.3[.]245",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "160"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.246.3[.]245"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "191.96.150[.]50",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "161"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.150[.]50"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Microsoft 365, Azure, and Okta cloud environments — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365, Azure, and Okta cloud environments 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Microsoft 365, Azure, and Okta cloud environments"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365, Azure, and Okta cloud environments",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Microsoft 365, Azure, and Okta cloud environments — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365, Azure, and Okta cloud environments 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Microsoft 365, Azure, and Okta cloud environments"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365, Azure, and Okta cloud environments",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Microsoft 365, Azure, and Okta cloud environments — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365, Azure, and Okta cloud environments 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Microsoft 365, Azure, and Okta cloud environments"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365, Azure, and Okta cloud environments",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Citrix systems — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix systems 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Citrix systems",
+    "action:a4 — Use valid accounts hosted on Microsoft 365, Azure, and Okta cloud environments for initial access",
+    "action:a5 — Exploit Citrix external-facing remote services for initial access"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Citrix systems — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix systems 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Citrix systems",
+    "action:a4 — Use valid accounts hosted on Microsoft 365, Azure, and Okta cloud environments for initial access",
+    "action:a5 — Exploit Citrix external-facing remote services for initial access"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Citrix systems — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix systems 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Citrix systems",
+    "action:a4 — Use valid accounts hosted on Microsoft 365, Azure, and Okta cloud environments for initial access",
+    "action:a5 — Exploit Citrix external-facing remote services for initial access"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Active Directory Federation Service (ADFS) — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Federation Service (ADFS) 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Active Directory Federation Service (ADFS)",
+    "action:a8 — Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+    "action:a12 — Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+    "action:a13 — Import DomainPasswordSpray.ps1 tool from GitHub to conduct password spraying",
+    "action:a15 — Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+    "action:a17 — Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Federation Service (ADFS)",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30",
+      "evidence-10",
+      "evidence-14",
+      "evidence-15",
+      "evidence-17",
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Active Directory Federation Service (ADFS) — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Federation Service (ADFS) 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Active Directory Federation Service (ADFS)",
+    "action:a8 — Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+    "action:a12 — Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+    "action:a13 — Import DomainPasswordSpray.ps1 tool from GitHub to conduct password spraying",
+    "action:a15 — Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+    "action:a17 — Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Federation Service (ADFS)",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30",
+      "evidence-10",
+      "evidence-14",
+      "evidence-15",
+      "evidence-17",
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Active Directory Federation Service (ADFS) — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Federation Service (ADFS) 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Active Directory Federation Service (ADFS)",
+    "action:a8 — Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+    "action:a12 — Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+    "action:a13 — Import DomainPasswordSpray.ps1 tool from GitHub to conduct password spraying",
+    "action:a15 — Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+    "action:a17 — Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Federation Service (ADFS)",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30",
+      "evidence-10",
+      "evidence-14",
+      "evidence-15",
+      "evidence-17",
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "Victim networks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — Victim networks",
+    "action:a2 — Gain persistent access via brute force"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-32",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "Victim networks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — Victim networks",
+    "action:a2 — Gain persistent access via brute force"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-32",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "Victim networks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — Victim networks",
+    "action:a2 — Gain persistent access via brute force"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-32",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s4-version",
+   "field": "Citrix external-facing remote services — 版本",
+   "category": "version",
+   "reason": "IR 指出 Citrix external-facing remote services，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Citrix external-facing remote services 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s4 — Citrix external-facing remote services",
+    "action:a5 — Exploit Citrix external-facing remote services for initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Citrix external-facing remote services",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Microsoft 365 — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a3 使用 Microsoft 365，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 依賴 Microsoft 365。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Microsoft 365",
+    "action:a3 — Use brute force password spraying to obtain valid user and group email account credentials"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Microsoft 365",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-28"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Use brute force password spraying to obtain valid user and group email account credentials",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s6-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a10 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a10 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s6 — Remote Desktop Protocol (RDP)",
+    "action:a10 — Use Microsoft Word to open PowerShell to launch RDP binary mstsc.exe for lateral movement"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s6.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Use Microsoft Word to open PowerShell to launch RDP binary mstsc.exe for lateral movement",
+     "source_ref": "actions:a10.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s6",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8, a12, a15, a17 涉及 Active Directory（h3 (Active Directory Federation Service (ADFS))），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h3 — Active Directory Federation Service (ADFS)",
+    "action:a8 — Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+    "action:a12 — Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+    "action:a15 — Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+    "action:a17 — Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Active Directory Federation Service (ADFS)",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Use self-service password reset (SSPR) tool on public facing ADFS to reset expired passwords and register MFA",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Use Active Directory Microsoft Graph API PowerShell application to perform directory dump of all AD accounts",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Attempt impersonation of domain controller exploiting CVE-2020-1472 (Netlogon vulnerability)",
+     "source_ref": "actions:a15.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names",
+     "source_ref": "actions:a17.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a18, a19 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a18 — Make outbound connections using msedge.exe likely to Cobalt Strike Beacon C2 infrastructure",
+    "action:a19 — Download files related to remote access methods and organization’s inventory"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Make outbound connections using msedge.exe likely to Cobalt Strike Beacon C2 infrastructure",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download files related to remote access methods and organization’s inventory",
+     "source_ref": "actions:a19.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a17 — Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Use LDAP query in PowerShell to search Active Directory for computer display names, OS, descriptions, and distinguished names",
+     "source_ref": "actions:a17.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-microsoft-365",
+   "field": "software dependency: Microsoft 365",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Microsoft 365 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-azure",
+   "field": "software dependency: Azure",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Azure 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-okta",
+   "field": "software dependency: Okta",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "Okta 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-citrix-external-facing-remo",
+   "field": "software dependency: Citrix external-facing remote services",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "Citrix external-facing remote services 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-active-directory-federation",
+   "field": "software dependency: Active Directory Federation Service (ADFS)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s5",
+   "question": "Active Directory Federation Service (ADFS) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-remote-desktop-protocol-rdp",
+   "field": "software dependency: Remote Desktop Protocol (RDP)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s6",
+   "question": "Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-active-directory-ad-microso",
+   "field": "software dependency: Active Directory (AD) Microsoft Graph API PowerShell application",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s7",
+   "question": "Active Directory (AD) Microsoft Graph API PowerShell application 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-kerberos-authentication",
+   "field": "software dependency: Kerberos authentication",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s8",
+   "question": "Kerberos authentication 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-powershell",
+   "field": "software dependency: PowerShell",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s9",
+   "question": "PowerShell 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-ldap-query",
+   "field": "software dependency: LDAP query",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s10",
+   "question": "LDAP query 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-msedge-exe",
+   "field": "software dependency: msedge.exe",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s11",
+   "question": "msedge.exe 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-virtual-private-network-vpn",
+   "field": "software dependency: Virtual Private Network (VPN) service",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s12",
+   "question": "Virtual Private Network (VPN) service 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-unassigned",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8438,
+  "unsupported_claim_count": 27,
+  "inferred_count": 7,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

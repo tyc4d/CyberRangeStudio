@@ -1,0 +1,955 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260819",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "c67dad3a8756dbc6f7eb5011e3f60ca2a83460d2f6a258c583a0093af1ef676b",
+  "source_name": "csa-2026-260819"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Using Internet scanning services to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+   "source": "llm",
+   "description": "Threat actors are using Internet scanning services (e.g., Censys, ZoomEye) to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+   "target_host_ref": "h1",
+   "attack_technique": "T1596.005",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "Rapidly iterating exploit code through AI-assisted development",
+   "source": "llm",
+   "description": "Threat actors rapidly iterate exploit code through AI-assisted development, lowering technical barriers to ICS attacks",
+   "target_host_ref": "h1",
+   "attack_technique": "T1587.004",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "Taking advantage of insecure credentials to access exposed devices",
+   "source": "llm",
+   "description": "Threat actors take advantage of insecure credentials to access exposed devices that have unconfigured (default) or minimally configured authentication",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "Deploying AI-generated Python scripts incorporating the snap7.dll library",
+   "source": "llm",
+   "description": "Threat actors deploy AI-generated Python scripts that incorporate the snap7.dll library from public repositories to gain read/write access to the PLC and mimic legitimate tools",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a5",
+   "name": "Masquerading malicious scripts as legitimate monitoring tools",
+   "source": "llm",
+   "description": "Threat actors masquerade malicious scripts as legitimate monitoring tools to evade detection by security teams",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "Conducting read/write operations on data blocks",
+   "source": "llm",
+   "description": "Threat actors conduct read/write operations on data blocks, potentially for reconnaissance, capability testing, or pre-positioning for effects operations",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Taking advantage of insecure credentials to access exposed devices depends on identifying exposed devices",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Deploying AI-generated Python scripts depends on rapidly iterating exploit code through AI-assisted development",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Masquerading malicious scripts depends on deploying AI-generated Python scripts",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Conducting read/write operations depends on masquerading malicious scripts as legitimate monitoring tools",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "programmable logic controllers (PLCs)",
+   "source": "llm",
+   "name": "Siemens S7 Series PLCs",
+   "network_placement": "Internet-exposed or insufficiently segmented",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "engineering workstations with Totally Integrated Automation (TIA) Portal, STEP 7, or S7 programming access",
+   "source": "llm",
+   "name": "Engineering workstations",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s2",
+    "s3"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "S7comm protocol",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "TIA Portal",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-19",
+    "evidence-16",
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "STEP 7",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-19",
+    "evidence-16",
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "snap7.dll",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "AI-generated Python scripts",
+   "type": "script",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Malicious scripts masquerading as legitimate monitoring tools",
+   "type": "script",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.siemens.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Using Internet scanning services (e.g., Censys, ZoomEye) to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using Internet scanning services (e.g., Censys, ZoomEye) to identify Internet exposed or insufficiently segmented Siemens S7 Series PLCs"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Rapidly iterating exploit code through AI-assisted development, lowering technical barriers to ICS attacks [T1587.004, T1588.007]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Rapidly iterating exploit code through AI assisted development, lowering technical barriers to ICS attacks [T1587.004, T1588.007]"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Taking advantage of insecure credentials to access exposed devices that have unconfigured (default) or minimally configured authentication",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Taking advantage of insecure credentials to access exposed devices that have unconfigured (default) or minimally configured authentication"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Deploying AI-generated Python scripts that incorporate the snap7.dll library from public repositories to gain read/write access to the PLC and mimic legitimate tools",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Deploying AI generated Python scripts that incorporate the snap7.dll library from public repositories to gain read/write access to the PLC and mimic legitimate "
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Masquerading malicious scripts as legitimate monitoring tools to evade detection by security teams",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Masquerading malicious scripts as legitimate monitoring tools to evade detection by security teams"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Conducting read/write operations on data blocks, potentially for reconnaissance, capability testing, or pre-positioning for effects operations [T0893, T0821]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Conducting read/write operations on data blocks, potentially for reconnaissance, capability testing, or pre positioning for effects operations [T0893, T0821]"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The actors leverage Internet scanning services to find Internet-exposed PLCs running outdated software or that are otherwise poorly protected.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors leverage Internet scanning services to find Internet exposed PLCs running outdated software or that are otherwise poorly protected."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Threat actors are using AI assistance to generate exploitation scripts using publicly available information on these Siemens S7 Series PLCs for initial access, credential access, denial of service, and other objectives.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Threat actors are leveraging open source industrial automation libraries—specifically snap7.dll/python-snap7—combined with AI-assisted scripting to create custom tools that mimic legitimate OT monitoring solutions.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors are leveraging open source industrial automation libraries specifically snap7.dll/python snap7 combined with AI assisted scripting to create custo"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The threat actors are conducting reconnaissance and capability development against U.S.-based Siemens PLC installations using AI-generated exploitation scripts disguised as legitimate monitoring tools.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actors are conducting reconnaissance and capability development against U.S. based Siemens PLC installations using AI generated exploitation scripts "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Threat actors are using Internet scanning services (e.g., Censys, ZoomEye) to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8947,
+   "matched_text": "sing Internet scanning services (e.g., Censys, ZoomEye) to identify Internet exposed or insufficiently segmented Siemens S7 Series PLCs"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "This advisory relates to an active threat to Siemens S7 Series programmable logic controllers (PLCs).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This advisory relates to an active threat to Siemens S7 Series programmable logic controllers (PLCs)."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Threat actors are conducting reconnaissance and capability development against U.S.-based Siemens PLC installations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "hreat actors are conducting reconnaissance and capability development against U.S. based Siemens PLC installations"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "If PLCs are exposed to the Internet, they are at high risk for exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "If PLCs are exposed to the Internet, they are at high risk for exploitation."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Map all engineering workstations with Totally Integrated Automation (TIA) Portal, STEP 7, or S7 programming access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Map all engineering workstations with Totally Integrated Automation (TIA) Portal, STEP 7, or S7 programming access"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Restrict TIA Portal/STEP 7 access to authorized engineering workstations only by MAC/IP allowlisting on PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restrict TIA Portal/STEP 7 access to authorized engineering workstations only by MAC/IP allowlisting on PLCs"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Monitor for Python processes with snap7.dll library imports on engineering workstations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Monitor for Python processes with snap7.dll library imports on engineering workstations"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "These tools provide read/write access to Siemens S7 Series PLC memory, configuration data, and ladder logic programs via the S7comm protocol.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "These tools provide read/write access to Siemens S7 Series PLC memory, configuration data, and ladder logic programs via the S7comm protocol."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Update TIA Portal and STEP 7 software to current versions",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Update TIA Portal and STEP 7 software to current versions"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Log all TIA Portal/STEP 7 connections to PLCs with timestamps and source IPs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Log all TIA Portal/STEP 7 connections to PLCs with timestamps and source IPs"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Threat actors deploy AI-generated Python scripts that incorporate the snap7.dll library from public repositories to gain read/write access to the PLC and mimic legitimate tools",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8571,
+   "matched_text": " AI generated Python scripts that incorporate the snap7.dll library from public repositories to gain read/write access to the PLC and mimic legitimate tools"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Threat actors masquerade malicious scripts as legitimate monitoring tools to evade detection by security teams",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.75,
+   "matched_text": " malicious scripts as legitimate monitoring tools to evade detection by security teams"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "www.siemens.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.siemens.com"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Siemens S7 Series PLCs — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7 Series PLCs 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Siemens S7 Series PLCs",
+    "action:a1 — Using Internet scanning services to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+    "action:a2 — Rapidly iterating exploit code through AI-assisted development",
+    "action:a3 — Taking advantage of insecure credentials to access exposed devices",
+    "action:a4 — Deploying AI-generated Python scripts incorporating the snap7.dll library",
+    "action:a5 — Masquerading malicious scripts as legitimate monitoring tools",
+    "action:a6 — Conducting read/write operations on data blocks"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7 Series PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Siemens S7 Series PLCs — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7 Series PLCs 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Siemens S7 Series PLCs",
+    "action:a1 — Using Internet scanning services to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+    "action:a2 — Rapidly iterating exploit code through AI-assisted development",
+    "action:a3 — Taking advantage of insecure credentials to access exposed devices",
+    "action:a4 — Deploying AI-generated Python scripts incorporating the snap7.dll library",
+    "action:a5 — Masquerading malicious scripts as legitimate monitoring tools",
+    "action:a6 — Conducting read/write operations on data blocks"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7 Series PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Siemens S7 Series PLCs — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7 Series PLCs 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Siemens S7 Series PLCs",
+    "action:a1 — Using Internet scanning services to identify Internet-exposed or insufficiently segmented Siemens S7 Series PLCs",
+    "action:a2 — Rapidly iterating exploit code through AI-assisted development",
+    "action:a3 — Taking advantage of insecure credentials to access exposed devices",
+    "action:a4 — Deploying AI-generated Python scripts incorporating the snap7.dll library",
+    "action:a5 — Masquerading malicious scripts as legitimate monitoring tools",
+    "action:a6 — Conducting read/write operations on data blocks"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7 Series PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "Internet-exposed or insufficiently segmented",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Engineering workstations — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering workstations 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Engineering workstations"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering workstations",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Engineering workstations — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering workstations 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Engineering workstations"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering workstations",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Engineering workstations — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Engineering workstations 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Engineering workstations"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Engineering workstations",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：S7comm protocol, TIA Portal, STEP 7。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a2 — Rapidly iterating exploit code through AI-assisted development",
+    "host:h1 — Siemens S7 Series PLCs"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Rapidly iterating exploit code through AI-assisted development",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a3 — Taking advantage of insecure credentials to access exposed devices",
+    "host:h1 — Siemens S7 Series PLCs"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Taking advantage of insecure credentials to access exposed devices",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-s7comm-protocol",
+   "field": "software dependency: S7comm protocol",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "S7comm protocol 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-tia-portal",
+   "field": "software dependency: TIA Portal",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "TIA Portal 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-step-7",
+   "field": "software dependency: STEP 7",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "STEP 7 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.7826,
+  "unsupported_claim_count": 5,
+  "inferred_count": 0,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

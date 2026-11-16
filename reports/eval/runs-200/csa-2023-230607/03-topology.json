@@ -1,0 +1,134 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing MOVEit Transfer web applications infected with a web shell",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 MOVEit Transfer software 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "underlying MOVEit Transfer databases",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "MySQL database",
+     "port": 3306,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "oss-mysql",
+   "version_basis": "assumed",
+   "deployed_version": "8.0.46",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h3",
+   "role": "Active Directory (AD) server",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Server Message Block (SMB)",
+     "port": 445,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false,
+   "not_deployed_reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 3306,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:3306 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "port": 445,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h3:445 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h3:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "No port is known for service MOVEit Transfer software (s1); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Microsoft SQL Server database (s3); it remains unreachable by default.",
+  "No port is known for service Azure SQL database (s4); it remains unreachable by default.",
+  "Host h3 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology).",
+  "Services without a resolved host association were left out of host service lists: s6.",
+  "Action a3 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied."
+ ]
+}

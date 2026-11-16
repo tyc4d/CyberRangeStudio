@@ -1,0 +1,2695 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-201022-1",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "46c04c7772fa54a608c0ea0ef7202bc8f624e48359c244afc820c23b0f37e6ee",
+  "source_name": "csa-2020-201022-1"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Connect to victim web servers using Turkish IP addresses",
+   "source": "llm",
+   "description": "The APT actor is using Turkish IP addresses 213.74.101[.]65, 213.74.139[.]196, and 212.252.30[.]170 to connect to victim web servers",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1190",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   }
+  },
+  {
+   "id": "a2",
+   "name": "Attempt brute force logins and SQL injections on victim websites",
+   "source": "llm",
+   "description": "The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injections on victim websites",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "Host malicious domains including possible aviation sector target",
+   "source": "llm",
+   "description": "The APT actor also hosted malicious domains, including possible aviation sector target columbusairports.microsoftonline[.]host",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1189",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   }
+  },
+  {
+   "id": "a4",
+   "name": "Scan for vulnerable Citrix and Microsoft Exchange services",
+   "source": "llm",
+   "description": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "Exploit Citrix Directory Traversal Bug (CVE-2019-19781)",
+   "source": "llm",
+   "description": "This actor continues to exploit a Citrix Directory Traversal Bug (CVE-2019-19781)",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a6",
+   "name": "Exploit Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+   "source": "llm",
+   "description": "This actor continues to exploit a Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a7",
+   "name": "Use Cisco AnyConnect SSL VPN connections for remote logins",
+   "source": "llm",
+   "description": "The APT actor has been observed using Cisco AnyConnect Secure Socket Layer (SSL) virtual private network (VPN) connections to enable remote logins on at least one victim network",
+   "target_host_ref": "h5",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1133",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
+  },
+  {
+   "id": "a8",
+   "name": "Enumerate and exploit Fortinet VPN vulnerability (CVE-2018-13379)",
+   "source": "llm",
+   "description": "The APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1078",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   }
+  },
+  {
+   "id": "a9",
+   "name": "Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers",
+   "source": "llm",
+   "description": "The APT actor exploited a Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows Active Directory servers for Privilege Escalation",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1078",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   }
+  },
+  {
+   "id": "a10",
+   "name": "Compromise Microsoft Office 365 accounts",
+   "source": "llm",
+   "description": "Successful authentications—including the compromise of Microsoft Office 365 (O365) accounts—have been observed on at least one victim network",
+   "target_host_ref": "h5",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1078",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The actor is using Turkish IP addresses to connect to victim web servers, then attempts brute force logins and SQL injections on victim websites.",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exploitation of Citrix Directory Traversal Bug follows scanning and identification of vulnerable Citrix services.",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exploitation of Microsoft Exchange remote code execution flaw follows scanning and identification of vulnerable Microsoft Exchange services.",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Enumeration and exploitation of Fortinet VPN vulnerability occurred before exploiting Windows Netlogon vulnerability.",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Use of Cisco AnyConnect SSL VPN connections observed before enumeration and exploitation of Fortinet VPN vulnerability.",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Compromise of Microsoft Office 365 accounts observed after obtaining access to Windows AD servers via Netlogon vulnerability.",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim networks targeted by the Russian state-sponsored APT actor",
+   "source": "llm",
+   "name": "U.S. SLTT government networks",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18",
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "victim networks targeted by the Russian state-sponsored APT actor",
+   "source": "llm",
+   "name": "aviation networks",
+   "evidence_refs": [
+    "evidence-20",
+    "evidence-21",
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h3",
+   "role": "servers targeted for privilege escalation",
+   "source": "llm",
+   "name": "Windows Active Directory servers",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "web servers targeted by brute force logins and SQL injections",
+   "source": "llm",
+   "name": "victim web servers",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h5",
+   "role": "network where Cisco AnyConnect SSL VPN connections and Microsoft Office 365 accounts were compromised",
+   "source": "llm",
+   "name": "at least one victim network",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Citrix Application Delivery Controller",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "Microsoft Exchange Server",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2020-0688"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s3",
+   "name": "Cisco AnyConnect Secure Socket Layer (SSL) VPN",
+   "source": "llm",
+   "host_ref": "h5",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s4",
+   "name": "Fortinet VPN",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s5",
+   "name": "Windows Active Directory",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2020-1472"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s6",
+   "name": "Microsoft Office 365 (O365)",
+   "source": "llm",
+   "host_ref": "h5",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "columbusairports.microsoftonline.host",
+   "type": "malicious domain",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.us-cert.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "213.74.101[.]65",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "213.74.139[.]196",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34",
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "212.252.30[.]170",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "108.177.235[.]92",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "5.196.167[.]184",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39",
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "37.139.7[.]16",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41",
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "149.56.20[.]55",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43",
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "91.227.68[.]97",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45",
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "5.45.119[.]124",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47",
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "columbusairports.microsoftonline[.]host",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49",
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "domain",
+   "value": "westus2.cloudapp.azure.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "cve",
+   "value": "CVE-2019-19781",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52",
+    "evidence-53",
+    "evidence-54",
+    "evidence-55",
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "cve",
+   "value": "CVE-2020-0688",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57",
+    "evidence-58",
+    "evidence-59",
+    "evidence-60",
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "cve",
+   "value": "CVE-2018-13379",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62",
+    "evidence-63",
+    "evidence-64",
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "cve",
+   "value": "CVE-2020-1472",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66",
+    "evidence-67",
+    "evidence-68",
+    "evidence-69",
+    "evidence-70",
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "138.201.186[.]43",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "193.37.212[.]43",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "146.0.77[.]60",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "ip",
+   "value": "51.159.28[.]101",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "microsoftonline[.]host",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "email.microsoftonline[.]services",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "domain",
+   "value": "microsoftonline[.]services",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "cve",
+   "value": "CVE-2019-10149",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79",
+    "evidence-80",
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "url",
+   "value": "https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/ad-forest-recovery-resetting-the-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "domain",
+   "value": "docs.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "us-cert.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "domain",
+   "value": "nvd.nist.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The FBI and CISA have observed Russian state-sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks. The APT actor is using Turkish IP addresses 213.74.101[.]65, 213.74.139[.]196, and 212.252.30[.]170 to connect to victim web servers (Exploit Public Facing Application).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have observed Russian state sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks. The APT actor i"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injections on victim websites (Brute Force; Exploit Public Facing Application).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injec"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The APT actor also hosted malicious domains, including possible aviation sector target columbusairports.microsoftonline[.]host, which resolved to 108.177.235[.]92 and [cityname].westus2.cloudapp.azure.com; these domains are U.S. registered and are likely SLTT government targets (Drive-By Compromise).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor also hosted malicious domains, including possible aviation sector target columbusairports.microsoftonline[.]host, which resolved to 108.177.235[.]"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "This actor continues to exploit a Citrix Directory Traversal Bug (CVE-2019-19781)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This actor continues to exploit a Citrix Directory Traversal Bug (CVE 2019 19781)"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "This actor continues to exploit a Citrix Directory Traversal Bug (CVE-2019-19781) and a Microsoft Exchange remote code execution flaw (CVE-2020-0688).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This actor continues to exploit a Citrix Directory Traversal Bug (CVE 2019 19781) and a Microsoft Exchange remote code execution flaw (CVE 2020 0688)."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The APT actor has been observed using Cisco AnyConnect Secure Socket Layer (SSL) virtual private network (VPN) connections to enable remote logins on at least one victim network",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor has been observed using Cisco AnyConnect Secure Socket Layer (SSL) virtual private network (VPN) connections to enable remote logins on at least o"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE 2018 13379) for Initial Access"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "and a Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "and a Windows Netlogon vulnerability (CVE 2020 1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Successful authentications—including the compromise of Microsoft Office 365 (O365) accounts—have been observed on at least one victim network (Valid Accounts).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Successful authentications including the compromise of Microsoft Office 365 (O365) accounts have been observed on at least one victim network (Valid Accounts)."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The FBI and CISA have observed Russian state-sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks. The APT actor is using Turkish IP addresses 213.74.101[.]65, 213.74.139[.]196, and 212.252.30[.]170 to connect to victim web servers (Exploit Public Facing Application). The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injections on victim websites (Brute Force; Exploit Public Facing Application).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have observed Russian state sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks. The APT actor i"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation. This actor continues to exploit a Citrix Directory Traversal Bug (CVE-2019-19781)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation. This actor contin"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation. This actor continues to exploit a Citrix Directory Traversal Bug (CVE-2019-19781) and a Microsoft Exchange remote code execution flaw (CVE-2020-0688).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor scanned for vulnerable Citrix and Microsoft Exchange services and identified vulnerable systems, likely for future exploitation. This actor contin"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access and a Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE 2018 13379) for Initial Access and a Windows Netlogon vulnerability (CVE"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The APT actor has been observed using Cisco AnyConnect Secure Socket Layer (SSL) virtual private network (VPN) connections to enable remote logins on at least one victim network, possibly enabled by an Exim Simple Mail Transfer Protocol (SMTP) vulnerability (CVE 2019-10149) (External Remote Services). More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor has been observed using Cisco AnyConnect Secure Socket Layer (SSL) virtual private network (VPN) connections to enable remote logins on at least o"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "More recently, the APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access and a Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation within the network (Valid Accounts). Between early February and mid-September, these APT actors used 213.74.101[.]65, 212.252.30[.]170, 5.196.167[.]184, 37.139.7[.]16, 149.56.20[.]55, 91.227.68[.]97, and 5.45.119[.]124 to target U.S. SLTT government networks. Successful authentications—including the compromise of Microsoft Office 365 (O365) accounts—have been observed on at least one victim network (Valid Accounts).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Russian state-sponsored advanced persistent threat (APT) actor activity targeting various U.S. state, local, territorial, and tribal (SLTT) government networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored advanced persistent threat (APT) actor activity targeting various U.S. state, local, territorial, and tribal (SLTT) government networks"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The FBI and CISA have observed Russian state-sponsored APT actor activity targeting U.S. SLTT government networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have observed Russian state sponsored APT actor activity targeting U.S. SLTT government networks"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Between early February and mid-September, these APT actors used ... to target U.S. SLTT government networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Between early February and mid September, these APT actors used … to target U.S. SLTT government networks"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Russian state-sponsored advanced persistent threat (APT) actor activity targeting ... aviation networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored advanced persistent threat (APT) actor activity targeting … aviation networks"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The FBI and CISA have observed Russian state-sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have observed Russian state sponsored APT actor activity targeting U.S. SLTT government networks, as well as aviation networks"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The APT actor also hosted malicious domains, including possible aviation sector target columbusairports.microsoftonline[.]host",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actor also hosted malicious domains, including possible aviation sector target columbusairports.microsoftonline[.]host"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The APT actor exploited a Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "d a Windows Netlogon vulnerability (CVE 2020 1472) to obtain access to Windows Active Directory (AD) servers for Privilege Escalation"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "The APT actor is using Turkish IP addresses ... to connect to victim web servers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The APT actor is using Turkish IP addresses … to connect to victim web servers"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injections on victim websites",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor is using 213.74.101[.]65 and 213.74.139[.]196 to attempt brute force logins and, in several instances, attempted Structured Query Language (SQL) injec"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Successful authentications—including the compromise of Microsoft Office 365 (O365) accounts—have been observed on at least one victim network",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Successful authentications including the compromise of Microsoft Office 365 (O365) accounts have been observed on at least one victim network"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "The APT actor scanned for vulnerable Citrix ... services and identified vulnerable systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The APT actor scanned for vulnerable Citrix … services and identified vulnerable systems"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "The APT actor scanned for vulnerable ... Microsoft Exchange services and identified vulnerable systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The APT actor scanned for vulnerable … Microsoft Exchange services and identified vulnerable systems"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "This actor continues to exploit ... a Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "This actor continues to exploit … a Microsoft Exchange remote code execution flaw (CVE 2020 0688)"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "The APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE-2018-13379) for Initial Access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he APT actor enumerated and exploited a Fortinet VPN vulnerability (CVE 2018 13379) for Initial Access"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "www.us-cert.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.cisa.gov"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "213.74.101[.]65",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "213.74.101[.]65"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "213.74.101[.]65",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "213.74.101[.]65"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "213.74.139[.]196",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "213.74.139[.]196"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "213.74.139[.]196",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "213.74.139[.]196"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "212.252.30[.]170",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "212.252.30[.]170"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "212.252.30[.]170",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "212.252.30[.]170"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "108.177.235[.]92",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.177.235[.]92"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "5.196.167[.]184",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.196.167[.]184"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "5.196.167[.]184",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.196.167[.]184"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "37.139.7[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37.139.7[.]16"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "37.139.7[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37.139.7[.]16"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "149.56.20[.]55",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.56.20[.]55"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "149.56.20[.]55",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.56.20[.]55"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "91.227.68[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.227.68[.]97"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "91.227.68[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.227.68[.]97"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "5.45.119[.]124",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.45.119[.]124"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "5.45.119[.]124",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.45.119[.]124"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "columbusairports.microsoftonline[.]host",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "columbusairports.microsoftonline[.]host"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "columbusairports.microsoftonline[.]host",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "columbusairports.microsoftonline[.]host"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "westus2.cloudapp.azure.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "westus2.cloudapp.azure.com"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2019-\n                  19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "CVE-2019-\n                19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "CVE-2020-\n       0688",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 0688"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "CVE-2020-0688",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 0688"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "CVE-2020-0688",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 0688"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "cve-2020-0688",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cve 2020 0688"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "CVE-2020-0688",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 0688"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 13379"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 13379"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 13379"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 13379"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "CVE-2020-1472",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 1472"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "138.201.186[.]43",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "138.201.186[.]43"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "193.37.212[.]43",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.37.212[.]43"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "146.0.77[.]60",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "146.0.77[.]60"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "51.159.28[.]101",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.159.28[.]101"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "microsoftonline[.]host",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "microsoftonline[.]host"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "email.microsoftonline[.]services",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "email.microsoftonline[.]services"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "microsoftonline[.]services",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "microsoftonline[.]services"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "CVE-2019-10149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 10149"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "CVE-2019-\n                                                                            10149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 10149"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "CVE-2019-10149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 10149"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/ad-forest-recovery-resetting-the-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://docs.microsoft.com/en us/windows server/identity/ad ds/manage/ad forest recovery resetting the"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "docs.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "docs.microsoft.com"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "us-cert.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "us cert.cisa.gov"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cisa.gov"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "nvd.nist.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "nvd.nist.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "U.S. SLTT government networks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. SLTT government networks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — U.S. SLTT government networks",
+    "action:a4 — Scan for vulnerable Citrix and Microsoft Exchange services",
+    "action:a5 — Exploit Citrix Directory Traversal Bug (CVE-2019-19781)",
+    "action:a6 — Exploit Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+    "action:a8 — Enumerate and exploit Fortinet VPN vulnerability (CVE-2018-13379)"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. SLTT government networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "U.S. SLTT government networks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. SLTT government networks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — U.S. SLTT government networks",
+    "action:a4 — Scan for vulnerable Citrix and Microsoft Exchange services",
+    "action:a5 — Exploit Citrix Directory Traversal Bug (CVE-2019-19781)",
+    "action:a6 — Exploit Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+    "action:a8 — Enumerate and exploit Fortinet VPN vulnerability (CVE-2018-13379)"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. SLTT government networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "U.S. SLTT government networks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. SLTT government networks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — U.S. SLTT government networks",
+    "action:a4 — Scan for vulnerable Citrix and Microsoft Exchange services",
+    "action:a5 — Exploit Citrix Directory Traversal Bug (CVE-2019-19781)",
+    "action:a6 — Exploit Microsoft Exchange remote code execution flaw (CVE-2020-0688)",
+    "action:a8 — Enumerate and exploit Fortinet VPN vulnerability (CVE-2018-13379)"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. SLTT government networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "aviation networks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "aviation networks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — aviation networks",
+    "action:a3 — Host malicious domains including possible aviation sector target"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "aviation networks",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "aviation networks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "aviation networks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — aviation networks",
+    "action:a3 — Host malicious domains including possible aviation sector target"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "aviation networks",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "aviation networks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "aviation networks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — aviation networks",
+    "action:a3 — Host malicious domains including possible aviation sector target"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "aviation networks",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Windows Active Directory servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows Active Directory servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Windows Active Directory servers",
+    "action:a9 — Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows Active Directory servers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Windows Active Directory servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows Active Directory servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Windows Active Directory servers",
+    "action:a9 — Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows Active Directory servers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Windows Active Directory servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows Active Directory servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Windows Active Directory servers",
+    "action:a9 — Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows Active Directory servers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "victim web servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — victim web servers",
+    "action:a1 — Connect to victim web servers using Turkish IP addresses",
+    "action:a2 — Attempt brute force logins and SQL injections on victim websites"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "victim web servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — victim web servers",
+    "action:a1 — Connect to victim web servers using Turkish IP addresses",
+    "action:a2 — Attempt brute force logins and SQL injections on victim websites"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "victim web servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — victim web servers",
+    "action:a1 — Connect to victim web servers using Turkish IP addresses",
+    "action:a2 — Attempt brute force logins and SQL injections on victim websites"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "at least one victim network — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "at least one victim network 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — at least one victim network",
+    "action:a7 — Use Cisco AnyConnect SSL VPN connections for remote logins",
+    "action:a10 — Compromise Microsoft Office 365 accounts"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "at least one victim network",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-26",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "at least one victim network — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "at least one victim network 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — at least one victim network",
+    "action:a7 — Use Cisco AnyConnect SSL VPN connections for remote logins",
+    "action:a10 — Compromise Microsoft Office 365 accounts"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "at least one victim network",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-26",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "at least one victim network — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "at least one victim network 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — at least one victim network",
+    "action:a7 — Use Cisco AnyConnect SSL VPN connections for remote logins",
+    "action:a10 — Compromise Microsoft Office 365 accounts"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "at least one victim network",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-26",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Citrix Application Delivery Controller — 版本",
+   "category": "version",
+   "reason": "IR 指出 Citrix Application Delivery Controller，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Citrix Application Delivery Controller 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Citrix Application Delivery Controller",
+    "action:a5 — Exploit Citrix Directory Traversal Bug (CVE-2019-19781)"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Citrix Application Delivery Controller",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-27",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s2-version",
+   "field": "Microsoft Exchange Server — 版本",
+   "category": "version",
+   "reason": "IR 指出 Microsoft Exchange Server（CVE-2020-0688），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Microsoft Exchange Server 的哪個版本？請選受 CVE-2020-0688 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s2 — Microsoft Exchange Server"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Microsoft Exchange Server",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2020-0688",
+     "source_ref": "services:s2.cve",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s4-version",
+   "field": "Fortinet VPN — 版本",
+   "category": "version",
+   "reason": "IR 指出 Fortinet VPN，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Fortinet VPN 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s4 — Fortinet VPN",
+    "action:a8 — Enumerate and exploit Fortinet VPN vulnerability (CVE-2018-13379)"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Fortinet VPN",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s5-version",
+   "field": "Windows Active Directory — 版本",
+   "category": "version",
+   "reason": "IR 指出 Windows Active Directory（CVE-2020-1472），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Windows Active Directory 的哪個版本？請選受 CVE-2020-1472 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s5 — Windows Active Directory",
+    "action:a9 — Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Windows Active Directory",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2020-1472",
+     "source_ref": "services:s5.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Citrix Application Delivery Controller — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a5 使用 Citrix Application Delivery Controller，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 依賴 Citrix Application Delivery Controller。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Citrix Application Delivery Controller",
+    "action:a5 — Exploit Citrix Directory Traversal Bug (CVE-2019-19781)"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Citrix Application Delivery Controller",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-27",
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Exploit Citrix Directory Traversal Bug (CVE-2019-19781)",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s3-configuration",
+   "field": "Cisco AnyConnect Secure Socket Layer (SSL) VPN — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a7 使用 Cisco AnyConnect Secure Socket Layer (SSL) VPN，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a7 依賴 Cisco AnyConnect Secure Socket Layer (SSL) VPN。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s3 — Cisco AnyConnect Secure Socket Layer (SSL) VPN",
+    "action:a7 — Use Cisco AnyConnect SSL VPN connections for remote logins"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Cisco AnyConnect Secure Socket Layer (SSL) VPN",
+     "source_ref": "services:s3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Use Cisco AnyConnect SSL VPN connections for remote logins",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s3",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 涉及 Active Directory（h3 (Windows Active Directory servers)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h3 — Windows Active Directory servers",
+    "action:a9 — Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Windows Active Directory servers",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Exploit Windows Netlogon vulnerability (CVE-2020-1472) to obtain access to Windows AD servers",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a2 — Attempt brute force logins and SQL injections on victim websites",
+    "host:h4 — victim web servers"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Attempt brute force logins and SQL injections on victim websites",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9651,
+  "unsupported_claim_count": 4,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 1,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

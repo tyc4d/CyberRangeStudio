@@ -1,0 +1,338 @@
+[
+ {
+  "id": "p1",
+  "text": "# People's Republic of China-Linked Cyber Actors Hide in Router Firmware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2023-09-27\n> - URL: https://www.ic3.gov/CSA/2023/230927.pdf\n> - PDF SHA-256: 307428da942b0593088461ca9f59ebb1016e098e4146482b98d703263e05306f (`source.pdf`, 12 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (57 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "| Cybersecurity Advisory"
+ },
+ {
+  "id": "p4",
+  "text": "People's Republic of China-Linked Cyber Actors\nHide in Router Firmware\nExecutive summary\nThe United States National Security Agency (NSA), the U.S. Federal Bureau of\nInvestigation (FBI), the U.S. Cybersecurity and Infrastructure Security Agency (CISA),\nthe Japan National Police Agency (NPA), and the Japan National Center of Incident\nReadiness and Strategy for Cybersecurity (NISC) (hereafter referred to as the\n“authoring agencies”) are releasing this joint cybersecurity advisory (CSA) to detail\nactivity of the People’s Republic of China (PRC)-linked cyber actors known as\nBlackTech. BlackTech has demonstrated capabilities in modifying router firmware\nwithout detection and exploiting routers’ domain-trust relationships for pivoting from\ninternational subsidiaries to headquarters in Japan and the U.S. — the primary targets.\nThe authoring agencies recommend implementing the mitigations described to detect\nthis activity and protect devices from the backdoors the BlackTech actors are leaving\nbehind."
+ },
+ {
+  "id": "p5",
+  "text": "BlackTech (a.k.a. Palmerworm, Temp.Overboard, Circuit Panda, and Radio Panda)\nactors have targeted government, industrial, technology, media, electronics, and\ntelecommunication sectors, including entities that support the militaries of the U.S. and\nJapan. BlackTech actors use custom malware, dual-use tools, and living off the land\ntactics, such as disabling logging on routers, to conceal their operations. This CSA\ndetails BlackTech’s tactics, techniques, and procedures (TTPs), which highlights the\nneed for multinational corporations to review all subsidiary connections, verify access,\nand consider implementing Zero Trust models to limit the extent of a potential\nBlackTech compromise."
+ },
+ {
+  "id": "p6",
+  "text": "For more information on the risks posed by this deep level of unauthorized access, see\nthe CSA People’s Republic of China State-Sponsored Cyber Actors Exploit Network\nProviders and Devices. [1]"
+ },
+ {
+  "id": "p7",
+  "text": "U//OO/205179-23 | PP-23-3215 | SEP 2023 Ver. 1.0"
+ },
+ {
+  "id": "p8",
+  "text": "Technical details\nThis advisory uses the MITRE® ATT&CK® for Enterprise framework, version 13.1. See\nthe Appendix: MITRE ATT&CK Techniques for all referenced TTPs."
+ },
+ {
+  "id": "p9",
+  "text": "Background\nActive since 2010, BlackTech actors have historically targeted a wide range of U.S. and\nEast Asia public organizations and private industries. BlackTech actors’ TTPs include\ndeveloping customized malware and tailored persistence mechanisms for compromising\nrouters. These TTPs allow the actors to disable logging [T1562] and abuse trusted\ndomain relationships [T1199] to pivot between international subsidiaries and domestic\nheadquarters’ networks."
+ },
+ {
+  "id": "p10",
+  "text": "Observable TTPs\nBlackTech cyber actors use custom malware payloads and remote access tools (RATs)\nto target victims’ operating systems. The actors have used a range of custom malware\nfamilies targeting Windows®, Linux®, and FreeBSD® operating systems. Custom\nmalware families employed by BlackTech include:"
+ },
+ {
+  "id": "p11",
+  "text": "     BendyBear [S0574]\n          Bifrose\n          BTSDoor\n          FakeDead (a.k.a. TSCookie) [S0436]\n          FlagPro [S0696]\n          FrontShell (FakeDead’s downloader module)\n          IconDown\n          PLEAD [S0435]\n          SpiderPig\n          SpiderSpring\n          SpiderStack\n          WaterBear [S0579]"
+ },
+ {
+  "id": "p12",
+  "text": "BlackTech actors continuously update these tools to evade detection [TA0005] by\nsecurity software. The actors also use stolen code-signing certificates [T1588.003] to"
+ },
+ {
+  "id": "p13",
+  "text": "sign the malicious payloads, which make them appear legitimate and therefore more\ndifficult for security software to detect [T1553.002]."
+ },
+ {
+  "id": "p14",
+  "text": "BlackTech actors use living off the land TTPs to blend in with normal operating system\nand network activities, allowing them to evade detection by endpoint detection and\nresponse (EDR) products. Common methods of persistence on a host include NetCat\nshells, modifying the victim registry [T1112] to enable the remote desktop protocol\n(RDP) [T1021.001], and secure shell (SSH) [T1021.004]. The actors have also used\nSNScan for enumeration [TA0007], and a local file transfer protocol (FTP) server\n[T1071.002] to move data through the victim network. For additional examples of\nmalicious cyber actors living off the land, see People's Republic of China State-\nSponsored Cyber Actor Living off the Land to Evade Detection. [2]"
+ },
+ {
+  "id": "p15",
+  "text": "Pivoting from international subsidiaries\nThe PRC-linked BlackTech actors target international subsidiaries of U.S. and\nJapanese companies. After gaining access [TA0001] to the subsidiaries’ internal\nnetworks, BlackTech actors are able to pivot from the trusted internal routers to other\nsubsidiaries of the companies and the headquarters’ networks. BlackTech actors exploit\ntrusted network relationships between an established victim and other entities to expand\ntheir access in target networks."
+ },
+ {
+  "id": "p16",
+  "text": "Specifically, upon gaining an initial foothold into a target network and gaining\nadministrator access to network edge devices, BlackTech cyber actors often modify the\nfirmware to hide their activity across the edge devices to further maintain persistence in\nthe network. To extend their foothold across an organization, BlackTech actors target\nbranch routers—typically smaller appliances used at remote branch offices to connect\nto a corporate headquarters—and then abuse the trusted relationship [T1199] of the\nbranch routers within the corporate network being targeted. BlackTech actors then use\nthe compromised public-facing branch routers as part of their infrastructure for proxying\ntraffic [TA0011], blending in with corporate network traffic, and pivoting to other victims\non the same corporate network [T1090.002]."
+ },
+ {
+  "id": "p17",
+  "text": "Maintaining access via stealthy router backdoors\nBlackTech has targeted and exploited various brands and versions of router devices.\nTTPs against routers enable the actors to conceal configuration changes, hide\ncommands, and disable logging while BlackTech actors conduct operations. BlackTech"
+ },
+ {
+  "id": "p18",
+  "text": "actors have compromised several Cisco® routers using variations of a customized\nfirmware backdoor [T1542.004]. The backdoor functionality is enabled and disabled\nthrough specially crafted TCP or UDP packets [T1205]. This TTP is not solely limited to\nCisco routers, and similar techniques could be used to enable backdoors in other\nnetwork equipment."
+ },
+ {
+  "id": "p19",
+  "text": "In some cases, BlackTech actors replace the firmware for certain Cisco IOS®-based\nrouters with malicious firmware. Although BlackTech actors already had elevated\nprivileges [TA0004] on the router to replace the firmware via command-line execution,\nthe malicious firmware is used to establish persistent backdoor access [TA0003] and\nobfuscate future malicious activity. The modified firmware uses a built-in SSH backdoor\n[T1556.004], allowing BlackTech actors to maintain access to the compromised router\nwithout BlackTech connections being logged [T1562.003]. BlackTech actors bypass the\nrouter's built-in security features by first installing older legitimate firmware [T1601.002]\nthat they then modify in memory to allow the installation of a modified, unsigned\nbootloader and modified, unsigned firmware [T1601.001]. The modified bootloader\nenables the modified firmware to continue evading detection [T1553.006], however, it is\nnot always necessary."
+ },
+ {
+  "id": "p20",
+  "text": "BlackTech actors may also hide their presence and obfuscate changes made to\ncompromised Cisco routers by hiding Embedded Event Manager (EEM) policies—a\nfeature usually used in Cisco IOS to automate tasks that execute upon specified\nevents—that manipulate Cisco IOS Command-Line Interface (CLI) command results.\nOn a compromised router, the BlackTech-created EEM policy waits for specific\ncommands to execute obfuscation measures or deny execution of specified legitimate\ncommands. This policy has two functions: (1) to remove lines containing certain strings\nin the output of specified, legitimate Cisco IOS CLI commands [T1562.006], and (2)\nprevent the execution of other legitimate CLI commands, such as hindering forensic\nanalysis by blocking copy, rename, and move commands for the associated EEM policy\n[T1562.001]."
+ },
+ {
+  "id": "p21",
+  "text": "Firmware replacement process\nBlackTech actors utilize the following file types to compromise the router. These files\nare downloaded to the router via FTP or SSH."
+ },
+ {
+  "id": "p22",
+  "text": "Table 1: File types to compromise the router"
+ },
+ {
+  "id": "p23",
+  "text": "File Type                     Description\n Old Legitimate                The IOS image firmware is modified in memory to allow installation\n Firmware                      of the Modified Firmware and Modified Bootloader.\n Modified                      The firmware has a built-in SSH backdoor, allowing operators to\n Firmware                      have unlogged interaction with the router.\n                               The bootloader allows Modified Firmware to continue evading the\n Modified\n                               router's security features for persistence across reboots. In some\n Bootloader\n                               cases, only modified firmware is used."
+ },
+ {
+  "id": "p24",
+  "text": "BlackTech actors use the Cisco router's CLI to replace the router’s IOS image firmware.\nThe process begins with the firmware being modified in memory—also called hot\npatching—to allow the installation of a modified bootloader and modified firmware\ncapable of bypassing the router’s security features. Then, a specifically constructed\npacket triggers the router to enable the backdoor that bypasses logging and the access\ncontrol list (ACL). The steps are as follows:"
+ },
+ {
+  "id": "p25",
+  "text": "1. Download old legitimate firmware.\n  2. Set the router to load the old legitimate firmware and reboot with the following\n        command(s):\nconfig t\nno boot system usbflash0 [filename]\nboot system usbflash0 [filename]\nend\nwrite\nreload"
+ },
+ {
+  "id": "p26",
+  "text": "3. Download the modified bootloader and modified firmware.\n  4. Set the router to load the modified firmware with the following command(s):\nconf t\nno boot system usbflash0 [filename]\nboot system usbflash0 [filename]\nend\nwrite"
+ },
+ {
+  "id": "p27",
+  "text": "5. Load the modified bootloader (the router reboots automatically) with the following\n     command:\nupgrade rom file bootloader"
+ },
+ {
+  "id": "p28",
+  "text": "6. Enable access by sending a trigger packet that has specific values within the UDP\n     data or TCP Sequence Number field and the Maximum Segment Size (MSS)\n     parameter within the TCP Options field."
+ },
+ {
+  "id": "p29",
+  "text": "Modified bootloader\nTo allow the modified bootloader and firmware to be installed on Cisco IOS without\ndetection, the cyber actors install an old, legitimate firmware and then modify that\nrunning firmware in memory to bypass firmware signature checks in the Cisco ROM\nMonitor (ROMMON) signature validation functions. The modified version’s instructions\nallow the actors to bypass functions of the IOS Image Load test and the Field\nUpgradeable ROMMON Integrity test."
+ },
+ {
+  "id": "p30",
+  "text": "Modified firmware\nBlackTech actors install modified IOS image firmware that allows backdoor access via\nSSH to bypass the router’s normal logging functions. The firmware consists of a Cisco\nIOS loader that will load an embedded IOS image."
+ },
+ {
+  "id": "p31",
+  "text": "BlackTech actors hook several functions in the embedded Cisco IOS image to jump to\ntheir own code. They overwrite existing code to handle magic packet checking,\nimplement an SSH backdoor, and bypass logging functionality on the compromised\nrouter. The modified instructions bypass command logging, IP address ACLs, and error\nlogging."
+ },
+ {
+  "id": "p32",
+  "text": "To enable the backdoor functions, the firmware checks for incoming trigger packets and\nenables or disables the backdoor functionality. When the backdoor is enabled,\nassociated logging functions on the router are bypassed. The source IP address is\nstored and used to bypass ACL handling for matching packets. The SSH backdoor\nincludes a special username that does not require additional authentication."
+ },
+ {
+  "id": "p33",
+  "text": "Detection and mitigation techniques\nIn order to detect and mitigate this BlackTech malicious activity, the authoring agencies\nstrongly recommend the following detection and mitigation techniques. It would be trivial\nfor the BlackTech actors to modify values in their backdoors that would render specific\nsignatures of this router backdoor obsolete. For more robust detection, network\ndefenders should monitor network devices for unauthorized downloads of bootloaders"
+ },
+ {
+  "id": "p34",
+  "text": "and firmware images and reboots. Network defenders should also monitor for unusual\ntraffic destined to the router, including SSH."
+ },
+ {
+  "id": "p35",
+  "text": "The following are the best mitigation practices to defend against this type of malicious\nactivity:"
+ },
+ {
+  "id": "p36",
+  "text": "     Disable outbound connections by applying the \"transport output none\"\n           configuration command to the virtual teletype (VTY) lines. This command will\n           prevent some copy commands from successfully connecting to external systems.\n           Note: An adversary with unauthorized privileged level access to a network\n           device could revert this configuration change. [3]"
+ },
+ {
+  "id": "p37",
+  "text": "     Monitor both inbound and outbound connections from network devices to both\n           external and internal systems. In general, network devices should only be\n           connecting to nearby devices for exchanging routing or network topology\n           information or with administrative systems for time synchronization, logging,\n           authentication, monitoring, etc. If feasible, block unauthorized outbound\n           connections from network devices by applying access lists or rule sets to other\n           nearby network devices. Additionally, place administrative systems in separate\n           virtual local area networks (VLANs) and block all unauthorized traffic from\n           network devices destined for non-administrative VLANs. [4]"
+ },
+ {
+  "id": "p38",
+  "text": "     Limit access to administration services and only permit IP addresses used by\n           network administrators by applying access lists to the VTY lines or specific\n           services. Monitor logs for successful and unsuccessful login attempts with the\n           \"login on-failure log\" and \"login on-success log\" configuration commands, or by\n           reviewing centralized Authentication, Authorization, and Accounting (AAA)\n           events. [3]"
+ },
+ {
+  "id": "p39",
+  "text": "     Upgrade devices to ones that have secure boot capabilities with better integrity\n           and authenticity checks for bootloaders and firmware. In particular, highly\n           prioritize replacing all end-of-life and unsupported equipment as soon as\n           possible. [3] [5]"
+ },
+ {
+  "id": "p40",
+  "text": "     When there is a concern that a single password has been compromised, change\n           all passwords and keys. [3]"
+ },
+ {
+  "id": "p41",
+  "text": "     Review logs generated by network devices and monitor for unauthorized reboots,\n           operating system version changes, changes to the configuration, or attempts to\n           update the firmware. Compare against expected configuration changes and\n           patching plans to verify that the changes are authorized. [3]"
+ },
+ {
+  "id": "p42",
+  "text": "     Periodically perform both file and memory verification described in the Network\n           Device Integrity (NDI) Methodology documents to detect unauthorized changes\n           to the software stored and running on network devices. [3]"
+ },
+ {
+  "id": "p43",
+  "text": "     Monitor for changes to firmware. Periodically take snapshots of boot records and\n           firmware and compare against known good images. [3]"
+ },
+ {
+  "id": "p44",
+  "text": "Works cited\n     [1] Joint CSA, People’s Republic of China State-Sponsored Cyber Actors Exploit Network Providers and\n         Devices, https://media.defense.gov/2022/Jun/07/2003013376/-1/-\n         1/0/CSA_PRC_SPONSORED_CYBER_ACTORS_EXPLOIT_NETWORK_PROVIDERS_DEVICES_TLPWH\n         ITE.PDF\n     [2] Joint CSA, People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection,\n         https://media.defense.gov/2023/May/24/2003229517/-1/-\n         1/0/CSA_PRC_State_Sponsored_Cyber_Living_off_the_Land_v1.1.PDF\n     [3] NSA, Network Infrastructure Security Guide, https://media.defense.gov/2022/Jun/15/2003018261/-1/-\n         1/0/CTR_NSA_NETWORK_INFRASTRUCTURE_SECURITY_GUIDE_20220615.PDF\n     [4] NSA, Performing Out-of-Band Network Management, https://media.defense.gov/2020/Sep/17/2002499616/-\n         1/-1/0/PERFORMING_OUT_OF_BAND_NETWORK_MANAGEMENT20200911.PDF\n     [5] Cisco, Attackers Continue to Target Legacy Devices, https://community.cisco.com/t5/security-\n         blogs/attackers-continue-to-target-legacy-devices/ba-p/4169954"
+ },
+ {
+  "id": "p45",
+  "text": "Disclaimer of endorsement\nThe information and opinions contained in this document are provided \"as is\" and without any warranties or\nguarantees. Reference herein to any specific commercial products, process, or service by trade name, trademark,\nmanufacturer, or otherwise, does not constitute or imply its endorsement, recommendation, or favoring by the United\nStates Government or Japan, and this guidance shall not be used for advertising or product endorsement purposes."
+ },
+ {
+  "id": "p46",
+  "text": "Trademark recognition\nCisco and Cisco IOS are registered trademarks of Cisco Technology, Inc.\nFreeBSD is a registered trademark of The FreeBSD Foundation.\nLinux is a registered trademark of Linus Torvalds.\nMITRE and MITRE ATT&CK are registered trademarks of The MITRE Corporation.\nWindows is a registered trademark of Microsoft Corporation."
+ },
+ {
+  "id": "p47",
+  "text": "Purpose\nThis document was developed in furtherance of the authoring agencies’ cybersecurity missions, including their\nresponsibilities to identify and disseminate cyber threats, and to develop and issue cybersecurity specifications and\nmitigations."
+ },
+ {
+  "id": "p48",
+  "text": "Contact\nNSA Cybersecurity Report Questions and Feedback: CybersecurityReports@nsa.gov\nNSA’s Defense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\nNSA Media Inquiries / Press Desk: 443-634-0721, MediaRelations@nsa.gov"
+ },
+ {
+  "id": "p49",
+  "text": "U.S. organizations: Report incidents and anomalous activity to CISA 24/7 Operations Center at\nReport@cisa.dhs.gov, cisa.gov/report, or (888) 282-0870 and/or to the FBI via your local FBI field office."
+ },
+ {
+  "id": "p50",
+  "text": "Appendix: MITRE ATT&CK Techniques\nSee Tables 1-8 for all referenced BlackTech tactics and techniques in this advisory."
+ },
+ {
+  "id": "p51",
+  "text": "Table 1: BlackTech ATT&CK Techniques for Enterprise – Resource Development"
+ },
+ {
+  "id": "p52",
+  "text": "Technique Title                             ID                                Use"
+ },
+ {
+  "id": "p53",
+  "text": "Obtain Capabilities: Code                        T1588.003   BlackTech actors use stolen code-signing\n Signing Certificates                                         certificates to sign payloads and evade defenses."
+ },
+ {
+  "id": "p54",
+  "text": "Table 2: BlackTech ATT&CK Techniques for Enterprise – Initial Access"
+ },
+ {
+  "id": "p55",
+  "text": "Technique Title                             ID                                Use"
+ },
+ {
+  "id": "p56",
+  "text": "Initial Access                                    TA0001     BlackTech actors gain access to victim networks by\n                                                              exploiting routers."
+ },
+ {
+  "id": "p57",
+  "text": "Trusted Relationship                              T1199      BlackTech actors exploit trusted domain\n                                                              relationships of routers to gain access to victim\n                                                              networks."
+ },
+ {
+  "id": "p58",
+  "text": "Table 3: BlackTech ATT&CK Techniques for Enterprise – Persistence"
+ },
+ {
+  "id": "p59",
+  "text": "Technique Title                             ID                                Use"
+ },
+ {
+  "id": "p60",
+  "text": "Persistence                                       TA0003     BlackTech actors gain persistent access to victims’\n                                                              networks."
+ },
+ {
+  "id": "p61",
+  "text": "Traffic Signaling                                 T1205      BlackTech actors send specially crafted packets to\n                                                              enable or disable backdoor functionality on a\n                                                              compromised router."
+ },
+ {
+  "id": "p62",
+  "text": "Pre-OS Boot: ROMMONkit                           T1542.004   BlackTech actors modify router firmware to\n                                                              maintain persistence."
+ },
+ {
+  "id": "p63",
+  "text": "Table 4: BlackTech ATT&CK Techniques for Enterprise – Privilege Escalation"
+ },
+ {
+  "id": "p64",
+  "text": "Technique Title                             ID                               Use"
+ },
+ {
+  "id": "p65",
+  "text": "Privilege Escalation                              TA0004     BlackTech actors gain elevated privileges on a\n                                                              victim’s network."
+ },
+ {
+  "id": "p66",
+  "text": "Table 5: BlackTech ATT&CK Techniques for Enterprise – Defense Evasion"
+ },
+ {
+  "id": "p67",
+  "text": "Technique Title                             ID                               Use"
+ },
+ {
+  "id": "p68",
+  "text": "Defense Evasion                                   TA0005     BlackTech actors configure their tools to evade\n                                                              detection by security software and EDR."
+ },
+ {
+  "id": "p69",
+  "text": "Modify Registry                                   T1112      BlackTech actors modify the victim’s registry."
+ },
+ {
+  "id": "p70",
+  "text": "Impair Defenses                                   T1562      BlackTech actors disable logging on compromised\n                                                              routers to avoid detection and evade defenses."
+ },
+ {
+  "id": "p71",
+  "text": "Impair Defenses: Impair                          T1562.003   BlackTech actors disable logging on the\n Command History Logging                                      compromised routers to prevent logging of any\n                                                              commands issued."
+ },
+ {
+  "id": "p72",
+  "text": "Modify System Image:                             T1601.001   BlackTech actors modify router firmware to evade\n Patch System Image                                           detection."
+ },
+ {
+  "id": "p73",
+  "text": "Table 6: BlackTech ATT&CK Techniques for Enterprise – Discovery"
+ },
+ {
+  "id": "p74",
+  "text": "Technique Title                             ID                               Use"
+ },
+ {
+  "id": "p75",
+  "text": "Discovery                                         TA0007     BlackTech actors use SNScan to enumerate\n                                                              victims’ networks and obtain further network\n                                                              information."
+ },
+ {
+  "id": "p76",
+  "text": "Table 7: BlackTech ATT&CK Techniques for Enterprise – Lateral Movement"
+ },
+ {
+  "id": "p77",
+  "text": "Technique Title                             ID                               Use"
+ },
+ {
+  "id": "p78",
+  "text": "Remote Services: Remote                          T1021.001   BlackTech actors use RDP to move laterally across\n Desktop Protocol                                             a victim’s network."
+ },
+ {
+  "id": "p79",
+  "text": "Remote Services: SSH                             T1021.004   BlackTech actors use SSH to move laterally across\n                                                              a victim’s network."
+ },
+ {
+  "id": "p80",
+  "text": "Table 8: BlackTech ATT&CK Techniques for Enterprise – Command and Control"
+ },
+ {
+  "id": "p81",
+  "text": "Technique Title                             ID                             Use"
+ },
+ {
+  "id": "p82",
+  "text": "Command and Control                               TA0011     BlackTech actors compromise and control a\n                                                              victim’s network infrastructure."
+ },
+ {
+  "id": "p83",
+  "text": "Application Layer Protocol:                      T1071.002   BlackTech actors use FTP to move data through a\n File Transfer Protocols                                      victim’s network or to deliver scripts for\n                                                              compromising routers."
+ },
+ {
+  "id": "p84",
+  "text": "Proxy                                             T1090      BlackTech actors use compromised routers to\n                                                              proxy traffic."
+ }
+]

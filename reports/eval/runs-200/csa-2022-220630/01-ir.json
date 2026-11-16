@@ -1,0 +1,1287 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-220630",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "ee82241af4f8708837045f280b4f30580bea08e4c4160537172869240584d8fc",
+  "source_name": "csa-2022-220630"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_technique": "T1133",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a2",
+   "name": "use email phishing and spam email campaigns with ransomware attached as initial intrusion vectors",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_technique": "T1566",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "execute PowerShell script invoke-ReflectivePEInjection via batch file",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_technique": "T1059.001",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a4",
+   "name": "edit the EnableLinkedConnections registry value to detect attached hosts and shared storage",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "restart the LanmanWorkstation service to allow registry edits to take effect",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a6",
+   "name": "kill processes of well-known security, accounting, and forensic software",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a7",
+   "name": "restart the machine in safe mode to avoid detection by security software",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a8",
+   "name": "encrypt victim files with AES-256 and encrypt the key with RSA-2048 public key",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_technique": "T1486",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a9",
+   "name": "run every 60 seconds to encrypt all files except critical system files and those with designated encrypted file extension",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a10",
+   "name": "establish persistence by copying executable to %APPDATA%\\Roaming and scheduling task to run ransomware every 15 minutes",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a11",
+   "name": "attempt to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "attack_technique": "T1490",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a12",
+   "name": "place ransom note in every folder containing encrypted files with communication instructions",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "PowerShell script execution uses access gained through RDP",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "PowerShell script execution uses access gained through phishing",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Editing registry depends on execution of PowerShell script",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Restarting LanmanWorkstation service follows registry edits",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Killing processes follows restarting LanmanWorkstation service",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Restarting machine in safe mode follows killing processes",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Encryption follows restarting machine in safe mode",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Encryption runs every 60 seconds after initial encryption",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r9",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Persistence established after encryption runs",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Prevention of recovery techniques follows persistence establishment",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r11",
+   "from_action": "a8",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Ransom note placement depends on victim files being encrypted",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim devices targeted by MedusaLocker ransomware actors",
+   "source": "llm",
+   "name": "victim devices",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-23"
+   ],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "PowerShell",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s3",
+   "name": "LanmanWorkstation service",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s4",
+   "name": "Server Message Block (SMB) Protocol",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "invoke-ReflectivePEInjection",
+   "type": "script",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "svhost.exe",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "svhostt.exe",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "EnableLinkedConnections registry value",
+   "type": "other",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "ransom note",
+   "type": "file",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "batch file",
+   "type": "file",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "ac[.]ma",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "gvlay6u4g53rxdi5.onion",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30",
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "gvlay6y4g53rxdi5.onion",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "medusacegu2ufmc3kx2kkqicrlcxdettsjcenhjena6uannk5f4ffuyd.onion",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "195.123.246.138",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "MedusaLocker actors most often gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " actors most often gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "MedusaLocker actors gained access to victim devices through vulnerable RDP configurations.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors gained access to victim devices through vulnerable RDP configurations."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Actors also frequently use email phishing and spam email campaigns—directly attaching the ransomware to the email—as initial intrusion vectors.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors also frequently use email phishing and spam email campaigns directly attaching the ransomware to the email as initial intrusion vectors."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "MedusaLocker actors used phishing and spearphishing to obtain access to victims’ networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors used phishing and spearphishing to obtain access to victims’ networks."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke-ReflectivePEInjection.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke ReflectivePEInjection."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "MedusaLocker actors may abuse PowerShell commands and scripts for execution.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " PowerShell commands and scripts for execution."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "This script propagates MedusaLocker throughout the network by editing the EnableLinkedConnections value within the infected machine’s registry, which then allows the infected machine to detect attached hosts and networks via Internet Control Message Protocol (ICMP) and to detect shared storage via Server Message Block (SMB) Protocol.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This script propagates MedusaLocker throughout the network by editing the EnableLinkedConnections value within the infected machine’s registry, which then allow"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Restarts the LanmanWorkstation service, which allows registry edits to take effect.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restarts the LanmanWorkstation service, which allows registry edits to take effect."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Kills the processes of well-known security, accounting, and forensic software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Kills the processes of well known security, accounting, and forensic software."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Restarts the machine in safe mode to avoid detection by security software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Restarts the machine in safe mode to avoid detection by security software."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "MedusaLocker actors may abuse Windows safe mode to disable endpoint defenses.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Windows safe mode to disable endpoint defenses."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Encrypts victim files with the AES-256 encryption algorithm; the resulting key is then encrypted with an RSA-2048 public key.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Encrypts victim files with the AES 256 encryption algorithm; the resulting key is then encrypted with an RSA 2048 public key."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "MedusaLocker actors encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Runs every 60 seconds, encrypting all files except those critical to the functionality of the victim’s machine and those that have the designated encrypted file extension.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Runs every 60 seconds, encrypting all files except those critical to the functionality of the victim’s machine and those that have the designated encrypted file"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Establishes persistence by copying an executable (svhost.exe or svhostt.exe) to the %APPDATA%\\Roaming directory and scheduling a task to run the ransomware every 15 minutes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Establishes persistence by copying an executable (svhost.exe or svhostt.exe) to the %APPDATA%\\Roaming directory and scheduling a task to run the ransomware ever"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Attempts to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attempts to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "MedusaLocker actors may deny access to operating systems containing features that can help fix corrupted systems, such as backup catalog, volume shadow copies, and automatic repair.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors may deny access to operating systems containing features that can help fix corrupted systems, such as backup catalog, volume shadow copies, "
+  },
+  {
+   "id": "evidence-18",
+   "quote": "MedusaLocker actors place a ransom note into every folder containing a file with the victim's encrypted data. The note outlines how to communicate with the MedusaLocker actors, typically providing victims one or more email address at which the actors can be reached.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors place a ransom note into every folder containing a file with the victim's encrypted data. The note outlines how to communicate with the Medu"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke-ReflectivePEInjection. This script propagates MedusaLocker throughout the network by editing the EnableLinkedConnections value within the infected machine’s registry, which then allows the infected machine to detect attached hosts and networks via Internet Control Message Protocol (ICMP) and to detect shared storage via Server Message Block (SMB) Protocol.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke ReflectivePEInjection. This script propagates MedusaLocker throughout the network "
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Actors also frequently use email phishing and spam email campaigns—directly attaching the ransomware to the email—as initial intrusion vectors. MedusaLocker ransomware uses a batch file to execute PowerShell script invoke-ReflectivePEInjection.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors also frequently use email phishing and spam email campaigns directly attaching the ransomware to the email as initial intrusion vectors. MedusaLocker ran"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "MedusaLocker actors place a ransom note into every folder containing a file with the victim's encrypted data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker actors place a ransom note into every folder containing a file with the victim's encrypted data."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "MedusaLocker ransomware actors most often gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker ransomware actors most often gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Safe mode starts up the Windows operating system with a limited set of drivers and services.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Safe mode starts up the Windows operating system with a limited set of drivers and services."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke-ReflectivePEInjection",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MedusaLocker ransomware uses a batch file to execute PowerShell script invoke ReflectivePEInjection"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "detect shared storage via Server Message Block (SMB) Protocol",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "detect shared storage via Server Message Block (SMB) Protocol"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "copying an executable (svhost.exe or svhostt.exe) to the %APPDATA%\\Roaming directory",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "copying an executable (svhost.exe or svhostt.exe) to the %APPDATA%\\Roaming directory"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "editing the EnableLinkedConnections value within the infected machine’s registry",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "editing the EnableLinkedConnections value within the infected machine’s registry"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "ac[.]ma",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ac[.]ma"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "gvlay6u4g53rxdi5.onion",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gvlay6u4g53rxdi5.onion"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "gvlay6u4g53rxdi5.onion",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gvlay6u4g53rxdi5.onion"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "gvlay6y4g53rxdi5.onion",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gvlay6y4g53rxdi5.onion"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "medusacegu2ufmc3kx2kkqicrlcxdettsjcenhjena6uannk5f4ffuyd.onion",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "medusacegu2ufmc3kx2kkqicrlcxdettsjcenhjena6uannk5f4ffuyd.onion"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "195.123.246.138",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "195.123.246.138"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim devices",
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+    "action:a2 — use email phishing and spam email campaigns with ransomware attached as initial intrusion vectors",
+    "action:a3 — execute PowerShell script invoke-ReflectivePEInjection via batch file",
+    "action:a4 — edit the EnableLinkedConnections registry value to detect attached hosts and shared storage",
+    "action:a5 — restart the LanmanWorkstation service to allow registry edits to take effect",
+    "action:a6 — kill processes of well-known security, accounting, and forensic software",
+    "action:a7 — restart the machine in safe mode to avoid detection by security software",
+    "action:a8 — encrypt victim files with AES-256 and encrypt the key with RSA-2048 public key",
+    "action:a9 — run every 60 seconds to encrypt all files except critical system files and those with designated encrypted file extension",
+    "action:a10 — establish persistence by copying executable to %APPDATA%\\Roaming and scheduling task to run ransomware every 15 minutes",
+    "action:a11 — attempt to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies",
+    "action:a12 — place ransom note in every folder containing encrypted files with communication instructions"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-22",
+      "evidence-23",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-22",
+      "evidence-23",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim devices",
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+    "action:a2 — use email phishing and spam email campaigns with ransomware attached as initial intrusion vectors",
+    "action:a3 — execute PowerShell script invoke-ReflectivePEInjection via batch file",
+    "action:a4 — edit the EnableLinkedConnections registry value to detect attached hosts and shared storage",
+    "action:a5 — restart the LanmanWorkstation service to allow registry edits to take effect",
+    "action:a6 — kill processes of well-known security, accounting, and forensic software",
+    "action:a7 — restart the machine in safe mode to avoid detection by security software",
+    "action:a8 — encrypt victim files with AES-256 and encrypt the key with RSA-2048 public key",
+    "action:a9 — run every 60 seconds to encrypt all files except critical system files and those with designated encrypted file extension",
+    "action:a10 — establish persistence by copying executable to %APPDATA%\\Roaming and scheduling task to run ransomware every 15 minutes",
+    "action:a11 — attempt to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies",
+    "action:a12 — place ransom note in every folder containing encrypted files with communication instructions"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-22",
+      "evidence-23",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim devices — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim devices 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim devices",
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+    "action:a2 — use email phishing and spam email campaigns with ransomware attached as initial intrusion vectors",
+    "action:a3 — execute PowerShell script invoke-ReflectivePEInjection via batch file",
+    "action:a4 — edit the EnableLinkedConnections registry value to detect attached hosts and shared storage",
+    "action:a5 — restart the LanmanWorkstation service to allow registry edits to take effect",
+    "action:a6 — kill processes of well-known security, accounting, and forensic software",
+    "action:a7 — restart the machine in safe mode to avoid detection by security software",
+    "action:a8 — encrypt victim files with AES-256 and encrypt the key with RSA-2048 public key",
+    "action:a9 — run every 60 seconds to encrypt all files except critical system files and those with designated encrypted file extension",
+    "action:a10 — establish persistence by copying executable to %APPDATA%\\Roaming and scheduling task to run ransomware every 15 minutes",
+    "action:a11 — attempt to prevent standard recovery techniques by deleting local backups, disabling startup recovery options, and deleting shadow copies",
+    "action:a12 — place ransom note in every folder containing encrypted files with communication instructions"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-22",
+      "evidence-23",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Remote Desktop Protocol (RDP) — 版本",
+   "category": "version",
+   "reason": "IR 指出 Remote Desktop Protocol (RDP)，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Remote Desktop Protocol (RDP) 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Remote Desktop Protocol (RDP)",
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a1 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Remote Desktop Protocol (RDP)",
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s3-configuration",
+   "field": "LanmanWorkstation service — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a5 使用 LanmanWorkstation service，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 依賴 LanmanWorkstation service。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s3 — LanmanWorkstation service",
+    "action:a5 — restart the LanmanWorkstation service to allow registry edits to take effect"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "LanmanWorkstation service",
+     "source_ref": "services:s3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "restart the LanmanWorkstation service to allow registry edits to take effect",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s3",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：Remote Desktop Protocol (RDP), PowerShell, LanmanWorkstation service, Server Message Block (SMB) Protocol。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a1 — gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+    "host:h1 — victim devices"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "gain access to victim devices through vulnerable Remote Desktop Protocol (RDP) configurations",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9118,
+  "unsupported_claim_count": 3,
+  "inferred_count": 7,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

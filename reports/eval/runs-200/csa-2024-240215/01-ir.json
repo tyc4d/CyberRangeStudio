@@ -1,0 +1,636 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240215",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "03d2a8a43e13241d7891300a735964748d0f86312249f7762570e924c9a31c5d",
+  "source_name": "csa-2024-240215"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Distributed Warzone RAT as malicious email attachment",
+   "source": "llm",
+   "description": "Warzone RAT was primarily distributed as a malicious attachment in an email, either through broad malware spam campaigns or targeted phishing attempts.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "Distributed Warzone RAT via malicious Microsoft Office files",
+   "source": "llm",
+   "description": "Warzone RAT was often distributed with or through malicious Microsoft Office files exploiting CVE-2017-11882.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "Warzone RAT gains persistence by copying itself and creating registry key",
+   "source": "llm",
+   "description": "During installation, the malware gains persistence by copying itself to C:\\Users\\User\\AppData\\Roaming\\ and creating a registry key with a value set to the location of Warzone’s executable binary to enable automatic execution after reboot.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "Warzone RAT communicates with C2 servers via TCP over port 5200",
+   "source": "llm",
+   "description": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200, using encrypted payloads with RC4 encryption.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "Warzone RAT collects and sends basic system information to C2 server",
+   "source": "llm",
+   "description": "After decrypting communication and connecting with the C2 server, the malware collects basic system information such as PC name and operating system and sends it back to the C2 server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "persistence depends on malware installation from distribution",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "persistence depends on malware installation from distribution",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "C2 communication requires installed persistent malware",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "system information collection occurs after connecting to C2 server",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim machine infected by Warzone RAT",
+   "source": "llm",
+   "name": "compromised host",
+   "os": "Windows",
+   "os_version": "all Windows releases",
+   "network_placement": "unknown",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Microsoft Office",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Registry",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s3",
+   "name": "TCP port 5200",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Warzone RAT",
+   "type": "malware",
+   "id": "m1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "malicious email attachment",
+   "type": "file",
+   "id": "f1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "malicious Microsoft Office files",
+   "type": "file",
+   "id": "f2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "registry key for persistence",
+   "type": "artifact",
+   "id": "r1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "wzvictims.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2017-8570",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2018-0802",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2017-11882",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Warzone RAT was primarily distributed as a malicious attachment in an email (T1566), either through broad malware spam (malspam) campaigns or targeted phishing attempts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Warzone RAT was primarily distributed as a malicious attachment in an email (T1566), either through broad malware spam (malspam) campaigns or targeted phishing "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The malware was often also distributed with or through malicious Microsoft Office files (T1221), which exploit Microsoft CVE-2017-11882, a CVE that has been in multiple Top Routinely Exploited Vulnerabilities reports coauthored by the Cybersecurity and Infrastructure Security Agency’s (CISA), the FBI, the NSA and FVEY partners.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware was often also distributed with or through malicious Microsoft Office files (T1221), which exploit Microsoft CVE 2017 11882, a CVE that has been in "
+  },
+  {
+   "id": "evidence-3",
+   "quote": "During installation, the malware gains persistence by copying itself to C:\\Users\\User\\AppData\\Roaming\\ and creating a registry key with a value set to the location of Warzone’s executable binary to enable automatic execution of the code after each machine reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During installation, the malware gains persistence by copying itself to\nC:\\Users\\User\\AppData\\Roaming\\ and creating a registry key with a value set to the locat"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200. The C2 IP address and port associated with a given Warzone RAT file is stored in a dedicated ‘.bss’ section of the file in encrypted form alongside the key needed to decrypt it. The C2 communication packets payload is also encrypted using RC4 encryption, typically with the passwords “warzone160\\x00” or “nevergonnagiveyouup”.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200. The C2 IP address and port associated with a given Warzon"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "After decrypting the communication and connecting with the C2 server, the malware collects basic system information about the compromised host, such as PC name and operating system, and sends it back to the C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After decrypting the communication and connecting with the C2 server, the malware collects basic system information about the compromised host, such as PC name "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The tool, which was written in C++ and compatible with all Windows releases",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The tool, which was written in C++ and compatible with all Windows releases"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Warzone RAT can collect compromised host information, including OS version, PC name",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Warzone RAT can collect compromised host information, including OS version, PC name"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "During installation, the malware gains persistence by copying itself to C:\\Users\\User\\AppData\\Roaming\\ and creating a registry key with a value set to the location of Warzone’s executable binary",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During installation, the malware gains persistence by copying itself to C:\\Users\\User\\AppData\\Roaming\\ and creating a registry key with a value set to the locat"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Warzone RAT was often also distributed with or through malicious Microsoft Office files (T1221), which exploit Microsoft CVE-2017-11882",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " was often also distributed with or through malicious Microsoft Office files (T1221), which exploit Microsoft CVE 2017 11882"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "creating a registry key with a value set to the location of Warzone’s executable binary to enable automatic execution",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "creating a registry key with a value set to the location of Warzone’s executable binary to enable automatic execution"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware communicates with C2 servers via TCP over a configurable port which defaults to port 5200"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Warzone Remote Access Trojan (RAT)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Warzone Remote Access Trojan (RAT)"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Warzone RAT was primarily distributed as a malicious attachment in an email",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Warzone RAT was primarily distributed as a malicious attachment in an email"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "wzvictims.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "wzvictims.ic3.gov"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "wzvictims.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "wzvictims.ic3.gov"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2017-8570",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 8570"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "CVE-2018-0802",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 0802"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "CVE-2017-11882",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 11882"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "CVE-2017-11882",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 11882"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "compromised host — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "compromised host 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — compromised host",
+    "action:a1 — Distributed Warzone RAT as malicious email attachment",
+    "action:a2 — Distributed Warzone RAT via malicious Microsoft Office files",
+    "action:a3 — Warzone RAT gains persistence by copying itself and creating registry key",
+    "action:a4 — Warzone RAT communicates with C2 servers via TCP over port 5200",
+    "action:a5 — Warzone RAT collects and sends basic system information to C2 server"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "compromised host",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Microsoft Office — 版本",
+   "category": "version",
+   "reason": "IR 指出 Microsoft Office，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Microsoft Office 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Microsoft Office",
+    "action:a2 — Distributed Warzone RAT via malicious Microsoft Office files"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Microsoft Office",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9524,
+  "unsupported_claim_count": 3,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

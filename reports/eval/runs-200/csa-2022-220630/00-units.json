@@ -1,0 +1,170 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: MedusaLocker"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-181A\n> - Date: 2022-06-30\n> - URL: https://www.ic3.gov/CSA/2022/220630.pdf\n> - PDF SHA-256: 049a1e4e586e28b8c6619625014fe3aaff946b492a5a780c952ed4ab41df8760 (`source.pdf`, 11 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (21 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                             TLP:WHITE                  Product ID: AA22-181A\n                                                                                                                              June 30, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: MedusaLocker\n        SUMMARY\n        Note: this joint Cybersecurity Advisory (CSA) is part of               Actions to take today to mitigate\n        an ongoing #StopRansomware effort to publish                           cyber threats from ransomware:\n        advisories for network defenders that detail various\n                                                                                    •   Prioritize remediating known\n        ransomware variants and ransomware threat actors.\n                                                                                        exploited vulnerabilities.\n        These #StopRansomware advisories include recently\n        and historically observed tactics, techniques, and                          •   Train users to recognize and\n        procedures (TTPs) and indicators of compromise (IOCs)                           report phishing attempts.\n        to help organizations protect against ransomware. Visit\n                                                                                    •   Enable and enforce multifactor\n        stopransomware.gov to see all #StopRansomware\n                                                                                        authentication (MFA).\n        advisories and to learn more about other ransomware\n        threats and no-cost resources.\n        The Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency\n        (CISA), the Department of the Treasury, and the Financial Crimes Enforcement Network (FinCEN)\n        are releasing this CSA to provide information on MedusaLocker ransomware. Observed as recently\n        as May 2022, MedusaLocker actors predominantly rely on vulnerabilities in Remote Desktop Protocol\n        (RDP) to access victims’ networks. The MedusaLocker actors encrypt the victim’s data and leave a\n        ransom note with communication instructions in every folder containing an encrypted file. The note\n        directs victims to provide ransomware payments to a specific Bitcoin wallet address. MedusaLocker\n        appears to operate as a Ransomware-as-a-Service (RaaS) model based on the observed split of\n        ransom payments. Typical RaaS models involve the ransomware developer and various affiliates that\n        deploy the ransomware on victim systems. MedusaLocker ransomware payments appear to be\n        consistently split between the affiliate, who receives 55 to 60 percent of the ransom, and the\n        developer, who receives the remainder."
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact your\n        local FBI field office at www.fbi.gov/contact-us/field-offices. When available, please include the following information\n        regarding the incident: date, time, and location of the incident; type of activity; number of people affected; type of\n        equipment used for the activity; the name of the submitting company or organization; and a designated point of contact.\n        To report incidents and anomalous activity or to request incident response resources or technical assistance related to\n        this threat, contact CISA at report@cisa.gov.\n        Disclaimer: the information in this Joint Cybersecurity Advisory is provided “\"as is” for informational purposes only.\n        The authors do not provide any warranties of any kind regarding this information or endorse any commercial product\n        or service, including any subjects of analysis. This document is marked TLP:WHITE. Disclosure is not limited.\n        Sources may use TLP:WHITE when information carries minimal or no foreseeable risk of misuse, in accordance with\n        applicable rules and procedures for public release. Subject to standard copyright rules, TLP:WHITE information may\n        be distributed without restriction. For more information on the Traffic Light Protocol, see https://www.cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "TLP: WHITE                                                                                         FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p7",
+  "text": "TECHNICAL DETAILS\n       MedusaLocker ransomware actors most often gain access to victim devices through vulnerable\n       Remote Desktop Protocol (RDP) configurations [T1133]. Actors also frequently use email phishing\n       and spam email campaigns—directly attaching the ransomware to the email—as initial intrusion\n       vectors [T1566].\n       MedusaLocker ransomware uses a batch file to execute PowerShell script invoke-\n       ReflectivePEInjection [T1059.001]. This script propagates MedusaLocker throughout the network\n       by editing the EnableLinkedConnections value within the infected machine’s registry, which then\n       allows the infected machine to detect attached hosts and networks via Internet Control Message\n       Protocol (ICMP) and to detect shared storage via Server Message Block (SMB) Protocol."
+ },
+ {
+  "id": "p8",
+  "text": "MedusaLocker then:"
+ },
+ {
+  "id": "p9",
+  "text": "•    Restarts the LanmanWorkstation service, which allows registry edits to take effect."
+ },
+ {
+  "id": "p10",
+  "text": "•    Kills the processes of well-known security, accounting, and forensic software."
+ },
+ {
+  "id": "p11",
+  "text": "•    Restarts the machine in safe mode to avoid detection by security software [T1562.009]."
+ },
+ {
+  "id": "p12",
+  "text": "•    Encrypts victim files with the AES-256 encryption algorithm; the resulting key is then\n                encrypted with an RSA-2048 public key [T1486]."
+ },
+ {
+  "id": "p13",
+  "text": "•    Runs every 60 seconds, encrypting all files except those critical to the functionality of the\n                victim’s machine and those that have the designated encrypted file extension."
+ },
+ {
+  "id": "p14",
+  "text": "•    Establishes persistence by copying an executable (svhost.exe or svhostt.exe) to the\n                %APPDATA%\\Roaming directory and scheduling a task to run the ransomware every 15\n                minutes."
+ },
+ {
+  "id": "p15",
+  "text": "•    Attempts to prevent standard recovery techniques by deleting local backups, disabling startup\n                recovery options, and deleting shadow copies [T1490]."
+ },
+ {
+  "id": "p16",
+  "text": "MedusaLocker actors place a ransom note into every folder containing a file with the victim's\n       encrypted data. The note outlines how to communicate with the MedusaLocker actors, typically\n       providing victims one or more email address at which the actors can be reached. The size of\n       MedusaLocker ransom demands appears to vary depending on the victim’s financial status as\n       perceived by the actors."
+ },
+ {
+  "id": "p17",
+  "text": "TLP: WHITE                                                                                   FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p18",
+  "text": "Indicators of Compromise\n          Encrypted File Extensions\n          .1btc                        .matlock20   .marlock02                .readinstructions\n          .bec                         .mylock      .jpz.nz                   .marlock11\n          .cn                          .NET1        .key1                     .fileslocked\n          .datalock                    .NZ          .lock                     .lockfilesUS\n          .deadfilesgr                 .tyco        .lockdata7                .rs\n          .faratak                     .uslockhh    .lockfiles                .tyco\n          .fileslock                   .zoomzoom    .perfection               .uslockhh\n          .marlock13                   n.exe        .Readinstruction          .marlock08\n          .marlock25                   nt_lock20    .READINSTRUCTION\n          .marlock6                    .marlock01   .ReadInstructions"
+ },
+ {
+  "id": "p19",
+  "text": "Ransom Note File Names\n          how_to_ recover_data.html                 how_to_recover_data.html.marlock01\n          instructions.html                         READINSTRUCTION.html\n          !!!HOW_TO_DECRYPT!!!                      How_to_recovery.txt\n          readinstructions.html                     readme_to_recover_files\n          recovery_instructions.html                HOW_TO_RECOVER_DATA.html\n          recovery_instruction.html"
+ },
+ {
+  "id": "p20",
+  "text": "TLP: WHITE                                                                               FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p21",
+  "text": "Payment Wallets\n          14oxnsSc1LZ5M2cPZeQ9rFnXqEvPCnZikc\n          1DRxUFhvJjGUdojCzMWSLmwx7Qxn79XbJq\n          18wRbb94CjyTGkUp32ZM7krCYCB9MXUq42\n          1AbRxRfP6yHePpi7jmDZkS4Mfpm1ZiatH5\n          1Edcufenw1BB4ni9UadJpQh9LVx9JGtKpP\n          1DyMbw6R9PbJqfUSDcK5729xQ57yJrE8BC\n          184ZcAoxkvimvVZaj8jZFujC7EwR3BKWvf\n          14oH2h12LvQ7BYBufcrY5vfKoCq2hTPoev\n          bc1qy34v0zv6wu0cugea5xjlxagsfwgunwkzc0xcjj\n          bc1q9jg45a039tn83jk2vhdpranty2y8tnpnrk9k5q\n          bc1qz3lmcw4k58n79wpzm550r5pkzxc2h8rwmmu6xm\n          1AereQUh8yjNPs9Wzeg1Le47dsqC8NNaNM\n          1DeNHM2eTqHp5AszTsUiS4WDHWkGc5UxHf\n          1HEDP3c3zPwiqUaYuWZ8gBFdAQQSa6sMGw\n          1HdgQM9bjX7u7vWJnfErY4MWGBQJi5mVWV\n          1nycdn9ebxht4tpspu4ehpjz9ghxlzipll\n          12xd6KrWVtgHEJHKPEfXwMVWuFK4k1FCUF\n          1HZHhdJ6VdwBLCFhdu7kDVZN9pb3BWeUED\n          1PormUgPR72yv2FRKSVY27U4ekWMKobWjg\n          14cATAzXwD7CQf35n8Ea5pKJPfhM6jEHak\n          1PopeZ4LNLanisswLndAJB1QntTF8hpLsD"
+ },
+ {
+  "id": "p22",
+  "text": "Email Addresses\n          willyhill1960@tutanota[.]com                 unlockfile@cock[.]li\n          zlo@keem[.]ne                                unlockmeplease@airmail[.]cc\n          zlo@keemail[.]me                             unlockmeplease@protonmail[.]com\n          zlo@tfwno[.]gf                               willyhill1960@protonmail[.]com\n          support@ypsotecs[.]com                       support@imfoodst[.]com\n          traceytevin@protonmail[.]com                 support@itwgset[.]com\n          unlock_file@aol[.]com                        support@novibmaker[.]com"
+ },
+ {
+  "id": "p23",
+  "text": "TLP: WHITE                                                                        FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p24",
+  "text": "Email Addresses\n          unlock_file@outlook[.]com          support@securycasts[.]com\n          support@exoprints[.]com            rewmiller-1974@protonmail[.]com\n          support@exorints[.]com             rpd@keemail[.]me\n          support@fanbridges[.]com           soterissylla@wyseil[.]com\n          support@faneridges[.]com           support@careersill[.]com\n          perfection@bestkoronavirus[.]com   karloskolorado@tutanota[.]com\n          pool1256@tutanota[.]com            kevynchaz@protonmail[.]com\n          rapid@aaathats3as[.]com            korona@bestkoronavirus[.]com\n          rescuer@tutanota[.]com             lockPerfection@gmail[.]com\n          ithelp01@decorous[.]cyou           lockperfection@gmail[.]com\n          ithelp01@wholeness[.]business      mulierfagus@rdhos[.]com\n          ithelp02@decorous[.]cyou           [rescuer]@cock[.]li\n          ithelp02@wholness[.]business       107btc@protonmail[.]com\n          ithelpresotre@outlook[.]com        33btc@protonmail[.]com\n          cmd@jitjat[.]org                   777decoder777@protonmail[.]com\n          coronaviryz@gmail[.]com            777decoder777@tfwno[.]gf\n          dec_helper@dremno[.]com            andrewmiller-1974@protonmail[.]com\n          dec_helper@excic[.]com             angelomartin-1980@protonmail[.]com\n          dec_restore@prontonmail[.]com      ballioverus@quocor[.]com\n          dec_restore1@outlook[.]com         beacon@jitjat[.]org\n          bitcoin@sitesoutheat[.]com         beacon@msgsafe[.]io\n          briansalgado@protonmail[.]com      best666decoder@tutanota[.]com\n          bugervongir@outlook[.]com          bitcoin@mobtouches[.]com\n          best666decoder@protonmail[.]com    encrypt2020@outlook[.]com\n          decoder83540@cock[.]li             fast-help@inbox[.]lv\n          decra2019@gmail[.]com              fuc_ktheworld1448@outlook[.]com\n          diniaminius@winrof[.]com           fucktheworld1448@cock[.]li\n          dirhelp@keemail[.]me               gartaganisstuffback@gmail[.]com\n          emaila.elaich@iav.ac[.]ma          gavingonzalez@protonmail[.]com\n          emd@jitjat[.]org                   gsupp@onionmail[.]org"
+ },
+ {
+  "id": "p25",
+  "text": "TLP: WHITE                                                                                        FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p26",
+  "text": "Email Addresses\n          encrypt2020@cock[.]li                              gsupp@techmail[.]info\n          best666decoder@protonmail[.]com                    helper@atacdi[.]com\n          ithelp@decorous[.]cyou                             helper@buildingwin[.]com\n          ithelp@decorous[.]cyoum                            helprestore@outlook[.]com\n          ithelp@wholeness[.]business                        helptorestore@outlook[.]com"
+ },
+ {
+  "id": "p27",
+  "text": "TOR Addresses\n          http://gvlay6u4g53rxdi5.onion/6-6pjEvFZDqKGImP5qrs2XAcUKUHwXPR1Z-\n          TEoTUp59yNfI5FvTMcD8975LO4G5T11r\n          http://gvlay6u4g53rxdi5.onion/8-Q5nAvqllwd3MfqeE0pWJTLrpdpedeyBF-\n          ytD1F9caSDprxEXHUk2x5QvViqNNwB15\n          http://gvlay6u4g53rxdi5.onion/8-C2kYOdVUD5w7FCS7Cjv7dywCHiB7gOvj-\n          XDvJwwmKFQvHfdsIr0Kk0sukibsOMjnS\n          http://gvlay6u4g53rxdi5.onion/8-8L5bNFyD8DPX1p2M9EjmYfaLY1lAqg79-\n          C9SR2i1pCCT8iTPT4LclPAYEfg57q8L7\n          http://gvlay6u4g53rxdi5.onion/21-l5PsticiJxSsATvI0EAoDaiDk9Ni5LN7-\n          GbG7h1T5qj8G56DwL6ErAFV4VPAqgElY\n          http://gvlay6u4g53rxdi5.onion/8-8L5bNFyD8DPX1p2M9EjmYfaLYIlAqg79-\n          GbkvQGP5SSsJ496BbaTuJIlnSXGoO8BR\n          http://gvlay6u4g53rxdi5.onion/6-6pjEvFZDqKGImP5qrs2xAcUKUHwXPR1Z-\n          IYKZ5sg9aKsj0gmqagMRhAPyysmf3Ul9\n          http://gvlay6u4g53rxdi5.onion/8-HJ80arrsNcyop4g6Jcxr2U0wFE9CYxKE-\n          KXTlwgVTO2o6DH9o0TZrdxr1mull3lt4\n          http://gvlay6u4g53rxdi5.onion/30WXEJKEM4IEY4256M0BQ0LN02ZNDD0BVI/4VISXPQ2IBACCVXHS\n          NEOXV2VGWFIIL4W\n          http://gvlay6u4g53rxdi5.onion/5-WZ8TKeY6iVCXnJr5A1fMtXao7V5HnMSa-\n          0cy030agZGkRhxMY2WQg46fymnvMDado\n          http://gvlay6u4g53rxdi5.onion/38-qSGLNKQbFBAEKEB29nqJa8rbiMqeeCtj-\n          lTnNXMbYwGbIP4Ag2FMqQLRIi6SdtDqV\n          http://gvlay6u4g53rxdi5.onion/21-8P4ZLCsMTPaLw9MkSlXJsNZWdHe0rxjt-\n          Vi9ngqKVf2QPgXxOVPovjRinSwPYOtt6\n          http://gvlay6u4g53rxdi5.onion/6-iSm1B1Ehljh8HYuXGym4Xyu1WdwsR2Av-\n          6tXiw1BImsqoLh7pd207Rl6XYoln7sId\n          http://gvlay6u4g53rxdi5.onion/8-grp514hncgblilsjtd32hg6jtbyhlocr5pqjswxfgf2oragnl3pqno6fkqcimqin"
+ },
+ {
+  "id": "p28",
+  "text": "TLP: WHITE                                                                                      FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p29",
+  "text": "TOR Addresses\n          http://gvlay6y4g53rxdi5.onion/21-8P4ZLCsMETPaLw9MkSlXJsNZWdHe0rxjt-\n          XmBgZLWlm5ULGFCOJFuVdEymmxysofwu\n          http://gvlay6u4g53rxdi5.onion/2l-\n          8P4ZLCsMTPaLw9MkSlXJsNZWdHeOrxjtE9lck1MuXPYo29daQys6gomZZXUImN7Z\n          http://gvlay6u4g53rxdi5.onion/21-8P4ZLCsMTPaLw9MkSlXJsNZWdHe0rxjt-\n          DcaE9HeHywqSHvdcIwOndCS4PuWASX8g\n          http://gvlay6u4g53rxdi5.onion/21-8P4ZLCsMTPaLw9MkSlXJsNZWdHe0rxjt-\n          kB4rQXGKyxGiLyw7YDsMKSBjyfdwcyxo\n          http://gvlay6u4g53rxdi5.onion/21-8P4ZLCsMTPaLw9MkSlXJsNZWdHe0rxjt-\n          bET6JbB9vEMZ7qYBPqUMCxOQExFx4iOi\n          http://gvlay6u4g53rxdi5. onion/8-MO0Q7O97Hgxvm1YbD7OMnimImZJXEWaG-\n          RbH4TvdwVTGQB3X6VOUOP3lgO6YOJEOW\n          http://gvlay6u4g53rxdi5.onion/8-gRp514hncgb1i1sjtD32hG6jTbUh1ocR-\n          Uola2Fo30KTJvZX0otYZgTh5txmKwUNe\n          http://gvlay6u4g53rxdi5.onion/21-E6UQFCEuCn4KvtAh4TonRTpyHqFo6F6L-\n          OWQwD1w1Td7hY7IGUUjxmHMoFSQW6blg\n          http://gvlay6u4g53rxdi5.onion/21-E6UQFCEuCn4KvtAh4TonRTpyHqFo6F6L-\n          uGHwkkWCoUtBbZWN50sSS4Ds8RABkrKy\n          http://gvlay6u4g53rxdi5.onion/21-E6UQFCEuCn4KvtAh4TonRTpyHqFo6F6L-\n          Tj3PRnQlpHc9OftRVDGAWUulvE80yZbc\n          http://gvlay6u4g53rxdi5.onion/8-Ww5sCBhsL8eM4PeAgsfgfa9lrqa81r31-\n          tDQRZCAUe4164X532j9Ky16IBN9StWTH\n          http://gvlay6u4g53rxdi5.onion/21-wIq5kK9gGKiTmyups1U6fABj1VnXIYRB-\n          I5xek6PG2EbWlPC7C1rXfsqJBlWlFFfY\n          qd7pcafncosqfqu3ha6fcx4h6sr7tzwagzpcdcnytiw3b6varaeqv5yd.onion\n          http://medusacegu2ufmc3kx2kkqicrlcxdettsjcenhjena6uannk5f4ffuyd.onion/leakdata/paigesmusic-\n          leakdata-closed-part1"
+ },
+ {
+  "id": "p30",
+  "text": "TLP: WHITE                                                                                FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p31",
+  "text": "Disclaimer: Many of these observed IP addresses are several years old and have been historically\n       linked to MedusaLocker ransomware. We recommend these IP addresses be investigated or vetted\n       by organizations prior to taking action, such as blocking.\n                            IP Address                               Last Observed\n                          195.123.246.138                               Nov-2021\n                          138.124.186.221                               Nov-2021\n                             159.223.0.9                                Nov-2021\n                           45.146.164.141                               Nov-2021\n                           185.220.101.35                               Nov-2021\n                          185.220.100.252                               Nov-2021\n                          185.220.100.249                               Sep-2021\n                           50.80.219.149                                Sep-2021\n                          185.220.101.146                               Sep-2021\n                          185.220.101.252                               Sep-2021\n                           179.60.150.97                                Sep-2021\n                            84.38.189.52                                Sep-2021\n                            94.232.43.63                                 Jul-2021\n                           108.11.30.103                                 Apr-2021\n                            194.61.55.94                                 Apr-2021\n                           198.50.233.202                                Apr-2021\n                            40.92.90.105                                Jan-2021\n                           188.68.216.23                                Dec-2020\n                            87.251.75.71                                Dec-2020\n                           196.240.57.20                                 Oct-2020\n                             198.0.198.5                                Aug-2020\n                           194.5.220.122                                Mar-2020\n                           194.5.250.124                                Mar-2020\n                           194.5.220.124                                Mar-2020\n                           104.210.72.161                               Nov-2019"
+ },
+ {
+  "id": "p32",
+  "text": "TLP: WHITE                                                                                           FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p33",
+  "text": "MITRE ATT&CK TECHNIQUES\n       MedusaLocker actors use the ATT&CK techniques listed in Table 1.\n                              Table 1: MedusaLocker Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p34",
+  "text": "Initial Access\n               Technique Title                       ID                                 Use\n        External Remote Services         T1133                        MedusaLocker actors gained access to\n                                                                      victim devices through vulnerable RDP\n                                                                      configurations.\n        Phishing                         T1566                        MedusaLocker actors used phishing and\n                                                                      spearphishing to obtain access to victims’\n                                                                      networks."
+ },
+ {
+  "id": "p35",
+  "text": "Execution\n               Technique Title                       ID                                 Use\n        Command and Scripting            T1059.001                    MedusaLocker actors may abuse\n        Interpreter: PowerShell                                       PowerShell commands and scripts for\n                                                                      execution."
+ },
+ {
+  "id": "p36",
+  "text": "Defense Evasion\n               Technique Title                       ID                                 Use\n        Impair Defenses: Safe Mode       T1562.009                    MedusaLocker actors may abuse\n        Boot                                                          Windows safe mode to disable endpoint\n                                                                      defenses. Safe mode starts up the\n                                                                      Windows operating system with a limited\n                                                                      set of drivers and services."
+ },
+ {
+  "id": "p37",
+  "text": "Impact\n               Technique Title                       ID                                 Use\n        Data Encrypted for Impact        T1486                        MedusaLocker actors encrypt data on\n                                                                      target systems or on large numbers of\n                                                                      systems in a network to interrupt\n                                                                      availability to system and network\n                                                                      resources.\n        Inhibit System Recovery          T1490                        MedusaLocker actors may deny access\n                                                                      to operating systems containing features\n                                                                      that can help fix corrupted systems, such\n                                                                      as backup catalog, volume shadow\n                                                                      copies, and automatic repair."
+ },
+ {
+  "id": "p38",
+  "text": "TLP: WHITE                                                                                      FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p39",
+  "text": "MITIGATIONS\n           •    Implement a recovery plan that maintains and retains multiple copies of sensitive or\n                proprietary data and servers in a physically separate, segmented, and secure location (i.e.,\n                hard drive, storage device, or the cloud).\n           •    Implement network segmentation and maintain offline backups of data to ensure limited\n                interruption to the organization.\n           •    Regularly back up data and password protect backup copies stored offline. Ensure copies of\n                critical data are not accessible for modification or deletion from the system where the data\n                resides.\n           •    Install, regularly update, and enable real-time detection for antivirus software on all hosts.\n           •    Install updates for operating systems, software, and firmware as soon as possible.\n           •    Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts.\n           •    Audit user accounts with administrative privileges and configure access controls according to\n                the principle of least privilege.\n           •    Disable unused ports.\n           •    Consider adding an email banner to emails received from outside your organization.\n           •    Disable hyperlinks in received emails.\n           •    Enforce multifactor authentication (MFA).\n           •    Use National Institute of Standards and Technology (NIST) standards for developing and\n                managing password policies:\n                     o Use longer passwords consisting of at least 8 characters and no more than 64\n                         characters in length.\n                     o Store passwords in hashed format using industry-recognized password managers.\n                     o Add password user “salts” to shared login credentials.\n                     o Avoid reusing passwords.\n                     o Implement multiple failed login attempt account lockouts.\n                     o Disable password “hints.”\n                     o Refrain from requiring password changes unless there is evidence of password\n                         compromise.\n                         Note: NIST guidance suggests favoring longer passwords and no longer require\n                         regular and frequent password resets. Frequent password resets are more likely to\n                         result in users developing password “patterns” cyber criminals can easily decipher.\n                     o Require administrator credentials to install software.\n           •    Only use secure networks; avoid using public Wi-Fi networks.\n           •    Consider installing and using a virtual private network (VPN) to establish secure remote\n                connections.\n           •    Focus on cybersecurity awareness and training. Regularly provide users with training on\n                information security principles and techniques as well as overall emerging cybersecurity risks\n                and vulnerabilities, such as ransomware and phishing scams."
+ },
+ {
+  "id": "p40",
+  "text": "TLP: WHITE                                                                                  FBI | CISA | Treasury | FinCEN"
+ },
+ {
+  "id": "p41",
+  "text": "RESOURCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n           •    Resource to mitigate a ransomware attack: CISA-Multi-State Information Sharing and Analysis\n                Center (MS-ISAC) Joint Ransomware Guide\n           •    No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment"
+ },
+ {
+  "id": "p42",
+  "text": "REPORTING\n           •    To report an incident and request technical assistance, contact CISA at\n                cisaservicedesk@cisa.dhs.gov or 888-282-0870, or FBI through a local field office.\n           •    Financial Institutions must ensure compliance with any applicable Bank Secrecy Act\n                requirements, including suspicious activity reporting obligations. Indicators of compromise\n                (IOCs), such as suspicious email addresses, file names, hashes, domains, and IP addresses,\n                can be provided under Item 44 of the Suspicious Activity Report (SAR) form. For more\n                information on mandatory and voluntary reporting of cyber events via SARs, see FinCEN\n                Advisory FIN-2016-A005, Advisory to Financial Institutions on Cyber-Events and Cyber-\n                Enabled Crime, October 25, 2016; and FinCEN Advisory FIN-2021-A004, Advisory on\n                Ransomware and the Use of the Financial System to Facilitate Ransom Payments, November\n                8, 2021, which updates FinCEN Advisory FIN-2020-A006.\n           •    The U.S. Department of State’s Rewards for Justice (RFJ) program offers a reward of up to\n                $10 million for reports of foreign government malicious activity against U.S. critical\n                infrastructure. See the RFJ website for more information and how to report information\n                securely."
+ }
+]

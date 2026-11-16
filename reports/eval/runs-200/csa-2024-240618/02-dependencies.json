@@ -1,0 +1,992 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240618",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "7cd3c41659a5407e6c69ec6c1f5d59c532bfe58edee12d119b611eba69f01f49",
+  "source_name": "csa-2024-240618"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploited configuration data to reverse tunnel from the ICS VPN appliance",
+   "source": "llm",
+   "description": "An attacker exploited configuration data to reverse tunnel from the Ivanti Connect Secure VPN appliance.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "failed",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "modified a JavaScript file used by the Web SSL VPN component",
+   "source": "llm",
+   "description": "The attacker modified a JavaScript file used by the Web SSL VPN component of the Ivanti Connect Secure device to compromise credentials and move laterally.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "failed",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "circumvented factory reset and gained root-level access on Ivanti Connect Secure VPN appliance",
+   "source": "llm",
+   "description": "Threat actors circumvented factory reset and gained root-level access on the Ivanti Connect Secure VPN appliance, evading detection by the Integrity Checker Tool and patching.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "failed",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a5",
+   "name": "exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+   "source": "llm",
+   "description": "Threat actors exploited CVE-2023-4966 in Citrix NetScaler web application delivery control and NetScaler Gateway appliances to bypass password requirements and multifactor authentication, hijacking legitimate user sessions.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "acquired elevated permissions to harvest credentials, move laterally, and access data and resources",
+   "source": "llm",
+   "description": "By hijacking legitimate user sessions on Citrix NetScaler web applications, threat actors acquired elevated permissions to harvest credentials, move laterally, and access data and resources.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a7",
+   "name": "used VPN sessions with administrative credentials to move laterally and obtain domain credentials",
+   "source": "llm",
+   "description": "Volt Typhoon, a PRC state-sponsored cyber group, uses VPN sessions with administrative credentials to move laterally, obtain domain credentials, and blend in with regular traffic.",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states the order using 'Then'",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Elevated permissions were acquired through hijacking legitimate user sessions enabled by exploiting CVE-2023-4966",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Internet-facing ICS VPN appliance",
+   "source": "llm",
+   "name": "Ivanti Connect Secure VPN appliance",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "web application delivery control and gateway appliances",
+   "source": "llm",
+   "name": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s2"
+   ]
+  },
+  {
+   "id": "h3",
+   "role": "corporate/business network accessed via VPN",
+   "source": "llm",
+   "name": "enterprise network",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Web SSL VPN component",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Citrix NetScaler web applications",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "JavaScript file",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-46805",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2024-21887",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2024-21893",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2023-4966",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Multiple sources observed the Internet-facing ICS VPN appliance fell victim to compromise when an attacker exploited configuration data to reverse tunnel from the ICS VPN appliance.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Multiple sources observed the Internet facing ICS VPN appliance fell victim to compromise when an attacker exploited configuration data to reverse tunnel from t"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Then, the attacker modified a JavaScript file used by the Web SSL VPN component of the device to compromise credentials and move from system to system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Then, the attacker modified a JavaScript file used by the Web SSL VPN component of the device to compromise credentials and move from system to system."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "However, this tool and patching failed to detect the compromise due to threat actors going virtually undetected, circumventing factory reset, and gaining root-level-access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "However, this tool and patching failed to detect the compromise due to threat actors going virtually undetected, circumventing factory reset, and gaining root l"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "CVE-2023-4966 (Citrix Bleed) affecting Citrix NetScaler web application delivery control (ADC) and NetScaler Gateway appliances. This vulnerability allowed threat actors to bypass password requirements and multifactor authentication (MFA), leading to successful hijacking of legitimate user sessions on Citrix NetScaler web applications.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966 (Citrix Bleed) affecting Citrix NetScaler web application delivery control (ADC) and NetScaler Gateway appliances. This vulnerability allowed thre"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Through hijacking legitimate user sessions, threat actors acquired elevated permissions to harvest credentials, move laterally, and access data and resources.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through hijacking legitimate user sessions, threat actors acquired elevated permissions to harvest credentials, move laterally, and access data and resources."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Volt Typhoon, a PRC state-sponsored cyber group that targets U.S. critical infrastructure, uses VPN sessions to securely connect to victim environments with administrative credentials. This allows Volt Typhoon actors to move laterally, obtain domain credentials for the network, and blend in with regular traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9968,
+   "matched_text": "Volt Typhoon, a PRC state sponsored cyber group that targets U.S. critical infrastructure, uses VPN sessions to securely connect to victim environments with adm"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "the Internet-facing ICS VPN appliance fell victim to compromise when an attacker exploited configuration data to reverse tunnel from the ICS VPN appliance",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the Internet facing ICS VPN appliance fell victim to compromise when an attacker exploited configuration data to reverse tunnel from the ICS VPN appliance"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The attacker modified a JavaScript file used by the Web SSL VPN component of the Ivanti Connect Secure device",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a2"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Threat actors circumvented factory reset and gained root-level access on the Ivanti Connect Secure VPN appliance",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Threat actors exploited CVE-2023-4966 in Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Citrix NetScaler web application delivery control "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Threat actors acquired elevated permissions to harvest credentials, move laterally, and access data and resources by hijacking legitimate user sessions on Citrix NetScaler web applications",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a6"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-12",
+   "quote": "An enterprise remote access VPN allows users to access the corporate/business network through a private and encrypted tunnel",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "An enterprise remote access VPN allows users to access the corporate/business network through a private and encrypted tunnel"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Threat actors can gain access to all services within an organization’s network if they use a compromised device or account and connect through VPN services",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "hreat actors can gain access to all services within an organization’s network if they use a compromised device or account and connect through VPN services"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CVE-2023-46805",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 46805"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2024-21887",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 21887"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2024-21893",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 21893"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Ivanti Connect Secure VPN appliance — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Connect Secure VPN appliance 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Ivanti Connect Secure VPN appliance",
+    "action:a1 — exploited configuration data to reverse tunnel from the ICS VPN appliance",
+    "action:a2 — modified a JavaScript file used by the Web SSL VPN component",
+    "action:a4 — circumvented factory reset and gained root-level access on Ivanti Connect Secure VPN appliance"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Connect Secure VPN appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Ivanti Connect Secure VPN appliance — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Connect Secure VPN appliance 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Ivanti Connect Secure VPN appliance",
+    "action:a1 — exploited configuration data to reverse tunnel from the ICS VPN appliance",
+    "action:a2 — modified a JavaScript file used by the Web SSL VPN component",
+    "action:a4 — circumvented factory reset and gained root-level access on Ivanti Connect Secure VPN appliance"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Connect Secure VPN appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Ivanti Connect Secure VPN appliance — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Connect Secure VPN appliance 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Ivanti Connect Secure VPN appliance",
+    "action:a1 — exploited configuration data to reverse tunnel from the ICS VPN appliance",
+    "action:a2 — modified a JavaScript file used by the Web SSL VPN component",
+    "action:a4 — circumvented factory reset and gained root-level access on Ivanti Connect Secure VPN appliance"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Connect Secure VPN appliance",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+    "action:a5 — exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+    "action:a6 — acquired elevated permissions to harvest credentials, move laterally, and access data and resources"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+    "action:a5 — exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+    "action:a6 — acquired elevated permissions to harvest credentials, move laterally, and access data and resources"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+    "action:a5 — exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+    "action:a6 — acquired elevated permissions to harvest credentials, move laterally, and access data and resources"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "enterprise network — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "enterprise network 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — enterprise network",
+    "action:a7 — used VPN sessions with administrative credentials to move laterally and obtain domain credentials"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "enterprise network",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "enterprise network — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "enterprise network 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — enterprise network",
+    "action:a7 — used VPN sessions with administrative credentials to move laterally and obtain domain credentials"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "enterprise network",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "enterprise network — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "enterprise network 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — enterprise network",
+    "action:a7 — used VPN sessions with administrative credentials to move laterally and obtain domain credentials"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "enterprise network",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a2 — modified a JavaScript file used by the Web SSL VPN component",
+    "action:a5 — exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+    "action:a6 — acquired elevated permissions to harvest credentials, move laterally, and access data and resources",
+    "action:a7 — used VPN sessions with administrative credentials to move laterally and obtain domain credentials",
+    "host:h1 — Ivanti Connect Secure VPN appliance",
+    "host:h2 — Citrix NetScaler web application delivery control and NetScaler Gateway appliances",
+    "host:h3 — enterprise network"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "modified a JavaScript file used by the Web SSL VPN component",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "exploited CVE-2023-4966 (Citrix Bleed) vulnerability",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "acquired elevated permissions to harvest credentials, move laterally, and access data and resources",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "used VPN sessions with administrative credentials to move laterally and obtain domain credentials",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-web-ssl-vpn-component",
+   "field": "software dependency: Web SSL VPN component",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Web SSL VPN component 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "NGINX（替代品，不等於原軟體）",
+    "Apache HTTP Server（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-citrix-netscaler-web-applic",
+   "field": "software dependency: Citrix NetScaler web applications",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Citrix NetScaler web applications 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "NGINX（替代品，不等於原軟體）",
+    "Apache HTTP Server（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_cve-cve-2023-4966",
+   "field": "affected software for CVE-2023-4966",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.7059,
+  "unsupported_claim_count": 8,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a3",
+    "name": "used memory and disk forensics combined with the Integrity Checker Tool to identify malicious files",
+    "actor": "defender"
+   },
+   {
+    "id": "a8",
+    "name": "implemented Zero Trust Network Access (ZTNA)",
+    "actor": "other"
+   },
+   {
+    "id": "a9",
+    "name": "implemented Cloud Secure Web Gateway (SWG)",
+    "actor": "other"
+   },
+   {
+    "id": "a10",
+    "name": "implemented Cloud Access Security Broker (CASB)",
+    "actor": "other"
+   },
+   {
+    "id": "a11",
+    "name": "implemented Firewall-as-a-Service (FWaaS)",
+    "actor": "other"
+   },
+   {
+    "id": "a12",
+    "name": "implemented Software-Defined Wide Area Networking (SD-WAN)",
+    "actor": "other"
+   },
+   {
+    "id": "a13",
+    "name": "implemented Next Generation Firewall (NGFW)",
+    "actor": "other"
+   },
+   {
+    "id": "a14",
+    "name": "implemented hardware-enforced network segmentation",
+    "actor": "other"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

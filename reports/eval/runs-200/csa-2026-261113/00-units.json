@@ -1,0 +1,330 @@
+[
+ {
+  "id": "p1",
+  "text": "# Threat Overview of ARTEX Autonomous Penetration Testing Framework"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-11-13\n> - URL: https://www.ic3.gov/CSA/2026/261113.pdf\n> - PDF SHA-256: 3dd86a94d33b29c65f56b4307919b74358e63cfde33a600b61adce5794d169e2 (`source.pdf`, 13 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (26 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "13 NOVEMBER 2026\n                                                                                              FLASH Number\n                                                                                           FLASH-20261113-001"
+ },
+ {
+  "id": "p4",
+  "text": "Threat Overview of ARTEX Autonomous Penetration\nTesting Framework"
+ },
+ {
+  "id": "p5",
+  "text": "Summary\nThe Federal Bureau of Investigation (FBI) is releasing this FLASH to highlight the tactics, techniques, and\nprocedures (TTPs) and indicators of compromise (IOCs) associated with the ARTEX autonomous\npenetration testing framework. ARTEX is an open-source, large language model (LLM)-driven agentic\nplatform that threat actors have weaponized to automate multiple phases of cyber intrusions at machine\nspeed, from reconnaissance through data exfiltration. Since at least August 2026, a variety of malicious\ncyber actors have used ARTEX to conduct campaigns targeting organizations globally across multiple\nsectors, including financial services, government, technology, defense, semiconductor, energy,\nhealthcare, manufacturing, telecommunications, and legal industries.1,2,3,4,5"
+ },
+ {
+  "id": "p6",
+  "text": "ARTEX significantly reduces the time required to chain attack techniques, with some intrusions\nprogressing from initial targeting to privileged access in under three hours.² The framework enables threat\nactors with minimal technical expertise to conduct complex, multi-target operations simultaneously,\nfundamentally accelerating attack velocity and expanding operational scale. Notable campaigns include\nfinancially motivated attacks against South Korean financial institutions resulting in exfiltration of personal\ninformation from approximately 67,000 individuals,6,7,8 and a supply chain compromise affecting\nConnectWise Cloud Backup customers that enabled access to more than 2,250 downstream tenants.2"
+ },
+ {
+  "id": "p7",
+  "text": "Following public disclosure of malicious usage, the original ARTEX developer removed the GitHub\nrepository in October 2026.3 However, the framework continues to proliferate through community forks,\nlocalized variations, archived copies, and a commercial version (ARTEX PRO), ensuring continued\navailability to threat actors.3,10 As of early November 2026, researchers identified over 1,600 publicly\nexposed ARTEX console instances, with total deployments likely significantly higher when including\nsystems behind firewalls or in private networks.4"
+ },
+ {
+  "id": "p8",
+  "text": "The FBI encourages organizations—particularly those operating internet-exposed applications, self-\nservice portals, cloud infrastructure, and partner/supplier systems—to implement the recommendations\nin the Mitigations section to reduce the likelihood and impact of ARTEX-enabled intrusions."
+ },
+ {
+  "id": "p9",
+  "text": "Threat\nARTEX is an autonomous, multi-agent penetration testing platform written in Go.3,4 The framework\ntranslates high-level tactical goals described in natural language into actionable machine commands\nexecuted by specialized super intelligence (SI) agents, requiring minimal human interaction beyond initial\nobjective setting.2,3 ARTEX does not include its own SI model but integrates with external LLM providers,\nincluding frontier models (Anthropic Claude, OpenAI GPT) and open-source or Chinese-origin models\n(DeepSeek, GLM, Grok, Kimi).3,6,7,9"
+ },
+ {
+  "id": "p10",
+  "text": "Analysis of attacker-controlled ARTEX instances shows Chinese models are most prevalent, with\nDeepSeek Flash family models dominating usage due to their balance of capabilities, relatively low cost,\nand lack of observable guardrails when framed for penetration testing. 7,9"
+ },
+ {
+  "id": "p11",
+  "text": "Originally released on GitHub by developer “Autumn-27” in July 2026, ARTEX gained rapid adoption,\nreaching an estimated 1,500–2,000 GitHub stars within 10 weeks.4 The developer stated the tool was\nintended for authorized security testing within defined scopes and made the repository unavailable on\nOctober 8, 2026, following reports of threat actor abuse.3,6 Despite this action, ARTEX remains widely\naccessible through independent routes and mirrors on code-sharing platforms.3,4,9"
+ },
+ {
+  "id": "p12",
+  "text": "Observed Capabilities and Potential Uses\nBased on observed capabilities and ongoing threat actor adoption, ARTEX presents the following risks:"
+ },
+ {
+  "id": "p13",
+  "text": "•   Accelerated Multi-Target Operations: SI agents provide automation for the time-consuming\n       phases of enumeration and exploitation; small threat groups can run concurrent intrusion\n       campaigns at a scale previously unavailable to them.\n   •   Exploitation of Overlooked Attack Surfaces: ARTEX excels at identifying and exploiting peripheral\n       systems receiving less security attention than flagship applications, including partner and supplier\n       portals, mobile backends, employee applications, sales-support systems, legacy services, third-\n       party integrations, and applications created across different business units.1\n   •   Supply Chain Compromise: Agents have demonstrated capability to identify and exploit supply\n       chain attack vectors, including modifying iOS application distribution infrastructure via exposed\n       cloud credentials.9 Autonomous agents can systematically map trust relationships between\n       organizations. By identifying and compromising weaker third-party vendors, CI/CD pipelines, or\n       integrated software providers, attackers can leverage ARTEX to pivot from a peripheral supplier\n       directly into high-value upstream enterprise networks.\n   •   Reduced Barrier to Entry: ARTEX lowers technical barriers for conducting complex intrusions,\n       enabling threat actors with minimal expertise to execute sophisticated campaigns. 3,9"
+ },
+ {
+  "id": "p14",
+  "text": "•   Compressed Detection Window: ARTEX generates high volumes of forensically noisy traffic that\n       may trigger alerts, but attack speed provides limited time for coordinated defender response\n       before objective completion.2,3"
+ },
+ {
+  "id": "p15",
+  "text": "Observed Tactics, Techniques, and Procedures\nThe following table maps observed ARTEX activity to MITRE ATT&CK phases:"
+ },
+ {
+  "id": "p16",
+  "text": "Phase                          Observed Activity                 ATT&CK Techniques\n Initial Recon                  • Automatically mapped            T1595 – Active Scanning\n                                effective permissions of Azure    T1580 – Cloud Infrastructure\n                                credentials (SAS tokens,          Discovery\n                                Service Principals, Kudu          T1087.004 – Account\n                                credentials, Storage Account      Discovery: Cloud Account\n                                keys) using sub-second            T1069.003 – Permission\n                                capability checks, test blob      Groups Discovery: Cloud\n                                writes/deletes, ARM               Groups\n                                deployment validation dry-        T1526 – Cloud Service\n                                runs                              Discovery\n                                • Tested compromised IAM\n                                user permissions using\n                                DryRun flags\n                                • Fuzzing web directories\n                                across 500+ requests\n                                • WHOIS asset mapping and\n                                active vulnerability scanning\n                                • Queried api.db-ip[.]com to\n                                determine victim geolocation\n Initial Access                 • Exploited unsigned SAML         T1190 – Exploit Public-Facing\n                                assertions                        Application\n                                • Exploited XXE flaws             T1078 – Valid Accounts\n                                • Exploited anonymous file        T1133 – External Remote\n                                upload                            Services\n                                • Abused cross-account cloud      T1195 – Supply Chain\n                                trust relationships from an       Compromise\n                                external partner tenant           T1199 – Trusted Relationship\n                                • Compromised third-party         T1606.002 – Forge Web\n                                vendor credentials to pivot via   Credentials: SAML Tokens\n                                trusted B2B federation            T1552.001 – Unsecured\n                                • Exploited SSRF                  Credentials: Credentials in\n                                • Hardcoded administrator         Files"
+ },
+ {
+  "id": "p17",
+  "text": "passwords in SPA JavaScript\n                       bundles\n                       • Missing authentication on\n                       Web APIs\n                       • RCE through command\n                       injection\n                       • Insecure Direct Object\n                       References (IDOR)\n                       • Weak administrative\n                       credentials\n                       • RCE through SSTI\n                       • SQL injection\n                       • Authentication bypass\n                       • Used stolen VPN\n                       configurations and leaked\n                       credentials\nEstablish Foothold /   • Deployed JSP and PHP web        T1505.003 – Server Software\nPersistence            shells (including via MySQL       Component: Web Shell\n                       log poisoning)                    T1078.004 – Valid Accounts:\n                       • Abused Kudu administrative      Cloud Accounts\n                       APIs to execute arbitrary         T1098.001 – Account\n                       commands                          Manipulation: Additional\n                       • Established C2 on internal      Cloud Credentials\n                       Windows database servers          T1574.001 – Hijack Execution\n                       • Installed open-source RATs      Flow: DLL\n                       (WISP, vshell, AdaptixC2)         T1036.005 – Masquerading\n                       • Created SSH key pairs,          T1105 – Ingress Tool Transfer\n                       allocated Elastic IPs             T1059 – Command and\n                       • Account takeover (password      Scripting Interpreter\n                       resets)\n                       • Added credentials to existing\n                       OAuth applications\nPrivilege Escalation   • Launched cloud compute          T1134.001 – Access Token\n                       instances with high-value IAM     Manipulation\n                       roles                             T1098.003 – Account\n                       • Kerberoasting to harvest        Manipulation: Additional\n                       service tickets                   Cloud Roles\n                       • SQL injection to dump           T1552.005 – Unsecured\n                       database credentials              Credentials: Cloud Instance\n                       • DCSync to steal domain          Metadata API\n                       krbtgt key                        T1606.002 – Forge Web\n                       • Created accounts with           Credentials: SAML Tokens"
+ },
+ {
+  "id": "p18",
+  "text": "is_admin=true flag              T1606 – Forge Web\n                                 • Abused resource-based         Credentials\n                                 constrained delegation          T1190 – Exploit Public-Facing\n                                 • Queried cloud metadata        Application\n                                 service via XXE                 T11558.003 – Steal or Forge\n                                 • Forged administrator token    Kerberos Tickets:\n                                 using unrotated                 Kerberoasting\n                                 authentication keys\nInternal Recon                   • Ran iterative PowerShell      T1518.001 – Software\n                                 enumeration scripts against     Discovery: Security Software\n                                 Domain Controllers              Discovery\n                                 • Enumerated over 110,000       T1555 – Credentials from\n                                 Active Directory objects        Password Stores\n                                 • Read LAPS passwords           T1087.002 – Account\n                                 • Inventoried endpoint sensor   Discovery: Domain Account\n                                 coverage to identify Windows    T1552.006 – Group Policy\n                                 machines without                Preferences\n                                 CrowdStrike Falcon              T1059.001 – Command and\n                                                                 Scripting Interpreter:\n                                                                 PowerShell\nLateral Movement                 • Attempted lateral movement    T1550.003 – Use Alternate\n                                 to domain controllers using     Authentication Material: Pass\n                                 Pass-the-Ticket, WinRM,         the Ticket\n                                 Kerberos relay, Pass-the-Hash   T1550.002 – Use Alternate\n                                 (blocked by endpoint            Authentication Material: Pass\n                                 protection)                     the Hash\n                                                                 T1021.006 – Remote Services:\n                                                                 Windows Remote\n                                                                 Management (WinRM)\n                                                                 T1557.001 – Adversary-in-the-\n                                                                 Middle: LLMNR/NBT-NS\n                                                                 Poisoning and SMB Relay\nCollection / Exfiltration Prep   • Interrogated backend SQL      T1114.002 – Email Collection:\n                                 databases                       Remote Email Collection\n                                 • Mass blob reads               T1555.006 – Cloud Secrets\n                                 • Deployed custom boot          Management Stores\n                                 scripts via EC2 instances to    T1530 – Data from Cloud\n                                 harvest data                    Storage\n                                 • Sent command output to        T1005 – Data from Local\n                                 rotating webhook.site           System\n                                 endpoints                       T1074.001 – Data Staged:\n                                 • Read mailboxes on             Local Data Staging"
+ },
+ {
+  "id": "p19",
+  "text": "compromised mail server          T1074.002 – Data Staged:\n                                  • Created new 100GB volumes      Remote Data Staging\n                                  for exfiltration preparation     T1059 – Command and\n                                                                   Scripting Interpreter"
+ },
+ {
+  "id": "p20",
+  "text": "Command and Control              • Used residential proxy         T1090 – Proxy\n                                  services                         T1090.003 – Proxy: Multi-hop\n                                  • Routed traffic through Tor,    Proxy\n                                  SOCKS proxies, compromised       T1572 – Protocol Tunneling\n                                  relays                           T1071.001 – Application Layer\n                                  • Tunneled traffic via Chisel    Protocol: Web Protocols\n                                  and SoftEther\n                                  • BLOODALCHEMY\n                                  communicated with C2\n                                  domains"
+ },
+ {
+  "id": "p21",
+  "text": "Indicators\nThe FBI recommends organizations investigate or vet IOCs prior to taking action, such as blocking. The FBI\nrecognizes that infrastructure used for malicious activity may be hosted on cloud or virtualized platforms\nwhere IP addresses can be dynamically or temporarily assigned. As a result, an address associated with\nmalicious activity at one point in time may later be reassigned to benign services. Accordingly, these\nindicators should be interpreted as historically observed infrastructure within the activity window and\nshould be corroborated with current network telemetry or additional intelligence sources when used for\ndefensive or investigative purposes."
+ },
+ {
+  "id": "p22",
+  "text": "IP Addresses\n Indicator                        Context                          Source\n 38.244.50[.]120                  ARTEX host and open directory    CrowdStrike⁶, Censys⁴\n                                  (South Korea financial\n                                  campaign)\n 144.172.64[.]60                  ConnectWise campaign; sign-      Microsoft²\n 144.172.64[.]99                  ins and Graph API activity in\n 144.172.64[.]128                 customer environments\n 187.15.88[.]186                  Graph API access via             Microsoft²\n 187.15.90[.]217                  compromised apps (transient\n 187.15.89[.]186                  VPN IPs relevant October 15–\n                                  16, 2026)"
+ },
+ {
+  "id": "p23",
+  "text": "101.53.80[.]20           Proxy IP addresses (South       CrowdStrike⁶\n205.214.59[.]31          Korea financial campaign)\n124.155.252[.]63\n154.201.79[.]246\n23.248.249[.]90\n23.158.220[.]98\n103.248.148[.]84\n203.160.133[.]172\n209.209.85[.]38\n199.19.95[.]66           WISP C2 nodes (Storm-3358       Microsoft10\n199.19.95[.]67           campaign; active as of\n199.19.95[.]68           November 6, 2026)\n91.92.240[.]238          ARTEX servers (Storm-3358       Microsoft10\n85.11.168[.]45           campaign; active as of\n178.16.54[.]129          November 6, 2026)\n31.77.229[.]35\n85.11.167[.]52           C2 server (Storm-3358           Microsoft10\n                         campaign; active as of\n                         November 6, 2026)"
+ },
+ {
+  "id": "p24",
+  "text": "Domains\nIndicator                Context                         Source\nxcai[.]pro               LLM API reseller (South Korea   CrowdStrike⁶\n                         financial campaign)"
+ },
+ {
+  "id": "p25",
+  "text": "Network and Behavioral Indicators\nIndicator Type           Description                     Source\nOutbound API calls       api.anthropic.com,              Zscaler⁷\n                         api.deepseek.com,\n                         open.bigmodel.cn, api.x.ai\n                         (investigate unexpected calls\n                         alongside other suspicious\n                         activity)\nHTTP request patterns    High-frequency automated        Zscaler⁷\n                         requests with sequential\n                         enumeration against\n                         login/search endpoints\nData transfers           Outbound transfers of           Zscaler⁷\n                         structured data (names,\n                         phone numbers, financial\n                         information) over HTTPS to"
+ },
+ {
+  "id": "p26",
+  "text": "unauthorized external\n                                   destinations\n Web shells                        *.aspx or *.jsp files in          Zscaler⁷\n                                   unexpected web application\n                                   paths"
+ },
+ {
+  "id": "p27",
+  "text": "Information Requested\nThe FBI encourages recipients of this document to report information concerning suspicious or criminal\nactivity to their local FBI field office at www.fbi.gov/contact-us/field-offices or the FBI Internet Crime\nComplaint Center (IC3) at www.ic3.gov."
+ },
+ {
+  "id": "p28",
+  "text": "If reporting an incident involving ARTEX or similar agentic SI frameworks, please provide the following\ninformation:"
+ },
+ {
+  "id": "p29",
+  "text": "1. ARTEX Infrastructure Artifacts: Source code or screenshots of suspected ARTEX console interfaces\nand ARTEX configuration files"
+ },
+ {
+  "id": "p30",
+  "text": "2. Authentication and Access Logs: Service principal sign-in logs showing unusual source networks,\nASNs, hosting providers, or geographies; user agent strings from suspicious authentication attempts; IP\nlogin information and associated timestamps; evidence of authentication from previously unseen\ninfrastructure"
+ },
+ {
+  "id": "p31",
+  "text": "3. Application and API Activity: Microsoft Graph activity; Microsoft Entra audit records; Microsoft 365\naudit records showing reconnaissance; sequential lookups or unusually high numbers of records\naccessed per session on partner/employee portals; rate limit violations or volumetric anomalies in API\ncalls"
+ },
+ {
+  "id": "p32",
+  "text": "4. LLM and SI Infrastructure Indicators: Outbound connections to LLM API endpoints; evidence of self-\nhosted LLM gateway or reseller software (CLIProxyAPI, New API); unfamiliar LLM proxies or resellers in\negress logs; token consumption patterns or API billing anomalies"
+ },
+ {
+  "id": "p33",
+  "text": "5. Cloud and Container Activity: AWS IAM activity logs; Azure ARM deployment validation dry-runs across\nmultiple resource types; test blob write/delete operations in cloud storage with sub-second timing;\nevidence of compromised Kudu/SCM credentials or unusual Kudu API activity; container orchestration\nlogs; cloud metadata service queries; unexpected IAM role assumptions, PassRole operations, or instance\nprofile modifications"
+ },
+ {
+  "id": "p34",
+  "text": "6. Exploitation and Persistence Artifacts: Web shells; evidence of BLOODALCHEMY components; open-\nsource RAT indicators (WISP, vshell, AdaptixC2); newly created accounts with naming patterns;"
+ },
+ {
+  "id": "p35",
+  "text": "application credential modifications to OAuth applications; SSH key additions, Elastic IP allocations,\nunexpected EC2/Azure VM launches"
+ },
+ {
+  "id": "p36",
+  "text": "7. Attack Characteristics: Compressed bursts of activity; high volumes of failed attempts with iterative,\nincremental changes; evidence of multiple sub-agents overwriting each other or generating duplicate\nrequests; mass notification/email broadcasts from compromised applications"
+ },
+ {
+  "id": "p37",
+  "text": "8. Loss and Impact Information: Total number of compromised accounts or affected users; types and\nvolumes of data accessed or exfiltrated; time from initial suspicious activity to detection; time from\ndetection to containment; total attempted loss amounts"
+ },
+ {
+  "id": "p38",
+  "text": "Recommendations\nThe FBI recommends organizations take the steps below to improve their security posture in response to\nARTEX and similar agentic SI frameworks."
+ },
+ {
+  "id": "p39",
+  "text": "Immediate Actions"
+ },
+ {
+  "id": "p40",
+  "text": "Reduce External Attack Surface:"
+ },
+ {
+  "id": "p41",
+  "text": "• Inventory all internet-facing applications, including peripheral systems: partner and supplier portals,\nmobile backends, employee applications, sales-support systems, legacy services, third-party integrations,\nand applications created across different business units.1,11"
+ },
+ {
+  "id": "p42",
+  "text": "• Restrict cloud administration, network device management, application publishing interfaces\n(Kudu/SCM endpoints), hypervisors, backup platforms, and other sensitive services to trusted networks,\nprivate connectivity, or dedicated administrative paths.⁵"
+ },
+ {
+  "id": "p43",
+  "text": "• Disable basic publishing authentication where not required; restrict access to deployment and\npublishing credentials; restrict SCM access to approved management networks or deployment\ninfrastructure.⁵"
+ },
+ {
+  "id": "p44",
+  "text": "• Consider deployment models such as run-from-package that reduce direct modification of deployed\napplication files.⁵"
+ },
+ {
+  "id": "p45",
+  "text": "• Establish governance around public IP allocation; require architecture review before workloads or\nmanagement interfaces are exposed directly to the internet.5"
+ },
+ {
+  "id": "p46",
+  "text": "• Move enterprise applications behind Zero Trust access solutions to eliminate external exposure where\nfeasible.7"
+ },
+ {
+  "id": "p47",
+  "text": "Harden Identity and Access:"
+ },
+ {
+  "id": "p48",
+  "text": "• Apply least privilege to multi-tenant application permissions and consent grants.2"
+ },
+ {
+  "id": "p49",
+  "text": "• Monitor credential additions, privilege assignments, and anomalous app-only activity, especially to\napplications with high privileged permissions and scopes.2"
+ },
+ {
+  "id": "p50",
+  "text": "• Review every Microsoft 365 tenant where affected ConnectWise applications are currently or were\npreviously installed or authorized, even if integration no longer in use; search by application ID rather than\ndisplay name.2"
+ },
+ {
+  "id": "p51",
+  "text": "• Review successful and failed service-principal sign-ins separately; investigate unfamiliar sources and\nactivity outside expected vendor infrastructure (do not limit review to published IPs).2"
+ },
+ {
+  "id": "p52",
+  "text": "• Review Microsoft Entra audit records for application/service principal credential additions; new\napplications/service principals/owners; app-role assignments and consent grants; privileged role\nassignments; changes to users/groups/authentication methods/Conditional Access (CA). If suspicious\nactivity is confirmed, revoke unnecessary permissions and rotate credentials.2"
+ },
+ {
+  "id": "p53",
+  "text": "• Require certificate manager or CA approval for higher-risk enrollment scenarios; enable Extended\nProtection for Authentication on CA web interfaces where supported; monitor unusual certificate\nenrollment involving privileged users or unexpected requesting systems.5"
+ },
+ {
+  "id": "p54",
+  "text": "Strengthen Application Protections:"
+ },
+ {
+  "id": "p55",
+  "text": "• Put guardrails around high-impact business APIs: rate limits, recipient limits, transaction thresholds,\nabuse controls appropriate to function; alert when application operates materially outside normal\nvolume.5"
+ },
+ {
+  "id": "p56",
+  "text": "• On partner and employee portals, alert on sequential lookups and unusually high numbers of records\naccessed per session; apply rate limits to affected endpoints; enforce server-side authorization for access\nto customer records and limit responses to fields required for the operation.7"
+ },
+ {
+  "id": "p57",
+  "text": "• Avoid returning detailed stack traces, compiler messages, SQL errors, internal paths, framework details\nto unauthenticated users; keep detailed troubleshooting information in internal logs. 5"
+ },
+ {
+  "id": "p58",
+  "text": "• Review application configurations, environment variables, infrastructure-as-code, deployment scripts,\nCI/CD pipelines, databases for embedded secrets; implement continuous scanning of repositories,\ncontainer images, build artifacts, pipelines for exposed secrets; rotate exposed credentials promptly.5"
+ },
+ {
+  "id": "p59",
+  "text": "Preserve Evidence and Respond:"
+ },
+ {
+  "id": "p60",
+  "text": "• Preserve available Microsoft Entra sign-in and audit records, Microsoft Purview Audit records, SIEM data,\npreviously configured Microsoft Graph telemetry; do not delay urgent containment while waiting for\nexports.2"
+ },
+ {
+  "id": "p61",
+  "text": "• Review activity starting from at least October 1, 2026, for ConnectWise-related activity; extend service-\nprincipal sign-in review and investigate earlier related activity including failed authentications and volume\nanomalies.2"
+ },
+ {
+  "id": "p62",
+  "text": "• If suspicious activity is confirmed, have appropriately authorized responder remove confirmed\nunauthorized credentials, grants, owners, assignments, identities after preserving evidence. 2"
+ },
+ {
+  "id": "p63",
+  "text": "• Keep affected ConnectWise application connections disabled until ConnectWise provides formal\nrestoration instructions; do not delete enterprise applications as first response (preserve configuration\nand evidence before irreversible changes).2"
+ },
+ {
+  "id": "p64",
+  "text": "Notes\n_______________________\n1. Akamai, \"What ARTEX Reveals About Overlooked Attack Surfaces,\" October 23, 2026."
+ },
+ {
+  "id": "p65",
+  "text": "2. Microsoft Security Research and Microsoft Threat Intelligence, \"AI-driven, large-scale nation-state\ncampaign using ARTEX enables supply chain compromise,\" October 21, 2026."
+ },
+ {
+  "id": "p66",
+  "text": "3. Google Threat Intelligence Group, \"ARTEX and Friends: Enter Agentic Offensive Frameworks,\" October\n30, 2026."
+ },
+ {
+  "id": "p67",
+  "text": "4. Censys, \"ARTEX: Agentic Asbestos,\" November 5, 2026."
+ },
+ {
+  "id": "p68",
+  "text": "5. Google Threat Intelligence Group and Mandiant, \"ARTEX and Friends: Enter Agentic Offensive\nFrameworks – Defensive Strategies from Mandiant Consulting,\" October 30, 2026."
+ },
+ {
+  "id": "p69",
+  "text": "6. CrowdStrike, \"Unknown Threat Actor Uses AI-Driven ARTEX to Target South Korean Finance,\" October 7,\n2026."
+ },
+ {
+  "id": "p70",
+  "text": "7. Zscaler ThreatLabz, \"Threat Actor Abuses Agentic AI Pentesting Framework to Target South Korean\nFinancial Institutions,\" October 14, 2026."
+ },
+ {
+  "id": "p71",
+  "text": "8. CERT-EU, \"From Penetration Testing to Cyber Threat: Beware of ARTEX,\" November 5, 2026."
+ },
+ {
+  "id": "p72",
+  "text": "9. Check Point Research, \"Hacking on Autopilot: Inside ARTEX Cybercrime Campaigns,\" November 5,\n2026."
+ },
+ {
+  "id": "p73",
+  "text": "10. Microsoft Threat Intelligence, \"ARTEX abuse expands as cybercriminals target financial sector,\"\nNovember 2026."
+ },
+ {
+  "id": "p74",
+  "text": "11. Akamai, \"What ARTEX Reveals About Overlooked Attack Surfaces – API Security Implications,\" October\n23, 2026."
+ },
+ {
+  "id": "p75",
+  "text": "Reporting Notice\n    If you identify suspicious activity within your enterprise or have information related to the contents of this\n    document, please contact your local FBI Cyber Squad immediately at www.fbi.gov/contact-us/field-\n    offices. The FBI also encourages you to report suspicious or criminal activity to the FBI Internet Crime\n    Complaint Center at www.ic3.gov. When available, each report should include the date, time, location,\n    type of activity, number of people, and type of equipment used for the activity, the name of the submitting\n    company or organization, and a designated point of contact. Press inquiries should be directed to the FBI’s\n    National Press Office at npo@fbi.gov or (202) 324-3691."
+ },
+ {
+  "id": "p76",
+  "text": "Individual indicators included in this document should always be evaluated in light of your complete\n    information security situation. Some indicators, particularly those of a nondeterministic or ephemeral\n    nature (such as filenames or IP addresses), may not be indicative of a compromise."
+ },
+ {
+  "id": "p77",
+  "text": "Your organization has no obligation to provide information in response to this product. If, after reviewing\n    the information provided, your organization decides to provide information to the FBI, it must do so\n    consistent with applicable state and federal law."
+ },
+ {
+  "id": "p78",
+  "text": "Administrative Note\n    The information in this document is being provided by the FBI, with no guarantees or warranties, for\n    potential use at the sole discretion of recipients to protect against cyber threats. This data is provided to\n    help cybersecurity professionals and system administrators guard against the persistent malicious actions\n    of cyber actors. The FBI does not endorse any commercial entity, product, company, or service, including\n    any entities, products, or services linked within this document. Any reference to specific commercial\n    entities, products, processes, or services by service mark, trademark, manufacturer, or otherwise, does\n    not constitute or imply endorsement, recommendation, or favoring by the FBI."
+ },
+ {
+  "id": "p79",
+  "text": "This FLASH is marked TLP:CLEAR. The information in this product may be shared without restriction.\n    Information is subject to standard copyright rules."
+ },
+ {
+  "id": "p80",
+  "text": "Your feedback regarding this product is critical.\nPlease take a moment to complete the survey at the link below. Input can be submitted\nanonymously and should be specific to your experience with our written products."
+ },
+ {
+  "id": "p81",
+  "text": "https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p82",
+  "text": "This survey is for feedback on contact and value only. Reporting of technical information\nregarding FLASH reports must be submitted through your local FBI field office."
+ }
+]

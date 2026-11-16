@@ -1,0 +1,178 @@
+[
+ {
+  "id": "p1",
+  "text": "# AVrecon Malware-Infected Routers Exploited as Residential Proxies by SocksEscort"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-03-12\n> - URL: https://www.ic3.gov/CSA/2026/260312.pdf\n> - PDF SHA-256: fa05f28448165b1a297fcd35f49a8d394959327170cb8a478c5df0e4c7156a4e (`source.pdf`, 8 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (16 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "12 March 2026\n                                                                                                  FLASH Number\n                                                                                                  20260312-001"
+ },
+ {
+  "id": "p4",
+  "text": "AVrecon Malware-Infected Routers Exploited as\nResidential Proxies by SocksEscort"
+ },
+ {
+  "id": "p5",
+  "text": "Summary\nThe Federal Bureau of Investigation (FBI) is releasing this FLASH to disseminate indicators of compromise\n(IOCs) and identified tactics, techniques, and procedures (TTPs) associated with AVrecon malware. This\nmalware has been observed targeting routers and other Internet of Things (IOT) devices, located in\napproximately 163 countries around the world, including the United States. Threat actors have been found\nto compromise routers, install AVrecon malware, and then sell access to the compromised devices as\nresidential proxies using the SocksEscort residential proxy service. SocksEscort is believed to have\ncompromised and sold access to approximately 369,000 devices since 2020."
+ },
+ {
+  "id": "p6",
+  "text": "The release of this FLASH follows the coordinated takedown of the SocksEscort service through a joint law\nenforcement operation. This operation was conducted by the FBI and partners at EUROPOL, France’s\nOffice of Anti-Cybercriminalité (OFAC), the Dutch National Police, Austria’s Bundeskriminalamt (BK), the\nDoD Office of Inspector General’s Defense Criminal Investigative Service (DCIS), and the U.S. Internal\nRevenue Service (IRS)."
+ },
+ {
+  "id": "p7",
+  "text": "Technical Details\nOverview"
+ },
+ {
+  "id": "p8",
+  "text": "Routers that do not receive regular security updates can be exposed to known, but un-patched\nvulnerabilities. Threat actors are aware of these vulnerabilities and exploit them to install malware, gain\ncontrol of the device, and sell access to them as residential proxies. Residential proxy networks are used\nby many types of threat actors to hide their identities online and make their activity appear as if it originates\nfrom the victim’s network. By using residential proxy networks, threat actors are more likely to bypass\ncommon website filters and block lists. This allows them to more easily conduct various types of online\nfraud or other malicious activity such as password spraying."
+ },
+ {
+  "id": "p9",
+  "text": "SocksEscort threat actors have exploited known vulnerabilities in various routers and IOT devices to gain\naccess to the devices and install AVrecon malware. This malware allows SocksEscort threat actors to\nmaintain remote access to the routers and use them as part of a botnet. SocksEscort monetizes their\nbotnet through various illicit methods, including selling access under the SocksEscort residential proxy\nbrand."
+ },
+ {
+  "id": "p10",
+  "text": "In addition to turning the device into a SocksEscort residential proxy, AVrecon can also update its stored\nconfiguration, establish a remote shell to an attacker-controlled server, and act as a loader by\ndownloading and executing arbitrary payloads."
+ },
+ {
+  "id": "p11",
+  "text": "SocksEscort uses AVrecon malware to target approximately 1,200 device models manufactured by Cisco,\nD-Link, Hikvision, MicroTik, Netgear, TP-Link, and Zyxel. The vast majority of observed devices infected\nwith AVrecon malware are small-office/home-office (SOHO) routers infected using critical vulnerabilities\nsuch as Remote Code Execution (RCE) and command injection. AVrecon malware is written in the C\nlanguage and primarily targets MIPS and ARM devices. Devices classified as End-of-Life (EOL) by their\nmanufacturers generally do not receive security patches to address known vulnerabilities. For non-EOL\ndevices, patches may have been released for some of the vulnerabilities used by AVrecon. However, these\npatches are often not applied automatically, and even if they are eventually applied, that may not\nremediate a device which has already been infected with AVrecon."
+ },
+ {
+  "id": "p12",
+  "text": "List of Top 20 Most Represented Device Models\n    • D-Link\n            o DIR-818LW Wireless Router\n            o DIR-850L Wireless Router\n            o DIR-860L Wireless Router\n    • Hikvision\n            o DS-2CD2020F-I IP Camera\n            o DS-2CD2420F-IW IP Camera\n    • Netgear\n            o DGN2200v4 Wireless Router\n            o AC1900 R7000\n    • TP-Link\n            o Archer C20 Wireless Router\n            o TL-WR840N Wireless Router\n            o TL-WR849N Wireless Router\n            o WR841N Wireless Router\n    • Zyxel\n            o EMG6726-B10A Router\n            o PMG5617GA Home Gateway Unit (HGU)\n            o VMG1312-B10D Wireless Router\n            o VMG1312-T20B Wireless Router\n            o VMG3925-B10A Wireless Router\n            o VMG3925-B10C Wireless Router\n            o VMG4825-B10A Wireless Router\n            o VMG4927-B50A Wireless Router\n            o VMG8825-T50K Wireless Route"
+ },
+ {
+  "id": "p13",
+  "text": "Distribution"
+ },
+ {
+  "id": "p14",
+  "text": "AVrecon malware is distributed by scanning for, identifying, and targeting Internet-connected devices with\nexposed vulnerable services. The SocksEscort threat actors abuse RCE, command injection\nvulnerabilities, flaws in exposed Simple Object Access Protocol (SOAP) interfaces, and various other\nexploitation techniques to compromise these devices. AVrecon’s Command and Control (C2) framework\nis also modular in nature, allowing for the easy addition of new exploit modules when needed. This\nmodular framework allows AVrecon to easily adapt new exploit techniques and vulnerabilities, to further\nexpand the range of devices which can be infected."
+ },
+ {
+  "id": "p15",
+  "text": "Exploitation"
+ },
+ {
+  "id": "p16",
+  "text": "Once a device has been compromised, SocksEscort threat actors initiate a series of steps which end in the\nexecution of AVrecon malware, which enables remote access to the device. For example, on certain\nmodels, a loader is executed first to test the environment and check to see if AVrecon is already running,\nbefore downloading and deploying AVrecon."
+ },
+ {
+  "id": "p17",
+  "text": "Persistence"
+ },
+ {
+  "id": "p18",
+  "text": "AVrecon persistence varies depending on the infected device type. In some cases, threat actors utilize a\ndevice’s built-in update features to flash the device with a custom firmware image. This custom firmware\ncontains a copy of AVrecon and is hardcoded to execute AVrecon on device startup. Threat actors also\nmodify the firmware to silently disable the device’s update and flashing features, making AVrecon\nextremely difficult to remove. These types of devices are essentially permanently infected with AVrecon."
+ },
+ {
+  "id": "p19",
+  "text": "In other cases, AVrecon is deployed without a persistence mechanism. If an infected device is power\ncycled, it resets to a normal state and is no longer infected by AVrecon. However, in at least one case,\nAVrecon C2 servers reacted to the loss of an infected device by remotely re-infecting it with the same\nknown vulnerabilities used to initially infect the device."
+ },
+ {
+  "id": "p20",
+  "text": "Communication"
+ },
+ {
+  "id": "p21",
+  "text": "Infected routers have been observed communicating with SocksEscort C2 servers over port 8080 and\n8000. AVrecon malware prompts the infected device to communicate with its designated C2 server over\nport 8000 every 60 seconds using a custom loop in which AVrecon and the C2 server exchange the words\n“PING” and “PONG” until the C2 has a command for AVrecon to execute. For example, the C2 may\ninterrupt the “PING/PONG” loop to direct the router to open a tunnel to a SocksEscort relay server.\nSocksEscort relay servers enable SocksEscort customers to connect and tunnel their traffic through\nresidential routers infected with AVrecon."
+ },
+ {
+  "id": "p22",
+  "text": "The FBI and its partners have observed various indicators which suggest that SocksEscort has been used\nto conduct ad fraud, attempt website vulnerability exploitation, password spraying, digital marketplace\nfraud, banking fraud, romance fraud, and various other types of malicious activity."
+ },
+ {
+  "id": "p23",
+  "text": "Indicators\nAVrecon malware primarily infects routers and IOT devices, which often lack Anti-Virus (AV), Endpoint\nDetection and Response (EDR), or other software which might allow a network owner to detect the\ninfection."
+ },
+ {
+  "id": "p24",
+  "text": "The IP addresses and domain indicators included in this report have been associated with threat actor\ncommand-and-control (C2) infrastructure observed as of March 2026. The available telemetry does not\ncontain granular timestamps for each individual indicator."
+ },
+ {
+  "id": "p25",
+  "text": "The FBI recognizes that infrastructure used for malicious activity may be hosted on cloud or virtualized\nplatforms where IP addresses can be dynamically or temporarily assigned. As a result, an address\nassociated with malicious activity at one point in time may later be reassigned to benign services.\nAccordingly, these indicators should be interpreted as historically observed infrastructure within the\nactivity window and should be corroborated with current network telemetry or additional intelligence\nsources when used for defensive or investigative purposes."
+ },
+ {
+  "id": "p26",
+  "text": "AVrecon Loader MD5 Hash\n 007fe05132e429ff57393163354f4c90                   5f6f52fd4ece5918ee7979036a49bca3\n 232fdd85e07f74ea232cadafdb095d31                   6e9540f68507580a3f495e9ff58dbd4e\n 3f83790a150a6bf71b908289fd230014                   7fe57eca60841291cdd8ef1bb5c27de9\n 4651d6a90d24cf57c83a76ab160abf85                   9f2df912212f67adcb64dbae8bfa2ca9\n 53f02fdf9c375c1837a31edf68694380"
+ },
+ {
+  "id": "p27",
+  "text": "AVrecon Malware MD5 Hash\n 444138b1d805808a06c4b908c7b73d96                   0a4e197044ad59116f0a1c2776125065\n 48374bfb610280c48086817cfb2bb310                   006cc428088ea3766c094b421bf8e77f\n 48ef5c2a62d1ae95ea37d165e8a1be26                   fb9d610a2b535dde194c05c099f0b307\n 4943e8c2a29ad616ec12cd7a507c612c                   5aed40bccde5a7646c6fea17f7dd2083\n 4a884070ea340d89756be6575676ce85                   8fc84a03b66ceccd394c6a754bb513a6\n 4d63235fdd3e0ace207d8fdbe19d63e0                   0c5e43e51d3c2a00f4ac1b517891872d\n 53437d28fdf92c09821f56140c67aaca                   a3e31f70b7a6abf3de15ca6646d16bfe\n 6501a2d2ed60b85b1080ac9edaf39b70                   efb8b73d59a805e1fd9ebf0d3540b0e8\n 06d491b70f369b2672fce5a7b59a5c93                   bf0183b2d18341c47576ba8e0d36fdff\n 126b1c224e8635d9571f9d769d7b55e2                   22c5849855878f331d7bbf07e7ec7e41\n 1c8c17ef978bd4f03db672c0b2d51d00                   f74c8bd1701746cce8b4bad819cdd148\n 1f970f5eb9cbef8dba11e2aed72373ba                   f774fcbf889a8a629004f31e8b962b63\n 2a646682ee7f0f853605c78bb9126ed5                   ffaa0890eb9a38307477157c02f63583\n 327c1ca93321705027e0bf47658b5f53                   f81b9fceea2056ba2c3f261b56f577b1\n 32f1f238da09f1ebc1385317d50e94b4                   8dcaf0e2a0baf54e65f46689b2a845ef"
+ },
+ {
+  "id": "p28",
+  "text": "3bfc273e5592825443ded9c28f50cd5d      3ed1a6d57f00c1643cc85e049c82d1b4\n6501a2d2ed60b85b1080ac9edaf39b70      d5d63db439bb1dba080ab27555b03a2a\n667ae41f4a6201071b8cc3f88e3e02c7      de86b12800919ce8b213b51354d28ab8\n6a389a89a6da7433210d9a52fc72589c      ef7f3f7cb4f3f1a90a2028d44c4fe702\n6a6619b4b9a53233ca0a56606c484f9a      f0d1852065c498c3bdaec3de8e6cd626\n6ec7063f03f95499b6c1821f90bda7e6      f143b44d3b8d835c09bf2c346d90ec22\n70c2317f40de5b28f42d640488910140      f3cf4a369e5fb451db250c31776ba84e\n74e5514cdd3ef6f703483700f04b5812      c32ac3f6cba0772de7737da60f9170c0\n7d4c60c77a7d74cc3d9af4dabbecdbb8      c53397dc47ddc38a8c6daa3a02116518\n8a978017496adb02eb368f3b28bc4ccd      bb5e9faa666e6d96eb95e358524213b6\n8ad3f40fd8fcf2c7ee04d1219017cfe3      bd24f43084b33f13a835f661bf48b5e2\n8fc84a03b66ceccd394c6a754bb513a6      bd4a12d4de4e42c4d9246aa92ddb86b8\n920534d235204ced7ad2c76c1af7b3f8      9dfba3b92850a74135925e524e7b4748\n963354b60552af16408cf4d82a827832      b1a32a442cdb34901f1f7ffbe47749f0\n9752ac893640a027bea5a6df48ceb396      b5ad7f7e10f5d0401a2ad6b737724ff6"
+ },
+ {
+  "id": "p29",
+  "text": "C2 IPs\n188.138.125.163          176.120.22.67               185.163.204.198\n62.138.0.10              85.25.100.30                62.138.14.209\n91.245.255.112           62.138.0.211                175.110.114.65\n188.116.22.153           213.202.230.95              38.180.91.47\n176.120.22.67            77.246.106.198              45.137.213.88\n91.215.85.178            37.77.150.19                185.162.128.133\n37.77.150.77             5.149.254.109               5.149.250.54\n79.141.160.92            5.149.250.171               212.118.38.30"
+ },
+ {
+  "id": "p30",
+  "text": "C2 Domains\nadvstat.cc               meterstrack.cc              startsun.cc\nbackdump.cc              netjunk.cc                  zeroback2.cc\ncritlan.cc               plxz.cc                     zeroback3.cc\nzeroback4.cc             atable.cc                   cleandone.cc\nevrc.space               lups.cc                     dzero.cc\nr0ck.online              regul.cc                    fpride.cc\nvdem.cc                  utcp.cc                     zerophone.cc\nzeroback.cc              zorc.cc"
+ },
+ {
+  "id": "p31",
+  "text": "C2 URI Path                             Description\nlumi/config.php                         lumi/test.php\nlumi/ping.php                           lumi/track.php"
+ },
+ {
+  "id": "p32",
+  "text": "lumi/pride.php"
+ },
+ {
+  "id": "p33",
+  "text": "AVrecon C2 HTTP Header                                 Description\nX-Proto-Cookies                                        X-Proto-Storage\nX-Proto-UAgent                                         X-Proto-Core\nX-Proto-Version                                        X-Proto-Jid\nX-Proto-System"
+ },
+ {
+  "id": "p34",
+  "text": "Filename                                               Description\nx                                                      AVrecon Loader Filename\ndnssmasq                                               AVrecon Malware Filename"
+ },
+ {
+  "id": "p35",
+  "text": "Recommendations\n  •   Keep all operating systems, software, and firmware up to date. Prioritize remediating known\n      exploited vulnerabilities in internet-facing systems.\n  •   Create and adhere to a patch schedule. Many SOHO routers and IOT devices may not\n      automatically apply security patches and critical updates. Applying these updates often requires\n      manual interaction with the device administration panel or manually re-flashing the device with\n      new firmware.\n      Review available device settings and enable any privacy or security-enhancing features, such as\n      verbose logging, basic firewall rules, or automatic updates.\n  •   Attempt to monitor, isolate, or otherwise restrict access to SOHO router and IOT devices which do\n      not support AV or EDR software.\n           o Many SOHO and IOT devices do not support commonly used AV and EDR software, which\n               means that extra precautions must be taken to ensure that these types of devices are\n               adequately monitored and isolated from other critical internal systems in the event of their\n               compromise.\n           o While not directly observed in the case of AVrecon, malware targeting routers and other\n               internet-facing edge devices can be used to move laterally into a network owner’s internal\n               network. This can lead to highly damaging activity, such as the exfiltration of sensitive data\n               or the deployment of ransomware.\n  •   If a device is considered EOL by its manufacturer and is no longer supported, consider replacing\n      the device with a model that is still receiving security updates.\n  •   Change all default device passwords and comply with National Institute of Standards and\n      Technology (NIST) standards."
+ },
+ {
+  "id": "p36",
+  "text": "•   Ensure that features such as remote administration are disabled or consider using Access Control\n    Lists (ACLs) or firewalls rules to restrict access to exposed ports and services.\n•   If possible, identify, detect, and investigate abnormal activity using a network monitoring tool\n    which logs and reports all network traffic, including potential lateral movement activity on a\n    network.\n•   Rebooting devices periodically can disrupt some infections. However, addressing known\n    vulnerabilities is critical to prevent re-infection.\n         o Factory resets and re-flashing with the latest firmware can also sometimes prevent\n            infection. However, some variants of AVrecon silently disable this functionality, and for EOL\n            devices, updating to the latest firmware will not address known vulnerabilities discovered\n            after the device’s EOL date."
+ },
+ {
+  "id": "p37",
+  "text": "Reporting Notice\n    The FBI encourages you to report suspicious or criminal activity to the FBI Internet Crime Complaint Center\n    at www.ic3.gov. When available, each report should include the date, time, location, type of activity,\n    number of people, and type of equipment used for the activity, the name of the submitting company or\n    organization, and a designated point of contact. Press inquiries should be directed to the FBI’s National\n    Press Office at npo@fbi.gov or (202) 324-3691."
+ },
+ {
+  "id": "p38",
+  "text": "Individual indicators included in this document should always be evaluated in light of your complete\n    information security situation. Some indicators, particularly those of a nondeterministic or ephemeral\n    nature (such as filenames or IP addresses), may not be indicative of a compromise."
+ },
+ {
+  "id": "p39",
+  "text": "Your organization has no obligation to provide information in response to this product. If, after reviewing\n    the information provided, your organization decides to provide information to the FBI, it must do so\n    consistent with applicable state and federal law."
+ },
+ {
+  "id": "p40",
+  "text": "Administrative Note\n    The information in this document is being provided by the FBI, with no guarantees or warranties, for\n    potential use at the sole discretion of recipients to protect against cyber threats. This data is provided to\n    help cybersecurity professionals and system administrators guard against the persistent malicious actions\n    of cyber actors. The FBI does not endorse any commercial entity, product, company, or service, including\n    any entities, products, or services linked within this document. Any reference to specific commercial\n    entities, products, processes, or services by service mark, trademark, manufacturer, or otherwise, does\n    not constitute or imply endorsement, recommendation, or favoring by the FBI."
+ },
+ {
+  "id": "p41",
+  "text": "This FLASH was coordinated with DHS/CISA and is marked TLP:CLEAR. Subject to standard copyright\n    rules, the information in this product may be shared without restriction."
+ },
+ {
+  "id": "p42",
+  "text": "Your feedback regarding this product is critical.\nPlease take a moment to complete the survey at the link below. Input can be submitted\nanonymously and should be specific to your experience with our written products."
+ },
+ {
+  "id": "p43",
+  "text": "https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p44",
+  "text": "This survey is for feedback on contact and value only. Reporting of technical information\nregarding FLASH reports must be submitted through your local FBI field office."
+ }
+]

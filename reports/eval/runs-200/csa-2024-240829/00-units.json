@@ -1,0 +1,1050 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: RansomHub Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-242A\n> - Date: 2024-08-29\n> - URL: https://www.ic3.gov/CSA/2024/240829.pdf\n> - PDF SHA-256: e4bb30bf789a5ab880e5bd03e756ce0d7c9bad4673f3cc0c3512bbad82eb5d34 (`source.pdf`, 24 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (94 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                Product ID: AA24-242A\n                                                                                                                    August 29, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: RansomHub Ransomware\n       Summary\n                                                                               Actions to take today to mitigate\n       Note: This joint Cybersecurity Advisory is part of an ongoing           cyber threats from ransomware:\n       #StopRansomware effort to publish advisories for network                •    Install updates for operating\n       defenders that detail various ransomware variants and                        systems, software, and firmware\n       ransomware threat actors. These #StopRansomware                              as soon as they are released.\n       advisories include recently and historically observed tactics,\n                                                                               •    Require phishing-resistant MFA\n       techniques, and procedures (TTPs) and indicators of\n                                                                                    (i.e., non-SMS text based) for as\n       compromise (IOCs) to help organizations protect against\n                                                                                    many services as possible.\n       ransomware. Visit stopransomware.gov to see all\n                                                                               •    Train users to recognize and\n       #StopRansomware advisories and to learn more about other\n                                                                                    report phishing attempts.\n       ransomware threats and no-cost resources."
+ },
+ {
+  "id": "p5",
+  "text": "The Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency (CISA), the\n       Multi-State Information Sharing and Analysis Center (MS-ISAC), and the Department of Health and Human\n       Services (HHS) (hereafter referred to as the authoring organizations) are releasing this joint advisory to\n       disseminate known RansomHub ransomware IOCs and TTPs. These have been identified through FBI\n       threat response activities and third-party reporting as recently as August 2024. RansomHub is a\n       ransomware-as-a-service variant—formerly known as Cyclops and Knight—that has established itself as an\n       efficient and successful service model (recently attracting high-profile affiliates from other prominent\n       variants such as LockBit and ALPHV)."
+ },
+ {
+  "id": "p6",
+  "text": "Since its inception in February 2024, RansomHub has encrypted and exfiltrated data from at least 210\n       victims representing the water and wastewater, information technology, government services and facilities,\n       healthcare and public health, emergency services, food and agriculture, financial services, commercial\n       facilities, critical manufacturing, transportation, and communications critical infrastructure sectors."
+ },
+ {
+  "id": "p7",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n       your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n       available, please include the following information regarding the incident: date, time, and location of the incident;\n       type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n       company or organization; and a designated point of contact. SLTT organizations should report incidents to MS-\n       ISAC (866-787-4722 or SOC@cisecurity.org).\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n       more information on the Traffic Light Protocol, see http://www.cisa.gov/tlp."
+ },
+ {
+  "id": "p8",
+  "text": "The affiliates leverage a double-extortion model by encrypting systems and exfiltrating data to extort\n        victims. It should be noted that data exfiltration methods are dependent on the affiliate conducting the\n        network compromise. The ransom note dropped during encryption does not generally include an initial\n        ransom demand or payment instructions. Instead, the note provides victims with a client ID and instructs\n        them to contact the ransomware group via a unique .onion URL (reachable through the Tor browser). The\n        ransom note typically gives victims between three and 90 days to pay the ransom (depending on the\n        affiliate) before the ransomware group publishes their data on the RansomHub Tor data leak site."
+ },
+ {
+  "id": "p9",
+  "text": "The authoring organizations encourage network defenders to implement the recommendations in the\n        Mitigations section of this cybersecurity advisory to reduce the likelihood and impact of ransomware\n        incidents."
+ },
+ {
+  "id": "p10",
+  "text": "For a downloadable copy of IOCs, see:"
+ },
+ {
+  "id": "p11",
+  "text": "•    AA24-242A-STIX XML (##KB)\n             •    AA24-242A STIX JSON (##KB)"
+ },
+ {
+  "id": "p12",
+  "text": "Table of Contents\n        Contents\n        Technical Details .............................................................................................................................................. 4\n           Initial Access ....................................................................................................................................................... 4\n           Discovery............................................................................................................................................................. 5\n           Defense Evasion................................................................................................................................................. 5\n           Privilege Escalation and Lateral Movement ..................................................................................................... 5\n           Data Exfiltration .................................................................................................................................................. 6\n           Encryption ........................................................................................................................................................... 6\n           Leveraged Tools ................................................................................................................................................. 8\n        Indicators of Compromise ............................................................................................................................. 10\n        MITRE ATT&CK Tactics and Techniques ....................................................................................................... 17\n        Incident Response......................................................................................................................................... 20\n        Mitigations ..................................................................................................................................................... 20\n           Network Defenders ..........................................................................................................................................20\n           Software Manufacturers ..................................................................................................................................22\n        Validate Security Controls ............................................................................................................................. 23\n        Resources...................................................................................................................................................... 23\n        References .................................................................................................................................................... 23\n        Reporting ....................................................................................................................................................... 23\n        Disclaimer ..................................................................................................................................................... 24"
+ },
+ {
+  "id": "p13",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 15. See the MITRE\n        ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE ATT&CK\n        tactics and techniques."
+ },
+ {
+  "id": "p14",
+  "text": "Initial Access\n        RansomHub affiliates typically compromise internet facing systems and user endpoints by using methods\n        such as phishing emails [T1566], exploitation of known vulnerabilities [T1190], and password spraying\n        [T1110.003]. Password spraying targets accounts compromised through data breaches. Proof-of-concept\n        exploits are obtained from sources such as ExploitDB and GitHub [T1588.005]. Exploits based on the\n        following CVEs have been observed:\n                 CVE-2023-3519 (CWE-94)\n                  o   Citrix ADC (NetScaler) Remote Code Execution. A vulnerability exists within Citrix ADC that\n                      allows an unauthenticated attacker to trigger a stack buffer overflow of the NSPPE (NetScaler\n                      Packet Processing Engine) process by making a specially crafted HTTP GET request. Successful\n                      exploitation results in remote code execution as root.\n                 CVE-2023-27997 (CWE-787 | CWE-122)\n                  o   A heap-based buffer overflow vulnerability in FortiOS version 7.2.4 and below, version 7.0.11\n                      and below, version 6.4.12 and below, version 6.0.16 and below and FortiProxy version 7.2.3\n                      and below, version 7.0.9 and below, version 2.0.12 and below, version 1.2 all versions, version\n                      1.1 all versions SSL-VPN may allow a remote attacker to execute arbitrary code or commands\n                      via specifically crafted requests.\n                 CVE-2023-46604 (CWE-502)\n                  o   The Java OpenWire protocol marshaller, such as in Apache ActiveMQ, is vulnerable to Remote\n                      Code Execution. This vulnerability may allow a remote attacker with network access to open\n                      either a Java-based OpenWire broker or client to run arbitrary shell commands by manipulating\n                      serialized class types in the OpenWire protocol to cause either the client or the broker\n                      (respectively) to instantiate any class on the classpath. Upgrading both brokers and clients to\n                      version 5.15.16, 5.16.7, 5.17.6, or 5.18.3 fixes this issue.\n                 CVE-2023-22515\n                  o   A vulnerability in publicly accessible Confluence Data Center and Server instances that allows\n                      the creation of unauthorized Confluence administrator accounts and access to Confluence\n                      instances. Atlassian Cloud sites are not affected by this vulnerability. If your Confluence site is\n                      accessed via an atlassian.net domain, it is hosted by Atlassian and is not vulnerable to this\n                      issue."
+ },
+ {
+  "id": "p15",
+  "text": "    CVE-2023-46747 (CWE-306 | CWE-288)\n                  o   Undisclosed requests may bypass configuration utility authentication, allowing an attacker with\n                      network access to the BIG-IP system through the management port and/or self IP addresses to\n                      execute arbitrary system commands. Note: Software versions which have reached End of\n                      Technical Support (EoTS) are not evaluated.\n                 CVE-2023-48788 (CWE-89)\n                  o   An improper neutralization of special elements used in an SQL command (SQL injection') in\n                      Fortinet FortiClientEMS version 7.2.0 through 7.2.2 and FortiClientEMS 7.0.1 through 7.0.10\n                      allows attackers to execute unauthorized code or commands via specially crafted packets.\n                 CVE-2017-0144\n                  o   The SMBv1 server in Microsoft Windows Vista SP2; Windows Server 2008 SP2 and R2 SP1;\n                      Windows 7 SP1; Windows 8.1; Windows Server 2012 Gold and R2; Windows RT 8.1; and\n                      Windows 10 Gold, 1511, and 1607; and Windows Server 2016 allows remote attackers to\n                      execute arbitrary code via crafted packets, also known as “Windows SMB Remote Code\n                      Execution Vulnerability” [T1210].\n                 CVE-2020-1472\n                  o   An elevation of privilege vulnerability exists when an attacker establishes a vulnerable Netlogon\n                      secure channel connection to a domain controller using the Netlogon Remote Protocol (MS-\n                      NRPC).\n                 CVE-2020-0787\n                  o   This vulnerability was also potentially exploited along with the Zerologon privilege escalation\n                      vulnerability."
+ },
+ {
+  "id": "p16",
+  "text": "Discovery\n        RansomHub affiliates conduct network scanning with tools such as AngryIPScanner, Nmap, and\n        PowerShell-based living off the land methods with PowerShell to conduct network scanning\n        [T1018][T1046][T1059.001]."
+ },
+ {
+  "id": "p17",
+  "text": "Defense Evasion\n        Cybersecurity researchers have observed affiliates renaming the ransomware executable with innocuous\n        file names, such as Windows.exe, left on the user’s desktop (C:\\Users\\%USERNAME%\\Desktop) or\n        downloads (C:\\Users\\%USERNAME%\\Downloads) [T1036]. The affiliates have also cleared Windows and\n        Linux system logs to inhibit any potential incident response [T1070]. Affiliates used Windows Management\n        Instrumentation [T1047] to disable antivirus products. In some instances, RansomHub-specific tools were\n        deployed to disable endpoint detection and response (EDR) tooling [T1562.001]."
+ },
+ {
+  "id": "p18",
+  "text": "Privilege Escalation and Lateral Movement\n        Following initial access, RansomHub affiliates created user accounts for persistence [T1136], reenabled\n        disabled accounts [T1098], and used Mimikatz [S0002] on Windows systems to gather credentials\n        [T1003] and escalate privileges to SYSTEM [T1068]. Affiliates then moved laterally inside the network\n        through methods including Remote Desktop Protocol (RDP) [T1021.001], PsExec [S0029], Anydesk"
+ },
+ {
+  "id": "p19",
+  "text": "[T1219], Connectwise, N-Able, Cobalt Strike [S0154], Metasploit, or other widely used command-and-\n        control (C2) methods."
+ },
+ {
+  "id": "p20",
+  "text": "Data Exfiltration\n        Data exfiltration methods depend heavily on the affiliate conducting the network compromise. The\n        ransomware binary does not normally include any mechanism for data exfiltration. Data exfiltration has\n        been observed through the usage of tools such as PuTTY [T1048.002], Amazon AWS S3 buckets/tools\n        [T1537], HTTP POST requests [T1048.003], WinSCP, Rclone, Cobalt Strike, Metasploit, and other methods."
+ },
+ {
+  "id": "p21",
+  "text": "Encryption\n        RansomHub ransomware has typically leveraged an Elliptic Curve Encryption algorithm called Curve 25519\n        to encrypt user accessible files on the system [T1486]. Curve 25519 uses a public/private key that is\n        unique to each victim organization. To successfully encrypt files that are currently in use, the ransomware\n        binary will typically attempt to stop the following processes:\n                 \"vmms.exe\"\n                 \"msaccess.exe\"\n                 \"mspub.exe\"\n                 \"svchost.exe\"\n                 \"vmcompute.exe\"\n                 \"notepad.exe\"\n                 \"ocautoupds.exe\"\n                 \"ocomm.exe\"\n                 \"ocssd.exe\"\n                 \"oracle.exe\"\n                 \"onenote.exe\"\n                 \"outlook.exe\"\n                 \"powerpnt.exe\"\n                 \"explorer.exe\"\n                 \"sql.exe\"\n                 \"steam.exe\"\n                 \"synctime.exe\"\n                 \"vmwp.exe\"\n                 \"thebat.exe\"\n                 \"thunderbird.exe\"\n                 \"visio.exe\"\n                 \"winword.exe\"\n                 \"wordpad.exe\""
+ },
+ {
+  "id": "p22",
+  "text": "    \"xfssvccon.exe\"\n                 \"TeamViewer.exe\"\n                 \"agntsvc.exe\"\n                 \"dbsnmp.exe\"\n                 \"dbeng50.exe\"\n                 \"encsvc.exe\"\n        The ransomware binary will attempt to encrypt any files that the user has access to, including user files and\n        networked shares.\n        RansomHub implements intermittent encryption, encrypting files in 0x100000 byte chunks and skipping\n        every 0x200000 bytes of data in between encrypted chunks. Files smaller than 0x100000 bytes in size are\n        completely encrypted. Files are appended with 58 (0x3A) bytes of data at the end. This data contains a\n        value which is likely part of an encryption/decryption key. The structure of the appended 0x3A bytes is\n        listed below with images from three different encrypted files."
+ },
+ {
+  "id": "p23",
+  "text": "Figure 1: The first eight bytes are the size of the encrypted file.\n                  The next eight bytes are the size of encrypted blocks. If the entire file is encrypted, this section is all\n                  zeros. In this example, each encrypted section is 0x100000 bytes long, with 0x100000 bytes\n                  between each encrypted block. This number was observed changing based on the size of the\n                  encrypted file."
+ },
+ {
+  "id": "p24",
+  "text": "Figure 2: The size of encrypted blocks."
+ },
+ {
+  "id": "p25",
+  "text": "The next two bytes were always seen to be 0x0001."
+ },
+ {
+  "id": "p26",
+  "text": "Figure 3: The next two bytes are always 0x0001.\n                  The next 32 bytes are the public encryption key for the file."
+ },
+ {
+  "id": "p27",
+  "text": "Figure 4: Public encryption key for the file.\n                  The next four bytes are a checksum value."
+ },
+ {
+  "id": "p28",
+  "text": "Figure 5: Checksum value.\n                  The last four bytes are always seen to be the sequence 0x00ABCDEF."
+ },
+ {
+  "id": "p29",
+  "text": "Figure 6: The last four bytes.\n        The ransomware executable does not typically encrypt executable files. A random file extension is added to\n        file names and a ransom note generally titled How To Restore Your Files.txt is left on the compromised\n        system. To further inhibit system recovery, the ransomware executable typically leverages the\n        vssadmin.exe program to delete volume shadow copies [T1490]."
+ },
+ {
+  "id": "p30",
+  "text": "Leveraged Tools\n        See Table 1 for publicly available tools and applications used by RansomHub affiliates. This includes\n        legitimate tools repurposed for their operations."
+ },
+ {
+  "id": "p31",
+  "text": "Table 1: Tools Used by RansomHub Affiliates\n        Disclaimer: Use of these tools and applications should not be attributed as malicious without analytical\n        evidence to support threat actor use and/or control."
+ },
+ {
+  "id": "p32",
+  "text": "Tool Name                                            Description"
+ },
+ {
+  "id": "p33",
+  "text": "BITSAdmin                             A command-line utility that manages downloads/uploads between a\n                                                client and server by using the Background Intelligent Transfer\n                                                Service (BITS) to perform asynchronous file transfers."
+ },
+ {
+  "id": "p34",
+  "text": "Cobalt Strike [S0154]                 A penetration testing tool used by security professionals to test the\n                                                security of networks and systems. RansomHub affiliates have used it\n                                                to assist with lateral movement and file execution."
+ },
+ {
+  "id": "p35",
+  "text": "Mimikatz [S0002]                      A tool that allows users to view and save authentication credentials\n                                                such as Kerberos tickets. RansomHub affiliates have used it to aid\n                                                privilege escalation."
+ },
+ {
+  "id": "p36",
+  "text": "PSExec [S0029]                        A tool designed to run programs and execute commands on remote\n                                                systems."
+ },
+ {
+  "id": "p37",
+  "text": "PowerShell                            Cross-platform task automation solution made up of a command line\n                                                shell, a scripting language, and a configuration management\n                                                framework, which runs on Windows, Linux, and macOS."
+ },
+ {
+  "id": "p38",
+  "text": "RClone                                A command line program used to sync files with cloud storage\n                                                services."
+ },
+ {
+  "id": "p39",
+  "text": "Sliver                                A penetration testing toolset which allows for remote command and\n                                                control of systems."
+ },
+ {
+  "id": "p40",
+  "text": "SMBExec                               A tool designed to manipulate SMB services for remote code\n                                                execution."
+ },
+ {
+  "id": "p41",
+  "text": "WinSCP                                Windows Secure Copy is a free and open source SSH File Transfer\n                                                Protocol, File Transfer Protocol, WebDAV, Amazon S3, and secure\n                                                copy protocol client. Affiliates have used it to transfer data from a\n                                                compromised network to actor-controlled accounts."
+ },
+ {
+  "id": "p42",
+  "text": "CrackMapExec                          Pentest Toolset"
+ },
+ {
+  "id": "p43",
+  "text": "Kerberoast                            Kerberos Brute force and Exploitation Tool"
+ },
+ {
+  "id": "p44",
+  "text": "AngryIPScanner                        Network Scanner"
+ },
+ {
+  "id": "p45",
+  "text": "Indicators of Compromise\n        Disclaimer: Several of these IP addresses were first observed as early as 2020, although most date from\n        2022 or 2023 and have been historically linked to QakBot. The authoring organizations recommend\n        organizations investigate or vet these IP addresses prior to taking action (such as blocking).\n        See Table 2–Table 5 for IOCs obtained from FBI investigations."
+ },
+ {
+  "id": "p46",
+  "text": "Table 2: Directory Structure TTPs"
+ },
+ {
+  "id": "p47",
+  "text": "Filename                                         Description"
+ },
+ {
+  "id": "p48",
+  "text": "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\crackmapex            CrackMapExe\n          ec.exe                                                                                    c"
+ },
+ {
+  "id": "p49",
+  "text": "Kerberoastin\n          C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\kerbrute.exe\n                                                                                                    g"
+ },
+ {
+  "id": "p50",
+  "text": "C:\\Users\\%USERNAME%\\Downloads\\Anydesk.exe                                                 Anydesk C2"
+ },
+ {
+  "id": "p51",
+  "text": "C:\\Users\\%USERNAME%\\Desktop\\IamBatMan.exe                                                 Ransomware"
+ },
+ {
+  "id": "p52",
+  "text": "C:\\Users\\backupexec\\Desktop\\stealer_cli_v2.exe                                            Info Stealer"
+ },
+ {
+  "id": "p53",
+  "text": "C:\\Users\\%USERNAME%\\Downloads\\nmap-7.94-setup.exe                                         Nmap"
+ },
+ {
+  "id": "p54",
+  "text": "C:\\Program Files (x86)\\Nmap\\nmap.exe                                                      Nmap"
+ },
+ {
+  "id": "p55",
+  "text": "C:\\Users\\%USERNAME%\\Downloads\\mimikatz_trunk\\x64\\mimikatz.exe                             Mimikatz"
+ },
+ {
+  "id": "p56",
+  "text": "C:\\Users\\backupexec\\Downloads\\x64\\mimikatz.exe                                            Mimikatz"
+ },
+ {
+  "id": "p57",
+  "text": "Disclaimer: The authoring organizations recommend network defenders investigate or vet IP addresses prior\n        to taking action, such as blocking. Many cyber actors are known to change IP addresses, sometimes daily,\n        and some IP addresses may host valid domains."
+ },
+ {
+  "id": "p58",
+  "text": "Table 3: Known IPs Related to Malicious Activity (2023-2024)"
+ },
+ {
+  "id": "p59",
+  "text": "IP Address"
+ },
+ {
+  "id": "p60",
+  "text": "8.211.2[.]97"
+ },
+ {
+  "id": "p61",
+  "text": "45.95.67[.]41"
+ },
+ {
+  "id": "p62",
+  "text": "45.134.140[.]69"
+ },
+ {
+  "id": "p63",
+  "text": "45.135.232[.]2"
+ },
+ {
+  "id": "p64",
+  "text": "IP Address"
+ },
+ {
+  "id": "p65",
+  "text": "89.23.96[.]203"
+ },
+ {
+  "id": "p66",
+  "text": "188.34.188[.]7"
+ },
+ {
+  "id": "p67",
+  "text": "193.106.175[.]107"
+ },
+ {
+  "id": "p68",
+  "text": "193.124.125[.]78"
+ },
+ {
+  "id": "p69",
+  "text": "193.233.254[.]21"
+ },
+ {
+  "id": "p70",
+  "text": "Table 4: Known URLs Related to Malicious Activity (2023-2024)"
+ },
+ {
+  "id": "p71",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p72",
+  "text": "http[:]//188.34.188[.]7/555"
+ },
+ {
+  "id": "p73",
+  "text": "http[:]//188.34.188[.]7/555/"
+ },
+ {
+  "id": "p74",
+  "text": "http[:]//188.34.188[.]7/555/amba16.ico"
+ },
+ {
+  "id": "p75",
+  "text": "http[:]//188.34.188[.]7/555/bcrypt.dll"
+ },
+ {
+  "id": "p76",
+  "text": "http[:]//188.34.188[.]7/555/CRYPTSP.dll"
+ },
+ {
+  "id": "p77",
+  "text": "http[:]//188.34.188[.]7/555/en"
+ },
+ {
+  "id": "p78",
+  "text": "http[:]//188.34.188[.]7/555/en-US"
+ },
+ {
+  "id": "p79",
+  "text": "http[:]//188.34.188[.]7/555/NEWOFFICIALPROGRAMCAUSEOFNEWUPDATE.exe"
+ },
+ {
+  "id": "p80",
+  "text": "http[:]//188.34.188[.]7/555/NEWOFFICIALPROGRAMCAUSEOFNEWUPDATE.exe.Config"
+ },
+ {
+  "id": "p81",
+  "text": "http[:]//188.34.188[].7/555/NEWOFFICIALPROGRAMCAUSEOFNEWUPDATE.INI"
+ },
+ {
+  "id": "p82",
+  "text": "http[:]//89.23.96[.]203/"
+ },
+ {
+  "id": "p83",
+  "text": "http[:]//89.23.96[.]203/333"
+ },
+ {
+  "id": "p84",
+  "text": "http[:]//89.23.96[.]203/333/"
+ },
+ {
+  "id": "p85",
+  "text": "http[:]//89.23.96[.]203/333/1.exe"
+ },
+ {
+  "id": "p86",
+  "text": "http[:]//89.23.96[.]203/333/1.exe.Config"
+ },
+ {
+  "id": "p87",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p88",
+  "text": "http[:]//89.23.96[.]203/333/10.exe"
+ },
+ {
+  "id": "p89",
+  "text": "http[:]//89.23.96[.]203/333/12.exe"
+ },
+ {
+  "id": "p90",
+  "text": "http[:]//89.23.96[.]203/333/12.exe.Config"
+ },
+ {
+  "id": "p91",
+  "text": "http[:]//89.23.96[.]203/333/2.exe"
+ },
+ {
+  "id": "p92",
+  "text": "http[:]//89.23.96[.]203/333/2.exe.Config"
+ },
+ {
+  "id": "p93",
+  "text": "http[:]//89.23.96[.]203/333/2wrRR6sW6XJtsXyPzuhWhDG7qwN4es.exe"
+ },
+ {
+  "id": "p94",
+  "text": "http[:]//89.23.96[.]203/333/2wrRR6sW6XJtsXyPzuhWhDG7qwN4es.exe.Config"
+ },
+ {
+  "id": "p95",
+  "text": "http[:]//89.23.96[.]203/333/3.exe"
+ },
+ {
+  "id": "p96",
+  "text": "http[:]//89.23.96[.]203/333/3.exe.Config"
+ },
+ {
+  "id": "p97",
+  "text": "http[:]//89.23.96[.]203/333/4.exe"
+ },
+ {
+  "id": "p98",
+  "text": "http[:]//89.23.96[.]203/333/4.exe.Config"
+ },
+ {
+  "id": "p99",
+  "text": "http[:]//89.23.96[.]203/333/5.exe"
+ },
+ {
+  "id": "p100",
+  "text": "http[:]//89.23.96[.]203/333/5.exe.Config"
+ },
+ {
+  "id": "p101",
+  "text": "http[:]//89.23.96[.]203/333/6.exe"
+ },
+ {
+  "id": "p102",
+  "text": "http[:]//89.23.96[.]203/333/7.exe"
+ },
+ {
+  "id": "p103",
+  "text": "http[:]//89.23.96[.]203/333/8.exe"
+ },
+ {
+  "id": "p104",
+  "text": "http[:]//89.23.96[.]203/333/9.exe"
+ },
+ {
+  "id": "p105",
+  "text": "http[:]//89.23.96[.]203/333/92.exe"
+ },
+ {
+  "id": "p106",
+  "text": "http[:]//89.23.96[.]203/333/AmbaPDF.ico"
+ },
+ {
+  "id": "p107",
+  "text": "http[:]//89.23.96[.]203/333/ambapdf.ico.DLL"
+ },
+ {
+  "id": "p108",
+  "text": "http[:]//89.23.96[.]203/333/bcrypt.dll"
+ },
+ {
+  "id": "p109",
+  "text": "http[:]//89.23.96[.]203/333/Cabinet.dll"
+ },
+ {
+  "id": "p110",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p111",
+  "text": "http[:]//89.23.96[.]203/333/CRYPTBASE.DLL"
+ },
+ {
+  "id": "p112",
+  "text": "http[:]//89.23.96[.]203/333/cryptnet.dll"
+ },
+ {
+  "id": "p113",
+  "text": "http[:]//89.23.96[.]203/333/CRYPTSP.dll"
+ },
+ {
+  "id": "p114",
+  "text": "http[:]//89.23.96[.]203/333/cv4TCGxUjvS.exe"
+ },
+ {
+  "id": "p115",
+  "text": "http[:]//89.23.96[.]203/333/DPAPI.DLL"
+ },
+ {
+  "id": "p116",
+  "text": "http[:]//89.23.96[.]203/333/en"
+ },
+ {
+  "id": "p117",
+  "text": "http[:]//89.23.96[.]203/333/en/d%E5%AD%97%E5%AD%97.resources.dll"
+ },
+ {
+  "id": "p118",
+  "text": "http[:]//89.23.96[.]203/333/en/d%E5%AD%97%E5%AD%97.resources.exe"
+ },
+ {
+  "id": "p119",
+  "text": "http[:]//89.23.96[.]203/333/en/d%E5%AD%97%E5%AD%97.resources/d%E5%AD%97%E5%AD%97.resourc\n          es.dll"
+ },
+ {
+  "id": "p120",
+  "text": "http[:]//89.23.96[.]203/333/en/d%E5%AD%97%E5%AD%97.resources/d%E5%AD%97%E5%AD%97.resourc\n          es.exe"
+ },
+ {
+  "id": "p121",
+  "text": "http[:]//89.23.96[.]203/333/en-US"
+ },
+ {
+  "id": "p122",
+  "text": "http[:]//89.23.96[.]203/333/en-US/d%E5%AD%97%E5%AD%97.resources.dll"
+ },
+ {
+  "id": "p123",
+  "text": "http[:]//89.23.96[.]203/333/en-US/d%E5%AD%97%E5%AD%97.resources.exe"
+ },
+ {
+  "id": "p124",
+  "text": "http[:]//89.23.96[.]203/333/en-\n          US/d%E5%AD%97%E5%AD%97.resources/d%E5%AD%97%E5%AD%97.resources.dll"
+ },
+ {
+  "id": "p125",
+  "text": "http[:]//89.23.96[.]203/333/en-\n          US/d%E5%AD%97%E5%AD%97.resources/d%E5%AD%97%E5%AD%97.resources.exe"
+ },
+ {
+  "id": "p126",
+  "text": "http[:]//89.23.96[.]203/333/iertutil.dll"
+ },
+ {
+  "id": "p127",
+  "text": "http[:]//89.23.96[.]203/333/information.exe"
+ },
+ {
+  "id": "p128",
+  "text": "http[:]//89.23.96[.]203/333/information.exe.Config"
+ },
+ {
+  "id": "p129",
+  "text": "http[:]//89.23.96[.]203/333/information.INI"
+ },
+ {
+  "id": "p130",
+  "text": "http[:]//89.23.96[.]203/333/IPHLPAPI.DLL"
+ },
+ {
+  "id": "p131",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p132",
+  "text": "http[:]//89.23.96[.]203/333/mshtml.dll"
+ },
+ {
+  "id": "p133",
+  "text": "http[:]//89.23.96[.]203/333/msi.dll"
+ },
+ {
+  "id": "p134",
+  "text": "http[:]//89.23.96[.]203/333/SspiCli.dll"
+ },
+ {
+  "id": "p135",
+  "text": "http[:]//89.23.96[.]203/333/TmsLA6kdcU8jxKzpMvbUVweTeF5YcR.exe"
+ },
+ {
+  "id": "p136",
+  "text": "http[:]//89.23.96[.]203/333/TmsLA6kdcU8jxKzpMvbUVweTeF5YcR.exe.Config"
+ },
+ {
+  "id": "p137",
+  "text": "http[:]//89.23.96[.]203/333/2wrRR6sW6XJtsXyPzuhWhDG7qwN4es.exe"
+ },
+ {
+  "id": "p138",
+  "text": "http[:]//89.23.96[.]203/333/xwenxub285p83ecrzvft.exe"
+ },
+ {
+  "id": "p139",
+  "text": "http[:]//89.23.96[.]203/333/cv4TCGxUjvS.exe"
+ },
+ {
+  "id": "p140",
+  "text": "http[:]//89.23.96[.]203/333/urlmon.dll"
+ },
+ {
+  "id": "p141",
+  "text": "http[:]//89.23.96[.]203/333/USERENV.dll"
+ },
+ {
+  "id": "p142",
+  "text": "http[:]//89.23.96[.]203/333/webio.dll"
+ },
+ {
+  "id": "p143",
+  "text": "http[:]//89.23.96[.]203/333/winhttp.dll"
+ },
+ {
+  "id": "p144",
+  "text": "http[:]//89.23.96[.]203/333/WININET.dll"
+ },
+ {
+  "id": "p145",
+  "text": "http[:]//89.23.96[.]203/333/WINMM.dll"
+ },
+ {
+  "id": "p146",
+  "text": "http[:]//89.23.96[.]203/333/WINMMBASE.dll"
+ },
+ {
+  "id": "p147",
+  "text": "http[:]//89.23.96[.]203/333/winnlsres.dll"
+ },
+ {
+  "id": "p148",
+  "text": "http[:]//89.23.96[.]203/333/xwenxub285p83ecrzvft.exe"
+ },
+ {
+  "id": "p149",
+  "text": "http[:]//89.23.96[.]203/333/xwenxub285p83ecrzvft.exe.Config"
+ },
+ {
+  "id": "p150",
+  "text": "http[:]//temp.sh/KnCqD/superloop.exe"
+ },
+ {
+  "id": "p151",
+  "text": "https[:]//grabify.link/Y33YXP"
+ },
+ {
+  "id": "p152",
+  "text": "https[:]//i.ibb.co/2KBydfw/112882618.png"
+ },
+ {
+  "id": "p153",
+  "text": "https[:]//i.ibb.co/4g6jH2J/2773036704.png"
+ },
+ {
+  "id": "p154",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p155",
+  "text": "https[:]//i.ibb.co/b1bZBpg/2615174623.png"
+ },
+ {
+  "id": "p156",
+  "text": "https[:]//i.ibb.co/Fxhyq6t/2077411869.png"
+ },
+ {
+  "id": "p157",
+  "text": "https[:]//i.ibb.co/HK0jV1G/534475006.png"
+ },
+ {
+  "id": "p158",
+  "text": "https[:]//i.ibb.co/nbMNnW4/2501108160.png"
+ },
+ {
+  "id": "p159",
+  "text": "https[:]//i.ibb.co/p1RCtpy/2681232755.png"
+ },
+ {
+  "id": "p160",
+  "text": "https[:]//i.ibb.co/SxQLwYm/1038436121.png"
+ },
+ {
+  "id": "p161",
+  "text": "https[:]//i.ibb.co/v1bn9ZK/369210627.png"
+ },
+ {
+  "id": "p162",
+  "text": "https[:]//i.ibb.co/V3Kj1c2/1154761258.png"
+ },
+ {
+  "id": "p163",
+  "text": "https[:]//i.ibb.co/X2FR8Kz/2113791011.png"
+ },
+ {
+  "id": "p164",
+  "text": "https[:]//i.ibb.com:443/V3Kj1c2/1154761258.png"
+ },
+ {
+  "id": "p165",
+  "text": "https[:]//12301230[.]co/npm/module.tripadvisor/module.tripadvisor.css"
+ },
+ {
+  "id": "p166",
+  "text": "https[:]//12301230[.]co/npm/module.external/jquery.min.js"
+ },
+ {
+  "id": "p167",
+  "text": "https[:]//12301230[.]co/npm/module.external/moment.min.js"
+ },
+ {
+  "id": "p168",
+  "text": "https[:]//12301230[.]co/npm/module.external/client.min.js"
+ },
+ {
+  "id": "p169",
+  "text": "https[:]//12301230[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p170",
+  "text": "https[:]//samuelelena[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p171",
+  "text": "https[:]//samuelelena[.]co/npm/module.external/jquery.min.js"
+ },
+ {
+  "id": "p172",
+  "text": "https[:]//samuelelena[.]co/npm/module.external/moment.min.js"
+ },
+ {
+  "id": "p173",
+  "text": "https[:]//samuelelena[.]co/npm/module.external/client.min.js"
+ },
+ {
+  "id": "p174",
+  "text": "https[:]//samuelelena[.]co/"
+ },
+ {
+  "id": "p175",
+  "text": "http[:]//samuelelena[.]co/"
+ },
+ {
+  "id": "p176",
+  "text": "https[:]//samuelelena[.]co/npm"
+ },
+ {
+  "id": "p177",
+  "text": "Web Requests"
+ },
+ {
+  "id": "p178",
+  "text": "https[:]//samuelelena[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p179",
+  "text": "http[:]//samuelelena[.]co/npm/"
+ },
+ {
+  "id": "p180",
+  "text": "http[:]//samuelelena[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p181",
+  "text": "http[:]//samuelelena[.]co/npm/module.external/client.min.js"
+ },
+ {
+  "id": "p182",
+  "text": "https[:]//samuelelena[.]co/npm/module.tripadvisor/module.tripadvisor."
+ },
+ {
+  "id": "p183",
+  "text": "https[:]//samuelelena[.]co/npm/module.external/jquery.min.js"
+ },
+ {
+  "id": "p184",
+  "text": "https[:]//samuelelena[.]co/npm/module.external"
+ },
+ {
+  "id": "p185",
+  "text": "https[:]//samuelelena[.]co/np"
+ },
+ {
+  "id": "p186",
+  "text": "https[:]/samuelelena[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p187",
+  "text": "https[:]//samuelelena[.]co/npm/module[.]tripadvisor/module[.]tripadvisor[.]js"
+ },
+ {
+  "id": "p188",
+  "text": "https[:]//samuelelena[.]co/npm/module[.]external/client.min.js"
+ },
+ {
+  "id": "p189",
+  "text": "https[:]//samuelelena[.]co/npm/module.external/jquery.min.js&nbsp;"
+ },
+ {
+  "id": "p190",
+  "text": "http[:]//samuelelena[.]co:443/"
+ },
+ {
+  "id": "p191",
+  "text": "http[:]//samuelelena[.]co/npm/module.external/jquery.min.js"
+ },
+ {
+  "id": "p192",
+  "text": "https[:]//40031[.]co/npm/module.tripadvisor/module.tripadvisor.css"
+ },
+ {
+  "id": "p193",
+  "text": "https[:]//40031[.]co/npm/module.external/jquery.min.js"
+ },
+ {
+  "id": "p194",
+  "text": "https[:]//40031[.]co/npm/module.external/moment.min.js"
+ },
+ {
+  "id": "p195",
+  "text": "https[:]//40031[.]co/npm/module.external/client.min.js"
+ },
+ {
+  "id": "p196",
+  "text": "https[:]//40031[.]co/npm/module.tripadvisor/module.tripadvisor.js"
+ },
+ {
+  "id": "p197",
+  "text": "Table 5: Emails Related to RansomHub (2023-2024)"
+ },
+ {
+  "id": "p198",
+  "text": "Email Addresses"
+ },
+ {
+  "id": "p199",
+  "text": "brahma2023[@]onionmail.org"
+ },
+ {
+  "id": "p200",
+  "text": "Email Addresses"
+ },
+ {
+  "id": "p201",
+  "text": "<victim_organization_name>[@]protonmail.com"
+ },
+ {
+  "id": "p202",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 6–Table 17 for all referenced threat actor tactics and techniques in this advisory. For assistance\n        with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s\n        Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p203",
+  "text": "Table 6: Resource Development"
+ },
+ {
+  "id": "p204",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p205",
+  "text": "Obtain Capabilities:                          RansomHub affiliates may buy, steal, or download exploits that\n                                        T1588.005\n          Exploits                                      can be used during targeting."
+ },
+ {
+  "id": "p206",
+  "text": "Table 7: Initial Access"
+ },
+ {
+  "id": "p207",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p208",
+  "text": "RansomHub affiliates used mass phishing and spear-phishing\n          Phishing                       T1566\n                                                        emails to obtain initial access."
+ },
+ {
+  "id": "p209",
+  "text": "Exploit Public-Facing                         RansomHub affiliates may exploit known vulnerabilities to\n                                         T1190\n          Application                                   obtain initial access."
+ },
+ {
+  "id": "p210",
+  "text": "Table 8: Execution"
+ },
+ {
+  "id": "p211",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p212",
+  "text": "Command and                   T1059.001       RansomHub affiliates used PowerShell and Scripts to quickly\n          Scripting Interpreter                         run and automate intrusion."
+ },
+ {
+  "id": "p213",
+  "text": "Windows                        T1047          RansomHub affiliates may abuse Windows Management\n          Management                                    Instrumentation to execute malicious commands and\n          Instrumentation                               payloads."
+ },
+ {
+  "id": "p214",
+  "text": "Table 9: Persistence"
+ },
+ {
+  "id": "p215",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p216",
+  "text": "Command and                   T1059.001       RansomHub affiliates used PowerShell and Scripts to quickly\n          Scripting Interpreter                         run and automate intrusion."
+ },
+ {
+  "id": "p217",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p218",
+  "text": "Create Account                 T1136           RansomHub affiliates may create an account to maintain\n                                                         access to victim systems."
+ },
+ {
+  "id": "p219",
+  "text": "Table 10: Privilege Escalation"
+ },
+ {
+  "id": "p220",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p221",
+  "text": "Account Manipulation           T1098           RansomHub affiliates may manipulate accounts to maintain\n                                                         and/or elevate access to victim systems."
+ },
+ {
+  "id": "p222",
+  "text": "Remote Services:              T1021.001        RansomHub affiliates may log onto systems using the Remote\n          Remote Desktop                                 Desk Protocol, then perform actions as the logged-on user.\n          Protocol"
+ },
+ {
+  "id": "p223",
+  "text": "Table 11: Defense Evasion"
+ },
+ {
+  "id": "p224",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p225",
+  "text": "Masquerading                   T1036           RansomHub affiliates may hide binaries by renaming\n                                                         executable names."
+ },
+ {
+  "id": "p226",
+  "text": "Indicator Removal on           T1070           RansomHub affiliates may remove logs to inhibit cybersecurity\n          Host                                           response."
+ },
+ {
+  "id": "p227",
+  "text": "Impair Defenses:              T1562.001        RansomHub affiliates may disable endpoint detection and\n          Disable or Modify                              response (EDR) tooling to avoid detection.\n          Tools"
+ },
+ {
+  "id": "p228",
+  "text": "Table 12: Credential Access"
+ },
+ {
+  "id": "p229",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p230",
+  "text": "OS Credential                  T1003           RansomHub affiliates used Mimikatz on Windows systems to\n          Dumping                                        gather credentials."
+ },
+ {
+  "id": "p231",
+  "text": "Brute Force: Password                          RansomHub affiliates may use password spraying to obtain\n                                        T1110.003\n          Spraying                                       initial access."
+ },
+ {
+  "id": "p232",
+  "text": "Table 13: Discovery"
+ },
+ {
+  "id": "p233",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p234",
+  "text": "Remote System                  T1018         RansomHub affiliates may attempt to get a listing of other\n          Discovery                                    systems by IP address, hostname, or other logical identifier on\n                                                       a network that may be used for Lateral Movement from the\n                                                       current system."
+ },
+ {
+  "id": "p235",
+  "text": "Network Service                T1046         RansomHub affiliates may attempt to get a listing of services\n          Discovery                                    running on remote hosts and local network infrastructure\n                                                       devices."
+ },
+ {
+  "id": "p236",
+  "text": "Table 14: Lateral Movement"
+ },
+ {
+  "id": "p237",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p238",
+  "text": "RansomHub affiliates may exploit remote services to gain\n          Exploitation of\n                                         T1210         unauthorized access to internal systems once inside of a\n          Remote Services\n                                                       network."
+ },
+ {
+  "id": "p239",
+  "text": "Table 15: Command and Control"
+ },
+ {
+  "id": "p240",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p241",
+  "text": "Remote Access                  T1219         RansomHub affiliates may use Anydesk, a legitimate desktop\n          Software                                     support and remote access software to establish an interactive\n                                                       command and control channel to target systems within\n                                                       networks."
+ },
+ {
+  "id": "p242",
+  "text": "Table 16: Exfiltration"
+ },
+ {
+  "id": "p243",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p244",
+  "text": "Exfiltration Over             T1048.002      RansomHub affiliates may steal data by exfiltrating it over an\n          Alternative Protocol:                        asymmetrically encrypted network protocol other than that of\n          Exfiltration Over                            the existing command and control channel.\n          Asymmetric Encrypted\n          Non-C2 Protocol"
+ },
+ {
+  "id": "p245",
+  "text": "Transfer Data to Cloud         T1537         RansomHub affiliates may exfiltrate data by transferring the\n          Account                                      data, including through sharing/syncing and creating backups\n                                                       of cloud environments, to another cloud account they control\n                                                       on the same service."
+ },
+ {
+  "id": "p246",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p247",
+  "text": "Exfiltration Over             T1048.003      RansomHub affiliates may steal data by exfiltrating it over an\n          Alternative Protocol:                        un-encrypted network protocol other than that of the existing\n          Exfiltration Over                            command and control channel.\n          Asymmetric\n          Unencrypted Non-C2\n          Protocol"
+ },
+ {
+  "id": "p248",
+  "text": "Table 17: Impact"
+ },
+ {
+  "id": "p249",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p250",
+  "text": "Data Encrypted for             T1486         RansomHub affiliates used encryption for ransomware\n          Impact                                       operations."
+ },
+ {
+  "id": "p251",
+  "text": "Inhibit System                 T1490         RansomHub ransomware deleted volume shadow copies and\n          Recovery                                     affiliates removed backups for ransomware operations."
+ },
+ {
+  "id": "p252",
+  "text": "Incident Response\n        If compromise is detected, organizations should:\n             1. Quarantine or take potentially affected hosts offline.\n             2. Reimage compromised hosts.\n             3. Provision new account credentials.\n             4. Collect and review artifacts such as running processes/services, unusual authentications, and\n                recent network connections.\n             5. Report the compromise to CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-282-\n                0870). State, local, tribal, or territorial government entities can also report to the Multi-State\n                Information Sharing and Analysis Center (MS-ISAC) (SOC@cisecurity.org or 866-787-4722)."
+ },
+ {
+  "id": "p253",
+  "text": "Mitigations\n        Network Defenders\n        The authoring organizations recommend organizations implement the mitigations below to improve\n        cybersecurity posture based on RansomHub’s activity. These mitigations align with the Cross-Sector\n        Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute of Standards and\n        Technology (NIST). The CPGs provide a minimum set of practices and protections that CISA and NIST\n        recommend all organizations implement. CISA and NIST based the CPGs on existing cybersecurity\n        frameworks and guidance to protect against the most common and impactful threats, tactics, techniques,\n        and procedures. Visit CISA’s Cross-Sector Cybersecurity Performance Goals for more information on the\n        CPGs, including additional recommended baseline protections."
+ },
+ {
+  "id": "p254",
+  "text": "   Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary data\n                 and servers in a physically separate, segmented, and secure location (i.e., hard drive, storage\n                 device, the cloud).\n                Require all accounts with password logins (e.g., service accounts, admin accounts, and domain\n                 admin accounts) to comply with National Institute for Standards and Technology (NIST) standards\n                 for developing and managing password policies.\n                 o    Use longer passwords consisting of at least 8 characters and no more than 64 characters in\n                      length;\n                 o    Store passwords in hashed format using industry-recognized password managers;\n                 o    Add password user “salts” to shared login credentials;\n                  o   Avoid reusing passwords;\n                  o   Implement multiple failed login attempt account lockouts;\n                  o   Disable password “hints”; and\n                  o   Refrain from requiring password changes more frequently than once per year.\n                      Note: NIST guidance suggests favoring longer passwords instead of requiring regular and\n                      frequent password resets. Frequent password resets are more likely to result in users\n                      developing password “patterns” cyber criminals can easily decipher.\n                 o    Require administrator credentials to install software.\n                Keep all operating systems, software, and firmware up to date [CPG 1.E]. Timely patching is one of\n                 the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                 cybersecurity threats. Prioritize patching known exploited vulnerabilities in internet-facing systems.\n                Require Phishing-Resistant multifactor authentication to administrator accounts [CPG 2.H] and\n                 require standard MFA for all services to the extent possible (particularly for webmail, virtual private\n                 networks, and accounts that access critical systems).\n                Segment networks [CPG 2.F] to prevent the spread of ransomware. Network segmentation can help\n                 prevent the spread of ransomware by controlling traffic flows between—and access to—various\n                 subnetworks and by restricting adversary lateral movement.\n                Identify, detect, and investigate abnormal activity and potential traversal of the indicated\n                 ransomware with a networking monitoring tool [CPG 3.A]. To aid in detecting the ransomware,\n                 implement a tool that logs and reports all network traffic, including lateral movement activity on a\n                 network. Endpoint detection and response (EDR) tools are particularly useful for detecting lateral\n                 connections as they have insight into common and uncommon network connections for each host.\n                Install, regularly update, and enable real time detection for antivirus software on all hosts.\n                Implement Secure Logging Collection and Storage Practices [CPG 2.T]. Learn more about logging\n                 best practices by referencing CISA’s Logging Made Easy resources.\n                Review domain controllers, servers, workstations, and active directories for new and/or\n                 unrecognized accounts.\n                Audit user accounts with administrative privileges and configure access controls according to the\n                 principle of least privilege."
+ },
+ {
+  "id": "p255",
+  "text": "   Disable unused ports.\n                Implement and enforce email security policies [CPG 2.M].\n                Disable macros by default [CPG 2.N].\n                Consider adding an email banner to emails received from outside your organization.\n                Disable hyperlinks in received emails.\n                Implement time-based access for accounts set at the admin level and higher. For example, the\n                 Just-in-Time (JIT) access method provisions privileged access when needed and can support\n                 enforcement of the principle of least privilege (as well as the Zero Trust model). This is a process\n                 where a network-wide policy is set in place to automatically disable admin accounts at the Active\n                 Directory level when the account is not in direct need. Individual users may submit their requests\n                 through an automated process that grants them access to a specified system for a set timeframe\n                 when they need to support the completion of a certain task.\n                Disable command-line and scripting activities and permissions. Privilege escalation and lateral\n                 movement often depend on software utilities running from the command line. If threat actors are\n                 not able to run these tools, they will have difficulty escalating privileges and/or moving laterally.\n                Maintain offline backups of data, and regularly maintain backup and restoration [CPG 2.R]. By\n                 instituting this practice, the organization ensures they will not be severely interrupted, and/or only\n                 have irretrievable data.\n                Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and covers the\n                 entire organization’s data infrastructure."
+ },
+ {
+  "id": "p256",
+  "text": "Software Manufacturers\n        The above mitigations apply to enterprises and critical infrastructure organizations with on-premises or\n        hybrid environments. Recognizing that insecure software is the root cause of many of these flaws and that\n        the responsibility should not be on the end user, CISA urges software manufacturers to implement the\n        following to reduce the prevalence of identified or exploited issues (e.g., misconfigurations, weak\n        passwords, and other weaknesses identified and exploited through the assessment team):\n                Embed security into product architecture throughout the entire software development lifecycle\n                 (SDLC).\n                Mandate MFA, ideally phishing-resistant MFA, for privileged users and make MFA a default, rather\n                 than opt-in, feature.\n        These mitigations align with tactics provided in the joint guide Shifting the Balance of Cybersecurity Risk:\n        Principles and Approaches for Secure by Design Software. CISA urges software manufacturers to take\n        ownership of improving the security outcomes of their customers by applying these and other secure by\n        design tactics. By using secure by design tactics, software manufacturers can make their product lines\n        secure “out of the box” without requiring customers to spend additional resources making configuration\n        changes, purchasing security software and logs, monitoring, and making routine updates.\n        For more information on secure by design, see CISA’s Secure by Design webpage."
+ },
+ {
+  "id": "p257",
+  "text": "Validate Security Controls\n        In addition to applying mitigations, CISA recommends exercising, testing, and validating your organization’s\n        security program against the threat behaviors mapped to the MITRE ATT&CK for Enterprise framework in\n        this advisory. The authoring organizations recommend testing your existing security controls inventory to\n        assess how they perform against the ATT&CK techniques described in this advisory.\n        To get started:\n             1. Select an ATT&CK technique described in this advisory (see Table 6–Table 17).\n             2. Align your security technologies against the technique.\n             3. Test your technologies against the technique.\n             4. Analyze your detection and prevention technologies’ performance.\n             5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n                data.\n             6. Tune your security program, including people, processes, and technologies, based on the data\n                generated by this process.\n        CISA, FBI, MS-ISAC, and HHS recommend continually testing your security program, at scale, in a\n        production environment to ensure optimal performance against the MITRE ATT&CK techniques identified in\n        this advisory."
+ },
+ {
+  "id": "p258",
+  "text": "Resources\n                #StopRansomware is a whole-of-government approach that gives one central location for\n                 ransomware resources and alerts.\n                Resource to reduce the risk of a ransomware attack: #StopRansomware Guide.\n                No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness Assessment.\n                Health and Human Services HPH Cybersecurity Gateway hosts the HPH CPGs and links to HHS\n                 cybersecurity resources."
+ },
+ {
+  "id": "p259",
+  "text": "References\n             1. Ransomware Roundup - Knight | FortiGuard Labs (fortinet.com)\n             2. Knight Ransomware - X-Industry - Red Sky Alliance\n             3. Cyclops Ransomware and Stealer Combo: Exploring a Dual Threat (uptycs.com)\n             4. Knight ransomware distributed in fake Tripadvisor complaint emails (bleepingcomputer.com)"
+ },
+ {
+  "id": "p260",
+  "text": "Reporting\n        Your organization has no obligation to respond or provide information to the FBI in response to this joint\n        advisory. If, after reviewing the information provided, your organization decides to provide information to\n        the FBI, reporting must be consistent with applicable state and federal laws."
+ },
+ {
+  "id": "p261",
+  "text": "The FBI is interested in any information that can be shared, to include boundary logs showing\n        communication to and from foreign IP addresses, a sample ransom note, communications with threat\n        actors, Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted file.\n        Additional details of interest include a targeted company point of contact, status and scope of infection,\n        estimated loss, operational impact, transaction IDs, date of infection, date detected, initial attack vector,\n        and host- and network-based indicators.\n        The authoring organizations do not encourage paying a ransom, as payment does not guarantee victim\n        files will be recovered. Furthermore, payment may also embolden adversaries to target additional\n        organizations, encourage other criminal actors to engage in the distribution of ransomware, and/or fund\n        illicit activities. Regardless of whether you or your organization have decided to pay the ransom, the FBI\n        and CISA urge you to promptly report ransomware incidents to the FBI’s Internet Crime Complain Center\n        (IC3), a local FBI Field Office, or CISA via the agency’s Incident Reporting System or its 24/7 Operations\n        Center (report@cisa.gov) or by calling 1-844-Say-CISA (1-844-729-2472)."
+ },
+ {
+  "id": "p262",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. The authoring\n        organizations do not endorse any commercial entity, product, company, or service, including any entities,\n        products, or services linked within this document. Any reference to specific commercial entities, products,\n        processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n        imply endorsement, recommendation, or favoring by the authoring organizations."
+ }
+]

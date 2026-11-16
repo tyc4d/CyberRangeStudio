@@ -1,0 +1,872 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260713",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "5381789ec4afae3826fec56f77ecede5eff4a3ba8ff9789647ee99931870058a",
+  "source_name": "csa-2026-260713"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Scan for poorly configured networking devices using SNMP",
+   "source": "llm",
+   "description": "The Russian FSB Center 16 cyber actors primarily use scanning to identify poorly configured networking devices, primarily routers, for exploitation. The actors scan for Internet IP ranges with active Simple Network Management Protocol (SNMP) agents that accept common or default community strings for authentication. These scans, run via proxies, consist of SNMP Set-Requests from a spoofed IP address containing Object Identifiers (OIDs) that instruct the SNMP agent on poorly configured networking devices.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1027",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "Copy router configuration to a file",
+   "source": "llm",
+   "description": "The actors instruct the SNMP agent on poorly configured networking devices to copy its configuration to a file, often called “config.bkp” or “output.txt”.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "Transfer configuration file to actor-controlled server",
+   "source": "llm",
+   "description": "The actors transfer the copied configuration file, typically using Trivial File Transfer Protocol (TFTP), to an actor-controlled leased virtual private server (VPS) or compromised FTP server.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "Exploit common vulnerabilities and exposures (CVEs) in Cisco devices",
+   "source": "llm",
+   "description": "The actors occasionally exploit common vulnerabilities and exposures (CVEs) in Cisco devices, Cisco’s Smart Install (SMI) functionality, and web portals to manage network devices. The actors previously exploited at least CVE-2018-0171 and CVE-2008-4128.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Copying the router configuration to a file depends on scanning to identify poorly configured devices",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Transferring the configuration file to an actor-controlled server depends on having copied the configuration file",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Scanning precedes exploiting CVEs as alternative discovery and exploitation method",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted devices for exploitation",
+   "source": "llm",
+   "name": "poorly configured networking devices",
+   "network_placement": "Internet-facing routers",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1",
+    "s2",
+    "s4"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "infrastructure for receiving exfiltrated configuration files",
+   "source": "llm",
+   "name": "actor-controlled leased virtual private server (VPS) or compromised FTP server",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s3"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Simple Network Management Protocol (SNMP) agent",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Trivial File Transfer Protocol (TFTP)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "FTP server",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "Cisco Smart Install (SMI) functionality",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2018-0171",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-13"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2008-412813",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2008-4128",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "media.defense.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "dibnet.dod.mil",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "www.sicurezzanazionale.gov.it",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The Russian FSB Center 16 cyber actors primarily use scanning to identify poorly configured networking devices, primarily routers, for exploitation. The actors scan for Internet IP ranges with active Simple Network Management Protocol (SNMP) agents that accept common or default community strings for authentication [T1595.001, T1595.002]. These scans, run via proxies, consist of SNMP Set-Requests from a spoofed IP address containing Object Identifiers (OIDs) that instruct the SNMP agent on poorly configured networking devices to [T1569, T1602.001, T1090]:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Russian FSB Center 16 cyber actors primarily use scanning to identify poorly\n  configured networking devices, primarily routers, for exploitation. The actor"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Copy its configuration to a file, often called “config.bkp” or “output.txt” [T1003, T1602.002].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Copy its configuration to a file, often called “config.bkp” or “output.txt” [T1003, T1602.002]."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor-controlled leased virtual private server (VPS) or compromised FTP server [T1583.003, T1090, T1071, T1048].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor controlled leased virtual private server (VPS) or compromised FTP server ["
+  },
+  {
+   "id": "evidence-4",
+   "quote": "While SNMP scanning is the primary method the actors use to discover and exploit poorly configured networking devices, they occasionally exploit common vulnerabilities and exposures (CVEs) in Cisco devices, Cisco’s Smart Install (SMI) functionality, and web portals to manage network devices. The actors previously exploited at least the following CVEs [T1584.008, T1588.005, T1190, T1068]:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6744,
+   "matched_text": "While SNMP scanning is the primary method the actors use to discover and exploit poorly configured networking devices, they occasionally exploit common vulnerab"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "•     CVE-2018-0171\n        •     CVE-2008-412813",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "•     CVE-2018-0171\n        •     CVE-2008-412813"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "•     Copy its configuration to a file, often called “config.bkp” or “output.txt” [T1003, T1602.002].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "• Copy its configuration to a file, often called “config.bkp” or “output.txt” [T1003, T1602.002]."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "•     Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor-controlled leased virtual private server (VPS) or compromised FTP server [T1583.003, T1090, T1071, T1048].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "• Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor controlled leased virtual private server (VPS) or compromised FTP server"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "While SNMP scanning is the primary method the actors use to discover and exploit poorly configured networking devices, they occasionally exploit common vulnerabilities and exposures (CVEs) in Cisco devices, Cisco’s Smart Install (SMI) functionality, and web portals to manage network devices.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The Russian FSB Center 16 cyber actors primarily use scanning to identify poorly configured networking devices, primarily routers, for exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Russian FSB Center 16 cyber actors primarily use scanning to identify poorly configured networking devices, primarily routers, for exploitation."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The actors scan for Internet IP ranges with active Simple Network Management Protocol (SNMP) agents that accept common or default community strings for authentication",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors scan for Internet IP ranges with active Simple Network Management Protocol (SNMP) agents that accept common or default community strings for authenti"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor-controlled leased virtual private server (VPS) or compromised FTP server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Transfer the file, typically using Trivial File Transfer Protocol (TFTP), to an actor controlled leased virtual private server (VPS) or compromised FTP server"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The actors occasionally exploit common vulnerabilities and exposures (CVEs) in Cisco devices, Cisco’s Smart Install (SMI) functionality, and web portals to manage network devices.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7895,
+   "matched_text": " occasionally exploit common vulnerabilities and exposures (CVEs) in Cisco devices, Cisco’s Smart Install (SMI) functionality, and"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CVE-2018-0171",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 0171"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CVE-2008-412813",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2008 412813"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2008-4128",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2008 4128"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "42"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "media.defense.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "42"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "media.defense.gov"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "media.defense.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "media.defense.gov"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "dibnet.dod.mil",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dibnet.dod.mil"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "www.sicurezzanazionale.gov.it",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.sicurezzanazionale.gov.it"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "poorly configured networking devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "poorly configured networking devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — poorly configured networking devices",
+    "action:a1 — Scan for poorly configured networking devices using SNMP",
+    "action:a2 — Copy router configuration to a file",
+    "action:a4 — Exploit common vulnerabilities and exposures (CVEs) in Cisco devices"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "poorly configured networking devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "poorly configured networking devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "poorly configured networking devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — poorly configured networking devices",
+    "action:a1 — Scan for poorly configured networking devices using SNMP",
+    "action:a2 — Copy router configuration to a file",
+    "action:a4 — Exploit common vulnerabilities and exposures (CVEs) in Cisco devices"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "poorly configured networking devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-10",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "actor-controlled leased virtual private server (VPS) or compromised FTP server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "actor-controlled leased virtual private server (VPS) or compromised FTP server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — actor-controlled leased virtual private server (VPS) or compromised FTP server",
+    "action:a3 — Transfer configuration file to actor-controlled server"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "actor-controlled leased virtual private server (VPS) or compromised FTP server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "actor-controlled leased virtual private server (VPS) or compromised FTP server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "actor-controlled leased virtual private server (VPS) or compromised FTP server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — actor-controlled leased virtual private server (VPS) or compromised FTP server",
+    "action:a3 — Transfer configuration file to actor-controlled server"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "actor-controlled leased virtual private server (VPS) or compromised FTP server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "actor-controlled leased virtual private server (VPS) or compromised FTP server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "actor-controlled leased virtual private server (VPS) or compromised FTP server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — actor-controlled leased virtual private server (VPS) or compromised FTP server",
+    "action:a3 — Transfer configuration file to actor-controlled server"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "actor-controlled leased virtual private server (VPS) or compromised FTP server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Simple Network Management Protocol (SNMP) agent — 版本",
+   "category": "version",
+   "reason": "IR 指出 Simple Network Management Protocol (SNMP) agent，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Simple Network Management Protocol (SNMP) agent 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Simple Network Management Protocol (SNMP) agent",
+    "action:a1 — Scan for poorly configured networking devices using SNMP"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Simple Network Management Protocol (SNMP) agent",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a3 — Transfer configuration file to actor-controlled server",
+    "host:h2 — actor-controlled leased virtual private server (VPS) or compromised FTP server"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Transfer configuration file to actor-controlled server",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-simple-network-management-p",
+   "field": "software dependency: Simple Network Management Protocol (SNMP) agent",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Simple Network Management Protocol (SNMP) agent 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-trivial-file-transfer-proto",
+   "field": "software dependency: Trivial File Transfer Protocol (TFTP)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Trivial File Transfer Protocol (TFTP) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-ftp-server",
+   "field": "software dependency: FTP server",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "FTP server 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-cisco-smart-install-smi-fun",
+   "field": "software dependency: Cisco Smart Install (SMI) functionality",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "Cisco Smart Install (SMI) functionality 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_cve-cve-2018-0171",
+   "field": "affected software for CVE-2018-0171",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2008-4128",
+   "field": "affected software for CVE-2008-4128",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.85,
+  "unsupported_claim_count": 3,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

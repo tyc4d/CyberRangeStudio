@@ -1,0 +1,83 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "target of ransomware attacks, data theft, and disruption of distance learning services",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Server Message Block (SMB)",
+     "port": 445,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP)、Server Message Block (SMB)、distance learning services、video conferencing applications、student database servers 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6 require access to Remote Desktop Protocol (RDP).",
+   "port": 3389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 3389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a4, a5, a6); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service distance learning services (s3); it remains unreachable by default.",
+  "No port is known for service video conferencing applications (s4); it remains unreachable by default.",
+  "No port is known for service student database servers (s5); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

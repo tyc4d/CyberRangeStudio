@@ -1,0 +1,446 @@
+[
+ {
+  "id": "p1",
+  "text": "# AI Data Security"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2025-05-22\n> - URL: https://www.ic3.gov/CSA/2025/250522.pdf\n> - PDF SHA-256: bce55417db5b25f7109ce1bfdf7b25ddbd7e7a3c92970f3a64f2c7956789bb6d (`source.pdf`, 22 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (44 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Joint Cybersecurity Information"
+ },
+ {
+  "id": "p4",
+  "text": "Best Practices for Securing Data Used to Train & Operate AI Systems"
+ },
+ {
+  "id": "p5",
+  "text": "Executive summary\nThis Cybersecurity Information Sheet (CSI) provides essential guidance on securing\ndata used in artificial intelligence (AI) and machine learning (ML) systems. It also\nhighlights the importance of data security in ensuring the accuracy and integrity of AI\noutcomes and outlines potential risks arising from data integrity issues in various stages\nof AI development and deployment."
+ },
+ {
+  "id": "p6",
+  "text": "This CSI provides a brief overview of the AI system lifecycle and general best practices\nto secure data used during the development, testing, and operation of AI-based\nsystems. These best practices include the incorporation of techniques such as data\nencryption, digital signatures, data provenance tracking, secure storage, and trust\ninfrastructure. This CSI also provides an in-depth examination of three significant areas\nof data security risks in AI systems: data supply chain, maliciously modified (“poisoned”)\ndata, and data drift. Each section provides a detailed description of the risks and the\ncorresponding best practices to mitigate those risks."
+ },
+ {
+  "id": "p7",
+  "text": "This guidance is intended primarily for organizations using AI systems in their\noperations, with a focus on protecting sensitive, proprietary, or mission critical data. The\nprinciples outlined in this information sheet provide a robust foundation for securing AI\ndata and ensuring the reliability and accuracy of AI-driven outcomes."
+ },
+ {
+  "id": "p8",
+  "text": "This document was authored by the National Security Agency’s Artificial Intelligence\nSecurity Center (AISC), the Cybersecurity and Infrastructure Security Agency (CISA),\nthe Federal Bureau of Investigation (FBI), the Australian Signals Directorate’s Australian\nCyber Security Centre (ASD’s ACSC), the New Zealand’s Government Communications"
+ },
+ {
+  "id": "p9",
+  "text": "This information is marked TLP:CLEAR. TLP:CLEAR information may be distributed without restriction. For more\ninformation on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p10",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                 TLP:CLEAR"
+ },
+ {
+  "id": "p11",
+  "text": "Security Bureau’s National Cyber Security Centre (NCSC-NZ), and the United\nKingdom’s National Cyber Security Centre (NCSC-UK)."
+ },
+ {
+  "id": "p12",
+  "text": "The goals of this guidance are to:\n          Raise awareness of the potential risks related to data security in the\n          development, testing, and deployment of AI systems;\n          Provide guidance and best practices for securing AI data across various stages\n          of the AI lifecycle, with an in-depth description of the three aforementioned\n          significant areas of data security risks; and\n          Establish a strong foundation for data security in AI systems by promoting the\n          adoption of robust data security measures and encouraging proactive risk\n          mitigation strategies."
+ },
+ {
+  "id": "p13",
+  "text": "Introduction\nThe data resources used during the development, testing, and operation of an AI1\nsystem are a critical component of the AI supply chain; therefore, the data resources\nmust be protected and secured. In its Data Management Lexicon, [1] the Intelligence\nCommunity (IC) defines Data Security as “The ability to protect data resources from\nunauthorized discovery, access, use, modification, and/or destruction…. Data Security\nis a component of Data Protection.”\nData security is paramount in the development and deployment of AI systems.\nTherefore, it is a key component of strategies developed to safeguard and manage the\noverall security of AI-based systems. Successful data management strategies must\nensure that the data has not been tampered with at any point throughout the entire AI\nsystem lifecycle; is free from malicious, unwanted, and unauthorized content; and does\nnot have unintentional duplicative or anomalous information. Note that AI data security\ndepends on robust, fundamental cybersecurity protection for all datasets used in\ndesigning, developing, deploying, operating, and maintaining AI systems and the ML\nmodels that enable them."
+ },
+ {
+  "id": "p14",
+  "text": "1 In this document, Artificial Intelligence (AI) has the meaning set forth in 15 U.S.C. 9401(3):"
+ },
+ {
+  "id": "p15",
+  "text": "“… a machine-based system that can, for a given set of human-defined objectives, make predictions, recommendations, or\ndecisions influencing real or virtual environments. AI systems use machine- and human-based inputs to:\n  (A) Perceive real and virtual environments;\n  (B) Take these perceptions and turn them into models through analysis in an automated manner; and\n  (C) Use model inference to formulate options for information or action.”"
+ },
+ {
+  "id": "p16",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                             TLP:CLEAR    2"
+ },
+ {
+  "id": "p17",
+  "text": "Audience and scope\nThis CSI outlines potential risks in AI systems stemming from data security issues that\narise during different phases of an AI deployment, and it introduces recommended\nprotocols to mitigate these risks. This guidance builds upon the NSA’s joint guidance on\nDeploying AI Systems Securely [2] and delves deeper into securing the data used to\ntrain and operate AI-based systems. This guidance is primarily developed for\norganizations that use AI systems in their day-to-day operations, including the Defense\nIndustrial Base (DIB), National Security System (NSS) owners, Federal Civilian\nExecutive Branch (FCEB) agencies, and critical infrastructure owners and operators.\nImplementing these mitigations can help secure AI-enabled systems and protect\nproprietary, sensitive, and/or mission critical data."
+ },
+ {
+  "id": "p18",
+  "text": "Securing data throughout the AI system lifecycle\nData security is a critical enabler that spans all phases of the AI system lifecycle. ML\nmodels learn their decision logic from data, so an attacker who can manipulate the data\ncan also manipulate the logic of an AI-based system. In the AI Risk Management\nFramework (RMF) [3], the National Institute of Standards and Technology (NIST)\ndefines six major stages in the lifecycle of AI systems, starting from Plan & Design and\nprogressing all the way to Operate & Monitor. The following table highlights relevant\ndata security factors for each stage of the AI lifecycle:\nTable 1: The AI System Lifecycle with key dimensions, necessary ongoing assessments, focus\nareas for data security, and particular data security risks covered in this CSI. [3]"
+ },
+ {
+  "id": "p19",
+  "text": "Test,                              Particular Data\n     AI                                Evaluation,\n                     Key                               Potential Focus Areas Security Risks\n Lifecycle                             Verification,                         Covered in this\n                  Dimensions                             for Data Security\n   Stage                               & Validation                                CSI\n                                         (TEVV)\n                                                     Incorporating data\n                                                     security measures from\n                                                     inception, designing    Data supply\n1) Plan &       Application           Audit & Impact\n                                                     robust security         chain\nDesign          Context               Assessment\n                                                     protocols, threat\n                                                     modeling, and including\n                                                     privacy by design"
+ },
+ {
+  "id": "p20",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                    TLP:CLEAR   3"
+ },
+ {
+  "id": "p21",
+  "text": "Test,                              Particular Data\n     AI                                Evaluation,\n                     Key                               Potential Focus Areas Security Risks\n Lifecycle                             Verification,                         Covered in this\n                  Dimensions                             for Data Security\n   Stage                               & Validation                                CSI\n                                         (TEVV)\n                                                       Ensuring data integrity,\n                                                       authenticity, encryption,   Data supply\n2) Collect                            Internal &                                   chain,\n                                                       access controls, data\n& Process Data & Input                External                                     maliciously\n                                                       minimization,\nData                                  Validation                                   modified data\n                                                       anonymization, and\n                                                       secure data transfer\n                                                    Protecting data from\n                                                    tampering, ensuring\n                                                    data quality and privacy\n                                                    (including differential        Data supply\n3) Build &                                                                         chain,\n                                                    privacy and secure\nUse        AI Model                   Model Testing                                maliciously\n                                                    multi-party computation\nModel                                                                              modified data\n                                                    when appropriate and\n                                                    possible), securing\n                                                    model training, and\n                                                    operating environments\n                                                    Performing\n                                                    comprehensive security\n                                                    testing, identifying and       Data supply\n                                                    mitigating risks,              chain,\n4) Verify &\n            AI Model                  Model Testing validating data integrity,     maliciously\nValidate\n                                                    adversarial testing, and       modified data\n                                                    formal verification when\n                                                    appropriate and\n                                                    possible\n                                                       Implementing strict\n                                                       access controls, zero-\n                                                       trust infrastructure,       Data supply\n                        Integration,                                               chain,\n                                                       secure data\n5) Deploy               Compliance                                                 maliciously\n          Task & Output                                transmission and\n& Use                   Testing,                                                   modified data,\n                                                       storage, secure API\n                        Validation                                                 data drift\n                                                       endpoints, and\n                                                       monitoring for\n                                                       anomalous behavior"
+ },
+ {
+  "id": "p22",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                          TLP:CLEAR   4"
+ },
+ {
+  "id": "p23",
+  "text": "Test,                              Particular Data\n     AI                                Evaluation,\n                     Key                               Potential Focus Areas Security Risks\n Lifecycle                             Verification,                         Covered in this\n                  Dimensions                             for Data Security\n   Stage                               & Validation                                CSI\n                                         (TEVV)\n                                                     Conducting continuous\n                                                     risk assessments,         Data supply\n                                                     monitoring for data       chain,\n6)\n          Application                 Audit & Impact breaches, deleting data maliciously\nOperate &\n          Context                     Assessment     securely, complying with modified data,\nMonitor\n                                                     regulations, incident     data drift\n                                                     response planning, and\n                                                     regular security auditing"
+ },
+ {
+  "id": "p24",
+  "text": "Throughout the AI system lifecycle, securing data is paramount to maintaining\ninformation integrity and system reliability. Starting with the initial Plan & Design\nphase, carefully plan data protection measures to provide proactive mitigations of\npotential risks. In the Collect & Process Data phase, data must be carefully analyzed,\nlabeled, sanitized, and protected from breaches and tampering. Securing data in the\nBuild & Use Model phase helps ensure models are trained on reliably sourced,\naccurate, and representative information. In the Verify & Validate phase,\ncomprehensive and thorough testing of AI models, derived from training data, can\nidentify security flaws and enable their mitigation."
+ },
+ {
+  "id": "p25",
+  "text": "Note that Verification & Validation is necessary each time new data or user feedback\nis introduced into the model; therefore, that data also needs to be handled with the\nsame security standards as AI training data. Implementing strict access controls\nprotects data from unauthorized access, especially in the Deploy & Use phase. Lastly,\ncontinuous data risk assessments in the Operate & Monitor phase are necessary to\nadapt to evolving threats. Neglecting these practices can lead to data corruption,\ncompromised models, data leaks, and non-compliance, emphasizing the critical\nimportance of robust data security at every phase."
+ },
+ {
+  "id": "p26",
+  "text": "Best practices to secure data for AI-based systems\nThe following list contains recommended practical steps that system owners can take to\nbetter protect the data used to build and operate their AI-based systems, whether\nrunning on premises or in the cloud. For more details on general cybersecurity best"
+ },
+ {
+  "id": "p27",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                     TLP:CLEAR   5"
+ },
+ {
+  "id": "p28",
+  "text": "practices, see also NIST SP 800-53, “Security and Privacy Controls for Information\nSystems and Organizations.” [33]"
+ },
+ {
+  "id": "p29",
+  "text": "1. Source reliable data and track data provenance\nVerify data sources use trusted, reliable, and accurate data for training and operating AI\nsystems. To the extent possible, only use data from authoritative sources. Implement\nprovenance tracking to enable the tracing of data origins, and log the path that data\nfollows through an AI system. [7] [8] [9] Incorporate a secure provenance database that\nis cryptographically signed and maintains an immutable, append-only ledger of data\nchanges. This facilitates data provenance tracking, helps identify sources of maliciously\nmodified data, and helps ensure that no single entity can undetectably manipulate the\ndata.\n2. Verify and maintain data integrity during storage and transport\nMaintaining data integrity2 is an essential component to preserve the accuracy,\nreliability, and trustworthiness of AI data. [4] Use checksums and cryptographic hashes\nto verify that data has not been altered or tampered with during storage or transmission.\nGenerating such unique codes for AI datasets enables the detection of unauthorized\nchanges or corruption, safeguarding the information’s authenticity.\n3. Employ digital signatures to authenticate trusted data revisions\nDigital signatures help ensure data integrity and prevent tampering by third parties.\nAdopt quantum-resistant digital signature standards [5] [6] to authenticate and verify\ndatasets used during AI model training, fine tuning, alignment, reinforcement learning\nfrom human feedback (RLHF), and/or other post-training processes that affect model\nparameters. Original versions of the data should be cryptographically signed, and any\nsubsequent data revisions should be signed by the person who made the change.\nOrganizations are encouraged to use trusted certificate authorities to verify this process.\n4. Leverage trusted infrastructure\nUse a trusted computing environment that leverages Zero Trust architecture. [10]\nProvide secure enclaves for data processing and keep sensitive information protected\nand unaltered during computations. This approach fosters a secure foundation for data\nprivacy and security in AI data workflows by isolating sensitive operations and mitigating"
+ },
+ {
+  "id": "p30",
+  "text": "2 Data integrity is defined by the IC Data Management Lexicon [1] as “The degree to which data can be trusted due to its"
+ },
+ {
+  "id": "p31",
+  "text": "provenance, pedigree, lineage and conformance with all business rules regarding its relationship with other data. In the context\nof data movement, this is the degree to which data has verifiably not been changed unexpectedly by a person or NPE.”"
+ },
+ {
+  "id": "p32",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                                   TLP:CLEAR        6"
+ },
+ {
+  "id": "p33",
+  "text": "risks of tampering. Trusted computing infrastructure supports the integrity of data\nprocesses, reduces risks associated with unverified or altered data, and ultimately\ncreates a more robust and transparent AI ecosystem. Trusted environments are\nessential for AI applications where data accuracy directly impacts their decision-making\nprocesses.\n5. Classify data and use access controls\nCategorize data using a classification system based on sensitivity and required\nprotection measures. [11] This process enables organizations to apply appropriate\nsecurity controls to different data types. Classifying data enables the enforcement of\nrobust protection measures like stringent encryption and access controls. [33] In\ngeneral, the output of AI systems should be classified at the same level as the input\ndata (rather than creating a separate set of guardrails)."
+ },
+ {
+  "id": "p34",
+  "text": "6. Encrypt data\nAdopt advanced encryption protocols proportional to the organizational data protection\nlevel. This includes securing data at rest, in transit, and during processing. AES-256\nencryption is the de facto industry standard and is considered resistant to quantum\ncomputing threats. [12] [13][13] Use protocols, such as TLS with AES-256 or post-\nquantum encryption, for data in transit. Refer to NIST SP 800-52r2, “Guidelines for the\nSelection, Configuration, and Use of Transport Layer Security (TLS) Implementations”\n[14] for more details."
+ },
+ {
+  "id": "p35",
+  "text": "7. Store data securely\nStore data in certified storage devices that enforce NIST FIPS 140-3 [15] compliance,\nensuring that the cryptographic modules used to encrypt the data provide high-level\nsecurity against advanced intrusion attempts. Note that Security Level 3 (defined in\nNIST FIPS 140-2 [16]) provides robust data protection; however, evaluate and\ndetermine the appropriate level of security based on organizational needs and risk\nassessments.\n8. Leverage privacy-preserving techniques\nThere are several privacy-preserving techniques [17] that can be leveraged for\nincreased data security. Note that there may be practical limitations to their\nimplementation due to computational cost.\n   Data depersonalization techniques (e.g., data masking [18]) involve replacing\n    sensitive data with inauthentic but realistic information that maintains the"
+ },
+ {
+  "id": "p36",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                TLP:CLEAR   7"
+ },
+ {
+  "id": "p37",
+  "text": "distributions of values throughout the dataset. This enables AI systems to utilize\n    datasets without exposing sensitive information, reducing the impact of data\n    breaches and supporting secure data sharing and collaboration. When possible, use\n    data masking to facilitate AI model training and development without compromising\n    sensitive information (e.g., personally identifiable information [PII]).\n   Differential privacy is a framework that provides a mathematical guarantee\n    quantifying the level of privacy of a dataset or query. It requires a pre-specified\n    privacy budget for the level of noise added to the data, but there are tradeoffs\n    between protecting the training data from membership inference techniques and\n    target task accuracy. Refer to [17] for further details.\n   Decentralized learning techniques (e.g., federated learning [19]) permit AI system\n    training over multiple local datasets with limited sharing of data among local\n    instances. An aggregator model incorporates the results of the distributed models,\n    limiting access on the local instance to the larger training dataset. Secure multi-party\n    computation is recommended for training and inferencing processes.\n9. Delete data securely\nPrior to repurposing or decommissioning any functional drives used for AI data storage\nand processing, erase them using a secure deletion method such as cryptographic\nerase, block erase, or data overwrite. Refer to NIST SP 800-88, “Guidelines for Media\nSanitization,” [20] for guidance on appropriate deletion methods.\n10. Conduct ongoing data security risk assessments\nConduct ongoing risk assessments using industry-standard frameworks, such as the\nNIST SP 800-3r2, Risk Management Framework (RMF) [4] [21], and the NIST AI 100-1,\nArtificial Intelligence RMF [3]. These assessments should evaluate the AI data security\nlandscape, identify risks, and prioritize actions to minimize security incidents.\nContinuously improve data security measures to keep pace with evolving threats and\nvulnerabilities, learn from security incidents, stay up to date with emerging technologies,\nand maintain a robust security posture."
+ },
+ {
+  "id": "p38",
+  "text": "Data supply chain – risks and mitigations\n         Relevant AI Lifecycle stages: 1) Plan & Design; 2) Collect & Process Data; 3) Build & Use Model;\n         4) Verify & Validate; 5) Deploy & Use; 6) Operate & Monitor"
+ },
+ {
+  "id": "p39",
+  "text": "Developing and deploying secure and reliable AI systems requires understanding\npotential risks and methods of introducing inaccurate or maliciously modified (a.k.a.\n“poisoned”) data into the system. In short, the security of AI systems depends on"
+ },
+ {
+  "id": "p40",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                             TLP:CLEAR       8"
+ },
+ {
+  "id": "p41",
+  "text": "thorough verification of training data and proactive measures to detect and prevent the\nintroduction of inaccurate material."
+ },
+ {
+  "id": "p42",
+  "text": "Threats can stem from large-scale data collected and curated by third parties, as well as\nfrom data that is not sufficiently protected after ingestion. Data collected and/or curated\nby a third party may contain inaccurate information, either unintentionally or through\nmalicious intent. Inaccurate material can compromise not only models trained using that\ndata, but also any additional models that rely on compromised models as a foundation.\nIt is crucial, therefore, to verify the integrity of the training data used when building an AI\nsystem. Organizations that utilize third-party data must take appropriate measures to\nensure that: 1) the data is not compromised upon ingestion; and 2) the data cannot be\ncompromised after it has been incorporated into the AI system. As such, both data\ncurators and data consumers should follow the best practices for digital signatures, data\nintegrity, and data provenance that are described in detail above."
+ },
+ {
+  "id": "p43",
+  "text": "General risks for data consumers3\nThe use of web-scale databases includes all of the risks outlined earlier, and one\ncannot simply assume that these datasets are clean, accurate, and free of malicious\ncontent. Third-party models trained on web-scraped data used to train a model for\ndownstream tasks could also affect the model’s learning process and result in behavior\nthat was unintended by the AI system designer."
+ },
+ {
+  "id": "p44",
+  "text": "From the moment data is ingested for use with AI systems, the data acquirer must\nsecure it against insider threats and malicious network activity to prevent unauthorized\nmodification.\nMitigation strategies:"
+ },
+ {
+  "id": "p45",
+  "text": "   Dataset verification: Before ingest, the consumer or curator should verify, as much\n    as possible, that the dataset to be ingested is free of malicious or inaccurate\n    material. Any detected abnormalities should be addressed, and suspicious data\n    should not be stored. The dataset verification process should include a digital\n    signature of the dataset at time of ingestion.\n   Content credentials: Use content credentials to track the provenance of media and\n    other data. Content credentials are “metadata that are secured cryptographically and"
+ },
+ {
+  "id": "p46",
+  "text": "3 The term data consumers is defined as technical personnel (e.g. data scientists, engineers) who make use of data that they"
+ },
+ {
+  "id": "p47",
+  "text": "themselves did not produce or annotate to build and/or operate AI systems."
+ },
+ {
+  "id": "p48",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                                TLP:CLEAR       9"
+ },
+ {
+  "id": "p49",
+  "text": "allow creators the ability to add information about themselves or their creative\n    process, or both, directly to media content…. Content Credentials securely bind\n    essential metadata to a media file that can track its origin(s), any edits made, and/or\n    what was used to create or modify the content…. This metadata alone does not\n    allow a consumer to determine whether a piece of content is ‘true,’ but rather\n    provides contextual information that assists in determining the authenticity of the\n    content.” [24]\n   Foundation model assurances: In the case where a consumer is not ingesting a\n    dataset but a foundation model trained by another party, the developers of the\n    foundation model need to be able to provide assurances regarding the data and\n    sources used and certify that their training data did not contain any known\n    compromised data. Take care to track the training data used in various model\n    lineages. Exercise caution before using a model without such assurances.\n   Require certification: Data consumers should strongly consider requiring a formal\n    certification from dataset and model providers, attesting that their systems are free\n    from known compromised data before using third-party data and/or foundation\n    models.\n   Secure storage: After ingest, data needs to be stored in a database that adheres to\n    the best practices for digital signatures, data integrity, and data provenance that are\n    described in detail above. Note that an append-only cryptographically signed\n    database should be used where feasible, but there may be a need to delete older\n    material that is no longer relevant. Each time a data element is updated (e.g.,\n    resized, cropped, flipped, etc.) for augmentation purposes in a non-temporary\n    fashion, then the updated data should be stored as a new entry with documented\n    changes. The database’s certificate should be verified at the time the database is\n    accessed for a training run. If the database does not pass the certificate check, abort\n    the training and conduct a comprehensive database audit to discover any data\n    modifications.\n2023 investigations by various industry professionals explored low-resource methods\nfor introducing malicious or inaccurate material into web-scale datasets, and potential\nstrategies to mitigate this risk. [29] These vulnerabilities depend on the fact that curators\nor collectors do not have control over the data, as seen in cases of datasets curated by\nthird parties (e.g., LAION) or datasets that are continually updated and released (e.g.,\nWikipedia)."
+ },
+ {
+  "id": "p50",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                  TLP:CLEAR      10"
+ },
+ {
+  "id": "p51",
+  "text": "Risk: Curated web-scale datasets\nCurated AI datasets (e.g., LAION-2B or COYO-700M) are vulnerable to a type of\ntechnique known as split-view poisoning. This risk arises because these datasets\noften contain data hosted on domains that may have expired or are no longer actively\nmaintained by their original owners. In such cases, anyone who purchases these\nexpired domains gains control over the content hosted on them. This situation creates\nan opportunity for malicious actors to modify or replace the data that the curated list\npoints to, potentially introducing inaccurate or misleading information into the dataset. In\nmany instances, it is possible to purchase enough control of a dataset to conduct\neffective poisoning for roughly $1,000 USD. In some cases, effective techniques can\ncost as little as $60 USD (e.g., COYO-700M), making this a viable threat from low-\nresource threat actors.\nMitigation strategies:"
+ },
+ {
+  "id": "p52",
+  "text": "   Raw data hashes: Data curators should attach a cryptographic hash to all raw data\n    referenced in the dataset. This will enable follow-on data consumers to verify that\n    the data has not changed since it was added to the list.\n   Hash verification: Data consumers should incorporate a hash check at time of\n    download in order to detect any changes made to it, and the downloader should\n    discard any data that does not pass the hash check.\n   Periodic checks: Curators should periodically scrape the data themselves to verify\n    that the data has not been modified. If any changes are detected, the curator should\n    take appropriate steps to ensure the data’s integrity.\n   Verifying data: Curators should verify that any changed data is clean and free from\n    inaccurate or malicious material. If the content of the data has been altered in any\n    way, the curator should either remove it from their list or flag it for further review.\n   Certification by curators: Since the data supply chain begins with the curators, the\n    certification process must start there as well. To the best of their ability, curators\n    should be able to certify that, at the time of publication, the dataset contains no\n    malicious or inaccurate material."
+ },
+ {
+  "id": "p53",
+  "text": "Risk: Collected web-scale datasets\nCollected web-scale datasets (e.g., Wikipedia) are vulnerable to frontrunning\npoisoning techniques. Frontrunning poisoning occurs when an actor injects malicious\nexamples in a short time window before websites with crowd-sourced content collect a"
+ },
+ {
+  "id": "p54",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                 TLP:CLEAR      11"
+ },
+ {
+  "id": "p55",
+  "text": "snapshot of their data. Wikipedia in particular conducts twice-monthly snapshots of their\ndata and publishes these snapshots for people to download. Since the snapshots\nhappen at known times, it is possible for malicious actors to edit pages close enough to\nthe snapshot time so that malicious edits will be captured and published before they can\nbe discovered and corrected. Industry analysis demonstrated potential malicious actors\nwould be able to successfully poison as much as 6.5% of Wikipedia. [29]"
+ },
+ {
+  "id": "p56",
+  "text": "Mitigation strategies:\n   Test & verify web-scale datasets: Be cautious when using web-scale datasets that\n    are vulnerable to frontrunning poisoning. Check that the data hasn’t been\n    manipulated, and only use snapshots verified by a trusted party.\n   (For web-scale data collectors) Randomize or lengthen snapshots: Collectors\n    such as Wikipedia should defend against actors making malicious edits ahead of a\n    planned snapshot by:\n         1. Randomizing the snapshot order.\n         2. Freezing edits to content long enough for edits to go through review before\n            releasing the snapshot."
+ },
+ {
+  "id": "p57",
+  "text": "These mitigations focus on increasing the amount of time a malicious actor must\n         maintain control of the data for it to be included in the published snapshot. Any\n         reasonable methods that increase the time a malicious actor must control the\n         data are also recommended.\n         Note that these mitigations are limited since they rely on trusted curators who\n         can detect malicious edits. It is more difficult to defend against subtle edits (e.g.,\n         attempts to insert hidden watermarks) that appear valid to human reviewers but\n         impact machine understanding."
+ },
+ {
+  "id": "p58",
+  "text": "Risk: Web-crawled datasets\nWeb-crawled datasets present a unique intersection of the risks discussed above. Since\nweb-crawled datasets are substantially less curated than other web-scale datasets, they\nbring increased risk. There are no trusted curators to detect malicious edits. There are\nno original curated views to which cryptographic hashes can be attached. The\nunfortunate reality is that “updates to a web page have no realistic bound on the delta\nbetween versions which might act as a signal for attaching trust.” [29]\nMitigation strategies:"
+ },
+ {
+  "id": "p59",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                     TLP:CLEAR     12"
+ },
+ {
+  "id": "p60",
+  "text": "   Consensus approaches: Data consumers using web-crawled datasets should rely\n    on consensus-based approaches, since notional determinations of which domains to\n    trust are ad-hoc and insufficient. For example, an AI developer could choose to only\n    trust an image-caption pair when it appears on many different websites to reduce\n    susceptibility to poisoning techniques, since a malicious actor would have to poison\n    a sufficiently large number of websites to be successful.\n   Data curation: Ultimately, it is incumbent on organizations to ensure malicious or\n    inaccurate material is not present in the data they use. If an organization does not\n    have resources to conduct the necessary due diligence, then the use of web-crawled\n    datasets is not recommended until some sort of trust infrastructure can be\n    implemented."
+ },
+ {
+  "id": "p61",
+  "text": "Final note on web-scale datasets and data poisoning\nBoth split-view and frontrunning poisoning are reasonably straightforward for a\nmalicious actor to execute, since they do not require particularly sophisticated\nmethodology. These poisoning techniques should be considered viable threats by\nanyone looking to incorporate web-scale data into their AI systems. The danger here\ncomes not only from directly using compromised data, but also from using models which\nmay themselves have been trained on compromised data.\nUltimately, data poisoning must be addressed from a supply chain perspective by those\nwho train and fine-tune AI models. Proper supply chain integrity and security\nmanagement (i.e., selecting reliable model providers and verifying the legitimacy of the\nmodels used) can reduce the risk of data poisoning and system compromise. The most\nreliable providers are those who assure that they do everything possible to prevent the\ninfluence and distribution of poisoned data and models. [34]\nEvery effort must be made by those building foundation models to filter out malicious\nand inaccurate data. Foundation models are evolving rapidly, and filtering out\ninaccurate, unauthorized, and malicious training data is an active area of research,\nparticularly at web-scale. As such, is currently impractical to prescribe precise methods\nfor doing so; it is a best-effort endeavor. Ideally, data curators and foundation model\nproviders should be able to attest to their filtering methods and provide evidence (e.g.\ntest results) of their effectiveness. Likewise, if possible, downstream model consumers\nshould include a review of the security claims as part of their security processes before\naccepting a foundation model for use."
+ },
+ {
+  "id": "p62",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                TLP:CLEAR    13"
+ },
+ {
+  "id": "p63",
+  "text": "Maliciously modified data – risks and mitigations\n          Relevant AI Lifecycle stages: 2) Collect & Process Data; 3) Build & Use Model; 4) Verify &\n          Validate; 5) Deploy & Use; 6) Operate & Monitor"
+ },
+ {
+  "id": "p64",
+  "text": "Maliciously modified data presents a significant threat to the accuracy and integrity of AI\nsystems. Deliberate manipulation of data can result in inaccurate outcomes, poor\ndecisions, and compromised security. Note that there are also risks associated with\nunintentional data errors and duplications that can affect the security and performance\nof AI systems. Challenges like adversarial machine learning threats, statistical bias, and\ninaccurate information can impact the overall security of AI-driven outcomes."
+ },
+ {
+  "id": "p65",
+  "text": "Risk: Adversarial Machine Learning threats\nAdversarial Machine Learning (AML) threats involve intentional, malicious attempts to\ndeceive, manipulate, or disrupt AI systems. [7] [17] [22] Malicious actors employ data\npoisoning to corrupt the learning process, compromising the integrity of training\ndatasets and leading to unreliable or malicious model behavior. Additionally, malicious\nactors may introduce adversarial examples into datasets that, while subtle, can evade\ncorrect classification, thereby undermining the model’s performance. Furthermore,\nsensitive information in training datasets can be indirectly extracted through\ntechniques like model inversion4, posing significant data security risks."
+ },
+ {
+  "id": "p66",
+  "text": "Mitigation Strategies:\n    Anomaly detection: Incorporate anomaly detection algorithms during data pre-\n     processing to identify and remove malicious or suspicious data points before\n     training. These algorithms can recognize statistically deviant patterns in the data,\n     making it possible to isolate and eliminate poisoned inputs.\n    Data sanitization: Sanitize the training data by applying techniques like data\n     filtering, sampling, and normalization. This helps reduce the impact of outliers, noisy\n     data, and other potentially poisoned inputs, ensuring that models learn from high-\n     quality, representative datasets. Perform sanitization on a regular basis, especially\n     prior to each and every training, fine-tuning, or any other process that adjusts model\n     parameters."
+ },
+ {
+  "id": "p67",
+  "text": "4 Model inversion refers to the process by which an attacker analyzes the output patterns of an AI system to reverse-engineer"
+ },
+ {
+  "id": "p68",
+  "text": "and uncover details about the training dataset, such as individual data points or patterns. This process can potentially expose\nconfidential or proprietary information from the data that was used to train the AI models."
+ },
+ {
+  "id": "p69",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                                   TLP:CLEAR       14"
+ },
+ {
+  "id": "p70",
+  "text": "   Secure training pipelines: Secure data collection, pre-processing, and training\n    pipelines to prevent malicious actors from tampering with datasets or model\n    parameters.\n   Ensemble methods / collaborative learning: Implement collaborative learning\n    frameworks that combine an ensemble of multiple, distinct AI models to reach a\n    consensus on output predictions. This approach can help counteract the impact of\n    data poisoning, since malicious inputs may only affect a subset of the collaborative\n    models, allowing the majority to maintain accuracy and reliability.\n   Data anonymization: Implement anonymization techniques to protect sensitive data\n    attributes, keeping them confidential while allowing AI models to learn patterns and\n    generate accurate predictions."
+ },
+ {
+  "id": "p71",
+  "text": "Risk: Bad data statements\nBad data statements5 [7] [23], such as missing metadata, can significantly influence AI\ndata security by introducing data integrity issues that can lead to faulty model\nperformance. Error-free metadata provides valuable contextual information about the\ndata, including its structure, purpose, and collection methods. When metadata is\nmissing, it becomes difficult to interpret data accurately and draw meaningful\nconclusions. This situation can result in incomplete or inaccurate data representation,\ncompromising AI system performance and reliability. If metadata is modified by a\nmalicious actor, then the security of the AI system is also at risk.\nMitigation strategies:"
+ },
+ {
+  "id": "p72",
+  "text": "   Metadata management: Implement strong data governance practices to help\n    ensure metadata is well-documented, complete, accurate, and secured.\n   Metadata validation: Establish data validation processes to check the\n    completeness and consistency of metadata before data is used for AI training.\n   Data enrichment: Use available resources, such as reference data and trusted\n    third-party data, to supplement missing metadata and improve the overall quality of\n    the training data."
+ },
+ {
+  "id": "p73",
+  "text": "5 “A data statement is a characterization of a dataset that provides context to allow developers and users to better understand"
+ },
+ {
+  "id": "p74",
+  "text": "how experimental results might generalize, how software might be appropriately deployed, and what biases might be reflected in\nsystems built on the software.” [23]"
+ },
+ {
+  "id": "p75",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                                  TLP:CLEAR        15"
+ },
+ {
+  "id": "p76",
+  "text": "Risk: Statistical bias6\nRobust data security and collection practices are key to mitigating statistical bias.\nExecutive Order (EO) 14179 mandates that U.S. government entities “develop AI\nsystems that are free from ideological bias or engineered social agendas.” [25] Note\nthat “an AI system is said to be biased when it exhibits systematically inaccurate\nbehavior.” [26] Statistical bias in AI systems can arise from artifacts present in training\ndata that can lead to artificially slanted or inaccurate outcomes. Sampling biases or\nbiases in data collection can affect the overall outcomes and performance of AI. Left\nunaddressed, statistical bias can degrade the accuracy and effectiveness of AI systems."
+ },
+ {
+  "id": "p77",
+  "text": "Mitigation strategies:\n    Regular training data audits: Regularly audit training data to detect, assess, and\n     address potential issues that can result in systematically inaccurate AI systems.\n    Representative training data: Ensure that training data is representative of the\n     totality of the information relevant to any given topic to reduce the risk of statistical\n     bias. Also ensure that AI data is properly divided into training, development, and\n     evaluation sets without overlap to properly measure statistical bias and other\n     measures of performance.\n    Edge cases: Identify and mitigate edge cases that can cause models to malfunction.\n    Test and correct for statistical bias: Create a repository with instances of\n     observed model output bias. Leverage that information to improve training data\n     audits and with reinforcement learning to “undo” some of the measured bias."
+ },
+ {
+  "id": "p78",
+  "text": "Risk: Data poisoning via inaccurate information\nOne form of data poisoning (sometimes referred to as “disinformation” [27]) involves the\nintentional insertion of inaccurate or misleading information in AI training datasets,\nwhich can negatively impact AI system performance, outcomes, and decision-making\nprocesses."
+ },
+ {
+  "id": "p79",
+  "text": "Mitigation strategies:\n    Remove inaccurate information from training data: Identify and remove\n     inaccurate or misleading information from AI datasets to the extent feasible."
+ },
+ {
+  "id": "p80",
+  "text": "6 “In technical systems, bias is most commonly understood and treated as a statistical phenomenon. Bias is an effect that"
+ },
+ {
+  "id": "p81",
+  "text": "deprives a statistical result of representativeness by systematically distorting it, as distinct from random error, which may distort\non any one occasion but balances out on the average.” [26] [32]"
+ },
+ {
+  "id": "p82",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                                       TLP:CLEAR         16"
+ },
+ {
+  "id": "p83",
+  "text": "   Data provenance and verification: Implement provenance verification mechanisms\n    during data collection to help ensure that only accurate and reliable data is used.\n    This process can include methods such as cross-verification, fact-checking, source\n    analysis, data provenance tracking, and content credentials.\n   Add more training data: Increasing the amount of non-malicious data makes\n    training more robust against poisoned examples—provided that these poisoned\n    examples are small in number. One way to do this is through data augmentation—\n    the creation of artificial training set samples that are small variations of existing\n    samples. The goal is to “outnumber” the poisoned samples so the model “forgets”\n    them. Note that this mitigation can only be applied during training, and therefore\n    does not apply to an already trained model. [28]\n   Data quality control: Perform quality control on data including detecting poisoned\n    samples through integrity checks, statistical deviation, or pattern recognition.\n    Proactively implement data quality controls during the training phase to prevent\n    issues before they arise in production."
+ },
+ {
+  "id": "p84",
+  "text": "Risk: Data duplications\nUnintended duplicate data elements [7] in training datasets can skew model\nperformance and cause overfitting, reducing the AI model’s ability to generalize across\na variety of real-world applications. Duplicates are not always exact; near-duplicates\nmay contain minor differences like formatting, abbreviations, or errors, which makes\ndetecting them more complex. Duplicate data often leads to inaccurate predictions,\nmaking the AI system less effective in real-world applications.\nMitigation strategies:"
+ },
+ {
+  "id": "p85",
+  "text": "   Data deduplication: Implement deduplication techniques (such as fuzzy matching,\n    hashing, clustering, etc.) to carefully identify and handle duplicates and near-\n    duplicates in the data."
+ },
+ {
+  "id": "p86",
+  "text": "Data drift – risks and mitigations\n         Relevant AI Lifecycle stages: 5) Deploy & Use; 6) Operate & Monitor"
+ },
+ {
+  "id": "p87",
+  "text": "Data drift, or distribution shift, refers to changes in the underlying statistical properties of\nthe input data to an operational AI system. Over time, the input data can become\nsignificantly different from the data originally used to train the model. [7] [8] Degradation\ncaused by data drift is a natural and expected occurrence, and AI system developers"
+ },
+ {
+  "id": "p88",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                     TLP:CLEAR      17"
+ },
+ {
+  "id": "p89",
+  "text": "and operators need to regularly update models to maintain accuracy and performance.\nData drift ordinarily begins as small, seemingly insignificant degradations in model\nperformance. Left unchecked, the degradation caused by data drift can snowball into\nsubstantial reductions in AI system accuracy and integrity that become increasingly\ndifficult to correct.\nIt is crucial to distinguish between data drift and data poisoning attacks designed to\naffect an AI model. Continuous monitoring of system accuracy and performance\nprovides important indicators based on the nature of the changes observed. If the\nchanges are slow and gradual over time, it is more likely that the model is experiencing\ndata drift. If the changes are abrupt and dramatic in one or more dimensions, it is more\nlikely that an actor is trying to compromise the model. Cyber compromises often aim to\nmanipulate the model’s performance quickly and significantly, leading to abrupt changes\nin the input data or model outputs.\nAI system operators and developers should employ a wide range of techniques for\ndetecting and mitigating data drift, including data preprocessing, increasing dataset\ncoverage of real-world scenarios, and adopting robust training and adaptation\nstrategies. [30] Packages that automate dataset loading assist AI system developers in\ncreating application-specific detection and mitigation techniques for data drift."
+ },
+ {
+  "id": "p90",
+  "text": "There are many potential causes of data drift, including:\n         A change in the upstream data pipeline not represented in the model training\n         data (e.g., the units of a particular data element change from miles to kilometers)\n         The introduction of completely new data elements that the model had not\n         previously seen (e.g., a new type of malware not recognized in the ML layer of an\n         anti-virus product)\n         A change in the context of how inputs and outputs are related (e.g., a change in\n         organizational structure due to a merger or acquisition could lead to new data\n         access patterns that might be misinterpreted as security threats by an AI system)"
+ },
+ {
+  "id": "p91",
+  "text": "The data associated with a given AI model should be regularly checked for any updates\nto help ensure the model still predicts as expected. [7] [8] [9] The interval for this update\nand check will depend on the particular AI system and application. For example, in high-\nstakes applications such as healthcare, early detection and mitigation of data drift are\ncritical prior to patient impact. Thus, continuous monitoring of model performance with\nadditional direct analysis of the input data is important in such applications. [30]"
+ },
+ {
+  "id": "p92",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                  TLP:CLEAR      18"
+ },
+ {
+  "id": "p93",
+  "text": "Mitigation strategies:\n   Data management: Employ a data management strategy in keeping with the best\n    practices in this CSI to help ensure that it is easy to add and track new data\n    elements for model training and adaptation. This management strategy enables\n    identification of data elements causing drift for appropriate mitigation or action.\n   Data-quality testing: AI system developers should use data-quality assessment\n    tools to assist in selecting and filtering data used for model training or adaptation.\n    Understanding the current dataset and its impact on model behavior is critical to\n    detecting data drift.\n   Input and output monitoring: Monitor the AI system inputs and outputs to verify\n    the model is performing as expected. [9] Regularly update your model using current\n    data. Utilize meaningful statistical methods that measure expected dataset metrics\n    and compare the distribution of the training data to the test data to help determine if\n    data drift is occurring. [7]\nData management tools and methods are currently an active area of research.\nHowever, data drift can be mitigated by incorporating application-specific data\nmanagement protocols that include: continuous monitoring, retraining (regularly\nincorporating the latest data into the models), data cleansing (correcting errors or\ninconsistencies in the data), and using ensemble models (combining predictions of\nmultiple models). Incorporation of a data management framework into the design of AI\nsystems from the beginning is essential for improving the overall integrity and security\nposture. [31]"
+ },
+ {
+  "id": "p94",
+  "text": "Conclusion\nData security is of paramount importance when developing and operating AI systems.\nAs organizations in various sectors rely more and more on AI-driven outcomes, data\nsecurity becomes crucial for maintaining accuracy, reliability, and integrity. The\nguidance provided in this CSI outlines a robust approach to securing AI data and\naddressing the risks associated with the data supply chain, malicious data, and data\ndrift."
+ },
+ {
+  "id": "p95",
+  "text": "Data security is an ever-evolving field, and continuous vigilance and adaptation are key\nto staying ahead of emerging threats and vulnerabilities. The best practices presented\nhere encourage the highest standards of data security in AI while helping ensure the\naccuracy and integrity of AI-driven outcomes. By adopting these best practices and risk"
+ },
+ {
+  "id": "p96",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                   TLP:CLEAR   19"
+ },
+ {
+  "id": "p97",
+  "text": "mitigation strategies, organizations can fortify their AI systems against potential threats\nand safeguard sensitive, proprietary, and mission critical data used in the development\nand operation of their AI systems."
+ },
+ {
+  "id": "p98",
+  "text": "Works cited\n   [1]   Office of the Director of National Intelligence. The Intelligence Community Data Management\n         Lexicon. 2024. https://dni.gov/files/ODNI/documents/IC_Data_Management_Lexicon.pdf\n   [2]   National Security Agency et al. Deploying AI Systems Securely: Best Practices for Deploying\n         Secure and Resilient AI Systems. 2024. https://media.defense.gov/2024/Apr/15/2003439257/-1/-\n         1/0/CSI-DEPLOYING-AI-SYSTEMS-SECURELY.PDF\n   [3]   National Institute of Standards and Technology (NIST). NIST AI 100-1: Artificial Intelligence Risk\n         Management Framework (AI RMF 1.0). 2023. https://doi.org/10.6028/NIST.AI.100-1\n   [4]   NIST. NIST Special Publication 800-37 Rev. 2: Guide for Applying the Risk Management\n         Framework to Federal Information Systems. 2018. https://doi.org/10.6028/NIST.SP.800-37r2\n   [5]   NIST. Federal Information Processing Standards Publication (FIPS) 204: Module-Lattice-Based\n         Digital Signature Standard. 2024. https://doi.org/10.6028/NIST.FIPS.204\n   [6]   NIST. FIPS 205: Stateless Hash-Based Digital Signature Standard. 2024.\n         https://doi.org/10.6028/NIST.FIPS.205\n   [7]   Bommasani, R. et al. On the Opportunities and Risks of Foundation Models. arXiv:2108.07258v3.\n         2022. https://arxiv.org/abs/2108.07258v3\n   [8]   Securing Artificial Intelligence (SAI); Data Supply Chain Security. ESTI GR SAI 002 V1.1.1. 2021.\n         https://etsi.org/deliver/etsi_gr/SAI/001_099/002/01.01.01_60/gr_SAI002v010101p.pdf\n   [9]   National Cyber Security Centre et al. Guidelines for Secure AI System Development. 2023.\n         https://www.ncsc.gov.uk/files/Guidelines-for-secure-AI-system-development.pdf\n  [10]   NIST. NIST Special Publication 800-207: Zero Trust Architecture. 2020.\n         https://doi.org/10.6028/NIST.SP.800-207\n  [11]   NIST. NIST IR 8496 ipd: Data Classification Concepts and Considerations for Improving Data\n         Protection. 2023. https://doi.org/10.6028/NIST.IR.8496.ipd\n  [12]   Cybersecurity and Infrastructure Security Agency (CISA), NSA, and NIST. Quantum-Readiness:\n         Migration to Post-Quantum Cryptography. 2023. https://www.cisa.gov/resources-\n         tools/resources/quantum-readiness-migration-post-quantum-cryptography\n  [13]   NIST. FIPS 203: Module-Lattice-Based Key-Encapsulation Mechanism Standard. 2024.\n         https://doi.org/10.6028/NIST.FIPS.203\n  [14]   NIST. NIST SP 800-52 Rev. 2: Guidelines for the Selection, Configuration, and Use of Transport\n         Layer Security (TLS) Implementations. 2019. https://doi.org/10.6028/NIST.SP.800-52r2\n  [15]   NIST. FIPS 140-3, Security Requirements for Cryptographic Modules. 2019.\n         https://doi.org/10.6028/NIST.FIPS.140-3\n  [16]   NIST. FIPS 140-2, Security Requirements for Cryptographic Modules. 2001.\n         https://doi.org/10.6028/NIST.FIPS.140-2\n  [17]   NIST. NIST AI 100-2e2023: Trustworthy and Responsible AI, Adversarial Machine Learning: A\n         Taxonomy and Terminology of Attacks and Mitigations. 2024.\n         https://doi.org/10.6028/NIST.AI.100-2e2023\n  [18]   Adak, M. F., Kose, Z. N., & Akpinar, M. Dynamic Data Masking by Two-Step Encryption. In 2023\n         Innovations in Intelligent Systems and Applications Conference (ASYU) (pp. 1-5). IEEE.\n         2023https://doi.org/10.1109/ASYU58738.2023.10296545\n  [19]   Kairouz, P. et al. Advances and Open Problems in Federated Learning. Foundations and Trends\n         in Machine Learning 14 (1-2): 1-210. arXiv:1912.04977. 2021. https://arxiv.org/abs/1912.04977\n  [20]   NIST. NIST SP 800-88 Rev. 1: Guidelines for Media Sanitization. 2014.\n         https://doi.org/10.6028/NIST.SP.800-88r1"
+ },
+ {
+  "id": "p99",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                               TLP:CLEAR       20"
+ },
+ {
+  "id": "p100",
+  "text": "[21] NIST. NIST Special Publication 800-3 Rev. 2: Risk Management Framework for Information\n       Systems and Organizations: A System Life Cycle Approach for Security and Privacy. 2018.\n       https://doi.org/10.6028/NIST.SP.800-37r2\n  [22] U.S. Department of Homeland Security. Preparedness Series June 2023: Risks and Mitigation\n       Strategies for Adversarial Artificial Intelligence Threats: A DHS S&T Study. 2023.\n       https://www.dhs.gov/sites/default/files/2023-12/23_1222_st_risks_mitigation_strategies.pdf\n  [23] Bender, E. M., & Friedman, B. Data Statements for Natural Language Processing: Toward\n       Mitigating System Bias and Enabling Better Science. Transactions of the Association for\n       Computational Linguistics (TACL) 6, 587–604. 2018. https://doi.org/10.1162/tacl_a_00041\n  [24] NSA et al. Content Credentials: Strengthening Multimedia Integrity in the Generative AI Era.\n       2025. https://media.defense.gov/2025/Jan/29/2003634788/-1/-1/0/CSI-CONTENT-\n       CREDENTIALS.PDF\n  [25] Executive Order (EO) 14179: “Removing Barriers to American Leadership in Artificial Intelligence”\n       https://www.federalregister.gov/executive-order/14179\n  [26] NIST. NIST Special Publication 1270: Framework for Identifying and Managing Bias in Artificial\n       Intelligence. 2023. https://doi.org/10.6028/NIST.SP.1270\n  [27] NIST. NIST AI 600-1: Artificial Intelligence Risk Management Framework: Generative Artificial\n       Intelligence Profile. 2023. https://doi.org/10.6028/NIST.AI.600-1\n  [28] Open Web Application Security Project (OWASP). AI Exchange. #Moretraindata.\n       https://owaspai.org/goto/moretraindata/\n  [29] Carlini, N. et al. Poisoning Web-Scale Training Datasets is Practical. arXiv:2302.10149. 2023.\n       https://arxiv.org/abs/2302.10149\n  [30] Kore, A., Abbasi Bavil, E., Subasri, V., Abdalla, M., Fine, B., Dolatabadi, E., & Abdalla, M.\n       Empirical Data Drift Detection Experiments on Real-World Medical Image Data. Nature\n       Communications 15, 1887. 2024. https://doi.org/10.1038/s41467-024-46142-w\n  [31] NIST. NIST Special Publication 800-208: Recommendation for Stateful Hash-Based Signature\n       Schemes. 2020. https://doi.org/10.6028/NIST.SP.800-208\n  [32] The Organisation for Economic Cooperation and Development (OECD). Glossary of statistical\n       terms. 2008. https://doi.org/10.1787/9789264055087-en\n  [33] NIST. NIST SP 800-53 Rev. 5: Security and Privacy Controls for Information Systems and\n       Organizations. 2020. https://doi.org/10.6028/NIST.SP.800-53r5\n  [34] OWASP. AI Exchange. How to select relevant threats and controls? risk analysis.\n       https://owaspai.org/goto/riskanalysis/"
+ },
+ {
+  "id": "p101",
+  "text": "Disclaimer of Endorsement\nThe information and opinions contained in this document are provided “as is” and without any warranties or\nguarantees. Reference herein to any specific commercial products, process, or service by trade name, trademark,\nmanufacturer, or otherwise, does not constitute or imply its endorsement, recommendation, or favoring by the United\nStates Government, and this guidance shall not be used for advertising or product endorsement purposes."
+ },
+ {
+  "id": "p102",
+  "text": "Purpose\nThis document was developed in furtherance of the authoring organizations’ cybersecurity missions, including their\nresponsibilities to identify and disseminate threats, and to develop and issue cybersecurity specifications and\nmitigations. This information may be shared broadly to reach all appropriate stakeholders."
+ },
+ {
+  "id": "p103",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                       TLP:CLEAR       21"
+ },
+ {
+  "id": "p104",
+  "text": "Notice of Generative AI Use\nGenerative AI technology was carefully and responsibly used in the development of this document. The authors\nmaintain ultimate responsibility for the accuracy of the information provided herein."
+ },
+ {
+  "id": "p105",
+  "text": "Contact\nU.S. Organizations"
+ },
+ {
+  "id": "p106",
+  "text": "    National Security Agency\n         Cybersecurity Report Feedback: CybersecurityReports@nsa.gov\n         Defense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\n         Media Inquiries / Press Desk: NSA Media Relations: 443-634-0721, MediaRelations@nsa.gov"
+ },
+ {
+  "id": "p107",
+  "text": "Australian organizations"
+ },
+ {
+  "id": "p108",
+  "text": "    Visit cyber.gov.au/report or call 1300 292 371 (1300 CYBER1) to report cybersecurity incidents and\n         vulnerabilities."
+ },
+ {
+  "id": "p109",
+  "text": "New Zealand organizations"
+ },
+ {
+  "id": "p110",
+  "text": "    For general enquiries, contact info@ncsc.govt.nz"
+ },
+ {
+  "id": "p111",
+  "text": "U/OO/157249-25 | PP-25-2301 | May 2025 Ver. 1.0                                                      TLP:CLEAR   22"
+ }
+]

@@ -1,0 +1,250 @@
+[
+ {
+  "id": "p1",
+  "text": "# APT Actors Exploiting CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA21-336A\n> - Date: 2021-12-03\n> - URL: https://www.ic3.gov/CSA/2021/211203.pdf\n> - PDF SHA-256: 5bc7d07e907cc00461109c27f617f901fa71ae1913c97ecfd063ce6651752451 (`source.pdf`, 11 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (22 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                           Product ID: AA21-336A\n                                                                                                             December 2, 2021"
+ },
+ {
+  "id": "p4",
+  "text": "APT Actors Exploiting CVE-2021-44077 in Zoho\n        ManageEngine ServiceDesk Plus\n         This Joint Cybersecurity Advisory uses the MITRE Adversarial Tactics, Techniques, and Common\n         Knowledge (ATT&CK®) framework, Version 9. See the ATT&CK for Enterprise framework for\n         referenced threat actor techniques and for mitigations."
+ },
+ {
+  "id": "p5",
+  "text": "SUMMARY\n        This joint advisory is the result of analytic efforts between the Federal Bureau of Investigation (FBI)\n        and the Cybersecurity and Infrastructure Security Agency (CISA) to highlight the cyber threat\n        associated with active exploitation of a newly identified vulnerability (CVE-2021-44077) in Zoho\n        ManageEngine ServiceDesk Plus—IT help desk software with asset management.\n        CVE-2021-44077, which Zoho rated critical, is an unauthenticated remote code execution (RCE)\n        vulnerability affecting all ServiceDesk Plus versions up to, and including, version 11305. This\n        vulnerability was addressed by the update released by Zoho on September 16, 2021 for ServiceDesk\n        Plus versions 11306 and above. The FBI and CISA assess that advanced persistent threat (APT)\n        cyber actors are among those exploiting the vulnerability. Successful exploitation of the vulnerability\n        allows an attacker to upload executable files and place webshells, which enable the adversary to\n        conduct post-exploitation activities, such as compromising administrator credentials, conducting\n        lateral movement, and exfiltrating registry hives and Active Directory files.\n        The Zoho update that patched this vulnerability was released on September 16, 2021, along with a\n        security advisory. Additionally, an email advisory was sent to all ServiceDesk Plus customers with\n        additional information. Zoho released a subsequent security advisory on November 22, 2021, and\n        advised customers to patch immediately.\n        The FBI and CISA are aware of reports of malicious cyber actors likely using exploits against CVE-\n        2021-44077 to gain access [T1190] to ManageEngine ServiceDesk Plus, as early as late October"
+ },
+ {
+  "id": "p6",
+  "text": "To request incident response resources or technical assistance related to these threats, contact CISA at\n        Central@cisa.gov.\n        Disclaimer: The information in this Joint Cybersecurity Advisory is provided \"as is\" for informational purposes\n        only. FBI and CISA do not provide any warranties of any kind regarding this information or endorse any\n        commercial product or service, including any subjects of analysis.\n        This product is marked TLP:WHITE. The information in this product may be shared with members of your\n        organization, and with clients and customers who need to know the information to protect themselves or prevent\n        future harm. For more information on the Traffic Light Protocol, see https://www.cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:WHITE                                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p8",
+  "text": "2021. The actors have been observed using various tactics, techniques and procedures (TTPs),\n       including:\n               Writing webshells [T1505.003] to disk for initial persistence\n               Obfuscating and Deobfuscating/Decoding Files or Information [T1027 and T1140]\n               Conducting further operations to dump user credentials [T1003]\n               Living off the land by only using signed Windows binaries for follow-on actions [T1218]\n               Adding/deleting user accounts as needed [T1136]\n               Stealing copies of the Active Directory database (NTDS.dit) [T1003.003] or registry hives\n               Using Windows Management Instrumentation (WMI) for remote execution [T1047]\n               Deleting files to remove indicators from the host [T1070.004]\n               Discovering domain accounts with the net Windows command [T1087.002]\n               Using Windows utilities to collect and archive files for exfiltration [T1560.001]\n               Using custom symmetric encryption for command and control (C2) [T1573.001]"
+ },
+ {
+  "id": "p9",
+  "text": "The FBI and CISA are proactively investigating this malicious cyber activity:"
+ },
+ {
+  "id": "p10",
+  "text": "    The FBI leverages specially trained cyber squads in each of its 56 field offices and CyWatch,\n                the FBI’s 24/7 operations center and watch floor, which provides around-the-clock support to\n                track incidents and communicate with field offices across the country and partner agencies.\n               CISA offers a range of no-cost cyber hygiene services to help organizations assess, identify,\n                and reduce their exposure to threats. By requesting these services, organizations of any size\n                could find ways to reduce their risk and mitigate attack vectors."
+ },
+ {
+  "id": "p11",
+  "text": "Sharing technical and/or qualitative information with the FBI and CISA helps empower and amplify\n       our capabilities as federal partners to collect and share intelligence and engage with victims, while\n       working to unmask and hold accountable those conducting malicious cyber activities."
+ },
+ {
+  "id": "p12",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p13",
+  "text": "TECHNICAL DETAILS\n       Compromise of the affected systems involves exploitation of CVE-2021-44077 in ServiceDesk Plus,\n       allowing the attacker to:\n           1. Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API\n              URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe, with a\n              SHA256 hash of\n              ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7. This\n              executable file serves as a dropper and contains an embedded, encoded Godzilla JAR file."
+ },
+ {
+  "id": "p14",
+  "text": "2. Gain execution for the dropper through a second POST request to a different REST API URL,\n              which will then decode the embedded Godzilla JAR file and drop it to the filepath\n              C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar with a SHA256 hash\n              of 67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015."
+ },
+ {
+  "id": "p15",
+  "text": "Confirming a successful compromise of ManageEngine ServiceDesk Plus may be difficult—the\n       attackers are known to run clean-up scripts designed to remove traces of the initial point of\n       compromise and hide any relationship between exploitation of the vulnerability and the webshell."
+ },
+ {
+  "id": "p16",
+  "text": "Targeted Industries\n       APT cyber actors have targeted Critical Infrastructure Sector industries, including the healthcare,\n       financial services, electronics and IT consulting industries."
+ },
+ {
+  "id": "p17",
+  "text": "INDICATORS OF COMPROMISE\n       Hashes"
+ },
+ {
+  "id": "p18",
+  "text": "Webshell:\n       67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015\n       068D1B3813489E41116867729504C40019FF2B1FE32AAB4716D429780E666324\n       759bd8bd7a71a903a26ac8d5914e5b0093b96de61bf5085592be6cc96880e088\n       262cf67af22d37b5af2dc71d07a00ef02dc74f71380c72875ae1b29a3a5aa23d\n       a44a5e8e65266611d5845d88b43c9e4a9d84fe074fd18f48b50fb837fa6e429d\n       ce310ab611895db1767877bd1f635ee3c4350d6e17ea28f8d100313f62b87382\n       75574959bbdad4b4ac7b16906cd8f1fd855d2a7df8e63905ab18540e2d6f1600\n       5475aec3b9837b514367c89d8362a9d524bfa02e75b85b401025588839a40bcb"
+ },
+ {
+  "id": "p19",
+  "text": "Dropper:\n       ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7"
+ },
+ {
+  "id": "p20",
+  "text": "TLP:WHITE                                                                    FBI | CISA"
+ },
+ {
+  "id": "p21",
+  "text": "Implant:\n       009d23d85c1933715c3edcccb46438690a66eebbcccb690a7b27c9483ad9d0ac\n       083bdabbb87f01477f9cf61e78d19123b8099d04c93ef7ad4beb19f4a228589a\n       342e85a97212bb833803e06621170c67f6620f08cc220cf2d8d44dff7f4b1fa3"
+ },
+ {
+  "id": "p22",
+  "text": "NGLite Backdoor:\n       805b92787ca7833eef5e61e2df1310e4b6544955e812e60b5f834f904623fd9f\n       3da8d1bfb8192f43cf5d9247035aa4445381d2d26bed981662e3db34824c71fd\n       5b8c307c424e777972c0fa1322844d4d04e9eb200fe9532644888c4b6386d755\n       3f868ac52916ebb6f6186ac20b20903f63bc8e9c460e2418f2b032a207d8f21d\n       342a6d21984559accbc54077db2abf61fd9c3939a4b09705f736231cbc7836ae\n       7e4038e18b5104683d2a33650d8c02a6a89badf30ca9174576bf0aff08c03e72"
+ },
+ {
+  "id": "p23",
+  "text": "KDC Sponge:\n       3c90df0e02cc9b1cf1a86f9d7e6f777366c5748bd3cf4070b49460b48b4d4090\n       b4162f039172dcb85ca4b85c99dd77beb70743ffd2e6f9e0ba78531945577665\n       e391c2d3e8e4860e061f69b894cf2b1ba578a3e91de610410e7e9fa87c07304c"
+ },
+ {
+  "id": "p24",
+  "text": "Malicious IIS Module:\n       bec067a0601a978229d291c82c35a41cd48c6fca1a3c650056521b01d15a72da"
+ },
+ {
+  "id": "p25",
+  "text": "Renamed WinRAR:\n       d0c3d7003b7f5b4a3bd74a41709cfecfabea1f94b47e1162142de76aa7a063c7"
+ },
+ {
+  "id": "p26",
+  "text": "Renamed csvde:\n       7d2780cd9acc516b6817e9a51b8e2889f2dec455295ac6e6d65a6191abadebff"
+ },
+ {
+  "id": "p27",
+  "text": "Network Indicators"
+ },
+ {
+  "id": "p28",
+  "text": "POST requests sent to the following URLs:\n       /RestAPI/ImportTechnicians?step=1"
+ },
+ {
+  "id": "p29",
+  "text": "Domains:\n       seed.nkn[.]org"
+ },
+ {
+  "id": "p30",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p31",
+  "text": "Note: the domain seed.nkn[.]org is a New Kind of Network (NKN) domain that provides legitimate\n       peer to peer networking services utilizing blockchain technology for decentralization. It is possible to\n       have false positive hits in a corporate network environment and it should be considered suspicious to\n       see any software-initiated contacts to this domain or any subdomain."
+ },
+ {
+  "id": "p32",
+  "text": "Log File Analysis\n               Check serverOut*.txt log files under C:\\ManageEngine\\ServiceDesk\\logs\\ for suspicious log\n                entries matching the following format:\n                    o [<time>]|[<date>]|[com.adventnet.servicedesk.setup.action.ImportTechni\n                        ciansAction]|[INFO]|[62]: fileName is : msiexec.exe]"
+ },
+ {
+  "id": "p33",
+  "text": "Filepaths\n       C:\\ManageEngine\\ServiceDesk\\bin\\msiexec.exe\n       C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar\n       C:\\Windows\\Temp\\ScriptModule.dll\n       C:\\ManageEngine\\ServiceDesk\\bin\\ScriptModule.dll\n       C:\\Windows\\system32\\ME_ADAudit.exe\n       c:\\Users\\[username]\\AppData\\Roaming\\ADManager\\ME_ADManager.exe\n       %ALLUSERPROFILE%\\Microsoft\\Windows\\Caches\\system.dat\n       C:\\ProgramData\\Microsoft\\Crypto\\RSA\\key.dat\n       c:\\windows\\temp\\ccc.exe"
+ },
+ {
+  "id": "p34",
+  "text": "TLP:WHITE                                                                                                 FBI | CISA"
+ },
+ {
+  "id": "p35",
+  "text": "Tactics, Techniques, and Procedures\n               Using WMI for lateral movement and remote code execution (in particular, wmic.exe)\n               Using plaintext credentials for lateral movement\n               Using pg_dump.exe to dump ManageEngine databases\n               Dumping NTDS.dit and SECURITY/SYSTEM/NTUSER registry hives\n               Active credential harvesting through LSASS (KDC Sponge)\n               Exfiltrating through webshells\n               Conducting exploitation activity often through other compromised U.S. infrastructure\n               Dropping multiple webshells and/or implants to maintain persistence\n               Using renamed versions of WinRAR, csvde, and other legitimate third-party tools for\n                reconnaissance and exfiltration"
+ },
+ {
+  "id": "p36",
+  "text": "Yara Rules\n       rule ReportGenerate_jsp {\n           strings:\n                $s1 = \"decrypt(fpath)\"\n                $s2 = \"decrypt(fcontext)\"\n                $s3 = \"decrypt(commandEnc)\"\n                $s4 = \"upload failed!\"\n                $s5 = \"sevck\"\n                $s6 = \"newid\""
+ },
+ {
+  "id": "p37",
+  "text": "condition:\n                filesize < 15KB and 4 of them\n       }"
+ },
+ {
+  "id": "p38",
+  "text": "rule EncryptJSP {\n           strings:\n                $s1 = \"AEScrypt\"\n                $s2 = \"AES/CBC/PKCS5Padding\"\n                $s3 = \"SecretKeySpec\"\n                $s4 = \"FileOutputStream\""
+ },
+ {
+  "id": "p39",
+  "text": "TLP:WHITE                                                                              FBI | CISA"
+ },
+ {
+  "id": "p40",
+  "text": "$s5 = \"getParameter\"\n                $s6 = \"new ProcessBuilder\"\n                $s7 = \"new BufferedReader\"\n                $s8 = \"readLine()\""
+ },
+ {
+  "id": "p41",
+  "text": "condition:\n                filesize < 15KB and 6 of them\n       }"
+ },
+ {
+  "id": "p42",
+  "text": "rule ZimbraImplant {\n             strings:\n               $u1 = \"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\n       AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36\"\n                   $u2 = \"Content-Type: application/soap+xml; charset=UTF-8\"\n                   $u3 = \"/service/soap\"\n                   $u4 = \"Good Luck :::)\""
+ },
+ {
+  "id": "p43",
+  "text": "$s1 = \"zimBR\"\n                   $s2 = \"log10\"\n                   $s3 = \"mymain\"\n                   $s4 = \"urn:zimbraAccount\"\n                   $s5 = \"/service/upload?fmt=extended,raw\"\n                   $s6 = \"<query>(in:\\\"inbox\\\" or in:\\\"junk\\\") is:unread</query>\""
+ },
+ {
+  "id": "p44",
+  "text": "condition:\n               (uint16(0) == 0x5A4D and uint32(uint32(0x3C)) == 0x00004550) and filesize\n       < 2MB and 1 of ($u*) and 3 of ($s*)\n       }"
+ },
+ {
+  "id": "p45",
+  "text": "rule GodzillaDropper {"
+ },
+ {
+  "id": "p46",
+  "text": "TLP:WHITE                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p47",
+  "text": "strings:\n                   $s1 = \"UEsDBAoAAAAAAI8UXFM\" // base64 encoded PK/ZIP header\n                   $s2 = \"../lib/tomcat/tomcat-postgres.jar\"\n                   $s3 = \"RunAsManager.exe\"\n                   $s4 = \"ServiceDesk\"\n               $s5 = \"C:\\\\Users\\\\pwn\\\\documents\\\\visual studio\n       2015\\\\Projects\\\\payloaddll\"\n                   $s6 = \"CreateMutexA\"\n                   $s7 = \"cplusplus_me\""
+ },
+ {
+  "id": "p48",
+  "text": "condition:\n               (uint16(0) == 0x5A4D and uint32(uint32(0x3C)) == 0x00004550) and filesize\n       < 350KB and 4 of them\n       }"
+ },
+ {
+  "id": "p49",
+  "text": "rule GodzillaJAR {\n             strings:\n                   $s1 = \"org/apache/tomcat/SSLFilter.class\"\n                   $s2 = \"META-INF/services/javax.servlet.ServletContainerInitializer\"\n                   $s3 = \"org/apache/tomcat/MainFilterInitializer.class\""
+ },
+ {
+  "id": "p50",
+  "text": "condition:\n                   uint32(0) == 0x04034B50 and filesize < 50KB and all of them\n       }"
+ },
+ {
+  "id": "p51",
+  "text": "rule APT_NGLite {\n             strings:\n                   $s1 = \"/mnt/hgfs/CrossC2-2.2\"\n                   $s2 = \"WHATswrongwithU\"\n                   $s3 = \"//seed.nkn.org:\""
+ },
+ {
+  "id": "p52",
+  "text": "TLP:WHITE                                                                              FBI | CISA"
+ },
+ {
+  "id": "p53",
+  "text": "$s4 = \"Preylistener\"\n                   $s5 = \"preyid\"\n                   $s6 = \"Www-Authenticate\""
+ },
+ {
+  "id": "p54",
+  "text": "condition:\n               (uint16(0) == 0x5A4D and uint32(uint32(0x3C)) == 0x00004550) and filesize\n       < 15MB and 4 of them\n       }"
+ },
+ {
+  "id": "p55",
+  "text": "rule KDCSponge {\n             strings:\n                   $k1 = \"kdcsvc.dll\"\n                   $k2 = \"kdccli.dll\"\n                   $k3 = \"kdcsvs.dll\"\n                   $f1 = \"KerbHashPasswordEx3\"\n                   $f2 = \"KerbFreeKey\"\n                   $f3 = \"KdcVerifyEncryptedTimeStamp\"\n                   $s1 = \"download//symbols//%S//%S//%S\" wide\n                   $s2 = \"KDC Service\"\n                   $s3 = \"\\\\system.dat\""
+ },
+ {
+  "id": "p56",
+  "text": "condition:\n               (uint16(0) == 0x5A4D and uint32(uint32(0x3C)) == 0x00004550) and filesize\n       < 1MB and 1 of ($k*) and 1 of ($f*) and 1 of ($s*)\n       }"
+ },
+ {
+  "id": "p57",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p58",
+  "text": "MITIGATIONS\n       Compromise Mitigations\n       Organizations that identify any activity related to ManageEngine ServiceDesk Plus indicators of\n       compromise within their networks should take action immediately.\n       Zoho ManageEngine ServiceDesk Plus build 11306, or higher, fixes CVE-2021-44077.\n       ManageEngine initially released a patch for this vulnerability on September 16, 2021. A subsequent\n       security advisory was released on November 22, 2021, and advised customers to patch immediately.\n       Additional information can be found in the Zoho security advisory released on November 22, 2021.\n       In addition, Zoho has set up a security response plan center that provides additional details, a\n       downloadable tool that can be run on potentially affected systems, and a remediation guide.\n       FBI and CISA also strongly recommend domain-wide password resets and double Kerberos TGT\n       password resets if any indication is found that the NTDS.dit file was compromised.\n       Note: Implementing these password resets should not be taken as a comprehensive mitigation in\n       response to this threat; additional steps may be necessary to regain administrative control of your\n       network."
+ },
+ {
+  "id": "p59",
+  "text": "Actions for Affected Organizations\n       Immediately report as an incident to CISA or the FBI (refer to Contact information section below) the\n       existence of any of the following:"
+ },
+ {
+  "id": "p60",
+  "text": "    Identification of indicators of compromise as outlined above.\n               Presence of webshell code on compromised ServiceDesk Plus servers.\n               Unauthorized access to or use of accounts.\n               Evidence of lateral movement by malicious actors with access to compromised systems.\n               Other indicators of unauthorized access or compromise."
+ },
+ {
+  "id": "p61",
+  "text": "TLP:WHITE                                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p62",
+  "text": "CONTACT INFORMATION\n       Recipients of this report are encouraged to contribute any additional information that they may have\n       related to this threat.\n       For any questions related to this report or to report an intrusion and request resources for incident\n       response or technical assistance, please contact:\n               CISA (888-282-0870 or Central@cisa.dhs.gov)."
+ }
+]

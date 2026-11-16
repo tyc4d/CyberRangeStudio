@@ -1,0 +1,162 @@
+[
+ {
+  "id": "p1",
+  "text": "# RagnarLocker Ransomware Indicators of Compromise"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2022-03-07\n> - URL: https://www.ic3.gov/CSA/2022/220307.pdf\n> - PDF SHA-256: 61bbbe267f551e48a61b36939322727739c9fcad0e6b7d35ae3cd65184ca2b59 (`source.pdf`, 8 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (14 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "7 MARCH 2022               The following information is being provided by the FBI, with no guarantees or warranties, for potential\n                           use at the sole discretion of recipients to protect against cyber threats. This data is provided in order\n  FLASH Number             to help cyber security professionals and system administrators to guard against the persistent malicious\n                           actions of cyber actors. This FLASH was coordinated with DHS/CISA.\nCU-000163-MW               This FLASH has been released TLP:WHITE"
+ },
+ {
+  "id": "p4",
+  "text": "WE NEED YOUR HELP! If you identify any suspicious activity within your enterprise or have related information,\n     please contact your local FBI Cyber Squad immediately with respect to the procedures outlined in the\n                                    Reporting Notice section of this message.\n      *Note: By reporting any related information to FBI Cyber Squads, you are assisting in sharing information that allows the FBI to track\n       malicious actors and coordinate with private industry and the United States Government to prevent future intrusions and attacks."
+ },
+ {
+  "id": "p5",
+  "text": "RagnarLocker Ransomware Indicators of Compromise"
+ },
+ {
+  "id": "p6",
+  "text": "Summary\n       The FBI first became aware of RagnarLocker in April 2020 and subsequently produced a FLASH\n       to disseminate known indicators of compromise (IOCs) at that time. This FLASH provides\n       updated and additional IOCs to supplement that report. As of January 2022, the FBI has\n       identified at least 52 entities across 10 critical infrastructure sectors affected by RagnarLocker\n       ransomware, including entities in the critical manufacturing, energy, financial services,\n       government, and information technology sectors. RagnarLocker ransomware actors work as\n       part of a ransomware family1, frequently changing obfuscation techniques to avoid detection\n       and prevention."
+ },
+ {
+  "id": "p7",
+  "text": "1 Ransomware family is a group of binaries associated to several ransomware variants or actor groups."
+ },
+ {
+  "id": "p8",
+  "text": "Technical Details\nRagnarLocker is identified by the extension “.RGNR_<ID>,” where <ID> is a hash of the\ncomputer’s NETBIOS name. The actors, identifying themselves as “RAGNAR_LOCKER,” leave a\n.txt ransom note, with instructions on how to pay the ransom and decrypt the data.\nRagnarLocker uses VMProtect, UPX, and custom packing algorithms and deploys within an\nattacker’s custom Windows XP virtual machine on a target’s site."
+ },
+ {
+  "id": "p9",
+  "text": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected\nmachine. If the victim location is identified as \"Azerbaijani,\" \"Armenian,\" \"Belorussian,\"\n\"Kazakh,\" \"Kyrgyz,\" \"Moldavian,\" \"Tajik,\" \"Russian,\" \"Turkmen,\" \"Uzbek,\" \"Ukrainian,\" or\n\"Georgian,\" the process terminates."
+ },
+ {
+  "id": "p10",
+  "text": "RagnarLocker checks for current infections to prevent multiple transform encryption of the\ndata, potentially corrupting it. The binary gathers the unique machine GUID, operating system\nproduct name, and user name currently running the process. This data is sent through a\ncustom hashing algorithm to generate a unique identifier: <HashedMachineGuid>-\n<HashedWindowsProductName>-<HashedUser>-<HashedComputerName>-\n<HashedAllDataTogether>."
+ },
+ {
+  "id": "p11",
+  "text": "RagnarLocker identifies all attached hard drives using Windows APIs: CreateFileW,\nDeviceIoControl, GetLogicalDrives, and SetVolumeMountPointA. The ransomware assigns a\ndrive letter to any volumes not assigned a logical drive letter and makes them accessible.\nThese newly attached volumes are later encrypted during the final stage of the binary."
+ },
+ {
+  "id": "p12",
+  "text": "RagnarLocker iterates through all running services and terminates services commonly used by\nmanaged service providers to remotely administer networks. The malware then attempts to\nsilently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using\ntwo different methods:"
+ },
+ {
+  "id": "p13",
+  "text": "   >vssadmin delete shadows /all /quiet\n      >wmic.exe.shadowcopy.delete"
+ },
+ {
+  "id": "p14",
+  "text": "Lastly, RagnarLocker encrypts all available files of interest. Instead of choosing which files to\nencrypt, RagnarLocker chooses which folders it will not encrypt. Taking this approach allows\nthe computer to continue to operate “normally” while the malware encrypts files with known\nand unknown extensions containing data of value to the victim. For example, if the logical\ndrive being processed is the C: drive, the malware does not encrypt files in the following\nfolders:"
+ },
+ {
+  "id": "p15",
+  "text": "   Windows"
+ },
+ {
+  "id": "p16",
+  "text": "   Windows.old\n      Mozilla\n      Mozilla Firefox\n      Tor browser\n      Internet Explorer\n      $Recycle.Bin\n      Program Data\n      Google\n      Opera\n      Opera Software"
+ },
+ {
+  "id": "p17",
+  "text": "Also, when iterating through files, the malware does not encrypt files with the following\nextensions:"
+ },
+ {
+  "id": "p18",
+  "text": "   .db\n      .sys\n      .dll\n      .lnk\n      .msi\n      .drv\n      .exe"
+ },
+ {
+  "id": "p19",
+  "text": "Indicators\nThe following IOCs are associated with RagnarLocker ransomware, as of January 2022."
+ },
+ {
+  "id": "p20",
+  "text": "RagnarLocker IOCs as of January 2022\nIP address             Context                              Timeframe\n                                                            2021-09-03 10:53:56 - 2021-09-\n185.138.164.18         IP accessing confluence server\n                                                            21 18:46:40\n                                                            2021-09-01 20:49:56 - 2021-09-\n185.172.129.215        IP accessing confluence server\n                                                            03 10:45:50\n                                                            2021-09-12 21:34:13 -02021-09-\n45.144.29.2            IP accessing confluence server\n                                                            16 14:28:19\n                       IP seen with updt32.exe proxy\n23.106.122.192                                              2021-09-27 20:07\n                       malware\n                       IP resolution for secanalytics C2\n45.90.59.131                                                2021-09-17 16:27\n                       domain\n                       IP address involved in PSCP\n149.28.200.140                                              2021-09-10 19:20\n                       activity"
+ },
+ {
+  "id": "p21",
+  "text": "IP address        Context                            Timeframe\n                  IP address resolution for\n193.42.36.53      windows-analytics-                 2021-10-01 14:41\n                  prod12ms[.]com\n                  IP address belonging to\n45.63.89.250                                         2021-09-11 13:13\n                  ctlmon.exe - GOTROJ malware\n                  IP address involved in data\n190.211.254.181                                      2021-10-27 11:30:35\n                  exfiltration\n                  IP address involved in data\n142.44.236.38                                        2021-11-03 8:16\n                  exfiltration\n                  IP address involved in data        2021-10-19 21:22:48 - 2021-10-\n37.120.238.107\n                  exfiltration                       26 13:12:56\n                  C2 embedded in malware\n95.216.196.181    (snmp.dat and bash.dat and         2021-11-11 19:20\n                  esync.exe)\n                  C2 embedded in malware\n162.55.38.44      (snmp.dat and bash.dat and         2021-11-11 19:20\n                  esync.exe)\n                  C2 embedded in malware\n116.203.132.32    (snmp.dat and bash.dat and         2021-11-11 19:20\n                  esync.exe)\n                  C2 embedded in malware\n49.12.212.231     (snmp.dat and bash.dat and         2021-11-11 19:20\n                  esync.exe)\n193.42.39.10      seen as argument to inetinfo.exe   2021-11-22 17:12\n                  (ssl-secure-com2048[.]com) -\n193.111.153.24    bash, snmp, 7z, and psexec         2021-11-18 20:38\n                  downloaded from this domain\n                  IP address involved in data\n178.32.222.98                                        2021-10-30 16:25\n                  exfiltration\n                  IP address involved in data        2021-11-26 14:18:21 - 2021-12-\n23.227.202.72\n                  exfiltration                       14 11:12:19\n159.89.95.163     NA                                 2021-06-05\n                                                     2021-03-26 19:28 UTC +3\n50.201.185.11     NA"
+ },
+ {
+  "id": "p22",
+  "text": "47.35.60.92       NA                                 2021-09-03 11:40 UTC +3"
+ },
+ {
+  "id": "p23",
+  "text": "108.26.193.165    NA                                 2021-05-13 14:01 GMT +3\n108.56.142.135    NA                                 2021-03-25 17:16:55 GMT +1\n198.12.81.56      NA                                 2021-10/11\n198.12.127.199    NA                                 2021-10/11\n45.91.93.75       NA                                 2021-03-18"
+ },
+ {
+  "id": "p24",
+  "text": "IP address              Context                        Timeframe\n217.25.93.106           NA                             2021-03-21\n45.146.164.193          NA                             2020-10-05\n89.40.10.25             NA                             2020-10-10\n5.45.65.52              NA                             NA\n79.141.160.43\n(URL:                   NA                             2021-05-24\nizugz.envisting.xyz)"
+ },
+ {
+  "id": "p25",
+  "text": "Bitcoin Addresses:                         Timeframe\n19kcqKevFZhiX7NFLa5wAw4JBjWLcpwp3e         2021-04-30"
+ },
+ {
+  "id": "p26",
+  "text": "1CG8RAqNaJCrmEdVLK7mm2mTuuK28dkzCU 2021-03"
+ },
+ {
+  "id": "p27",
+  "text": "151Ls8urp6e2D1oXjEQAkvqogSn3TS8pp6         2021-02-27"
+ },
+ {
+  "id": "p28",
+  "text": "Email Addresses:                           Timeframe\nShingXuan7110@protonmail.com               2021-040-03\nscanjikoon@yahoo.com                       2021-05-25\nalexeyberdin17@gmail.com (linked by SMS)   NA\ntitan_fall572cool@gmail.com                NA\nVivopsalrozor@yahoo.com                    NA\nGamarjoba@mail.com                         NA\nback.shadow98@gmail.com (cookie-linked)    NA\nmichael.shawn.brown2@gmail.com             NA\nAlexey_Berdin@list.ru                      NA\nsh0d44n@gmail.com                          NA\nalexeyberdin437@gmail.com                  NA\nalexeyberdin38@gmail.com                   NA\nalexeyberbi@gmail.com                      NA"
+ },
+ {
+  "id": "p29",
+  "text": "Information Requested:\nThe FBI does not encourage paying a ransom to criminal actors. Paying a ransom may embolden\nadversaries to target additional organizations, encourage other criminal actors to engage in the\ndistribution of ransomware, or fund illicit activities. Paying the ransom also does not guarantee\na victim’s files will be recovered. However, the FBI understands when businesses are faced with\nan inability to function, executives will evaluate all options to protect their shareholders,\nemployees, and customers. Regardless of whether you or your organization decides to pay the\nransom, the FBI urges you to report ransomware incidents to your local field office. Doing so\nprovides investigators and analysts with the critical information they need to track ransomware\nattackers, hold them accountable under US law, and prevent future attacks.\nThe FBI may seek the following information:\nSHORT TERM ITEMS"
+ },
+ {
+  "id": "p30",
+  "text": "   Copy of the ransom note (screen shot/picture/text file).\n          Any discovered malicious IPs with time stamps/time zones (unusual RDP\n           connections/unusual VPN connections/beacons to malicious IPs).\n          Virtual currency addresses/amount of demand.\n          Any malicious files (executables/binaries).\n          Summary of timeline of events (dates of initial observation/malicious activity).\n          Evidence of data exfiltration.\nLONG TERM ITEMS"
+ },
+ {
+  "id": "p31",
+  "text": "   Brief summary of where the IOCs came from.\n          Incident response report.\n          Copy of any communications with malicious actors.\n          Forensic images and memory captures.\n          Host and network logs.\n          Any available decryptor.\n          Scope of impact (amount of loss)."
+ },
+ {
+  "id": "p32",
+  "text": "Recommended Mitigations:\n      Back-up critical data offline.\n      Ensure copies of critical data are in the cloud or on an external hard drive or storage\n       device. This information should not be accessible from the compromised network."
+ },
+ {
+  "id": "p33",
+  "text": "   Secure your back-ups and ensure data is not accessible for modification or deletion\n       from the system where the data resides.\n      Use multi-factor authentication with strong passwords, including for remote access\n       services.\n      Keep computers, devices, and applications patched and up-to-date.\n      Monitor cyber threat reporting regarding the publication of compromised VPN login\n       credentials and change passwords and settings.\n      Consider adding an email banner to emails received from outside your organization.\n      Disable unused remote access/Remote Desktop Protocol (RDP) ports and monitor\n       remote access/RDP logs.\n      Audit user accounts with administrative privileges and configure access controls with\n       least privilege in mind.\n      Implement network segmentation."
+ },
+ {
+  "id": "p34",
+  "text": "Additional Resources\nFor additional resources related to the prevention and mitigation of ransomware, go to\nhttps://www.stopransomware.gov as well as the CISA-Multi-State Information Sharing and\nAnalysis Center (MS-ISAC) Joint Ransomware Guide. Stopransomware.gov is the Government’s\nofficial one-stop location for resources to tackle ransomware more effectively."
+ },
+ {
+  "id": "p35",
+  "text": "CISA’s Ransomware Readiness Assessment (RRA) is a no-cost self-assessment based on a tiered\nset of practices to help organizations better assess how well they are equipped to defend and\nrecover from a ransomware incident."
+ },
+ {
+  "id": "p36",
+  "text": "CISA offers a range of no-cost cyber hygiene services to help critical infrastructure organizations\nassess, identify, and reduce their exposure to threats, including ransomware. By requesting\nthese services, organizations of any size could find ways to reduce their risk and mitigate attack\nvectors."
+ },
+ {
+  "id": "p37",
+  "text": "Reporting Notice\n     The FBI encourages recipients of this document to report information concerning suspicious or\n     criminal activity to their local FBI field office. With regards to specific information that appears\n     in this communication; the context, individual indicators, particularly those of a non-\n     deterministic or ephemeral nature (such as filenames or IP addresses), may not be indicative of\n     a compromise. Indicators should always be evaluated in light of your complete information\n     security situation."
+ },
+ {
+  "id": "p38",
+  "text": "Field office contacts can be identified at www.fbi.gov/contact-us/field-offices. When available,\n     each report submitted should include the date, time, location, type of activity, number of\n     people, and type of equipment used for the activity, the name of the submitting company or\n     organization, and a designated point of contact."
+ },
+ {
+  "id": "p39",
+  "text": "Administrative Note\n     This product is marked TLP:WHITE. Subject to standard copyright rules, the information in this\n     product may be shared without restriction."
+ },
+ {
+  "id": "p40",
+  "text": "Your Feedback Regarding this Product is Critical\nWas this product of value to your organization? Was the content clear and concise?\nYour comments are very important to us and can be submitted anonymously. Please take a\nmoment to complete the survey at the link below. Feedback should be specific to your\nexperience with our written products to enable the FBI to make quick and continuous\nimprovements to such products. Feedback may be submitted online here:\nhttps://www.ic3.gov/PIFSurvey\nPlease note that this survey is for feedback on content and value only. Reporting of technical\ninformation regarding FLASH reports must be submitted through your local FBI Field Office."
+ }
+]

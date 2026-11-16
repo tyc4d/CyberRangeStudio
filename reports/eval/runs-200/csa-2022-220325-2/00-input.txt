@@ -1,0 +1,1216 @@
+# Tactics, Techniques, and Procedures of Indicted State-Sponsored Russian Cyber Actors Targeting the Energy Sector
+
+> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-083A
+> - Date: 2022-03-25
+> - URL: https://www.ic3.gov/CSA/2022/220325-2.pdf
+> - PDF SHA-256: 4989e45c6ca40f64b8bdaa2d388782d12d940247eaf710c10fa2d7db449c297d (`source.pdf`, 35 pages)
+> - License: U.S. Government work (public domain)
+> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (89 lines). No other edits.
+
+Co-Authored by:                                                                      TLP:WHITE               Product ID: AA22-083A
+                                                                                                                   March 24, 2022
+
+
+        Tactics, Techniques, and Procedures of
+        Indicted State-Sponsored Russian Cyber Actors
+        Targeting the Energy Sector
+        Executive Summary
+        This joint Cybersecurity Advisory (CSA)—coauthored by               Actions to Take Today to Protect
+        the Cybersecurity and Infrastructure Security Agency                Energy Sector Networks:
+        (CISA), the Federal Bureau of Investigation (FBI), and the
+        Department of Energy (DOE)—provides information on                      ●   Implement and ensure robust
+        multiple intrusion campaigns conducted by state-                            network segmentation
+                                                                                    between IT and ICS
+        sponsored Russian cyber actors from 2011 to 2018 and                        networks.
+        targeted U.S. and international Energy Sector                           ●   Enforce MFA to authenticate
+        organizations. CISA, the FBI, and DOE responded to these                    to a system.
+        campaigns with appropriate action in and around the time                ●   Manage the creation of,
+        that they occurred. CISA, the FBI, and DOE are sharing                      modification of, use of—and
+        this information in order to highlight historical tactics,                  permissions associated
+                                                                                    with—privileged accounts.
+        techniques, and procedures (TTPs) used by adversaries to
+        target U.S. and international Energy Sector organizations.
+
+        On March 24, 2022, the U.S. Department of Justice unsealed indictments of three Russian Federal
+        Security Service (FSB) officers and a Russian Federation Central Scientific Research Institute of
+        Chemistry and Mechanics (TsNIIKhM) employee for their involvement in the following intrusion
+        campaigns against U.S. and international oil refineries, nuclear facilities, and energy companies.[1]
+
+            •     Global Energy Sector Intrusion Campaign, 2011 to 2018: the FSB conducted a multi-stage
+                  campaign in which they gained remote access to U.S. and international Energy Sector
+                  networks, deployed ICS-focused malware, and collected and exfiltrated enterprise and ICS-
+                  related data.
+                      o One of the indicted FSB officers was involved in campaign activity that involved
+                          deploying Havex malware to victim networks.
+
+        All organizations should report incidents and anomalous activity to CISA 24/7 Operations Center at
+        report@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field office,
+        This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information
+        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public
+        release. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.
+        For more information on the Traffic Light Protocol, see cisa.gov/tlp/.
+
+
+TLP:WHITE                                                                                        CISA | FBI | DOE
+
+
+HITE                o    The other two indicted FSB officers were involved in activity targeting U.S. Energy
+                         Sector networks from 2016 through 2018.
+           •    Compromise of Middle East-based Energy Sector organization with TRITON Malware,
+                2017: Russian cyber actors with ties to the TsNIIKhM gained access to and leveraged
+                TRITON (also known as HatMan) malware to manipulate a foreign oil refinery’s ICS
+                controllers. TRITON was designed to specifically target Schneider Electric’s Triconex Tricon
+                safety systems and is capable of disrupting those systems. Schneider Electric has issued a
+                patch to mitigate the risk of the TRITON malware’s attack vector; however, network defenders
+                should install the patch and remain vigilant against these threat actors’ TTPs.
+                    o The indicted TsNIIKhM cyber actor is charged with attempt to access U.S. protected
+                        computer networks and to cause damage to an energy facility.
+                    o The indicted TsNIIKhM cyber actor was a co-conspirator in the deployment of the
+                        TRITON malware in 2017.
+
+       This CSA provides the TTPs used by indicted FSB and TsNIIKhM actors in cyber operations against
+       the global Energy Sector. Specifically, this advisory maps TTPs used in the global Energy Sector
+       campaign and the compromise of the Middle East-based Energy Sector organization to the MITRE
+       ATT&CK for Enterprise and ATT&CK for ICS frameworks.
+
+       CISA, the FBI, and DOE assess that state-sponsored Russian cyber operations continue to pose a
+       threat to U.S. Energy Sector networks. CISA, the FBI, and DOE urge the Energy Sector and other
+       critical infrastructure organizations to apply the recommendations listed in the Mitigations section of
+       this advisory and Appendix A to reduce the risk of compromise.
+
+       For more information on Russian state-sponsored malicious cyber activity, see CISA's Russia Cyber
+       Threat Overview and Advisories webpage. For more information on the threat of Russian state-
+       sponsored malicious cyber actors to U.S. critical infrastructure as well as additional mitigation
+       recommendations, see joint CSA Understanding and Mitigating Russian State-Sponsored Cyber
+       Threats to U.S. Critical Infrastructure and CISA's Shields Up Technical Guidance webpage.
+
+       Rewards for Justice Program
+       If you have information on state-sponsored Russian cyber operations targeting U.S. critical
+       infrastructure, contact the Department of State’s (DOS) Rewards for Justice program. You may be
+       eligible for a reward of up to $10 million, which DOS is offering for information leading to the
+       identification or location of any person who, while acting under the direction or control of a foreign
+       government, participates in malicious cyber activity against U.S. critical infrastructure in violation of
+       the Computer Fraud and Abuse Act (CFAA). Contact +1-202-702-7843 on WhatsApp, Signal, or
+       Telegram, or send information via the Rewards for Justice secure Tor-based tips line located on the
+       Dark Web. For more details refer to rewardsforjustice.net.
+
+
+TLP:WHITE                                                                                      CISA | FBI | DOE
+
+
+HITE TECHNICAL DETAILS
+
+       Global Energy Sector Intrusion Campaign, 2011 to 2018
+       From at least 2011 through 2018, the FSB (also known as         This advisory uses the MITRE
+       Berserk Bear, Energetic Bear, TeamSpy, Dragonfly,               ATT&CK® for Enterprise framework,
+       Havex, Crouching Yeti, and Koala) conducted an intrusion        version 10, and the ATT&CK for
+       campaign against international and U.S. Energy Sector           ICSs framework. See the ATT&CK
+       organizations. The threat actor gained remote access to         for Enterprise and ATT&CK for ICS
+       and deployed malware designed to collect ICS-related            frameworks for all referenced threat
+       information on compromised Energy Sector networks, and          actor tactics and techniques.
+       exfiltrated enterprise and ICS data.
+
+       Beginning in 2013 and continuing through 2014, the threat actor leveraged Havex malware on Energy
+       Sector networks. The threat actor gained access to these victim networks via spearphishing emails,
+       redirects to compromised websites, and malicious versions of legitimate software updates on multiple
+       ICS vendor websites. The new software updates contained installations of Havex malware, which
+       infected systems of users who downloaded the compromised updates.
+       Havex is a remote access Trojan (RAT) that communicates with a command and control (C2) server.
+       The C2 server deploys payloads that enumerate all collected network resources and uses the Open
+       Platform Communications (OPC) standard to gather information about connected control systems
+       devices and resources within the network. Havex allowed the actor to install additional malware and
+       extract data, including system information, lists of files and installed programs, e-mail address books,
+       and virtual private network (VPN) configuration files. The Havex payload can cause common OPC
+       platforms to crash, which could cause a denial-of-service condition on applications that rely on OPC
+       communications. Note: for additional information on Havex, see to CISA ICS Advisory ICS Focused
+       Malware and CISA ICS Alert ICS Focused Malware (Update A).
+       Beginning in 2016, the threat actor began widely targeting U.S. Energy Sector networks. The actor
+       conducted these attacks in two stages: first targeting third-party commercial organizations (such as
+       vendors, integrators, and suppliers) and then targeting Energy Sector organizations. The threat actor
+       used the compromised third-party infrastructure to conduct spearphishing, watering hole, and supply
+       chain attacks to harvest Energy Sector credentials and to pivot to Energy Sector enterprise networks.
+       After obtaining access to the U.S. Energy Sector networks, the actor conducted network discovery,
+       moved laterally, gained persistence, then collected and exfiltrated information pertaining to ICS from
+       the enterprise, and possibly operational technology (OT), environments. Exfiltrated information
+       included: vendor information, reference documents, ICS architecture, and layout diagrams.
+       For more detailed information on FSB targeting of U.S. Energy Sector networks, See CISA Alert
+       Russian Government Cyber Activity Targeting Energy Sector and Other Critical Infrastructure
+       Sectors.
+
+       Refer to Appendix A for TTPs of Havex malware and TTPs used by the actor in the 2016 to 2018
+       targeting of U.S. Energy Sector networks, as well as associated mitigations.
+
+
+TLP:WHITE                                                                                     CISA | FBI | DOE
+
+
+HITE Compromise of Middle East-based Energy Sector Organization with TRITON
+       Malware, 2017
+       In 2017, Russian cyber actors with ties to TsNIIKhM gained access to and manipulated a foreign oil
+       refinery’s safety devices. TsNIIKhM actors used TRITON malware on the ICS controllers, which
+       resulted in the refinery shutting down for several days.
+       TRITON is a custom-built, sophisticated, multi-stage malware affecting Schneider Electric’s Triconex
+       Tricon, a safety programmable logic controller (PLC) (also referred to as a safety instrumented
+       system [SIS]), which monitors industrial processes to prevent hazardous conditions. TRITON is
+       capable of directly interacting with, remotely controlling, and compromising these safety systems. As
+       these systems are used in a large number of environments, the capacity to disable, inhibit, or modify
+       the ability of a process to fail safely could result in physical consequences. Note: for additional
+       information on affected products, see to CISA ICS Advisory Schneider Electric Triconex Tricon
+       (Update B).
+       TRITON malware affects Triconex Tricon PLCs by modifying in-memory firmware to add additional
+       programming. The extra functionality allows an attacker to read/modify memory contents and execute
+       custom code, disabling the safety system.
+       TRITON malware has multiple components, including a custom Python script, four Python modules,
+       and malicious shellcode that contains an injector and a payload. For detailed information on
+       TRITON’s components, refer to CISA Malware Analysis Report (MAR): HatMan: Safety System
+       Targeted Malware (Update B).
+       Note: the indicted TsNIIKhM cyber actor was also involved in activity targeting U.S. Energy Sector
+       companies in 2018, and other TsNIIKhM-associated actors have targeted a U.S.-based company’s
+       facilities in an attempt to access the company’s OT systems. To date, CISA, FBI, and DOE have no
+       information to indicate these actors have intentionally disrupted any U.S. Energy Sector infrastructure.
+       Refer to Appendix A for TTPs used by TRITON as well as associated mitigations.
+
+       MITIGATIONS
+       Enterprise Environment
+       CISA, the FBI, and DOE recommend Energy Sector and other critical infrastructure organizations
+       implement the following mitigations to harden their corporate enterprise network. These mitigations
+       are tailored to combat multiple enterprise techniques observed in these campaigns (refer to Appendix
+       A for observed TTPs and additional mitigations).
+       Privileged Account Management
+           •    Manage the creation of, modification of, use of—and permissions associated with—privileged
+                accounts, including SYSTEM and root.
+
+       Password Policies
+           •     Set and enforce secure password policies for accounts.
+
+
+TLP:WHITE                                                                                        CISA | FBI | DOE
+
+
+HITE Disable or Remove Features or Programs
+           •    Remove or deny access to unnecessary and potentially vulnerable software to prevent abuse
+                by adversaries.
+
+       Audit
+           •    Perform audits or scans of systems, permissions, insecure software, insecure configurations,
+                etc., to identify potential weaknesses.
+
+       Operating System Configuration
+           •    Make configuration changes related to the operating system or a common feature of the
+                operating system that result in system hardening against techniques.
+
+       Multifactor Authentication
+           •    Enforce multifactor authentication (MFA) by requiring users to provide two or more pieces of
+                information (such as username and password plus a token, e.g., a physical smart card or
+                token generator) to authenticate to a system.
+
+       Filter Network Traffic
+           •    Use network appliances to filter ingress or egress traffic and perform protocol-based filtering.
+                Configure software on endpoints to filter network traffic.
+
+       Network Segmentation
+           •    Architect sections of the network to isolate critical systems, functions, or resources. Use
+                physical and logical segmentation to prevent access to potentially sensitive systems and
+                information. Use a demilitarized zone (DMZ) to contain any internet-facing services that
+                should not be exposed from the internal network.
+
+       Limit Access to Resources over the Network
+           •    Prevent access to file shares, remote access to systems, and unnecessary services.
+                Mechanisms to limit access may include use of network concentrators, Remote Desktop
+                Protocol (RDP) gateways, etc.
+
+       Execution Prevention
+           •    Block execution of code on a system through application control, and/or script blocking.
+
+       Industrial Control System Environment
+       CISA, the FBI, and DOE recommend Energy Sector and other critical infrastructure organizations
+       implement the following mitigations to harden their ICS/OT environment.
+
+
+TLP:WHITE                                                                                     CISA | FBI | DOE
+
+
+HITE Network Segmentation
+           •    Implement and ensure robust network segmentation between IT and ICS networks to limit the
+                ability of cyber threat actors to move laterally to ICS networks if the IT network is
+                compromised.
+                    o Implement a network topology for ICS that has multiple layers, with the most critical
+                         communications occurring in the most secure and reliable layer. For more information
+                         refer to National Institute of Standard and Technology Special Publication 800-82:
+                         Guide to Industrial Control Systems (ICS) Security. Further segmentation should be
+                         applied to portions of the network that are reliant on one another by functionality.
+                         Figure 5 on page 26 of the CISA ICS Defense in Depth Strategy document describes
+                         this architecture.
+                    o Use one-way communication diodes to prevent external access, whenever possible.
+                    o Set up DMZs to create a physical and logical subnetwork that acts as an intermediary
+                         for connected security devices to avoid exposure.
+                    o Employ reliable network security protocols and services where feasible.
+           •    Consider using virtual local area networks (VLANs) for additional network segmentation, for
+                example, by placing all printers in separate, dedicated VLANs and restricting users’ direct
+                printer access. This same principle can be applied to segmentation of portions of the process
+                for which devices are used. As an example, systems that are only involved in the creation of
+                one component within an assembly line that is not directly related to another component can
+                be on separate VLANs, which allows for identification of any unexpected communication, as
+                well as segmentation against potential risk exposure on a larger scale.
+           •    Implement perimeter security between network segments to limit the ability of cyber threat
+                actors to move laterally.
+                    o Control traffic between network segments by using firewalls, intrusion detection
+                        systems (IDSs), and rules for filtering traffic on routers and switches.
+                    o Implement network monitoring at key chokepoints—including egress points to the
+                        internet, between network segments, core switch locations—and at key assets or
+                        services (e.g., remote access services).
+                    o Configure an IDS to create alarms for any ICS traffic outside normal operations (after
+                        establishing a baseline of normal operations and network traffic).
+                    o Configure security incident and event monitoring to monitor, analyze, and correlate
+                        event logs from across the ICS network to identify intrusion attempts.
+
+       ICS Best Practices
+           •    Update all software. Use a risk-based assessment strategy to determine which ICS networks,
+                assets, and zones should participate in the patch management program.
+           •    Test all patches in out-of-band testing environments before implementation into production
+                environments.
+           •    Implement application allow listing on human machine interfaces and engineering
+                workstations.
+
+
+TLP:WHITE                                                                                      CISA | FBI | DOE
+
+
+HITE       •    Harden software configuration on field devices, including tablets and smartphones.
+           •    Replace all end-of-life software and hardware devices.
+           •    Disable unused ports and services on ICS devices (after testing to ensure this will not affect
+                ICS operation).
+           •    Restrict and manage remote access software. Enforce MFA for remote access to ICS
+                networks.
+           •    Configure encryption and security for network protocols within the ICS environment.
+           •    Do not allow vendors to connect their devices to the ICS network. Use of a compromised
+                device could introduce malware.
+           •    Disallow any devices that do not live solely on the ICS environment from communicating on
+                the platform. ‘Transient devices’ provide risk exposure to the ICS environment from malicious
+                activity in the IT or other environments to which they connect.
+           •    Maintain an ICS asset inventory of all hardware, software, and supporting infrastructure
+                technologies.
+           •    Maintain robust host logging on critical devices within the ICS environment, such as jump
+                boxes, domain controllers, repository servers, etc. These logs should be aggregated into a
+                centralized log server for review.
+           •    Ensure robust physical security is in place to prevent unauthorized personal from accessing
+                controlled spaces that house ICS equipment.
+           •    Regularly test manual controls so that critical functions can be kept running if ICS/OT
+                networks need to be taken offline.
+
+       CONTACT INFORMATION
+       All organizations should report incidents and anomalous activity to CISA 24/7 Operations Center at
+       report@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field office.
+
+       REFERENCES
+       [1] https://www.justice.gov/opa/pr/four-russian-government-employees-charged-two-historical-
+       hacking-campaigns-targeting-critical
+       [2] https://collaborate.mitre.org/attackics/index.php/Software/S0003
+       [3] https://collaborate.mitre.org/attackics/index.php/Software/S0003
+       [4] https://collaborate.mitre.org/attackics/index.php/Software/S0013
+
+
+        TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+
+        APPENDIX
+        HITE     A: CAMPAIGN AND MALWARE TACTICS, TECHNIQUES, AND PROCEDURES
+        Global Energy Sector Campaign: Havex Malware
+        Table 1 maps Havex’s capabilities to the ATT&CK for Enterprise framework, and table 2 maps Havex’s capabilities to the ATT&CK
+        for ICS framework. Table 1 also provides associated mitigations. For additional mitigations, refer to the Mitigations section of this
+        advisory.
+                                                  Table 1: Enterprise Domain Tactics and Techniques for Havex [2]
+
+         Tactic              Technique               Use                                             Detection/Mitigations
+         Persistence         Boot or Logon           Havex adds Registry Run keys to achieve         Monitor: monitor Registry for changes to run
+         [TA0003]            Autostart               persistence.                                    keys that do not correlate with known
+                             Execution:                                                              software, patch cycles, etc. Monitor the start
+                             Registry Run Keys                                                       folder for additions or changes. Tools such
+                             / Startup Folder                                                        as Sysinternals Autoruns may also be
+                             [T1547.001]                                                             used to detect system changes that could be
+                                                                                                     attempts at persistence, including listing the
+                                                                                                     run keys' Registry locations and startup
+                                                                                                     folders. Suspicious program execution as
+                                                                                                     startup programs may show up as outlier
+                                                                                                     processes that have not been seen before
+                                                                                                     when compared against historical data.
+         Privilege           Process Injection       Havex injects itself into explorer.exe.         Behavior Prevention on End Point: use
+         Escalation          [T1055]                                                                 capabilities to prevent suspicious behavior
+         [TA0004]                                                                                    patterns from occurring on endpoint systems.
+                             Note: this
+                                                                                                     This could include suspicious process, file,
+                             technique also
+                                                                                                     Application Programming Interface (API) call,
+                             applies to Tactic:
+                                                                                                     etc., behavior.
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+          Tactic              Technique           Use                                              Detection/Mitigations
+     HITE                     Defense Evasion                                                      Privileged Account Management: manage
+                              [TA0005]                                                             the creation of, modification of, use of, and
+                                                                                                   permissions associated with privileged
+                                                                                                   accounts, including SYSTEM and root.
+          Defense             Indicator Removal   Havex contains a cleanup module that             Monitor: monitoring for command-line
+          Evasion             on Host: File       removes traces of itself from victim networks.   deletion functions to correlate with binaries
+          [TA0005]            Deletion                                                             or other files that an adversary may drop and
+                              [T1070.004]                                                          remove may lead to detection of malicious
+                                                                                                   activity. Another good practice is monitoring
+                                                                                                   for known deletion and secure deletion tools
+                                                                                                   that are not already on systems within an
+                                                                                                   enterprise network, which an adversary
+                                                                                                   could introduce. Some monitoring tools may
+                                                                                                   collect command-line arguments but may not
+                                                                                                   capture DEL commands since DEL is a native
+                                                                                                   function within cmd.exe.
+          Credential          Credentials from    Havex may contain a publicly available web       Password Policies: set and enforce secure
+          Access              Password Stores:    browser password recovery tool.                  password policies for accounts.
+          [TA0006]            Credentials from
+                              Web Browsers
+                              [T1555.003]
+          Discovery           Account             Havex collects address book information          Monitor: monitor processes and command-
+          [TA0007]            Discovery: Email    from Outlook.                                    line arguments for actions that could be
+                              Account                                                              taken to gather system and network
+                              [T1087.003]                                                          information. Remote access tools with built-
+                                                                                                   in features may interact directly with the
+                                                                                                   Windows API to gather information.
+                                                                                                   Information may also be acquired through
+
+     TLP:WHITE                                                                                                               CISA | FBI | DOE
+          Tactic              Technique            Use                                              Detection/Mitigations
+     HITE                                                                                           Windows system management tools such as
+                                                                                                    Windows Management Instrumentation
+                                                                                                    (WMI) and PowerShell.
+                              File and Directory   Havex collects information about available       Monitor: monitor processes and command-
+                              Discovery [T1083]    drives, default browser, desktop file list, My   line arguments for actions that could be
+                                                   Documents, internet history, program files,      taken to gather system and network
+                                                   and root of available drives.                    information. Remote access tools with built-
+                                                                                                    in features may interact directly with the
+                                                                                                    Windows API to gather information.
+                                                                                                    Information may also be acquired through
+                                                                                                    Windows system management tools such as
+                                                                                                    WMI and PowerShell.
+                              Process Discovery    Havex collects information about running         Monitor: normal, benign system and
+                              [T1057]              processes.                                       network events that look like process
+                                                                                                    discovery may be uncommon, depending on
+                                                                                                    the environment and how they are used.
+                                                                                                    Monitor processes and command-line
+                                                                                                    arguments for actions that could be taken to
+                                                                                                    gather system and network information.
+                                                                                                    Remote access tools with built-in features
+                                                                                                    may interact directly with the Windows API to
+                                                                                                    gather information. Information may also be
+                                                                                                    acquired through Windows system
+                                                                                                    management tools such as WMI and
+                                                                                                    PowerShell.
+
+
+     TLP:WHITE                                                                                                                CISA | FBI | DOE
+          Tactic              Technique           Use                                                Detection/Mitigations
+     HITE                     System              Havex collects information about the OS and        Monitor: monitor processes and command-
+                              Information         computer name.                                     line arguments for actions that could be
+                              Discovery [T1082]                                                      taken to gather system and network
+                                                                                                     information. Remote access tools with built-
+                                                                                                     in features may interact directly with the
+                                                                                                     Windows API to gather information.
+                                                                                                     Information may also be acquired through
+                                                                                                     Windows system management tools such as
+                                                                                                     WMI and PowerShell.
+                                                                                                     In cloud-based systems, native logging can
+                                                                                                     be used to identify access to certain APIs
+                                                                                                     and dashboards that may contain system
+                                                                                                     information. Depending on how the
+                                                                                                     environment is used, that data alone may not
+                                                                                                     be useful due to benign use during normal
+                                                                                                     operations.
+                              System Network      Havex collects information about the internet      Monitor: monitor processes and command-
+                              Configuration       adapter configuration.                             line arguments for actions that could be
+                              Discovery [T1016]                                                      taken to gather system and network
+                                                                                                     information. Remote access tools with built-
+                              System              Havex collects usernames.
+                                                                                                     in features may interact directly with the
+                              Owner/User
+                                                                                                     Windows API to gather information.
+                              Discovery [T1033]
+                                                                                                     Information may also be acquired through
+                                                                                                     Windows system management tools such as
+                                                                                                     WMI and PowerShell.
+          Collection          Archive Collected   Havex writes collected data to a temporary         Audit: audit or scan systems, permissions,
+          [TA0009]            Data [T1560]        file in an encrypted form before exfiltration to   insecure software, insecure configurations,
+                                                  a C2 server.                                       etc., to identify potential weaknesses.
+
+     TLP:WHITE                                                                                                                      CISA | FBI | DOE
+          Tactic              Technique                 Use                                               Detection/Mitigations
+     HITECommand              Data Encoding:    Havex uses standard Base64 + bzip2 or                     Detect: analyze network data for uncommon
+         and Control          Standard Encoding standard Base64 + reverse XOR + RSA-                      data flows (e.g., a client sending significantly
+         [TA0011]             [T1132.001]       2048 to decrypt data received from C2                     more data than it receives from a server).
+                                                servers.                                                  Processes using the network that do not
+                                                                                                          normally have network communication or
+                                                                                                          have never been seen before are suspicious.
+                                                                                                          Analyze packet contents to detect
+                                                                                                          communications that do not follow the
+                                                                                                          expected protocol behavior for the port that
+                                                                                                          is being used.
+
+
+                                                       Table 2: ICS Domain Tactics and Techniques for Havex [3]
+
+          Tactic                   Technique                                     Use
+          Initial Access           Spearphishing Attachment [T0865]              Havex is distributed through a Trojanized installer attached to emails.
+
+
+                                   Supply Chain Compromise [T0862]               Havex is distributed through Trojanized installers planted on
+                                                                                 compromised vendor websites.
+                                   Note: this activity also applies to Tactic:
+                                   Drive by Compromise [T0817]
+          Execution                User Execution [T0863]                        Execution of Havex relies on a user opening a Trojanized installer
+                                                                                 attached to an email.
+          Discovery                Remote System Discovery [T0846]               Havex uses Windows networking (WNet) to discover all the servers,
+                                                                                 including OPC servers that are reachable by the compromised
+                                                                                 machine over the network.
+
+
+     TLP:WHITE                                                                                                                CISA | FBI | DOE
+          Tactic                   Technique                                Use
+     HITE                          Remote System Information Discovery      Havex gathers server information, including CLSID, server name,
+                                   [T0888]                                  Program ID, OPC version, vendor information, running state, group
+                                                                            count, and server bandwidth.
+          Collection               Automated Collection [T0802]             Havex gathers information about connected control systems devices.
+
+                                   Point & Tag Identification [T0861]       Havex can enumerate OPC tags; specifically tag name, type, access,
+                                                                            and ID.
+          Inhibit                  Denial of Service [T0814]                Havex has caused multiple common OPC platforms to intermittently
+          Response                                                          crash.
+          Function
+          Impact                   Denial of Control [T0813]                Havex can cause PLCs inability to control connected systems.
+
+
+        Global Energy Sector Campaign: 2016 to 2018 U.S. Energy Sector Targeting
+        Table 3 maps the 2016 to 2018 U.S. Energy Sector targeting activity to the MITRE ATT&CK Enterprise framework. Mitigations for
+        techniques are also provided in table. For additional mitigations, refer to the Mitigations section of this advisory.
+         Table 3: Energy Sector Campaign, 2016 to 2018 targeting U.S. Energy Sector: Observed MITRE ATT&CK Enterprise Tactics and Techniques
+
+          Tactic                   Technique                    Threat Actor Activity                     Detections/Mitigations
+
+          Reconnaissance Gather Victim Identity                 The threat actor harvested credentials    Software Configuration: implement
+          [TA0043]       Information: Credentials               of third-party commercial organizations   configuration changes to software
+                         [T1589.001]                            by sending spearphishing emails that      (other than the operating system) to
+                                                                contained a PDF attachment. The PDF       mitigate security risks associated to
+                                                                attachment contained a shortened URL      how the software operates.
+                                                                that, when clicked, led users to a
+                                                                                                          User Training: train users to be aware
+                                                                                                          of access or manipulation attempts by
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+        Tactic                     Technique                Threat Actor Activity                      Detections/Mitigations
+                                                            website that prompted the user for their   an adversary to reduce the risk of
+                                                            email address and password.                successful spearphishing, social
+                                                                                                       engineering, and other techniques that
+                                                            The threat actor harvested credentials
+                                                                                                       involve user interaction.
+                                                            of Energy Sector targets by sending
+                                                            spearphishing emails with a malicious
+                                                            Microsoft Word document or links to the
+                                                            watering holes created on compromised
+                                                            third-party websites.
+                                                            Note: this activity also applies to:
+                                                               ● Tactic: Reconnaissance
+                                                                   [TA0043], Technique: Phishing
+                                                                   for Information [T1598]:
+                                                                        ○ Spearphishing
+                                                                            Attachment [T1598.002]
+                                                                        ○ Spearphishing Link
+                                                                            [T1598.003]
+
+          Resource                 Compromise               The threat actor created watering holes    This activity typically takes place
+          Development              Infrastructure: Server   on compromised third-party                 outside the visibility of target
+          [TA0042]                 [T1584.004]              organizations’ domains.                    organizations, making detection of this
+                                                                                                       behavior difficult. Ensure that users
+                                                                                                       browse the internet securely. Prevent
+                                                                                                       intentional and unintentional download
+                                                                                                       of malware or rootkits, and users from
+                                                                                                       accessing infected or malicious
+                                                                                                       websites. Treat all traffic as untrusted,
+                                                                                                       even if it comes from a partner website
+                                                                                                       or popular domain.
+
+
+     TLP:WHITE                                                                                                            CISA | FBI | DOE
+
+        Tactic                     Technique                Threat Actor Activity                    Detections/Mitigations
+        Initial Access             Valid Accounts [T1078]   The threat actor obtained access to      Network Segmentation: architect
+        [TA0001]                                            Energy Sector targets by leveraging      sections of the network to isolate critical
+                                                            compromised third-party infrastructure   systems, functions, or resources. Use
+                                                            and previously compromised Energy        physical and logical segmentation to
+                                                            Sector credentials against remote        prevent access to potentially sensitive
+                                                            access services and infrastructure—      systems and information. Use a DMZ to
+                                                            specifically VPN, RDP, and Outlook       contain any internet-facing services that
+                                                            Web Access—where MFA was not             should not be exposed from the internal
+                                                            enabled.                                 network.
+                                                                                                     MFA: enforce use of two or more
+                                                                                                     pieces of evidence (such as username
+                                                                                                     and password plus a token, e.g., a
+                                                                                                     physical smart card or token generator)
+                                                                                                     to authenticate to a system.
+                                                                                                     Privileged Account Management:
+                                                                                                     manage the creation of, modification of,
+                                                                                                     use of, and permissions associated with
+                                                                                                     privileged accounts, including SYSTEM
+                                                                                                     and root.
+                                                                                                     Update Software: perform regular
+                                                                                                     software updates to mitigate
+                                                                                                     exploitation risk.
+                                                                                                     Exploit Protection: use capabilities to
+                                                                                                     detect and block conditions that may
+                                                                                                     lead to or be indicative of a software
+                                                                                                     exploit occurring.
+
+
+     TLP:WHITE                                                                                                                CISA | FBI | DOE
+
+        Tactic                     Technique                  Threat Actor Activity                      Detections/Mitigations
+                                                                                                         Application Isolation and
+                                                                                                         Sandboxing: restrict execution of code
+                                                                                                         to a virtual environment on or in transit
+                                                                                                         to an endpoint system.
+
+                                   External Remote Services   The threat actor installed VPN clients on Network Segmentation: architect
+                                   [T1133]                    compromised third-party targets to        sections of the network to isolate critical
+                                                              connect to Energy Sector networks.        systems, functions, or resources. Use
+                                                                                                        physical and logical segmentation to
+                                                                                                        prevent access to potentially sensitive
+                                                                                                        systems and information. Use a DMZ to
+                                                                                                        contain any internet-facing services that
+                                                                                                        should not be exposed from the internal
+                                                                                                        network.
+                                                                                                         MFA: enforce use of two or more
+                                                                                                         pieces of evidence (such as username
+                                                                                                         and password plus a token, e.g., a
+                                                                                                         physical smart card or token generator)
+                                                                                                         to authenticate to a system.
+                                                                                                         Limit Access to Resource Over
+                                                                                                         Network: prevent access to file shares,
+                                                                                                         remote access to systems, and
+                                                                                                         unnecessary services. Mechanisms to
+                                                                                                         limit access may include use of network
+                                                                                                         concentrators, RDP gateways, etc.
+                                                                                                         Disable or Remove Program: remove
+                                                                                                         or deny access to unnecessary and
+
+
+     TLP:WHITE                                                                                                             CISA | FBI | DOE
+
+        Tactic                     Technique                 Threat Actor Activity                     Detections/Mitigations
+                                                                                                       potentially vulnerable software to
+                                                                                                       prevent abuse by adversaries.
+
+          Execution                Command and Scripting     During an RDP session, the threat actor   Antivirus/Antimalware: use signatures
+          [TA0002]                 Interpreter: PowerShell   used a PowerShell Script to create an     or heuristics to detect malicious
+                                   [T1059.001]               account within a victim’s Microsoft       software.
+                                                             Exchange Server.
+                                                                                                       Code Signing: enforce binary and
+                                                             Note: this activity also applies to:      application integrity with digital
+                                                                ● Tactic: Persistence [TA0003],        signature verification to prevent
+                                                                    Technique: Create Account:         untrusted code from executing.
+                                                                    Local Account [T1136.001]
+                                                                                                       Disable or Remove Program: remove
+                                                                                                       or deny access to unnecessary and
+                                                                                                       potentially vulnerable software to
+                                                                                                       prevent abuse by adversaries.
+                                                                                                       Privileged Account Management:
+                                                                                                       manage the creation of, modification of,
+                                                                                                       use of, and permissions associated with
+                                                                                                       privileged accounts, including SYSTEM
+                                                                                                       and root.
+
+                                   Command and Scripting     The threat actor used a JavaScript with   Execution Prevention: block execution
+                                   Interpreter: Windows      an embedded Command Shell script to:      of code on a system through application
+                                   Command Shell                                                       control, and/or script blocking.
+                                   [T1059.003]                  ●   Create a local administrator
+                                                                    account;
+                                                                ●   Disable the host-based firewall;
+                                                                ●   Globally open port 3389 for RDP
+                                                                    access; and
+
+
+     TLP:WHITE                                                                                                           CISA | FBI | DOE
+
+        Tactic                     Technique             Threat Actor Activity                      Detections/Mitigations
+                                                            ●   Attempt to add the newly created
+                                                                account to the administrators
+                                                                group to gain elevated
+                                                                privileges.
+                                                         Note: this activity also applies to:
+                                                            ● Tactic: Credential Access
+                                                                [TA0006], Technique: Input
+                                                                Capture [T1056]
+                                                            ● Tactic: Execution [TA0002],
+                                                                Technique: Command and
+                                                                Scripting Interpreter: JavaScript
+                                                                [T1059.007]
+                                                            ● Tactic: Persistence [TA0003],
+                                                                Technique: Create Account:
+                                                                Local Account [T1136.001]
+
+                                   Scheduled Task/Job:   The threat actor created a Scheduled       Audit: audit or scan systems,
+                                   Scheduled Task        Task to automatically log out of a newly   permissions, insecure software,
+                                   [T1053.005]           created account every eight hours.         insecure configurations, etc., to identify
+                                                                                                    potential weaknesses.
+                                                                                                    Harden Operating System
+                                                                                                    Configuration: make configuration
+                                                                                                    changes related to the operating system
+                                                                                                    or a common feature of the operating
+                                                                                                    system that result in system hardening
+                                                                                                    against techniques.
+                                                                                                    Privileged Account Management:
+                                                                                                    manage the creation of, modification of,
+                                                                                                    use of, and permissions associated with
+
+
+     TLP:WHITE                                                                                                          CISA | FBI | DOE
+
+        Tactic                     Technique               Threat Actor Activity                   Detections/Mitigations
+                                                                                                   privileged accounts, including SYSTEM
+                                                                                                   and root.
+                                                                                                   User Account Management: manage
+                                                                                                   the creation of, modification of, use of,
+                                                                                                   and permissions associated with user
+                                                                                                   accounts.
+
+          Persistence              Create Account: Local   The threat actor created local          MFA: enforce use of two or more
+          [TA0003]                 Account [T1136.001]     administrator accounts on previously    pieces of evidence (such as username
+                                                           compromised third-party organizations   and password plus a token, e.g., a
+                                                           for reconnaissance and to remotely      physical smart card or token generator)
+                                                           access Energy Sector targets.           to authenticate to a system.
+                                                                                                   Privileged Account Management:
+                                                                                                   manage the creation of, modification of,
+                                                                                                   use of, and permissions associated with
+                                                                                                   privileged accounts, including SYSTEM
+                                                                                                   and root.
+
+                                   Server Software         The threat actor created webshells on   Detect: the portion of the webshell that
+                                   Component: Web Shell    Energy Sector targets’ publicly         is on the server may be small and look
+                                   [T1505.003]             accessible email and web servers.       innocuous. Process monitoring may be
+                                                                                                   used to detect Web servers that
+                                                                                                   perform suspicious actions such as
+                                                                                                   running cmd.exe or accessing files that
+                                                                                                   are not in the Web directory. File
+                                                                                                   monitoring may be used to detect
+                                                                                                   changes to files in the Web directory of
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+        Tactic                     Technique                Threat Actor Activity                       Detections/Mitigations
+                                                                                                        a Web server that do not match with
+                                                                                                        updates to the Web server's content
+                                                                                                        and may indicate implantation of a Web
+                                                                                                        shell script. Log authentication attempts
+                                                                                                        to the server and any unusual traffic
+                                                                                                        patterns to or from the server and
+                                                                                                        internal network.
+
+          Defense                  Indicator Removal on     The threat actor created new accounts       Encrypt Sensitive Information:
+          Evasion                  Host: Clear Windows      on victim networks to perform cleanup       protect sensitive information with strong
+          [TA0005]                 Event Logs [T1070.001]   operations. The accounts created were       encryption.
+                                                            used to clear the following Windows
+                                                                                                        Remote Data Storage: use remote
+                                                            event logs: System, Security, Terminal
+                                                                                                        security log and sensitive file storage
+                                                            Services, Remote Services, and Audit.
+                                                                                                        where access can be controlled better
+                                                            The threat actor also removed               to prevent exposure of intrusion
+                                                            applications they installed while they      detection log data or sensitive
+                                                            were in the network along with any logs     information.
+                                                            produced. For example, the VPN client
+                                                                                                        Restrict File and Directory
+                                                            installed at one third-party commercial
+                                                                                                        Permissions: restrict access by setting
+                                                            facility was deleted along with the logs
+                                                                                                        directory and file permissions that are
+                                                            that were produced from its use. Finally,
+                                                                                                        not specific to users or privileged
+                                                            data generated by other accounts used
+                                                                                                        accounts.
+                                                            on the systems accessed were deleted.
+                                                            Note: this activity also applies to:
+                                                                ●   Tactic: Persistence [TA0003],
+                                                                    Technique: Create Account:
+                                                                    Local Account [T1136.001]
+
+
+     TLP:WHITE                                                                                                               CISA | FBI | DOE
+
+        Tactic                     Technique                 Threat Actor Activity                      Detections/Mitigations
+                                   Indicator Removal on      The threat actor cleaned up target         Monitor: monitoring for command-line
+                                   Host: File Deletion       networks by deleting created               deletion functions to correlate with
+                                   [T1070.004]               screenshots and specific registry keys.    binaries or other files that an adversary
+                                                                                                        may drop and remove may lead to
+                                                             The threat actor also deleted all batch
+                                                                                                        detection of malicious activity. Another
+                                                             scripts, output text documents, and any
+                                                                                                        good practice is monitoring for known
+                                                             tools they brought into the environment,
+                                                                                                        deletion and secure deletion tools that
+                                                             such as scr.exe.
+                                                                                                        are not already on systems within an
+                                                             Note: this activity also applies to:       enterprise network that an adversary
+                                                                 •   Technique: Modify Registry         could introduce. Some monitoring tools
+                                                                     [T1112]                            may collect command-line arguments,
+                                                                                                        but may not capture DEL commands
+                                                                                                        since DEL is a native function within
+                                                                                                        cmd.exe.
+
+                                   Technique: Masquerading   After downloading tools from a remote      Restrict File and Directory
+                                   [T1036]                   server, the threat actor renamed the       Permissions: restrict access by setting
+                                                             extensions.                                directory and file permissions that are
+                                                                                                        not specific to users or privileged
+                                                                                                        accounts.
+                                                                                                        Code Signing: enforce binary and
+                                                                                                        application integrity with digital
+                                                                                                        signature verification to prevent
+                                                                                                        untrusted code from executing.
+                                                                                                        Execution Prevention: block execution
+                                                                                                        of code on a system through application
+                                                                                                        control, and/or script blocking.
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+        Tactic                     Technique               Threat Actor Activity                       Detections/Mitigations
+        Credential                 Brute Force: Password   The threat actor used password-             MFA: enforce use of two or more
+        Access                     Cracking [T1110.002]    cracking techniques to obtain the           pieces of evidence (such as username
+        [TA0006]                                           plaintext passwords from obtained           and password plus a token, e.g., a
+                                                           credential hashes.                          physical smart card or token generator)
+                                                                                                       to authenticate to a system.
+                                                           The threat actor dropped and executed
+                                                           open-source and free password               Password Policies: set and enforce
+                                                           cracking tools such as Hydra,               secure password policies for accounts.
+                                                           SecretsDump, and CrackMapExec, and
+                                                           Python.
+
+                                   Forced Authentication   Microsoft Word attachments sent via         Password Policies: set and enforce
+                                   [T1187]                 spearphishing emails leveraged              secure password policies for accounts.
+                                                           legitimate Microsoft Office functions for
+                                                                                                       Filter Network Traffic: use network
+                                                           retrieving a document from a remote
+                                                                                                       appliances to filter ingress or egress
+                                                           server over Server Message Block
+                                                                                                       traffic and perform protocol-based
+                                                           (SMB) using Transmission Control
+                                                                                                       filtering. Configure software on
+                                                           Protocol ports 445 or 139. As a part of
+                                                                                                       endpoints to filter network traffic.
+                                                           the standard processes executed by
+                                                           Microsoft Word, this request
+                                                           authenticates the client with the server,
+                                                           sending the user’s credential hash to
+                                                           the remote server before retrieving the
+                                                           requested file. (Note: transfer of
+                                                           credentials can occur even if the file is
+                                                           not retrieved.)
+
+
+     TLP:WHITE                                                                                                 CISA | FBI | DOE
+
+        Tactic                     Technique   Threat Actor Activity                         Detections/Mitigations
+                                               The threat actor’s watering hole sites
+                                               contained altered JavaScript and PHP
+                                               files that requested a file icon using
+                                               SMB from an IP address controlled by
+                                               the threat actors.
+
+                                               The threat actor manipulated LNK files to
+                                               repeatedly gather user credentials.
+                                               Default Windows functionality enables
+                                               icons to be loaded from a local or
+                                               remote Windows repository. The threat
+                                               actor exploited this built-in Windows
+                                               functionality by setting the icon path to a
+                                               remote server controller by the actors.
+                                               When the user browses to the directory,
+                                               Windows attempts to load the icon and
+                                               initiate an SMB authentication session.
+                                               During this process, the active user’s
+                                               credentials are passed through the
+                                               attempted SMB connection.
+                                               Note: this activity also applies to:
+                                                   ●   Tactic: Persistence [TA0003],
+                                                       Technique: Boot or Logon
+                                                       Autostart Execution: Shortcut
+                                                       Modification [T1547.009]
+
+
+     TLP:WHITE                                                                                                               CISA | FBI | DOE
+
+        Tactic                     Technique                  Threat Actor Activity                      Detections/Mitigations
+                                   OS Credential Dumping:     The threat actor used an Administrator     Operating System Configuration:
+                                   Local Security Authority   PowerShell prompt to enable the            make configuration changes related to
+                                   Subsystem Service          WDigest authentication protocol to store   the operating system or a common
+                                   (LSASS) Memory
+                                                              plaintext passwords in the LSASS           feature of the operating system that
+                                   [T1003.001]
+                                                              memory. With this enabled, credential      result in system hardening against
+                                                              harvesting tools can dump passwords        techniques.
+                                                              from this process’s memory.
+                                                                                                         Password Policies: set and enforce
+                                                                                                         secure password policies for accounts.
+                                                                                                         Privileged Account Management:
+                                                                                                         manage the creation of, modification of,
+                                                                                                         use of, and permissions associated with
+                                                                                                         privileged accounts, including SYSTEM
+                                                                                                         and root.
+                                                                                                         Privileged Process Integrity: protect
+                                                                                                         processes with high privileges that can
+                                                                                                         be used to interact with critical system
+                                                                                                         components through use of protected
+                                                                                                         process light, anti-process injection
+                                                                                                         defenses, or other process integrity
+                                                                                                         enforcement measures.
+                                                                                                         User Training: train users to be aware
+                                                                                                         of access or manipulation attempts by
+                                                                                                         an adversary to reduce the risk of
+                                                                                                         successful spearphishing, social
+                                                                                                         engineering, and other techniques that
+                                                                                                         involve user interaction.
+
+
+     TLP:WHITE                                                                                                            CISA | FBI | DOE
+
+        Tactic                     Technique                Threat Actor Activity                     Detections/Mitigations
+                                                                                                      Credential Access Protection: use
+                                                                                                      capabilities to prevent successful
+                                                                                                      credential access by adversaries;
+                                                                                                      including blocking forms of credential
+                                                                                                      dumping.
+
+                                   OS Credential Dumping:   The threat actor collected the files      Monitor: monitor processes and
+                                   NTDS [T1003.003]         ntds.dit. The file ntds.dit is the        command-line arguments for program
+                                                            Active Directory (AD) database that       execution that may be indicative of
+                                                            contains all information related to the   credential dumping, especially attempts
+                                                            AD, including encrypted user              to access or copy the NTDS.dit.
+                                                            passwords.
+                                                                                                      Privileged Account Management:
+                                                                                                      manage the creation of, modification of,
+                                                                                                      se of, and permissions associated with
+                                                                                                      privileged accounts, including SYSTEM
+                                                                                                      and root.
+                                                                                                      User Training: train users to be aware
+                                                                                                      of access or manipulation attempts by
+                                                                                                      an adversary to reduce the risk of
+                                                                                                      successful spearphishing, social
+                                                                                                      engineering, and other techniques that
+                                                                                                      involve user interaction.
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+        Tactic                     Technique                 Threat Actor Activity                       Detections/Mitigations
+        Discovery                  Remote System Discovery   The threat actor used privileged            Monitor: normal, benign system and
+        [TA0007]                   [T1018]                   credentials to access the Energy Sector     network events related to legitimate
+                                                             victim’s domain controller. Once on the     remote system discovery may be
+                                                             domain controller, the threat actors used   uncommon, depending on the
+                                                             batch scripts dc.bat and dit.bat to         environment and how they are used.
+                                                             enumerate hosts, users, and additional
+                                                                                                         Monitor processes and command-line
+                                                             information about the environment.          arguments for actions that could be
+                                                             Note: this activity also applies to:        taken to gather system and network
+                                                                                                         information.
+                                                                 ●   Tactic: Persistence [TA0003],
+                                                                     Technique: Valid Accounts:          Monitor for processes that can be used
+                                                                     Domain Accounts [T1078.002]         to discover remote systems, such as
+                                                                 ●   Tactic: Discovery [TA0007],         ping.exe and tracert.exe,
+                                                                     Technique: System Owner/User
+                                                                     Discovery [T1033]                   especially when executed in quick
+                                                                                                         succession.
+
+
+                                                             The threat actor accessed workstations
+                                                             and servers on corporate networks that
+                                                             contained data output from control
+                                                             systems within energy generation
+                                                             facilities. The threat actors accessed
+                                                             files pertaining to ICS or supervisory
+                                                             control and data acquisition systems.
+                                                             The actor targeted and copied profile
+                                                             and configuration information for
+                                                             accessing ICS systems on the network.
+
+
+     TLP:WHITE                                                                                                        CISA | FBI | DOE
+
+        Tactic                     Technique            Threat Actor Activity                     Detections/Mitigations
+                                                        The threat actor copied Virtual Network
+                                                        Connection (VNC) profiles that
+                                                        contained configuration information on
+                                                        accessing ICS systems and took
+                                                        screenshots of a Human Machine
+                                                        Interface.
+                                                        Note: this activity also applies to
+                                                            ●   Tactic: Discovery [TA0007],
+                                                                Technique File and Directory
+                                                                Discovery [T1083]
+                                                            ●   Tactic: [TA0009], Technique:
+                                                                Screen Capture [T1113]
+
+                                   File and Directory   The actor used dirsb.bat to gather        This type of attack technique cannot be
+                                   Discovery [T1083]    folder and file names from hosts on the   easily mitigated with preventive controls
+                                                        network.                                  since it is based on the abuse of system
+                                                                                                  features. Monitor processes and
+                                                        Note: this activity also applies to:
+                                                                                                  command-line arguments for actions
+                                                            ●   Tactic: Execution [TA0002],       that could be taken to gather system
+                                                                Command and Scripting             and network information. Remote
+                                                                Interpreter: Windows Command      access tools with built-in features may
+                                                                Shell [T1059.003]                 interact directly with the Windows API to
+                                                                                                  gather information.
+                                                        The threat actor conducted
+                                                        reconnaissance operations within the
+                                                        network. The threat actor focused on
+                                                        identifying and browsing file servers
+                                                        within the intended victim’s network.
+
+
+     TLP:WHITE                                                                                                         CISA | FBI | DOE
+
+        Tactic                     Technique               Threat Actor Activity                  Detections/Mitigations
+        Lateral                    Lateral Tool Transfer   The threat actor moved laterally via   Network Intrusion Prevention: use
+        Movement                   [T1570]                 PsExec, batch scripts, RDP, VNC, and   intrusion detection signatures to block
+        [TA0008]                                           admin shares.                          traffic at network boundaries.
+                                                           Note: this activity also applies to:   Network Segmentation: architect
+                                                                                                  sections of the network to isolate critical
+                                                               ●   Tactic: Lateral Movement
+                                                                   [TA0008], Techniques:          systems, functions, or resources. Use
+                                                                      ○ Remote Services:          physical and logical segmentation to
+                                                                           Remote Desktop         prevent access to potentially sensitive
+                                                                           Protocol [T1021.001]   systems and information. Use a DMZ to
+                                                                      ○ Remote Services:          contain any internet-facing services that
+                                                                           SMB/Windows Admin      should not be exposed from the internal
+                                                                           Shares [T1021.002]
+                                                                                                  network.
+                                                                      ○ Remote Services: VNC
+                                                                           [T1021.005]            Operating System Configuration:
+                                                                                                  make configuration changes related to
+                                                                                                  the operating system or a common
+                                                                                                  feature of the operating system that
+                                                                                                  result in system hardening against
+                                                                                                  techniques.
+                                                                                                  Privileged Account Management:
+                                                                                                  manage the creation of, modification of,
+                                                                                                  use of, and permissions associated with
+                                                                                                  privileged accounts, including SYSTEM
+                                                                                                  and root.
+                                                                                                  User Account Management: manage
+                                                                                                  the creation of, modification o, se of,
+
+
+     TLP:WHITE                                                                              CISA | FBI | DOE
+
+        Tactic                     Technique   Threat Actor Activity   Detections/Mitigations
+                                                                       and permissions associated with user
+                                                                       accounts.
+                                                                       Disable or Remove Feature or
+                                                                       Program: remove or deny access to
+                                                                       unnecessary and potentially vulnerable
+                                                                       software to prevent abuse by
+                                                                       adversaries.
+                                                                       Audit: audit or scan systems,
+                                                                       permissions, insecure software,
+                                                                       insecure configurations, etc. to identify
+                                                                       potential weaknesses.
+                                                                       MFA: enforce use of two or more
+                                                                       pieces of evidence (such as username
+                                                                       and password plus a token, e.g., a
+                                                                       physical smart card or token generator)
+                                                                       to authenticate to a system.
+                                                                       Limit Access to Resource Over
+                                                                       Network: prevent access to file shares,
+                                                                       remote access to systems, and
+                                                                       unnecessary services. Mechanisms to
+                                                                       limit access may include use of network
+                                                                       concentrators, RDP gateways, etc.
+                                                                       Filter Network Traffic: use network
+                                                                       appliances to filter ingress or egress
+                                                                       traffic and perform protocol-based
+
+
+     TLP:WHITE                                                                                                                 CISA | FBI | DOE
+
+        Tactic                     Technique                 Threat Actor Activity                       Detections/Mitigations
+                                                                                                         filtering. Configure software on
+                                                                                                         endpoints to filter network traffic.
+                                                                                                         Limit Software Installation: block
+                                                                                                         users or groups from installing
+                                                                                                         unapproved software.
+
+          Collection               Data from Local System    The threat actor collected the Windows      Monitor: monitor processes and
+          [TA0009]                 [T1005]                   SYSTEM registry hive file, which contains   command-line arguments for actions
+                                                             host configuration information.             that could be taken to collect files from
+                                                                                                         a system. Remote access tools with
+                                                                                                         built-in features may interact directly
+                                                                                                         with the Windows API to gather data.
+                                                                                                         Data may also be acquired through
+                                                                                                         Windows system management tools
+                                                                                                         such as WMI and PowerShell.
+
+
+                                   Archive Collected Data:   The threat actor compressed the             Audit: audit or scan systems,
+                                   Archive via Utility       ntds.dit file and the SYSTEM registry       permissions, insecure software,
+                                   [T1560.001]               hive they had collected into archives       insecure configurations, etc. to identify
+                                                             named SYSTEM.zip and comps.zip.             potential weaknesses.
+
+                                   Screen Capture [T1113]    The threat actor used Windows’              Network Segmentation: architect
+                                                             Scheduled Tasks and batch scripts, to       sections of the network to isolate critical
+                                                             execute scr.exe and collect additional      systems, functions, or resources. Use
+                                                             information from hosts on the network.      physical and logical segmentation to
+                                                             The tool scr.exe is a screenshot utility
+
+
+     TLP:WHITE                                                                                                 CISA | FBI | DOE
+
+        Tactic                     Technique   Threat Actor Activity                       Detections/Mitigations
+                                               that the threat actor used to capture the   prevent access to potentially sensitive
+                                               screen of systems across the network.       systems and information. Use a DMZ to
+                                               Note: this activity also applies to:        contain any internet-facing services that
+                                                                                           should not be exposed from the internal
+                                                   ●   Tactic: Execution [TA0002],
+                                                       Techniques:                         network.
+                                                          ○ Command and Scripting          MFA: enforce use of two or more
+                                                               Interpreter: Windows        pieces of evidence (such as username
+                                                               Command Shell
+                                                                                           and password plus a token, e.g., a
+                                                               [T1059.003]
+                                                                                           physical smart card or token generator)
+                                                          ○ Scheduled Task/Job:
+                                                               Scheduled Task              to authenticate to a system.
+                                                               [T1053.005]                 Limit Access to Resource Over
+                                                                                           Network: prevent access to file shares,
+                                               The actor used batch scripts labeled        remote access to systems, and
+                                               pss.bat and psc.bat to run the              unnecessary services. Mechanisms to
+                                               PsExec tool. PsExec was used to             limit access may include use of network
+                                               execute scr.exe across the network          concentrators, RDP gateways, etc.
+                                               and to collect screenshots of systems in    Disable or Remove Feature or
+                                               a text file.                                Program: remove or deny access to
+                                               Note: this activity also applies to:        unnecessary and potentially vulnerable
+                                                                                           software to prevent abuse by
+                                                   ●   Tactic: Execution [TA0002],
+                                                       Techniques:                         adversaries.
+                                                          ○ Command and Scripting
+                                                               Interpreter: Windows
+                                                               Command Shell
+                                                               [T1059.003]
+                                                          ○ System Services: Service
+                                                               Execution [T1569.002]
+
+
+     TLP:WHITE                                                                                                           CISA | FBI | DOE
+
+        Tactic                     Technique               Threat Actor Activity                    Detections/Mitigations
+        Command and                Ingress Tool Transfer   The threat actor downloaded tools from   Monitor: monitor for file creation and
+        Control                    [T1105]                 a remote server.                         files transferred into the network.
+        [TA0011]                                                                                    Unusual processes with external
+                                                                                                    network connections creating files on-
+                                                                                                    system may be suspicious. Use of
+                                                                                                    utilities, such as File Transfer Protocol,
+                                                                                                    that does not normally occur may also
+                                                                                                    be suspicious.
+                                                                                                    Analyze network data for uncommon
+                                                                                                    data flows (e.g., a client sending
+                                                                                                    significantly more data than it receives
+                                                                                                    from a server). Processes utilizing the
+                                                                                                    network that do not normally have
+                                                                                                    network communication or have never
+                                                                                                    been seen before are suspicious.
+                                                                                                    Analyze packet contents to detect
+                                                                                                    communications that do not follow the
+                                                                                                    expected protocol behavior for the port
+                                                                                                    that is being used.
+                                                                                                    Use intrusion detection signatures to
+                                                                                                    block traffic at network boundaries.
+
+
+     TLP:WHITE                                                                                                              CISA | FBI | DOE
+
+        TRITON Malware
+       Table 4 maps TRITON’s capabilities to the ATT&CK for ICS framework. For mitigations to harden ICS/OT environments, refer to the
+       Mitigations section of this advisory.
+                                                  Table 4: ICS Domain Tactics and Techniques for TRITON [4]
+
+              Tactic                     Technique                                                      Use
+          Initial Access     Engineering Workstation                TRITON compromises workstations within the safety network.
+                             Compromise [T0818]
+          Execution          Change Operating Mode [T0858]          TRITON can halt or run a program through the TriStation protocol. (Note:
+                                                                    TriStation protocol is the protocol that Triconex System software uses to
+                             Note: this technique also applies to
+                                                                    communicate with the Tricon PLCs.)
+                             Evasion.
+                             Execution through API [T0871]          TRITON leverages a custom implementation of the TriStation protocol,
+                                                                    which triggers APIs related to program download, program allocation, and
+                                                                    program changes.
+                             Hooking [T0874]                        TRITON's injector modifies the address of the handler for a Tristation
+                                                                    protocol command so that when the command is received, the payload may
+                             Note: this technique also applies to
+                                                                    be executed instead of normal processing.
+                             Tactic: Privilege Escalation.
+                             Modify Controller Tasking [T0821]      Some TRITON components are added to the program table on the Tricon
+                                                                    so that they are executed by the firmware once each cycle.
+                             Native API [T0834]                     TRITON’s payload takes commands from TsHi.ExplReadRam(Ex),
+                                                                    TsHi.ExplWriteRam(Ex), and TsHi.ExplExec functions to perform
+                                                                    operations on controller memory and registers using syscalls written in
+                                                                    PowerPC shellcode.
+                             Scripting [T0853]
+                                                                    TRITON communicates with Triconex Tricon PLCs using its custom Python
+                                                                    script. This Python script communicates using four Python modules that
+
+
+     TLP:WHITE                                                                                                                CISA | FBI | DOE
+              Tactic                      Technique                                                       Use
+     HITE                                                            collectively implement the TriStation protocol via User Datagram Protocol
+                                                                     (UDP) 1502.
+
+                                                                     Note: this use also applies to:
+
+                                                                        ●   Tactic: Command and Control │Technique: Commonly Used Port
+                                                                            [T0885]
+
+          Persistence        System Firmware [T0857]                 TRITON’s injector injects the payload into the Tricon PLCs’ running
+                                                                     firmware. A threat actor can use the payload to read and write memory on
+                             Note: this technique also applies to
+                                                                     the PLC and execute code at an arbitrary address within the firmware. If the
+                             Tactic: Inhibit Response Function.
+                                                                     memory address it writes to is within the firmware region, the malicious
+                                                                     payload disables address translation, writes the code at the provided
+                                                                     address, flushes the instruction cache, and re-enables address translation.
+                                                                     This allows the malware to change the running firmware.
+          Privilege          Exploitation for Privilege Escalation   TRITON can gain supervisor-level access and control system states by
+          Escalation         [T0890]                                 exploiting a vulnerability.
+          Evasion            Exploitation for Evasion [T0820]
+                                                                     TRITON’s injector exploits a vulnerability in the device firmware to escalate
+                                                                     privileges and then it disables and (later patches) a firmware RAM/ROM
+                                                                     consistency check.
+
+                             Indicator Removal on Host [T0872]       After running the malicious payload, TRITON’s Python script overwrites the
+                                                                     malicious payload with a “dummy” program.
+                             Masquerading [T0849]                    TRITON’s Python script masquerades as legitimate Triconex software.
+                                                                     TRITON’s injector masquerades as a standard compiled PowerPC program
+                                                                     for the Triconex PLC.
+
+
+     TLP:WHITE                                                                                                         CISA | FBI | DOE
+              Tactic                     Technique                                                 Use
+     HITEDiscovery           Remote System Discovery [T0846]   TRITON’s Python script can autodetect Triconex PLCs on the network by
+                                                               sending a UDP broadcast packet over port 1502.
+          Lateral            Program Download [T0843]          TRITON leverages the TriStation protocol to download programs to the
+          Movement                                             Tricon PLCs.
+
+          Collection         Detect Operating Mode [T0868]     A TRITON Python module provides string representations of different
+                                                               features of the TriStation protocol, including message and error codes, key
+                                                               position states, and other values returned by the status functions.
+                             Program Upload [T0845]            TRITON uploads its payload to the Tricon PLCs.
+          Impair             Unauthorized Command Message      A threat actor can use TRITON to prevent the Tricon PLC from functioning
+          Process            [T0855]                           appropriately.
+          Control
+          Impact             Loss of Safety [T0880]            TRITON can reprogram the safety PLC logic to allow unsafe conditions or
+                                                               state to persist.

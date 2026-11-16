@@ -1,0 +1,1032 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-220307",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "3317361e54c180d6132218e8fa13dad1b81bb5f3666792a2a0db26b1025a1f3e",
+  "source_name": "csa-2022-220307"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "RagnarLocker ransomware encrypts files with extension .RGNR_<ID>",
+   "source": "llm",
+   "description": "RagnarLocker is identified by the extension “.RGNR_<ID>,” where <ID> is a hash of the computer’s NETBIOS name.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a2",
+   "name": "RagnarLocker leaves a .txt ransom note",
+   "source": "llm",
+   "description": "The actors, identifying themselves as “RAGNAR_LOCKER,” leave a .txt ransom note, with instructions on how to pay the ransom and decrypt the data.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a3",
+   "name": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms",
+   "source": "llm",
+   "description": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms and deploys within an attacker’s custom Windows XP virtual machine on a target’s site.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a4",
+   "name": "RagnarLocker uses Windows API GetLocaleInfoW to identify victim location",
+   "source": "llm",
+   "description": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected machine. If the victim location is identified as certain countries, the process terminates.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a5",
+   "name": "RagnarLocker checks for current infections to prevent multiple encryption",
+   "source": "llm",
+   "description": "The binary gathers the unique machine GUID, operating system product name, and user name currently running the process. This data is sent through a custom hashing algorithm to generate a unique identifier.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a6",
+   "name": "RagnarLocker identifies all attached hard drives and assigns drive letters",
+   "source": "llm",
+   "description": "RagnarLocker identifies all attached hard drives using Windows APIs and assigns a drive letter to any volumes not assigned a logical drive letter, making them accessible for encryption.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a7",
+   "name": "RagnarLocker terminates services used by managed service providers",
+   "source": "llm",
+   "description": "RagnarLocker iterates through all running services and terminates services commonly used by managed service providers to remotely administer networks.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a8",
+   "name": "RagnarLocker deletes all Volume Shadow Copies silently",
+   "source": "llm",
+   "description": "The malware attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods: 'vssadmin delete shadows /all /quiet' and 'wmic.exe.shadowcopy.delete'.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a9",
+   "name": "RagnarLocker encrypts all available files except those in excluded folders",
+   "source": "llm",
+   "description": "RagnarLocker encrypts all available files of interest but excludes certain folders such as Windows, Windows.old, Mozilla, Tor browser, Internet Explorer, $Recycle.Bin, Program Data, Google, Opera, and Opera Software.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  },
+  {
+   "id": "a10",
+   "name": "RagnarLocker excludes files with certain extensions from encryption",
+   "source": "llm",
+   "description": "When iterating through files, the malware does not encrypt files with extensions .db, .sys, .dll, .lnk, .msi, .drv, and .exe.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM and native readiness/behavior checks; the local VM runtime and validated guest image are not configured."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source wording gives the order",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a9",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "encryption produces files with extension .RGNR_<ID>",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the ransom note is left after encryption",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r9",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "exclusion of files with certain extensions happens during encryption",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "target machine infected by RagnarLocker ransomware",
+   "source": "llm",
+   "name": "infected machine",
+   "os": "Windows",
+   "os_version": "Windows XP virtual machine",
+   "network_placement": "target’s site",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-15",
+    "evidence-20",
+    "evidence-17",
+    "evidence-7",
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1",
+    "s2"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Windows APIs",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Volume Shadow Copies",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "RagnarLocker ransomware",
+   "type": "malware",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": ".txt ransom note",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "VMProtect",
+   "type": "tool",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "UPX",
+   "type": "tool",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "custom packing algorithms",
+   "type": "tool",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "ip",
+   "value": "185.138.164.18",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "185.172.129.215",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "45.144.29.2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "45.90.59.131",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "95.216.196.181",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "162.55.38.44",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "116.203.132.32",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "49.12.212.231",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "178.32.222.98",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "prod12ms[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "ssl-secure-com2048[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "domain",
+   "value": "www.stopransomware.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "RagnarLocker is identified by the extension “.RGNR_<ID>,” where <ID> is a hash of the computer’s NETBIOS name.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker is identified by the extension “.RGNR_<ID>,” where <ID> is a hash of the computer’s NETBIOS name."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actors, identifying themselves as “RAGNAR_LOCKER,” leave a .txt ransom note, with instructions on how to pay the ransom and decrypt the data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors, identifying themselves as “RAGNAR_LOCKER,” leave a .txt ransom note, with instructions on how to pay the ransom and decrypt the data."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms and deploys within an attacker’s custom Windows XP virtual machine on a target’s site.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms and deploys within an attacker’s custom Windows XP virtual machine on a target’s site."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected machine. If the victim location is identified as \"Azerbaijani,\" \"Armenian,\" \"Belorussian,\" \"Kazakh,\" \"Kyrgyz,\" \"Moldavian,\" \"Tajik,\" \"Russian,\" \"Turkmen,\" \"Uzbek,\" \"Ukrainian,\" or \"Georgian,\" the process terminates.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected\nmachine. If the victim location is identified as \"Azerbaijani,\" \"Armenian"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "RagnarLocker checks for current infections to prevent multiple transform encryption of the data, potentially corrupting it. The binary gathers the unique machine GUID, operating system product name, and user name currently running the process. This data is sent through a custom hashing algorithm to generate a unique identifier: <HashedMachineGuid>-<HashedWindowsProductName>-<HashedUser>-<HashedComputerName>-<HashedAllDataTogether>.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker checks for current infections to prevent multiple transform encryption of the\ndata, potentially corrupting it. The binary gathers the unique machin"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "RagnarLocker identifies all attached hard drives using Windows APIs: CreateFileW, DeviceIoControl, GetLogicalDrives, and SetVolumeMountPointA. The ransomware assigns a drive letter to any volumes not assigned a logical drive letter and makes them accessible. These newly attached volumes are later encrypted during the final stage of the binary.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker identifies all attached hard drives using Windows APIs: CreateFileW,\nDeviceIoControl, GetLogicalDrives, and SetVolumeMountPointA. The ransomware as"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "RagnarLocker iterates through all running services and terminates services commonly used by managed service providers to remotely administer networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker iterates through all running services and terminates services commonly used by managed service providers to remotely administer networks."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The malware then attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods:\n\n   >vssadmin delete shadows /all /quiet\n      >wmic.exe.shadowcopy.delete",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7692,
+   "matched_text": "The malware then attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods:"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "   >vssadmin delete shadows /all /quiet\n      >wmic.exe.shadowcopy.delete",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "   >vssadmin delete shadows /all /quiet\n      >wmic.exe.shadowcopy.delete"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Lastly, RagnarLocker encrypts all available files of interest. Instead of choosing which files to encrypt, RagnarLocker chooses which folders it will not encrypt. Taking this approach allows the computer to continue to operate “normally” while the malware encrypts files with known and unknown extensions containing data of value to the victim. For example, if the logical drive being processed is the C: drive, the malware does not encrypt files in the following folders:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Lastly, RagnarLocker encrypts all available files of interest. Instead of choosing which files to\nencrypt, RagnarLocker chooses which folders it will not encryp"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "   Windows",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "   Windows"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "   Windows.old\n      Mozilla\n      Mozilla Firefox\n      Tor browser\n      Internet Explorer\n      $Recycle.Bin\n      Program Data\n      Google\n      Opera\n      Opera Software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "   Windows.old\n      Mozilla\n      Mozilla Firefox\n      Tor browser\n      Internet Explorer\n      $Recycle.Bin\n      Program Data\n      Google\n      O"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Also, when iterating through files, the malware does not encrypt files with the following extensions:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Also, when iterating through files, the malware does not encrypt files with the following\nextensions:"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "   .db\n      .sys\n      .dll\n      .lnk\n      .msi\n      .drv\n      .exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "   .db\n      .sys\n      .dll\n      .lnk\n      .msi\n      .drv\n      .exe"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ragnar Locker uses Windows API GetLocaleInfoW to identify the location of the infected machine."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "RagnarLocker checks for current infections to prevent multiple transform encryption of the data, potentially corrupting it.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker checks for current infections to prevent multiple transform encryption of the data, potentially corrupting it."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "RagnarLocker identifies all attached hard drives using Windows APIs: CreateFileW, DeviceIoControl, GetLogicalDrives, and SetVolumeMountPointA.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker identifies all attached hard drives using Windows APIs: CreateFileW, DeviceIoControl, GetLogicalDrives, and SetVolumeMountPointA."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The malware then attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware then attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods:"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Lastly, RagnarLocker encrypts all available files of interest.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Lastly, RagnarLocker encrypts all available files of interest."
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The binary gathers the unique machine GUID, operating system product name, and user name currently running the process.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The binary gathers the unique machine GUID, operating system product name, and user name currently running the process."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "RagnarLocker encrypts all available files of interest.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker encrypts all available files of interest."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "RagnarLocker uses Windows API GetLocaleInfoW to identify the location of the infected machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8889,
+   "matched_text": "Locker uses Windows API GetLocaleInfoW to identify the location of the infected machine."
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The malware attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods: 'vssadmin delete shadows /all /quiet' and 'wmic.exe.shadowcopy.delete'.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7692,
+   "matched_text": " attempts to silently delete all Volume Shadow Copies, preventing user recovery of encrypted files, using two different methods:"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RagnarLocker uses VMProtect, UPX, and custom packing algorithms"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "185.138.164.18",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.138.164.18"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "185.172.129.215",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.172.129.215"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "45.144.29.2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.144.29.2"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "45.90.59.131",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.90.59.131"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "95.216.196.181",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.216.196.181"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "162.55.38.44",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "162.55.38.44"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "116.203.132.32",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "116.203.132.32"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "49.12.212.231",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "49.12.212.231"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "178.32.222.98",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "178.32.222.98"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "prod12ms[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "prod12ms[.]com"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "ssl-secure-com2048[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ssl secure com2048[.]com"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "www.stopransomware.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.stopransomware.gov"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "RagnarLocker ransomware encrypts files with extension .RGNR_<ID> — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「RagnarLocker ransomware encrypts files with extension .RGNR_<ID>」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — RagnarLocker ransomware encrypts files with extension .RGNR_<ID>"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "RagnarLocker ransomware encrypts files with extension .RGNR_<ID>",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-windows-apis",
+   "field": "software dependency: Windows APIs",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Windows APIs 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-volume-shadow-copies",
+   "field": "software dependency: Volume Shadow Copies",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Volume Shadow Copies 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9189,
+  "unsupported_claim_count": 3,
+  "inferred_count": 6,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "needs_vm"
+}

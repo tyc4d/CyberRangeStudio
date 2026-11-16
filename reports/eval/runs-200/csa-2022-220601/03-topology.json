@@ -1,0 +1,141 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access target",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 SonicWall SSL VPN 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "initial access target",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Fortinet FortiGate SSL VPN and firewall appliances 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "initial access target",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Microsoft Windows Server",
+     "port": 445,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "windows-server-eval-vm",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": 2,
+    "memory_mib": 4096,
+    "disk_gib": 50
+   },
+   "deployable": false,
+   "not_deployed_reason": "Windows Server Evaluation VM (user supplied media) 需要尚未備妥的 VM 映像（OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied）；這台主機不會被部署。"
+  },
+  {
+   "id": "h4",
+   "role": "compromised systems and networks targeted for enumeration, persistence, and exfiltration",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "FTP services (e.g., Filezilla)",
+     "port": 21,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Log4j Log4Shell Apache Logging Services、FTP services (e.g., Filezilla)、cloud storage services including rclone and Mega.nz 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "reason": "Scenario action(s) a1, a7, a8, a10 require access to Microsoft Windows Server.",
+   "port": 445,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h3",
+   "action": "allow",
+   "port": 445
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 21,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:21 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h3 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service SonicWall SSL VPN (s2); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Fortinet FortiGate SSL VPN and firewall appliances (s3); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h3 needs Windows Server Evaluation VM (user supplied media) as a VM, which is not deployable yet (OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied).",
+  "No port is known for service Log4j Log4Shell Apache Logging Services (s1); it remains unreachable by default.",
+  "No port is known for service cloud storage services including rclone and Mega.nz (s6); it remains unreachable by default.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Services without a resolved host association were left out of host service lists: svc-unsupported-log4j-unspecified."
+ ]
+}

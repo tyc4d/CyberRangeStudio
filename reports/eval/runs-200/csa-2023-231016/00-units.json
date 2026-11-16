@@ -1,0 +1,114 @@
+[
+ {
+  "id": "p1",
+  "text": "# Threat Actors Exploit Atlassian Confluence CVE-2023-22515 for Initial Access to Networks"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-289A\n> - Date: 2023-10-16\n> - URL: https://www.ic3.gov/CSA/2023/231016.pdf\n> - PDF SHA-256: 01e2c14d4fd5480aa2195489b237fcd4ebe67d4b0a077b1bd3a426babaaf95f6 (`source.pdf`, 6 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (11 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Authored by:                                                                                       TLP:CLEAR                Product ID: AA23-289A\n                                                                                                                                 October 16, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Threat Actors Exploit Atlassian Confluence\n        CVE-2023-22515 for Initial Access to Networks\n        SUMMARY\n        The Cybersecurity and Infrastructure Security Agency (CISA), Federal Bureau of Investigation (FBI),\n        and Multi-State Information Sharing and Analysis Center (MS-ISAC) are releasing this joint\n        Cybersecurity Advisory (CSA) in response to the active exploitation of CVE-2023-22515. This recently\n        disclosed vulnerability affects certain versions of Atlassian Confluence Data Center and Server,\n        enabling malicious cyber threat actors to obtain initial access to Confluence instances by creating\n        unauthorized Confluence administrator accounts. Threat actors exploited CVE-2023-22515 as a zero-\n        day to obtain access to victim systems and continue active exploitation post-patch. Atlassian has\n        rated this vulnerability as critical; CISA, FBI, and MS-ISAC expect widespread, continued exploitation\n        due to ease of exploitation.\n        CISA, FBI, and MS-ISAC strongly encourage network administrators to immediately apply the\n        upgrades provided by Atlassian. CISA, FBI, and MS-ISAC also encourage organizations to hunt for\n        malicious activity on their networks using the detection signatures and indicators of compromise\n        (IOCs) in this CSA. If a potential compromise is detected, organizations should apply the incident\n        response recommendations.\n        For additional information on upgrade instructions, a complete list of affected product versions, and\n        IOCs, see Atlassian’s security advisory for CVE-2023-22515.[1] While Atlassian’s advisory provides\n        interim measures to temporarily mitigate known attack vectors, CISA, FBI, and MS-ISAC strongly\n        encourage upgrading to a fixed version or taking servers offline to apply necessary updates.\n        For a downloadable copy of IOCs, see: AA23-289A.stix"
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\n        Overview\n        CVE-2023-22515 is a critical Broken Access Control vulnerability affecting the following versions of\n        Atlassian Confluence Data Center and Server. Note: Atlassian Cloud sites (sites accessed by an\n        To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact your local FBI\n        field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When available, please include the\n        following information regarding the incident: date, time, and location of the incident; type of activity; number of people affected;\n        type of equipment used for the activity; the name of the submitting company or organization; and a designated point of contact.\n        SLTT organizations should report incidents to MS-ISAC (866-787-4722 or SOC@cisecurity.org).\n         This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\n        minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\n        standard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information on the Traffic\n        Light Protocol, see cisa.gov/tlp.."
+ },
+ {
+  "id": "p6",
+  "text": "TLP:CLEAR                                                                                              CISA  FBI | MS-ISAC"
+ },
+ {
+  "id": "p7",
+  "text": "atlassian.net domain), including Confluence Data Center and Server versions before 8.0.0, are not\n       affected by this vulnerability."
+ },
+ {
+  "id": "p8",
+  "text": "•   8.0.0                         •   8.1.3                          •   8.3.1\n             •   8.0.1                         •   8.1.4                          •   8.3.2\n             •   8.0.2                         •   8.2.0                          •   8.4.0\n             •   8.0.3                         •   8.2.1                          •   8.4.1\n             •   8.0.4                         •   8.2.2                          •   8.4.2\n             •   8.1.0                         •   8.2.3                          •   8.5.0\n             •   8.1.1                         •   8.3.0                          •   8.5.1"
+ },
+ {
+  "id": "p9",
+  "text": "Unauthenticated remote threat actors can exploit this vulnerability to create unauthorized Confluence\n       administrator accounts and access Confluence instances. More specifically, threat actors can change\n       the Confluence server’s configuration to indicate the setup is not complete and use the\n       /setup/setupadministrator.action endpoint to create a new administrator user. The vulnerability is\n       triggered via a request on the unauthenticated /server-info.action endpoint.\n       Considering the root cause of the vulnerability allows threat actors to modify critical configuration\n       settings, CISA, FBI, and MS-ISAC assess that the threat actors may not be limited to creating new\n       administrator accounts. Open source further indicates an Open Web Application Security Project\n       (OWASP) classification of injection (i.e., CWE-20: Improper Input Validation) is an appropriate\n       description.[2] Atlassian released a patch on October 4, 2023, and confirmed that threat actors\n       exploited CVE-2023-22515 as a zero-day—a previously unidentified vulnerability.[1]\n       On October 5, 2023, CISA added this vulnerability to its Known Exploited Vulnerabilities Catalog\n       based on evidence of active exploitation. Due to the ease of exploitation, CISA, FBI, and MS-ISAC\n       expect to see widespread exploitation of unpatched Confluence instances in government and private\n       networks."
+ },
+ {
+  "id": "p10",
+  "text": "Post-Exploitation: Exfiltration of Data\n       Post-exploitation exfiltration of data can be executed through of a variety of techniques. A\n       predominant method observed involves the use of cURL—a command line tool used to transfer data\n       to or from a server. An additional data exfiltration technique observed includes use of Rclone\n       [S1040]—a command line tool used to sync data to cloud and file hosting services such as Amazon\n       Web Services and China-based UCloud Information Technology Limited. Note: This does not\n       preclude the effectiveness of alternate methods, but highlights methods observed to date. Threat\n       actors were observed using Rclone to either upload a configuration file to victim infrastructure or enter\n       cloud storage credentials via the command line. Example configuration file templates are listed in the\n       following Figures 1 and 2, which are populated with the credentials of the exfiltration point:\n                                                       Figure 1"
+ },
+ {
+  "id": "p11",
+  "text": "TLP:CLEAR                                                                                           CISA  FBI | MS-ISAC"
+ },
+ {
+  "id": "p12",
+  "text": "[s3]\n                                      type =\n                                      env_auth =\n                                      access_key_id =\n                                      secret_access_key =\n                                      region =\n                                      endpoint =\n                                      location_constraint =\n                                      acl =\n                                      server_side_encryption =\n                                      storage_class ="
+ },
+ {
+  "id": "p13",
+  "text": "Figure 2"
+ },
+ {
+  "id": "p14",
+  "text": "[minio]\n                                      type =\n                                      provider =\n                                      env_auth =\n                                      access_key_id =\n                                      secret_access_key =\n                                      endpoint =\n                                      acl ="
+ },
+ {
+  "id": "p15",
+  "text": "The following User-Agent strings were observed in request headers. Note: As additional threat actors\n       begin to use this CVE due to the availability of publicly posted proof-of-concept code, an increasing\n       variation in User-Agent strings is expected.\n           •    Python-requests/2.27.1\n           •    curl/7.88.1"
+ },
+ {
+  "id": "p16",
+  "text": "Indicators of Compromise\n       Disclaimer: Organizations are recommended to investigate or vet these IP addresses prior to taking\n       action, such as blocking.\n       The following IP addresses were obtained from FBI investigations as of October 2023 and observed\n       conducting data exfiltration:\n           •    170.106.106[.]16\n           •    43.130.1[.]222"
+ },
+ {
+  "id": "p17",
+  "text": "TLP:CLEAR                                                                                                  CISA  FBI | MS-ISAC"
+ },
+ {
+  "id": "p18",
+  "text": "•    152.32.207[.]23\n           •    199.19.110[.]14\n           •    95.217.6[.]16 (Note: This is the official rclone.org website)\n       Additional IP addresses observed sending related exploit traffic have been shared by Microsoft.[3]"
+ },
+ {
+  "id": "p19",
+  "text": "DETECTION METHODS\n       Network defenders are encouraged to review and deploy Proofpoint’s Emerging Threat signatures.\n       See Ruleset Update Summary - 2023/10/12 - v10438.[4]\n       Network defenders are also encouraged to aggregate application and server-level logging from\n       Confluence servers to a logically separated log search and alerting system, as well as configure alerts\n       for signs of exploitation (as detailed in Atlassian’s security advisory)."
+ },
+ {
+  "id": "p20",
+  "text": "INCIDENT RESPONSE\n       Organizations are encouraged to review all affected Confluence instances for evidence of\n       compromise, as outlined by Atlassian.[1] If compromise is suspected or detected, organizations\n       should assume that threat actors hold full administrative access and can perform any number of\n       unfettered actions—these include but are not limited to exfiltration of content and system credentials,\n       as well as installation of malicious plugins.\n       If a potential compromise is detected, organizations should:\n           1. Collect and review artifacts such as running processes/services, unusual authentications, and\n              recent network connections.\n                   a. Note: Upgrading to fixed versions, as well as removing malicious administrator\n                       accounts may not fully mitigate risk considering threat actors may have established\n                       additional persistence mechanisms.\n                   b. Search and audit logs from Confluence servers for attempted exploitation.[2]\n           2. Quarantine and take offline potentially affected hosts.\n           3. Provision new account credentials.\n           4. Reimage compromised hosts.\n           5. Report the compromise to CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-\n              282-0870). The FBI encourages recipients of this document to report information concerning\n              suspicious or criminal activity to their local FBI field office or IC3.gov. State, local, tribal, and\n              territorial governments should report incidents to the MS-ISAC (SOC@cisecurity.org or 866-\n              787-4722)."
+ },
+ {
+  "id": "p21",
+  "text": "TLP:CLEAR                                                                                                 CISA  FBI | MS-ISAC"
+ },
+ {
+  "id": "p22",
+  "text": "MITIGATIONS\n       As of October 10, 2023, proof-of-concept exploits       These mitigations apply to all organizations\n       for CVE-2023-22515 have been observed in                using non-cloud Atlassian Confluence Data\n       open source publications.[5] While there are            Center and Server software. CISA, FBI, and\n       immediate concerns such as increased risk of            MS-ISAC recommend that software\n       exploitation and the potential integration into         manufacturers incorporate secure by design\n       malware toolkits, the availability of a proof-of-       and default principles and tactics into their\n       concept presents an array of security and               software development practices to reduce the\n       operational challenges that extend beyond these         prevalence of Broken Access Control\n       immediate issues. Immediate action is strongly          vulnerabilities, thus strengthening the secure\n       advised to address the potential risks associated       posture for their customers.\n       with this development.\n                                                               For more information on secure by design, see\n       CISA, FBI, and MS-ISAC recommend taking                 CISA’s Secure by Design and Default webpage\n       immediate action to address the potential               and joint guide.\n       associated risks and encourage organizations to:\n           •    Immediately upgrade to fixed versions. See Atlassian’s upgrading instructions[6] for more\n                information. If unable to immediately apply upgrades, restrict untrusted network access\n                until feasible. Malicious cyber threat actors who exploit the affected instance can escalate to\n                administrative privileges.\n           •    Follow best cybersecurity practices in your production and enterprise environments.\n                While not observed in this instance of exploitation, mandating phishing-resistant multifactor\n                authentication (MFA) for all staff and services can make it more difficult for threat actors to\n                gain access to networks and information systems. For additional best practices, see:\n                    o CISA’s Cross-Sector Cybersecurity Performance Goals (CPGs). The CPGs,\n                       developed by CISA and the National Institute of Standards and Technology (NIST), are\n                       a prioritized subset of IT and OT security practices that can meaningfully reduce the\n                       likelihood and impact of known cyber risks and common tactics, techniques, and\n                       procedures (TTPs). Because the CPGs are a subset of best practices, CISA\n                       recommends software manufacturers implement a comprehensive information security\n                       program based on a recognized framework, such as the NIST Cybersecurity\n                       Framework (CSF).\n                    o Center for Internet Security’s (CIS) Critical Security Controls. The CIS Critical\n                       Security Controls are a prescriptive, prioritized, and simplified set of best practices that\n                       organizations can use to strengthen cybersecurity posture and protect against cyber\n                       incidents."
+ },
+ {
+  "id": "p23",
+  "text": "RESOURCES\n           •    NIST: CVE-2023-22515\n           •    MITRE: CWE-20 - Improper Input Validation\n           •    CISA: Known Exploited Vulnerabilities Catalog"
+ },
+ {
+  "id": "p24",
+  "text": "TLP:CLEAR                                                                                              CISA  FBI | MS-ISAC"
+ },
+ {
+  "id": "p25",
+  "text": "•    MITRE Software: Rclone\n           •    CISA: Secure by Design and Default\n           •    CISA: Phishing-Resistant MFA\n           •    CISA: Cross-Sector Cybersecurity Performance Goals\n           •    CIS: Critical Security Controls"
+ },
+ {
+  "id": "p26",
+  "text": "REFERENCES\n       [1] Atlassian: CVE-2023-22515 - Broken Access Control Vulnerability in Confluence Data Center and\n           Server\n       [2] Rapid7: CVE-2023-22515 Analysis\n       [3] Microsoft: CVE-2023-22515 Exploit IP Addresses\n       [4] Proofpoint: Emerging Threats Rulesets\n       [5] Confluence CVE-2023-22515 Proof of Concept - vulhub\n       [6] Atlassian Support: Upgrading Confluence"
+ },
+ {
+  "id": "p27",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA, FBI, and\n       MS-ISAC do not endorse any commercial entity, product, company, or service, including any entities,\n       products, or services linked within this document. Any reference to specific commercial entities,\n       products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not\n       constitute or imply endorsement, recommendation, or favoring by CISA, FBI, and MS-ISAC."
+ },
+ {
+  "id": "p28",
+  "text": "VERSION HISTORY\n       October 16, 2023: Initial version."
+ }
+]

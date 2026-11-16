@@ -1,0 +1,878 @@
+[
+ {
+  "id": "p1",
+  "text": "# State-Sponsored Actors Compromise and Maintain Persistent Access to U.S. Critical Infrastructure"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-038A\n> - Date: 2024-02-07\n> - URL: https://www.ic3.gov/CSA/2024/240207.pdf\n> - PDF SHA-256: cc52cb97e7623e4cec977858b36ac64014e2321c6fe6a56506249fca59ce7b61 (`source.pdf`, 45 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (135 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                      TLP:CLEAR            Product ID: AA24-038A\n                                                                                                               February 7, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "PRC State-Sponsored Actors Compromise and\n        Maintain Persistent Access to U.S. Critical\n        Infrastructure"
+ },
+ {
+  "id": "p5",
+  "text": "This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p6",
+  "text": "SUMMARY\n       The Cybersecurity and Infrastructure Security        Actions to take today to mitigate Volt\n       Agency (CISA), National Security Agency (NSA),       Typhoon activity:\n       and Federal Bureau of Investigation (FBI) assess\n                                                              • Apply patches for internet-facing\n       that People’s Republic of China (PRC) state-\n                                                                systems. Prioritize patching critical\n       sponsored cyber actors are seeking to pre-\n                                                                vulnerabilities in appliances known to be\n       position themselves on IT networks for disruptive\n                                                                frequently exploited by Volt Typhoon.\n       or destructive cyberattacks against U.S. critical\n                                                              • Implement phishing-resistant MFA.\n       infrastructure in the event of a major crisis or\n                                                              • Ensure logging is turned on for\n       conflict with the United States.\n                                                                application, access, and security logs\n       CISA, NSA, FBI and the following partners are            and store logs in a central system.\n       releasing this advisory to warn critical\n       infrastructure organizations about this\n       assessment, which is based on observations from the U.S. authoring agencies’ incident response\n       activities at critical infrastructure organizations compromised by the PRC state-sponsored cyber\n       group known as Volt Typhoon (also known as Vanguard Panda, BRONZE SILHOUETTE, Dev-0391,\n       UNC3236, Voltzite, and Insidious Taurus):\n           •    U.S. Department of Energy (DOE)\n           •    U.S. Environmental Protection Agency (EPA)\n           •    U.S. Transportation Security Administration (TSA)\n           •    Australian Signals Directorate’s (ASD’s) Australian Cyber Security Centre (ACSC)\n           •    Canadian Centre for Cyber Security (CCCS), a part of the Communications Security\n                Establishment (CSE)\n           •    United Kingdom National Cyber Security Centre (NCSC-UK)\n           •    New Zealand National Cyber Security Centre (NCSC-NZ)"
+ },
+ {
+  "id": "p7",
+  "text": "The U.S. authoring agencies have confirmed that Volt Typhoon has compromised the IT\n       environments of multiple critical infrastructure organizations—primarily in Communications, Energy,\n       Transportation Systems, and Water and Wastewater Systems Sectors—in the continental and non-\n       continental United States and its territories, including Guam. Volt Typhoon’s choice of targets and\n       pattern of behavior is not consistent with traditional cyber espionage or intelligence gathering\n       operations, and the U.S. authoring agencies assess with high confidence that Volt Typhoon actors\n       are pre-positioning themselves on IT networks to enable lateral movement to OT assets to disrupt\n       functions. The U.S. authoring agencies are concerned about the potential for these actors to use their\n       network access for disruptive effects in the event of potential geopolitical tensions and/or military\n       conflicts. CCCS assesses that the direct threat to Canada’s critical infrastructure from PRC state-\n       sponsored actors is likely lower than that to U.S. infrastructure, but should U.S. infrastructure be\n       disrupted, Canada would likely be affected as well, due to cross-border integration. ASD’s ACSC and\n       NCSC-NZ assess Australian and New Zealand critical infrastructure, respectively, could be vulnerable\n       to similar activity from PRC state-sponsored actors."
+ },
+ {
+  "id": "p8",
+  "text": "As the authoring agencies have previously highlighted, the use of living off the land (LOTL)\n       techniques is a hallmark of Volt Typhoon actors’ malicious cyber activity when targeting critical\n       infrastructure. The group also relies on valid accounts and leverage strong operational security, which\n       combined, allows for long-term undiscovered persistence. In fact, the U.S. authoring agencies have\n       recently observed indications of Volt Typhoon actors maintaining access and footholds within some\n       victim IT environments for at least five years. Volt Typhoon actors conduct extensive pre-exploitation\n       reconnaissance to learn about the target organization and its environment; tailor their tactics,\n       techniques, and procedures (TTPs) to the victim’s environment; and dedicate ongoing resources to\n       maintaining persistence and understanding the target environment over time, even after initial\n       compromise.\n       The authoring agencies urge critical infrastructure organizations to apply the mitigations in this\n       advisory and to hunt for similar malicious activity using the guidance herein provided, along with the\n       recommendations found in joint guide Identifying and Mitigating Living Off the Land Techniques.\n       These mitigations are primarily intended for IT and OT administrators in critical infrastructure\n       organizations. Following the mitigations for prevention of or in response to an incident will help disrupt\n       Volt Typhoon’s accesses and reduce the threat to critical infrastructure entities.\n       If activity is identified, the authoring agencies strongly recommend that critical infrastructure\n       organizations apply the incident response recommendations in this advisory and report the incident to\n       the relevant agency (see Contact Information section).\n       For additional information, see joint advisory People’s Republic of China State-Sponsored Cyber\n       Actor Living off the Land to Evade Detection and U.S. Department of Justice (DOJ) press release\n       U.S. Government Disrupts Botnet People’s Republic of China Used to Conceal Hacking of Critical\n       Infrastructure. For more information on PRC state-sponsored malicious cyber activity, see CISA’s\n       China Cyber Threat Overview and Advisories webpage.\n       For a downloadable copy of indicators of compromise (IOCs), see:\n           •    MAR-10448362-1.v1 (JSON, 60 KB)"
+ },
+ {
+  "id": "p9",
+  "text": "TABLE OF CONTENTS\n       Summary ............................................................................................................................................. 2\n       Table of Contents ................................................................................................................................ 4\n       Technical Details ................................................................................................................................. 6\n          Overview of Activity.......................................................................................................................... 6\n          Observed TTPs................................................................................................................................ 9\n             Reconnaissance ........................................................................................................................... 9\n             Resource Development ................................................................................................................ 9\n             Initial Access ................................................................................................................................ 9\n             Execution ..................................................................................................................................... 9\n             Persistence ................................................................................................................................ 10\n             Defense Evasion ........................................................................................................................ 10\n             Credential Access ...................................................................................................................... 10\n             Discovery ................................................................................................................................... 11\n             Lateral Movement....................................................................................................................... 13\n             Collection and Exfiltration ........................................................................................................... 14\n          Command and Control ................................................................................................................... 15\n       Detection/Hunt Recommendations .................................................................................................... 16\n          Apply Living off the Land Detection Best Practices ........................................................................ 16\n          Review Application, Security, and System Event Logs................................................................... 16\n          Monitor and Review OT System Logs ............................................................................................ 19\n          Use gait to Detect Possible Network Proxy Activities ..................................................................... 20\n          Review Logins for Impossible Travel .............................................................................................. 20\n          Review Standard Directories for Unusual Files .............................................................................. 20\n       Incident Response............................................................................................................................. 20\n       Mitigations ......................................................................................................................................... 23\n          IT Network Administrators and Defenders...................................................................................... 23\n             Harden the Attack Surface ......................................................................................................... 23\n             Secure Credentials ..................................................................................................................... 24\n             Secure Accounts ........................................................................................................................ 24\n             Secure Remote Access Services ............................................................................................... 25\n             Secure Sensitive Data ................................................................................................................ 26"
+ },
+ {
+  "id": "p10",
+  "text": "Implement Network Segmentation .............................................................................................. 26\n             Secure Cloud Assets .................................................................................................................. 26\n             Be Prepared ............................................................................................................................... 27\n          OT Administrators and Defenders .................................................................................................. 28\n       Contact Information ........................................................................................................................... 29\n       Validate Security Controls ................................................................................................................. 30\n       References ........................................................................................................................................ 30\n       Resources ......................................................................................................................................... 30\n       Disclaimer ......................................................................................................................................... 30\n       Acknowledgements ........................................................................................................................... 31\n       Version History .................................................................................................................................. 31\n       Appendix A: Volt Typhoon Observed Commands / LOTL Activity ...................................................... 32\n       Appendix B: Indicators of Compromise .............................................................................................. 36\n       Appendix C: MITRE ATT&CK Tactics and Techniques...................................................................... 37"
+ },
+ {
+  "id": "p11",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK for Enterprise framework, version 14. See Appendix C:\n       MITRE ATT&CK Tactics and Techniques section for tables of the Volt Typhoon cyber threat actors’\n       activity mapped to MITRE ATT&CK® tactics and techniques. For assistance with mapping malicious\n       cyber activity to the MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for\n       MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p12",
+  "text": "Overview of Activity\n       In May 2023, the authoring agencies—working with industry partners—disclosed information about\n       activity attributed to Volt Typhoon (see joint advisory People’s Republic of China State-Sponsored\n       Cyber Actor Living off the Land to Evade Detection). Since then, CISA, NSA, and FBI have\n       determined that this activity is part of a broader campaign in which Volt Typhoon actors have\n       successfully infiltrated the networks of critical infrastructure organizations in the continental and non-\n       continental United States and its territories, including Guam.\n       The U.S. authoring agencies have primarily observed compromises linked to Volt Typhoon in\n       Communications, Energy, Transportation Systems, and Water and Wastewater Systems sector\n       organizations’ IT networks. Some victims are smaller organizations with limited cybersecurity\n       capabilities that provide critical services to larger organizations or key geographic locations.\n       Volt Typhoon actors tailor their TTPs to the victim environment; however, the U.S. authoring agencies\n       have observed the actors typically following the same pattern of behavior across identified intrusions.\n       Their choice of targets and pattern of behavior is not consistent with traditional cyber espionage or\n       intelligence gathering operations, and the U.S. authoring agencies assess with high confidence that\n       Volt Typhoon actors are pre-positioning themselves on IT networks to enable the disruption of OT\n       functions across multiple critical infrastructure sectors (see Figure 1).\n           1. Volt Typhoon conducts extensive pre-compromise reconnaissance to learn about the\n              target organization’s network architecture and operational protocols. This\n              reconnaissance includes identifying network topologies, security measures, typical user\n              behaviors, and key network and IT staff. The intelligence gathered by Volt Typhoon actors is\n              likely leveraged to enhance their operational security. For example, in some instances, Volt\n              Typhoon actors may have abstained from using compromised credentials outside of normal\n              working hours to avoid triggering security alerts on abnormal account activities.\n           2. Volt Typhoon typically gains initial access to the IT network by exploiting known or\n              zero-day vulnerabilities in public-facing network appliances (e.g., routers, virtual private\n              networks [VPNs], and firewalls) and then connects to the victim’s network via VPN for follow-\n              on activities.\n           3. Volt Typhoon aims to obtain administrator credentials within the network, often by\n              exploiting privilege escalation vulnerabilities in the operating system or network\n              services. In some cases, Volt Typhoon has obtained credentials insecurely stored on a\n              public-facing network appliance."
+ },
+ {
+  "id": "p13",
+  "text": "4. Volt Typhoon uses valid administrator credentials to move laterally to the domain\n              controller (DC) and other devices via remote access services such as Remote Desktop\n              Protocol (RDP).\n           5. Volt Typhoon conducts discovery in the victim’s network, leveraging LOTL binaries for\n              stealth. A key tactic includes using PowerShell to perform targeted queries on Windows event\n              logs, focusing on specific users and periods. These queries facilitate the discreet extraction of\n              security event logs into .dat files, allowing Volt Typhoon actors to gather critical information\n              while minimizing detection. This strategy, blending in-depth pre-compromise reconnaissance\n              with meticulous post-exploitation intelligence collection, underscores their sophisticated and\n              strategic approach to cyber operations.\n           6. Volt Typhoon achieves full domain compromise by extracting the Active Directory\n              database (NTDS.dit) from the DC. Volt Typhoon frequently employs the Volume Shadow\n              Copy Service (VSS) using command-line utilities such as vssadmin to access NTDS.dit. The\n              NTDS.dit file is a centralized repository that contains critical Active Directory data, including\n              user accounts, passwords (in hashed form), and other sensitive data, which can be leveraged\n              for further exploitation. This method entails the creation of a shadow copy—a point-in-time\n              snapshot—of the volume hosting the NTDS.dit file. By leveraging this snapshot, Volt Typhoon\n              actors effectively bypass the file locking mechanisms inherent in a live Windows environment,\n              which typically prevent direct access to the NTDS.dit file while the domain controller is\n              operational.\n           7. Volt Typhoon likely uses offline password cracking techniques to decipher these\n              hashes. This process involves extracting the hashes from the NTDS.dit file and then applying\n              various password cracking methods, such as brute force attacks, dictionary attacks, or more\n              sophisticated techniques like rainbow tables to uncover the plaintext passwords. The\n              successful decryption of these passwords allows Volt Typhoon actors to obtain elevated\n              access and further infiltrate and manipulate the network.\n           8. Volt Typhoon uses elevated credentials for strategic network infiltration and additional\n              discovery, often focusing on gaining capabilities to access OT assets. Volt Typhoon\n              actors have been observed testing access to domain-joint OT assets using default OT vendor\n              credentials, and in certain instances, they have possessed the capability to access OT\n              systems whose credentials were compromised via NTDS.dit theft. This access enables\n              potential disruptions, such as manipulating heating, ventilation, and air conditioning (HVAC)\n              systems in server rooms or disrupting critical energy and water controls, leading to significant\n              infrastructure failures (in some cases, Volt Typhoon actors had the capability to access\n              camera surveillance systems at critical infrastructure facilities). In one confirmed compromise,\n              Volt Typhoon actors moved laterally to a control system and were positioned to move to a\n              second control system."
+ },
+ {
+  "id": "p14",
+  "text": "Figure 1: Typical Volt Typhoon Activity"
+ },
+ {
+  "id": "p15",
+  "text": "After successfully gaining access to legitimate accounts, Volt Typhoon actors exhibit minimal activity\n       within the compromised environment (except discovery as noted above), suggesting their objective is\n       to maintain persistence rather than immediate exploitation. This assessment is supported by\n       observed patterns where Volt Typhoon methodically re-targets the same organizations over extended\n       periods, often spanning several years, to continuously validate and potentially enhance their\n       unauthorized accesses. Evidence of their meticulous approach is seen in instances where they\n       repeatedly exfiltrate domain credentials, ensuring access to current and valid accounts. For example,\n       in one compromise, Volt Typhoon likely extracted NTDS.dit from three domain controllers in a four-\n       year period. In another compromise, Volt Typhoon actors extracted NTDS.dit two times from a victim\n       in a nine-month period.\n       Industry reporting—identifying that Volt Typhoon actors are silent on the network following credential\n       dumping and perform discovery to learn about the environment, but do not exfiltrate data—is\n       consistent with the U.S. authoring agencies’ observations. This indicates their aim is to achieve and\n       maintain persistence on the network. In one confirmed compromise, an industry partner observed Volt\n       Typhoon actors dumping credentials at regular intervals.\n       In addition to leveraging stolen account credentials, the actors use LOTL techniques and avoid\n       leaving malware artifacts on systems that would cause alerts. Their strong focus on stealth and\n       operational security allows them to maintain long-term, undiscovered persistence. Further, Volt\n       Typhoon’s operational security is enhanced by targeted log deletion to conceal their actions within the\n       compromised environment.\n       See the below sections for Volt Typhoon TTPs observed by the U.S. authoring agencies from multiple\n       confirmed Volt Typhoon compromises."
+ },
+ {
+  "id": "p16",
+  "text": "Observed TTPs\n       Reconnaissance\n       Volt Typhoon actors conduct extensive pre-compromise reconnaissance [TA0043] to learn about the\n       target organization [T1591], its network [T1590], and its staff [T1589]. This includes web searches\n       [T1593]—including victim-owned sites [T1594]—for victim host [T1592], identity, and network\n       information, especially for information on key network and IT administrators. According to industry\n       reporting, Volt Typhoon actors use FOFA[1], Shodan, and Censys for querying or searching for\n       exposed infrastructure. In some instances, the U.S. authoring agencies have observed Volt Typhoon\n       actors targeting the personal emails of key network and IT staff [T1589.002] post compromise.\n       Resource Development\n       Historically, Volt Typhoon actors use multi-hop proxies for command and control (C2) infrastructure\n       [T1090.003]. The proxy is typically composed of virtual private servers (VPSs) [T1583.003] or small\n       office/home office (SOHO) routers. Recently, Volt Typhoon actors used Cisco and NETGEAR end-of-\n       life SOHO routers implanted with KV Botnet malware to support their operations [T1584.005]. (See\n       DOJ press release U.S. Government Disrupts Botnet People’s Republic of China Used to Conceal\n       Hacking of Critical Infrastructure for more information).\n       Initial Access\n       To obtain initial access [TA0001], Volt Typhoon actors commonly exploit vulnerabilities in networking\n       appliances such as those from Fortinet, Ivanti Connect Secure (formerly Pulse Secure), NETGEAR,\n       Citrix, and Cisco [T1190]. They often use publicly available exploit code for known vulnerabilities\n       [T1588.005] but are also adept at discovering and exploiting zero-day vulnerabilities [T1587.004].\n           •    In one confirmed compromise, Volt Typhoon actors likely obtained initial access by exploiting\n                CVE-2022-42475 in a network perimeter FortiGate 300D firewall that was not patched. There\n                is evidence of a buffer overflow attack identified within the Secure Sockets Layer (SSL)-VPN\n                crash logs.\n       Once initial access is achieved, Volt Typhoon actors typically shift to establishing persistent access\n       [TA0003]. They often use VPN sessions to securely connect to victim environments [T1133], enabling\n       discreet follow-on intrusion activities. This tactic not only provides a stable foothold in the network but\n       also allows them to blend in with regular traffic, significantly reducing their chances of detection.\n       Execution\n       Volt Typhoon actors rarely use malware for post-compromise execution. Instead, once Volt Typhoon\n       actors gain access to target environments, they use hands-on-keyboard activity via the command-line\n       [T1059] and other native tools and processes on systems [T1218] (often referred to as “LOLBins”),\n       known as LOTL, to maintain and expand access to the victim networks. According to industry\n       reporting, some “commands appear to be exploratory or experimental, as the operators [i.e.,\n       malicious actors] adjust and repeat them multiple times.”[2]"
+ },
+ {
+  "id": "p17",
+  "text": "For more details on LOTL activity, see the Credential Access and Discovery sections and Appendix\n       A: Volt Typhoon LOTL Activity.\n       Similar to LOTL, Volt Typhoon actors also use legitimate but outdated versions of network admin\n       tools. For example, in one confirmed compromise, actors downloaded [T1105] an outdated version of\n       comsvcs.dll on the DC in a non-standard folder. comsvcs.dll is a legitimate Microsoft Dynamic\n       Link Library (DLL) file normally found in the System32 folder. The actors used this DLL with MiniDump\n       and the process ID of the Local Security Authority Subsystem Service (LSASS) to dump the LSASS\n       process memory [T1003.001] and obtain credentials (LSASS process memory space contains hashes\n       for the current user’s operating system (OS) credentials).\n       The actors also use legitimate non-native network admin and forensic tools. For example, Volt\n       Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain\n       controllers. MRC is a free imaging tool that captures the physical memory of a computer, and Volt\n       Typhoon actors likely used it to analyze in-memory data for sensitive information (such as credentials)\n       and in-transit data not typically accessible on disk. Volt Typhoon actors have also been observed\n       implanting Fast Reverse Proxy (FRP) for command and control.[3] (See the Command and Control\n       section).\n       Persistence\n       Volt Typhoon primarily relies on valid credentials for persistence [T1078].\n       Defense Evasion\n       Volt Typhoon has strong operational security. Their actors primarily use LOTL for defense evasion\n       [TA0005], which allows them to camouflage their malicious activity with typical system and network\n       behavior, potentially circumventing simplistic endpoint security capabilities. For more information, see\n       joint guide Identifying and Mitigating Living off the Land Techniques.\n       Volt Typhoon actors also obfuscate their malware. In one confirmed compromise, Volt Typhoon\n       obfuscated FRP client files (BrightmetricAgent.exe and SMSvcService.exe) and the command-\n       line port scanning utility ScanLine by packing the files with Ultimate Packer for Executables (UPX)\n       [T1027.002]. FRP client applications support encryption, compression, and easy token authentication\n       and work across multiple protocols—including transmission control protocol (TCP), user datagram\n       protocol (UDP), hypertext transfer protocol (HTTP), and hypertext transfer protocol secure (HTTPS).\n       The FRP client applications use the Kuai connection protocol (KCP) for error-checked and\n       anonymous data stream delivery over UDP, with packet-level encryption support. See Appendix C\n       and CISA Malware Analysis Report (MAR)-10448362-1.v1 for more information.\n       In addition to LOTL and obfuscation techniques, Volt Typhoon actors have been observed selectively\n       clearing Windows Event Logs [T1070.001], system logs, and other technical artifacts to remove\n       evidence [T1070.009] of their intrusion activity and masquerading file names [T1036.005].\n       Credential Access\n       Volt Typhoon actors first obtain credentials from public-facing appliances after gaining initial access\n       by exploiting privilege escalation vulnerabilities [T1068] in the operating system or network services."
+ },
+ {
+  "id": "p18",
+  "text": "In some cases, they have obtained credentials insecurely stored on the appliance [T1552]. In one\n       instance, where Volt Typhoon likely exploited CVE-2022-42475 in an unpatched Fortinet device, Volt\n       Typhoon actors compromised a domain admin account stored inappropriately on the device.\n       Volt Typhoon also consistently obtains valid credentials by extracting the Active Directory database\n       file (NTDS.dit)—in some cases multiple times from the same victim over long periods [T1003.003].\n       NTDS.dit contains usernames, hashed passwords, and group memberships for all domain accounts,\n       essentially allowing for full domain compromise if the hashes can be cracked offline.\n       To obtain NTDS.dit, the U.S. authoring agencies have observed Volt Typhoon:\n           1. Move laterally [TA0008] to the domain controller via an interactive RDP session using a\n              compromised account with domain administrator privileges [T1021.001];\n           2. Execute the Windows-native vssadmin [T1006] command to create a volume shadow copy;\n           3. Use Windows Management Instrumentation Console (WMIC) commands [T1047] to execute\n              ntdsutil (a LOTL utility) to copy NTDS.dit and SYSTEM registry hive from the volume\n              shadow copy; and\n           4. Exfiltrate [TA0010] NTDS.dit and SYSTEM registry hive to crack passwords offline)\n              [T1110.002]. (For more details, including specific commands used, see Appendix A: Volt\n              Typhoon LOTL Activity.)\n              Note: A volume shadow copy contains a copy of all the files and folders that exist on the\n              specified volume. Each volume shadow copy created on a DC includes its NTDS.dit and the\n              SYSTEM registry hive, which provides keys to decrypt the NTDS.dit file.\n       Volt Typhoon actors have also been observed interacting with a PuTTY application by enumerating\n       existing stored sessions [T1012]. Given this interaction and the exposure of cleartext-stored proxy\n       passwords used in remote administration, Volt Typhoon actors potentially had access to PuTTY\n       profiles that allow access to critical systems (see the Lateral Movement section).\n       According to industry reporting, Volt Typhoon actors attempted to dump credentials through LSASS\n       (see Appendix B for commands used).[2]\n       The U.S. authoring agencies have observed Volt Typhoon actors leveraging Mimikatz to harvest\n       credentials, and industry partners have observed Volt Typhoon leveraging Impacket.[2]\n           •    Mimikatz is a credential dumping tool and Volt Typhoon actors use it to obtain credentials. In\n                one confirmed compromise, the Volt Typhoon used RDP to connect to a server and run\n                Mimikatz after leveraging a compromised administrator account to deploy it.\n           •    Impacket is an open source Python toolkit for programmatically constructing and manipulating\n                network protocols. It contains tools for Kerberos manipulation, Windows credential dumping,\n                packet sniffing, and relay attacks—as well as remote service execution.\n       Discovery\n       Volt Typhoon actors have been observed using commercial tools, LOTL utilities, and appliances\n       already present on the system for system information [T1082], network service [T1046], group\n       [T1069] and user [T1033] discovery."
+ },
+ {
+  "id": "p19",
+  "text": "Volt Typhoon uses at least the following LOTL tools and commands for system information, network\n       service, group, and user discovery techniques:\n               •    cmd                            •   nltest                         •   systeminfo\n               •    certutil                       •   netstat                        •   tasklist\n               •    dnscmd                         •   ntdsutil                       •   wevtutil\n               •    ldifde                         •   ping                           •   whoami\n               •    makecab                        •   PowerShell                     •   wmic\n               •    net user/group/use             •   quser                          •   xcopy\n               •    netsh                          •   reg query/reg save"
+ },
+ {
+  "id": "p20",
+  "text": "Some observed specific examples of discovery include:\n           •       Capturing successful logon events [T1654].\n                   o Specifically, in one incident, analysis of the PowerShell console history of a domain\n                       controller indicated that security event logs were directed to a file named user.dat, as\n                       evidenced by the executed command Get-EventLog security -instanceid 4624 -\n                       after [year-month-date] | fl * | Out-File\n                       'C:\\users\\public\\documents\\user.dat'. This indicates the group's specific interest in\n                       capturing successful logon events (event ID 4624) to analyze user authentication patterns\n                       within the network. Additionally, file system analysis, specifically of the Master File Table\n                       (MFT), uncovered evidence of a separate file, systeminfo.dat, which was created in\n                       C:\\Users\\Public\\Documents but subsequently deleted [T1070.004]. The presence of\n                       these activities suggests a methodical approach by Volt Typhoon actors in collecting and\n                       then possibly removing traces of sensitive log information from the compromised system.\n           •       Executing tasklist /v to gather a detailed process listing [T1057], followed by executing\n                   taskkill /f /im rdpservice.exe (the function of this executable is not known).\n           •       Executing net user and quser for user account information [T1087.001].\n           •       Creating and accessing a file named rult3uil.log on a domain controller in\n                   C:\\Windows\\System32\\. The rult3uil.log file contained user activities on a compromised\n                   system, showcasing a combination of window title information [T1010] and focus shifts,\n                   keypresses, and command executions across Google Chrome and Windows PowerShell, with\n                   corresponding timestamps.\n           •       Employing ping with various IP addresses to check network connectivity [T1016.001] and net\n                   start to list running services [T1007].\n       See Appendix A for additional LOTL examples.\n       In one confirmed compromise, Volt Typhoon actors attempted to use Advanced IP Scanner, which\n       was on the network for admin use, to scan the network.\n       Volt Typhoon actors have been observed strategically targeting network administrator web browser\n       data—focusing on both browsing history and stored credentials [T1555.003]—to facilitate targeting of\n       personal email addresses (see the Reconnaissance section) for further discovery and possible\n       network modifications that may impact the threat actor’s persistence within victim networks."
+ },
+ {
+  "id": "p21",
+  "text": "In one confirmed compromise:\n           •    Volt Typhoon actors obtained the history file from the User Data directory of a network\n                administrator user’s Chrome browser. To obtain the history file, Volt Typhoon actors first\n                executed an RDP session to the user’s workstation where they initially attempted, and failed,\n                to obtain the C$ File Name:\n                users\\{redacted}\\appdata\\local\\Google\\Chrome\\UserData\\default\\History file, as\n                evidenced by the accompanying 1016 (reopen failed) SMB error listed in the application event\n                log. The threat actors then disconnected the RDP session to the workstation and accessed\n                the file C:\\Users\\{redacted}\\Downloads\\History.zip. This file presumably contained\n                data from the User Data directory of the user’s Chrome browser, which the actors likely\n                saved in the Downloads directory for exfiltration [T1074]. Shortly after accessing the\n                history.zip file, the actors terminated RDP sessions.\n           •    About four months later, Volt Typhoon actors accessed the same user’s Chrome data C$\n                File Name: Users\\{redacted}\\AppData\\Local\\Google\\Chrome\\User Data\\Local\n                State and $ File Name: Users\\{redacted}\\AppData\\Local\\Google\\Chrome\\User\n                Data\\Default\\Login Data via SMB. The Local State file contains the Advanced Encryption\n                Standard (AES) encryption key [T1552.004] used to encrypt the passwords stored in the\n                Chrome browser, which would enable the actors to obtain plaintext passwords stored in the\n                Login Data file in the Chrome browser."
+ },
+ {
+  "id": "p22",
+  "text": "In another confirmed compromise, Volt Typhoon actors accessed directories containing Chrome and\n       Edge user data on multiple systems. Directory interaction was observed over the network to paths\n       such as C:\\Users\\{redacted}\\AppData\\Local\\Google\\Chrome\\User Data\\ and\n       C:\\Users\\{redacted}\\AppData\\Local\\Microsoft\\Edge\\User Data\\. They also enumerated\n       several directories, including directories containing vulnerability testing and cyber related content and\n       facilities data, such as construction drawings [T1083].\n       Lateral Movement\n       For lateral movement, Volt Typhoon actors have been observed predominantly employing RDP with\n       compromised valid administrator credentials. Note: With a full on-premises Microsoft Active Directory\n       identity compromise (see the Credential Access section), the group may be capable of using other\n       methods such as Pass the Hash or Pass the Ticket for lateral movement [T1550].\n       In one confirmed compromise of a Water and Wastewater Systems Sector entity, after obtaining initial\n       access, Volt Typhoon actors connected to the network via a VPN with administrator credentials they\n       obtained and opened an RDP session with the same credentials to move laterally. Over a nine-month\n       period, they moved laterally to a file server, a domain controller, an Oracle Management Server\n       (OMS), and a VMware vCenter server. The actors obtained domain credentials from the domain\n       controller and performed discovery, collection, and exfiltration on the file server (see the Discovery\n       and Collection and Exfiltration sections).\n       Volt Typhoon’s movement to the vCenter server was likely strategic for pre-positioning to OT assets.\n       The vCenter server was adjacent to OT assets, and Volt Typhoon actors were observed interacting"
+ },
+ {
+  "id": "p23",
+  "text": "with the PuTTY application on the server by enumerating existing stored sessions. With this\n       information, Volt Typhoon potentially had access to a range of critical PuTTY profiles, including those\n       for water treatment plants, water wells, an electrical substation, OT systems, and network security\n       devices. This would enable them to access these critical systems [T1563]. See Figure 2."
+ },
+ {
+  "id": "p24",
+  "text": "Figure 2: Volt Typhoon Lateral Movement Path File Server, DC, and OT-Adjacent Assets"
+ },
+ {
+  "id": "p25",
+  "text": "Additionally, Volt Typhoon actors have been observed using PSExec to execute remote processes,\n       including the automated acceptance of the end-user license agreement (EULA) through an\n       administrative account, signified by the accepteula command flag.\n       Volt Typhoon actors may have attempted to move laterally to a cloud environment in one victim’s\n       network but direct attribution to the Volt Typhoon group was inconclusive. During the period of the\n       their known network presence, there were anomalous login attempts to an Azure tenant [T1021.007]\n       potentially using credentials [T1078.004] previously compromised from theft of NTDS.dit. These\n       attempts, coupled with misconfigured virtual machines with open RDP ports, suggested a potential for\n       cloud-based lateral movement. However, subsequent investigations, including password changes and\n       multifactor authentication (MFA) implementations, revealed authentication failures from non-\n       associated IP addresses, with no definitive link to Volt Typhoon.\n       Collection and Exfiltration\n       The U.S. authoring agencies assess Volt Typhoon primarily collects information that would facilitate\n       follow-on actions with physical impacts. For example, in one confirmed compromise, they collected\n       [TA0009] sensitive information obtained from a file server in multiple zipped files [T1560] and likely\n       exfiltrated [TA0010] the files via Server Message Block (SMB) [T1048] (see Figure 3). Collected"
+ },
+ {
+  "id": "p26",
+  "text": "information included diagrams and documentation related to OT equipment, including supervisory\n       control and data acquisition (SCADA) systems, relays, and switchgear. This data is crucial for\n       understanding and potentially impacting critical infrastructure systems, indicating a focus on gathering\n       intelligence that could be leveraged in actions targeting physical assets and systems."
+ },
+ {
+  "id": "p27",
+  "text": "Figure 3: Volt Typhoon Attack Path for Exfiltration of Data from File Server"
+ },
+ {
+  "id": "p28",
+  "text": "In another compromise, Volt Typhoon actors leveraged WMIC to create and use temporary\n       directories (C:\\Users\\Public\\pro, C:\\Windows\\Temp\\tmp, C:\\Windows\\Temp\\tmp\\Active\n       Directory and C:\\Windows\\Temp\\tmp\\registry) to stage the extracted ntds.dit and SYSTEM\n       registry hives from ntdsutil execution volume shadow copies (see the Credential Access section)\n       obtained from two DCs. They then compressed and archived the extracted ntds.dit and\n       accompanying registry files by executing ronf.exe, which was likely a renamed version of the\n       archive utility rar.exe) [T1560.001]."
+ },
+ {
+  "id": "p29",
+  "text": "Command and Control\n       Volt Typhoon actors have been observed leveraging compromised SOHO routers and virtual private\n       servers (VPS) to proxy C2 traffic. For more information, see DOJ press release U.S. Government\n       Disrupts Botnet People’s Republic of China Used to Conceal Hacking of Critical Infrastructure).\n       They have also been observed setting up FRP clients [T1090] on a victim’s corporate infrastructure to\n       establish covert communications channels [T1573] for command and control. In one instance, Volt\n       Typhoon actors implanted the FRP client with filename SMSvcService.exe on a Shortel Enterprise\n       Contact Center (ECC) server and a second FRP client with filename Brightmetricagent.exe on\n       another server. These clients, when executed via PowerShell [T1059.001], open reverse proxies"
+ },
+ {
+  "id": "p30",
+  "text": "between the compromised system and Volt Typhoon C2 servers. Brightmetricagent.exe has\n       additional capabilities. The FRP client can locate servers behind a network firewall or obscured\n       through Network Address Translation (NAT) [T1016]. It also contains multiplexer libraries that can bi-\n       directionally stream data over NAT networks and contains a command-line interface (CLI) library that\n       can leverage command shells such as PowerShell, Windows Management Instrumentation (WMI),\n       and Z Shell (zsh) [T1059.004]. See Appendix C and MAR-10448362-1.v1 for more information.\n       In the same compromise, Volt Typhoon actors exploited a Paessler Router Traffic Grapher (PRTG)\n       server as an intermediary for their FRP operations. To facilitate this, they used the netsh command,\n       a legitimate Windows command, to create a PortProxy registry modification [T1112] on the PRTG\n       server [T1090.001]. This key alteration redirected specific port traffic to Volt Typhoon’s proxy\n       infrastructure, effectively converting the PRTG’s server into a proxy for their C2 traffic [T1584.004]\n       (see Appendix B for details)."
+ },
+ {
+  "id": "p31",
+  "text": "DETECTION/HUNT RECOMMENDATIONS\n       Apply Living off the Land Detection Best Practices\n       Apply the prioritized detection and hardening best practice recommendations provided in joint\n       guide Identifying and Mitigating Living off the Land Techniques. Many organizations lack\n       security and network management best practices (such as established baselines) that support\n       detection of malicious LOTL activity—this makes it difficult for network defenders to discern legitimate\n       behavior from malicious behavior and conduct behavior analytics, anomaly detection, and proactive\n       hunting. Conventional IOCs associated with the malicious activity are generally lacking, complicating\n       network defenders’ efforts to identify, track, and categorize this sort of malicious behavior. This\n       advisory provides guidance for a multifaceted cybersecurity strategy that enables behavior analytics,\n       anomaly detection, and proactive hunting, which are part of a comprehensive approach to mitigating\n       cyber threats that employ LOTL techniques."
+ },
+ {
+  "id": "p32",
+  "text": "Review Application, Security, and System Event Logs\n       Routinely review application, security, and system event logs, focusing on Windows\n       Extensible Storage Engine Technology (ESENT) Application Logs. Due to Volt Typhoon’s ability\n       for long-term undetected persistence, network defenders should assume significant dwell time and\n       review specific application event log IDs, which remain on endpoints for longer periods compared to\n       security event logs and other ephemeral artifacts. Focus on Windows ESENT logs because certain\n       ESENT Application Log event IDs (216, 325, 326, and 327) may indicate actors copying NTDS.dit.\n       See Table 1 for examples of ESENT and other key log indicators that should be investigated. Please\n       note that incidents may not always have exact matches listed in the Event Detail column due to\n       variations in event logging and TTPs."
+ },
+ {
+  "id": "p33",
+  "text": "Table 1: Key Log Indicators for Detecting Volt Typhoon Activity"
+ },
+ {
+  "id": "p34",
+  "text": "Event ID\n                                                  Event Detail                                       Description\n           (Log)"
+ },
+ {
+  "id": "p35",
+  "text": "A change in the NTDS.dit\n                                                                        database location is\n        216              A database location change was detected from   detected. This could\n        (Windows         'C:\\Windows\\NTDS\\ntds.dit' to                  suggest an initial step in\n        ESENT            '\\\\?\\GLOBALROOT\\Device\\{redacted}VolumeShadowC NTDS credential dumping\n        Application      opy1\\Windows\\NTDS\\ntds.dit'                    where the database is\n        Log)\n                                                                        being prepared for\n                                                                        extraction."
+ },
+ {
+  "id": "p36",
+  "text": "Indicates creation of a new\n                                                                                            NTDS.dit file in a non-\n                                                                                            standard directory. Often a\n        (Windows\n                         The database engine created a new database (2,                     sign of data staging for\n        ESENT\n                         C:\\Windows\\Temp\\tmp\\Active Directory\\ntds.dit).                    exfiltration. Monitor for\n        Application\n                                                                                            unusual database\n        Log)\n                                                                                            operations in temp\n                                                                                            directories."
+ },
+ {
+  "id": "p37",
+  "text": "A new flush map file is\n                                                                                 being created for\n        637                                                                      NTDS.dit. This may\n                         C:\\Windows\\Temp\\tmp\\Active Directory\\ntds.jfm-++- (0)\n        (Windows                                                                 suggest ongoing operations\n                         New flush map file “C:\\Windows\\Temp\\tmp\\Active\n        ESENT                                                                    related to NTDS credential\n                         Directory\\ntds.jfm” will be created to enable persisted\n        Application                                                              dumping, potentially\n                         lost flush detection.\n        Log)                                                                     capturing uncommitted\n                                                                                 changes to the NTDS.dit\n                                                                                 file."
+ },
+ {
+  "id": "p38",
+  "text": "Represents the mounting of\n                         NTDS-++-12460,D,100-++--++-1-++-                                   an NTDS.dit file from a\n                         C:\\$SNAP_{redacted}_VOLUMEC$\\Windows\\NTDS\\nt                       volume shadow copy. This\n        (Windows\n                         ds.dit-++-0-++- [1] The database engine attached a                 is a critical step in NTDS\n        ESENT\n                         database. Began mounting of                                        credential dumping,\n        Application\n                         C:\\Windows\\NTDS\\ntds.dit file created from volume                  indicating active\n        Log)\n                         shadow copy process                                                manipulation of a domain\n                                                                                            controller’s data."
+ },
+ {
+  "id": "p39",
+  "text": "Event ID\n                                             Event Detail                              Description\n           (Log)"
+ },
+ {
+  "id": "p40",
+  "text": "The detachment of a\n        327              C:\\Windows\\Temp\\tmp\\Active Directory\\ntds.dit-++-1-   database, particularly in a\n        (Windows         ++- [1] The database engine detached a database (2,   temp directory, could\n        ESENT            C:\\Windows\\Temp\\tmp\\Active Directory\\ntds.dit).       indicate the completion of a\n        Application      Completion of mounting of ntds.dit file to            credential dumping\n        Log)             C:\\Windows\\Temp\\tmp\\Active Director                   process, potentially as part\n                                                                               of exfiltration preparations."
+ },
+ {
+  "id": "p41",
+  "text": "21 (Windows\n        Terminal\n        Services\n                    Remote Desktop Services: Session logon succeeded:          Successful authentication\n        Local\n                    User: {redacted}\\{redacted} Session ID: {redacted}         to a Remote Desktop\n        Session\n                    Source Network Address: {redacted}                         Services session.\n        Manager\n        Operational\n        Log)"
+ },
+ {
+  "id": "p42",
+  "text": "22 (Windows\n                                                                               Successful start of a new\n        Terminal\n                                                                               Remote Desktop session.\n        Services\n                    Remote Desktop Services: Shell start notification          This may imply lateral\n        Local\n                    received: User: {redacted}\\{redacted} Session ID:          movement or unauthorized\n        Session\n                    {redacted} Source Network Address: {redacted}              remote access, especially if\n        Manager\n                                                                               the user or session is\n        Operational\n                                                                               unexpected.\n        Log)"
+ },
+ {
+  "id": "p43",
+  "text": "23 (Windows\n        Terminal\n        Services\n        Local       Remote Desktop Services: Session logoff succeeded:         Successful logoff of\n        Session     User: {redacted}\\{redacted} Session ID: {redacted}         Remote Desktop session.\n        Manager\n        Operational\n        Log)"
+ },
+ {
+  "id": "p44",
+  "text": "24 (Windows Remote Desktop Services: Session has been                  Remote Desktop session\n        Terminal                                                               disconnected by user or\n                    disconnected: User: {redacted}\\{redacted} Session ID:\n        Services                                                               due to network connectivity\n                    {redacted} Source Network Address: {redacted}\n        Local                                                                  issues."
+ },
+ {
+  "id": "p45",
+  "text": "Event ID\n                                             Event Detail                                 Description\n           (Log)\n        Session\n        Manager\n        Operational\n        Log)"
+ },
+ {
+  "id": "p46",
+  "text": "25 (Windows                                                               Successful reconnection to\n        Terminal                                                                  a Remote Desktop\n        Services                                                                  Services session. This may\n                    Remote Desktop Services: Session reconnection\n        Local                                                                     imply lateral movement or\n                    succeeded: User: {redacted}\\{redacted} Session ID:\n        Session                                                                   unauthorized remote\n                    {redacted} Source Network Address: {redacted}\n        Manager                                                                   access, especially if the\n        Operational                                                               user or session is\n        Log)                                                                      unexpected."
+ },
+ {
+  "id": "p47",
+  "text": "Handle scavenged.                                        Indicates the server closed\n                                                                                  a handle for a client. While\n                         Share Name: C$                                           common in network\n        1017        File Name:                                                    operations, unusual\n        (Windows                                                                  patterns or locations (like\n        System Log) users\\{redacted}\\downloads\\History.zip Durable: 1             History.zip in a user’s\n                    Resilient or Persistent: 0 Guidance: The server closed        downloads) may suggest\n                    a handle that was previously reserved for a client after      data collection from a local\n                    60 seconds.                                                   system."
+ },
+ {
+  "id": "p48",
+  "text": "All Event ID 1102 entries\n        1102                                                                      should be investigated as\n        (Windows                                                                  logs are generally not\n                         All\n        Security                                                                  cleared and this is a known\n        Log)                                                                      Volt Typhoon tactic to cover\n                                                                                  their tracks."
+ },
+ {
+  "id": "p49",
+  "text": "Monitor and Review OT System Logs\n           •    Review access logs for communication paths between IT and OT networks, looking for\n                anomalous accesses or protocols.\n           •    Measure the baseline of normal operations and network traffic for the industrial control system\n                (ICS) and assess traffic anomalies for malicious activity.\n           •    Configure intrusion detection systems (IDS) to create alarms for any ICS network traffic\n                outside normal operations.\n           •    Track and monitor audit trails on critical areas of ICS."
+ },
+ {
+  "id": "p50",
+  "text": "•    Set up security incident and event monitoring (SIEM) to monitor, analyze, and correlate event\n                logs from across the ICS network to identify intrusion attempts.\n       Review CISA’s Recommended Cybersecurity Practices for Industrial Control Systems and the joint\n       advisory, NSA and CISA Recommend Immediate Actions to Reduce Exposure Across all Operational\n       Technologies and Control Systems, for further OT system detection and mitigation guidance."
+ },
+ {
+  "id": "p51",
+  "text": "Use gait to Detect Possible Network Proxy Activities\n       Use gait[4] to detect network proxy activities. Developed by Sandia National Labs, gait is a\n       publicly available Zeek[5] extension. The gait extension can help enrich Zeek’s network connection\n       monitoring and SSL logs by including additional metadata in the logs. Specifically, gait captures\n       unique TCP options and timing data such as a TCP, transport layer security (TLS), and Secure Shell\n       (SSH) layer inferred round trip times (RTT), aiding in the identification of the software used by both\n       endpoints and intermediaries.\n       While the gait extension for Zeek is an effective tool for enriching network monitoring logs with\n       detailed metadata, it is not specifically designed to detect Volt Typhoon actor activities. The\n       extension’s capabilities extend to general anomaly detection in network traffic, including—but not\n       limited to—proxying activities. Therefore, while gait can be helpful in identifying tactics similar to those\n       used by Volt Typhoon, such as proxy networks and FRP clients for C2 communication, not all\n       proxying activities detected by using this additional metadata are necessarily indicative of Volt\n       Typhoon presence. It serves as a valuable augmentation to current security stacks for a broader\n       spectrum of threat detection.\n       For more information, see Sandia National Lab’s gait GitHub page sandialabs/gait: Zeek Extension to\n       Collect Metadata for Profiling of Endpoints and Proxies."
+ },
+ {
+  "id": "p52",
+  "text": "Review Logins for Impossible Travel\n       Examine VPN or other account logon times, frequency, duration, and locations. Logons from\n       two geographically distant locations within a short timeframe from a single user may indicate an\n       account is being used maliciously. Logons of unusual frequency or duration may indicate a threat\n       actor attempting to access a system repeatedly or maintain prolonged sessions for the purpose of\n       data extraction."
+ },
+ {
+  "id": "p53",
+  "text": "Review Standard Directories for Unusual Files\n       Review directories, such as C:\\windows\\temp\\ and C:\\users\\public\\, for unexpected or\n       unusual files. Monitor these temporary file storage directories for files typically located in standard\n       system paths, such as the System32 directory. For example, Volt Typhoon has been observed\n       downloading comsvcs.dll to a non-standard folder (this file is normally found in the System32\n       folder)."
+ },
+ {
+  "id": "p54",
+  "text": "INCIDENT RESPONSE\n       If compromise, or potential compromise, is detected, organizations should assume full domain\n       compromise because of Volt Typhoon’s known behavioral pattern of extracting the NTDS.dit from"
+ },
+ {
+  "id": "p55",
+  "text": "the DCs. Organizations should immediately implement the following immediate, defensive\n       countermeasures:\n           1. Sever the enterprise network from the internet. Note: this step requires the agency to\n              understand its internal and external connections. When making the decision to sever internet\n              access, knowledge of connections must be combined with care to avoid disrupting critical\n              functions.\n              a. If you cannot sever from the internet, shutdown all non-essential traffic between the\n                  affected enterprise network and the internet.\n           2. Reset credentials of privileged and non-privileged accounts within the trust boundary\n              of each compromised account.\n              a. Reset passwords for all domain users and all local accounts, such as Guest,\n                  HelpAssistant, DefaultAccount, System, Administrator, and krbtgt. The krbtgt\n                  account is responsible for handling Kerberos ticket requests as well as encrypting and\n                  signing them. The krbtgt account should be reset twice because the account has a two-\n                  password history. The first account reset for the krbtgt needs to be allowed to replicate\n                  prior to the second reset to avoid any issues. See CISA’s Eviction Guidance for Networks\n                  Affected by the SolarWinds and Active Directory/M365 Compromise for more information.\n                  Although tailored to FCEB agencies compromised in the 2020 SolarWinds Orion supply\n                  chain compromise, the steps are applicable to organizations with Windows AD\n                  compromise.\n                  i) Review access policies to temporarily revoke privileges/access for affected\n                      accounts/devices. If it is necessary to not alert the attacker (e.g., for intelligence\n                      purposes), then privileges can be reduced for affected accounts/devices to “contain”\n                      them.\n              b. Reset the relevant account credentials or access keys if the investigation finds the threat\n                  actor’s access is limited to non-elevated permissions.\n                  i) Monitor related accounts, especially administrative accounts, for any further signs of\n                      unauthorized access.\n           3. Audit all network appliance and edge device configurations with indicators of malicious activity\n              for signs of unauthorized or malicious configuration changes. Organizations should ensure\n              they audit the current network device running configuration and any local configurations that\n              could be loaded at boot time. If configuration changes are identified:\n              a. Change all credentials being used to manage network devices, to include keys and strings\n                  used to secure network device functions (SNMP strings/user credentials, IPsec/IKE\n                  preshared keys, routing secrets, TACACS/RADIUS secrets, RSA keys/certificates, etc.).\n              b. Update all firmware and software to the latest version.\n           4. Report the compromise to an authoring agency (see the Contact Information section).\n           5. For organizations with cloud or hybrid environments, apply best practices for identity and\n              credential access management.\n              a. Verify that all accounts with privileged role assignments are cloud native, not synced from\n                  Active Directory."
+ },
+ {
+  "id": "p56",
+  "text": "b. Audit conditional access policies to ensure Global Administrators and other highly\n                  privileged service principals and accounts are not exempted.\n              c. Audit privileged role assignments to ensure adherence to the principle of least privilege\n                  when assigning privileged roles.\n              d. Leverage just-in-time and just-enough access mechanisms when administrators need to\n                  elevate to a privileged role.\n              e. In hybrid environments, ensure federated systems (such as AD FS) are configured and\n                  monitored properly.\n              f. Audit Enterprise Applications for recently added applications and examine the API\n                  permissions assigned to each.\n           6. Reconnect to the internet. Note: The decision to reconnect to the internet depends on\n              senior leadership’s confidence in the actions taken. It is possible—depending on the\n              environment—that new information discovered during pre-eviction and eviction steps could\n              add additional eviction tasks.\n           7. Minimize and control use of remote access tools and protocols by applying best practices\n              from joint Guide to Securing Remote Access Software and joint Cybersecurity Information\n              Sheet: Keeping PowerShell: Security Measures to Use and Embrace.\n           8. Consider sharing technical information with an authoring agency and/or a sector-\n              specific information sharing and analysis center.\n       For more information on incident response and remediation, see:\n           •    Joint advisory Technical Approaches to Uncovering and Remediating Malicious Activity. This\n                advisory provides incident response best practices.\n           •    CISA’s Federal Government Cybersecurity Incident and Vulnerability Response Playbooks.\n                Although tailored to U.S. Federal Civilian Executive Branch (FCEB) agencies, the playbooks\n                are applicable to all organizations. The incident response playbook provides procedures to\n                identify, coordinate, remediate, recover, and track successful mitigations from incidents.\n           •    Joint Water and Wastewater Sector - Incident Response Guide. This joint guide provides\n                incident response best practices and information on federal resources for Water and\n                Wastewater Systems Sector organizations."
+ },
+ {
+  "id": "p57",
+  "text": "MITIGATIONS\n       The authoring agencies recommend                     These mitigations are intended for IT\n       organizations implement the mitigations below        administrators in critical infrastructure\n       to improve your organization’s cybersecurity         organizations. The authoring agencies recommend\n       posture on the basis of Volt Typhoon activity.       that software manufactures incorporate secure by\n       These mitigations align with the Cross-Sector        design and default principles and tactics into their\n       Cybersecurity Performance Goals (CPGs)               software development practices to strengthen the\n       developed by CISA and the National Institute of      security posture for their customers.\n       Standards and Technology (NIST). The CPGs\n                                                            For information on secure by design practices that\n       provide a minimum set of practices and\n                                                            may protect customers against common Volt\n       protections that CISA and NIST recommend all\n                                                            Typhoon techniques, see joint guide Identifying\n       organizations implement. CISA and NIST based\n                                                            and Mitigating Living off the Land Techniques and\n       the CPGs on existing cybersecurity frameworks\n                                                            joint Secure by Design Alert Security Design\n       and guidance to protect against the most\n                                                            Improvements for SOHO Device Manufacturers.\n       common and impactful threats, tactics,\n       techniques, and procedures. Visit CISA’s             For more information on secure by design, see\n       Cross-Sector Cybersecurity Performance Goals         CISA’s Secure by Design webpage and joint\n       for more information on the CPGs, including          guide.\n       additional recommended baseline protections."
+ },
+ {
+  "id": "p58",
+  "text": "IT Network Administrators and Defenders\n       Harden the Attack Surface\n           •    Apply patches for internet-facing systems within a risk-informed span of time [CPG 1E].\n                Prioritize patching critical assets, known exploited vulnerabilities, and vulnerabilities in\n                appliances known to be frequently exploited by Volt Typhoon (e.g., Fortinet, Ivanti, NETGEAR,\n                Citrix, and Cisco devices).\n           •    Apply vendor-provided or industry standard hardening guidance to strengthen software\n                and system configurations. Note: As part of CISA’s Secure by Design campaign, CISA urges\n                software manufacturers to prioritize secure by default configurations to eliminate the need for\n                customer implementation of hardening guidelines.\n           •    Maintain and regularly update an inventory of all organizational IT assets [CPG 1A].\n           •    Use third party assessments to validate current system and network security\n                compliance via security architecture reviews, penetration tests, bug bounties, attack surface\n                management services, incident simulations, or table-top exercises (both announced and\n                unannounced) [CPG 1F].\n           •    Limit internet exposure of systems when not necessary. An organization’s primary attack\n                surface is the combination of the exposure of all its internet-facing systems. Decrease the\n                attack surface by not exposing systems or management interfaces to the internet when not\n                necessary."
+ },
+ {
+  "id": "p59",
+  "text": "Secure Credentials\n           •    Do not store credentials on edge appliances/devices. Ensure edge devices do not contain\n                accounts that could provide domain admin access.\n           •    Do not store plaintext credentials on any system [CPG 2L]. Credentials should be stored\n                securely—such as with a credential/password manager or vault, or other privileged account\n                management solutions—so they can only be accessed by authenticated and authorized users.\n           •    Change default passwords [CPG 2A] and ensure they meet the policy requirements for\n                complexity.\n           •    Implement and enforce an organizational system-enforced policy that:\n                o Requires passwords for all IT password-protected assets to be at least 15\n                    characters;\n                o Does not allow users to reuse passwords for accounts, applications, services, etc.,\n                    [CPG 2C]; and\n                o Does not allow service accounts/machine accounts to reuse passwords from\n                    member user accounts.\n           •    Configure Group Policy settings to prevent web browsers from saving passwords and\n                disable autofill functions.\n           •    Disable the storage of clear text passwords in LSASS memory.\n       Secure Accounts\n           •    Implement phishing-resistant MFA for access to assets [CPG 2H].\n           •    Separate user and privileged accounts.\n                o User accounts should never have administrator or super-user privileges [CPG 2E].\n                o Administrators should never use administrator accounts for actions and activities not\n                   associated with the administrator role (e.g., checking email, web browsing).\n           •    Enforce the principle of least privilege.\n                o Ensure administrator accounts only have the minimum permissions necessary to\n                   complete their tasks.\n                o Review account permissions for default/accounts for edge appliances/devices and\n                   remove domain administrator privileges, if identified.\n                o Significantly limit the number of users with elevated privileges. Implement continuous\n                   monitoring for changes in group membership, especially in privileged groups, to detect and\n                   respond to unauthorized modifications.\n                o Remove accounts from high-privilege groups like Enterprise Admins and Schema\n                   Admins. Temporarily reinstate these privileges only when necessary and under strict\n                   auditing to reduce the risk of privilege abuse.\n                o Transition to Group Managed Service Accounts (gMSAs) where suitable for enhanced\n                   management and security of service account credentials. gMSAs provide automated\n                   password management and simplified Service Principal Name (SPN) management,\n                   enhancing security over traditional service accounts. See Microsoft’s Group Managed\n                   Service Accounts Overview."
+ },
+ {
+  "id": "p60",
+  "text": "•    Enforce strict policies via Group Policy and User Rights Assignments to limit high-\n                privilege service accounts.\n           •    Consider using a privileged access management (PAM) solution to manage access to\n                privileged accounts and resources [CPG 2L]. PAM solutions can also log and alert usage to\n                detect any unusual activity.\n           •    Complement the PAM solution with role-based access control (RBAC) for tailored access\n                based on job requirements. This ensures that elevated access is granted only when required\n                and for a limited duration, minimizing the window of opportunity for abuse or exploitation of\n                privileged credentials.\n           •    Implement an Active Directory tiering model to segregate administrative accounts\n                based on their access level and associated risk. This approach reduces the potential impact of\n                a compromised account. See Microsoft’s PAM environment tier model.\n           •    Harden administrative workstations to only permit administrative activities from\n                workstations appropriately hardened based on the administrative tier. See Microsoft’s Why are\n                privileged access devices important - Privileged access.\n           •    Disable all user accounts and access to organizational resources of employees on the\n                day of their departure [CPG 2G]\n           •    Regularly audit all user, admin, and service accounts and remove or disable unused or\n                unneeded accounts as applicable.\n           •    Regularly roll NTLM hashes of accounts that support token-based authentication.\n           •    Improve management of hybrid (cloud and on-premises) identity federation by:\n                o Using cloud only administrators that are asynchronous with on-premises\n                    environments and ensuring on-premises administrators are asynchronous to the cloud.\n                o Using CISA’s SCuBAGear tool to discover cloud misconfigurations in Microsoft\n                    cloud tenants. SCuBA gear is automation script for comparing Federal Civilian Executive\n                    Branch (FCEB) agency tenant configurations against CISA M365 baseline\n                    recommendations. SCuBAGear is part of CISA’s Secure Cloud Business Applications\n                    (SCuBA) project, which provides guidance for FCEB agencies, securing their cloud\n                    business application environments and protecting federal information created, accessed,\n                    shared, and stored in those environments. Although tailored to FCEB agencies, the project\n                    provides security guidance applicable to all organizations with cloud environments. For\n                    more information on SCuBAGear see CISA’s Secure Cloud Business Applications\n                    (SCuBA) Project.\n                o Using endpoint detection and response capabilities to actively defend on-premises\n                    federation servers.\n       Secure Remote Access Services\n           •    Limit the use of RDP and other remote desktop services. If RDP is necessary, apply best\n                practices, including auditing the network for systems using RDP, closing unused RDP ports,\n                and logging RDP login attempts."
+ },
+ {
+  "id": "p61",
+  "text": "•    Disable Server Message Block (SMB) protocol version 1 and upgrade to version 3\n                (SMBv3) after mitigating existing dependencies (on existing systems or applications), as they\n                may break when disabled.\n           •    Harden SMBv3 by implementing guidance included in joint #StopRansomware Guide (see\n                page 8 of the guide).\n           •    Apply mitigations from the joint Guide to Securing Remote Access Software.\n       Secure Sensitive Data\n           •    Securely store sensitive data (including operational technology documentation, network\n                diagrams, etc.), ensuring that only authenticated and authorized users can access the data.\n       Implement Network Segmentation\n           •    Ensure that sensitive accounts use their administrator credentials only on hardened,\n                secure computers. This practice can reduce lateral movement exposure within networks.\n           •    Conduct comprehensive trust assessments to identify business-critical trusts and\n                apply necessary controls to prevent unauthorized cross-forest/domain traversal.\n           •    Harden federated authentication by enabling Secure Identifier (SID) Filtering and\n                Selective Authentication on AD trust relationships to further restrict unauthorized access\n                across domain boundaries.\n           •    Implement network segmentation to isolate federation servers from other systems and\n                limit allowed traffic to systems and protocols that require access in accordance with Zero Trust\n                principles.\n       Secure Cloud Assets\n           •    Harden cloud assets in accordance with vendor-provided or industry standard hardening\n                guidance.\n                o Organizations with Microsoft cloud infrastructure, see CISA’s Microsoft 365 Security\n                     Configuration Baseline Guides, which provide minimum viable secure configuration\n                     baselines for Microsoft Defender for Office 365, Azure Active Directory (now known as\n                     Microsoft Entra ID), Exchange Online, OneDrive for Business, Power BI, Power Platform,\n                     SharePoint Online, and Teams. For additional guidance, see the Australian Signals\n                     Directorate’s Blueprint for Secure Cloud.\n                o Organizations with Google cloud infrastructure, see CISA’s Google Workspace Security\n                     Configuration Baseline Guides, which provide minimum viable secure configuration\n                     baselines for Groups for Business, GMAIL, Google Calendar, Google Chat, Google\n                     Common Controls, Google Classroom, Google Drive and Docs, Google Meet, and Google\n                     Sites.\n           •    Revoke unnecessary public access to cloud environment. This involves reviewing and\n                restricting public endpoints and ensuring that services like storage accounts, databases, and\n                virtual machines are not publicly accessible unless absolutely necessary. Disable legacy\n                authentication protocols across all cloud services and platforms. Legacy protocols frequently\n                lack support for advanced security mechanisms such as multifactor authentication, rendering"
+ },
+ {
+  "id": "p62",
+  "text": "them susceptible to compromises. Instead, enforce the use of modern authentication protocols\n                that support stronger security features like MFA, token-based authentication, and adaptive\n                authentication measures.\n                o Enforce this practice through the use of Conditional Access Policies. These policies\n                    can initially be run in report-only mode to identify potential impacts and plan mitigations\n                    before fully enforcing them. This approach allows organizations to systematically control\n                    access to their cloud resources, significantly reducing the risk of unauthorized access and\n                    potential compromise.\n           •    Regularly monitor and audit privileged cloud-based accounts, including service accounts,\n                which are frequently abused to enable broad cloud resource access and persistence.\n       Be Prepared\n           •    Ensure logging is turned on for application, access, and security logs (e.g., intrusion\n                detection systems/intrusion prevention systems, firewall, data loss prevention, and VPNs)\n                [CPG 2T]. Given Volt Typhoon’s use of LOTL techniques and their significant dwell time,\n                application event logs may be a valuable resource to hunt for Volt Typhoon activity because\n                these logs typically remain on endpoints for relatively long periods of time.\n                o For OT assets where logs are non-standard or not available, collect network traffic and\n                    communications between those assets and other assets.\n                o Implement file integrity monitoring (FIM) tools to detect unauthorized changes.\n           •    Store logs in a central system, such as a security information and event management\n                (SIEM) tool or central database.\n                o Ensure the logs can only be accessed or modified by authorized and authenticated\n                    users [CPG 2U].\n                o Store logs for a period informed by risk or pertinent regulatory guidelines.\n                o Tune log alerting to reduce noise while ensuring there are alerts for high-risk\n                    activities. (For information on alert tuning, see joint guide Identifying and Mitigating Living\n                    Off the Land Techniques.)\n           •    Establish and continuously maintain a baseline of installed tools and software, account\n                behavior, and network traffic. This way, network defenders can identify potential outliers,\n                which may indicate malicious activity. Note: For information on establishing a baseline, see\n                joint guide Identifying and Mitigating Living off the Land Techniques.\n           •    Document a list of threats and cyber actor TTPs relevant to your organization (e.g.,\n                based on industry or sectors), and maintain the ability (such as via rules, alerting, or\n                commercial prevention and detection systems) to detect instances of those key threats [CPG\n                3A].\n           •    Implement periodic training for all employees and contractors that covers basic\n                security concepts (such as phishing, business email compromise, basic operational security,\n                password security, etc.), as well as fostering an internal culture of security and cyber\n                awareness [CPG 2I].\n                o Tailor the training to network IT personnel/administrators and other key staff based\n                    on relevant organizational cyber threats and TTPs, such as Volt Typhoon. For\n                    example, communicate that Volt Typhoon actors are known to target personal email"
+ },
+ {
+  "id": "p63",
+  "text": "accounts of IT staff, and encourage staff to protect their personal email accounts by using\n                    strong passwords and implementing MFA.\n                o   In addition to basic cybersecurity training, ensure personnel who maintain or secure OT\n                    as part of their regular duties receive OT-specific cybersecurity training on at least\n                    an annual basis [CPG 2J].\n                o   Educate users about the risks associated with storing unprotected passwords."
+ },
+ {
+  "id": "p64",
+  "text": "OT Administrators and Defenders\n           •    Change default passwords [CPG 2A] and ensure they meet the policy requirements for\n                complexity. If the asset’s password cannot be changed, implement compensating controls for\n                the device; for example, segment the device into separate enclaves and implement increased\n                monitoring and logging.\n           •    Require that passwords for all OT password-protected assets be at least 15 characters,\n                when technically feasible. In instances where minimum passwords lengths are not technically\n                feasible (for example, assets in remote locations), apply compensating controls, record the\n                controls, and log all login attempts. [CPG 2B].\n           •    Enforce strict access policies for accessing OT networks. Develop strict operating\n                procedures for OT operators that details secure configuration and usage.\n           •    Segment OT assets from IT environments by [CPG 2F]:\n                o Denying all connections to the OT network by default unless explicitly allowed (e.g., by\n                    IP address and port) for specific system functionality.\n                o Requiring necessary communications paths between IT and OT networks to pass\n                    through an intermediary, such as a properly configured firewall, bastion host, “jump box,”\n                    or a demilitarized zone (DMZ), which is closely monitored, captures network logs, and only\n                    allows connections from approved assets.\n           •    Closely monitor all connections into OT networks for misuse, anomalous activity, or OT\n                protocols.\n           •    Monitor for unauthorized controller change attempts. Implement integrity checks of\n                controller process logic against a known good baseline. Ensure process controllers are\n                prevented from remaining in remote program mode while in operation if possible.\n           •    Lock or limit set points in control processes to reduce the consequences of\n                unauthorized controller access.\n           •    Be prepared by:\n                o Determining your critical operational processes’ reliance on key IT infrastructure:\n                     Maintain and regularly update an inventory of all organizational OT assets.\n                     Understand and evaluate cyber risk on “as-operated” OT assets.\n                     Create an accurate “as-operated” OT network map and identify OT and IT network\n                        inter-dependencies.\n                o Identifying a resilience plan that addresses how to operate if you lose access to or\n                    control of the IT and/or OT environment.\n                     Plan for how to continue operations if a control system is malfunctioning, inoperative,\n                        or actively acting contrary to the safe and reliable operation of the process."
+ },
+ {
+  "id": "p65",
+  "text": "  Develop workarounds or manual controls to ensure ICS networks can be isolated if the\n                       connection to a compromised IT environment creates risk to the safe and reliable\n                       operation of OT processes.\n                o Create and regularly exercise an incident response plan.\n                     Regularly test manual controls so that critical functions can be kept running if OT\n                       networks need to be taken offline.\n                o Implement regular data backup procedures on OT networks.\n                     Regularly test backup procedures.\n           •    Follow risk-informed guidance in the joint advisory NSA and CISA Recommend Immediate\n                Actions to Reduce Exposure Across all Operational Technologies and Control Systems, the\n                NSA advisory Stop Malicious Cyber Activity Against Connected Operational Technology."
+ },
+ {
+  "id": "p66",
+  "text": "CONTACT INFORMATION\n       US organizations: To report suspicious or criminal activity related to information found in this joint\n       Cybersecurity Advisory, contact:\n           •    CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870 or your local FBI field\n                office. When available, please include the following information regarding the incident: date,\n                time, and location of the incident; type of activity; number of people affected; type of\n                equipment used for the activity; the name of the submitting company or organization; and a\n                designated point of contact.\n           •    For NSA client requirements or general cybersecurity inquiries, contact\n                Cybersecurity_Requests@nsa.gov.\n           •    Water and Wastewater Systems Sector organizations, contact the EPA Water Infrastructure\n                and Cyber Resilience Division at watercyberta@epa.gov to voluntarily provide situational\n                awareness.\n           •    Entities required to report incidents to DOE should follow established reporting requirements,\n                as appropriate. For other energy sector inquiries, contact EnergySRMA@hq.doe.gov.\n           •    For transportation entities regulated by TSA, report to CISA Central in accordance with the\n                requirements found in applicable Security Directives, Security Programs, or TSA Order."
+ },
+ {
+  "id": "p67",
+  "text": "Australian organizations: Visit cyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report\n       cybersecurity incidents and access alerts and advisories.\n       Canadian organizations: Report incidents by emailing CCCS at contact@cyber.gc.ca.\n       New Zealand organizations: Report cyber security incidents to incidents@ncsc.govt.nz or call 04\n       498 7654.\n       United Kingdom organizations: Report a significant cyber security incident: ncsc.gov.uk/report-an-\n       incident (monitored 24 hours) or, for urgent assistance, call 03000 200 973."
+ },
+ {
+  "id": "p68",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, the authoring agencies recommend exercising, testing, and\n       validating your organization's security program against the threat behaviors mapped to the MITRE\n       ATT&CK for Enterprise framework in this advisory. The authoring agencies recommend testing your\n       existing security controls inventory to assess how they perform against the ATT&CK techniques\n       described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Table 5 through Table 17).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       The authoring agencies recommend continually testing your security program, at scale, in a\n       production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p69",
+  "text": "REFERENCES\n       [1] fofa\n       [2] Microsoft: Volt Typhoon targets US critical infrastructure with living-off-the-land techniques\n       [3] GitHub - fatedier/frp: A fast reverse proxy to help you expose a local server behind a NAT or\n       firewall to the internet\n       [4] GitHub - sandialabs/gait: Zeek Extension to Collect Metadata for Profiling of Endpoints and\n       Proxies\n       [5] The Zeek Network Security Monitor"
+ },
+ {
+  "id": "p70",
+  "text": "RESOURCES\n       Microsoft: Volt Typhoon targets US critical infrastructure with living-off-the-land techniques\n       Secureworks: Chinese Cyberespionage Group BRONZE SILHOUETTE Targets U.S. Government\n       and Defense Organizations"
+ },
+ {
+  "id": "p71",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. The authoring\n       agencies do not endorse any commercial entity, product, company, or service, including any entities,\n       products, or services linked within this document. Any reference to specific commercial entities,"
+ },
+ {
+  "id": "p72",
+  "text": "products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not\n       constitute or imply endorsement, recommendation, or favoring by the authoring agencies."
+ },
+ {
+  "id": "p73",
+  "text": "ACKNOWLEDGEMENTS\n       Fortinet and Microsoft contributed to this advisory."
+ },
+ {
+  "id": "p74",
+  "text": "VERSION HISTORY\n       February 7, 2024: Initial Version."
+ },
+ {
+  "id": "p75",
+  "text": "APPENDIX A: VOLT TYPHOON OBSERVED COMMANDS / LOTL ACTIVITY\n       See Table 2 and Table 3 for Volt Typhoon commands and PowerShell scripts observed by the U.S.\n       authoring agencies during incident response activities. For additional commands used by Volt\n       Typhoon, see joint advisory People's Republic of China State-Sponsored Cyber Actor Living off the\n       Land to Evade Detection."
+ },
+ {
+  "id": "p76",
+  "text": "Table 2: Volt Typhoon Observed Commands in PowerShell Console History"
+ },
+ {
+  "id": "p77",
+  "text": "Command/Script                                         Description/Use"
+ },
+ {
+  "id": "p78",
+  "text": "Get-EventLog security -instanceid 4624 -after             PowerShell command extracts security log\n        {redacted date} | fl * | Out-File                         entries with the Event ID 4624 after a specified\n        'C:\\users\\public\\documents\\user.dat'                      date. The output is formatted (fl *) and saved\n                                                                  to user.dat. Potentially used to analyze logon\n                                                                  patterns and identify potential targets for lateral\n                                                                  movement."
+ },
+ {
+  "id": "p79",
+  "text": "Get-EventLog security -instanceid 4624 | Where-           PowerShell command extracts security log\n        Object {$_.message.contains('{redacted user               entries with the Event ID 4624 and filters them\n        account}')} | select -First 1 | fl *                      to include only those containing a specific user\n                                                                  account, selecting the first instance of such an\n                                                                  event."
+ },
+ {
+  "id": "p80",
+  "text": "wminc process get name,processid\n                                                                  Appears to be an attempt to use the wmic\n                                                                  command but with a misspelling (wminc instead\n                                                                  of wmic). This command, as it stands, would\n                                                                  not execute successfully and would return an\n                                                                  error in a typical Windows environment. This\n                                                                  could indicate a mistake made during manual\n                                                                  input."
+ },
+ {
+  "id": "p81",
+  "text": "wmic process get name,processid                           WMI command lists all running processes with\n                                                                  process names and process IDs. Potentially\n                                                                  used to find process IDs needed for other\n                                                                  operations, like memory dumping."
+ },
+ {
+  "id": "p82",
+  "text": "tasklist /v                                               Command displays detailed information about\n                                                                  currently running processes, including the\n                                                                  name, PID, session number, and memory\n                                                                  usage."
+ },
+ {
+  "id": "p83",
+  "text": "Command/Script                      Description/Use"
+ },
+ {
+  "id": "p84",
+  "text": "taskkill /f /im rdpservice.exe         Command forcibly terminates the process\n                                               rdpservice.exe. Potentially used as a\n                                               cleanup activity post-exploitation."
+ },
+ {
+  "id": "p85",
+  "text": "ping -n 1 {redacted IP address}        Command sends one ICMP echo request to a\n                                               specified IP address."
+ },
+ {
+  "id": "p86",
+  "text": "ping -n 1 -w 1 {redacted IP address}   Command sends one ICMP echo request to a\n                                               specified IP address with a timeout (-w) of 1\n                                               millisecond."
+ },
+ {
+  "id": "p87",
+  "text": "net user                               Lists all user accounts on the local machine or\n                                               domain, useful for quickly viewing existing user\n                                               accounts."
+ },
+ {
+  "id": "p88",
+  "text": "quser                                  Displays information about user sessions on a\n                                               system, aiding in identifying active users or\n                                               sessions.\n        query user\n        net start                              Lists all active services."
+ },
+ {
+  "id": "p89",
+  "text": "cmd                                    Opens a new instance of the command prompt."
+ },
+ {
+  "id": "p90",
+  "text": "cd [Redacted Path]                     Changes the current directory to a specified\n                                               path, typically for navigating file systems."
+ },
+ {
+  "id": "p91",
+  "text": "Remove-Item .\\Thumbs.db                PowerShell command to delete the Thumbs.db\n                                               file, possibly for cleanup or removing traces."
+ },
+ {
+  "id": "p92",
+  "text": "move .\\Thumbs.db ttt.dat               Relocates and renames the file Thumbs.db in\n                                               the current directory to ttt.dat within the\n                                               same directory."
+ },
+ {
+  "id": "p93",
+  "text": "del .\\Thumbs.db /f /s /q               Force deletes Thumbs.db files from the current\n                                               directory and all subdirectories, part of cleanup\n                                               operations to erase traces."
+ },
+ {
+  "id": "p94",
+  "text": "del ??\n                                               Deletes files with two-character names,\n                                               potentially a targeted cleanup command."
+ },
+ {
+  "id": "p95",
+  "text": "Command/Script                                             Description/Use\n        del /?\n                                                                     Displays help information for the del\n                                                                     command."
+ },
+ {
+  "id": "p96",
+  "text": "exit\n                                                                     Terminates the command prompt session."
+ },
+ {
+  "id": "p97",
+  "text": "ipconfig\n                                                                     Retrieves network configuration details, helpful\n                                                                     for discovery and mapping the victim's network."
+ },
+ {
+  "id": "p98",
+  "text": "net time /dom\n                                                                     Queries or sets the network time for a domain,\n                                                                     potentially used for reconnaissance or to\n                                                                     manipulate system time."
+ },
+ {
+  "id": "p99",
+  "text": "netstta -ano\n                                                                     Intended as netstat -ano; a mistyped\n                                                                     command indicating a potential operational\n                                                                     error."
+ },
+ {
+  "id": "p100",
+  "text": "netstat -ano\n                                                                     Lists active network connections and\n                                                                     processes, helpful for identifying\n                                                                     communication channels and potential targets."
+ },
+ {
+  "id": "p101",
+  "text": "type .\\Notes.txt\n                                                                     Displays the contents of Notes.txt, possibly\n                                                                     used for extracting specific information or\n                                                                     intelligence gathering."
+ },
+ {
+  "id": "p102",
+  "text": "logoff\n                                                                     Logs off the current user session."
+ },
+ {
+  "id": "p103",
+  "text": "Table 3: Volt Typhoon Observed PowerShell Scripts"
+ },
+ {
+  "id": "p104",
+  "text": "Script name and                                Contents                                 Description/Use\n               location"
+ },
+ {
+  "id": "p105",
+  "text": "C:\\{redacted}\\                  # Find DC list from Active Directory                  The script is designed for\n        logins.ps1                      $DCs = Get-ADDomainController -Filter *               user logon discovery in a\n                                                                                              Windows Active Directory\n                                                                                              environment. It retrieves a\n                                        # Define time for report (default is 1 day)           list of DCs and then\n                                        $startDate = (get-date).AddDays(-1)                   queries security logs on\n                                                                                              these DCs for successful\n                                                                                              logon events (Event ID\n                                                                                              4624) within the last day.\n                                                                                              The script differentiates"
+ },
+ {
+  "id": "p106",
+  "text": "Script name and                                Contents                           Description/Use\n               location\n                                                                                        between local (Logon Type\n                                        # Store successful logon events from\n                                        security logs with the specified dates and      2) and remote (Logon\n                                        workstation/IP in an array                      Type 10) logon events. For\n                                                                                        each event, it extracts and\n                                        foreach ($DC in $DCs){\n                                                                                        displays details including\n                                        $slogonevents = Get-Eventlog -LogName           the logon type, date/time of\n                                        Security -ComputerName $DC.Hostname -\n                                                                                        logon, status, account\n                                        after $startDate | where {$_.eventID -eq\n                                        4624 }}                                         name, and the workstation\n                                                                                        or IP address used for the\n                                                                                        logon. Volt Typhoon may\n                                        # Crawl through events; print all logon         be leveraging this script to\n                                        history with type, date/time, status, account   monitor user logon\n                                        name, computer and IP address if user           activities across the\n                                        logged on remotely\n                                                                                        network, potentially to\n                                                                                        identify patterns, gather\n                                        foreach ($e in $slogonevents){                  credentials, or track the\n                                        # Logon Successful Events                       movement of users and\n                                                                                        administrators within the\n                                        # Local (Logon Type 2)                          network.\n                                         if (($e.EventID -eq 4624 ) -and\n                                        ($e.ReplacementStrings[8] -eq 2)){\n                                         write-host \"Type: Local Logon`tDate:\n                                        \"$e.TimeGenerated \"`tStatus:\n                                        Success`tUser: \"$e.ReplacementStrings[5]\n                                        \"`tWorkstation: \"$e.ReplacementStrings[11]\n                                        }\n                                        # Remote (Logon Type 10)\n                                         if (($e.EventID -eq 4624 ) -and\n                                        ($e.ReplacementStrings[8] -eq 10)){\n                                         write-host \"Type: Remote Logon`tDate:\n                                        \"$e.TimeGenerated \"`tStatus:\n                                        Success`tUser: \"$e.ReplacementStrings[5]\n                                        \"`tWorkstation: \"$e.ReplacementStrings[11]\n                                        \"`tIP Address: \"$e.ReplacementStrings[18]\n                                        }}"
+ },
+ {
+  "id": "p107",
+  "text": "APPENDIX B: INDICATORS OF COMPROMISE\n       See Table 4 for Volt Typhoon IOCs obtained by the U.S. authoring agencies during incident response\n       activities."
+ },
+ {
+  "id": "p108",
+  "text": "Table 4: Volt Typhoon Malicious Files and Associated Hashes"
+ },
+ {
+  "id": "p109",
+  "text": "Note: See MAR-10448362-1.v1 for more information on this malware.\n                File Name                    Description                    MD5                    Hashes (SHA256)"
+ },
+ {
+  "id": "p110",
+  "text": "The file is an FRP that fd41134e8ead1c18cca               edc0c63065e88ec961\n                                        could be used to        d27c62a260aa6                     97c8d7a40662a15a81\n                                        reveal servers situated                                   2a9583dc6c82b18ecd\n                                        behind a network                                          7e43b13b70\n        BrightmetricAgent.exe           firewall or obscured\n                                        through Network\n                                        Address Translation\n                                        (NAT)."
+ },
+ {
+  "id": "p111",
+  "text": "The file is a Windows     b1de37bf229890ac181             99b80c5ac352081a64\n                                        executable \"FRPC”         bdef1ad8ee0c2                   129772ed5e1543d94c\n                                        designed to open a                                        ad708ba2adc46dc4ab\n                                        reverse proxy                                             7a0bd563f1\n        SMSvcService.exe\n                                        between the\n                                        compromised system\n                                        and the threat actor(s)\n                                        C2 server."
+ },
+ {
+  "id": "p112",
+  "text": "APPENDIX C: MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Table 5 through Table 17 for all referenced threat actor tactics and techniques in this advisory."
+ },
+ {
+  "id": "p113",
+  "text": "Table 5: Volt Typhoon actors ATT&CK Techniques for Enterprise – Reconnaissance"
+ },
+ {
+  "id": "p114",
+  "text": "Reconnaissance"
+ },
+ {
+  "id": "p115",
+  "text": "Technique Title               ID                                      Use"
+ },
+ {
+  "id": "p116",
+  "text": "Gather Victim Host              T1592    Volt Typhoon conducts extensive pre-compromise\n        Information                              reconnaissance. This includes web searches, including victim-\n                                                 owned sites, for victim host, identity, and network information,\n                                                 especially for information on key network and IT\n                                                 administrators."
+ },
+ {
+  "id": "p117",
+  "text": "Gather Victim                   T1589    Volt Typhoon conducts extensive pre-compromise\n        Identity Information                     reconnaissance to learn about the target organization’s staff."
+ },
+ {
+  "id": "p118",
+  "text": "Gather Victim               T1589.002    Volt Typhoon targets the personal emails of key network and\n        Identity Information:                    IT staff.\n        Email Addresses"
+ },
+ {
+  "id": "p119",
+  "text": "Gather Victim                   T1590    Volt Typhoon conducts extensive pre-compromise\n        Network Information                      reconnaissance to learn about the target organization’s\n                                                 network."
+ },
+ {
+  "id": "p120",
+  "text": "Gather Victim Org               T1591    Volt Typhoon conducts extensive pre-compromise\n        Information                              reconnaissance to learn about the target organization."
+ },
+ {
+  "id": "p121",
+  "text": "Search Open                     T1593    Volt Typhoon conducts extensive pre-compromise\n        Websites/Domains                         reconnaissance. This includes web searches, including victim-\n                                                 owned sites, for victim host, identity, and network information,\n                                                 especially for information on key network and IT\n                                                 administrators."
+ },
+ {
+  "id": "p122",
+  "text": "Search Victim-                  T1594    Volt Typhoon conducts extensive pre-compromise\n        Owned Websites                           reconnaissance. This includes web searches, including victim-\n                                                 owned sites, for victim host, identity, and network information,\n                                                 especially for information on key network and IT\n                                                 administrators."
+ },
+ {
+  "id": "p123",
+  "text": "Table 6: Volt Typhoon actors ATT&CK Techniques for Enterprise – Resource Development"
+ },
+ {
+  "id": "p124",
+  "text": "Resource Development"
+ },
+ {
+  "id": "p125",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p126",
+  "text": "Acquire                     T1583.003     Volt Typhoon uses multi-hop proxies for command-and-control\n        Infrastructure:                           infrastructure. The proxy is typically composed of Virtual\n        Botnet                                    Private Servers (VPSs) or small office/home office (SOHO)\n                                                  routers."
+ },
+ {
+  "id": "p127",
+  "text": "Compromise                  T1584.005     Volt Typhoon used Cisco and NETGEAR end-of-life SOHO\n        Infrastructure:                           routers implanted with KV Botnet malware to support their\n        Botnet                                    operations."
+ },
+ {
+  "id": "p128",
+  "text": "Compromise                  T1584.004     Volt Typhoon has redirected specific port traffic to their proxy\n        Infrastructure:                           infrastructure, effectively converting the PRTG’s Detection\n        Server                                    Guidance server into a proxy for their C2 traffic."
+ },
+ {
+  "id": "p129",
+  "text": "Develop                     T1587.004     Volt Typhoon uses publicly available exploit code, but is also\n        Capabilities: Exploits                    adept at discovering and exploiting vulnerabilities as zero\n                                                  days."
+ },
+ {
+  "id": "p130",
+  "text": "Obtain Capabilities:        T1588.005     Volt Typhoon uses publicly available exploit code, but is also\n        Exploits                                  adept at discovering and exploiting vulnerabilities as zero\n                                                  days."
+ },
+ {
+  "id": "p131",
+  "text": "Table 7: Volt Typhoon actors ATT&CK Techniques for Enterprise – Initial Access"
+ },
+ {
+  "id": "p132",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p133",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p134",
+  "text": "Exploit Public-                 T1190     Volt Typhoon commonly exploits vulnerabilities in networking\n        Facing Application                        appliances such as Fortinet, Ivanti (formerly Pulse Secure),\n                                                  NETGEAR, Citrix, and Cisco."
+ },
+ {
+  "id": "p135",
+  "text": "External Remote                 T1133     Volt Typhoon often uses VPN sessions to securely connect to\n        Services                                  victim environments, enabling discreet follow-on intrusion\n                                                  activities."
+ },
+ {
+  "id": "p136",
+  "text": "Table 8: Volt Typhoon actors ATT&CK Techniques for Enterprise – Execution"
+ },
+ {
+  "id": "p137",
+  "text": "Execution"
+ },
+ {
+  "id": "p138",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p139",
+  "text": "Command and                     T1059     Volt Typhoon uses hands-on-keyboard execution for their\n        Scripting Interpreter                     malicious activity via the command-line."
+ },
+ {
+  "id": "p140",
+  "text": "Command and                 T1059.001     Volt Typhoon has executed clients via PowerShell.\n        Scripting Interpreter:\n        PowerShell"
+ },
+ {
+  "id": "p141",
+  "text": "Command and                 T1059.004     Volt Typhoon has used Brightmetricagent.exe, which\n        Scripting Interpreter:                    contains multiplexer libraries that can bi-directionally stream\n        Unix Shell                                data over through NAT networks and contains a command-\n                                                  line interface (CLI) library that can leverage command shells\n                                                  such as PowerShell, Windows Management, Instrumentation\n                                                  (WMI), and Z Shell (zsh)."
+ },
+ {
+  "id": "p142",
+  "text": "Windows                         T1047     Volt Typhoon has used Windows Management\n        Management                                Instrumentation Console (WMIC) commands.\n        Instrumentation"
+ },
+ {
+  "id": "p143",
+  "text": "Table 9: Volt Typhoon actors ATT&CK Techniques for Enterprise – Persistence"
+ },
+ {
+  "id": "p144",
+  "text": "Persistence"
+ },
+ {
+  "id": "p145",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p146",
+  "text": "Valid Accounts                  T1078     Volt Typhoon primarily relies on valid credentials for\n                                                  persistence."
+ },
+ {
+  "id": "p147",
+  "text": "Table 10: Volt Typhoon actors ATT&CK Techniques for Enterprise – Privilege Escalation"
+ },
+ {
+  "id": "p148",
+  "text": "Privilege Escalation"
+ },
+ {
+  "id": "p149",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p150",
+  "text": "Exploitation for                T1068     Volt Typhoon first obtains credentials from public-facing\n        Privilege Escalation                      appliances after gaining initial access by exploiting privilege"
+ },
+ {
+  "id": "p151",
+  "text": "escalation vulnerabilities in the operating system or network\n                                                 services."
+ },
+ {
+  "id": "p152",
+  "text": "Table 11: Volt Typhoon actors ATT&CK Techniques for Enterprise – Defense Evasion"
+ },
+ {
+  "id": "p153",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p154",
+  "text": "Technique Title               ID                                      Use"
+ },
+ {
+  "id": "p155",
+  "text": "Direct Volume                   T1006    Volt Typhoon has executed the Windows-native vssadmin\n        Access                                   command to create a volume shadow copy."
+ },
+ {
+  "id": "p156",
+  "text": "Indicator Removal:          T1070.009    Volt Typhoon has selectively cleared Windows Event Logs,\n        Clear Persistence                        system logs, and other technical artifacts to remove evidence\n                                                 of their intrusion activity and masquerading file names."
+ },
+ {
+  "id": "p157",
+  "text": "Indicator Removal:          T1070.001    Volt Typhoon has selectively cleared Windows Event Logs,\n        Clear Windows                            system logs, and other technical artifacts to remove evidence\n        Event Logs                               of their intrusion activity and masquerading file names."
+ },
+ {
+  "id": "p158",
+  "text": "Indicator Removal:          T1070.004    Volt Typhoon created systeminfo.dat in\n        File Deletion                            C:\\Users\\Public\\Documents, but subsequently deleted it."
+ },
+ {
+  "id": "p159",
+  "text": "Masquerading:               T1036.005    Volt Typhoon has selectively cleared Windows Event Logs,\n        Match Legitimate                         system logs, and other technical artifacts to remove evidence\n        Name or Location                         of their intrusion activity and masquerading file names."
+ },
+ {
+  "id": "p160",
+  "text": "Modify Registry                 T1112    Volt Typhoon has used the netsh command, a legitimate\n                                                 Windows command, to create a PortProxy registry\n                                                 modification on the PRTG server."
+ },
+ {
+  "id": "p161",
+  "text": "Obfuscated Files or         T1027.002    Volt Typhoon has obfuscated FRP client files\n        Information:                             (BrightmetricAgent.exe and SMSvcService.exe) and the\n        Software Packing                         command-line port scanning utility ScanLine by packing the\n                                                 files with Ultimate Packer for Executables (UPX)."
+ },
+ {
+  "id": "p162",
+  "text": "System Binary                   T1218    Volt Typhoon uses hands-on-keyboard activity via the\n        Proxy Execution                          command-line and use other native tools and processes on\n                                                 systems (often referred to as “LOLBins”), known as LOTL, to\n                                                 maintain and expand access to the victim networks."
+ },
+ {
+  "id": "p163",
+  "text": "Table 12: Volt Typhoon actors ATT&CK Techniques for Enterprise – Credential Access"
+ },
+ {
+  "id": "p164",
+  "text": "Credential Access"
+ },
+ {
+  "id": "p165",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p166",
+  "text": "Brute Force:                T1110.002     Volt Typhoon has exfiltrated NTDS.dit and SYSTEM registry\n        Password Cracking                         hive to crack passwords offline."
+ },
+ {
+  "id": "p167",
+  "text": "Credentials from                T1555     Volt Typhoon has installed browsers saved passwords history,\n        Password Stores                           credit card details, and cookies."
+ },
+ {
+  "id": "p168",
+  "text": "Credentials from            T1555.003     Volt Typhoon has strategically targeted network administrator\n        Password Stores:                          web browser data, focusing on both browsing history and\n        Credentials from                          stored credentials.\n        Web Browsers"
+ },
+ {
+  "id": "p169",
+  "text": "OS Credential               T1003.001     Volt Typhoon used a DLL with MiniDump and the process ID\n        Dumping: LSASS                            of Local Security Authority Subsystem Service (LSASS) to\n        Memory                                    dump the LSASS process memory and obtain credentials."
+ },
+ {
+  "id": "p170",
+  "text": "OS Credential               T1003.003     Volt Typhoon appears to prioritize obtaining valid credentials\n        Dumping: NTDS                             by extracting the Active Directory database file (NTDS.dit)."
+ },
+ {
+  "id": "p171",
+  "text": "Unsecured                       T1552     Volt Typhoon has obtained credentials insecurely stored on an\n        Credentials                               appliance."
+ },
+ {
+  "id": "p172",
+  "text": "Unsecured                   T1552.004     Volt Typhoon has accessed a Local State file that contains the\n        Credentials: Private                      Advanced Encryption Standard (AES) encryption key used to\n        Keys                                      encrypt the passwords stored in the Chrome browser, which\n                                                  enables the actors to obtain plaintext passwords stored in the\n                                                  Login Data file in the Chrome browser."
+ },
+ {
+  "id": "p173",
+  "text": "Table 13: Volt Typhoon actors ATT&CK Techniques for Enterprise – Discovery"
+ },
+ {
+  "id": "p174",
+  "text": "Discovery"
+ },
+ {
+  "id": "p175",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p176",
+  "text": "Account Discovery:          T1087.001     Volt Typhoon executed net user and quser for user account\n        Local Account                             information."
+ },
+ {
+  "id": "p177",
+  "text": "Application Window              T1010   Volt Typhoon created and accessed a file named\n        Discovery                               rult3uil.log on a Domain Controller in\n                                                C:\\Windows\\System32\\. The rult3uil.log file contained\n                                                user activities on a compromised system, showcasing a\n                                                combination of window title information and focus shifts,\n                                                keypresses, and command executions across Google Chrome\n                                                and Windows PowerShell, with corresponding timestamps."
+ },
+ {
+  "id": "p178",
+  "text": "Browser Information             T1217   Volt Typhoon has installed browsers saved passwords history,\n        Discovery                               credit card details, and cookies."
+ },
+ {
+  "id": "p179",
+  "text": "File and Directory              T1083   Volt Typhoon enumerated several directories, including\n        Discovery                               directories containing vulnerability testing and cyber related\n                                                content and facilities data, such as construction drawings."
+ },
+ {
+  "id": "p180",
+  "text": "Log Enumeration                 T1654   Volt Typhoon has captured successful logon events."
+ },
+ {
+  "id": "p181",
+  "text": "Network Service                 T1046   Volt Typhoon has used commercial tools, LOTL utilities, and\n        Discovery                               appliances already present on the system for system\n                                                information, network service, group, and user discovery."
+ },
+ {
+  "id": "p182",
+  "text": "Peripheral Device               T1120   Volt Typhoon has obtained the victim's system screen\n        Discovery                               dimension and display devices information."
+ },
+ {
+  "id": "p183",
+  "text": "Permission Groups               T1069   Volt Typhoon has used commercial tools, LOTL utilities, and\n        Discovery                               appliances already present on the system for system\n                                                information, network service, group, and user discovery."
+ },
+ {
+  "id": "p184",
+  "text": "Process Discovery               T1057   Volt Typhoon executed tasklist /v to gather a detailed\n                                                process listing."
+ },
+ {
+  "id": "p185",
+  "text": "Query Registry                  T1012   Volt Typhoon has interacted with a PuTTY application by\n                                                enumerating existing stored sessions."
+ },
+ {
+  "id": "p186",
+  "text": "Software Discovery              T1518   Volt Typhoon has obtained the victim's list of applications\n                                                installed on the victim's system."
+ },
+ {
+  "id": "p187",
+  "text": "System Information              T1082   Volt Typhoon has used commercial tools, LOTL utilities, and\n        Discovery                               appliances already present on the system for system\n                                                information, network service, group, and user discovery."
+ },
+ {
+  "id": "p188",
+  "text": "System Location                 T1614    Volt Typhoon has obtained the victim's system current locale.\n        Discovery"
+ },
+ {
+  "id": "p189",
+  "text": "System Network              T1016.001    Volt Typhoon employs ping with various IP addresses to\n        Configuration                            check network connectivity and net start to list running\n        Discovery: Internet                      services.\n        Connection\n        Discovery"
+ },
+ {
+  "id": "p190",
+  "text": "System Owner/User               T1033    Volt Typhoon has used commercial tools, LOTL utilities, and\n        Discovery                                appliances already present on the system for system\n                                                 information, network service, group, and user discovery."
+ },
+ {
+  "id": "p191",
+  "text": "System Service                  T1007    Volt Typhoon employs ping with various IP addresses to\n        Discovery                                check network connectivity and net start to list running\n                                                 services."
+ },
+ {
+  "id": "p192",
+  "text": "System Time                     T1124    Volt Typhoon has obtained the victim's system timezone.\n        Discovery"
+ },
+ {
+  "id": "p193",
+  "text": "Table 14: Volt Typhoon actors ATT&CK Techniques for Enterprise – Lateral Movement"
+ },
+ {
+  "id": "p194",
+  "text": "Lateral Movement"
+ },
+ {
+  "id": "p195",
+  "text": "Technique Title               ID                                      Use"
+ },
+ {
+  "id": "p196",
+  "text": "Remote Service                  T1563    Volt Typhoon potentially had access to a range of critical\n        Session Hijacking                        PuTTY profiles, including those for water treatment plants,\n                                                 water wells, an electrical substation, operational technology\n                                                 systems, and network security devices. This would enable\n                                                 them to access these critical systems."
+ },
+ {
+  "id": "p197",
+  "text": "Remote Services:            T1021.007    During the period of Volt Typhoon’s known network presence,\n        Cloud Services                           there were anomalous login attempts to an Azure tenant\n                                                 potentially using credentials previously compromised from\n                                                 theft of NTDS.dit."
+ },
+ {
+  "id": "p198",
+  "text": "Remote Services:            T1021.001    Volt Typhoon has moved laterally to the Domain Controller via\n        Remote Desktop                           an interactive RDP session using a compromised account with\n        Protocol                                 domain administrator privileges."
+ },
+ {
+  "id": "p199",
+  "text": "Use Alternate                   T1550     Volt Typhoon may be capable of using other methods such as\n        Authentication                            Pass the Hash or Pass the Ticket for lateral movement.\n        Material"
+ },
+ {
+  "id": "p200",
+  "text": "Valid Accounts:             T1078.004     During the period of Volt Typhoon’s known network presence,\n        Cloud Accounts                            there were anomalous login attempts to an Azure tenant\n                                                  potentially using credentials previously compromised from\n                                                  theft of NTDS.dit."
+ },
+ {
+  "id": "p201",
+  "text": "Table 15: Volt Typhoon actors ATT&CK Techniques for Enterprise – Collection"
+ },
+ {
+  "id": "p202",
+  "text": "Collection"
+ },
+ {
+  "id": "p203",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p204",
+  "text": "Archive Collected               T1560     Volt Typhoon collected sensitive information obtained from a\n        Data                                      file server in multiple zipped files."
+ },
+ {
+  "id": "p205",
+  "text": "Archive Collected           T1560.001     Volt Typhoon has compressed and archived the extracted\n        Data: Archive via                         ntds.dit and accompanying registry files (by executing\n        Utility                                   ronf.exe, which was likely a renamed version of rar.exe)."
+ },
+ {
+  "id": "p206",
+  "text": "Data Staged                     T1074     Volt Typhoon accessed the file\n                                                  C:\\Users\\{redacted}\\Downloads\\History.zip, which\n                                                  presumably contained data from the User Data directory of the\n                                                  user’s Chrome browser, which the actors likely saved in the\n                                                  Downloads directory for exfiltration."
+ },
+ {
+  "id": "p207",
+  "text": "Screen Capture                  T1113     Volt Typhoon has obtained a screenshot of the victim's system\n                                                  using two libraries (gdi32.dll and gdiplus.dll)"
+ },
+ {
+  "id": "p208",
+  "text": "Table 16: Volt Typhoon actors ATT&CK Techniques for Enterprise – Command and Control"
+ },
+ {
+  "id": "p209",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p210",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p211",
+  "text": "Encrypted Channel               T1573     Volt Typhoon has setup FRP clients on a victim’s corporate\n                                                  infrastructure to establish covert communications channels for\n                                                  command and control."
+ },
+ {
+  "id": "p212",
+  "text": "Ingress Tool                    T1105     Volt Typhoon uses legitimate, but outdated versions of\n        Transfer                                  network admin tools. For example, in one confirmed\n                                                  compromise, actors downloaded an outdated version of\n                                                  comsvcs.dll, on the DC in a non-standard folder."
+ },
+ {
+  "id": "p213",
+  "text": "Proxy                           T1090     Volt Typhoon has setup FRP clients on a victim’s corporate\n                                                  infrastructure to establish covert communications channels for\n                                                  command and control."
+ },
+ {
+  "id": "p214",
+  "text": "Proxy: Internal             T1090.001     Volt Typhoon has used the netsh command, a legitimate\n        Proxy                                     Windows command, to create a PortProxy registry\n                                                  modification on the PRTG server."
+ },
+ {
+  "id": "p215",
+  "text": "Proxy: Multi-hop            T1090.003     Volt Typhoon uses multi-hop proxies for command-and-control\n        Proxy                                     infrastructure."
+ },
+ {
+  "id": "p216",
+  "text": "Table 17: Volt Typhoon actors ATT&CK Techniques for Enterprise – Exfiltration"
+ },
+ {
+  "id": "p217",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p218",
+  "text": "Technique Title               ID                                         Use"
+ },
+ {
+  "id": "p219",
+  "text": "Exfiltration Over               T1048     Volt Typhoon exfiltrated files via Server Message Block\n        Alternative Protocol                      (SMB)."
+ }
+]

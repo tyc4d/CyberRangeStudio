@@ -1,0 +1,782 @@
+[
+ {
+  "id": "p1",
+  "text": "# Understanding Ransomware Threat Actors: LockBit"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-165A\n> - Date: 2023-06-14\n> - URL: https://www.ic3.gov/CSA/2023/230614.pdf\n> - PDF SHA-256: 0b8d3bbb0dbdc387dc3c1108732e151eddf85d31c55eba7f5e956dce3e9b842d (`source.pdf`, 29 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (57 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                       TLP:CLEAR           Product ID: AA23-165A\n                                                                                                                 June 14, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "UNDERSTANDING RANSOMWARE THREAT ACTORS:"
+ },
+ {
+  "id": "p5",
+  "text": "LockBit"
+ },
+ {
+  "id": "p6",
+  "text": "Publication: June 14, 2023\n        Cybersecurity and Infrastructure Security Agency\n        FBI | MS-ISAC | ACSC | NCSC-UK | CCCS | ANSSI | BSI | CERT NZ | NCSC-NZ"
+ },
+ {
+  "id": "p7",
+  "text": "This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p8",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p9",
+  "text": "SUMMARY\n       In 2022, LockBit was the most deployed ransomware variant across the world and continues to be\n       prolific in 2023. Since January 2020, affiliates using LockBit have attacked organizations of varying\n       sizes across an array of critical infrastructure sectors, including financial services, food and\n       agriculture, education, energy, government and emergency services, healthcare, manufacturing, and\n       transportation. LockBit ransomware operation functions as a Ransomware-as-a-Service (RaaS)\n       model where affiliates are recruited to conduct ransomware attacks using LockBit ransomware tools\n       and infrastructure. Due to the large number of unconnected affiliates in the operation, LockBit\n       ransomware attacks vary significantly in observed tactics, techniques, and procedures (TTPs). This\n       variance in observed ransomware TTPs presents a notable challenge for organizations working to\n       maintain network security and protect against a ransomware threat.\n       The Cybersecurity and Infrastructure Security Agency (CISA), Federal Bureau of Investigation (FBI),\n       the Multi-State Information Sharing and Analysis Center (MS-ISAC), and the following international\n       partners, hereafter referred to as “authoring organizations,” are releasing this Cybersecurity Advisory\n       (CSA) detailing observed activity in LockBit ransomware incidents and providing recommended\n       mitigations to enable network defenders to proactively improve their organization’s defenses against\n       this ransomware operation.\n           •    Australian Cyber Security Centre (ACSC)\n           •    Canadian Centre for Cyber Security (CCCS)\n           •    United Kingdom’s National Cyber Security Centre (NCSC-UK)\n           •    National Cybersecurity Agency of France (ANSSI)\n           •    Germany’s Federal Office for Information Security (BSI)\n           •    New Zealand’s Computer Emergency Response Team (CERT NZ) and National Cyber\n                Security Centre (NCSC NZ)"
+ },
+ {
+  "id": "p10",
+  "text": "The authoring organizations encourage the implementation of the recommendations found in this\n       CSA to reduce the likelihood and impact of future ransomware incidents."
+ },
+ {
+  "id": "p11",
+  "text": "TLP:CLEAR                                                                                                                                    International Partnership"
+ },
+ {
+  "id": "p12",
+  "text": "Table of Contents\n       Summary ............................................................................................................................................. 2\n       Technical Details ................................................................................................................................. 4\n          Introduction ...................................................................................................................................... 4\n          LockBit Statistics.............................................................................................................................. 5\n          Tools ................................................................................................................................................ 9\n          Common Vulnerabilities and Exposures (CVEs) Exploited ............................................................. 13\n          Post Detonation TTPs .................................................................................................................... 14\n       MITRE ATT&CK Tactics and Techniques .......................................................................................... 14\n       Mitigations ......................................................................................................................................... 20\n       Validate Security Controls ................................................................................................................. 26\n       Resources ......................................................................................................................................... 27\n       Reporting........................................................................................................................................... 28\n       Disclaimer ......................................................................................................................................... 29\n       References ........................................................................................................................................ 29"
+ },
+ {
+  "id": "p13",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p14",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK for Enterprise framework, version 13.1. See the MITRE\n       ATT&CK Tactics and Techniques section for tables of LockBit’s activity mapped to MITRE ATT&CK®\n       tactics and techniques."
+ },
+ {
+  "id": "p15",
+  "text": "Introduction\n       The LockBit RaaS and its affiliates have negatively impacted organizations, both large and small,\n       across the world. In 2022, LockBit was the most active global ransomware group and RaaS provider\n       in terms of the number of victims claimed on their data leak site. [1] A RaaS cybercrime group\n       maintains the functionality of a particular ransomware variant, sells access to that ransomware variant\n       to individuals or groups of operators (often referred to as “affiliates”), and supports affiliates’\n       deployment of their ransomware in exchange for upfront payment, subscription fees, a cut of profits,\n       or a combination of upfront payment, subscription fees, and a cut of profits. Some of the methods\n       LockBit has used to successfully attract affiliates include, but are not limited to:\n           •    Assuring payment by allowing affiliates to receive ransom payments before sending a cut to\n                the core group; this practice stands in stark contrast to other RaaS groups who pay\n                themselves first and then disburse the affiliates’ cut.\n           •    Disparaging other RaaS groups in online forums.\n           •    Engaging in publicity-generating activities stunts, such as paying people to get LockBit tattoos\n                and putting a $1 million bounty on information related to the real-world identity of LockBit’s\n                lead who goes by the persona “LockBitSupp.”\n           •    Developing and maintaining a simplified, point-and-click interface for its ransomware, making\n                it accessible to those with a lower degree of technical skill. [2, 3]"
+ },
+ {
+  "id": "p16",
+  "text": "LockBit has been successful through innovation and ongoing development of the group’s\n       administrative panel and the RaaS supporting functions. In parallel, affiliates that work with LockBit\n       and other notable variants are constantly revising the TTPs used for deploying and executing\n       ransomware.\n       Table 1 shows LockBit RaaS’s innovation and development.\n                                           Table 1: Evolution of LockBit RaaS"
+ },
+ {
+  "id": "p17",
+  "text": "Date                                            Event"
+ },
+ {
+  "id": "p18",
+  "text": "First observed activity of ABCD ransomware, the predecessor\n               September 2019\n                                         to LockBit. [4]"
+ },
+ {
+  "id": "p19",
+  "text": "LockBit-named ransomware first seen on Russian-language\n                 January 2020\n                                         based cybercrime forums."
+ },
+ {
+  "id": "p20",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p21",
+  "text": "Date                                            Event"
+ },
+ {
+  "id": "p22",
+  "text": "Appearance of LockBit version 2 (LockBit 2.0), also known as\n                   June 2021            LockBit Red including StealBit, a built-in information-stealing\n                                        tool."
+ },
+ {
+  "id": "p23",
+  "text": "Introduction of LockBit Linux-ESXi Locker version 1.0\n                 October 2021           expanding capabilities to target systems to Linux and VMware\n                                        ESXi. [5]"
+ },
+ {
+  "id": "p24",
+  "text": "Emergence of LockBit 3.0, also known as LockBit Black, that\n                  March 2022            shares similarities with BlackMatter and Alphv (also known as\n                                        BlackCat) ransomware."
+ },
+ {
+  "id": "p25",
+  "text": "Non-LockBit affiliates able to use LockBit 3.0 after its builder\n               September 2022\n                                        was leaked. [2, 6]"
+ },
+ {
+  "id": "p26",
+  "text": "Arrival of LockBit Green incorporating source code from Conti\n                 January 2023\n                                        ransomware. [7]"
+ },
+ {
+  "id": "p27",
+  "text": "LockBit ransomware encryptors targeting macOS seen on\n                   April 2023\n                                        VirusTotal [8, 9]"
+ },
+ {
+  "id": "p28",
+  "text": "LockBit 2.0, LockBit 3.0, LockBit Green, and LockBit Linux-ESXi Locker are still available for affiliates’\n       use on LockBit’s panel."
+ },
+ {
+  "id": "p29",
+  "text": "LockBit Statistics\n       Percentage of ransomware incidents attributed to LockBit:\n           •    Australia: From April 1, 2022, to March 31, 2023, LockBit made up 18% of total reported\n                Australian ransomware incidents. This figure includes all variants of LockBit ransomware, not\n                solely LockBit 3.0.\n           •    Canada: In 2022, LockBit was responsible for 22% of attributed ransomware incidents in\n                Canada.[10]\n           •    New Zealand: In 2022, CERT NZ received 15 reports of LockBit ransomware, representing\n                23% of 2022 ransomware reports.\n           •    United States: In 2022, 16% of the State, Local, Tribal, and Tribunal (SLTT) government\n                ransomware incidents reported to the MS-ISAC were identified as LockBit attacks. This\n                included ransomware incidents impacting municipal governments, county governments, public\n                higher education and K-12 schools, and emergency services (e.g., law enforcement)."
+ },
+ {
+  "id": "p30",
+  "text": "TLP:CLEAR                                                                                         International Partnership"
+ },
+ {
+  "id": "p31",
+  "text": "Number of LockBit ransomware attacks in the U.S. since 2020:\n           •    About 1,700 attacks according to the FBI."
+ },
+ {
+  "id": "p32",
+  "text": "Total of U.S. ransoms paid to LockBit:\n           •    Approximately $91M since LockBit activity was first observed in the U.S. on January 5, 2020."
+ },
+ {
+  "id": "p33",
+  "text": "Earliest observed LockBit activity:\n           •    Australia: The earliest documented occurrence of LockBit 3.0 was in early August 2022.\n           •    Canada: The first recorded instance of LockBit activity in Canada was in March 2020.\n           •    New Zealand: The first recorded incident involving LockBit ransomware was in March 2021.\n           •    United States: LockBit activity was first observed on January 5, 2020."
+ },
+ {
+  "id": "p34",
+  "text": "Most recently observed LockBit activity:\n           •    Australia: April 21, 2023.\n           •    New Zealand: February 2023.\n           •    United States: As recently as May 25, 2023."
+ },
+ {
+  "id": "p35",
+  "text": "Operational activity related to LockBit in France\n       Since the first case in July 2020 to present, ANSSI has handled 80 alerts linked to the LockBit\n       ransomware, which accounts for 11% of all ransomware cases handled by ANSSI in that period. In\n       about 13% of those cases, ANSSI was not able to confirm nor deny the breach of its constituents’\n       networks – as the alerts were related to the threat actor’s online claims. So far, 69 confirmed incidents\n       have been handled by ANSSI. Table 2 shows the LockBit activity observed by ANSSI versus overall\n       ransomware activity tracked by the Computer Emergency Response Team-France (CERT-FR).\n                              Table 2: ANSSI-Observed LockBit vs. Overall Ransomware Activity"
+ },
+ {
+  "id": "p36",
+  "text": "Percentage of CERT-FR’s\n                       Year                    Number of Incidents\n                                                                             Ransomware-Related Activity"
+ },
+ {
+  "id": "p37",
+  "text": "2020 (from July)                         4                                 2%"
+ },
+ {
+  "id": "p38",
+  "text": "2021                             20                                10%"
+ },
+ {
+  "id": "p39",
+  "text": "2022                             30                                27%"
+ },
+ {
+  "id": "p40",
+  "text": "2023                             15                                27%"
+ },
+ {
+  "id": "p41",
+  "text": "Total (2020-2023)                        69                                11%"
+ },
+ {
+  "id": "p42",
+  "text": "TLP:CLEAR                                                                                                International Partnership"
+ },
+ {
+  "id": "p43",
+  "text": "Table 3 shows the number of instances different LockBit strains were observed by ANSSI from July\n       2020 to present.\n                               Table 3: ANSSI-Observed LockBit Strain and Number of Instances"
+ },
+ {
+  "id": "p44",
+  "text": "Name of the Strain*                         Number of Instances"
+ },
+ {
+  "id": "p45",
+  "text": "LockBit 2.0 (LockBit Red)                                   26"
+ },
+ {
+  "id": "p46",
+  "text": "LockBit 3.0 (LockBit Black)                                  23"
+ },
+ {
+  "id": "p47",
+  "text": "LockBit                                          21"
+ },
+ {
+  "id": "p48",
+  "text": "LockBit Green                                         1"
+ },
+ {
+  "id": "p49",
+  "text": "LockBit (pre-encryption)                                    1"
+ },
+ {
+  "id": "p50",
+  "text": "Total                                          72**"
+ },
+ {
+  "id": "p51",
+  "text": "* Name either obtained from ANSSI’s or the victim’s investigations\n                         ** Includes incidents with multiple strains"
+ },
+ {
+  "id": "p52",
+  "text": "Figure 1: ANSSI-Observed LockBit Strains by Year"
+ },
+ {
+  "id": "p53",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p54",
+  "text": "From the incidents handled, ANSSI can infer that LockBit 3.0 widely took over from LockBit 2.0 and\n       the original LockBit strain from 2022. In two cases, victims were infected with as many as three\n       different strains of LockBit (LockBit 2.0/Red, LockBit 3.0/Black, and LockBit Green).\n       Leak Sites\n       The authoring agencies observe data leak sites, where attackers publish the names and captured\n       data of victims if they do not pay ransom or hush money. Additionally, these sites can be used to\n       record alleged victims who have been threatened with a data leak. The term 'victims' may include\n       those who have been attacked, or those who have been threatened or blackmailed (with the attack\n       having taken place).\n       The leak sites only show the portion of LockBit affiliates’ victims subjected to secondary extortion.\n       Since 2021, LockBit affiliates have employed double extortion by first encrypting victim data and then\n       exfiltrating that data while threatening to post that stolen data on leak sites. Because LockBit only\n       reveals the names and leaked data of victims who refuse to pay the primary ransom to decrypt their\n       data, some LockBit victims may never be named or have their exfiltrated data posted on leak sites. As\n       a result, the leak sites reveal a portion of LockBit affiliates’ total victims. For these reasons, the leak\n       sites are not a reliable indicator of when LockBit ransomware attacks occurred. The date of data\n       publication on the leak sites may be months after LockBit affiliates actually executed ransomware\n       attacks.\n       Up to the Q1 2023, a total of 1,653 alleged victims were observed on LockBit leak sites. With the\n       introduction of LockBit 2.0 and LockBit 3.0, the leak sites have changed, with some sources choosing\n       to differentiate leak sites by LockBit versions and others ignoring any differentiation. Over time, and\n       through different evolutions of LockBit, the address and layout of LockBit leak sites have changed and\n       are aggregated under the common denominator of the LockBit name. The introduction of LockBit 2.0\n       at the end of the Q2 2021 had an immediate impact on the cybercriminal market due to multiple RaaS\n       operations shutting down in May and June 2021 (e.g., DarkSide and Avaddon). LockBit competed\n       with other RaaS operations, like Hive RaaS, to fill the gap in the cybercriminal market leading to an\n       influx of LockBit affiliates. Figure 2 shows the alleged number of victims worldwide on LockBit leak\n       sites starting in Q3 2020."
+ },
+ {
+  "id": "p55",
+  "text": "Figure 2: Alleged Number of Victims Worldwide on LockBit Leak Sites"
+ },
+ {
+  "id": "p56",
+  "text": "TLP:CLEAR                                                                                           International Partnership"
+ },
+ {
+  "id": "p57",
+  "text": "Tools\n       During their intrusions, LockBit affiliates have been observed using various freeware and open-source\n       tools that are intended for legal use. When repurposed by LockBit, these tools are then used for a\n       range of malicious cyber activity, such as network reconnaissance, remote access and tunneling,\n       credential dumping, and file exfiltration. Use of PowerShell and batch scripts are observed across\n       most intrusions, which focus on system discovery, reconnaissance, password/credential hunting, and\n       privilege escalation. Artifacts of professional penetration-testing tools such as Metasploit and Cobalt\n       Strike have also been observed.\n       Table 4 shows a list of legitimate freeware and open-source tools LockBit affiliates have repurposed\n       for ransomware operations. The legitimate freeware and open-source tools mentioned in this product\n       are all publicly available and legal. The use of these tools by a threat actor should not be attributed to\n       the freeware and open-source tools, absent specific articulable facts tending to show they are used at\n       the direction or under the control of a threat actor.\n                             Table 4: Freeware and Open-Source Tools Used by LockBit Affiliates"
+ },
+ {
+  "id": "p58",
+  "text": "Repurposed Use by\n                   Tool                    Intended Use                                   MITRE ATT&CK ID\n                                                                 LockBit Affiliates\n                                                               Compresses data to\n                                       Compresses files into                                    T1562\n        7-zip                                                  avoid detection before\n                                       an archive.                                          Impair Defenses\n                                                               exfiltration.\n                                                               Gathers AD\n                                                               information used to\n                                       Searches Active         exploit a victim’s\n                                                                                                  S0552\n        AdFind                         Directory (AD) and      network, escalate\n                                                                                                  AdFind\n                                       gathers information.    privileges, and\n                                                               facilitate lateral\n                                                               movement.\n                                                               Maps a victim’s\n                                       Performs network                                         T1046\n        Advanced Internet                                      network to identify\n                                       scans and shows                                      Network Service\n        Protocol (IP) Scanner                                  potential access\n                                       network devices.                                        Discovery\n                                                               vectors.\n                                                               Finds open\n                                                               Transmission Control\n                                                                                                T1046\n        Advanced Port                  Performs network        Protocol (TCP) and\n                                                                                            Network Service\n        Scanner                        scans.                  User Data Protocol\n                                                                                               Discovery\n                                                               (UDP) ports for\n                                                               exploitation.\n                                                               Enables escalation of\n                                       Allows software to be\n                                                               privileges by changing            TA0004\n        AdvancedRun                    run with different\n                                                               settings before running    Privilege Escalation\n                                       settings.\n                                                               software."
+ },
+ {
+  "id": "p59",
+  "text": "TLP:CLEAR                                                                                              International Partnership"
+ },
+ {
+  "id": "p60",
+  "text": "Repurposed Use by\n                    Tool                    Intended Use                                     MITRE ATT&CK ID\n                                                                   LockBit Affiliates\n                                        Enables remote           Enables remote                    T1219\n        AnyDesk                         connections to network   control of victim’s           Remote Access\n                                        devices.                 network devices.                 Software\n        Atera Remote                    Enables remote           Enables remote                    T1219\n        Monitoring &                    connections to network   control of victim’s           Remote Access\n        Management (RMM)                devices.                 network devices.                 Software\n                                                                 Terminates endpoint             T1562.001\n                                        Terminates\n                                                                 detection and                Impair Defenses:\n        Backstab                        antimalware-protected\n                                                                 response (EDR)-              Disable or Modify\n                                        processes.\n                                                                 protected processes.              Tools\n                                                                                                 T1562.001\n                                        Generates .bat files\n                                                                 Bypasses PowerShell          Impair Defenses:\n        Bat Armor                       using PowerShell\n                                                                 execution policy.            Disable or Modify\n                                        scripts.\n                                                                                                   Tools\n                                                                 Enables identification\n                                        Performs\n                                                                 of AD relationships              T1482\n                                        reconnaissance of AD\n        Bloodhound                                               that can be exploited          Domain Trust\n                                        for attack path\n                                                                 to gain access onto a           Discovery\n                                        management.\n                                                                 victim’s network.\n                                        Handles command-line     Facilitates installation          T1072\n        Chocolatey                      package management       of LockBit affiliate       Software Deployment\n                                        on Microsoft Windows.    actors’ tools.                    Tools\n                                                                 Enables LockBit                 T1562.001\n                                        Disables Microsoft       affiliate actors to          Impair Defenses:\n        Defender Control\n                                        Defender.                bypass Microsoft            Disable or Modify\n                                                                 Defender.                         Tools\n                                                                                                   T1003\n                                        Recovers passwords       Obtains credentials for\n                                                                                             Operating System\n        ExtPassword                     from Windows             network access and\n                                                                                               (OS) Credential\n                                        systems.                 exploitation.\n                                                                                                  Dumping\n                                                                 Enables data\n                                        Performs cross-                                          T1071.002\n                                                                 exfiltration over FTP to\n                                        platform File Transfer                                Application Layer\n        FileZilla                                                the LockBit affiliate\n                                        Protocol (FTP) to a                                 Protocol: File Transfer\n                                                                 actors’ site, server, or\n                                        site, server, or host.                                    Protocols\n                                                                 host.\n                                                                                                   T1567.002\n                                                                Facilitates cloud-based\n                                        Facilitates cloud-based                             Exfiltration Over Web\n        FreeFileSync                                            file synchronization for\n                                        file synchronization.                               Service: Exfiltration to\n                                                                data exfiltration.\n                                                                                               Cloud Storage"
+ },
+ {
+  "id": "p61",
+  "text": "TLP:CLEAR                                                                                              International Partnership"
+ },
+ {
+  "id": "p62",
+  "text": "Repurposed Use by\n                   Tool                     Intended Use                                     MITRE ATT&CK ID\n                                                                    LockBit Affiliates\n                                                                                                 T1562.001\n                                                                  Terminates and\n                                                                                              Impair Defenses:\n        GMER                            Removes rootkits.         removes EDR\n                                                                                              Disable or Modify\n                                                                  software.\n                                                                                                   Tools\n                                        Collection of Python      Enables lateral                  S0357\n        Impacket                        classes for working       movement on a                   Impacket\n                                        with network protocols.   victim’s network.\n                                        Recovers system           Collect credentials for\n                                                                                                    S0349\n        LaZagne                         passwords across          accessing a victim’s\n                                                                                                   LaZagne\n                                        multiple platforms.       systems and network.\n                                        Establishes SOCKS5        Enables connections\n                                                                                                  T1095\n                                        or TCP tunnels from a     to systems within the\n        Ligolo                                                                              Non-Application Layer\n                                        reverse connection for    victim’s network via\n                                                                                                 Protocol\n                                        pen testing.              reverse tunneling.\n                                        Recovers passwords        Obtains credentials for          T1003\n        LostMyPassword                  from Windows              network access and            OS Credential\n                                        systems.                  exploitation.                   Dumping"
+ },
+ {
+  "id": "p63",
+  "text": "Facilitates cloud-based            T1567.002\n                                        Facilitates cloud-based                             Exfiltration Over Web\n        MEGA Ltd MegaSync                                       file synchronization for\n                                        file synchronization.                               Service: Exfiltration to\n                                                                data exfiltration.\n                                                                                               Cloud Storage\n                                        Monitors applications     Obtains credentials by\n                                                                                                T1003.001\n                                        for central processing    dumping the contents\n        Microsoft Sysinternals                                                                 OS Credential\n                                        unit (CPU) spikes and     of Local Security\n        ProcDump                                                                              Dumping: LSASS\n                                        generates crash           Authority Subsystem\n                                                                                                 Memory\n                                        dumps during a spike.     Service (LSASS).\n                                                                  Enables LockBit\n                                        Executes a command-\n        Microsoft Sysinternals                                    affiliate actors to              S0029\n                                        line process on a\n        PsExec                                                    control victim’s                 PsExec\n                                        remote machine.\n                                                                  systems.\n                                                                  Extracts credentials\n                                                                  from a system for\n                                        Extracts credentials                                        S0002\n        Mimikatz                                                  gaining network\n                                        from a system.                                             Mimikatz\n                                                                  access and exploiting\n                                                                  systems."
+ },
+ {
+  "id": "p64",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p65",
+  "text": "Repurposed Use by\n                   Tool                     Intended Use                                     MITRE ATT&CK ID\n                                                                    LockBit Affiliates\n                                                                 Enables victim network\n                                        Enables remote\n                                                                 protections to be\n                                        access to a local web                                       S0508\n        Ngrok                                                    bypassed by tunnelling\n                                        server by tunnelling                                        Ngrok\n                                                                 to a system over the\n                                        over the internet.\n                                                                 internet.\n                                                                 Obtains credentials for         T1555.003\n                                        Recovers passwords\n        PasswordFox                                              network access and          Credentials from Web\n                                        from Firefox Browser.\n                                                                 exploitation.                    Browsers\n                                        Enables advanced\n                                                                 Terminates and                   T1562.001\n                                        task management\n                                                                 circumvents EDR               Impair Defenses:\n        PCHunter                        including system\n                                                                 processes and                 Disable or Modify\n                                        processes and\n                                                                 services.                          Tools\n                                        kernels.\n                                        Removes rootkits, as\n                                        well as detecting,       Terminates and                   T1562.001\n        PowerTool                       analyzing, and fixing    removes EDR                   Impair Defenses:\n                                        kernel structure         software.                     Disable or Modify\n                                        modifications.                                              Tools"
+ },
+ {
+  "id": "p66",
+  "text": "Terminates and                   T1562.001\n        Process Hacker                  Removes rootkits.        removes EDR                   Impair Defenses:\n                                                                 software.                     Disable or Modify\n                                                                                                    Tools\n                                        Automates Secure         Enables LockBit\n        PuTTY Link (Plink)              Shell (SSH) actions on   affiliate actors to avoid          T1572\n                                        Windows.                 detection.                   Protocol Tunneling"
+ },
+ {
+  "id": "p67",
+  "text": "Manages cloud\n                                                                 Facilitates data\n                                        storage files using a                                       S1040\n        Rclone                                                   exfiltration over cloud\n                                        command-line                                                Rclone\n                                                                 storage.\n                                        program."
+ },
+ {
+  "id": "p68",
+  "text": "Performs numerous        Performs numerous\n                                        security-oriented        security-oriented                 T1082\n        Seatbelt                                                                              System Information\n                                        checks.                  checks to enumerate\n                                                                 system information.              Discovery"
+ },
+ {
+  "id": "p69",
+  "text": "Enables remote           Enables LockBit\n        ScreenConnect (also                                                                       T1219\n                                        connections to network   affiliate actors to\n        known as                                                                               Remote Access\n                                        devices for              remotely connect to a\n        ConnectWise)                                                                             Software\n                                        management.              victim’s systems."
+ },
+ {
+  "id": "p70",
+  "text": "TLP:CLEAR                                                                                               International Partnership"
+ },
+ {
+  "id": "p71",
+  "text": "Repurposed Use by\n                   Tool                      Intended Use                                      MITRE ATT&CK ID\n                                                                    LockBit Affiliates\n                                                                    Enables LockBit\n                                        Performs network            affiliate actors to             T1046\n        SoftPerfect Network\n                                        scans for systems           obtain information          Network Service\n        Scanner\n                                        management.                 about a victim’s               Discovery\n                                                                    systems and network.\n                                                                    Enables LockBit\n                                        Enables remote              affiliate actors to          T1021.001\n                                        connections to network      remotely connect to        Remote Services:\n        Splashtop\n                                        devices for                 systems over Remote        Remote Desktop\n                                        management.                 Desktop Protocol              Protocol\n                                                                    (RDP)."
+ },
+ {
+  "id": "p72",
+  "text": "Terminates and                 T1562.001\n        TDSSKiller                      Removes rootkits.           removes EDR                 Impair Defenses:\n                                                                    software.                   Disable or Modify\n                                                                                                     Tools\n                                        Enables remote              Enables LockBit\n                                        connections to network      affiliate actors to            T1219\n        TeamViewer                                                                              Remote Access\n                                        devices for                 remotely connect to a\n                                        management.                 victim’s systems.             Software"
+ },
+ {
+  "id": "p73",
+  "text": "Enables LockBit\n                                        Facilitates remote          affiliate actors to           T1071.001\n                                        access via Hypertext        remotely access             Application Layer\n        ThunderShell\n                                        Transfer Protocol           systems while                Protocol: Web\n                                        (HTTP) requests.            encrypting network             Protocols\n                                                                    traffic.\n                                        Facilitates file transfer\n                                                                    Enables data                       T1048\n                                        using SSH File\n        WinSCP                                                      exfiltration via the SSH     Exfiltration Over\n                                        Transfer Protocol for\n                                                                    File Transfer Protocol.    Alternative Protocol\n                                        Microsoft Windows."
+ },
+ {
+  "id": "p74",
+  "text": "Common Vulnerabilities and Exposures (CVEs) Exploited\n       Based on secondary sources, it was noted that affiliates exploit older vulnerabilities like CVE-2021-\n       22986, F5 iControl REST unauthenticated Remote Code Execution Vulnerability, as well as newer\n       vulnerabilities such as:\n           •    CVE-2023-0669: Fortra GoAnyhwere Managed File Transfer (MFT) Remote Code Execution\n                Vulnerability\n           •    CVE-2023-27350: PaperCut MF/NG Improper Access Control Vulnerability"
+ },
+ {
+  "id": "p75",
+  "text": "TLP:CLEAR                                                                                               International Partnership"
+ },
+ {
+  "id": "p76",
+  "text": "LockBit affiliates have been documented exploiting numerous CVEs, including:\n           •    CVE-2021-44228: Apache Log4j2 Remote Code Execution Vulnerability,\n           •    CVE-2021-22986: F5 BIG-IP and BIG-IQ Centralized Management iControl REST Remote\n                Code Execution Vulnerability,\n           •    CVE-2020-1472: NetLogon Privilege Escalation Vulnerability,\n           •    CVE-2019-0708: Microsoft Remote Desktop Services Remote Code Execution Vulnerability,\n                and\n           •    CVE-2018-13379: Fortinet FortiOS Secure Sockets Layer (SSL) Virtual Private Network (VPN)\n                Path Traversal Vulnerability."
+ },
+ {
+  "id": "p77",
+  "text": "For further information on these CVEs , see CISA’s Known Exploited Vulnerabilities (KEV) Catalog."
+ },
+ {
+  "id": "p78",
+  "text": "Post Detonation TTPs\n       When LockBit affiliates target an organization responsible for managing other organizations’\n       networks, CERT NZ has observed LockBit affiliates attempt secondary ransomware extortion after\n       detonation of the LockBit variant on the primary target. Once the primary target is hit, LockBit affiliates\n       then attempt to extort the companies that are customers of the primary target. This extortion is in the\n       form of secondary ransomware that locks down services those customers consume. Additionally, the\n       primary target’s customers may be extorted by LockBit affiliates threatening to release those\n       customers’ sensitive information."
+ },
+ {
+  "id": "p79",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       Tables 5-16 show the LockBit affiliate tactics and techniques referenced in this advisory.\n                       Table 5: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Initial Access"
+ },
+ {
+  "id": "p80",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p81",
+  "text": "LockBit affiliates gain access to a system\n        Drive-by Compromise                         T1189       through a user visiting a website over the\n                                                                normal course of browsing."
+ },
+ {
+  "id": "p82",
+  "text": "LockBit affiliates may exploit vulnerabilities\n        Exploit Public-Facing Application           T1190       (e.g., Log4Shell) in internet-facing systems to\n                                                                gain access to victims’ systems."
+ },
+ {
+  "id": "p83",
+  "text": "LockBit affiliates exploit RDP to gain access to\n        External Remote Services                    T1133\n                                                                victims’ networks."
+ },
+ {
+  "id": "p84",
+  "text": "LockBit affiliates use phishing and\n        Phishing                                    T1566       spearphishing to gain access to victims'\n                                                                networks."
+ },
+ {
+  "id": "p85",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p86",
+  "text": "Technique Title                   ID                              Use"
+ },
+ {
+  "id": "p87",
+  "text": "LockBit affiliates obtain and abuse credentials\n        Valid Accounts                              T1078       of existing accounts as a means of gaining\n                                                                initial access."
+ },
+ {
+  "id": "p88",
+  "text": "Table 6: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Execution"
+ },
+ {
+  "id": "p89",
+  "text": "Technique Title                   ID                              Use"
+ },
+ {
+  "id": "p90",
+  "text": "LockBit 3.0 launches commands during its\n        Execution                                  TA0002\n                                                                execution."
+ },
+ {
+  "id": "p91",
+  "text": "Command and Scripting\n                                                                LockBit affiliates use batch scripts to execute\n        Interpreter: Windows Command              T1059.003\n                                                                malicious commands.\n        Shell"
+ },
+ {
+  "id": "p92",
+  "text": "LockBit affiliates may use Chocolatey, a\n        Software Deployment Tools                   T1072\n                                                                command-line package manager for Windows."
+ },
+ {
+  "id": "p93",
+  "text": "System Services: Service                                LockBit 3.0 uses PsExec to execute commands\n                                                  T1569.002\n        Execution                                               or payloads."
+ },
+ {
+  "id": "p94",
+  "text": "Table 7: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Persistence"
+ },
+ {
+  "id": "p95",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p96",
+  "text": "LockBit affiliates enables automatic logon for\n         Boot or Logon Autostart Execution          T1547\n                                                                persistence."
+ },
+ {
+  "id": "p97",
+  "text": "LockBit affiliates may use a compromised user\n         Valid Accounts                             T1078       account to maintain persistence on the target\n                                                                network."
+ },
+ {
+  "id": "p98",
+  "text": "Table 8: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Privilege Escalation"
+ },
+ {
+  "id": "p99",
+  "text": "Technique Title                    ID                              Use"
+ },
+ {
+  "id": "p100",
+  "text": "LockBit affiliates will attempt to escalate to the\n        Privilege Escalation                        TA0004      required privileges if current account privileges\n                                                                are insufficient."
+ },
+ {
+  "id": "p101",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p102",
+  "text": "Technique Title                   ID                             Use"
+ },
+ {
+  "id": "p103",
+  "text": "LockBit affiliates may use ucmDccwCOM\n        Abuse Elevation Control Mechanism           T1548      Method in UACMe, a GitHub collection of User\n                                                               Account Control (UAC) bypass techniques."
+ },
+ {
+  "id": "p104",
+  "text": "LockBit affiliates enable automatic logon for\n        Boot or Logon Autostart Execution           T1547\n                                                               privilege escalation."
+ },
+ {
+  "id": "p105",
+  "text": "LockBit affiliates may create Group Policy for\n        Domain Policy Modification: Group\n                                                 T1484.001     lateral movement and can force group policy\n        Policy Modification\n                                                               updates."
+ },
+ {
+  "id": "p106",
+  "text": "LockBit affiliates may use a compromised user\n        Valid Accounts                              T1078      account to escalate privileges on a victim’s\n                                                               network."
+ },
+ {
+  "id": "p107",
+  "text": "Table 9 LockBit Affiliates’ ATT&CK Techniques for Enterprise – Defense Evasion"
+ },
+ {
+  "id": "p108",
+  "text": "Technique Title                   ID                             Use"
+ },
+ {
+  "id": "p109",
+  "text": "LockBit 3.0 will only decrypt the main\n        Execution Guardrails: Environmental                    component or continue to decrypt and/or\n                                                  T1480.001\n        Keying                                                 decompress data if the correct password is\n                                                               entered."
+ },
+ {
+  "id": "p110",
+  "text": "LockBit 3.0 affiliates use Backstab, Defender\n                                                               Control, GMER, PCHunter, PowerTool,\n                                                               Process Hacker or TDSSKiller to disable EDR\n                                                               processes and services."
+ },
+ {
+  "id": "p111",
+  "text": "LockBit 3.0 affiliates use Bat Armor to bypass\n                                                               the PowerShell execution Policy.\n        Impair Defenses: Disable or Modify\n                                                  T1562.001\n        Tools                                                  LockBit affiliates may deploy a batch script,\n                                                               123.bat, to disable and uninstall antivirus\n                                                               software."
+ },
+ {
+  "id": "p112",
+  "text": "Lockbit 3.0 may modify and/or disable security\n                                                               tools including EDR and antivirus to avoid\n                                                               possible detection of malware, tools, and\n                                                               activities."
+ },
+ {
+  "id": "p113",
+  "text": "Indicator Removal: Clear Windows          T1070.001    LockBit executable clears the Windows Event\n        Event Logs                                             Logs files."
+ },
+ {
+  "id": "p114",
+  "text": "TLP:CLEAR                                                                                           International Partnership"
+ },
+ {
+  "id": "p115",
+  "text": "Technique Title                   ID                              Use"
+ },
+ {
+  "id": "p116",
+  "text": "Indicator Removal: File Deletion          T1070.004    LockBit 3.0 will delete itself from the disk."
+ },
+ {
+  "id": "p117",
+  "text": "LockBit 3.0 will send encrypted host and bot\n        Obfuscated Files or Information             T1027      information to its command and control (C2)\n                                                               servers."
+ },
+ {
+  "id": "p118",
+  "text": "LockBit affiliates may perform software\n        Obfuscated Files or Information:                       packing or virtual machine software protection\n                                                  T1027.002\n        Software Packing                                       to conceal their code. Blister Loader has been\n                                                               used for such purpose."
+ },
+ {
+  "id": "p119",
+  "text": "Table 10: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Credential Access"
+ },
+ {
+  "id": "p120",
+  "text": "Technique Title                   ID                              Use"
+ },
+ {
+  "id": "p121",
+  "text": "LockBit affiliates may leverage VPN or RDP\n        Brute Force                                T1110\n                                                               brute force credentials as an initial access."
+ },
+ {
+  "id": "p122",
+  "text": "Credentials from Password Stores:                      LockBit 3.0 actors use PasswordFox to recover\n                                                 T1555.003\n        Credentials from Web Browsers                          passwords from Firefox Browser."
+ },
+ {
+  "id": "p123",
+  "text": "LockBit 3.0 actors use ExtPassword or\n        OS Credential Dumping                      T1003       LostMyPassword to recover passwords from\n                                                               Windows systems."
+ },
+ {
+  "id": "p124",
+  "text": "LockBit affiliates may use Microsoft\n                                                               Sysinternals ProDump to dump the contents of\n        OS Credential Dumping: LSASS                           lsass.exe.\n                                                 T1003.001\n        Memory\n                                                               LockBit affiliates have used Mimikatz to dump\n                                                               credentials."
+ },
+ {
+  "id": "p125",
+  "text": "TLP:CLEAR                                                                                             International Partnership"
+ },
+ {
+  "id": "p126",
+  "text": "Table 11: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Discovery"
+ },
+ {
+  "id": "p127",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p128",
+  "text": "LockBit affiliates use SoftPerfect Network\n                                                              Scanner, Advanced IP Scanner, or Advanced\n                                                              Port Scanner to scan target networks.\n         Network Service Discovery                 T1046      LockBit affiliates may use SoftPerfect Network\n                                                              Scanner, Advanced Port Scanner, and AdFind\n                                                              to enumerate connected machines in the\n                                                              network."
+ },
+ {
+  "id": "p129",
+  "text": "LockBit affiliates will enumerate system\n                                                              information to include hostname, host\n         System Information Discovery              T1082      configuration, domain information, local drive\n                                                              configuration, remote shares, and mounted\n                                                              external storage devices."
+ },
+ {
+  "id": "p130",
+  "text": "LockBit 3.0 will not infect machines with\n         System Location Discovery:\n                                                 T1614.001    language settings that match a defined\n         System Language Discovery\n                                                              exclusion list."
+ },
+ {
+  "id": "p131",
+  "text": "Table 12: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Lateral Movement"
+ },
+ {
+  "id": "p132",
+  "text": "Technique Title                  ID                              Use"
+ },
+ {
+  "id": "p133",
+  "text": "LockBit affiliates will laterally move across\n          Lateral Movement                        TA0008\n                                                               networks and access domain controllers."
+ },
+ {
+  "id": "p134",
+  "text": "LockBit affiliates use Splashtop remote-\n          Remote Services: Remote\n                                                 T1021.001     desktop software to facilitate lateral\n          Desktop Protocol\n                                                               movement."
+ },
+ {
+  "id": "p135",
+  "text": "Remote Services: Server\n          Message Block (SMB)/Admin              T1021.002     LockBit affiliates may use Cobalt Strike and\n          Windows Shares                                       target SMB shares for lateral movement."
+ },
+ {
+  "id": "p136",
+  "text": "TLP:CLEAR                                                                                               International Partnership"
+ },
+ {
+  "id": "p137",
+  "text": "Table 13: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Collection"
+ },
+ {
+  "id": "p138",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p139",
+  "text": "LockBit affiliates may use 7-zip to compress\n          Archive Collected Data: Archive\n                                                 T1560.001      and/or encrypt collected data prior to\n          via Utility\n                                                                exfiltration."
+ },
+ {
+  "id": "p140",
+  "text": "Table 14: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Command and Control"
+ },
+ {
+  "id": "p141",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p142",
+  "text": "Application Layer Protocol: File\n                                                  T1071.002     LockBit affiliates may use FileZilla for C2.\n         Transfer Protocols"
+ },
+ {
+  "id": "p143",
+  "text": "LockBit affiliates use ThunderShell as a\n         Application Layer Protocol: Web\n                                                  T1071.001     remote access tool that communicates via\n         Protocols\n                                                                HTTP requests."
+ },
+ {
+  "id": "p144",
+  "text": "LockBit affiliates use Ligolo to establish\n         Non-Application Layer Protocol             T1095       SOCKS5 or TCP tunnels from a reverse\n                                                                connection."
+ },
+ {
+  "id": "p145",
+  "text": "LockBit affiliates use Plink to automate SSH\n         Protocol Tunneling                         T1572\n                                                                actions on Windows."
+ },
+ {
+  "id": "p146",
+  "text": "LockBit 3.0 actors use AnyDesk, Atera RMM,\n         Remote Access Software                     T1219\n                                                                ScreenConnect or TeamViewer for C2."
+ },
+ {
+  "id": "p147",
+  "text": "Table 15: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Exfiltration"
+ },
+ {
+  "id": "p148",
+  "text": "Technique Title                    ID                                Use"
+ },
+ {
+  "id": "p149",
+  "text": "LockBit affiliates use StealBit, a custom\n         Exfiltration                               TA0010       exfiltration tool first used with LockBit 2.0, to\n                                                                 steal data from a target network."
+ },
+ {
+  "id": "p150",
+  "text": "LockBit affiliates use publicly available file\n         Exfiltration Over Web Service              T1567\n                                                                 sharing services to exfiltrate a target’s data."
+ },
+ {
+  "id": "p151",
+  "text": "TLP:CLEAR                                                                                           International Partnership"
+ },
+ {
+  "id": "p152",
+  "text": "LockBit affiliates use (1) Rclone, an open-\n                                                                source command line cloud storage manager\n         Exfiltration Over Web Service:\n                                                 T1567.002      or FreeFileSync to exfiltrate and(2) MEGA, a\n         Exfiltration to Cloud Storage\n                                                                publicly available file sharing service for data\n                                                                exfiltration."
+ },
+ {
+  "id": "p153",
+  "text": "Table 16: LockBit Affiliates’ ATT&CK Techniques for Enterprise – Impact"
+ },
+ {
+  "id": "p154",
+  "text": "Technique Title                   ID                               Use"
+ },
+ {
+  "id": "p155",
+  "text": "LockBit 3.0 deletes log files and empties the\n         Data Destruction                          T1485\n                                                                recycle bin."
+ },
+ {
+  "id": "p156",
+  "text": "LockBit 3.0 encrypts data on target systems to\n                                                                interrupt availability to system and network\n         Data Encrypted for Impact                 T1486        resources.\n                                                                LockBit affiliates can encrypt Windows and\n                                                                Linux devices, as well as VMware instances."
+ },
+ {
+  "id": "p157",
+  "text": "LockBit 3.0 changes the host system’s\n         Defacement: Internal Defacement         T1491.001      wallpaper and icons to the LockBit 3.0\n                                                                wallpaper and icons, respectively."
+ },
+ {
+  "id": "p158",
+  "text": "LockBit 3.0 deletes volume shadow copies\n         Inhibit System Recovery                   T1490\n                                                                residing on disk."
+ },
+ {
+  "id": "p159",
+  "text": "LockBit 3.0 terminates processes and\n         Service Stop                              T1489\n                                                                services."
+ },
+ {
+  "id": "p160",
+  "text": "MITIGATIONS\n       The authoring organizations recommend implementing the mitigations listed below to improve their\n       cybersecurity posture to better defend against LockBit’s activity. These mitigations align with the\n       Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute\n       of Standards and Technology (NIST). The CPGs provide a minimum set of practices and protections\n       that CISA and NIST recommend all organizations implement. CISA and NIST based the CPGs on\n       existing cybersecurity frameworks and guidance to protect against the most common and impactful\n       threats, tactics, techniques, and procedures. Visit CISA’s Cross-Sector Cybersecurity Performance\n       Goals for more information on the CPGs, including additional recommended baseline protections.\n       The listed mitigations are ordered by MITRE ATT&CK tactic. Mitigations that apply to multiple MITRE\n       ATT&CK tactics are listed under the tactic that occurs earliest in an incident’s lifecycle. For example,"
+ },
+ {
+  "id": "p161",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p162",
+  "text": "account use polices are mitigations for initial access, persistence, privilege escalation, and credential\n       access but would be listed under initial access mitigations."
+ },
+ {
+  "id": "p163",
+  "text": "Initial Access\n           •    Consider implementing sandboxed browsers to protect systems from malware originating\n                from web browsing. Sandboxed browsers isolate the host machine from malicious code.\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with NIST standards for developing and managing\n                password policies [CPG 2.L].\n                    o Enforce use of longer passwords consisting of at least 15 characters in length [CPG\n                      2.B, 2.C].\n                    o Store passwords in a salted and hashed format using industry-recognized password\n                      hashing algorithms.\n                    o Prevent use of commonly used or known-compromised passwords [CPG 2.C].\n                    o Implement multiple failed login attempt account lockouts [CPG 2.G].\n                    o Disable password “hints.”\n                    o Refrain from requiring password changes more frequently than once per year.\n                      Note: NIST guidance suggests favoring longer passwords instead of requiring regular\n                      and frequent password resets. Frequent password resets are more likely to result in\n                      users developing password “patterns” cyber criminals can easily decipher.\n                    o Require administrator credentials to install software [CPG 2.Q].\n           •    Implement filters at the email gateway to filter out emails with known malicious indicators,\n                such as known malicious subject lines, and block suspicious IP addresses at the firewall [CPG\n                2.M].\n           •    Install a web application firewall and configure with appropriate rules to protect enterprise\n                assets.\n           •    Segment networks to prevent the spread of ransomware. Network segmentation can help\n                prevent the spread of ransomware by controlling traffic flows between—and access to—\n                various subnetworks and by restricting adversary lateral movement. Isolate web-facing\n                applications to further minimize the spread of ransomware across a network [CPG 2.F].\n           •    Follow the least-privilege best practice by requiring administrators to use administrative\n                accounts for managing systems and use simple user accounts for non-administrative tasks\n                [CPG 2.E].\n           •    Enforce the management of and audit user accounts with administrative privileges.\n                Configure access controls according to the principle of least privilege [CPG 2.E].\n           •    Implement time-based access for accounts set at the admin level and higher. For\n                example, the Just-in-Time (JIT) access method provisions privileged access when needed\n                and can support enforcement of the principle of least privilege (as well as the Zero Trust\n                model). This is a process where a network-wide policy is set in place to automatically disable\n                admin accounts at the Active Directory level when the account is not in direct need. Individual\n                users may submit their requests through an automated process that grants them access to a"
+ },
+ {
+  "id": "p164",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p165",
+  "text": "specified system for a set timeframe when they need to support the completion of a certain\n                task.\n           •    Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats. Public-facing applications must be patched in a timely manner as\n                vulnerabilities can often be exploited directly by the threat actor. By closely monitoring the\n                threat landscape, threat actors often take advantage of vulnerabilities before systems are\n                patched. Organizations should patch vulnerable software and hardware systems within 24 to\n                48 hours from when a vulnerability is disclosed. Prioritize patching known exploited\n                vulnerabilities in internet-facing systems [CPG 1.E].\n           •    Restrict service accounts from remotely accessing other systems. Configure group\n                policy to Deny log on locally, Deny log on through Terminal Services, and Deny\n                access to this computer from the network for all service accounts to limit the\n                ability for compromised service accounts to be used for lateral movement.\n           •    Block direct internet access for administration interfaces (e.g., application protocol\n                interface (API)) and for remote access.\n           •    Require phishing-resistant multifactor authentication (MFA) for all services to the extent\n                possible, particularly for webmail, virtual private networks, and privileged accounts that access\n                critical systems [CPG 2.H].\n           •    Consolidate, monitor, and defend internet gateways.\n           •    Install, regularly update, and enable real-time detection for antivirus software on all\n                hosts.\n           •    Raise awareness for phishing threats in your organization. Phishing is one of the primary\n                infection vectors in ransomware campaigns, and all employees should receive practical\n                training on the risks associated with the regular use of email. With the rise of sophisticated\n                phishing methods, such as using stolen email communication or artificial intelligence (AI)\n                systems such as ChatGPT, the distinction between legitimate and malicious emails becomes\n                more complex. This particularly applies to employees from corporate divisions that have to\n                deal with a high volume of external email communication (e.g., staff recruitment) [CPG 2.I,\n                2.J].\n           •    Consider adding an external email warning banner for emails sent to or received from\n                outside of your organization [CPG 2.M].\n           •    Review internet-facing services and disable any services that are no longer a business\n                requirement to be exposed or restrict access to only those users with an explicit requirement\n                to access services, such as SSL, VPN, or RDP. If internet-facing services must be used,\n                control access by only allowing access from an admin IP range [CPG 2.X].\n           •     Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts.\n           •    Regularly verify the security level of the Active Directory domain by checking for\n                misconfigurations."
+ },
+ {
+  "id": "p166",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p167",
+  "text": "Execution\n           •    Develop and regularly update comprehensive network diagram(s) that describes systems\n                and data flows within your organization’s network(s) [CPG 2.P].\n           •    Control and restrict network connections accordingly with a network flow matrix.\n           •    Enable enhanced PowerShell logging [CPG 2.T, 2.U].\n                   o PowerShell logs contain valuable data, including historical OS, registry interaction, and\n                       possibility of a threat actor’s PowerShell use.\n                   o Ensure PowerShell instances are configured to use the latest version, and have\n                       module, script block, and transcription logging enabled (enhanced logging).\n                   o The two logs that record PowerShell activity are the PowerShell Windows Event Log\n                       and the PowerShell Operational Log. It is recommended to turn on these two\n                       Windows Event Logs with a retention period of at least 180 days. These logs should be\n                       checked on a regular basis to confirm whether the log data has been deleted or\n                       logging has been turned off. Set the storage size permitted for both logs to as large as\n                       reasonably practical.\n           •    Configure the Windows Registry to require UAC approval for any PsExec operations\n                requiring administrator privileges to reduce the risk of lateral movement by PsExec."
+ },
+ {
+  "id": "p168",
+  "text": "Privilege Escalation\n           •    Disable command-line and scripting activities and permissions. Privilege escalation and\n                lateral movement often depend on software utilities running from the command line. If threat\n                actors are not able to run these tools, they will have difficulty escalating privileges and/or\n                moving laterally [CPG 2.N].\n           •    Enable Credential Guard to protect your Windows system credentials. This is enabled by\n                default on Windows 11 Enterprise 22H2 and Windows 11 Education 22H2. Credential Guard\n                prevents credential dumping techniques of the Local Security Authority (LSA) secrets. Be\n                aware that enabling this security control has some downsides. In particular, you can no longer\n                use New Technology Local Area Network (LAN) Manager (NTLM) classic authentication\n                single sign-on, Kerberos unconstrained delegation, as well as Data Encryption Standard\n                (DES) encryption.\n           •    Implement Local Administrator Password Solution (LAPS) where possible if your OS is\n                older than Windows Server 2019 and Windows 10 as these versions do not have LAPS built\n                in. NOTE: The authoring organizations recommend organizations upgrade to Windows Server\n                2019 and Windows 10 or greater."
+ },
+ {
+  "id": "p169",
+  "text": "Defense Evasion\n           •    Apply local security policies to control application execution (e.g., Software Restriction\n                Policies (SRP), AppLocker, Windows Defender Application Control (WDAC)) with a strict\n                allowlist.\n           •    Establish an application allowlist of approved software applications and binaries that are\n                allowed to be executed on a system. This measure prevents unwanted software to be run."
+ },
+ {
+  "id": "p170",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p171",
+  "text": "Usually, application allowlist software can also be used to define blocklists so that the\n                execution of certain programs can be blocked, for example cmd.exe or PowerShell.exe\n                [CPG 2.Q]."
+ },
+ {
+  "id": "p172",
+  "text": "Credential Access\n           •    Restrict NTLM uses with security policies and firewalling."
+ },
+ {
+  "id": "p173",
+  "text": "Discovery\n           •    Disable unused ports. Disable ports that are not being used for business purposes (e.g.,\n                RDP-TCP Port 3389). Close unused RDP ports."
+ },
+ {
+  "id": "p174",
+  "text": "Lateral Movement\n           •    Identify Active Directory control paths and eliminate the most critical among them\n                according to the business needs and assets.\n           •    Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting the\n                ransomware, implement a tool that logs and reports all network traffic, including lateral\n                movement activity on a network [CPG 1.E]. EDR tools are particularly useful for detecting\n                lateral connections as they have insight into common and uncommon network connections for\n                each host."
+ },
+ {
+  "id": "p175",
+  "text": "Command and Control\n           •    Implement a tiering model by creating trust zones dedicated to an organization’s most\n                sensitive assets.\n           •    VPN access should not be considered as a trusted network zone. Organizations should\n                instead consider moving to zero trust architectures."
+ },
+ {
+  "id": "p176",
+  "text": "Exfiltration\n           •    Block connections to known malicious systems by using a Transport Layer Security (TLS)\n                Proxy. Malware often uses TLS to communicate with the infrastructure of the threat actor. By\n                using feeds for known malicious systems, the establishment of a connection to a C2 server\n                can be prevented.\n           •    Use web filtering or a Cloud Access Security Broker (CASB) to restrict or monitor access\n                to public-file sharing services that may be used to exfiltrate data from a network."
+ },
+ {
+  "id": "p177",
+  "text": "Impact\n           •    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers in a physically separate, segmented, and secure location (e.g., hard drive,\n                storage device, the cloud) [CPG 2.R]."
+ },
+ {
+  "id": "p178",
+  "text": "TLP:CLEAR                                                                                          International Partnership"
+ },
+ {
+  "id": "p179",
+  "text": "•    Maintain offline backups of data, and regularly maintain backup and restoration (daily or\n                weekly at the minimum). By instituting this practice, the organization ensures they will not be\n                severely interrupted, and/or only have irretrievable data [CPG 2.R]. ACSC recommends\n                organizations follow the 3-2-1 backup strategy in which organizations have three copies of\n                data (one copy of production data and two backup copies) on two different media, such as\n                disk and tape, with one copy kept off-site for disaster recovery.\n           •    Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and\n                covers the entire organization’s data infrastructure [CPG 2.K, 2.R]."
+ },
+ {
+  "id": "p180",
+  "text": "Implement Mitigations for Defense-in-Depth\n       Implementing multiple mitigations within a defense-in-depth approach can help protect against\n       ransomware, such as LockBit. CERT NZ explains How ransomware happens and how to stop it by\n       applying mitigations, or critical controls, to provide a stronger defense to detect, prevent, and respond\n       to ransomware before an organization’s data is encrypted. By understanding the most common attack\n       vectors, organizations can identify gaps in network defenses and implement the mitigations noted in\n       this advisory to harden organizations against ransomware attacks. In Figure 3, a ransomware attack\n       is broken into three phases:\n           •    Initial Access where the cyber actor is looking for a way into a network.\n           •    Consolidation and Preparation when the actor is attempting to gain access to all devices.\n           •    Impact on Target where the actor is able to steal and encrypt data and then demand ransom."
+ },
+ {
+  "id": "p181",
+  "text": "Figure 3 shows the mitigations/critical controls, as various colored hexagons, working together to stop\n       a ransomware attacker from accessing a network to steal and encrypt data. In the Initial Access\n       phase, mitigations working together to deny an attacker network access include securing internet-\n       exposed services, patching devices, implementing MFA, disabling macros, employing application\n       allowlisting, and using logging and alerting. In the Consolidation and Preparation phase, mitigations\n       working together to keep an attacker from accessing network devices are patching devices, using\n       network segmentation, enforcing the principle of least privilege, implementing MFA, and using logging\n       and alerting. Finally, in the Impact on Target phase, mitigations working together to deny or degrade\n       an attacker’s ability to steal and/or encrypt data includes using logging and alerting, using and\n       maintaining backups, and employing application allowlisting."
+ },
+ {
+  "id": "p182",
+  "text": "TLP:CLEAR                                                                                     International Partnership"
+ },
+ {
+  "id": "p183",
+  "text": "Critical Controls Key"
+ },
+ {
+  "id": "p184",
+  "text": "Figure 3: Stopping Ransomware Using Layered Mitigations"
+ },
+ {
+  "id": "p185",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, the authoring organizations recommend exercising, testing, and\n       validating your organization's security program against the threat behaviors mapped to the MITRE\n       ATT&CK for Enterprise framework in this advisory. The authoring organizations recommend testing\n       your existing security controls inventory to assess how they perform against the ATT&CK techniques\n       described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Tables 5-16)."
+ },
+ {
+  "id": "p186",
+  "text": "TLP:CLEAR                                                                                      International Partnership"
+ },
+ {
+  "id": "p187",
+  "text": "2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       The authoring organizations recommend continually testing your security program, at scale, in a\n       production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p188",
+  "text": "RESOURCES\n           •    ACSC:\n                  o See 2023-03: ACSC Ransomware Profile – LockBit 3.0 for additional information.\n           •    CISA:\n                   o Stopransomware.gov is a whole-of-government approach that gives one central\n                      location for ransomware resources and alerts.\n                   o Information on no-cost cyber hygiene services is available at Cyber Hygiene Services\n                      and Ransomware Readiness Assessment.\n           •    CISA, NSA, FBI, and MS-ISAC:\n                   o See the #StopRansomware Guide developed through the Joint Ransomware Task\n                       Force (JRTF) to provide a one-stop resource to help organizations reduce the risk of\n                       ransomware incidents through best practices to detect, prevent, respond, and recover,\n                       including step-by-step approaches to address potential attacks.\n           •    FBI and CISA:\n                   o See Alert AA23-075A - #StopRansomware: LockBit 3.0 for information on IOCs and\n                       TTPs identified through FBI investigations as recently as March 2023.\n           •    MS-ISAC:\n                  o See the Center for Internet Security (CIS) Critical Security Controls (CIS Controls)\n                      https://www.cisecurity.org/insights/white-papers/cis-community-defense-model-2-0for\n                      information on strengthening an organization’s cybersecurity posture through\n                      implementing a prescriptive, prioritized, and simplified set of best.\n                  o See the CIS Community Defense Model 2.0 (CDM 2.0) for the effectiveness of the CIS\n                      Controls against the most prevalent types of attacks and how CDM 2.0 can be used to\n                      design, prioritize, implement, and improve an organization’s cybersecurity program.\n                  o See Blueprint for Ransomware Defense for a clear, actionable framework for\n                      ransomware mitigation, response, and recovery built around the CIS Controls.\n           •    NCSC-UK\n                  o See guidance on Mitigating malware and ransomware attacks for information on\n                     defending organizations against malware or ransomware attacks."
+ },
+ {
+  "id": "p189",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p190",
+  "text": "•    BSI:\n                   o    See BSI’s Ransomware – Facts and Defense Strategies for a comprehensive\n                        collection of resources on ransomware prevention, detection, and reaction. Note:\n                        These resources are in German.\n           •    CCCS:\n                  o See CCCS’s Ransomware playbook (ITSM.00.099) for information on ransomware\n                      prevention and response.\n                  o See CCCS’s Top 10 IT security actions based on analysis of cyber threat trends to\n                      help minimize intrusions or the impacts of a successful cyber intrusion.\n           •    CERT NZ:\n                  o See CERT NZ’s Security awareness building and Creating an effective security\n                     awareness program to assist organization’s in providing adequate security awareness\n                     and training to personnel while creating a positive security culture.\n                  o Businesses can find information on developing an incident response plan, creating a\n                     contact list, and communicating ransomware incidents at CERT NZ’s Creating an\n                     incident response plan.\n           •    NCSC NZ:\n                  o For guidance on ransomware for public service agencies, see NCSC NZ’s\n                     Ransomware: Your organization should be both protected and prepared."
+ },
+ {
+  "id": "p191",
+  "text": "REPORTING\n       The authoring organizations do not encourage paying ransom, as payment does not guarantee victim\n       files will be recovered. Furthermore, payment may also embolden adversaries to target additional\n       organizations, encourage other criminal actors to engage in the distribution of ransomware, and/or\n       fund illicit activities. Regardless of whether you or your organization have decided to pay the ransom,\n       the authoring organizations urge you to promptly report ransomware incidents to your country’s\n       respective authorities.\n           •    Australia: Australian organizations that have been impacted or require assistance in regard to\n                a ransomware incident can contact ACSC via 1300 CYBER1 (1300 292 371), or by submitting\n                a report to cyber.gov.au.\n           •    Canada: Canadian victims of ransomware are encouraged to consider reporting cyber\n                incidents to law enforcement (e.g., local police or the Canadian Anti-Fraud Centre) as well as\n                to the Canadian Centre for Cyber Security online via My Cyber Portal.\n           •    France:\n                    o Individuals and small organizations can seek assistance with Cybermalveillance –\n                        https://www.cybermalveillance.gouv.fr/.\n                    o Larger organizations, as well as public and regulated entities, can request assistance\n                        from CERT-FR via cert-fr@ssi.gouv.fr."
+ },
+ {
+  "id": "p192",
+  "text": "TLP:CLEAR                                                                                        International Partnership"
+ },
+ {
+  "id": "p193",
+  "text": "•    Germany: German victims of ransomware are encouraged to consider reporting cyber\n                incidents to law enforcement (e.g., local police or the Central Contact Point for Cybercrime as\n                well as to the Federal Office for Information Security (BSI) via the Reporting and Information\n                Portal.\n           •    New Zealand: New Zealand organizations and businesses can report security incidents to the\n                NCSC at incidents@ncsc.govt.nz or call 04 498 7654, or to CERT NZ through\n                https://www.cert.govt/nz/it-specialists/report-an-incident/ or to ir@ops.cert.govt.nz.\n           •    United States:\n                    o Report ransomware incidents to a local FBI Field Office or CISA’s 24/7 Operations\n                        Center at Report@cisa.dhs.gov, cisa.gov/report, or (888) 282-0870. When available,\n                        please include the information regarding the incident: date, time, and location of the\n                        incident; type of activity; number of people affected; type of equipment used for the\n                        activity; the name of the submitting company or organization; and a designated point of\n                        contact.\n                    o For SLTTs, email soc@msisac.org or call (866) 787-4722.\n           •    United Kingdom: UK organizations should report any suspected compromises to NCSC."
+ },
+ {
+  "id": "p194",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. The authoring\n       organizations do not endorse any commercial product or service, including any subjects of analysis.\n       Any reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by the authoring organizations."
+ },
+ {
+  "id": "p195",
+  "text": "REFERENCES\n       [1] LockBit, BlackCat, and Royal Dominate the Ransomware Scene\n       [2] Ransomware Diaries: Volume 1\n       [3] What is LockBit ransomware and how does it operate?\n       [4] Ransomware Spotlight: LockBit\n       [5] Analysis and Impact of LockBit Ransomware’s First Linux and VMware ESXi Variant\n       [6] A first look at the builder for LockBit 3.0 Black\n       [7] LockBit ransomware gang releases LockBit Green version\n       [8] LockBit Ransomware Now Targeting Apple macOS Devices\n       [9] Apple’s Macs Have Long Escaped Ransomware. That May be Changing\n       [10] Intelligence agency says ransomware group with Russian ties poses 'an enduring threat' to Canada"
+ }
+]

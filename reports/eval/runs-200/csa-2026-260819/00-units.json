@@ -1,0 +1,234 @@
+[
+ {
+  "id": "p1",
+  "text": "# Defending Against an Active Threat to Siemens S7 Series PLCs"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-08-19\n> - URL: https://www.ic3.gov/CSA/2026/260819.pdf\n> - PDF SHA-256: 7b758f5af869d4a4dd1fcdf26010439a4ed29716858f87eaf58eaaf5e2cfe9af (`source.pdf`, 11 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (32 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Joint Cybersecurity Advisory"
+ },
+ {
+  "id": "p4",
+  "text": "Defending Against an Active Threat to Siemens S7\nSeries PLCs"
+ },
+ {
+  "id": "p5",
+  "text": "Executive summary\nNote: This advisory relates to an active threat to Siemens S7 Series programmable\nlogic controllers (PLCs). However, ongoing PLC targeting activity is broader than\nSiemens PLCs. All PLC owners and operators should apply relevant mitigations to\nreduce the risk to their devices and systems. The Siemens-specific content in this\nadvisory should be understood and applied as one subset of the wider threat landscape.\nThe National Security Agency (NSA),                              Top Mitigations\nCybersecurity and Infrastructure Security            • Inventory all Siemens S7 Series\nAgency (CISA), Federal Bureau of                       programmable logic controllers (PLCs)\nInvestigation (FBI), Department of Energy            • Apply critical security patches\n(DOE), and Environmental Protection                  • Ensure PLCs are not accessible from\n                                                       the Internet\nAgency (EPA)—hereafter referred to as the\n                                                     • Strengthen access controls\nauthoring agencies—are releasing this\n                                                     • Monitor for unauthorized activity\nCybersecurity Advisory to warn owners and            • Harden PLC services, protocols, and\noperators of industrial control systems                ladder logic integrity\n(ICSs) of an active cyber threat to Siemens          • Hunt for anomalies that may indicate a\n                                                       compromise\nS7 Series PLCs and provide relevant\nmitigations to protect and defend them."
+ },
+ {
+  "id": "p6",
+  "text": "The threat actors are conducting reconnaissance and capability development against\nU.S.-based Siemens PLC installations using AI-generated exploitation scripts disguised\nas legitimate monitoring tools. The actors leverage Internet scanning services to find\nInternet-exposed PLCs running outdated software or that are otherwise poorly\nprotected. The U.S. critical infrastructure sectors most targeted by this threat activity\ninclude Critical Manufacturing, Energy, Water and Wastewater, Chemical, Food and\nAgriculture, and Commercial Facilities. This is not a theoretical risk—it is an active\nthreat. Depending on the specific circumstances, exploitation of poorly protected PLCs"
+ },
+ {
+  "id": "p7",
+  "text": "This document is marked TLP:CLEAR. Recipients may share this information without restriction.\nInformation is subject to standard copyright rules.\nU/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0"
+ },
+ {
+  "id": "p8",
+  "text": "could lead to disruption of critical industrial processes, safety incidents, downtime or\nequipment damage, compromise of sensitive data, compliance violations, and\ncascading impacts across interconnected systems.\nThe authoring agencies urge all owners and operators of operational technology (OT)\nsystems using Siemens S7 Series and other PLC devices to proactively check their\nsystems:"
+ },
+ {
+  "id": "p9",
+  "text": "•     are properly protected with all applicable security patches and updates,\n     •     are isolated from the Internet wherever possible,\n     •     have strong access controls, and\n     •     employ security tooling to monitor ICS environments for anomalous or malicious\n           activity.\nThese mitigations are particularly important for owners and operators who work with\nthird-party service providers or system integrators who may have remote access to\nPLCs, as the asset owners may not realize that their systems are exposed and at risk."
+ },
+ {
+  "id": "p10",
+  "text": "Technical details\nNote: This advisory uses the MITRE ATT&CK®1 Matrix for ICS framework, version 19,\nand the MITRE ATT&CK Matrix for Enterprise framework, version 19. This advisory also\nuses MITRE D3FENDTM, version 1.5.0. See Appendix A and Appendix B for tables of\nthe activity mapped to MITRE ATT&CK and MITRE D3FEND tactics, techniques, and\ncountermeasures."
+ },
+ {
+  "id": "p11",
+  "text": "Threat actor targeting\nThreat actors are actively targeting the following Siemens PLC models:"
+ },
+ {
+  "id": "p12",
+  "text": "•     S7-200 Series (all CPU variants)\n     •     S7-300 Series (all CPU variants including 314, 315, 317 models)\n     •     S7-400 Series (all CPU variants)\n     •     S7-1200 Series (CPU 1211C, 1212C, 1214C, 1215C, 1217C variants)\n     •     S7-1500 Series (all CPU variants, including F-series safety controllers)\nThreat actors are using AI assistance to generate exploitation scripts using publicly\navailable information on these Siemens S7 Series PLCs for initial access, credential\n1 MITRE and ATT&CK are registered trademarks of The MITRE Corporation. MITRE D3FEND is a trademark of the MITRE Corporation."
+ },
+ {
+  "id": "p13",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                                                                          2"
+ },
+ {
+  "id": "p14",
+  "text": "access, denial of service, and other objectives. If these PLCs are exposed to the\nInternet or insufficiently segmented, then threat actors can exploit various critical and\nhigh severity known vulnerabilities in these PLCs."
+ },
+ {
+  "id": "p15",
+  "text": "Note: Using AI to generate exploitation scripts represents an evolution in threat actor\ncapabilities, dramatically reducing the technical expertise and time required to develop\nworking ICS exploitation scripts and malicious tools. In addition, AI enables adversaries\nto rapidly leverage additional attack vectors and adapt to defensive measures. Threat\nactors can easily collect public information about vulnerabilities and weaknesses, find\nexposed and exploitable PLCs, and use AI-generated scripts to act on that information.\nIf PLCs are exposed to the Internet, they are at high risk for exploitation."
+ },
+ {
+  "id": "p16",
+  "text": "Threat actors are leveraging open source industrial automation libraries—specifically\nsnap7.dll/python-snap7—combined with AI-assisted scripting to create custom tools\nthat mimic legitimate OT monitoring solutions. These tools provide read/write access to\nSiemens S7 Series PLC memory, configuration data, and ladder logic programs via the\nS7comm protocol."
+ },
+ {
+  "id": "p17",
+  "text": "Threat actor techniques\nThreat actors are:"
+ },
+ {
+  "id": "p18",
+  "text": "•    Using Internet scanning services (e.g., Censys, ZoomEye) to identify Internet-\n          exposed or insufficiently segmented Siemens S7 Series PLCs [T1596.005]\n     •    Rapidly iterating exploit code through AI-assisted development, lowering\n          technical barriers to ICS attacks [T1587.004, T1588.007]\n     •    Taking advantage of insecure credentials to access exposed devices that\n          have unconfigured (default) or minimally configured authentication [T1694]\n     •    Deploying AI-generated Python scripts that incorporate the snap7.dll library\n          from public repositories [T0834] to gain read/write access to the PLC and mimic\n          legitimate tools\n     •    Masquerading malicious scripts as legitimate monitoring tools to evade\n          detection by security teams [T0849]\n     •    Conducting read/write operations on data blocks, potentially for\n          reconnaissance, capability testing, or pre-positioning for effects operations\n          [T0893, T0821]"
+ },
+ {
+  "id": "p19",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                             3"
+ },
+ {
+  "id": "p20",
+  "text": "The authoring agencies assess this activity pattern is likely intended as persistent\nreconnaissance in targeted sectors and facilities to develop capabilities and prepare to\ncause operational effects against critical infrastructure. For capability development,\nactors are testing and refining their exploitation techniques against specific PLC models\nto improve their ability to compromise the PLCs. To prepare for operational effects,\nactors are leveraging read access to understand target environments, enabling\npreparation and positioning for future write operations to cause disruption or other\noperational impacts."
+ },
+ {
+  "id": "p21",
+  "text": "Potential operational impacts\nThe U.S. critical infrastructure sectors most targeted by this threat activity include\nCritical Manufacturing, Energy, Water and Wastewater, Chemical, Food and Agriculture,\nand Commercial Facilities. Additionally, Siemens S7 Series PLCs are used in other\nsectors, including the Defense Industrial Base (DIB), and could be targeted there as\nwell. Unauthorized access to PLCs could result in:"
+ },
+ {
+  "id": "p22",
+  "text": "•    Disruption of critical industrial processes affecting production throughput,\n          product quality, and public services\n     •    Safety incidents affecting personnel through manipulation of safety interlocks,\n          emergency shutdown systems, or process parameters\n     •    Equipment damage and extended operational downtime from process\n          upsets, improper sequencing, or forced equipment operation outside design\n          parameters\n     •    Compromise of sensitive operational data, including proprietary process\n          recipes, control strategies, and facility configurations\n     •    Cascading impacts across interconnected systems affecting supply chains,\n          dependent facilities, and integrated business operations\n     •    Regulatory compliance violations and potential liability from process safety\n          management failures"
+ },
+ {
+  "id": "p23",
+  "text": "Mitigation actions\nSince threat actors are developing capabilities using AI to compromise PLCs using\nknown vulnerabilities, misconfigurations, and other weaknesses and then may use\ncompromised PLCs to interfere with normal operations, the authoring agencies urge"
+ },
+ {
+  "id": "p24",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                          4"
+ },
+ {
+  "id": "p25",
+  "text": "organizations to implement comprehensive defense-in-depth strategies, in addition to\nCommon Vulnerabilities and Exposures (CVE) remediation, to protect and defend their\nPLCs."
+ },
+ {
+  "id": "p26",
+  "text": "Detection opportunities\nOrganizations should implement detection strategies and hunt for anomalies that may\nindicate a compromise, focusing on [D3-PM]:"
+ },
+ {
+  "id": "p27",
+  "text": "•    Anomalous S7comm behavior: Connections from non-engineering\n          workstations, unusual data block access patterns, or write operations outside\n          change windows\n     •    Reconnaissance indicators: Sequential IP scanning on port 102, repeated\n          connection attempts with varying parameters, or enumeration of CPU properties\n     •    Tool artifacts: Snap7.dll library usage outside approved engineering\n          workstations, Python scripts with S7comm functionality, or unauthorized\n          monitoring software installations\n     •    Temporal anomalies: S7comm activity during off-hours, unexpected connection\n          patterns consistent with automated scripting rather than human operators, or\n          configuration changes without corresponding work orders or change tickets\n     •    Geographic anomalies: Connections originating from unexpected countries or\n          IP ranges not associated with vendors or integrators"
+ },
+ {
+  "id": "p28",
+  "text": "Preventative hardening actions\nTo counter threats to PLCs, the authoring agencies recommend all PLC owners and\noperators follow the mitigations in joint guidance Primary Mitigations to Reduce Cyber\nThreats to Operational Technology.\nTo harden Siemens S7 Series PLCs, the authoring agencies strongly urge all owners\nimplement the hardening steps below. Entities that rely on systems integrators or third-\nparty managed service providers should share this advisory with those parties and\nrequest implementation of the following mitigations:"
+ },
+ {
+  "id": "p29",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                          5"
+ },
+ {
+  "id": "p30",
+  "text": "1. Conduct an immediate inventory of all Siemens S7 Series PLCs in your\nenvironment [D3-HCI]:\n     •    Verify current firmware versions for all S7-200, S7-300, S7-400, S7-1200, and\n          S7-1500 controllers against backup gold copy\n     •    Identify any systems directly or indirectly accessible from untrusted networks\n     •    Map all engineering workstations with Totally Integrated Automation (TIA) Portal,\n          STEP 7, or S7 programming access"
+ },
+ {
+  "id": "p31",
+  "text": "2. Apply critical security patches as soon as possible [D3-SU]:\n     •    Update Siemens S7 Series PLC firmware to the latest versions that address\n          known vulnerabilities\n     •    Prioritize Internet-facing or demilitarized zone (DMZ)-resident controllers\n     •    Update TIA Portal and STEP 7 software to current versions\n     •    Consult Siemens ProductCERT advisories for information on known\n          vulnerabilities, along with relevant workarounds and mitigations\n     •    Test all updates in a development environment before production deployment"
+ },
+ {
+  "id": "p32",
+  "text": "3. Verify network segmentation and ensure PLCs are NOT accessible from\nthe Internet [D3-NI]:\n     •    Audit firewall rules for any exposed S7comm services (Transmission Control\n          Protocol [TCP] port 102)\n     •    Block TCP port 102 at perimeter firewalls entirely\n     •    Implement a DMZ architecture that separates OT and IT networks\n     •    Deploy unidirectional gateways for data historian connections where appropriate\n     •    Verify there is no unauthorized routing between corporate and industrial networks"
+ },
+ {
+  "id": "p33",
+  "text": "4. Review and strengthen access controls [D3-NAM, D3-CH]:\n     •    Restrict TIA Portal/STEP 7 access to authorized engineering workstations only\n          by MAC/IP allowlisting on PLCs\n     •    Enable PLC password protection on all Siemens S7 Series controllers\n     •    Configure protection levels (such as write protection and read/write protection) on\n          Siemens S7 Series devices"
+ },
+ {
+  "id": "p34",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                              6"
+ },
+ {
+  "id": "p35",
+  "text": "•    Remove or change default SNMP community strings\n     •    Implement application allowlisting on all engineering workstations\n     •    Enable multi-factor authentication for all remote access to OT networks"
+ },
+ {
+  "id": "p36",
+  "text": "5. Enable comprehensive logging and monitoring [D3-PM, D3-NTA]:\n     •    Deploy ICS-aware intrusion detection (e.g., Claroty, Dragos Platform, Nozomi\n          Networks, or similar)\n     •    Monitor all S7comm traffic on TCP port 102 for connections outside maintenance\n          windows\n     •    Alert on unauthorized PUT/GET operations, especially write commands to data\n          blocks or configuration areas of memory\n     •    Log all TIA Portal/STEP 7 connections to PLCs with timestamps and source IPs\n     •    Establish a baseline for legitimate behavior and configure monitoring tools to\n          alert on deviations\n     •    Monitor for Python processes with snap7.dll library imports on engineering\n          workstations\n     •    Watch for sequential IP scanning patterns or block reads of configuration data"
+ },
+ {
+  "id": "p37",
+  "text": "6. Implement S7-specific hardening measures [D3-ACH]:\n     •    Disable web servers on Siemens S7 Series devices if not operationally required\n     •    Disable unused communication protocols (such as Modbus TCP and PROFINET,\n          if they are not required)\n     •    Configure connection resources to limit simultaneous S7comm sessions\n     •    Enable TIA Portal/STEP 7 “complete restart protection” and “know-how\n          protection” features where available\n     •    Evaluate for ladder logic changes in online/offline modes"
+ },
+ {
+  "id": "p38",
+  "text": "7. Contact Siemens for model-specific guidance:\n     •    Engage Siemens Technical Support for hardening recommendations specific to\n          your CPU models and firmware versions\n     •    Verify patch compatibility with your specific operational environment and third-\n          party integrations"
+ },
+ {
+  "id": "p39",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                            7"
+ },
+ {
+  "id": "p40",
+  "text": "•    Request assistance with protection level configuration and access control\n          implementation"
+ },
+ {
+  "id": "p41",
+  "text": "Conclusion\nThere is an active threat targeting Internet-exposed Siemens S7 Series PLCs. The\ncombination of known vulnerabilities, accessible exploitation libraries, and AI-assisted\ndevelopment creates a high-probability attack scenario against inadequately protected\nPLC installations. Organizations should treat this Cybersecurity Advisory with urgency\nand coordinate response efforts across security, engineering, executive leadership,\nplant operations, and vendor support teams to implement the recommended detection\nand hardening actions."
+ },
+ {
+  "id": "p42",
+  "text": "Resources\n     •    Primary Mitigations to Reduce Cyber Threats to Operational Technology"
+ },
+ {
+  "id": "p43",
+  "text": "•    Secure connectivity principles for Operational Technology (OT): How\n          organisations should design, secure, and manage connectivity in OT"
+ },
+ {
+  "id": "p44",
+  "text": "•    Control System Defense: Know the Opponent"
+ },
+ {
+  "id": "p45",
+  "text": "Incident reporting\nU.S. organizations are encouraged to report suspicious or criminal activity related to\ninformation in this advisory to CISA and/or the FBI. Contact CISA via CISA’s 24/7\nOperations Center at contact@cisa.dhs.gov or 1-844-Say-CISA (1-844-729-2472). File\na claim with FBI’s Internet Crime Complaint Center (IC3) or contact your local FBI field\noffice. When available, please include the following information regarding the incident:\n    • Date, time, and location of the incident;\n    • Type of activity;\n    • Number of people affected;\n    • Type of equipment used for the activity; and\n    • Name of the submitting company or organization, and a designated point of\n        contact.\nEntities required to report incidents to DOE should follow established reporting\nrequirements, as appropriate. For other energy sector inquiries, contact\nEnergySRMA@hq.doe.gov."
+ },
+ {
+  "id": "p46",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                          8"
+ },
+ {
+  "id": "p47",
+  "text": "In addition, consider contacting Siemens ProductCERT via\nhttps://www.siemens.com/cert or email productcert@siemens.com."
+ },
+ {
+  "id": "p48",
+  "text": "Disclaimer of endorsement\nThe information and opinions contained in this document are provided \"as is\" and without any warranties or\nguarantees. Reference herein to any specific commercial products, process, or service by trade name, trademark,\nmanufacturer, or otherwise, does not constitute or imply its endorsement, recommendation, or favoring by the United\nStates Government, and this guidance shall not be used for advertising or product endorsement purposes."
+ },
+ {
+  "id": "p49",
+  "text": "Purpose\nThis document was developed in furtherance of the authoring agencies’ cybersecurity missions, including their\nresponsibilities to identify and disseminate threats and to develop and issue cybersecurity specifications and\nmitigations. This information may be shared broadly to reach all appropriate stakeholders."
+ },
+ {
+  "id": "p50",
+  "text": "Contact\nCybersecurity Report Feedback: CybersecurityReports@nsa.gov\nDefense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\nMedia Inquiries / Press Desk: NSA Media Relations: 443-634-0721, MediaRelations@nsa.gov"
+ },
+ {
+  "id": "p51",
+  "text": "Contact Siemens ProductCERT for up-to-date information about the security of Siemens products or to report\ncybersecurity vulnerabilities at productcert@siemens.com. For support with increasing the security of installed\nSiemens PLCs, contact Siemens Industrial Cybersecurity Services at services.automation@siemens.com. See\nSiemens ProductCERT and Siemens CERT for more information."
+ },
+ {
+  "id": "p52",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                                                    9"
+ },
+ {
+  "id": "p53",
+  "text": "Appendix A: MITRE ATT&CK tactics and techniques\nSee Table 1 for the threat actor tactics and techniques referenced in this advisory.\nTable 1: MITRE ATT&CK tactics and techniques"
+ },
+ {
+  "id": "p54",
+  "text": "Tactic                  Technique Title           ID                      Use\n                              Search Open                        Using Internet scanning services to\n                              Technical                          identify Internet-exposed or poorly\nReconnaissance                                       T1596.005\n                              Databases: Scan                    segmented Siemens S7 Series\n                              Databases                          PLCs\n                              Develop                            Developing exploits for known\nResource\n                              Capabilities:          T1587.004   Siemens S7 Series PLC\nDevelopment\n                              Exploits                           vulnerabilities\n                              Obtain\n                                                                 Rapidly iterating exploit\nResource                      Capabilities:\n                                                     T1588.007   code through AI-assisted\nDevelopment                   Artificial\n                                                                 development\n                              Intelligence\n                                                                 Deploying AI-generated Python\nExecution                     Native API             T0834       scripts incorporating the\n                                                                 snap7.dll library\n                                                                 Conducting write operations on\n                              Modify Controller\nExecution                                            T0821       data blocks, potentially for pre-\n                              Tasking\n                                                                 positioning for effects operations\n                                                                 Masquerading as legitimate\nEvasion                       Masquerading           T0849\n                                                                 monitoring tools to evade detection\n                                                                 Accessing exposed devices that\nLateral                       Insecure                           have unconfigured (default) or\n                                                     T1694\nMovement                      Credentials                        minimally configured\n                                                                 authentication\n                                                                 Conducting read operations on\n                              Data from Local\nCollection                                           T0893       data blocks, potentially for\n                              System\n                                                                 reconnaissance"
+ },
+ {
+  "id": "p55",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                                     10"
+ },
+ {
+  "id": "p56",
+  "text": "Appendix B: MITRE D3FEND countermeasures\nSee Table 2 for a mapping of several of the cybersecurity countermeasures mentioned\nin this advisory.\nTable 2: MITRE D3FEND Countermeasures"
+ },
+ {
+  "id": "p57",
+  "text": "Countermeasure Title                                 ID                    Description\nHardware Component                                        Conduct an immediate inventory of all\n                                           D3-HCI\nInventory                                                 Siemens S7 Series PLCs\n                                                          Apply critical security patches as soon as\nSoftware Update                            D3-SU\n                                                          possible\n                                                          Verify network segmentation and ensure\nNetwork Isolation                          D3-NI\n                                                          PLCs are not accessible from the Internet\n                                                          Restrict TIA Portal/STEP 7 access to\nNetwork Access\n                                           D3-NAM         authorized engineering workstations only\nMediation\n                                                          via MAC/IP allowlisting on PLCs\n                                                          • Enable PLC password protection on all S7\n                                                            controllers\nCredential Hardening                       D3-CH\n                                                          • Enable multi-factor authentication for all\n                                                            remote access to OT networks\n                                                          • Deploy ICS-aware intrusion detection\n                                                          • Alert on unauthorized PUT/GET\n                                                            operations\nPlatform Monitoring                        D3-PM          • Monitor for unexpected behavior\n                                                            deviations\n                                                          • Monitor for snap7.dll library imports\n                                                          • Hunt for indicators of compromise\n                                                          • Alert on unexpected S7comm traffic on\nNetwork Traffic Analysis                   D3-NTA           TCP port 102\n                                                          • Watch for sequential IP scanning patterns\n                                                          • Disable unused web servers and protocols\nApplication\n                                           D3-ACH         • Remove SNMP community strings\nConfiguration Hardening\n                                                          • Watch for ladder logic changes"
+ },
+ {
+  "id": "p58",
+  "text": "U/OO/6053597-26 | PP-26-3374 | August 2026 Ver 1.0                                                         11"
+ }
+]

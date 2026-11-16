@@ -1,0 +1,1176 @@
+# 2023 Top Routinely Exploited Vulnerabilities
+
+> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-317A
+> - Date: 2024-11-12
+> - URL: https://www.ic3.gov/CSA/2024/241112.pdf
+> - PDF SHA-256: ca4b60f4011eeecfa3bd27ca1293340877b88b17ba011a251f5b0a90dacc9fbd (`source.pdf`, 30 pages)
+> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.
+> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (106 lines). No other edits.
+
+Co-Authored by:                                                                                           Product ID: AA24-317A
+                                                                                                            November 12, 2024
+
+
+       2023 Top Routinely Exploited Vulnerabilities
+       Summary
+       The following cybersecurity agencies coauthored this joint Cybersecurity Advisory (hereafter collectively
+       referred to as the authoring agencies):
+                 United States: The Cybersecurity and Infrastructure Security Agency (CISA), the Federal Bureau of
+                  Investigation (FBI), and National Security Agency (NSA)
+                 Australia: Australian Signals Directorate’s Australian Cyber Security Centre (ACSC)
+                 Canada: Canadian Centre for Cyber Security (CCCS)
+                 New Zealand: New Zealand National Cyber Security Centre (NCSC-NZ) and Computer Emergency
+                  Response Team New Zealand (CERT NZ)
+                 United Kingdom: National Cyber Security Centre (NCSC-UK)
+       This advisory provides details, collected and compiled by the authoring agencies, on the Common
+       Vulnerabilities and Exposures (CVEs) routinely and frequently exploited by malicious cyber actors in 2023
+       and their associated Common Weakness Enumerations (CWEs). Malicious cyber actors exploited more
+       zero-day vulnerabilities to compromise enterprise networks in 2023 compared to 2022, allowing them to
+       conduct operations against high priority targets.
+       The authoring agencies strongly encourage vendors, designers, developers, and end-user organizations to
+       implement the following recommendations, and those found within the Mitigations section of this advisory,
+       to reduce the risk of compromise by malicious cyber actors.
+                 Vendors, designers, and developers. Implement secure by design and default principles and tactics
+                  to reduce the prevalence of vulnerabilities in your software.
+                  ○   Follow the SP 800-218 Secure Software Development Framework (SSDF) and implement
+                      secure by design practices into each stage of the software development life cycle (SDLC).
+                      Establish a coordinated vulnerability disclosure program that includes processes to determine
+                      root causes of discovered vulnerabilities.
+
+
+       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information
+       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public
+       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For
+       more information on the Traffic Light Protocol, see http://www.cisa.gov/tlp.Light Protocol, see cisa.gov/tlp.
+
+                  ○   Prioritize secure by default configurations, such as eliminating default passwords and not
+                      requiring additional configuration changes to enhance product security.
+                  ○   Ensure that published CVEs include the proper CWE field, identifying the root cause of the
+                      vulnerability.
+                 End-user organizations:
+                  ○   Apply timely patches to systems.
+                      Note: If CVEs identified in this advisory have not been patched, check for signs of compromise
+                      before patching.
+                  ○   Implement a centralized patch management system.
+                  ○   Use security tools such as endpoint detection and response (EDR), web application firewalls,
+                      and network protocol analyzers.
+                  ○   Ask your software providers to discuss their secure by design program, provide links to
+                      information about how they are working to remove classes of vulnerabilities, and to set secure
+                      default settings.
+
+
+        Table of Contents
+        Summary ......................................................................................................................................................... 1
+        Purpose ........................................................................................................................................................... 4
+        Technical Details ............................................................................................................................................. 4
+           Key Findings .......................................................................................................................................................4
+               Cybersecurity Efforts to Include ....................................................................................................................4
+           Top Routinely Exploited Vulnerabilities ............................................................................................................4
+           Additional Routinely Exploited Vulnerabilities ..................................................................................................9
+        Mitigations .................................................................................................................................................... 13
+           Vendors and Developers ................................................................................................................................ 13
+           End-User Organizations .................................................................................................................................. 14
+               Vulnerability and Configuration Management .......................................................................................... 14
+               Identity and Access Management.............................................................................................................. 15
+               Protective Controls and Architecture ......................................................................................................... 15
+               Supply Chain Security ................................................................................................................................. 16
+        Resources ..................................................................................................................................................... 16
+        References .................................................................................................................................................... 17
+        Reporting ....................................................................................................................................................... 17
+        Disclaimer ..................................................................................................................................................... 17
+        Version History .............................................................................................................................................. 17
+        Appendix: Patch Information and Additional Resources for Top Exploited Vulnerabilities ........................... 18
+
+
+        Purpose
+        The authoring agencies developed this document in furtherance of their respective cybersecurity missions,
+        including their responsibilities to develop and issue cybersecurity specifications and mitigations.
+
+        Technical Details
+        Key Findings
+        In 2023, malicious cyber actors exploited more zero-day vulnerabilities to compromise enterprise networks
+        compared to 2022, allowing them to conduct cyber operations against higher-priority targets. In 2023, the
+        majority of the most frequently exploited vulnerabilities were initially exploited as a zero-day, which is an
+        increase from 2022, when less than half of the top exploited vulnerabilities were exploited as a zero-day.
+        Malicious cyber actors continue to have the most success exploiting vulnerabilities within two years after
+        public disclosure of the vulnerability. The utility of these vulnerabilities declines over time as more systems
+        are patched or replaced. Malicious cyber actors find less utility from zero-day exploits when international
+        cybersecurity efforts reduce the lifespan of zero-day vulnerabilities.
+        Cybersecurity Efforts to Include
+        Implementing security-centered product development lifecycles. Software developers deploying patches to
+        fix software vulnerabilities is often a lengthy and expensive process, particularly for zero-days. The use of
+        more robust testing environments and implementing threat modeling throughout the product development
+        lifecycle will likely reduce overall product vulnerabilities.
+        Increasing incentives for responsible vulnerability disclosure. Global efforts to reduce barriers to
+        responsible vulnerability disclosure could restrict the utility of zero-day exploits used by malicious cyber
+        actors. For example, instituting vulnerability reporting bug bounty programs that allow researchers to
+        receive compensation and recognition for their contributions to vulnerability research may boost
+        disclosures.
+        Using sophisticated endpoint detection and response (EDR) tools. End users leveraging EDR solutions may
+        improve the detection rate of zero-day exploits. Most zero-day exploits, including at least three of the top
+        15 vulnerabilities from last year, have been discovered when an end user or EDR system reports
+        suspicious activity or unusual device malfunctions.
+
+        Top Routinely Exploited Vulnerabilities
+        Listed in Table 1 are the top 15 vulnerabilities the authoring agencies observed malicious cyber actors
+        routinely exploiting in 2023 with details also discussed below.
+                 CVE-2023-3519: This vulnerability affects Citrix NetScaler ADC and NetScaler Gateway.
+                  ○   Allows an unauthenticated user to cause a stack buffer overflow in the NSPPE process by using
+                      a HTTP GET request.
+                 CVE-2023-4966: This vulnerability affects Citrix NetScaler ADC and NetScaler Gateway.
+                  ○   Allows session token leakage; a proof-of-concept for this exploit was revealed in October 2023.
+
+
+                 CVE-2023-20198: This vulnerability affects Cisco IOS XE Web UI.
+                  ○   Allows unauthorized users to gain initial access and issue a command to create a local user
+                      and password combination, resulting in the ability to log in with normal user access.
+                 CVE-2023-20273: This vulnerability affects Cisco IOS XE, following activity from CVE-2023-20198.
+                  ○   Allows privilege escalation, once a local user has been created, to root privileges.
+                 CVE-2023-27997: This vulnerability affects Fortinet FortiOS and FortiProxy SSL-VPN.
+                  ○   Allows a remote user to craft specific requests to execute arbitrary code or commands.
+                 CVE-2023-34362: This vulnerability affects Progress MOVEit Transfer.
+                  ○   Allows abuse of an SQL injection vulnerability to obtain a sysadmin API access token.
+                  ○   Allows a malicious cyber actor to obtain remote code execution via this access by abusing a
+                      deserialization call.
+                 CVE-2023-22515: This vulnerability affects Atlassian Confluence Data Center and Server.
+                  ○   Allows exploit of an improper input validation issue.
+                      ●    Arbitrary HTTP parameters can be translated into getter/setter sequences via the XWorks2
+                           middleware and, in turn, allow Java objects to be modified at run time.
+                      ●    The exploit creates a new administrator user and uploads a malicious plugin to get
+                           arbitrary code execution.
+                 CVE-2021-44228: This vulnerability, known as Log4Shell, affects Apache’s Log4j library, an open
+                  source logging framework incorporated into thousands of products worldwide.
+                  ○    Allows the execution of arbitrary code.
+                      ●    An actor can exploit this vulnerability by submitting a specially crafted request to a
+                           vulnerable system, causing the execution of arbitrary code.
+                      ●    The request allows a cyber actor to take full control of a system.
+                      ●    The actor can then steal information, launch ransomware, or conduct other malicious
+                           activity.
+                      ●    Malicious cyber actors began exploiting the vulnerability after it was publicly disclosed in
+                           December 2021.
+                 CVE-2023-2868: This is a remote command injection vulnerability that affects the Barracuda
+                  Networks Email Security Gateway (ESG) Appliance.
+                  ○   Allows an individual to obtain unauthorized access and remotely execute system commands
+                      via the ESG appliance.
+                 CVE-2022-47966: This is an unauthenticated remote code execution vulnerability that affects
+                  multiple products using Zoho ManageEngine.
+                  ○   Allows an unauthenticated user to execute arbitrary code by providing a crafted samlResponse
+                      XML to the ServiceDesk Plus SAML endpoint.
+                 CVE-2023-27350: This vulnerability affects PaperCut MF/NG.
+                  ○   Allows a malicious cyber actor to chain an authentication bypass vulnerability with the abuse of
+                      built-in scripting functionality to execute code.
+
+
+                 CVE-2020-1472: This vulnerability affects Microsoft Netlogon.
+                  ○    Allows privilege escalation.
+                       ●   An unauthorized user may use non-default configurations to establish a vulnerable
+                           Netlogon secure channel connection to a domain controller by using the Netlogon Remote
+                           Protocol.
+                           Note: This CVE has been included in top routinely exploited vulnerabilities lists since 2021.
+                 CVE-2023-42793: This vulnerability can affect JetBrains TeamCity servers.
+                  ○    Allows authentication bypass that allows remote code execution against vulnerable JetBrains
+                       TeamCity servers.
+                 CVE-2023-23397: This vulnerability affects Microsoft Office Outlook.
+                  ○    Allows elevation of privilege.
+                       ●   A threat actor can send a specially crafted email that the Outlook client will automatically
+                           trigger when Outlook processes it.
+                       ●   This exploit occurs even without user interaction.
+                 CVE-2023-49103: This vulnerability affects ownCloud graphapi.
+                  ○    Allows unauthenticated information disclosure.
+                       ●   An unauthenticated user can access sensitive data such as admin passwords, mail server
+                           credentials, and license keys.
+
+                                       Table 1: Top 15 Routinely Exploited Vulnerabilities in 2023
+
+                 CVE                   Vendor             Product(s)          Vulnerability Type             CWE
+
+                                                                                                     CWE-94: Improper
+                                                    NetScaler ADC                                    Control of Generation
+          CVE-2023-3519         Citrix                                      Code Injection
+                                                    NetScaler Gateway                                of Code ('Code
+                                                                                                     Injection')
+
+                                                                                                     CWE-119: Improper
+                                                    NetScaler ADC                                    Restriction of
+          CVE-2023-4966         Citrix                                      Buffer Overflow          Operations within the
+                                                    NetScaler Gateway                                Bounds of a Memory
+                                                                                                     Buffer
+
+                                                                                                     CWE-420:
+          CVE-2023-
+                                Cisco               IOS XE Web UI           Privilege Escalation     Unprotected Alternate
+          20198
+                                                                                                     Channel
+
+
+                 CVE                   Vendor        Product(s)        Vulnerability Type            CWE
+
+                                                                                            CWE-78: Improper
+                                                                                            Neutralization of
+          CVE-2023-                                                  Web UI Command         Special Elements
+                                Cisco           IOS XE
+          20273                                                      Injection              used in an OS
+                                                                                            Command ('OS
+                                                                                            Command Injection')
+
+                                                                                            CWE-787: Out-of-
+          CVE-2023-                             FortiOS              Heap-Based Buffer      bounds Write
+                                Fortinet
+          27997                                 FortiProxy SSL-VPN   Overflow               CWE-122: Heap-
+                                                                                            based Buffer Overflow
+
+                                                                                            CWE-89: Improper
+                                                                                            Neutralization of
+          CVE-2023-                                                                         Special Elements
+                                Progress        MOVEit Transfer      SQL Injection
+          34362                                                                             used in an SQL
+                                                                                            Command ('SQL
+                                                                                            Injection')
+
+          CVE-2023-                             Confluence Data      Broken Access          CWE-20 Improper
+                                Atlassian
+          22515                                 Center and Server    Control                Input Validation
+
+                                                                                            CWE-917 Improper
+                                                                                            Neutralization of
+                                                                                            Special Elements
+                                                                                            used in an Expression
+                                                                                            Language Statement
+                                                                                            ('Expression
+                                                                                            Language Injection')
+          CVE-2021-
+                                                                     Remote Code            CWE-502:
+          44228                 Apache          Log4j2
+                                                                     Execution (RCE)        Deserialization of
+          (Log4Shell)                                                                       Untrusted Data
+                                                                                            CWE-20 Improper
+                                                                                            Input Validation
+                                                                                            CWE-400
+                                                                                            Uncontrolled
+                                                                                            Resource
+                                                                                            Consumption
+
+
+                 CVE                   Vendor         Product(s)      Vulnerability Type           CWE
+
+                                                                                           CWE-77: Improper
+                                                                                           Neutralization of
+                                                                                           Special Elements
+                                Barracuda                           Improper Input         used in a Command
+          CVE-2023-2868                         ESG Appliance
+                                Networks                            Validation             ('Command Injection')
+                                                                                           CWE-20: Improper
+                                                                                           Input Validation
+
+          CVE-2022-                             ManageEngine        Remote Code            CWE-20 Improper
+                                Zoho
+          47966                                 Multiple Products   Execution              Input Validation
+
+          CVE-2023-                                                 Improper Access        CWE-284: Improper
+                                PaperCut        MF/NG
+          27350                                                     Control                Access Control
+
+                                                                                           CWE-330: Use of
+          CVE-2020-1472         Microsoft       Netlogon            Privilege Escalation   Insufficiently Random
+                                                                                           Values
+
+                                                                                           CWE-288:
+          CVE-2023-                                                 Authentication         Authentication Bypass
+                                JetBrains       TeamCity
+          42793                                                     Bypass                 Using an Alternate
+                                                                                           Path or Channel
+
+                                                                                           CWE-294:
+                                                                                           Authentication Bypass
+          CVE-2023-                                                                        by Capture-replay
+                                Microsoft       Office Outlook      Privilege Escalation
+          23397
+                                                                                           CWE-20: Improper
+                                                                                           Input Validation
+
+                                                                                           CWE-200 Exposure of
+          CVE-2023-                                                 Information            Sensitive Information
+                                ownCloud        graphapi
+          49103                                                     Disclosure             to an Unauthorized
+                                                                                           Actor
+
+
+        Additional Routinely Exploited Vulnerabilities
+        The authoring agencies identified other vulnerabilities, listed in Table 2, that malicious cyber actors also
+        routinely exploited in 2023—in addition to the 15 vulnerabilities listed in Table 1.
+
+                                   Table 2: Additional Routinely Exploited Vulnerabilities in 2023
+
+                 CVE                   Vendor            Product            Vulnerability Type            CWE
+
+          CVE-2023-                               Confluence Data         Improper               CWE-863: Incorrect
+                                Atlassian
+          22518                                   Center and Server       Authorization          Authorization
+
+                                                                                                 CWE-94 Improper
+          CVE-2023-                                                       Insecure               Control of Generation
+                                Novi              Novi Survey
+          29492                                                           Deserialization        of Code ('Code
+                                                                                                 Injection')
+
+                                                                                                 CWE-434:
+          CVE-2021-                               WARP, IPVPN, and        Configuration Upload   Unrestricted Upload
+                                FatPipe
+          27860                                   MPVPN                   Exploit                of File with Dangerous
+                                                                                                 Type
+
+                                                                                                 CWE-706: Use of
+          CVE-2021-                               ManageEngine            Authentication
+                                Zoho                                                             Incorrectly-Resolved
+          40539                                   ADSelfService Plus      Bypass
+                                                                                                 Name or Reference
+
+                                                                                                 CWE-502:
+          CVE-2023-0669         Fortra            GoAnywhere MFT          RCE                    Deserialization of
+                                                                                                 Untrusted Data
+
+                                                  BIG-IP and BIG-IQ
+                                                                                                 CWE-918: Server-Side
+          CVE-2021-                               Centralized
+                                F5                                        RCE                    Request Forgery
+          22986                                   Management iControl
+                                                                                                 (SSRF)
+                                                  REST
+
+                                                  Remote Desktop                                 CWE-416: Use After
+          CVE-2019-0708         Microsoft                                 RCE
+                                                  Services                                       Free
+
+                                                                                                 CWE-22: Improper
+                                                                                                 Limitation of a
+          CVE-2018-
+                                Fortinet          FortiOS SSL VPN         Path Traversal         Pathname to a
+          13379
+                                                                                                 Restricted Directory
+                                                                                                 ('Path Traversal')
+
+
+                 CVE                    Vendor             Product       Vulnerability Type            CWE
+
+                                                                                              CWE-502:
+          CVE-2022-                                                    Insecure Object
+                                Netwrix          Auditor                                      Deserialization of
+          31199                                                        Deserialization
+                                                                                              Untrusted Data
+
+          CVE-2023-                              Endpoint Manager      Authentication         CWE-287: Improper
+                                Ivanti
+          35078                                  Mobile                Bypass                 Authentication
+
+                                                                                              CWE-22: Improper
+                                                                                              Limitation of a
+          CVE-2023-                              Endpoint Manager
+                                Ivanti                                 Path Traversal         Pathname to a
+          35081                                  Mobile (EPMM)
+                                                                                              Restricted Directory
+                                                                                              ('Path Traversal')
+
+                                                                                              CWE-400:
+          CVE-2023-                                                                           Uncontrolled
+                                N/A              HTTP/2                Rapid Reset Attack
+          44487                                                                               Resource
+                                                                                              Consumption
+
+                                                                                              CWE-473: PHP
+          CVE-2023-                              Junos OS EX Series    External Variable
+                                Juniper                                                       External Variable
+          36844                                  PHP                   Modification
+                                                                                              Modification
+
+                                                                                              CWE-473: PHP
+          CVE-2023-                              Junos OS EX Series    External Variable
+                                Juniper                                                       External Variable
+          36845                                  and SRX Series PHP    Modification
+                                                                                              Modification
+
+                                                                       Missing                CWE-306: Missing
+          CVE-2023-
+                                Juniper          Junos OS SRX Series   Authentication for     Authentication for
+          36846
+                                                                       Critical Function      Critical Function
+
+                                                                       Missing                CWE-306: Missing
+          CVE-2023-
+                                Juniper          Junos OS EX Series    Authentication for     Authentication for
+          36847
+                                                                       Critical Function      Critical Function
+
+                                                                                              CWE-120: Buffer Copy
+          CVE-2023-                              iOS, iPadOS, and                             without Checking Size
+                                Apple                                  Buffer Overflow
+          41064                                  macOS ImageIO                                of Input ('Classic
+                                                                                              Buffer Overflow')
+
+          CVE-2023-                              Apple iOS, iPadOS,                           CWE-20 Improper
+                                Apple                                  Code Execution
+          41061                                  and watchOS Wallet                           Input Validation
+
+
+                 CVE                    Vendor            Product         Vulnerability Type            CWE
+
+                                                                                               CWE-94: Improper
+          CVE-2021-                              Community and                                 Control of Generation
+                                GitLab                                  RCE
+          22205                                  Enterprise Editions                           of Code ('Code
+                                                                                               Injection')
+
+                                                                                               CWE-22: Improper
+                                                                                               Limitation of a
+          CVE-2019-
+                                Ivanti           Pulse Connect Secure   Arbitrary File Read    Pathname to a
+          11510
+                                                                                               Restricted Directory
+                                                                                               ('Path Traversal')
+
+                                                                                               CWE-798: Use of
+                                                                                               Hard-coded
+                                                                                               Credentials
+                                                                        Insecure Default
+          CVE-2023-6448         Unitronics       Vision PLC and HMI                            CWE-1188:
+                                                                        Password
+                                                                                               Initialization of a
+                                                                                               Resource with an
+                                                                                               Insecure Default
+
+                                                                                               CWE-119: Improper
+                                                                                               Restriction of
+                                                 IOS and IOS XE
+          CVE-2017-6742         Cisco                                   RCE                    Operations within the
+                                                 Software SNMP
+                                                                                               Bounds of a Memory
+                                                                                               Buffer
+
+                                                                                               CWE-125: Out-of-
+                                                                        Out-of-Bounds Read     bounds Read
+          CVE-2021-4034         Red Hat          Polkit
+                                                                        and Write              CWE-787: Out-of-
+                                                                                               bounds Write
+
+                                                                                               CWE-917: Improper
+                                                                                               Neutralization of
+                                                                        Object-Graph           Special Elements
+          CVE-2021-                              Confluence Server
+                                Atlassian                               Navigation Language    used in an Expression
+          26084                                  and Data Center
+                                                                        (OGNL) Injection       Language Statement
+                                                                                               ('Expression
+                                                                                               Language Injection')
+
+          CVE-2021-                                                     Authentication         CWE-287: Improper
+                                Dahua            Various products
+          33044                                                         Bypass                 Authentication
+
+
+                 CVE                    Vendor          Product              Vulnerability Type            CWE
+
+          CVE-2021-                                                        Authentication         CWE-287: Improper
+                                Dahua            Various products
+          33045                                                            Bypass                 Authentication
+
+                                                                                                  CWE-94: Improper
+                                                                                                  Control of Generation
+          CVE-2022-3236         Sophos           Firewall                  Code Injection
+                                                                                                  of Code ('Code
+                                                                                                  Injection')
+
+                                                                                                  CWE-917: Improper
+                                                                                                  Neutralization of
+                                                                                                  Special Elements
+          CVE-2022-                              Confluence Server
+                                Atlassian                                  RCE                    used in an Expression
+          26134                                  and Data Center
+                                                                                                  Language Statement
+                                                                                                  ('Expression
+                                                                                                  Language Injection')
+
+                                                                                                  CWE-918: Server-Side
+          CVE-2022-                                                        Server-Side Request
+                                Microsoft        Exchange Server                                  Request Forgery
+          41040                                                            Forgery
+                                                                                                  (SSRF)
+
+                                                                                                  CWE-345: Insufficient
+                                                                                                  Verification of Data
+          CVE-2023-                                                                               Authenticity
+                                RARLAB           WinRAR                    Code Execution
+          38831
+                                                                                                  CWE-351: Insufficient
+                                                                                                  Type Distinction
+
+                                                                                                  CWE-502:
+          CVE-2019-             Progress         Progress Telerik UI for   Deserialization of
+                                                                                                  Deserialization of
+          18935                 Telerik          ASP.NET AJAX              Untrusted Data
+                                                                                                  Untrusted Data
+
+                                                                                                  CWE-918: Server-Side
+          CVE-2021-                              Microsoft Exchange
+                                Microsoft                                  RCE                    Request Forgery
+          34473                                  Server
+                                                                                                  (SSRF)
+
+
+        Mitigations
+        Vendors and Developers
+        The authoring agencies recommend vendors and developers take the following steps to help ensure their
+        products are secure by design and default:
+                 Identify repeatedly exploited classes of vulnerability.
+                  ○   Perform an analysis of both CVEs and known exploited vulnerabilities (KEVs) to understand
+                      which classes of vulnerability are identified more than others.
+                  ○   Implement appropriate mitigations to eliminate those classes of vulnerability.
+                  ○   If a product has several instances of SQL injection vulnerabilities, ensure all database queries
+                      in the product use parameterized queries and prohibit other forms of queries.
+                 Ensure business leaders are responsible for security.
+                  ○   Business leaders should ensure their teams take proactive steps to eliminate entire classes of
+                      security vulnerabilities, rather than only making one-off patches when new vulnerabilities are
+                      discovered.
+                 Follow SP 800-218 SSDF and implement secure by design practices into each stage of the SDLC;
+                  in particular, aim to perform the following SSDF recommendations:
+                  ○   Prioritize the use of memory safe languages wherever possible [SSDF PW 6.1].
+                  ○   Exercise due diligence when selecting software components (e.g., software libraries, modules,
+                      middleware, frameworks) to ensure robust security in consumer software products [SSDF PW
+                      4.1].
+                  ○   Set up secure software development team practices—this includes conducting peer code
+                      reviews, working to a common organization secure coding standard, and maintaining
+                      awareness of language-specific security concerns [SSDF PW.5.1, PW.7.1, PW.7.2].
+                  ○   Establish a vulnerability disclosure program to verify and resolve security vulnerabilities
+                      disclosed by people who may be internal or external to the organization [SSDF RV.1.3] and
+                      establish processes to determine root causes of discovered vulnerabilities.
+                  ○   Use static and dynamic application security testing (SAST/DAST) tools to analyze product
+                      source code and application behavior to detect error-prone practices [SSDF PW.7.2, PW.8.2].
+                 Configure production-ready products to have the most secure settings by default and provide
+                  guidance on the risks of changing each setting [SSDF PW.9.1, PW9.2].
+                  ○   Prioritize secure by default configurations such as eliminating default passwords, implementing
+                      single sign on (SSO) technology via modern open standards, and providing high-quality audit
+                      logs to customers with no additional configuration necessary and at no extra charge.
+                 Ensure published CVEs include the proper CWE field identifying the root cause of the vulnerability
+                  to enable industry-wide analysis of software security and design flaws.
+
+
+        For more information on designing secure by design and default products, including additional
+        recommended secure by default configurations, see CISA’s joint guide Shifting the Balance of
+        Cybersecurity Risk: Principles and Approaches for Security by Design and Default.
+
+        End-User Organizations
+        The authoring agencies recommend end-user organizations implement the mitigations below to improve
+        their cybersecurity posture based on threat actors’ activity. These mitigations align with the cross-sector
+        Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute of Standards and
+        Technology (NIST). The CPGs provide a minimum set of practices and protections that CISA and NIST
+        recommend all organizations implement. CISA and NIST based the CPGs on existing cybersecurity
+        frameworks and guidance to protect against the most common and impactful threats, tactics, techniques,
+        and procedures. Visit CISA’s CPGs webpage for more information on CPGs, including additional
+        recommended baseline protections.
+
+        Vulnerability and Configuration Management
+                 Update software, operating systems, applications, and firmware on IT network assets in a timely
+                  manner [CPG 1.E].
+                  ○   Prioritize patching KEVs, especially those CVEs identified in this advisory, then critical and high
+                      vulnerabilities that allow for remote code execution or denial-of-service on internet-facing
+                      equipment.
+                  ○   For patch information on CVEs identified in this advisory, refer to the Appendix: Patch
+                      Information and Additional Resources for Top Exploited Vulnerabilities.
+                      ●    If a patch for a KEV or critical vulnerability cannot be quickly applied, implement vendor-
+                           approved workarounds.
+                      ●    Replace end-of-life software (i.e., software no longer supported by the vendor).
+                 Routinely perform automated asset discovery across the entire estate to identify and catalogue all
+                  the systems, services, hardware, and software.
+                 Implement a robust patch management process and centralized patch management system that
+                  establishes prioritization of patch applications [CPG 1.A].
+                  ○   Organizations that are unable to perform rapid scanning and patching of internet-facing
+                      systems should consider moving these services to mature, reputable cloud service providers
+                      (CSPs) or other managed service providers (MSPs).
+                  ○   Reputable MSPs can patch applications (such as webmail, file storage, file sharing, chat, and
+                      other employee collaboration tools) for their customers.
+                      Note: MSPs and CSPs can expand their customer’s attack surface and may introduce
+                      unanticipated risks, so organizations should proactively collaborate with their MSPs and CSPs
+                      to jointly reduce risk [CPG 1.F]. For more information and guidance, see the following
+                      resources:
+                      ●    CISA Insights’ Risk Considerations for MSP Customers.
+
+
+                      ●    CISA Insights’ Mitigations and Hardening Guidance for MSPs and Small- and Mid-sized
+                           Businesses.
+                      ●    ACSC’s How to Manage Your Security When Engaging a MSP.
+                 Document secure baseline configurations for all IT/OT components, including cloud infrastructure.
+                  ○   Monitor, examine, and document any deviations from the initial secure baseline [CPG 2.O].
+                 Perform regular secure system backups and create known good copies of all device configurations
+                  for repairs and/or restoration.
+                  ○   Store copies off-network in physically secure locations and test regularly [CPG 2.R].
+                 Maintain an updated cybersecurity incident response plan that is tested at least annually and
+                  updated within a risk informed time frame to ensure its effectiveness [CPG 2.S].
+
+        Identity and Access Management
+                 Enforce phishing-resistant multifactor authentication (MFA) for all users without exception [CPG
+                  2.H].
+                 Enforce MFA on all VPN connections.
+                  ○   If MFA is unavailable, require employees engaging in remote work to use strong passwords
+                      [CPG 2.A, 2.B, 2.C, 2.D, 2.G].
+                 Regularly review, validate, or remove unprivileged accounts (annually at a minimum) [CPG 2.D,
+                  2.E].
+                 Configure access control under the principle of least privilege [CPG 2.O].
+                  ○   Ensure software service accounts only provide necessary permissions (least privilege) to
+                      perform intended functions (using non-administrative privileges where feasible).
+                      Note: See CISA’s Capacity Enhancement Guide – Implementing Strong Authentication and
+                      ACSC’s guidance on Implementing MFA for more information on authentication system
+                      hardening.
+        Protective Controls and Architecture
+                 Properly configure and secure internet-facing network devices, disable unused or unnecessary
+                  network ports and protocols, encrypt network traffic, and disable unused network services and
+                  devices [CPG 2.V, 2.W, 2.X].
+                  ○   Harden commonly exploited enterprise network services, including Link-Local Multicast Name
+                      Resolution (LLMNR) protocol, Remote Desktop Protocol (RDP), Common Internet File System
+                      (CIFS), Active Directory, and OpenLDAP.
+                  ○   Manage Windows Key Distribution Center (KDC) accounts (e.g., KRBTGT) to minimize Golden
+                      Ticket attacks and Kerberoasting.
+                  ○   Strictly control the use of native scripting applications, such as command-line, PowerShell,
+                      WinRM, Windows Management Instrumentation (WMI), and Distributed Component Object
+                      Model (DCOM).
+
+
+                 Implement Zero Trust Network Architecture (ZTNA) to limit or block lateral movement by controlling
+                  access to applications, devices, and databases. Use private virtual local area networks [CPG 2.F,
+                  2.X].
+                  Note: See CISA’s Zero Trust Maturity Model and the Department of Defense’s Zero Trust Reference
+                  Architecture for additional information on Zero Trust.
+                 Continuously monitor the attack surface and investigate abnormal activity that may indicate cyber
+                  actor or malware lateral movement [CPG 2.T].
+                  ○   Use security tools, such as endpoint detection and response (EDR) and security information
+                      and event management (SIEM) tools.
+                      ●    Consider using an information technology asset management (ITAM) solution to ensure
+                           EDR, SIEM, vulnerability scanners, and other similar tools are reporting the same number
+                           of assets [CPG 2.T, 2.V].
+                  ○   Use web application firewalls to monitor and filter web traffic.
+                      ●    These tools are commercially available via hardware, software, and cloud-based solutions,
+                           and may detect and mitigate exploitation attempts where a cyber actor sends a malicious
+                           web request to an unpatched device [CPG 2.B, 2.F].
+                  ○   Implement an administrative policy and/or automated process configured to monitor unwanted
+                      hardware, software, or programs against an allowlist with specified, approved versions [CPG
+                      2.Q].
+
+        Supply Chain Security
+                 Reduce third-party applications and unique system/application builds—provide exceptions only if
+                  required to support business critical functions [CPG 2.Q].
+                 Ensure contracts require vendors and/or third-party service providers to:
+                  ○   Provide notification of security incidents and vulnerabilities within a risk informed time frame
+                      [CPG 1.G, 1.H, 1.I].
+                  ○   Supply a Software Bill of Materials (SBOM) with all products to enhance vulnerability
+                      monitoring and to help reduce time to respond to identified vulnerabilities [CPG 4.B].
+                 Ask your software providers to discuss their secure by design program, provide links to information
+                  about how they are working to remove classes of vulnerabilities, and to set secure default settings.
+
+        Resources
+                 For information on the top vulnerabilities routinely exploited in 2016–2019, 2020, 2021, and
+                  2022:
+                  ○   Joint CSA Top 10 Routinely Exploited Vulnerabilities.
+                  ○   Joint CSA Top Routinely Exploited Vulnerabilities.
+                  ○   Joint CSA 2021 Top Routinely Exploited Vulnerabilities.
+                  ○   Joint CSA 2022 Top Routinely Exploited Vulnerabilities.
+                 See the Appendix for additional partner resources on the vulnerabilities mentioned in this advisory.
+
+
+                 See ACSC’s Essential Eight Maturity Model for additional mitigations.
+                 See ACSC’s Cyber Supply Chain Risk Management for additional considerations and advice.
+
+        References
+                 Apache Log4j Vulnerability Guidance
+
+        Reporting
+        U.S. organizations: All organizations should report incidents and anomalous activity to CISA 24/7
+        Operations Center at report@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field office or
+        the FBI’s CyWatch at (855) 292-3937 or CyWatch@fbi.gov. When available, please include the following
+        information regarding the incident: date, time, and location of the incident; type of activity; number of
+        people affected; type of equipment used for the activity; the name of the submitting company or
+        organization; and a designated point of contact. For NSA client requirements or general cybersecurity
+        inquiries, contact Cybersecurity_Requests@nsa.gov.
+        Australian organizations: Visit cyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report cybersecurity
+        incidents and access alerts and advisories.
+        Canadian organizations: Report incidents by emailing CCCS at contact@cyber.gc.ca.
+        New Zealand organizations: Report cyber security incidents to incidents@ncsc.govt.nz or call 04 498
+        7654.
+        United Kingdom organizations: Report a significant cyber security incident at gov.uk/report-cyber
+        (monitored 24 hours).
+
+        Disclaimer
+        The information in this report is being provided “as is” for informational purposes only. CISA, FBI, NSA,
+        ACSC, CCCS, NCSC-NZ, CERT NZ, and NCSC-UK do not endorse any commercial product or service,
+        including any subjects of analysis. Any reference to specific commercial products, processes, or services by
+        service mark, trademark, manufacturer, or otherwise, does not constitute or imply endorsement,
+        recommendation, or favoring.
+
+        Version History
+        November 12, 2024: Initial version.
+
+
+        Appendix: Patch Information and Additional Resources for Top Exploited Vulnerabilities
+                  CVE                   Vendor        Affected Products and Versions           Patch Information                  Resources
+
+                                                 NetScaler ADC and NetScaler Gateway:
+                                                 13.1 before 13.1-49.13                                                    Threat Actors Exploiting
+                                                 13.0 before 13.0-91.13                  Citrix ADC and Citrix Gateway     Citrix CVE-2023-3519 to
+                                                                                         Security Bulletin for CVE-2023-   Implant Webshells
+          CVE-2023-3519           Citrix         NetScaler ADC:
+                                                                                         3519, CVE-2023-3466, CVE-         Critical Security Update
+                                                 13.1-FIPS before 13.1-37.159            2023-3467                         for NetScaler ADC and
+                                                 12.1-FIPS before 12.1-55.297                                              NetScaler Gateway
+
+                                                 12.1-NDcPP before 12.1-55.297
+
+                                                 NetScaler ADC and NetScaler Gateway:
+                                                 14.1 before 14.1-8.50                                                     #StopRansomware:
+                                                                                                                           LockBit 3.0 Ransomware
+                                                 13.1 before 13.1-49.15
+                                                                                         NetScaler ADC and NetScaler       Affiliates Exploit CVE
+                                                 13.0 before 13.0-92.19                  Gateway Security Bulletin for     2023-4966 Citrix Bleed
+          CVE-2023-4966           Citrix                                                                                   Vulnerability
+                                                 NetScaler ADC:                          CVE-2023-4966 and CVE-
+                                                                                         2023-4967                         Critical Security Update
+                                                 13.1-FIPS before 13.1-37.164
+                                                                                                                           for NetScaler ADC and
+                                                 12.1-FIPS before 12.1-55.300                                              NetScaler Gateway
+                                                 12.1-NDcPP before 12.1-55.300
+
+                                                                                         Multiple Vulnerabilities in       Guidance for Addressing
+                                                 Any Cisco IOS XE Software with web UI
+          CVE-2023-20198          Cisco                                                  Cisco IOS XE Software Web UI      Cisco IOS XE Web UI
+                                                 feature enabled
+                                                                                         Feature                           Vulnerabilities
+
+
+                                                                                                                                                CISA | FBI| NSA
+
+                  CVE                   Vendor           Affected Products and Versions          Patch Information                 Resources
+
+                                                 FortiOS-6K7K versions:
+                                                 7.0.10, 7.0.5, 6.4.12
+                                                 6.4.10, 6.4.8, 6.4.6, 6.4.2
+                                                 6.2.9 through 6.2.13                      Heap buffer overflow in sslvpn
+          CVE-2023-27997          Fortinet
+                                                 6.2.6 through 6.2.7                       pre-authentication
+
+                                                 6.2.4
+                                                 6.0.12 through 6.0.16
+                                                 6.0.10
+
+                                                 MOVEit Transfer:
+                                                 2023.0.0 (15.0)
+                                                 2022.1.x (14.1)
+                                                                                                                            #StopRansomware: CL0P
+                                                 2022.0.x (14.0)                           MOVEit Transfer Critical         Ransomware Gang
+          CVE-2023-34362          Progress
+                                                 2021.1.x (13.1)                           Vulnerability                    Exploits CVE-2023-34362
+                                                                                                                            MOVEit Vulnerability
+                                                 2021.0.x (13.0)
+                                                 2020.1.x (12.1)
+                                                 2020.0.x (12.0) or older MOVEit Cloud
+
+                                                 8.0.0, 8.0.1, 8.0.2, 8.0.3, 8.0.4
+                                                                                                                            Threat Actors Exploit
+                                                                                           Broken Access Control
+                                                 8.1.0, 8.1.1, 8.1.3, 8.1.4                                                 Atlassian Confluence
+          CVE-2023-22515          Atlassian                                                Vulnerability in Confluence
+                                                                                                                            CVE-2023-22515 for
+                                                 8.2.0, 8.2.1, 8.2.2, 8.2.38.3.0, 8.3.1,   Data Center and Server
+                                                                                                                            Initial Access to Networks
+                                                 8.3.2
+
+
+                                                                                                                                                    CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions                Patch Information                  Resources
+
+                                                 8.4.0, 8.4.1, 8.4.28.5.0, 8.5.1
+
+
+                                                                                              Apache Log4j Security
+                                                 Log4j, all versions from 2.0-beta9 to        Vulnerabilities                   Malicious Cyber Actors
+          CVE-2021- 44228                        2.14.1                                                                         Continue to Exploit
+                                  Apache                                                      For additional information, see
+          (Log4Shell)                            For other affected vendors and products,     joint advisory: Mitigating        Log4Shell in VMware
+                                                 see CISA's GitHub repository.                Log4Shell and Other Log4j-        Horizon Systems
+                                                                                              Related Vulnerabilities
+
+
+                                                                                              Barracuda Email Security
+                                  Barracuda
+          CVE-2023-2868                          5.1.3.001 through 9.2.0.006                  Gateway Appliance (ESG)
+                                  Networks
+                                                                                              Vulnerability
+
+
+                                                 Multiple products, multiple versions. (For   Security advisory for remote
+                                                 more details, see Security advisory for      code execution vulnerability in
+          CVE-2022-47966          Zoho
+                                                 remote code execution vulnerability in       multiple ManageEngine
+                                                 multiple ManageEngine products)              products
+
+                                                 PaperCut MF or NG version 8.0 or later
+                                                 (excluding patched versions) on all OS
+                                                                                                                                Malicious Actors Exploit
+                                                 platforms. This includes:                    URGENT MF/NG vulnerability
+          CVE-2023-27350          PaperCut                                                                                      CVE-2023-27350 in
+                                                                                              bulletin (March 2023)
+                                                 version 8.0.0 to 19.2.7 (inclusive)                                            PaperCut MF and NG
+                                                 version 20.0.0 to 20.1.6 (inclusive)
+
+
+                                                                                                                                                  CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions               Patch Information                  Resources
+
+                                                 version 21.0.0 to 21.2.10 (inclusive)
+                                                 version 22.0.0 to 22.0.8 (inclusive)
+
+
+                                                                                                                               Russian Military Cyber
+                                                                                             Netlogon Elevation of Privilege   Actors Target U.S. and
+          CVE-2020-1472           Microsoft      Netlogon
+                                                                                             Vulnerability                     Global Critical
+                                                                                                                               Infrastructure
+
+                                                                                                                               Russian Cyber Actors Use
+                                                                                             Microsoft Outlook Elevation of    Compromised Routers to
+          CVE-2023-23397          Microsoft      Outlook
+                                                                                             Privilege Vulnerability           Facilitate Cyber
+                                                                                                                               Operations
+
+
+                                                                                             Disclosure of Sensitive
+          CVE-2023-49103          ownCloud       graphapi                                    Credentials and Configuration
+                                                                                             in Containerized Deployments
+
+
+                                                                                             Multiple Vulnerabilities in       Guidance for Addressing
+                                                 Cisco IOS XE Software with web UI feature
+          CVE-2023-20273          Cisco                                                      Cisco IOS XE Software Web UI      Cisco IOS XE Web UI
+                                                 enabled
+                                                                                             Feature                           Vulnerabilities
+
+
+                                                                                                                                             CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions            Patch Information               Resources
+
+                                                                                                                         Russian Foreign
+                                                                                          CVE-2023-42793 Vulnerability   Intelligence Service (SVR)
+          CVE-2023-42793          JetBrains      In JetBrains TeamCity before 2023.05.4
+                                                                                          in TeamCity: Post-Mortem       Exploiting JetBrains
+                                                                                                                         TeamCity CVE Globally
+
+
+                                                                                          Improper Authorization in
+                                                 All versions of Confluence Data Cetner
+          CVE-2023-22518          Atlassian                                               Confluence Data Center and
+                                                 and Confluence Server
+                                                                                          Server
+
+
+          CVE-2023-29492          —              —                                        —
+
+
+                                                 WARP, MPVPN, IPVPN
+          CVE-2021-27860          FatPipe                                                 FatPipe CVE List
+                                                 10.1.2 and 10.2.2
+
+
+                                                                                                                         ACSC Alert:
+                                                                                          Security advisory -
+                                                 ManageEngine ADSelfService Plus builds   ADSelfService Plus             Critical vulnerability in
+          CVE-2021-40539          Zoho                                                                                   ManageEngine
+                                                 up to 6113                               authentication bypass
+                                                                                          vulnerability                  ADSelfService Plus
+                                                                                                                         exploited by cyber actors
+
+
+                                                                                                                                                   CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions                  Patch Information               Resources
+
+                                                                                                                               #StopRansomware: CL0P
+                                                                                                                               Ransomware Gang
+          CVE-2023-0669           Fortra         GoAnywhere versions 2.3 through 7.1.2         Fortra deserialization RCE
+                                                                                                                               Exploits CVE-2023-34362
+                                                                                                                               MOVEit Vulnerability
+
+                                                 BIG-IP versions:
+                                                 16.0.x before 16.0.1.1, 15.1.x before         K03009991: iControl REST
+                                                 15.1.2.1, 14.1.x before 14.1.4, 13.1.x        unauthenticated remote
+          CVE-2021-22986          F5
+                                                 before 13.1.3.6, and 12.1.x before            command execution
+                                                 12.1.5.3 and BIG-IQ 7.1.0.x before            vulnerability CVE-2021-22986
+                                                 7.1.0.3 and 7.0.0.x before 7.0.0.2
+
+
+                                                                                               Remote Desktop Services
+          CVE-2019-0708           Microsoft      Remote Desktop Services                       Remote Code Execution
+                                                                                               Vulnerability
+
+
+                                                                                               FortiProxy - system file leak
+                                                 FortiOS and FortiProxy 2.0.2, 2.0.1, 2.0.0,
+                                                                                               through SSL VPN special
+          CVE-2018-13379          Fortinet       1.2.8, 1.2.7, 1.2.6, 1.2.5, 1.2.4, 1.2.3,
+                                                                                               crafted HTTP resource
+                                                 1.2.2, 1.2.1, 1.2.0, 1.1.6
+                                                                                               requests
+
+                                                 All supported versions of Endpoint
+                                                 Manager Mobile (EPMM), including:                                             Threat Actors Exploiting
+                                                                                               CVE-2023-35078 - New Ivanti
+          CVE-2023-35078          Ivanti                                                                                       Ivanti EPMM
+                                                 Version 11.4 releases 11.10, 11.9 and         EPMM Vulnerability
+                                                                                                                               Vulnerabilities
+                                                 11.8
+
+
+                                                                                                                                                 CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions             Patch Information                  Resources
+
+
+                                                 All supported versions of Endpoint                                          Threat Actors Exploiting
+                                                                                           CVE-2023-35081 - Remote
+          CVE-2023-35081          Ivanti         Manager Mobile (EPMM), including 11.10,                                     Ivanti EPMM
+                                                                                           Arbitrary File Write
+                                                 11.9 and 11.8                                                               Vulnerabilities
+
+
+                                                 Juniper Networks Junos OS on SRX Series
+                                                 and EX Series:
+                                                 All versions prior to 20.4R3-S9;
+                                                 21.1 version 21.1R1 and later versions;
+                                                 21.2 versions prior to 21.2R3-S7;
+                                                 21.3 versions prior to 21.3R3-S5;         2023-08 Out-of-Cycle Security
+                                                                                           Bulletin: Junos OS: SRX Series
+                                                 21.4 versions prior to 21.4R3-S5;
+                                                                                           and EX Series: Multiple
+          CVE-2023-36844          Juniper
+                                                 22.1 versions prior to 22.1R3-S4;         vulnerabilities in J-Web can be
+                                                 22.2 versions prior to 22.2R3-S2;         combined to allow a preAuth
+                                                                                           Remote Code Execution
+                                                 22.3 versions prior to 22.3R2-S2,
+                                                 22.3R3-S1;
+                                                 22.4 versions prior to 22.4R2-S1,
+                                                 22.4R3;
+                                                 23.2 versions prior to 23.2R1-S1,
+                                                 23.2R2.
+
+
+                                                                                                                                         CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions             Patch Information           Resources
+
+                                                 Juniper Networks Junos OS on SRX Series
+                                                 and EX Series:
+                                                 All versions prior to 20.4R3-S9;
+                                                 21.1 version 21.1R1 and later versions;
+                                                 21.2 versions prior to 21.2R3-S7;
+                                                 21.3 versions prior to 21.3R3-S5;         2023-08 Out-of-Cycle Security
+                                                                                           Bulletin: Junos OS: SRX Series
+                                                 21.4 versions prior to 21.4R3-S5;
+                                                                                           and EX Series: Multiple
+          CVE-2023-36845          Juniper
+                                                 22.1 versions prior to 22.1R3-S4;         vulnerabilities in J-Web can be
+                                                 22.2 versions prior to 22.2R3-S2;         combined to allow a preAuth
+                                                                                           Remote Code Execution
+                                                 22.3 versions prior to 22.3R2-S2,
+                                                 22.3R3-S1;
+                                                 22.4 versions prior to 22.4R2-S1,
+                                                 22.4R3;
+                                                 23.2 versions prior to 23.2R1-S1,
+                                                 23.2R2.
+
+                                                 Juniper Networks Junos OS on SRX Series
+                                                 and EX Series:                            2023-08 Out-of-Cycle Security
+                                                                                           Bulletin: Junos OS: SRX Series
+                                                 All versions prior to 20.4R3-S9;
+                                                                                           and EX Series: Multiple
+          CVE-2023-36846          Juniper
+                                                 21.1 version 21.1R1 and later versions;   vulnerabilities in J-Web can be
+                                                                                           combined to allow a preAuth
+                                                 21.2 versions prior to 21.2R3-S7;
+                                                                                           Remote Code Execution
+                                                 21.3 versions prior to 21.3R3-S5;
+
+
+                                                                                                                                         CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions             Patch Information           Resources
+
+                                                 21.4 versions prior to 21.4R3-S5;
+                                                 22.1 versions prior to 22.1R3-S4;
+                                                 22.2 versions prior to 22.2R3-S2;
+                                                 22.3 versions prior to 22.3R2-S2,
+                                                 22.3R3-S1;
+                                                 22.4 versions prior to 22.4R2-S1,
+                                                 22.4R3;
+                                                 23.2 versions prior to 23.2R1-S1,
+                                                 23.2R2.
+
+                                                 Juniper Networks Junos OS on SRX Series
+                                                 and EX Series:
+                                                 All versions prior to 20.4R3-S9;
+                                                 21.1 version 21.1R1 and later versions;
+                                                 21.2 versions prior to 21.2R3-S7;         2023-08 Out-of-Cycle Security
+                                                 21.3 versions prior to 21.3R3-S5;         Bulletin: Junos OS: SRX Series
+                                                                                           and EX Series: Multiple
+          CVE-2023-36847          Juniper        21.4 versions prior to 21.4R3-S5;         vulnerabilities in J-Web can be
+                                                 22.1 versions prior to 22.1R3-S4;         combined to allow a preAuth
+                                                                                           Remote Code Execution
+                                                 22.2 versions prior to 22.2R3-S2;
+                                                 22.3 versions prior to 22.3R2-S2,
+                                                 22.3R3-S1;
+                                                 22.4 versions prior to 22.4R2-S1,
+                                                 22.4R3;
+
+
+                                                                                                                                      CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions            Patch Information         Resources
+
+                                                 23.2 versions prior to 23.2R1-S1,
+                                                 23.2R2.
+
+
+                                                                                          About the security content of
+                                                                                          iOS 16.6.1 and iPadOS 16.6.1
+                                                                                          About the security content of
+                                                 Versions prior to:                       macOS Ventura 13.5.2
+                                                 iOS 16.6.1 and iPadOS 16.6.1, macOS      About the security content of
+          CVE-2023-41064          Apple          Monterey 12.6.9, macOS Ventura 13.5.2,   iOS 15.7.9 and iPadOS 15.7.9
+                                                 iOS 15.7.9 and iPadOS 15.7.9, macOS
+                                                 Big Sur 11.7.10                          About the security content of
+                                                                                          macOS Monterey 12.6.9
+                                                                                          About the security content of
+                                                                                          macOS Big Sur 11.7.10
+
+                                                                                          About the security content of
+                                                 Versions prior to:                       watchOS 9.6.2
+          CVE-2023-41061          Apple          watchOS 9.6.2, iOS 16.6.1 and iPadOS
+                                                 16.6.1                                   About the security content of
+                                                                                          iOS 16.6.1 and iPadOS 16.6.1
+
+
+                                                                                          RCE when removing metadata
+          CVE-2021-22205          GitLab         All versions starting from 11.9
+                                                                                          with ExifTool
+
+
+                                                                                                                                                   CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions              Patch Information                   Resources
+
+                                                                                            SA44101 - 2019-04: Out-of-
+                                                 Pulse Secure Pulse Connect Secure          Cycle Advisory: Multiple
+          CVE-2019-11510          Ivanti         versions, 9.0R1 to 9.0R3.3, 8.3R1 to       vulnerabilities resolved in
+                                                 8.3R7, and 8.2R1 to 8.2R12                 Pulse Connect Secure / Pulse
+                                                                                            Policy Secure 9.0RX
+
+
+                                                 VisiLogic versions before                  Unitronics Cybersecurity
+          CVE-2023-6448           Unitronics                                                Advisory 2023-001: Default
+                                                 9.9.00                                     administrative password
+
+
+                                                 Simple Network Management Protocol
+                                                                                            SNMP Remote Code Execution
+                                                 subsystem of Cisco IOS 12.0 through 12.4
+          CVE-2017-6742           Cisco                                                     Vulnerabilities in Cisco IOS and
+                                                 and 15.0 through 15.6 and IOS XE 2.2
+                                                                                            IOS XE Software
+                                                 through 3.17
+
+                                                 Red Hat Enterprise Linux 6
+                                                 Red Hat Enterprise Linux 7
+                                                                                                                               Joint CSA: Russian
+                                                 Red Hat Enterprise Linux 8                 RHSB-2022-001 Polkit
+                                                                                                                               Military Cyber Actors
+          CVE-2021-4034           Red Hat                                                   Privilege Escalation - (CVE-
+                                                 Red Hat Virtualization 4                                                      Target U.S. and Global
+                                                                                            2021-4034)
+                                                 Any Red Hat product supported on Red                                          Critical Infrastructure
+                                                 Hat Enterprise Linux (including RHEL
+                                                 CoreOS) is also potentially impacted.
+
+
+                                                                                                                                                CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions               Patch Information               Resources
+
+                                                 Confluence Server and Data Center,
+                                                                                                                            Joint CSA: Russian
+                                                 versions 6.13.23, from version 6.14.0       Jira Atlassian: Confluence
+                                                                                                                            Military Cyber Actors
+          CVE-2021-26084          Atlassian      before 7.4.11, from version 7.5.0 before    Server Webwork OGNL
+                                                                                                                            Target U.S. and Global
+                                                 7.11.6, and from version 7.12.0 before      injection - CVE-2021-26084
+                                                                                                                            Critical Infrastructure
+                                                 7.12.5.
+
+                                                                                                                            Joint CSA: Russian
+                                                                                                                            Military Cyber Actors
+          CVE-2021-33044          Dahua          Various products                            —
+                                                                                                                            Target U.S. and Global
+                                                                                                                            Critical Infrastructure
+
+                                                                                                                            Joint CSA: Russian
+                                                                                                                            Military Cyber Actors
+          CVE-2021-33045          Dahua          Various products                            —
+                                                                                                                            Target U.S. and Global
+                                                                                                                            Critical Infrastructure
+
+                                                                                                                            Joint CSA: Russian
+                                                 Sophos Firewall v19.0 MR1 (19.0.1) and      Resolved RCE in Sophos         Military Cyber Actors
+          CVE-2022-3236           Sophos
+                                                 older                                       Firewall (CVE-2022-3236)       Target U.S. and Global
+                                                                                                                            Critical Infrastructure
+
+                                                                                                                            Joint CSA: Russian
+                                                 Confluence Server and Data Center,
+                                                                                             Confluence Security Advisory   Military Cyber Actors
+          CVE-2022-26134          Atlassian      versions: 7.4.17, 7.13.7, 7.14.3, 7.15.2,
+                                                                                             2022-06-02                     Target U.S. and Global
+                                                 7.16.4, 7.17.4, 7.18.1
+                                                                                                                            Critical Infrastructure
+
+
+                                                                                                                                           CISA | FBI| NSA
+
+                  CVE                   Vendor        Affected Products and Versions          Patch Information               Resources
+
+
+                                                                                        Microsoft Exchange Server
+          CVE-2022-41040          Microsoft      Microsoft Exchange servers             Elevation of Privilege
+                                                                                        Vulnerability
+
+
+          CVE-2023-38831          RARLAB         WinRAR Versions prior to 6.23 Beta 1   WinRAR 6.23 Beta 1 Released
+
+
+                                                                                                                      Threat Actors Exploit
+                                                                                                                      Progress Telerik
+                                  Progress       Telerik.Web.UI.dll versions:           Allows JavaScriptSerializer
+          CVE-2019-18935                                                                                              Vulnerabilities in Multiple
+                                  Telerik                                               Deserialization
+                                                                                                                      U.S. Government IIS
+                                                                                                                      Servers
+
+                                                 Exchange Server, Multiple Versions:
+                                                                                                                      Iranian Government-
+                                                 Q1 2011 (2011.1.315) to R2 2017 SP1
+                                                                                                                      Sponsored APT Cyber
+                                                 (2017.2.621)                           Microsoft Exchange Server
+                                                                                                                      Actors Exploiting
+                                                                                        Remote Code Execution
+          CVE-2021-34473          Microsoft      R2 2017 SP2 (2017.2.711) to R3 2019                                  Microsoft Exchange and
+                                                                                        Vulnerability, CVE-2021-
+                                                 (2019.3.917)                                                         Fortinet Vulnerabilities in
+                                                                                        34473
+                                                                                                                      Furtherance of Malicious
+                                                 R3 2019 SP1 (2019.3.1023)
+                                                                                                                      Activities
+                                                 R1 2020 (2020.1.114) and later

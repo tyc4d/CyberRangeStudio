@@ -1,0 +1,135 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "server exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Fortinet FortiOS、Microsoft Exchange server 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "application exploited for initial access",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "image_hint": "unsupported-vmware-horizon",
+   "runtime": "external_platform",
+   "deployable": false,
+   "not_deployed_reason": "VMware Horizon (external platform required) 無法由元件目錄部署（not reproducible without supported external VMware Horizon backend）；這台主機不會被部署，也不以替身頂替。"
+  },
+  {
+   "id": "h3",
+   "role": "targeted network",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Local Security Authority Subsystem Service (LSASS) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "targeted network",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h5",
+   "role": "targeted network",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h6",
+   "role": "targeted network",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h7",
+   "role": "server used for data exfiltration",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Fortinet FortiOS (s1); it remains unreachable by default.",
+  "No port is known for service Microsoft Exchange server (s2); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service VMware Horizon (s3); it remains unreachable by default.",
+  "No port is known for service Log4j application (svc-unsupported-log4j-unspecified-h2); it remains unreachable by default.",
+  "Host h2 has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.",
+  "Host h2 needs VMware Horizon (external platform required), which the catalogue cannot deploy (not reproducible without supported external VMware Horizon backend). It is not replaced by a stand-in.",
+  "No port is known for service Local Security Authority Subsystem Service (LSASS) (s4); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h5 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h6 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h7 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Action a8 is stated to run from h7 against h6, but no destination service port is identified; the path stays denied."
+ ]
+}

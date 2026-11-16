@@ -1,0 +1,588 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260219",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "e8d3f52dc43f9a1f9688ceb8dd9b8ff406a8817da215b30393676c6a29280581",
+  "source_name": "csa-2026-260219"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "deploy ATM jackpotting malware",
+   "source": "llm",
+   "description": "Threat actors are deploying ATM jackpotting malware, including the Ploutus family malware, to infect ATMs and force them to dispense cash.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization",
+   "source": "llm",
+   "description": "Ploutus malware exploits the eXtensions for Financial Services (XFS), allowing threat actors to bypass bank authorization and instruct the ATM to dispense cash on demand.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "gain physical access to ATM by opening ATM face with generic keys",
+   "source": "llm",
+   "description": "Threat actors gain access to ATMs most often by opening an ATM face with widely available generic keys.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "remove ATM hard drive, copy malware to hard drive, return hard drive, reboot ATM",
+   "source": "llm",
+   "description": "Threat actors remove the ATM’s hard drive, connect it to their computer, copy the malware to the hard drive, return the hard drive to the ATM, and reboot the ATM.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "remove ATM hard drive, replace with foreign hard drive or external device with preloaded malware, reboot ATM",
+   "source": "llm",
+   "description": "Threat actors remove the ATM’s hard drive, replace it with a foreign hard drive or other external device with preloaded malware, and reboot the ATM.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "physical access to ATM is prerequisite to removing hard drive and copying malware",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "physical access to ATM is prerequisite to removing hard drive and replacing it with foreign device",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Ploutus malware exploits XFS after being deployed",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-1"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "ATM device targeted by jackpotting malware",
+   "source": "llm",
+   "name": "ATM",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "eXtensions for Financial Services (XFS)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Ploutus",
+   "type": "malware",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "hash",
+   "value": "2C2D16658D8DA6B389934273EF8F8E22",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-9"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "hash",
+   "value": "5F177B84F3D92AB5711BE446125FDBE3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "61EECEB5F9186A0BC01DC82798CD6C5F",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-11"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "FDA82030AE92313E94B9339EA1FC107C",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "C04A7CB926CCBF829D0A36A91EBF91BD",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-13"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Threat actors are deploying ATM jackpotting malware, including the Ploutus family malware, to infect ATMs and force them to dispense cash.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors are deploying ATM jackpotting malware, including the Ploutus family malware, to infect ATMs and force them to dispense cash."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Ploutus malware exploits the eXtensions for Financial Services (XFS), the layer of software that instructs an ATM what to physically do. When a legitimate transaction occurs, the ATM application sends instructions through XFS for bank authorization. If a threat actor can issue their own commands to XFS, they can bypass bank authorization entirely and instruct the ATM to dispense cash on demand.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ploutus malware exploits the eXtensions for Financial Services (XFS), the layer of software that instructs an ATM what to physically do. When a legitimate trans"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "After gaining access to ATMs, most often by opening an ATM face with widely available generic keys, ATM jackpotting threat actors have used several main methods to deploy malware:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After gaining access to ATMs, most often by opening an ATM face with widely available generic keys, ATM jackpotting threat actors have used several main methods"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Threat actors remove the ATM’s hard drive, connect it to their computer, copy the malware to the hard drive, return the hard drive to the ATM, and reboot the ATM.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors remove the ATM’s hard drive, connect it to their computer, copy the malware to the hard drive, return the hard drive to the ATM, and reboot the AT"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Threat actors remove the ATM’s hard drive, replace it with a foreign hard drive or other external device with preloaded malware, and reboot the ATM.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors remove the ATM’s hard drive, replace it with a foreign hard drive or other external device with preloaded malware, and reboot the ATM."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Ploutus malware exploits the eXtensions for Financial Services (XFS), the layer of software that instructs an ATM what to physically do.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ploutus malware exploits the eXtensions for Financial Services (XFS), the layer of software that instructs an ATM what to physically do."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Digital Indicators (as observed on affected ATMs running Windows OS)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Digital Indicators (as observed on affected ATMs running Windows OS)"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The malware can be used across ATMs of different manufacturers with very little adjustment to the code as the Windows operating system is exploited during the compromise.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware can be used across ATMs of different manufacturers with very little adjustment to the code as the Windows operating system is exploited during the c"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "2C2D16658D8DA6B389934273EF8F8E22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2C2D16658D8DA6B389934273EF8F8E22"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "5F177B84F3D92AB5711BE446125FDBE3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5F177B84F3D92AB5711BE446125FDBE3"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "61EECEB5F9186A0BC01DC82798CD6C5F",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "61EECEB5F9186A0BC01DC82798CD6C5F"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "FDA82030AE92313E94B9339EA1FC107C",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "FDA82030AE92313E94B9339EA1FC107C"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "C04A7CB926CCBF829D0A36A91EBF91BD",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C04A7CB926CCBF829D0A36A91EBF91BD"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "69"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "ATM — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "ATM 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — ATM",
+    "action:a1 — deploy ATM jackpotting malware",
+    "action:a2 — exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization",
+    "action:a3 — gain physical access to ATM by opening ATM face with generic keys",
+    "action:a4 — remove ATM hard drive, copy malware to hard drive, return hard drive, reboot ATM",
+    "action:a5 — remove ATM hard drive, replace with foreign hard drive or external device with preloaded malware, reboot ATM"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "ATM",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "ATM — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "ATM 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — ATM",
+    "action:a1 — deploy ATM jackpotting malware",
+    "action:a2 — exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization",
+    "action:a3 — gain physical access to ATM by opening ATM face with generic keys",
+    "action:a4 — remove ATM hard drive, copy malware to hard drive, return hard drive, reboot ATM",
+    "action:a5 — remove ATM hard drive, replace with foreign hard drive or external device with preloaded malware, reboot ATM"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "ATM",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "eXtensions for Financial Services (XFS) — 版本",
+   "category": "version",
+   "reason": "IR 指出 eXtensions for Financial Services (XFS)，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 eXtensions for Financial Services (XFS) 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — eXtensions for Financial Services (XFS)",
+    "action:a2 — exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "eXtensions for Financial Services (XFS)",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：eXtensions for Financial Services (XFS)。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a2 — exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization",
+    "host:h1 — ATM"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exploit eXtensions for Financial Services (XFS) to dispense cash without bank authorization",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-extensions-for-financial-se",
+   "field": "software dependency: eXtensions for Financial Services (XFS)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "eXtensions for Financial Services (XFS) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "needs_vm"
+}

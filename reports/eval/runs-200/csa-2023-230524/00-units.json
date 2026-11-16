@@ -1,0 +1,534 @@
+[
+ {
+  "id": "p1",
+  "text": "# People's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade Detection"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2023-05-24\n> - URL: https://www.ic3.gov/CSA/2023/230524.pdf\n> - PDF SHA-256: 1ba216c39a5dd90c9f7549235eca363a31ccb6532ff4bef1cae7b1d4b023f7d3 (`source.pdf`, 24 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (71 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Joint Cybersecurity Advisory"
+ },
+ {
+  "id": "p4",
+  "text": "People's Republic of China State-Sponsored Cyber\nActor Living off the Land to Evade Detection"
+ },
+ {
+  "id": "p5",
+  "text": "Summary\nThe United States and international cybersecurity authorities are issuing this joint\nCybersecurity Advisory (CSA) to highlight a recently discovered cluster of activity of\ninterest associated with a People’s Republic of China (PRC) state-sponsored cyber\nactor, also known as Volt Typhoon. Private sector partners have identified that this\nactivity affects networks across U.S. critical infrastructure sectors, and the authoring\nagencies believe the actor could apply the same techniques against these and other\nsectors worldwide."
+ },
+ {
+  "id": "p6",
+  "text": "This advisory from the United States National Security Agency (NSA), the U.S.\nCybersecurity and Infrastructure Security Agency (CISA), the U.S. Federal Bureau of\nInvestigation (FBI), the Australian Signals Directorate’s Australian Cyber Security\nCentre (ACSC), the Communications Security Establishment’s Canadian Centre for\nCyber Security (CCCS), the New Zealand National Cyber Security Centre (NCSC-NZ),\nand the United Kingdom National Cyber Security Centre (NCSC-UK) (hereafter referred\nto as the “authoring agencies”) provides an overview of hunting guidance and\nassociated best practices to detect this activity."
+ },
+ {
+  "id": "p7",
+  "text": "One of the actor’s primary tactics, techniques, and procedures (TTPs) is living off the\nland, which uses built-in network administration tools to perform their objectives. This\nTTP allows the actor to evade detection by blending in with normal Windows system\nand network activities, avoid endpoint detection and response (EDR) products that\nwould alert on the introduction of third-party applications to the host, and limit the\namount of activity that is captured in default logging configurations. Some of the built-in\ntools this actor uses are: wmic, ntdsutil, netsh, and PowerShell. The advisory"
+ },
+ {
+  "id": "p8",
+  "text": "Disclaimer: This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries minimal or no foreseeable\nrisk of misuse, in accordance with applicable rules and procedures for public release. Subject to standard copyright rules, TLP:CLEAR information may be\ndistributed without restriction. For more information on the Traffic Light Protocol, see cisa.gov/tlp/.\nU/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1"
+ },
+ {
+  "id": "p9",
+  "text": "provides examples of the actor’s commands along with detection signatures to aid\nnetwork defenders in hunting for this activity. Many of the behavioral indicators included\ncan also be legitimate system administration commands that appear in benign activity.\nCare should be taken not to assume that findings are malicious without further\ninvestigation or other indications of compromise."
+ },
+ {
+  "id": "p10",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                              2"
+ },
+ {
+  "id": "p11",
+  "text": "Contents\nPeople's Republic of China State-Sponsored Cyber Actor Living off the Land to Evade\nDetection ......................................................................................................................... 1\nSummary ......................................................................................................................... 1\nTechnical Details ............................................................................................................. 4\nBackground ..................................................................................................................... 4\nArtifacts ........................................................................................................................... 4\n  Network artifacts .......................................................................................................... 4\n   Host artifacts ................................................................................................................ 5\n      Windows management instrumentation (WMI/WMIC).............................................. 5\n      Ntds.dit Active Directory database ........................................................................... 5\n      PortProxy ................................................................................................................. 8\n      PowerShell ............................................................................................................. 10\n      Impacket ................................................................................................................ 10\n      Enumeration of the environment ............................................................................ 11\n      Additional credential theft ....................................................................................... 12\n      Additional commands ............................................................................................. 12\nMitigations ..................................................................................................................... 13\n  Logging recommendations ........................................................................................ 14\nIndicators of compromise (IOCs) summary ................................................................... 15\n  TTPs .......................................................................................................................... 15\n   Command execution .................................................................................................. 16\n   Command line patterns.............................................................................................. 18\n   File paths ................................................................................................................... 18\n   File names ................................................................................................................. 18\n   SHA-256 file hashes .................................................................................................. 18\n   User-agent ................................................................................................................. 19\n   Yara rules .................................................................................................................. 19\nReferences .................................................................................................................... 21\nAcknowledgements ....................................................................................................... 22\nAppendix: MITRE ATT&CK Techniques........................................................................ 23"
+ },
+ {
+  "id": "p12",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                                                           3"
+ },
+ {
+  "id": "p13",
+  "text": "Technical Details\nThis advisory uses the MITRE ATT&CK for Enterprise framework, version 13. See the\nAppendix: MITRE ATT&CK Techniques for all referenced tactics and techniques."
+ },
+ {
+  "id": "p14",
+  "text": "Background\nThe authoring agencies are aware of recent People’s Republic of China (PRC) state-\nsponsored cyber activity and have identified potential indicators associated with these\ntechniques. This advisory will help net defenders hunt for this activity on their systems.\nIt provides many network and host artifacts associated with the activity occurring after\nthe network has been initially compromised, with a focus on command lines used by the\ncyber actor. An Indicators of compromise (IOCs) summary is included at the end of this\nadvisory. For a downloadable copy of IOCs, see aa23-144a.stix_.xml (STIX, 35 kB)."
+ },
+ {
+  "id": "p15",
+  "text": "Especially for living off the land techniques, it is possible that some command lines\nmight appear on a system as the result of benign activity and would be false positive\nindicators of malicious activity. Defenders must evaluate matches to determine their\nsignificance, applying their knowledge of the system and baseline behavior.\nAdditionally, if creating detection logic based on these commands, network defenders\nshould account for variability in command string arguments, as items such as ports\nused may differ across environments."
+ },
+ {
+  "id": "p16",
+  "text": "Artifacts\nNetwork artifacts\nThe actor has leveraged compromised small office/home office (SOHO) network\ndevices as intermediate infrastructure to obscure their activity by having much of the\ncommand and control (C2) traffic emanate from local ISPs in the geographic area of the\nvictim. Owners of SOHO devices should ensure that network management interfaces\nare not exposed to the Internet to avoid them being re-purposed as redirectors by\nmalicious actors. If they must be exposed to the Internet, device owners and operators\nshould ensure they follow zero trust principles and maintain the highest level of\nauthentication and access controls possible."
+ },
+ {
+  "id": "p17",
+  "text": "The actor has used Earthworm and a custom Fast Reverse Proxy (FRP) client with\nhardcoded C2 callbacks [T1090] to ports 8080, 8443, 8043, 8000, and 10443 with"
+ },
+ {
+  "id": "p18",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                              4"
+ },
+ {
+  "id": "p19",
+  "text": "various filenames including, but not limited to: cisco_up.exe, cl64.exe, vm3dservice.exe,\nwatchdogd.exe, Win.exe, WmiPreSV.exe, and WmiPrvSE.exe."
+ },
+ {
+  "id": "p20",
+  "text": "Host artifacts\nWindows management instrumentation (WMI/WMIC)\nThe actor has executed the following command to gather information about local drives\n[T1082]:"
+ },
+ {
+  "id": "p21",
+  "text": "cmd.exe /C \"wmic path win32_logicaldisk get\n      caption,filesystem,freespace,size,volumename\""
+ },
+ {
+  "id": "p22",
+  "text": "This command does not require administrative credentials to return results. The\ncommand uses a command prompt [T1059.003] to execute a Windows Management\nInstrumentation Command Line (WMIC) query, collecting information about the storage\ndevices on the local host, including drive letter, file system (e.g., new technology file\nsystem [NTFS]), free space and drive size in bytes, and an optional volume name.\nWindows Management Instrumentation (WMI) is a built-in Windows tool that allows a\nuser to access management information from hosts in an enterprise environment. The\ncommand line version of WMI is called WMIC."
+ },
+ {
+  "id": "p23",
+  "text": "By default, WMI Tracing is not enabled, so the WMI commands being executed and the\nassociated user might not be available. Additional information on WMI events and\ntracing can be found in the References section of the advisory."
+ },
+ {
+  "id": "p24",
+  "text": "Ntds.dit Active Directory database\nThe actor may try to exfiltrate the ntds.dit file and the SYSTEM registry hive from\nWindows domain controllers (DCs) out of the network to perform password cracking\n[T1003.003]. (The ntds.dit file is the main Active Directory (AD) database file and, by\ndefault, is stored at %SystemRoot%\\NTDS\\ntds.dit. This file contains information\nabout users, groups, group memberships, and password hashes for all users in the\ndomain; the SYSTEM registry hive contains the boot key that is used to encrypt\ninformation in the ntds.dit file.) Although the ntds.dit file is locked while in use by AD, a\ncopy can be made by creating a Volume Shadow Copy and extracting the ntds.dit file\nfrom the Shadow Copy. The SYSTEM registry hive may also be obtained from the\nShadow Copy. The following example commands show the actor creating a Shadow\nCopy and then extracting a copy of the ntds.dit file from it."
+ },
+ {
+  "id": "p25",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                 5"
+ },
+ {
+  "id": "p26",
+  "text": "cmd /c vssadmin create shadow /for=C: >\n         C:\\Windows\\Temp\\<filename>.tmp\n         cmd /c copy\n         \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTD\n         S\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp"
+ },
+ {
+  "id": "p27",
+  "text": "The built-in Ntdsutil.exe tool performs all these actions using a single command. There\nare several ways to execute Ntdsutil.exe, including running from an elevated command\nprompt (cmd.exe), using WMI/WMIC, or PowerShell. Defenders should look for the\nexecution of Ntdsutil.exe commands using long, short, or a combination of the\nnotations. For example, the long notation command activate instance ntds ifm\ncan also be executed using the short notation ac i ntds i. Table 1 provides the long\nand short forms of the arguments used in the sample Ntdsutil.exe command, along with\na brief description of the arguments.\n                                      Table 1: Ntdsutil.exe command syntax\n         Long form                     Short form                        Description\n                                                         Sets variable % as the active instance for\n activate instance %              ac i %\n                                                         ntdsutil to use\n                                                         Install from media (ifm). Creates\n                                                         installation media to be used with\n ifm                              i                      DCPromo so the server will not need to\n                                                         copy data from another Domain\n                                                         Controller on the network"
+ },
+ {
+  "id": "p28",
+  "text": "The actor has executed WMIC commands [T1047] to create a copy of the ntds.dit file\nand SYSTEM registry hive using ntdsutil.exe. Each of the following actor commands is\na standalone example; multiple examples are provided to show how syntax and file\npaths may differ per environment."
+ },
+ {
+  "id": "p29",
+  "text": "wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\pro\n         wmic process call create \"cmd.exe /c ntdsutil \\\"ac i ntds\\\"\n         ifm \\\"create full C:\\Windows\\Temp\\Pro\"\n         wmic process call create \"cmd.exe /c mkdir\n         C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\tmp\\\"\n         \"cmd.exe\" /c wmic process call create \"cmd.exe /c mkdir\n         C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm\n         \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\""
+ },
+ {
+  "id": "p30",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                       6"
+ },
+ {
+  "id": "p31",
+  "text": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir\n         C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\tmp\\\" 1>\n         \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1"
+ },
+ {
+  "id": "p32",
+  "text": "Note: The <timestamp value> would be an epoch timestamp following the format\n         like “__1684956600.123456”."
+ },
+ {
+  "id": "p33",
+  "text": "Each actor command above creates a copy of the ntds.dit database and the SYSTEM\nand SECURITY registry hives in the C:\\Windows\\Temp\\<folder> directory, where\n<folder> is replaced with the path specified in the command (e.g., pro, tmp, or\nMcAfee_Logs). By default, the hidden ADMIN$ share is mapped to C:\\Windows\\, so\nthe last command will direct standard output and error messages from the command to\na file within the folder specified."
+ },
+ {
+  "id": "p34",
+  "text": "The actor has also saved the files directly to the C:\\Windows\\Temp and\nC:\\Users\\Public directories, so the entirety of those directory structures should be\nanalyzed. Ntdsutil.exe creates two subfolders in the directory specified in the command:\nan Active Directory folder that contains the ntds.dit and ntds.jfm files, and a registry\nfolder that contains the SYSTEM and SECURITY hives. Defenders should look for this\nfolder structure across their network:"
+ },
+ {
+  "id": "p35",
+  "text": "<path specified in command>\\Active Directory\\ntds.dit\n         <path specified in command>\\Active Directory\\ntds.jfm\n         <path specified in command>\\registry\\SECURITY\n         <path specified in command>\\registry\\SYSTEM"
+ },
+ {
+  "id": "p36",
+  "text": "When one of the example commands is executed, several successive log entries are\ncreated in the Application log, under the ESENT Source. Associated events can be\nviewed in Windows Event Viewer by navigating to: Windows Logs | Application. To\nnarrow results to relevant events, select Filter Current Log from the Actions menu on\nthe right side of the screen. In the Event sources dropdown, check the box next to\nESENT, then limit the logs to ID numbers 216, 325, 326, and 327. Clicking the OK box\nwill apply the filters to the results."
+ },
+ {
+  "id": "p37",
+  "text": "Since ESENT logging is used extensively throughout Windows, defenders should focus\non events that reference ntds.dit. If such events are present, the events’ details should\ncontain the file path where the file copies were created. Since these files can be"
+ },
+ {
+  "id": "p38",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                             7"
+ },
+ {
+  "id": "p39",
+  "text": "deleted, or enhanced logging may not be configured on hosts, the file path can greatly\naid in a hunt operation. Identifying the user associated with this activity is also a critical\nstep in a hunt operation as other actions by the compromised—or actor-created—user\naccount can be helpful to understand additional actor TTPs, as well as the breadth of\nthe actor's actions.\nNote: If an actor can exfiltrate the ntds.dit and SYSTEM registry hive, the entire domain\nshould be considered compromised, as the actor will generally be able to crack the\npassword hashes for domain user accounts, create their own accounts, and/or join\nunauthorized systems to the domain. If this occurs, defenders should follow guidance\nfor removing malicious actors from victim networks, such as CISA's Eviction Guidance\nfor Network Affected by the SolarWinds and Active Directory/M365 Compromise."
+ },
+ {
+  "id": "p40",
+  "text": "In addition to the above TTPs used by the actor to copy the ntds.dit file, the following\ntools could be used by an actor to obtain the same information:"
+ },
+ {
+  "id": "p41",
+  "text": "    Secretsdump.py\n             Note: This script is a component of Impacket, which the actor has been\n               known to use\n        Invoke-NinjaCopy (PowerShell)\n        DSInternals (PowerShell)\n        FgDump\n        Metasploit\nBest practices for securing ntds.dit include hardening Domain Controllers and\nmonitoring event logs for ntdsutil.exe and similar process creations. Additionally, any\nuse of administrator privileges should be audited and validated to confirm the legitimacy\nof executed commands."
+ },
+ {
+  "id": "p42",
+  "text": "PortProxy\nThe actor has used the following commands to enable port forwarding [T1090] on the\nhost:"
+ },
+ {
+  "id": "p43",
+  "text": "\"cmd.exe /c \"netsh interface portproxy add v4tov4\n         listenaddress=0.0.0.0 listenport=9999\n         connectaddress=<rfc1918 internal ip address>\n         connectport=8443 protocol=tcp\"\""
+ },
+ {
+  "id": "p44",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                  8"
+ },
+ {
+  "id": "p45",
+  "text": "\"cmd.exe /c netsh interface portproxy add v4tov4\n         listenport=50100 listenaddress=0.0.0.0 connectport=1433\n         connectaddress=<rfc1918 internal ip address>\""
+ },
+ {
+  "id": "p46",
+  "text": "where <rfc1918 internal ip address> is replaced with an IPv4 address\n         internal to the network, omitting the < >’s."
+ },
+ {
+  "id": "p47",
+  "text": "Netsh is a built-in Windows command line scripting utility that can display or modify the\nnetwork settings of a host, including the Windows Firewall. The portproxy add command\nis used to create a host:port proxy that will forward incoming connections on the\nprovided listenaddress and listenport to the connectaddress and connectport.\nAdministrative privileges are required to execute the portproxy command. Each\nportproxy command above will create a registry key in the\nHKLM\\SYSTEM\\CurrentControlSet\\Services\\PortProxy\\v4tov4\\tcp\\ path.\nDefenders should look for the presences of keys in this path and investigate any\nanomalous entries."
+ },
+ {
+  "id": "p48",
+  "text": "Note: Using port proxies is not common for legitimate system administration since they\ncan constitute a backdoor into the network that bypasses firewall policies.\nAdministrators should limit port proxy usage within environments and only enable them\nfor the period of time in which they are required."
+ },
+ {
+  "id": "p49",
+  "text": "Defenders should also use unusual IP addresses and ports in the command lines or\nregistry entries to identify other hosts that are potentially included in actor actions. All\nhosts on the network should be examined for new and unusual firewall and port\nforwarding rules, as well as IP addresses and ports specified by the actor. If network\ntraffic or logging is available, defenders should attempt to identify what traffic was\nforwarded though the port proxies to aid in the hunt operation. As previously mentioned,\nidentifying the associated user account that made the networking changes can also aid\nin the hunt operation."
+ },
+ {
+  "id": "p50",
+  "text": "Firewall rule additions and changes can be viewed in Windows Event Viewer by\nnavigating to: Applications and Service Logs | Microsoft | Windows |\nWindows Firewall With Advanced Security | Firewall."
+ },
+ {
+  "id": "p51",
+  "text": "In addition to host-level changes, defenders should review perimeter firewall\nconfigurations for unauthorized changes and/or entries that may permit external"
+ },
+ {
+  "id": "p52",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                9"
+ },
+ {
+  "id": "p53",
+  "text": "connections to internal hosts. The actor is known to target perimeter devices in their\noperations. Firewall logs should be reviewed for any connections to systems on the\nports listed in any portproxy commands discovered."
+ },
+ {
+  "id": "p54",
+  "text": "PowerShell\nThe actor has used the following PowerShell [T1059.001] command to identify\nsuccessful logons to the host [T1033]:"
+ },
+ {
+  "id": "p55",
+  "text": "Get-EventLog security -instanceid 4624"
+ },
+ {
+  "id": "p56",
+  "text": "Note: Event ID 4624 is logged when a user successfully logs on to a host and\n         contains useful information such as the logon type (e.g., interactive or\n         networking), associated user and computer account names, and the logon time.\n         Event ID 4624 entries can be viewed in Windows Event Viewer by navigating to:\n         Windows Logs | Security. PowerShell logs can be viewed in Event Viewer:\n         Applications and Service Logs | Windows PowerShell."
+ },
+ {
+  "id": "p57",
+  "text": "This command identifies what user account they are currently leveraging to access the\nnetwork, identify other users logged on to the host, or identify how their actions are\nbeing logged. If the actor is using a password spray technique [T1110.003], there may\nbe several failed logon (Event ID 4625) events for several different user accounts,\nfollowed by one or more successful logons (Event ID 4624) within a short period of time.\nThis period may vary by actor but can range from a few seconds to a few minutes."
+ },
+ {
+  "id": "p58",
+  "text": "If the actor is using brute force password attempts [T1110] against a single user\naccount, there may be several Event ID 4625 entries for that account, followed by a\nsuccessful logon Event ID 4624. Defenders should also look for abnormal account\nactivity, such as logons outside of normal working hours and impossible time-and-\ndistance logons (e.g., a user logging on from two geographically separated locations at\nthe same time)."
+ },
+ {
+  "id": "p59",
+  "text": "Impacket\nThe actor regularly employs the use of Impacket’s wmiexec, which redirects output to a\nfile within the victim host’s ADMIN$ share (C:\\Windows\\) containing an epoch\ntimestamp in its name. The following is an example of the “dir” command being\nexecuted by wmiexec.py:"
+ },
+ {
+  "id": "p60",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                            10"
+ },
+ {
+  "id": "p61",
+  "text": "cmd.exe /Q /c dir 1>\n         \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1"
+ },
+ {
+  "id": "p62",
+  "text": "Note: Discovery of an entry similar to the example above in the Windows Event\n         Log and/or a file with a name in a similar format may be evidence of malicious\n         activity and should be investigated further. In the event that only a filename is\n         discovered, the epoch timestamp within the filename reflects the time of\n         execution by default and can be used to help scope threat hunting activities."
+ },
+ {
+  "id": "p63",
+  "text": "Enumeration of the environment\nThe following commands were used by the actor to enumerate the network topology\n[T1016], the active directory structure [T1069.002], and other information about the\ntarget environment [T1069.001], [T1082]:"
+ },
+ {
+  "id": "p64",
+  "text": "arp -a\n         curl www.ip-api.com\n         dnscmd . /enumrecords /zone {REDACTED}\n         dnscmd . /enumzones\n         dnscmd /enumrecords {REDACTED} . /additional\n         ipconfig /all\n         ldifde.exe -f c:\\windows\\temp\\<filename>.txt -p subtree\n         net localgroup administrators\n         net group /dom\n         net group \"Domain Admins\" /dom\n         netsh interface firewall show all\n         netsh interface portproxy show all\n         netsh interface portproxy show v4tov4\n         netsh firewall show all\n         netsh portproxy show v4tov4\n         netstat -ano\n         reg query hklm\\software\\\n         systeminfo\n         tasklist /v\n         whoami\n         wmic volume list brief\n         wmic service brief"
+ },
+ {
+  "id": "p65",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                              11"
+ },
+ {
+  "id": "p66",
+  "text": "wmic product list brief\n         wmic baseboard list full\n         wevtutil qe security /rd:true /f:text\n          /q:*[System[(EventID=4624) and\n          TimeCreated[@SystemTime>='{REDACTED}']] and\n          EventData[Data='{REDACTED}']]\nAdditional credential theft\nThe actor also used the following commands to identify additional opportunities for\nobtaining credentials in the environment [T1555], [T1003]:"
+ },
+ {
+  "id": "p67",
+  "text": "dir C:\\Users\\{REDACTED}\\.ssh\\known_hosts\n         dir\n         C:\\users\\{REDACTED}\\appdata\\roaming\\Mozilla\\firefox\\profile\n         s\n         mimikatz.exe\n         reg query hklm\\software\\OpenSSH\n         reg query hklm\\software\\OpenSSH\\Agent\n         reg query hklm\\software\\realvnc\n         reg query hklm\\software\\realvnc\\vncserver\n         reg query hklm\\software\\realvnc\\Allusers\n         reg query hklm\\software\\realvnc\\Allusers\\vncserver\n         reg query hkcu\\software\\{REDACTED}\\putty\\session\n         reg save hklm\\sam ss.dat\n         reg save hklm\\system sy.dat\nAdditional commands\nThe actor executed the following additional commands:"
+ },
+ {
+  "id": "p68",
+  "text": "7z.exe a -p {REDACTED} c:\\windows\\temp\\{REDACTED}.7z\n         C:\\Windows\\system32\\pcwrun.exe\n         C:\\Users\\Administrator\\Desktop\\Win.exe\n         C:\\Windows\\System32\\cmdbak.exe /c ping -n 1 127.0.0.1 >\n         C:\\Windows\\temp\\putty.log\n         C:\\Windows\\Temp\\tmp.log\n         \"cmd.exe\" /c dir \\\\127.0.0.1\\C$ /od\n         \"cmd.exe\" /c ping –a –n 1 <IP address>\n         \"cmd.exe\" /c wmic /user:<username> /password:<password>\n         process call create \"net stop \\\"<service name>\\\" >\n         C:\\Windows\\Temp\\tmp.log\""
+ },
+ {
+  "id": "p69",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                         12"
+ },
+ {
+  "id": "p70",
+  "text": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value>\n         2>&1\n         net use \\\\127.0.0.1\\IPC$ /y /d\n         powershell start-process -filepath\n         c:\\windows\\temp\\<filename>.bat -windowstyle Hidden\n         rar.exe a –{REDACTED} c:\\Windows\\temp\\{REDACTED}\n         D:\\{REDACTED}\\\n         wmic /node:{REDACTED} /user:{REDACTED} /password:{REDACTED}\n         cmd /c whoami\n         xcopy C:\\windows\\temp\\hp d:\\{REDACTED}"
+ },
+ {
+  "id": "p71",
+  "text": "Mitigations\nThe authoring agencies recommend organizations implement the mitigations below to\nimprove your organization’s cybersecurity posture on the basis of the threat actor’s\nactivity. These mitigations align with the Cross-Sector Cybersecurity Performance Goals\n(CPGs) developed by CISA and the National Institute of Standards and Technology\n(NIST). The CPGs provide a minimum set of practices and protections that CISA and\nNIST recommend all organizations implement. CISA and NIST based the CPGs on\nexisting cybersecurity Frameworks and guidance to protect against the most common\nand impactful threats and TTPs. Visit CISA’s Cross-Sector Cybersecurity Performance\nGoals for more information on the CPGs, including additional recommended baseline\nprotections."
+ },
+ {
+  "id": "p72",
+  "text": "    Defenders should harden domain controllers and monitor event logs [2.T] for\n         ntdsutil.exe and similar process creations. Additionally, any use of administrator\n         privileges should be audited and validated to confirm the legitimacy of executed\n         commands."
+ },
+ {
+  "id": "p73",
+  "text": "    Administrators should limit port proxy usage within environments and only enable\n         them for the period of time in which they are required [2.X]."
+ },
+ {
+  "id": "p74",
+  "text": "    Defenders should investigate unusual IP addresses and ports in command lines,\n         registry entries, and firewall logs to identify other hosts that are potentially\n         involved in actor actions."
+ },
+ {
+  "id": "p75",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                               13"
+ },
+ {
+  "id": "p76",
+  "text": "    In addition to host-level changes, defenders should review perimeter firewall\n         configurations for unauthorized changes and/or entries that may permit external\n         connections to internal hosts."
+ },
+ {
+  "id": "p77",
+  "text": "    Defenders should also look for abnormal account activity, such as logons outside\n         of normal working hours and impossible time-and-distance logons (e.g., a user\n         logging on from two geographically separated locations at the same time)."
+ },
+ {
+  "id": "p78",
+  "text": "    Defenders should forward log files to a hardened centralized logging server,\n         preferably on a segmented network [2.F]."
+ },
+ {
+  "id": "p79",
+  "text": "Logging recommendations\nTo be able to detect the activity described in this CSA, defenders should set the audit\npolicy for Windows security logs to include “audit process creation” and “include\ncommand line in process creation events” in addition to accessing the logs.\nOtherwise, the default logging configurations may not contain the necessary\ninformation."
+ },
+ {
+  "id": "p80",
+  "text": "Enabling these options will create Event ID 4688 entries in the Windows Security log to\nview command line processes. Given the cost and difficulty of logging and analyzing\nthis kind of activity, if an organization must limit the requirements, they should focus on\nenabling this kind of logging on systems that are externally facing or perform\nauthentication or authorization, especially including domain controllers."
+ },
+ {
+  "id": "p81",
+  "text": "To hunt for the malicious WMI and PowerShell activity, defenders should also log WMI\nand PowerShell events. By default, WMI Tracing and deep PowerShell logging are not\nenabled, but they can be enabled by following the configuration instructions linked in the\nReferences section."
+ },
+ {
+  "id": "p82",
+  "text": "The actor takes measures to hide their tracks, such as clearing logs [T1070.001]. To\nensure log integrity and availability, defenders should forward log files to a hardened\ncentralized logging server, preferably on a segmented network. Such an architecture\nmakes it harder for an actor to cover their tracks as evidence of their actions will be\ncaptured in multiple locations."
+ },
+ {
+  "id": "p83",
+  "text": "Defenders should also monitor logs for Event ID 1102, which is generated when the\naudit log is cleared. All Event ID 1102 entries should be investigated as logs are"
+ },
+ {
+  "id": "p84",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                               14"
+ },
+ {
+  "id": "p85",
+  "text": "generally not cleared and this is a known actor tactic to cover their tracks. Even if an\nevent log is cleared on a host, if the logs are also stored on a logging server, the copy of\nthe log will be preserved."
+ },
+ {
+  "id": "p86",
+  "text": "This activity is often linked to malicious exploitation of edge devices and network\nmanagement devices. Defenders should enable logging on their edge devices, to\ninclude system logs, to be able to identify potential exploitation and lateral movement.\nThey should also enable network-level logging, such as sysmon, webserver,\nmiddleware, and network device logs."
+ },
+ {
+  "id": "p87",
+  "text": "Indicators of compromise (IOCs) summary\nTTPs\n        Exploiting vulnerabilities [T1190] in widely used software including, but not limited\n         to:\n              CVE-2021-40539—ManageEngine ADSelfService Plus.\n                     https://www.cisa.gov/uscert/ncas/alerts/aa21-259a.\n              CVE-2021-27860—FatPipe WARP, IPVPN, MPVPN.\n                     https://www.ic3.gov/Media/News/2021/211117-2.pdf."
+ },
+ {
+  "id": "p88",
+  "text": "    Using webshells for persistence and exfiltration [T1505.003], with at least some\n         of the webshells derived from the Awen webshell.\n        Using compromised Small-Office Home-Office (SOHO) devices (e.g. routers) to\n         obfuscate the source of the activity [T1090.002].\n             Most common types include ASUS, Cisco RV, Draytek Vigor, FatPipe\n               IPVPN/MPVPN/WARP, Fortinet Fortigate, Netgear Prosafe, and Zyxel\n               USG devices.\n             Common CVEs for these devices and mitigation guidance can be found in\n               the joint Cybersecurity Advisory, “Top CVEs Actively Exploited by\n               People’s Republic of China State-Sponsored Cyber Actors.”\n        Using living off the land tools for discovery, lateral movement, and collection\n         activities, to include:\n              certutil\n              dnscmd\n              ldifde\n              makecab\n              net user/group/use\n              netsh\n              nltest"
+ },
+ {
+  "id": "p89",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                  15"
+ },
+ {
+  "id": "p90",
+  "text": " ntdsutil\n              PowerShell\n              req query/save\n              systeminfo\n              tasklist\n              wevtutil\n              wmic\n              xcopy\n        Selective clearing of Windows Event Logs, system logs, and other technical\n         artifacts to remove evidence of their intrusion activity [T1070].\n        Using open source “hacktools” tools, such as:\n             Fast Reverse Proxy (frp)\n                   Probably derived from the publicly-available fatedier and\n                     EarthWorm variants.\n             Impacket\n                   To detect Impacket usage, see the joint Cybersecurity Advisory:\n                     \"Impacket and Exfiltration Tool Used to Steal Sensitive Information\n                     from Defense Industrial Base Organization”.\n             Mimikatz.exe\n             Remote administration tools\n                   Defenders should consult the joint Cybersecurity Advisory:\n                     \"Protecting Against Malicious Use of Remote Monitoring and\n                     Management Software\"."
+ },
+ {
+  "id": "p91",
+  "text": "Command execution\nFile names and directory paths used in these commands are only meant to serve as\nexamples. Actual names and paths may differ depending on environment and activity,\nso defenders should account for variants when performing queries."
+ },
+ {
+  "id": "p92",
+  "text": "Note: Many of the commands are derivatives of common system administration\ncommands that could generate false positives when used alone without additional\nindicators."
+ },
+ {
+  "id": "p93",
+  "text": "7z.exe a -p {REDACTED} c:\\windows\\temp\\{REDACTED}.7z\n         c:\\windows\\temp\\*\n         \"C:\\pstools\\psexec.exe\" \\\\{REDACTED} -s cmd /c \"cmd.exe /c\n         \"netsh interface portproxy delete v4tov4\n         listenaddress=0.0.0.0 listenport=9999\"\"\n         C:\\Windows\\system32\\pcwrun.exe\n         C:\\Users\\Administrator\\Desktop\\Win.exe"
+ },
+ {
+  "id": "p94",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                            16"
+ },
+ {
+  "id": "p95",
+  "text": "cmd.exe /C dir /S \\\\{REDACTED}\\c$\\Users\\{REDACTED} >>\n         c:\\windows\\temp\\{REDACTED}.tmp\n         \"cmd.exe\" /c wmic process call create \"cmd.exe /c mkdir\n         C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm\n         \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\"\n         cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value>\n         2>&1\n         cmd.exe /Q /c net group \"domain admins\" /dom\n         1>\\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1\n         cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir\n         C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\tmp\\\" 1>\n         \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1\n         D:\\{REDACTED}\\xcopy C:\\windows\\temp\\hp d:\\{REDACTED}\n         Get-EventLog security -instanceid 4624\n         ldifde.exe -f c:\\windows\\temp\\cisco_up.txt -p subtree\n         makecab ..\\backup\\210829-020000.zip\n         ..\\webapps\\adssp\\html\\Lock.lic\n         move \"\\\\<redacted>\\c$\\users\\public\\Appfile\\registry\\SYSTEM\"\n         ..\\backup\\210829-020000.zip\n         netsh interface portproxy add v4tov4 listenaddress=0.0.0.0\n         listenport=9999 connectaddress={REDACTED} connectport=8443\n         protocol=tcp\n         netsh interface portproxy delete v4tov4\n         listenaddress=0.0.0.0 listenport=9999\n         Rar.exe a –{REDACTED} c:\\Windows\\temp\\DMBC2C61.tmp\n         start-process -filepath c:\\windows\\temp\\<filename>.bat -\n         windowstyle hidden 1\n         Note: The batch file in question (<filename>.bat) could use any name, and no\n         discernable pattern has been determined at this time.\n         wmic process call create \"cmd.exe /c mkdir\n         C:\\users\\public\\Appfile & ntdsutil \\\"ac i ntds\\\" ifm\n         \\\"create full C:\\users\\public\\Appfile\\\" q q"
+ },
+ {
+  "id": "p96",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                         17"
+ },
+ {
+  "id": "p97",
+  "text": "wmic process call create \"cmd.exe /c mkdir\n         C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\tmp\\\"\n         wmic process call create \"cmd.exe /c ntdsutil \\\"ac i ntds\\\"\n         ifm \\\"create full C:\\Windows\\Temp\\Pro\"\n         wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm\n         \\\"create full C:\\Windows\\Temp\\\""
+ },
+ {
+  "id": "p98",
+  "text": "Command line patterns\nCertain patterns in commands (with asterisks for wildcards) can be used to identify\npotentially malicious commands:\n        cmd.exe /C dir /S \\\\* >> *\n        cmd.exe /Q /c * 1> \\\\127.0.0.1\\ADMIN$\\__*.*>&1\n        powershell start-process -filepath c:\\windows\\temp\\*.exe -\n         windowstyle hidden"
+ },
+ {
+  "id": "p99",
+  "text": "File paths\nThe most common paths where files and executables used by the actor have been\nfound include:\n        C:\\Users\\Public\\Appfile (including subdirectories)\n        C:\\Perflogs (including subdirectories)\n        C:\\Windows\\Temp (including subdirectories)\nFile names\nThe file names the actor has previously used for such things as malware, scripts, and\ntools include:"
+ },
+ {
+  "id": "p100",
+  "text": "backup.bat                   cl64.exe            update.bat        Win.exe\n billagent.exe                nc.exe              update.exe        WmiPrvSE.exe\n billaudit.exe                rar.exe             vm3dservice.exe   WmiPreSV.exe\n cisco_up.exe                 SMSvcService.exe    watchdogd.exe\nIn addition to the file names and paths above, malicious files names, believed to be\nrandomly created, in the following format have also been discovered:\nC:\\Windows\\[a-zA-Z]{8}.exe"
+ },
+ {
+  "id": "p101",
+  "text": "SHA-256 file hashes\n        f4dd44bc19c19056794d29151a5b1bb76afd502388622e24c863a8494af147dd\n        ef09b8ff86c276e9b475a6ae6b54f08ed77e09e169f7fc0872eb1d427ee27d31\n        d6ebde42457fe4b2a927ce53fc36f465f0000da931cfab9b79a36083e914ceca"
+ },
+ {
+  "id": "p102",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                          18"
+ },
+ {
+  "id": "p103",
+  "text": "    472ccfb865c81704562ea95870f60c08ef00bcd2ca1d7f09352398c05be5d05d\n         66a19f7d2547a8a85cee7a62d0b6114fd31afdee090bd43f36b89470238393d7\n         3c2fe308c0a563e06263bbacf793bbe9b2259d795fcc36b953793a7e499e7f71\n         41e5181b9553bbe33d91ee204fe1d2ca321ac123f9147bb475c0ed32f9488597\n         c7fee7a3ffaf0732f42d89c4399cbff219459ae04a81fc6eff7050d53bd69b99\n         3a9d8bb85fbcfe92bae79d5ab18e4bca9eaf36cea70086e8d1ab85336c83945f\n         fe95a382b4f879830e2666473d662a24b34fccf34b6b3505ee1b62b32adafa15\n         ee8df354503a56c62719656fae71b3502acf9f87951c55ffd955feec90a11484"
+ },
+ {
+  "id": "p104",
+  "text": "User-agent\nIn some cases, the following user-agent string (including the extra spacing) was\nidentified performing reconnaissance activities by this actor:\nMozilla/5.0 (Windows NT 6.1; WOW64; rv:68.0)\nGecko/20100101 Firefox/68.0"
+ },
+ {
+  "id": "p105",
+  "text": "Note: The spacing between “)” and “Gecko” is 3 tabs followed by 4 spaces."
+ },
+ {
+  "id": "p106",
+  "text": "Yara rules\n rule ShellJSP {\n     strings:\n         $s1 = \"decrypt(fpath)\"\n         $s2 = \"decrypt(fcontext)\"\n         $s3 = \"decrypt(commandEnc)\"\n         $s4 = \"upload failed!\"\n         $s5 = \"aes.encrypt(allStr)\"\n         $s6 = \"newid\""
+ },
+ {
+  "id": "p107",
+  "text": "condition:\n             filesize < 50KB and 4 of them\n }"
+ },
+ {
+  "id": "p108",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                         19"
+ },
+ {
+  "id": "p109",
+  "text": "rule EncryptJSP {\n     strings:\n         $s1 = \"AEScrypt\"\n         $s2 = \"AES/CBC/PKCS5Padding\"\n         $s3 = \"SecretKeySpec\"\n         $s4 = \"FileOutputStream\"\n         $s5 = \"getParameter\"\n         $s6 = \"new ProcessBuilder\"\n         $s7 = \"new BufferedReader\"\n         $s8 = \"readLine()\""
+ },
+ {
+  "id": "p110",
+  "text": "condition:\n           filesize < 50KB and 6 of them\n }\n rule CustomFRPClient {\n    meta:\n          description=”Identify instances of the actor's custom FRP tool based\n on unique strings chosen by the actor and included in the tool”\n    strings:\n          $s1 = \"%!PS-Adobe-\" nocase ascii wide\n          $s2 = \"github.com/fatedier/frp/cmd/frpc\" nocase ascii wide\n          $s3 = \"github.com/fatedier/frp/cmd/frpc/sub.startService\" nocase\n ascii wide\n          $s4 = \"MAGA2024!!!\" nocase ascii wide\n          $s5 = \"HTTP_PROXYHost: %s\" nocase ascii wide"
+ },
+ {
+  "id": "p111",
+  "text": "condition:\n           all of them\n }\n rule HACKTOOL_FRPClient {\n    meta:\n          description=”Identify instances of FRP tool (Note: This tool is\n known to be used by multiple actors, so hits would not necessarily imply\n activity by the specific actor described in this report)”\n    strings:\n          $s1 = \"%!PS-Adobe-\" nocase ascii wide\n          $s2 = \"github.com/fatedier/frp/cmd/frpc\" nocase ascii wide\n          $s3 = \"github.com/fatedier/frp/cmd/frpc/sub.startService\" nocase\n ascii wide\n          $s4 = \"HTTP_PROXYHost: %s\" nocase ascii wide"
+ },
+ {
+  "id": "p112",
+  "text": "condition:\n           3 of them\n }"
+ },
+ {
+  "id": "p113",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                  20"
+ },
+ {
+  "id": "p114",
+  "text": "References\nActive Directory and domain controller hardening:\n    Best practices: https://learn.microsoft.com/en-us/windows-server/identity/ad-\n       ds/plan/security-best-practices/best-practices-for-securing-active-directory"
+ },
+ {
+  "id": "p115",
+  "text": "CISA regional cyber threats:\n    PRC state-sponsored activity: China Cyber Threat Overview and Advisories"
+ },
+ {
+  "id": "p116",
+  "text": "Microsoft Threat Intelligence blog:\n    Volt Typhoon activity: https://www.microsoft.com/en-\n      us/security/blog/2023/05/24/volt-typhoon-targets-us-critical-infrastructure-with-\n      living-off-the-land-techniques/\nNtdsutil.exe:\n    Overview: https://learn.microsoft.com/en-us/previous-versions/windows/it-\n      pro/windows-server-2012-r2-and-2012/cc753343(v=ws.11)\nPowerShell:\n   Best practices: https://media.defense.gov/2022/Jun/22/2003021689/-1/-\n     1/0/CSI_KEEPING_POWERSHELL_SECURITY_MEASURES_TO_USE_AND_\n     EMBRACE_20220622.PDF\n   Logging configuration: https://www.mandiant.com/resources/blog/greater-visibility"
+ },
+ {
+  "id": "p117",
+  "text": "Windows command line process auditing:\n    Overview: https://learn.microsoft.com/en-us/windows-server/identity/ad-\n     ds/manage/component-updates/command-line-process-auditing\nWindows Defender Firewall:\n    Best practices: https://learn.microsoft.com/en-us/windows/security/threat-\n     protection/windows-firewall/best-practices-configuring\n    Logging configuration: https://learn.microsoft.com/en-us/windows/security/threat-\n     protection/windows-firewall/configure-the-windows-firewall-log\nWindows management instrumentation:\n    Events: https://learn.microsoft.com/en-us/windows/win32/wmisdk/tracing-wmi-\n     activity#obtaining-wmi-events-through-event-viewer\n    Tracing activity: https://learn.microsoft.com/en-us/windows/win32/wmisdk/tracing-\n     wmi-activity\nWindows password spraying:\n    Logging and playbook configuration: https://learn.microsoft.com/en-\n     us/security/compass/incident-response-playbook-password-spray"
+ },
+ {
+  "id": "p118",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                           21"
+ },
+ {
+  "id": "p119",
+  "text": "Acknowledgements\nThe NSA Cybersecurity Collaboration Center, along with the authoring agencies,\nacknowledge Amazon Web Services (AWS) Security, Broadcom, Cisco Talos, Google's\nThreat Analysis Group, Lumen Technologies, Mandiant, Microsoft Threat Intelligence\n(MSTI), Palo Alto Networks, SecureWorks, SentinelOne, Trellix, and additional industry\npartners for their collaboration on this advisory."
+ },
+ {
+  "id": "p120",
+  "text": "Disclaimer of endorsement\nThe information and opinions contained in this document are provided \"as is\" and without any warranties\nor guarantees. Reference herein to any specific commercial products, process, or service by trade name,\ntrademark, manufacturer, or otherwise does not constitute or imply its endorsement, recommendation, or\nfavoring by the authoring agencies’ governments, and this guidance shall not be used for advertising or\nproduct endorsement purposes."
+ },
+ {
+  "id": "p121",
+  "text": "Trademark recognition\nActive Directory®, Microsoft®, PowerShell®, and Windows® are registered trademarks of Microsoft\nCorporation. MITRE® and ATT&CK® are registered trademarks of The MITRE Corporation."
+ },
+ {
+  "id": "p122",
+  "text": "Purpose\nThis document was developed in furtherance of the authoring agencies’ cybersecurity missions, including\ntheir responsibilities to identify and disseminate threats, and to develop and issue cybersecurity\nspecifications and mitigations. This information may be shared broadly to reach all appropriate\nstakeholders."
+ },
+ {
+  "id": "p123",
+  "text": "Contact\nU.S. organizations: Urgently report any anomalous activity or incidents, including based upon technical\ninformation associated with this Cybersecurity Advisory, to CISA at Report@cisa.dhs.gov or\ncisa.gov/report or to the FBI via your local FBI field office listed at https://www.fbi.gov/contact-us/field-\noffices.\nNSA Cybersecurity Report Questions and Feedback: CybersecurityReports@nsa.gov\nNSA Defense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\nNSA Media Inquiries / Press Desk: 443-634-0721, MediaRelations@nsa.gov"
+ },
+ {
+  "id": "p124",
+  "text": "Australian organizations: Visit cyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report\ncybersecurity incidents and to access alerts and advisories."
+ },
+ {
+  "id": "p125",
+  "text": "Canadian organizations: Report incidents by emailing CCCS at contact@cyber.gc.ca."
+ },
+ {
+  "id": "p126",
+  "text": "New Zealand organizations: Report cyber security incidents to incidents@ncsc.govt.nz or call 04 498\n7654."
+ },
+ {
+  "id": "p127",
+  "text": "United Kingdom organizations: Report a significant cyber security incident at ncsc.gov.uk/report-an-\nincident (monitored 24 hours) or, for urgent assistance, call 03000 200 973."
+ },
+ {
+  "id": "p128",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                                 22"
+ },
+ {
+  "id": "p129",
+  "text": "Appendix: MITRE ATT&CK Techniques\nTable 2 captures all referenced threat actor tactics and techniques in this advisory."
+ },
+ {
+  "id": "p130",
+  "text": "Table 2: All referenced threat actor tactics and techniques\n                                                    Initial Access\n            Technique Title                          ID                           Use\n                                                              Actor used public-facing applications to gain\nExploit Public-facing Application                 T1190       initial access to systems; in this case,\n                                                              Earthworm and PortProxy.\n                                                      Execution\nWindows Management                                            The actor executed WMIC commands to\n                                                  T1047\nInstrumentation                                               create a copy of the SYSTEM registry.\nCommand and Scripting                                         The actor used a PowerShell command to\n                                                  T1059.001\nInterpreter: PowerShell                                       identify successful logons to the host.\n                                                              The actor used this primary command\nCommand and Scripting\n                                                              prompt to execute a query that collected\nInterpreter: Windows Command                      T1059.003\n                                                              information about the storage devices on\nShell\n                                                              the local host.\n                                                     Persistence\n                                                              The actor used backdoor web servers with\nServer Software Component: Web                                web shells to establish persistence to\n                                                  T1505.003\nShell                                                         systems, including some of the webshells\n                                                              being derived from Awen webshell.\n                                                    Defense Evasion\n                                                              The actor selectively cleared Windows\n                                                              Event Logs, system logs, and other\nIndicator Removal                                 T1070       technical artifacts to remove evidence of\n                                                              their intrusion activity.\nIndicator Removal: Clear Windows                              The actor cleared system event logs to hide\n                                                  T1070.001\nEvent Logs                                                    activity of an intrusion.\n                                              Credential Access\n                                                              The actor may try to exfiltrate the ntds.dit\nOS Credential Dumping: NTDS                       T1003.003   file and the SYSTEM registry hive out of the\n                                                              network to perform password cracking.\n                                                              The actor attempted to gain access to\nBrute Force                                       T1110\n                                                              accounts with multiple password attempts.\n                                                              The actor used commonly used passwords\n                                                  T1110.003\nBrute Force: Password Spraying                                against accounts to attempt to acquire valid\n                                                              credentials.\n                                                              The actor used additional commands to\nOS Credential Dumping                             T1003\n                                                              obtain credentials in the environment."
+ },
+ {
+  "id": "p131",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                               23"
+ },
+ {
+  "id": "p132",
+  "text": "The actor searched for common password\nCredentials from Password Stores                  T1555\n                                                              storage locations.\n                                                     Discovery\n                                                              The actor executed commands to gather\nSystem Information Discovery                      T1082\n                                                              information about local drives.\n                                                              The actor gathered information about\nSystem Owner/User Discovery                       T1033       successful logons to the host using a\n                                                              PowerShell command.\nPermission Groups Discovery:                                  The actor attempt to find local system\n                                                  T1069.001\nLocal Groups                                                  groups and permission settings.\nPermission Groups Discovery:                                  The actor used commands to enumerate\n                                                  T1069.002\nDoman Groups                                                  the active directory structure.\nSystem Network Configuration                                  The actor used commands to enumerate\n                                                  T1016\nDiscovery                                                     the network topology.\n                                           Command and Control\n                                                              The actor used commands to enable port\nProxy                                             T1090\n                                                              forwarding on the host.\n                                                              The actor used compromised SOHO\nProxy: External Proxy                             T1090.002   devices (e.g. routers) to obfuscate the\n                                                              source of their activity."
+ },
+ {
+  "id": "p133",
+  "text": "U/OO/156893-23 | PP-23-1143 | JUN 2023 Ver. 1.1                                                            24"
+ }
+]

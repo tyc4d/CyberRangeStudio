@@ -1,0 +1,146 @@
+[
+ {
+  "id": "p1",
+  "text": "# Update on SVR Cyber Operations and Vulnerability Exploitation"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2024-10-10\n> - URL: https://www.ic3.gov/CSA/2024/241010.pdf\n> - PDF SHA-256: 5359e1285d1f8c8769c53720be247f5da02d21c616575a581e7ef281deb5654a (`source.pdf`, 8 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (15 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR          Product ID: JCSA-20241010-001\n                                                                                                                   October 10, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "Update on SVR Cyber Operations and\n        Vulnerability Exploitation\n        SUMMARY\n        The Federal Bureau of Investigation (FBI), the             The authoring agencies recommend the\n        National Security Agency (NSA), Cyber National             following mitigations to protect their networks.\n        Mission Force (CNMF), and the United                       See the Mitigations section for the complete\n        Kingdom’s National Cyber Security Centre                   list.\n        (NCSC-UK) are releasing this joint Cybersecurity\n        Advisory (CSA) to highlight the tactics,                        •   Reduce attack surface by disabling\n        techniques, and procedures (TTPs) employed by                       Internet-accessible services that you do\n        the Russian Federation’s Foreign Intelligence                       not need, or restrict access to trusted\n        Service (SVR) in recent cyber operations and                        networks, and removing unused\n        provide network defenders with information to                       applications and utilities from\n        help counter SVR cyber threats.                                     workstations and development\n                                                                            environments.\n        Since at least 2021, Russian SVR cyber actors –\n                                                                •           Require and enforce multi-factor\n        also tracked as APT29, Midnight Blizzard\n                                                                            authentication whenever possible.\n        (formerly Nobelium), Cozy Bear, and the Dukes\n                                                                •           Regularly audit cloud-based accounts\n        – have consistently targeted US, European, and\n                                                                            and applications with administrative\n        global entities in the defense, technology, and\n                                                                            access to email for unusual activity.\n        finance sectors to collect foreign intelligence and\n        enable future cyber operations, including in\n        support of Russia’s ongoing invasion of Ukraine since February 2022. Their operations continue to\n        pose a global threat to government and private sector organizations.\n        The authoring agencies are releasing this CSA to warn network defenders that SVR cyber actors are\n        highly capable of and interested in exploiting software vulnerabilities for initial access [T1190] and\n        escalation of privileges [T1068]. Organizations should prioritize rapid patch deployment and keep\n        software up to date. The SVR continues using TTPs such as spearphishing [T1566], password\n        spraying [T1078], abuse of supply chain [T1195] and trusted relationships [T1199], custom and\n        To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office. When available, please include the following information regarding the incident: date,\n        time, and location of the incident; type of activity; number of people affected; type of equipment used for the\n        activity; the name of the submitting company or organization; and a designated point of contact. For NSA\n        cybersecurity reporting inquiries, contact CybersecurityReports@nsa.gov.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p5",
+  "text": "TLP:CLEAR                                                                                        FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p6",
+  "text": "bespoke malware, cloud exploitation, and living-off-the-land techniques to gain initial access, escalate\n       privileges, move laterally, maintain persistence in victim networks and cloud environments, and\n       exfiltrate information. SVR actors often use The Onion Router (TOR) network, leased and\n       compromised infrastructure, and proxies to obfuscate activity."
+ },
+ {
+  "id": "p7",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 15.1. See the\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to ATT&CK\n       tactics and techniques. For assistance with mapping malicious cyber activity to the ATT&CK\n       framework, see Best Practices for MITRE ATT&CK Mapping and Decider Tool."
+ },
+ {
+  "id": "p8",
+  "text": "Victims\n       SVR cyber operations generally have two types of intended victims: targets of intent and targets of\n       opportunity.\n       Targets of intent include government and diplomatic entities, technology companies, think tanks,\n       international organizations, and cleared defense contractors. These groups are targeted for the\n       purpose of collecting foreign intelligence and technical data as well as establishing accesses to\n       enable subsequent downstream/supply chain compromises. These targets include governments and\n       organizations in North America and Western Europe as well as public and private sector\n       organizations in Asia, Africa, Russia’s near abroad, and South America. Since 2021, SVR cyber\n       operations have continued against Ukraine, likely in support of Russian war efforts.\n       Targets of opportunity represent entities with Internet-accessible infrastructure vulnerable to\n       exploitation through publicly disclosed vulnerabilities, weak authentication controls, or system\n       misconfigurations. SVR cyber operators consistently scan Internet-facing systems for unpatched\n       vulnerabilities. This mass scanning and opportunistic exploitation of vulnerable systems, as opposed\n       to more targeted operations, increase the threat surface to include virtually any organization with\n       vulnerable systems. The SVR takes advantage of opportunistic victims to host malicious\n       infrastructure, conduct follow-on operations from compromised accounts, or to attempt to pivot to\n       other networks.\n           •   In 2023, SVR cyber actors conducted opportunistic exploitation of a JetBrains TeamCity CVE\n               to target an energy trade association, software development firms, hosting companies, tools\n               manufacturers, and information technology companies."
+ },
+ {
+  "id": "p9",
+  "text": "•   Also in 2023, SVR cyber actors used Microsoft Teams accounts impersonating technical\n               support entities to send spearphishing messages [T1566] via Microsoft Teams Chat to socially\n               engineer the victims to grant the actors account access. The campaign was enabled by\n               compromises of poorly secured Microsoft customer tenants operated by numerous small\n               businesses [T1584.005]. After obtaining access to those small businesses’ accounts, the SVR\n               created platforms in those victim environments to enable operations targeting their intended\n               victim organizations, which included government agencies, technology and manufacturing\n               firms, and non-governmental organizations."
+ },
+ {
+  "id": "p10",
+  "text": "TLP:CLEAR                                                                                          FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p11",
+  "text": "Infrastructure\n       SVR cyber intrusions include a heavy focus on remaining anonymous and undetected. The actors\n       use TOR extensively throughout intrusions – from initial targeting to data collection – and across\n       network infrastructure. The actors lease operational infrastructure using a variety of fake identities\n       and low reputation email accounts [T1583]. The SVR obtains infrastructure from resellers of major\n       hosting providers.\n       When the SVR suspects their intrusions have been identified by their victim or law enforcement, they\n       quickly attempt to destroy their infrastructure and any evidence on it. To remain undetected, the SVR\n       frequently uses tools and programs already on victim networks to avoid anti-virus software. During\n       intrusions into cloud environments, the SVR exploits misconfigurations and weak access controls to\n       access information without the need for additional software.\n       Additionally, SVR infrastructure used to directly interact with victims located in North America almost\n       exclusively consists of endpoints associated with one or more proxy networks [T1665]. These proxy\n       networks, which frequently use networks associated with mobile telephone providers or residential\n       Internet services, are used to attempt to blend in with legitimate users of the victims’ network and\n       avoid connections originating from IP addresses associated with datacenters or commercial VPN\n       providers.\n       To disrupt this activity, organizations should baseline authorized devices and apply additional scrutiny\n       to systems accessing their network resources that do not adhere to the baseline.\n       Vulnerability Exploitation\n       In April 2021, the US, UK, and Canadian governments published a joint CSA highlighting the SVR’s\n       exploitation of CVEs for initial access. Since then, SVR cyber actors have exploited vulnerabilities at a\n       mass scale to target victims worldwide across a variety of sectors, including:\n           •   CVE-2022-27924: CVE-2022-2794 is a command injection vulnerability [CWE-74] that allows\n               an unauthenticated attacker to inject arbitrary memcache commands into a targeted Zimbra\n               instance, causing an overwrite of arbitrary cached entries. SVR cyber actors exploited Zimbra\n               mail servers targeting hundreds of domains worldwide, including through exploitation of the\n               CVE. This allowed the actors to access user credentials and mailboxes without victim\n               interaction. Following the exploitation of those systems, the SVR deployed infrastructure to\n               enable collection from the victims."
+ },
+ {
+  "id": "p12",
+  "text": "•   CVE-2023-42793: Starting in September 2023, SVR cyber actors have exploited JetBrains\n               TeamCity CVE-2023-42793, which enabled arbitrary code execution via insecure handling of\n               specific paths allowing for authentication bypass.\n       Based on the SVR cyber actors’ TTPs and previous targeting, the authoring agencies assess they\n       have the capability and interest to exploit additional CVEs for initial access, remote code execution,\n       and privilege escalation, including the ones listed below. The below CVEs have all been publicly\n       disclosed; organizations should implement vendor-issued security patches if they have not already."
+ },
+ {
+  "id": "p13",
+  "text": "TLP:CLEAR                                                                                          FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p14",
+  "text": "Table 1: CVEs\n               CVE                      Vendor/Product              Details\n               CVE-2023-20198           Cisco IOS XE Software       Privilege escalation vulnerability\n                                        web UI feature              [CWE-269] that allows an attacker to\n                                                                    create a local user and password\n                                                                    combination\n               CVE-2023-4911            RHSA GNU C Library's        Buffer overflow vulnerability [CWE-\n                                        dynamic loader ld.so        122] that could allow a local attacker\n                                                                    to execute code with elevated\n                                                                    privileges\n               CVE-2023-38545           Haxx Libcurl                SOCKS5 heap buffer overflow\n                                                                    vulnerability [CWE-122]\n               CVE-2023-38546           Haxx Libcurl                Missing authorization vulnerability\n                                                                    [CWE-862] that allows an attacker to\n                                                                    insert cookies in a running program if\n                                                                    certain conditions are met\n               CVE-2023-40289           Supermicro X11SSM-F,        Command injection vulnerability\n                                        X11SAE-F, and X11SSE-       [CWE-74] that allows an attacker to\n                                        F 1.66                      elevate privileges\n               CVE-2023-24023           Bluetooth BR/EDR            Allows certain man-in-the-middle\n                                        devices with Secure         attacks [CWE-300] that force a short\n                                        Simple Pairing and          key length [CWE-326], and might lead\n                                        Secure Connections          to discovery of the encryption key and\n                                        pairing in Bluetooth Core   live injection, aka BLUFFS.\n                                        Specification 4.2 through\n                                        5.4\n               CVE-2023-40088           Android                     Use after free [CWE-416] vulnerability\n                                                                    that could lead to remote (proximal,\n                                                                    adjacent) code execution\n               CVE-2023-40076           Google Android 14.0         Permissions bypass vulnerability\n                                                                    [CWE-200] that allows an attacker to\n                                                                    access credentials and escalate local\n                                                                    privileges\n               CVE-2023-40077           Google Android 11-14        Use after free [CWE-416] vulnerability\n                                                                    that can lead to escalation of\n                                                                    privileges\n               CVE-2023-45866           Bluetooth HID Hosts in      Improper authentication vulnerability\n                                        BlueZ                       [CWE-287] that could allow an\n                                                                    attacker in close proximity to inject\n                                                                    keystrokes and carry out arbitrary\n                                                                    commands\n               CVE-2022-40507           Qualcomm                    Double free vulnerability [CWE-415]"
+ },
+ {
+  "id": "p15",
+  "text": "TLP:CLEAR                                                                                          FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p16",
+  "text": "CVE-2023-36745           Microsoft Exchange         Remote code execution [CWE-502]\n                                        Server\n               CVE-2023-4966            Citrix NetScaler ADC,      Buffer overflow vulnerability [CWE-\n                                        NetScaler Gateway          119]\n               CVE-2023-6345            Google Chrome              Integer overflow vulnerability [CWE-\n                                                                   190] that allows a remote attacker to\n                                                                   potentially perform a sandbox escape\n                                                                   via a malicious file\n               CVE-2023-37580           Zimbra                     Cross-site scripting (XSS) vulnerability\n                                                                   [CWE-79]\n               CVE-2021-27850           Apache Tapestry            Critical unauthenticated remote code\n                                                                   execution vulnerability [CWE-502]\n               CVE-2021-41773           Apache HTTP server         Directory traversal vulnerability [CWE-\n                                        2.4.99                     35]\n               CVE-2021-42013           Apache HTTP server         Remote code execution vulnerability\n                                        2.4.50                     [CWE-22]\n               CVE-2018-13379           Fortinet FortiGate SSL     Path traversal vulnerability [CWE-35]\n                                        VPN\n               CVE-2023-42793           JetBrains TeamCity         Authentication bypass vulnerability\n                                                                   [CWE-288]\n               CVE-2023-29357           SharePoint Server          Elevation of privilege vulnerability\n                                                                   [CWE-303]\n               CVE-2023-24955           SharePoint Server          Remote code execution vulnerability\n                                                                   [CWE-94]\n               CVE-2023-35078           Ivanti Endpoint Manager    Authentication bypass vulnerability\n                                        Mobile versions through    [CWE-288]\n                                        11.10\n               CVE-2023-5044            Kubernetes Ingress-nginx   Code injection vulnerability [CWE-94]"
+ },
+ {
+  "id": "p17",
+  "text": "TLP:CLEAR                                                                                           FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p18",
+  "text": "ATT&CK TACTICS AND TECHNIQUES\n       See table 2 for all referenced threat actor tactics and techniques in this advisory.\n                                        Table 2: SVR ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p19",
+  "text": "Technique Title              ID                              Use"
+ },
+ {
+  "id": "p20",
+  "text": "Exploit Public-             T1190       The actors exploit multiple CVEs for initial access\n              Facing Application                      and/or privilege escalation."
+ },
+ {
+  "id": "p21",
+  "text": "Escalation of               T1068       The actors escalate privileges on a compromised\n              privileges                              host."
+ },
+ {
+  "id": "p22",
+  "text": "Phishing                    T1566       The actors commonly conduct spear phishing\n                                                      campaigns."
+ },
+ {
+  "id": "p23",
+  "text": "Valid accounts              T1078       The actors conduct password spraying to access\n                                                      victim environments."
+ },
+ {
+  "id": "p24",
+  "text": "Compromise                  T1195.002   The actors use trojanized software updates to\n              software supply                         compromise downstream customers.\n              chain"
+ },
+ {
+  "id": "p25",
+  "text": "Trusted Relationship        T1199       The actors abuse trusted relationships to target\n                                                      other connections."
+ },
+ {
+  "id": "p26",
+  "text": "Compromise                  T1584       The actors compromise infrastructure to incorporate\n              Infrastructure                          in future operations."
+ },
+ {
+  "id": "p27",
+  "text": "Hide Infrastructure         T1665       The actors use residential proxies and TOR to\n                                                      obfuscate infrastructure."
+ },
+ {
+  "id": "p28",
+  "text": "Acquire                     T1583       The actors use cryptocurrencies, fake identities, and\n              Infrastructure                          low reputation email accounts to lease\n                                                      infrastructure."
+ },
+ {
+  "id": "p29",
+  "text": "Compromise                  T1584.005   The actors compromise numerous third-party\n              Infrastructure:                         systems to form a botnet.\n              Botnet"
+ },
+ {
+  "id": "p30",
+  "text": "TLP:CLEAR                                                                                     FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p31",
+  "text": "MITIGATIONS\n       The authoring agencies recommend organizations implement the mitigations below to improve your\n       organization’s cybersecurity posture on the basis of the threat actor’s activity.\n           •   Prioritize rapid deployment of patches and software updates as soon as they become\n               available. Enable automatic updates where possible.\n           •   Reduce attack surface by disabling Internet-accessible services that you do not need, or\n               restrict access to trusted networks, and removing unused applications and utilities from\n               workstations and development environments.\n           •   Perform continuous threat hunting activities.\n           •   Ensure proper configuration of systems – check for open ports and obsolete or unused\n               protocols, especially on Internet-facing systems.\n           •   Isolate Internet-facing services in a network Demilitarized Zone (DMZ) to reduce exposure of\n               internal networks.\n           •   Require and enforce multi-factor authentication whenever possible.\n           •   Require additional identity challenges for enrollment of new devices when users are permitted\n               to self-enroll multi-factor authentication mechanisms or register devices on the corporate\n               network.\n           •   Notify users across multiple platforms when devices have been successfully registered to help\n               identify unexpected registrations. Train and encourage users to notice and report unexpected\n               registrations.\n           •   Enable robust logging for authentication services and Internet-facing functions.\n           •   Regularly audit cloud-based accounts and applications with administrative access to email for\n               unusual activity.\n           •   Limit token access lifetimes and monitor for evidence of token reuse.\n           •   Enforce least-privileged access and disable external management capabilities.\n           •   Baseline authorized devices and apply additional scrutiny to systems accessing network\n               resources that do not adhere to the baseline.\n           •   Disable remote downloading of information to non-enrolled devices when possible."
+ },
+ {
+  "id": "p32",
+  "text": "The authoring agencies recommend testing your existing security controls to assess how they\n       perform against the techniques described in this advisory."
+ },
+ {
+  "id": "p33",
+  "text": "TLP:CLEAR                                                                                        FBI | NSA | CNMF | NCSC"
+ },
+ {
+  "id": "p34",
+  "text": "REFERENCES\n       NSA, FBI, CISA Cybersecurity Advisory Russian SVR Targets U.S. and Allied Networks\n       FBI, DHS Joint Cybersecurity Advisory Russian Foreign Intelligence Service (SVR) Cyber\n       Operations: Trends and Best Practices for Network Defenders\n       UK NCSC, CISA, FBI, NSA Advisory Further TTPs associated with SVR cyber actors\n       UK NCSC, CISA, CNMF, FBI, NSA, ASD ACSC, CCCS, NZ NCSC Joint Cybersecurity Advisory\n       SVR Cyber Actors Adapt Tactics for Initial Cloud Access (AA24-057A)\n       FBI, CISA, NSA, UK NCSC, SKW, CERT.PL Joint Cybersecurity Advisory Russian Foreign\n       Intelligence Service (SVR) Exploiting JetBrains TeamCity CVE Globally (AA23-347A)"
+ },
+ {
+  "id": "p35",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. The authoring\n       agencies do not endorse any commercial entity, product, company, or service, including any entities,\n       products, or services linked within this document. Any reference to specific commercial entities,\n       products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not\n       constitute or imply endorsement, recommendation, or favoring by the authoring agencies."
+ },
+ {
+  "id": "p36",
+  "text": "VERSION HISTORY\n       October 10, 2024: Initial version."
+ }
+]

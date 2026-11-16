@@ -1,0 +1,118 @@
+[
+ {
+  "id": "p1",
+  "text": "# Silent Ransom Group Impersonating IT Personnel through Social Engineering"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-05-26\n> - URL: https://www.ic3.gov/CSA/2026/260526.pdf\n> - PDF SHA-256: b8647d98c5892e7beb047bd9f97358e80db3e06d8d54648e848aae70d0c766cb (`source.pdf`, 5 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (10 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "26 MAY 2026\n                                                                                                 FLASH Number\n                                                                                               FLASH-20260526-01"
+ },
+ {
+  "id": "p4",
+  "text": "Silent Ransom Group Impersonating IT Personnel\nthrough Social Engineering"
+ },
+ {
+  "id": "p5",
+  "text": "Summary\nThe Silent Ransom Group (SRG), also known as Luna Moth, Chatty Spider, and UNC3753, is targeting law\nfirms using social engineering techniques. Through phone calls and phishing emails, SRG actors pose as IT\nsupport to establish access to victim computers and exfiltrate data, usually through legitimate remote\naccess tools or by sending an individual in-person to the victim company’s location to gain physical access\nto computers. While SRG has victimized companies in many sectors including those in the insurance,\nfinance, and healthcare industries, the group has consistently targeted US-based law firms since Spring\n2023."
+ },
+ {
+  "id": "p6",
+  "text": "Threat\nSRG actors—active since at least 2022—conduct data theft and extortion operations without relying on\ntraditional ransomware encryption. Unlike conventional ransomware actors, SRG actors typically seek\nrapid access to victim systems, immediate data exfiltration, and extortion through threats of public\ndisclosure or sale of stolen data."
+ },
+ {
+  "id": "p7",
+  "text": "Historically, SRG actors sent phishing emails purportedly to charge small “subscription fees” to gain\naccess to victim networks. To cancel the fake subscription, the victim was instructed to call the threat\nactor, who then emailed the victim a link to download remote access software."
+ },
+ {
+  "id": "p8",
+  "text": "As of Spring 2026, SRG actors use a social engineering scheme to pose as an employee from the victim’s IT\ndepartment. SRG actors either directly call or send phishing emails to urge employees to call the SRG\nactor posing as IT support. While on the phone, the SRG actor directs the employee to grant access to a\nremote desktop session. If that attempt fails, SRG sends a threat actor to the victim’s location to gain\naccess to insert a storage device into the victim’s computer. In this scheme, the threat actor tells the\nvictim they need to image the device or create a backup file to address potential impacts from the phishing\nemail."
+ },
+ {
+  "id": "p9",
+  "text": "Once the threat actor obtains access to the victim’s device, they minimally escalate privileges and quickly\npivot to data exfiltration without encryption. SRG actors use WinSCP (Windows Secure Copy) or a hidden\nor renamed version of “Rclone” to exfiltrate data. SRG actors also exfiltrate data to internal filesharing\nplatforms such as Google Drive or Microsoft OneDrive. By sending someone in-person to the victim’s\nlocation to facilitate the intrusion, SRG actors exfiltrate data to an external hard drive or USB drive inserted"
+ },
+ {
+  "id": "p10",
+  "text": "by the threat actor into the victim’s computer. SRG actors use the exfiltrated victim data to extort the\nvictim by sending a ransom email threatening to sell or post the data online. SRG actors also call\nemployees or clients of a victim company to pressure the victim to begin ransom negotiations. SRG actors\nhave a public-facing website, business-data-leaks[.]com, where they post victim data."
+ },
+ {
+  "id": "p11",
+  "text": "MITRE ATT&CK Mapping"
+ },
+ {
+  "id": "p12",
+  "text": "ATT&CK Tactic         Technique                     Relevance to SRG Activity\n Initial Access        T1566 – Phishing              Callback phishing emails using invoice, billing, subscription, or IT-\n                                                     themed lures\n Resource              T1598.004 – Voice             Threat actors direct victims to initiate phone contact or\n Development /         Phishing                      impersonate internal IT support\n Social Engineering\n Execution             T1219 – Remote Access         Legitimate remote administration tools used to establish\n                       Software                      interactive access\n Credential Access     T1078 – Valid Accounts        Threat actors may leverage victim credentials to access email or\n                                                     cloud services\n Collection            T1560 – Archive Collected     Data may be staged or compressed prior to exfiltration\n                       Data\n Collection            T1530 – Data from Cloud       Theft of data from Microsoft 365, OneDrive, Google Drive, or\n                       Storage                       similar platforms\n Exfiltration          T1567 – Exfiltration Over     Upload of stolen data to cloud storage or web-accessible platforms\n                       Web Service\n Exfiltration          T1052.001 – Exfiltration to   In-person intrusion scenarios involving USB or external hard drive\n                       Removable Media               data theft\n Impact                T1657 – Financial Theft /     Threatened publication or sale of stolen victim data\n                       Extortion"
+ },
+ {
+  "id": "p13",
+  "text": "Indicators\nRecent SRG campaigns left few artifacts on compromised machines. Traditional antivirus products are\nalso unlikely to flag the intrusion because SRG generally uses legitimate system management or remote\naccess tools to carry out the attack. Use of these tools should not be attributed as malicious without\nanalytical evidence to support they are used at the direction of, or controlled by, SRG actors."
+ },
+ {
+  "id": "p14",
+  "text": "Indicators of an SRG attack may include the following:"
+ },
+ {
+  "id": "p15",
+  "text": "•     New, unauthorized downloads of system management or remote access tools, including Zoho\n          Assist, Quick Assist, AnyDesk, RustDesk, Syncro, Splashtop, or Atera.\n    •     Unauthorized installation of external hard drives or USB drives on company computers.\n    •     Exfiltration of data to Microsoft OneDrive, Google Drive, or external servers."
+ },
+ {
+  "id": "p16",
+  "text": "•   WinSCP or Rclone connection made to an external IP address.\n   •   Alerts that data was exfiltrated from the company environment.\n   •   Unidentified or unauthorized individuals attempting to access computers and claiming to be IT\n       support.\n   •   Emails, phone calls, or voicemails from an unnamed group claiming data was stolen.\n   •   Emails or phone calls to clients claiming that their data was stolen.\n   •   Employees receiving unsolicited phone calls from individuals falsely claiming to work in their IT\n       department."
+ },
+ {
+  "id": "p17",
+  "text": "Information Requested\nThe FBI is seeking any information from SRG victims that can be legally shared, including:"
+ },
+ {
+  "id": "p18",
+  "text": "•   A copy of the ransom note.\n   •   The phone number or email account used by the threat actor.\n   •   Transcripts of communications with the threat actor, to include voicemails.\n   •   The original call back message or phishing email.\n   •   Cryptocurrency wallet information.\n   •   Special sensitivities of stolen data.\n   •   Identifying information of individuals posing as IT support, including surveillance videos and any\n       photos provided."
+ },
+ {
+  "id": "p19",
+  "text": "Your organization has no obligation to respond or provide information back to the FBI in response to this\nproduct. If, after reviewing the information provided, your organization decides to provide information to\nthe FBI, reporting must be consistent with applicable state and federal laws."
+ },
+ {
+  "id": "p20",
+  "text": "Recommendations\nImplementing and practicing basic cyber hygiene to include using robust passwords, multifactor\nauthentication, and installation of antivirus tools can possibly defend against ransomware attacks. The FBI\nrecommends the following actions to defend against SRG threat actors:"
+ },
+ {
+  "id": "p21",
+  "text": "•   Verify the credentials of all individuals accessing company spaces, including obtaining copies of\n       each visitor’s ID card.\n   •   Limit access to sensitive data from less secure networks, such as home or public internet.\n   •   Develop and communicate policies regarding when and how IT support will communicate and\n       authenticate themselves to employees.\n   •   Conduct staff training on identifying, resisting, and reporting phishing attempts."
+ },
+ {
+  "id": "p22",
+  "text": "•   Maintain regular backups of company data.\n•   Require phishing-resistant multi-factor authentication (MFA) for as many services as possible.\n•   If possible, block access to port 22, which enables encrypted remote access, file transfers, and\n    secure command execution on network devices.\n•   If possible, disable remote access and external drive installation permissions on company\n    computers with access to sensitive or confidential data."
+ },
+ {
+  "id": "p23",
+  "text": "Reporting Notice\n    If you identify suspicious activity within your enterprise or have information related to the contents of this\n    document, please contact your local FBI Cyber Squad immediately at www.fbi.gov/contact-us/field-\n    offices. The FBI also encourages you to report suspicious or criminal activity to the FBI Internet Crime\n    Complaint Center at www.ic3.gov. When available, each report should include the date, time, location,\n    type of activity, number of people, and type of equipment used for the activity, the name of the submitting\n    company or organization, and a designated point of contact. Press inquiries should be directed to the FBI’s\n    National Press Office at npo@fbi.gov or (202) 324-3691."
+ },
+ {
+  "id": "p24",
+  "text": "Individual indicators included in this document should always be evaluated in light of your complete\n    information security situation. Some indicators, particularly those of a nondeterministic or ephemeral\n    nature (such as filenames or IP addresses), may not be indicative of a compromise."
+ },
+ {
+  "id": "p25",
+  "text": "Administrative Note\n    The information in this document is being provided by the FBI “as is” for informational purposes only, with\n    no guarantees or warranties, for potential use at the sole discretion of recipients to protect against cyber\n    threats. This data is provided to help cybersecurity professionals and system administrators guard against\n    the persistent malicious actions of cyber actors. The FBI does not endorse any commercial entity, product,\n    company, or service, including any entities, products, or services linked within this document. Any\n    reference to specific commercial entities, products, processes, or services by service mark, trademark,\n    manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring by\n    the FBI."
+ },
+ {
+  "id": "p26",
+  "text": "This FLASH was coordinated with DHS/CISA and is marked TLP:CLEAR. The information in this product\n    may be shared without restriction. Information is subject to standard copyright rules."
+ },
+ {
+  "id": "p27",
+  "text": "Your feedback regarding this product is critical.\nPlease take a moment to complete the survey at the link below. Input can be submitted\nanonymously and should be specific to your experience with our written products."
+ },
+ {
+  "id": "p28",
+  "text": "https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p29",
+  "text": "This survey is for feedback on contact and value only. Reporting of technical information\nregarding FLASH reports must be submitted through your local FBI field office."
+ }
+]

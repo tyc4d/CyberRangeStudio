@@ -1,0 +1,837 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260429",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "4352d0213674cef6c66457ddf6cc55fb7f23359757d9a372484627b6b3985d44",
+  "source_name": "csa-2026-260429"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+   "source": "llm",
+   "description": "Once inside the IT network, threat actors, such as those conducting activity tracked publicly as Volt Typhoon, can escalate and maintain access by exfiltrating Active Directory credentials.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "Threat actors move laterally into OT network using shared domains or credentials",
+   "source": "llm",
+   "description": "Once compromised, shared domains or credentials between IT and OT environments are one way for threat actors to move laterally into the OT network.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "Threat actors compromise trusted third-party vendor software updates",
+   "source": "llm",
+   "description": "Threat actors have compromised trusted third-party vendor software updates to gain network access.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a4",
+   "name": "Threat actors exploit supply chain weaknesses",
+   "source": "llm",
+   "description": "Threat actors have exploited supply chain weaknesses to gain network access.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a5",
+   "name": "Threat actors take advantage of insecure and unrestricted remote access granted to vendors and operators",
+   "source": "llm",
+   "description": "Threat actors have taken advantage of insecure and unrestricted remote access granted to vendors and operators to gain network access.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a6",
+   "name": "Threat actors adopt living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks",
+   "source": "llm",
+   "description": "Threat actors have adopted living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "Threat actors use OT-specific capabilities if on the OT network",
+   "source": "llm",
+   "description": "If on the OT network, threat actors could then use OT-specific capabilities.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a8",
+   "name": "Threat actors use malware packages designed for targeting OT and critical infrastructure systems",
+   "source": "llm",
+   "description": "Threat actors have used malware packages designed and tailored for use in targeting OT and critical infrastructure systems, such as CrashOverride, Havex, BlackEnergy 2 and 3, Trisis, and Incontroller.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "shared domains or credentials between IT and OT environments",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "order of compromise and exploitation",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "order of exploitation and taking advantage",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "prepositioning in IT networks before using OT-specific capabilities",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "use of OT-specific capabilities includes using malware packages designed for OT",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "IT network targeted for initial access and credential exfiltration",
+   "source": "llm",
+   "name": "IT network",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "svc-unsupported-ad-ds-h1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "Operational Technology network targeted for lateral movement and OT-specific attacks",
+   "source": "llm",
+   "name": "OT network",
+   "evidence_refs": [
+    "evidence-2",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "svc-unsupported-ad-ds-h1",
+   "name": "Active Directory",
+   "cve": [],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "service-unspecified"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Active Directory credentials",
+   "type": "account",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "CrashOverride",
+   "type": "malware",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Havex",
+   "type": "malware",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "BlackEnergy 2 and 3",
+   "type": "malware",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Trisis",
+   "type": "malware",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Incontroller",
+   "type": "malware",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "doi.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "NIST.SP",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Once inside the IT network, threat actors, such as those conducting activity tracked publicly as Volt Typhoon, can escalate and maintain access by exfiltrating Active Directory credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once inside the IT network, threat actors, such as those conducting activity tracked publicly as Volt Typhoon, can escalate and maintain access by exfiltrating "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Once compromised, shared domains or credentials between IT and OT environments are one way for threat actors to move laterally into the OT network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once compromised, shared domains or credentials between IT and OT environments are one way for threat actors to move laterally into the OT network."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Other threat actors have compromised trusted third-party vendor software updates, exploited supply chain weaknesses, and taken advantage of insecure and unrestricted remote access granted to vendors and operators to gain network access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Other threat actors have compromised trusted third party vendor software updates, exploited supply chain weaknesses, and taken advantage of insecure and unrestr"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Threat actors have also adopted living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors have also adopted living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "If on the OT network, threat actors could then use OT-specific capabilities (see PRC State-Sponsored Actors Compromise and Maintain Persistent Access to U.S. Critical Infrastructure for more information).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "If on the OT network, threat actors could then use OT specific capabilities (see PRC State Sponsored Actors Compromise and Maintain Persistent Access to U.S. Cr"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Historical examples of this capability include malware packages designed and tailored for use in targeting OT and critical infrastructure systems, such as CrashOverride, Havex, BlackEnergy 2 and 3, Trisis, and Incontroller.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Historical examples of this capability include malware packages designed and tailored for use in targeting OT and critical infrastructure systems, such as Crash"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Threat actors have also adopted living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks. If on the OT network, threat actors could then use OT-specific capabilities",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors have also adopted living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks. If on the OT network, threat a"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "If on the OT network, threat actors could then use OT-specific capabilities (see PRC State-Sponsored Actors Compromise and Maintain Persistent Access to U.S. Critical Infrastructure for more information). Historical examples of this capability include malware packages designed and tailored for use in targeting OT and critical infrastructure systems, such as CrashOverride, Havex, BlackEnergy 2 and 3, Trisis, and Incontroller.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ". Historical examples of this capability include malware packages designed and tailored for use in targeting OT and critical infrastructure systems, such as Cra"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "If on the OT network, threat actors could then use OT-specific capabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9868,
+   "matched_text": "If on the OT network, threat actors could then use OT specific capabilities"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "doi.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "doi.org"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "doi.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "142"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "doi.org"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "NIST.SP",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "NIST.SP"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "NIST.SP",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "142"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "NIST.SP"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "IT network — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT network 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — IT network",
+    "action:a1 — Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+    "action:a6 — Threat actors adopt living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT network",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "IT network — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT network 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — IT network",
+    "action:a1 — Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+    "action:a6 — Threat actors adopt living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT network",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "IT network — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "IT network 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — IT network",
+    "action:a1 — Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+    "action:a6 — Threat actors adopt living off the land (LOTL) techniques in IT networks while prepositioning to move to OT networks"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "IT network",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "OT network — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT network 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — OT network",
+    "action:a2 — Threat actors move laterally into OT network using shared domains or credentials",
+    "action:a7 — Threat actors use OT-specific capabilities if on the OT network",
+    "action:a8 — Threat actors use malware packages designed for targeting OT and critical infrastructure systems"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT network",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-9",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "OT network — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT network 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — OT network",
+    "action:a2 — Threat actors move laterally into OT network using shared domains or credentials",
+    "action:a7 — Threat actors use OT-specific capabilities if on the OT network",
+    "action:a8 — Threat actors use malware packages designed for targeting OT and critical infrastructure systems"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT network",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-9",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "OT network — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "OT network 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — OT network",
+    "action:a2 — Threat actors move laterally into OT network using shared domains or credentials",
+    "action:a7 — Threat actors use OT-specific capabilities if on the OT network",
+    "action:a8 — Threat actors use malware packages designed for targeting OT and critical infrastructure systems"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "OT network",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-9",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 涉及 Active Directory，但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "action:a1 — Threat actors escalate and maintain access by exfiltrating Active Directory credentials"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "AD 相關步驟",
+     "value": "Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：Active Directory。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a4 — Threat actors exploit supply chain weaknesses"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Threat actors exploit supply chain weaknesses",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a1 — Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+    "host:h1 — IT network"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Threat actors escalate and maintain access by exfiltrating Active Directory credentials",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_version-active-directory-h1",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9231,
+  "unsupported_claim_count": 1,
+  "inferred_count": 3,
+  "absent_count": 1,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

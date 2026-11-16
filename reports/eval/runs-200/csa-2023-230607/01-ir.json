@@ -1,0 +1,5746 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230607",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "b99cebd5295560c7fb902157b5380e84672fa145a5d8fa80624eac94ddba35e0",
+  "source_name": "csa-2023-230607"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software",
+   "source": "llm",
+   "description": "CL0P ransomware group exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software; begins with a SQL injection to infiltrate the MOVEit Transfer web application.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+   "source": "llm",
+   "description": "The web shell authenticates incoming http requests via a hard-coded password and can run commands that will download files from the MOVEit Transfer system, extract its Azure system settings, retrieve detailed record information, create, insert, or delete a particular user.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1190",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "used the LEMURLOOT web shell to steal data from underlying MOVEit Transfer databases",
+   "source": "llm",
+   "description": "The web shell was then used to steal data from underlying MOVEit Transfer databases.",
+   "target_host_ref": "h2",
+   "attack_tactic": "collection",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a4",
+   "name": "created a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service'",
+   "source": "llm",
+   "description": "The web shell can create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service.'",
+   "target_host_ref": "h1",
+   "attack_tactic": "privilege-escalation",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "deleted an account with LoginName and RealName values set to 'Health Check Service'",
+   "source": "llm",
+   "description": "The web shell can delete an account with LoginName and RealName values set to 'Health Check Service.'",
+   "target_host_ref": "h1",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "used SDBot as a backdoor to enable other commands and functions to be executed in the compromised computer",
+   "source": "llm",
+   "description": "CL0P actors use SDBot as a backdoor to enable other commands and functions to be executed in the compromised computer.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1059.001",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a7",
+   "name": "used FlawedAmmyy remote access trojan (RAT) to communicate with the Command and Control (C2)",
+   "source": "llm",
+   "description": "FlawedAmmyy/FlawedGrace remote access trojan (RAT) collects information and attempts to communicate with the Command and Control (C2) server to enable the download of additional malware components.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1071",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a8",
+   "name": "used Truebot to download additional modules",
+   "source": "llm",
+   "description": "CL0P actors use Truebot to download additional modules.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1129",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a9",
+   "name": "used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server",
+   "source": "llm",
+   "description": "Cobalt Strike is used to expand network access after gaining access to the Active Directory (AD) server.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1018",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a10",
+   "name": "attempted to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity",
+   "source": "llm",
+   "description": "CL0P actors have been observed attempting to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1021.002",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a11",
+   "name": "used Remote Desktop Protocol (RDP) to interact with compromised systems after initial access",
+   "source": "llm",
+   "description": "CL0P ransomware actors have been observed using Remote Desktop Protocol (RDP) to interact with compromised systems after initial access.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1563.002",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a12",
+   "name": "used Truebot to take screenshots in effort to collect sensitive data",
+   "source": "llm",
+   "description": "CL0P actors use Truebot to take screenshots in effort to collect sensitive data.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1113",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a13",
+   "name": "used FlawedAmmyy remote access trojan (RAT) to download additional malware components",
+   "source": "llm",
+   "description": "CL0P actors are assessed to use FlawedAmmyy remote access trojan (RAT) to the download of additional malware components.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1105",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  },
+  {
+   "id": "a14",
+   "name": "dropped copies of SDBot in removable drives and network shares",
+   "source": "llm",
+   "description": "CL0P actors use SDBot to drop copies of itself in removable drives and network shares.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1105",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "occurrence": "capability",
+   "source_certainty": "capability",
+   "epistemic_reason": "原文描述的是工具／惡意程式具備的能力，沒有說這個動作在本事件中實際發生。"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the web shell was installed using the exploited vulnerability",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "LEMURLOOT web shell was then used to steal data",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "web shell can create a new administrator privileged account",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "web shell can delete an account with LoginName and RealName values set to 'Health Check Service'",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a14",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "SDBot is used to drop copies of itself in removable drives and network shares",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a13",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "FlawedAmmyy RAT enables download of additional malware components",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Cobalt Strike activity follows attempts to compromise AD server using SMB vulnerabilities",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r8",
+   "from_action": "a1",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r10",
+   "from_action": "a1",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r11",
+   "from_action": "a11",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r12",
+   "from_action": "a8",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Truebot is used to download modules and to take screenshots",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing MOVEit Transfer web applications infected with a web shell",
+   "source": "llm",
+   "name": "MOVEit Transfer web application",
+   "os": "windows",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20",
+    "evidence-21",
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "underlying MOVEit Transfer databases",
+   "source": "llm",
+   "name": "MOVEit Transfer databases",
+   "evidence_refs": [
+    "evidence-23",
+    "evidence-24",
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "Active Directory (AD) server",
+   "source": "llm",
+   "name": "Active Directory (AD) server",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-26",
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "MOVEit Transfer software",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "MySQL database",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Microsoft SQL Server database",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "Azure SQL database",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s5",
+   "name": "Server Message Block (SMB)",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s6",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "LEMURLOOT",
+   "type": "web shell",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SDBot",
+   "type": "malware",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-34",
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "FlawedAmmyy/FlawedGrace",
+   "type": "remote access trojan (RAT)",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35",
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Truebot",
+   "type": "malware",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Cobalt Strike",
+   "type": "tool",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Health Check Service account",
+   "type": "account",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-34362",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38",
+    "evidence-39",
+    "evidence-40",
+    "evidence-41",
+    "evidence-42",
+    "evidence-43",
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2023-0669",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "human2.aspx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "human.aspx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "c58c2c2ea608c83fad9326055a8271d47d8246dc9cb401e420c0971c67e19cbf",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "b69e23cd45c8ac71652737ef44e15a34",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "cf23ea0d63b4c4c348865cefd70c35727ea8c82ba86d56635e488d816e60ea45",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50",
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "www.reddit.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52",
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "www.bleepingcomputer.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54",
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "gist.github.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56",
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "44d8e68c7c4e04ed3adacb5a88450552",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "a85299f78ab5dd05e7f0f11ecea165ea",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "44ce8556f798b7f6a7574148b679c643",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60",
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "7d7349e51a9bdcdd8b5daeeefe6772b5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "2387be2afe2250c20d4e7a8c185be8d9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "0b3220b11698b1436d1d866ac07cc90018e59884e91a8cb71ef8924309f1e0e9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "0ea05169d111415903a1098110c34cdbbd390c23016cd4e179dd9ef507104495",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "110e301d3b5019177728010202c8096824829c0b11bb0dc0bff55547ead18286",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "1826268249e1ea58275328102a5a8d158d36b4fd312009e4a2526f0bfbc30de2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "2413b5d0750c23b07999ec33a5b4930be224b661aaf290a0118db803f31acbc5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "2ccf7e42afd3f6bf845865c74b2e01e2046e541bb633d037b05bd1cdb296fa59",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "348e435196dd795e1ec31169bd111c7ec964e5a6ab525a562b17f10de0ab031d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "387cee566aedbafa8c114ed1c6b98d8b9b65e9f178cf2f6ae2f5ac441082747a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "38e69f4a6d2e81f28ed2dc6df0daf31e73ea365bd2cfc90ebc31441404cca264",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "3a977446ed70b02864ef8cfa3135d8b134c93ef868a4cc0aa5d3c2a74545725b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "3ab73ea9aebf271e5f3ed701286701d0be688bf7ad4fb276cb4fbe35c8af8409",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "hash",
+   "value": "3c0dbda8a5500367c22ca224919bfc87d725d890756222c8066933286f26494c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "hash",
+   "value": "4359aead416b1b2df8ad9e53c497806403a2253b7e13c03317fc08ad3b0b95bf",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "hash",
+   "value": "48367d94ccb4411f15d7ef9c455c92125f3ad812f2363c4d2e949ce1b615429a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "hash",
+   "value": "58ccfb603cdc4d305fddd52b84ad3f58ff554f1af4d7ef164007cb8438976166",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "hash",
+   "value": "5b566de1aa4b2f79f579cdac6283b33e98fdc8c1cfa6211a787f8156848d67ff",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "hash",
+   "value": "6015fed13c5510bbb89b0a5302c8b95a5b811982ff6de9930725c4630ec4011d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "702421bcee1785d93271d311f0203da34cc936317e299575b06503945a6ea1e0",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "hash",
+   "value": "769f77aace5eed4717c7d3142989b53bd5bac9297a6e11b2c588c3989b397e6b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "7c39499dd3b0b283b242f7b7996205a9b3cf8bd5c943ef6766992204d46ec5f1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "93137272f3654d56b9ce63bec2e40dd816c82fb6bad9985bed477f17999a47db",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "98a30c7251cf622bd4abce92ab527c3f233b817a57519c2dd2bf8e3d3ccb7db8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "hash",
+   "value": "9d1723777de67bc7e11678db800d2a32de3bcd6c40a629cd165e3f7bbace8ead",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "9e89d9f045664996067a05610ea2b0ad4f7f502f73d84321fb07861348fdc24a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "hash",
+   "value": "a1269294254e958e0e58fc0fe887ebbc4201d5c266557f09c3f37542bd6d53d7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "hash",
+   "value": "a8f6c1ccba662a908ef7b0cb3cc59c2d1c9e2cbbe1866937da81c4c616e68986",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "hash",
+   "value": "b1c299a9fe6076f370178de7b808f36135df16c4e438ef6453a39565ff2ec272",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "hash",
+   "value": "b5ef11d04604c9145e4fe1bedaeb52f2c2345703d52115a5bf11ea56d7fb6b03",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "hash",
+   "value": "b9a0baf82feb08e42fa6ca53e9ec379e79fbe8362a7dac6150eb39c2d33d94ad",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "hash",
+   "value": "bdd4fa8e97e5e6eaaac8d6178f1cf4c324b9c59fc276fd6b368e811b327ccf8b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "hash",
+   "value": "c56bcb513248885673645ff1df44d3661a75cfacdce485535da898aa9ba320d4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "hash",
+   "value": "c77438e8657518221613fbce451c664a75f05beea2184a3ae67f30ea71d34f37",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "hash",
+   "value": "cec425b3383890b63f5022054c396f6d510fae436041add935cd6ce42033f621",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "hash",
+   "value": "d477ec94e522b8d741f46b2c00291da05c72d21c359244ccb1c211c12b635899",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "hash",
+   "value": "d49cf23d83b2743c573ba383bf6f3c28da41ac5f745cde41ef8cd1344528c195",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "hash",
+   "value": "daaa102d82550f97642887514093c98ccd51735e025995c2cc14718330a856f4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "hash",
+   "value": "e8012a15b6f6b404a33f293205b602ece486d01337b8b3ec331cd99ccadb562e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "hash",
+   "value": "ea433739fb708f5d25c937925e499c8d2228bf245653ee89a6f3d26a5fd00b7a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "hash",
+   "value": "ed0c3e75b7ac2587a5892ca951707b4e0dd9c8b18aaf8590c24720d73aa6b90c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "hash",
+   "value": "f0d85b65b9f6942c75271209138ab24a73da29a06bc6cc4faeddcb825058c09d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "hash",
+   "value": "fe5f8388ccea7c548d587d1e2843921c038a9f4ddad3cb03f3aa8a45c29c6a2f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-57",
+   "type": "url",
+   "value": "http://hiperfdhaus[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-58",
+   "type": "url",
+   "value": "http://jirostrogud[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-59",
+   "type": "url",
+   "value": "http://qweastradoc[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-60",
+   "type": "url",
+   "value": "http://qweastradoc[.]com/gate.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-61",
+   "type": "url",
+   "value": "http://connectzoomdownload[.]com/download/ZoomInstaller.exe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-62",
+   "type": "url",
+   "value": "https://connectzoomdownload[.]com/download/ZoomInstaller.exe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-63",
+   "type": "domain",
+   "value": "hiperfdhaus[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-64",
+   "type": "domain",
+   "value": "jirostrogud[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-65",
+   "type": "domain",
+   "value": "qweastradoc[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113"
+   ]
+  },
+  {
+   "id": "indicator-66",
+   "type": "domain",
+   "value": "gate.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-114",
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-67",
+   "type": "domain",
+   "value": "connectzoomdownload[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-68",
+   "type": "url",
+   "value": "http://zoom[.]voyage/download/Zoom.exe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-69",
+   "type": "url",
+   "value": "http://guerdofest[.]com/gate.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-70",
+   "type": "domain",
+   "value": "zoom[.]voyage",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-71",
+   "type": "domain",
+   "value": "guerdofest[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-72",
+   "type": "ip",
+   "value": "104.194.222[.]107",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-73",
+   "type": "ip",
+   "value": "138.197.152[.]201",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-74",
+   "type": "ip",
+   "value": "146.0.77[.]141",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-75",
+   "type": "ip",
+   "value": "146.0.77[.]155",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-76",
+   "type": "ip",
+   "value": "146.0.77[.]183",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-77",
+   "type": "ip",
+   "value": "148.113.152[.]144",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126"
+   ]
+  },
+  {
+   "id": "indicator-78",
+   "type": "ip",
+   "value": "162.244.34[.]26",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-79",
+   "type": "ip",
+   "value": "162.244.35[.]6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  },
+  {
+   "id": "indicator-80",
+   "type": "ip",
+   "value": "179.60.150[.]143",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-129"
+   ]
+  },
+  {
+   "id": "indicator-81",
+   "type": "ip",
+   "value": "185.104.194[.]156",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-130"
+   ]
+  },
+  {
+   "id": "indicator-82",
+   "type": "ip",
+   "value": "185.104.194[.]24",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-131"
+   ]
+  },
+  {
+   "id": "indicator-83",
+   "type": "ip",
+   "value": "185.104.194[.]40",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-132"
+   ]
+  },
+  {
+   "id": "indicator-84",
+   "type": "ip",
+   "value": "185.117.88[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-133"
+   ]
+  },
+  {
+   "id": "indicator-85",
+   "type": "ip",
+   "value": "185.162.128[.]75",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-134"
+   ]
+  },
+  {
+   "id": "indicator-86",
+   "type": "ip",
+   "value": "185.174.100[.]215",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-135"
+   ]
+  },
+  {
+   "id": "indicator-87",
+   "type": "ip",
+   "value": "185.174.100[.]250",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-136"
+   ]
+  },
+  {
+   "id": "indicator-88",
+   "type": "ip",
+   "value": "185.181.229[.]240",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-137"
+   ]
+  },
+  {
+   "id": "indicator-89",
+   "type": "ip",
+   "value": "185.181.229[.]73",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-138"
+   ]
+  },
+  {
+   "id": "indicator-90",
+   "type": "ip",
+   "value": "185.183.32[.]122",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-139"
+   ]
+  },
+  {
+   "id": "indicator-91",
+   "type": "ip",
+   "value": "185.185.50[.]172",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-140"
+   ]
+  },
+  {
+   "id": "indicator-92",
+   "type": "ip",
+   "value": "188.241.58[.]244",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-141"
+   ]
+  },
+  {
+   "id": "indicator-93",
+   "type": "ip",
+   "value": "193.169.245[.]79",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-142"
+   ]
+  },
+  {
+   "id": "indicator-94",
+   "type": "ip",
+   "value": "194.33.40[.]103",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-143"
+   ]
+  },
+  {
+   "id": "indicator-95",
+   "type": "ip",
+   "value": "194.33.40[.]104",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-144"
+   ]
+  },
+  {
+   "id": "indicator-96",
+   "type": "ip",
+   "value": "198.12.76[.]214",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-145"
+   ]
+  },
+  {
+   "id": "indicator-97",
+   "type": "ip",
+   "value": "198.27.75[.]110",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-146"
+   ]
+  },
+  {
+   "id": "indicator-98",
+   "type": "ip",
+   "value": "206.221.182[.]106",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-147"
+   ]
+  },
+  {
+   "id": "indicator-99",
+   "type": "ip",
+   "value": "209.127.116[.]122",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-148"
+   ]
+  },
+  {
+   "id": "indicator-100",
+   "type": "ip",
+   "value": "209.127.4[.]22",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-149"
+   ]
+  },
+  {
+   "id": "indicator-101",
+   "type": "ip",
+   "value": "209.222.103[.]170",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-150"
+   ]
+  },
+  {
+   "id": "indicator-102",
+   "type": "ip",
+   "value": "209.97.137[.]33",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-151"
+   ]
+  },
+  {
+   "id": "indicator-103",
+   "type": "ip",
+   "value": "45.227.253[.]133",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-152"
+   ]
+  },
+  {
+   "id": "indicator-104",
+   "type": "ip",
+   "value": "45.227.253[.]147",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-153"
+   ]
+  },
+  {
+   "id": "indicator-105",
+   "type": "ip",
+   "value": "45.227.253[.]50",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-154"
+   ]
+  },
+  {
+   "id": "indicator-106",
+   "type": "ip",
+   "value": "45.227.253[.]6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-155"
+   ]
+  },
+  {
+   "id": "indicator-107",
+   "type": "ip",
+   "value": "45.227.253[.]82",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-156"
+   ]
+  },
+  {
+   "id": "indicator-108",
+   "type": "ip",
+   "value": "45.56.165[.]248",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-157"
+   ]
+  },
+  {
+   "id": "indicator-109",
+   "type": "ip",
+   "value": "5.149.248[.]68",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-158"
+   ]
+  },
+  {
+   "id": "indicator-110",
+   "type": "ip",
+   "value": "5.149.250[.]74",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-159"
+   ]
+  },
+  {
+   "id": "indicator-111",
+   "type": "ip",
+   "value": "5.149.250[.]92",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-160"
+   ]
+  },
+  {
+   "id": "indicator-112",
+   "type": "ip",
+   "value": "5.188.86[.]114",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-161"
+   ]
+  },
+  {
+   "id": "indicator-113",
+   "type": "ip",
+   "value": "5.188.86[.]250",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-162"
+   ]
+  },
+  {
+   "id": "indicator-114",
+   "type": "ip",
+   "value": "5.188.87[.]194",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-163"
+   ]
+  },
+  {
+   "id": "indicator-115",
+   "type": "ip",
+   "value": "5.188.87[.]226",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-164"
+   ]
+  },
+  {
+   "id": "indicator-116",
+   "type": "ip",
+   "value": "5.188.87[.]27",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-165"
+   ]
+  },
+  {
+   "id": "indicator-117",
+   "type": "ip",
+   "value": "5.252.23[.]116",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-166"
+   ]
+  },
+  {
+   "id": "indicator-118",
+   "type": "ip",
+   "value": "5.252.25[.]88",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-167"
+   ]
+  },
+  {
+   "id": "indicator-119",
+   "type": "ip",
+   "value": "5.34.180[.]205",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-168"
+   ]
+  },
+  {
+   "id": "indicator-120",
+   "type": "ip",
+   "value": "62.112.11[.]57",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-169"
+   ]
+  },
+  {
+   "id": "indicator-121",
+   "type": "ip",
+   "value": "62.182.82[.]19",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-170"
+   ]
+  },
+  {
+   "id": "indicator-122",
+   "type": "ip",
+   "value": "62.182.85[.]234",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-171"
+   ]
+  },
+  {
+   "id": "indicator-123",
+   "type": "ip",
+   "value": "66.85.26[.]215",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-172"
+   ]
+  },
+  {
+   "id": "indicator-124",
+   "type": "ip",
+   "value": "66.85.26[.]234",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-173"
+   ]
+  },
+  {
+   "id": "indicator-125",
+   "type": "ip",
+   "value": "66.85.26[.]248",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-174"
+   ]
+  },
+  {
+   "id": "indicator-126",
+   "type": "ip",
+   "value": "79.141.160[.]78",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-175",
+    "evidence-176"
+   ]
+  },
+  {
+   "id": "indicator-127",
+   "type": "ip",
+   "value": "79.141.160[.]83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-177"
+   ]
+  },
+  {
+   "id": "indicator-128",
+   "type": "ip",
+   "value": "84.234.96[.]104",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-178"
+   ]
+  },
+  {
+   "id": "indicator-129",
+   "type": "ip",
+   "value": "84.234.96[.]31",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-179"
+   ]
+  },
+  {
+   "id": "indicator-130",
+   "type": "ip",
+   "value": "89.39.104[.]118",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-180"
+   ]
+  },
+  {
+   "id": "indicator-131",
+   "type": "ip",
+   "value": "89.39.105[.]108",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-181"
+   ]
+  },
+  {
+   "id": "indicator-132",
+   "type": "ip",
+   "value": "91.202.4[.]76",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-182"
+   ]
+  },
+  {
+   "id": "indicator-133",
+   "type": "ip",
+   "value": "91.222.174[.]95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-183"
+   ]
+  },
+  {
+   "id": "indicator-134",
+   "type": "ip",
+   "value": "91.229.76[.]187",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-184"
+   ]
+  },
+  {
+   "id": "indicator-135",
+   "type": "ip",
+   "value": "93.190.142[.]131",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-185"
+   ]
+  },
+  {
+   "id": "indicator-136",
+   "type": "ip",
+   "value": "92.118.36[.]249",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-186"
+   ]
+  },
+  {
+   "id": "indicator-137",
+   "type": "ip",
+   "value": "5.34.180[.]48",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-187"
+   ]
+  },
+  {
+   "id": "indicator-138",
+   "type": "ip",
+   "value": "185.33.86[.]225",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-188"
+   ]
+  },
+  {
+   "id": "indicator-139",
+   "type": "ip",
+   "value": "148.113.159[.]213",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-189"
+   ]
+  },
+  {
+   "id": "indicator-140",
+   "type": "ip",
+   "value": "15.235.13[.]184",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-190"
+   ]
+  },
+  {
+   "id": "indicator-141",
+   "type": "ip",
+   "value": "82.117.252[.]141",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-191"
+   ]
+  },
+  {
+   "id": "indicator-142",
+   "type": "ip",
+   "value": "185.80.52[.]230",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-192"
+   ]
+  },
+  {
+   "id": "indicator-143",
+   "type": "ip",
+   "value": "91.222.174[.]68",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-193"
+   ]
+  },
+  {
+   "id": "indicator-144",
+   "type": "ip",
+   "value": "5.34.178[.]31",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-194"
+   ]
+  },
+  {
+   "id": "indicator-145",
+   "type": "ip",
+   "value": "185.104.194[.]134",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-195"
+   ]
+  },
+  {
+   "id": "indicator-146",
+   "type": "ip",
+   "value": "5.34.178[.]28",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-196"
+   ]
+  },
+  {
+   "id": "indicator-147",
+   "type": "ip",
+   "value": "185.81.113[.]156",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-197"
+   ]
+  },
+  {
+   "id": "indicator-148",
+   "type": "ip",
+   "value": "5.34.178[.]30",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-198"
+   ]
+  },
+  {
+   "id": "indicator-149",
+   "type": "ip",
+   "value": "77.83.197[.]66",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-199"
+   ]
+  },
+  {
+   "id": "indicator-150",
+   "type": "ip",
+   "value": "193.42.38[.]196",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-200"
+   ]
+  },
+  {
+   "id": "indicator-151",
+   "type": "ip",
+   "value": "209.222.98[.]25",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-201"
+   ]
+  },
+  {
+   "id": "indicator-152",
+   "type": "ip",
+   "value": "106.75.139[.]199",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-202"
+   ]
+  },
+  {
+   "id": "indicator-153",
+   "type": "ip",
+   "value": "79.141.166[.]119",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-203"
+   ]
+  },
+  {
+   "id": "indicator-154",
+   "type": "ip",
+   "value": "185.117.88[.]2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-204"
+   ]
+  },
+  {
+   "id": "indicator-155",
+   "type": "ip",
+   "value": "185.33.87[.]126",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-205"
+   ]
+  },
+  {
+   "id": "indicator-156",
+   "type": "ip",
+   "value": "82.117.252[.]142",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-206"
+   ]
+  },
+  {
+   "id": "indicator-157",
+   "type": "ip",
+   "value": "15.235.83[.]73",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-207"
+   ]
+  },
+  {
+   "id": "indicator-158",
+   "type": "ip",
+   "value": "81.56.49[.]148",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-208"
+   ]
+  },
+  {
+   "id": "indicator-159",
+   "type": "ip",
+   "value": "96.44.181[.]131",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-209"
+   ]
+  },
+  {
+   "id": "indicator-160",
+   "type": "ip",
+   "value": "192.42.116[.]191",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-210"
+   ]
+  },
+  {
+   "id": "indicator-161",
+   "type": "ip",
+   "value": "213.121.182[.]84",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-211"
+   ]
+  },
+  {
+   "id": "indicator-162",
+   "type": "ip",
+   "value": "104.200.72[.]149",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-212"
+   ]
+  },
+  {
+   "id": "indicator-163",
+   "type": "ip",
+   "value": "152.57.231[.]216",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-213"
+   ]
+  },
+  {
+   "id": "indicator-164",
+   "type": "ip",
+   "value": "142.44.212[.]178",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-214"
+   ]
+  },
+  {
+   "id": "indicator-165",
+   "type": "ip",
+   "value": "54.39.133[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-215"
+   ]
+  },
+  {
+   "id": "indicator-166",
+   "type": "ip",
+   "value": "76.117.196[.]3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-216"
+   ]
+  },
+  {
+   "id": "indicator-167",
+   "type": "ip",
+   "value": "24.3.132[.]168",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-217"
+   ]
+  },
+  {
+   "id": "indicator-168",
+   "type": "ip",
+   "value": "166.70.47[.]90",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-218"
+   ]
+  },
+  {
+   "id": "indicator-169",
+   "type": "ip",
+   "value": "208.115.199[.]25",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-219"
+   ]
+  },
+  {
+   "id": "indicator-170",
+   "type": "ip",
+   "value": "216.144.248[.]20",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-220"
+   ]
+  },
+  {
+   "id": "indicator-171",
+   "type": "ip",
+   "value": "173.254.236[.]131",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-221"
+   ]
+  },
+  {
+   "id": "indicator-172",
+   "type": "ip",
+   "value": "3.101.53[.]11",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-222"
+   ]
+  },
+  {
+   "id": "indicator-173",
+   "type": "ip",
+   "value": "54.184.187[.]134",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-223"
+   ]
+  },
+  {
+   "id": "indicator-174",
+   "type": "ip",
+   "value": "100.21.161[.]34",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-224"
+   ]
+  },
+  {
+   "id": "indicator-175",
+   "type": "ip",
+   "value": "44.206.3[.]111",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-225"
+   ]
+  },
+  {
+   "id": "indicator-176",
+   "type": "ip",
+   "value": "75.101.131[.]237",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-226"
+   ]
+  },
+  {
+   "id": "indicator-177",
+   "type": "ip",
+   "value": "20.47.120[.]195",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-227"
+   ]
+  },
+  {
+   "id": "indicator-178",
+   "type": "ip",
+   "value": "198.137.247[.]10",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-228"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell [CPG 2.E]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-229"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "CL0P ransomware group exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software; begins with a SQL injection to infiltrate the MOVEit Transfer web application.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P ransomware group exploited the zero day vulnerability CVE 2023 34362 affecting MOVEit Transfer software; begins with a SQL injection to infiltrate the MOVE"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "In May 2023, the CL0P ransomware group exploited a SQL injection zero-day vulnerability CVE-2023-34362 to install a web shell named LEMURLOOT on MOVEit Transfer web applications [1].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In May 2023, the CL0P ransomware group exploited a SQL injection zero day vulnerability CVE 2023 34362 to install a web shell named LEMURLOOT on MOVEit Transfer"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform. The web shell authenticates incoming http requests via a hard-coded password and can run commands that will download files from the MOVEit Transfer system, extract its Azure system settings, retrieve detailed record information, create, insert, or delete a particular user.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform. The web shell authenticates incoming http requests via a hard coded pass"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "named LEMURLOOT, which was then used to steal data from underlying MOVEit Transfer databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "named LEMURLOOT, which was then used to steal data from underlying MOVEit Transfer databases."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to “Health Check Service.”",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to “Health Check Service.”"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Delete an account with LoginName and RealName values set to ‘Health Check Service.’",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Delete an account with LoginName and RealName values set to ‘Health Check Service.’"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "CL0P actors use SDBot as a backdoor to enable other commands and functions to be executed in the compromised computer.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "71"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " other commands and functions to be executed in the compromised computer."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "FlawedAmmyy/FlawedGrace remote access trojan (RAT) collects information and attempts to communicate with the Command and Control (C2) server to enable the download of additional malware components,.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "FlawedAmmyy/FlawedGrace remote access trojan (RAT) collects information and attempts to communicate with the Command and Control (C2) server to enable the downl"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "CL0P actors use FlawedAmmyy remote access trojan (RAT) to communicate with the Command and Control (C2).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors use FlawedAmmyy remote access trojan (RAT) to communicate with the Command and Control (C2)."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "CL0P actors use Truebot to download additional modules.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "73"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors use Truebot to download additional modules."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Cobalt Strike is used to expand network access after gaining access to the Active Directory (AD) server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cobalt Strike is used to expand network access after gaining access to the Active Directory (AD) server."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "CL0P actors use Cobalt Strike to expand network access after gaining access to the Active Directory (AD) servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "90"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors use Cobalt Strike to expand network access after gaining access to the Active Directory (AD) servers."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CL0P actors have been observed attempting to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " compromise the AD server using Server Message Block (SMB) vulnerabilities with follow on Cobalt Strike activity."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CL0P ransomware actors have been observed using Remote Desktop Protocol (RDP) to interact with compromised systems after initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " using Remote Desktop Protocol (RDP) to interact with compromised systems after initial access."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CL0P actors use Truebot to take screenshots in effort to collect sensitive data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "99"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors use Truebot to take screenshots in effort to collect sensitive data."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CL0P actors are assessed to use FlawedAmmyy remote access trojan (RAT) to the download of additional malware components.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "104"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors are assessed to use FlawedAmmyy remote access trojan (RAT) to the download of additional malware components."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CL0P actors use SDBot to drop copies of itself in removable drives and network shares.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "105"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P actors use SDBot to drop copies of itself\n                                                                 in removable drives and network shares."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The web shell authenticates incoming http requests via a hard-coded password and can run commands that will ... create, insert, or delete a particular user.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The web shell authenticates incoming http requests via a hard coded password and can run commands that will … create, insert, or delete a particular user."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Internet-facing MOVEit Transfer web applications were infected with a web shell named LEMURLOOT",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8182,
+   "matched_text": "Internet facing MOVEit Transfer web applications were infected with a web shell"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The web shell authenticates incoming http requests via a hard-coded password and can run commands that will download files from the MOVEit Transfer system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The web shell authenticates incoming http requests via a hard coded password and can run commands that will download files from the MOVEit Transfer system"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "MOVEit is typically used to manage an organization’s file transfer operations and has a web application that supports MySQL, Microsoft SQL Server, and Azure SQL database engines.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MOVEit is typically used to manage an organization’s file transfer operations and has a web application that supports MySQL, Microsoft SQL Server, and Azure SQL"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The web shell was initially observed with the name human2.aspx in an effort to masquerade as the legitimate human.aspx file present as part of MOVEit Transfer software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The web shell was initially observed with the name human2.aspx in an effort to masquerade as the legitimate human.aspx file present as part of MOVEit Transfer s"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The web shell was then used to steal data from underlying MOVEit Transfer databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a3"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-24",
+   "quote": "MOVEit Transfer web applications were infected with a web shell named LEMURLOOT, which was then used to steal data from underlying MOVEit Transfer databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6875,
+   "matched_text": "named LEMURLOOT, which was then used to steal data from underlying MOVEit Transfer databases."
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Cobalt Strike is used to expand network access after gaining access to the Active Directory (AD) server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cobalt Strike is used to expand network access after gaining access to the Active Directory (AD) server."
+  },
+  {
+   "id": "evidence-26",
+   "quote": "CL0P actors have been observed attempting to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-27",
+   "quote": "CL0P ransomware group exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CL0P ransomware group exploited the zero day vulnerability CVE 2023 34362 affecting MOVEit Transfer software"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "MOVEit Transfer web application supports MySQL, Microsoft SQL Server, and Azure SQL database engines.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " supports MySQL, Microsoft SQL Server, and Azure SQL database engines."
+  },
+  {
+   "id": "evidence-29",
+   "quote": "DEWMODE is a web shell written in PHP designed to target Accellion FTA devices and interact with the underlying MySQL database",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "DEWMODE is a web shell written in PHP designed to target Accellion FTA devices and interact with the underlying MySQL database"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "The web shell can retrieve Microsoft Azure system settings and enumerate the underlying SQL database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8182,
+   "matched_text": "etrieve Microsoft Azure system settings and enumerate the underlying SQL database."
+  },
+  {
+   "id": "evidence-31",
+   "quote": "CL0P ransomware actors have been observed using Remote Desktop Protocol (RDP) to interact with compromised systems after initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-32",
+   "quote": "installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a2"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-33",
+   "quote": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LEMURLOOT is a web shell written in C# designed to target the MOVEit Transfer platform."
+  },
+  {
+   "id": "evidence-34",
+   "quote": "CL0P actors use SDBot as a backdoor to enable other commands and functions to be executed in the compromised computer.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a6"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-35",
+   "quote": "FlawedAmmyy/FlawedGrace remote access trojan (RAT) collects information and attempts to communicate with the Command and Control (C2) server to enable the download of additional malware components.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9949,
+   "matched_text": "FlawedAmmyy/FlawedGrace remote access trojan (RAT) collects information and attempts to communicate with the Command and Control (C2) server to enable the downl"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "The web shell can create a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service.'",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-37",
+   "quote": "The web shell can delete an account with LoginName and RealName values set to 'Health Check Service.'",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-38",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "118"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "CVE-2023-0669",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 0669"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "human2.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "human2.aspx"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "human.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "human.aspx"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "c58c2c2ea608c83fad9326055a8271d47d8246dc9cb401e420c0971c67e19cbf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c58c2c2ea608c83fad9326055a8271d47d8246dc9cb401e420c0971c67e19cbf"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "b69e23cd45c8ac71652737ef44e15a34",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b69e23cd45c8ac71652737ef44e15a34"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "cf23ea0d63b4c4c348865cefd70c35727ea8c82ba86d56635e488d816e60ea45",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cf23ea0d63b4c4c348865cefd70c35727ea8c82ba86d56635e488d816e60ea45"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "cf23ea0d63b4c4c348865cefd70c35727ea8c82ba86d56635e488d816e60ea45",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cf23ea0d63b4c4c348865cefd70c35727ea8c82ba86d56635e488d816e60ea45"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "www.reddit.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.reddit.com"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "www.reddit.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.reddit.com"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "www.bleepingcomputer.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.bleepingcomputer.com"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "www.bleepingcomputer.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.bleepingcomputer.com"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "gist.github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gist.github.com"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "gist.github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gist.github.com"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "44d8e68c7c4e04ed3adacb5a88450552",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "44d8e68c7c4e04ed3adacb5a88450552"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "a85299f78ab5dd05e7f0f11ecea165ea",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a85299f78ab5dd05e7f0f11ecea165ea"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "44ce8556f798b7f6a7574148b679c643",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "44ce8556f798b7f6a7574148b679c643"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "44ce8556f798b7f6a7574148b679c643",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "44ce8556f798b7f6a7574148b679c643"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "7d7349e51a9bdcdd8b5daeeefe6772b5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7d7349e51a9bdcdd8b5daeeefe6772b5"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "2387be2afe2250c20d4e7a8c185be8d9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2387be2afe2250c20d4e7a8c185be8d9"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "0b3220b11698b1436d1d866ac07cc90018e59884e91a8cb71ef8924309f1e0e9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0b3220b11698b1436d1d866ac07cc90018e59884e91a8cb71ef8924309f1e0e9"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "0ea05169d111415903a1098110c34cdbbd390c23016cd4e179dd9ef507104495",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0ea05169d111415903a1098110c34cdbbd390c23016cd4e179dd9ef507104495"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "110e301d3b5019177728010202c8096824829c0b11bb0dc0bff55547ead18286",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "110e301d3b5019177728010202c8096824829c0b11bb0dc0bff55547ead18286"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "1826268249e1ea58275328102a5a8d158d36b4fd312009e4a2526f0bfbc30de2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1826268249e1ea58275328102a5a8d158d36b4fd312009e4a2526f0bfbc30de2"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "2413b5d0750c23b07999ec33a5b4930be224b661aaf290a0118db803f31acbc5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2413b5d0750c23b07999ec33a5b4930be224b661aaf290a0118db803f31acbc5"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "2ccf7e42afd3f6bf845865c74b2e01e2046e541bb633d037b05bd1cdb296fa59",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2ccf7e42afd3f6bf845865c74b2e01e2046e541bb633d037b05bd1cdb296fa59"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "348e435196dd795e1ec31169bd111c7ec964e5a6ab525a562b17f10de0ab031d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "348e435196dd795e1ec31169bd111c7ec964e5a6ab525a562b17f10de0ab031d"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "387cee566aedbafa8c114ed1c6b98d8b9b65e9f178cf2f6ae2f5ac441082747a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "387cee566aedbafa8c114ed1c6b98d8b9b65e9f178cf2f6ae2f5ac441082747a"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "38e69f4a6d2e81f28ed2dc6df0daf31e73ea365bd2cfc90ebc31441404cca264",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "38e69f4a6d2e81f28ed2dc6df0daf31e73ea365bd2cfc90ebc31441404cca264"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "3a977446ed70b02864ef8cfa3135d8b134c93ef868a4cc0aa5d3c2a74545725b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3a977446ed70b02864ef8cfa3135d8b134c93ef868a4cc0aa5d3c2a74545725b"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "3ab73ea9aebf271e5f3ed701286701d0be688bf7ad4fb276cb4fbe35c8af8409",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3ab73ea9aebf271e5f3ed701286701d0be688bf7ad4fb276cb4fbe35c8af8409"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "3c0dbda8a5500367c22ca224919bfc87d725d890756222c8066933286f26494c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3c0dbda8a5500367c22ca224919bfc87d725d890756222c8066933286f26494c"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "4359aead416b1b2df8ad9e53c497806403a2253b7e13c03317fc08ad3b0b95bf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4359aead416b1b2df8ad9e53c497806403a2253b7e13c03317fc08ad3b0b95bf"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "48367d94ccb4411f15d7ef9c455c92125f3ad812f2363c4d2e949ce1b615429a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "48367d94ccb4411f15d7ef9c455c92125f3ad812f2363c4d2e949ce1b615429a"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "58ccfb603cdc4d305fddd52b84ad3f58ff554f1af4d7ef164007cb8438976166",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "58ccfb603cdc4d305fddd52b84ad3f58ff554f1af4d7ef164007cb8438976166"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "5b566de1aa4b2f79f579cdac6283b33e98fdc8c1cfa6211a787f8156848d67ff",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5b566de1aa4b2f79f579cdac6283b33e98fdc8c1cfa6211a787f8156848d67ff"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "6015fed13c5510bbb89b0a5302c8b95a5b811982ff6de9930725c4630ec4011d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6015fed13c5510bbb89b0a5302c8b95a5b811982ff6de9930725c4630ec4011d"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "702421bcee1785d93271d311f0203da34cc936317e299575b06503945a6ea1e0",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "702421bcee1785d93271d311f0203da34cc936317e299575b06503945a6ea1e0"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "769f77aace5eed4717c7d3142989b53bd5bac9297a6e11b2c588c3989b397e6b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "769f77aace5eed4717c7d3142989b53bd5bac9297a6e11b2c588c3989b397e6b"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "7c39499dd3b0b283b242f7b7996205a9b3cf8bd5c943ef6766992204d46ec5f1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7c39499dd3b0b283b242f7b7996205a9b3cf8bd5c943ef6766992204d46ec5f1"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "93137272f3654d56b9ce63bec2e40dd816c82fb6bad9985bed477f17999a47db",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93137272f3654d56b9ce63bec2e40dd816c82fb6bad9985bed477f17999a47db"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "98a30c7251cf622bd4abce92ab527c3f233b817a57519c2dd2bf8e3d3ccb7db8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "98a30c7251cf622bd4abce92ab527c3f233b817a57519c2dd2bf8e3d3ccb7db8"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "9d1723777de67bc7e11678db800d2a32de3bcd6c40a629cd165e3f7bbace8ead",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9d1723777de67bc7e11678db800d2a32de3bcd6c40a629cd165e3f7bbace8ead"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "9e89d9f045664996067a05610ea2b0ad4f7f502f73d84321fb07861348fdc24a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9e89d9f045664996067a05610ea2b0ad4f7f502f73d84321fb07861348fdc24a"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "a1269294254e958e0e58fc0fe887ebbc4201d5c266557f09c3f37542bd6d53d7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a1269294254e958e0e58fc0fe887ebbc4201d5c266557f09c3f37542bd6d53d7"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "a8f6c1ccba662a908ef7b0cb3cc59c2d1c9e2cbbe1866937da81c4c616e68986",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a8f6c1ccba662a908ef7b0cb3cc59c2d1c9e2cbbe1866937da81c4c616e68986"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "b1c299a9fe6076f370178de7b808f36135df16c4e438ef6453a39565ff2ec272",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b1c299a9fe6076f370178de7b808f36135df16c4e438ef6453a39565ff2ec272"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "b5ef11d04604c9145e4fe1bedaeb52f2c2345703d52115a5bf11ea56d7fb6b03",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b5ef11d04604c9145e4fe1bedaeb52f2c2345703d52115a5bf11ea56d7fb6b03"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "b9a0baf82feb08e42fa6ca53e9ec379e79fbe8362a7dac6150eb39c2d33d94ad",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b9a0baf82feb08e42fa6ca53e9ec379e79fbe8362a7dac6150eb39c2d33d94ad"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "bdd4fa8e97e5e6eaaac8d6178f1cf4c324b9c59fc276fd6b368e811b327ccf8b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bdd4fa8e97e5e6eaaac8d6178f1cf4c324b9c59fc276fd6b368e811b327ccf8b"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "c56bcb513248885673645ff1df44d3661a75cfacdce485535da898aa9ba320d4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c56bcb513248885673645ff1df44d3661a75cfacdce485535da898aa9ba320d4"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "c77438e8657518221613fbce451c664a75f05beea2184a3ae67f30ea71d34f37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c77438e8657518221613fbce451c664a75f05beea2184a3ae67f30ea71d34f37"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "cec425b3383890b63f5022054c396f6d510fae436041add935cd6ce42033f621",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cec425b3383890b63f5022054c396f6d510fae436041add935cd6ce42033f621"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "d477ec94e522b8d741f46b2c00291da05c72d21c359244ccb1c211c12b635899",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d477ec94e522b8d741f46b2c00291da05c72d21c359244ccb1c211c12b635899"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "d49cf23d83b2743c573ba383bf6f3c28da41ac5f745cde41ef8cd1344528c195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d49cf23d83b2743c573ba383bf6f3c28da41ac5f745cde41ef8cd1344528c195"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "daaa102d82550f97642887514093c98ccd51735e025995c2cc14718330a856f4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "daaa102d82550f97642887514093c98ccd51735e025995c2cc14718330a856f4"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "e8012a15b6f6b404a33f293205b602ece486d01337b8b3ec331cd99ccadb562e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e8012a15b6f6b404a33f293205b602ece486d01337b8b3ec331cd99ccadb562e"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "ea433739fb708f5d25c937925e499c8d2228bf245653ee89a6f3d26a5fd00b7a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ea433739fb708f5d25c937925e499c8d2228bf245653ee89a6f3d26a5fd00b7a"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "ed0c3e75b7ac2587a5892ca951707b4e0dd9c8b18aaf8590c24720d73aa6b90c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ed0c3e75b7ac2587a5892ca951707b4e0dd9c8b18aaf8590c24720d73aa6b90c"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "f0d85b65b9f6942c75271209138ab24a73da29a06bc6cc4faeddcb825058c09d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f0d85b65b9f6942c75271209138ab24a73da29a06bc6cc4faeddcb825058c09d"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "fe5f8388ccea7c548d587d1e2843921c038a9f4ddad3cb03f3aa8a45c29c6a2f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fe5f8388ccea7c548d587d1e2843921c038a9f4ddad3cb03f3aa8a45c29c6a2f"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "http://hiperfdhaus[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://hiperfdhaus[.]com"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "http://jirostrogud[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://jirostrogud[.]com"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "http://qweastradoc[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://qweastradoc[.]com"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "http://qweastradoc[.]com/gate.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://qweastradoc[.]com/gate.php"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "http://connectzoomdownload[.]com/download/ZoomInstaller.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://connectzoomdownload[.]com/download/ZoomInstaller.exe"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "https://connectzoomdownload[.]com/download/ZoomInstaller.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://connectzoomdownload[.]com/download/ZoomInstaller.exe"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "hiperfdhaus[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hiperfdhaus[.]com"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "jirostrogud[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "jirostrogud[.]com"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "qweastradoc[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "qweastradoc[.]com"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "gate.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gate.php"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "gate.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gate.php"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "connectzoomdownload[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "connectzoomdownload[.]com"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "http://zoom[.]voyage/download/Zoom.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://zoom[.]voyage/download/Zoom.exe"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "http://guerdofest[.]com/gate.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://guerdofest[.]com/gate.php"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "zoom[.]voyage",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zoom[.]voyage"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "guerdofest[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "guerdofest[.]com"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "104.194.222[.]107",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.194.222[.]107"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "138.197.152[.]201",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "138.197.152[.]201"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "146.0.77[.]141",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "146.0.77[.]141"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "146.0.77[.]155",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "146.0.77[.]155"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "146.0.77[.]183",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "146.0.77[.]183"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "148.113.152[.]144",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "148.113.152[.]144"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "162.244.34[.]26",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "162.244.34[.]26"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "162.244.35[.]6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "162.244.35[.]6"
+  },
+  {
+   "id": "evidence-129",
+   "quote": "179.60.150[.]143",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "179.60.150[.]143"
+  },
+  {
+   "id": "evidence-130",
+   "quote": "185.104.194[.]156",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.104.194[.]156"
+  },
+  {
+   "id": "evidence-131",
+   "quote": "185.104.194[.]24",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.104.194[.]24"
+  },
+  {
+   "id": "evidence-132",
+   "quote": "185.104.194[.]40",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.104.194[.]40"
+  },
+  {
+   "id": "evidence-133",
+   "quote": "185.117.88[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.117.88[.]17"
+  },
+  {
+   "id": "evidence-134",
+   "quote": "185.162.128[.]75",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.162.128[.]75"
+  },
+  {
+   "id": "evidence-135",
+   "quote": "185.174.100[.]215",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.174.100[.]215"
+  },
+  {
+   "id": "evidence-136",
+   "quote": "185.174.100[.]250",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.174.100[.]250"
+  },
+  {
+   "id": "evidence-137",
+   "quote": "185.181.229[.]240",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.181.229[.]240"
+  },
+  {
+   "id": "evidence-138",
+   "quote": "185.181.229[.]73",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.181.229[.]73"
+  },
+  {
+   "id": "evidence-139",
+   "quote": "185.183.32[.]122",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.183.32[.]122"
+  },
+  {
+   "id": "evidence-140",
+   "quote": "185.185.50[.]172",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.185.50[.]172"
+  },
+  {
+   "id": "evidence-141",
+   "quote": "188.241.58[.]244",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.241.58[.]244"
+  },
+  {
+   "id": "evidence-142",
+   "quote": "193.169.245[.]79",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.169.245[.]79"
+  },
+  {
+   "id": "evidence-143",
+   "quote": "194.33.40[.]103",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "194.33.40[.]103"
+  },
+  {
+   "id": "evidence-144",
+   "quote": "194.33.40[.]104",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "194.33.40[.]104"
+  },
+  {
+   "id": "evidence-145",
+   "quote": "198.12.76[.]214",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "198.12.76[.]214"
+  },
+  {
+   "id": "evidence-146",
+   "quote": "198.27.75[.]110",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "198.27.75[.]110"
+  },
+  {
+   "id": "evidence-147",
+   "quote": "206.221.182[.]106",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.221.182[.]106"
+  },
+  {
+   "id": "evidence-148",
+   "quote": "209.127.116[.]122",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "209.127.116[.]122"
+  },
+  {
+   "id": "evidence-149",
+   "quote": "209.127.4[.]22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "209.127.4[.]22"
+  },
+  {
+   "id": "evidence-150",
+   "quote": "209.222.103[.]170",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "209.222.103[.]170"
+  },
+  {
+   "id": "evidence-151",
+   "quote": "209.97.137[.]33",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "209.97.137[.]33"
+  },
+  {
+   "id": "evidence-152",
+   "quote": "45.227.253[.]133",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.227.253[.]133"
+  },
+  {
+   "id": "evidence-153",
+   "quote": "45.227.253[.]147",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.227.253[.]147"
+  },
+  {
+   "id": "evidence-154",
+   "quote": "45.227.253[.]50",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.227.253[.]50"
+  },
+  {
+   "id": "evidence-155",
+   "quote": "45.227.253[.]6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.227.253[.]6"
+  },
+  {
+   "id": "evidence-156",
+   "quote": "45.227.253[.]82",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.227.253[.]82"
+  },
+  {
+   "id": "evidence-157",
+   "quote": "45.56.165[.]248",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.56.165[.]248"
+  },
+  {
+   "id": "evidence-158",
+   "quote": "5.149.248[.]68",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.149.248[.]68"
+  },
+  {
+   "id": "evidence-159",
+   "quote": "5.149.250[.]74",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.149.250[.]74"
+  },
+  {
+   "id": "evidence-160",
+   "quote": "5.149.250[.]92",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.149.250[.]92"
+  },
+  {
+   "id": "evidence-161",
+   "quote": "5.188.86[.]114",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.86[.]114"
+  },
+  {
+   "id": "evidence-162",
+   "quote": "5.188.86[.]250",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.86[.]250"
+  },
+  {
+   "id": "evidence-163",
+   "quote": "5.188.87[.]194",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.87[.]194"
+  },
+  {
+   "id": "evidence-164",
+   "quote": "5.188.87[.]226",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.87[.]226"
+  },
+  {
+   "id": "evidence-165",
+   "quote": "5.188.87[.]27",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.188.87[.]27"
+  },
+  {
+   "id": "evidence-166",
+   "quote": "5.252.23[.]116",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.252.23[.]116"
+  },
+  {
+   "id": "evidence-167",
+   "quote": "5.252.25[.]88",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.252.25[.]88"
+  },
+  {
+   "id": "evidence-168",
+   "quote": "5.34.180[.]205",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.180[.]205"
+  },
+  {
+   "id": "evidence-169",
+   "quote": "62.112.11[.]57",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62.112.11[.]57"
+  },
+  {
+   "id": "evidence-170",
+   "quote": "62.182.82[.]19",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62.182.82[.]19"
+  },
+  {
+   "id": "evidence-171",
+   "quote": "62.182.85[.]234",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62.182.85[.]234"
+  },
+  {
+   "id": "evidence-172",
+   "quote": "66.85.26[.]215",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66.85.26[.]215"
+  },
+  {
+   "id": "evidence-173",
+   "quote": "66.85.26[.]234",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66.85.26[.]234"
+  },
+  {
+   "id": "evidence-174",
+   "quote": "66.85.26[.]248",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66.85.26[.]248"
+  },
+  {
+   "id": "evidence-175",
+   "quote": "79.141.160[.]78",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.141.160[.]78"
+  },
+  {
+   "id": "evidence-176",
+   "quote": "79.141.160[.]78",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.141.160[.]78"
+  },
+  {
+   "id": "evidence-177",
+   "quote": "79.141.160[.]83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.141.160[.]83"
+  },
+  {
+   "id": "evidence-178",
+   "quote": "84.234.96[.]104",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.234.96[.]104"
+  },
+  {
+   "id": "evidence-179",
+   "quote": "84.234.96[.]31",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.234.96[.]31"
+  },
+  {
+   "id": "evidence-180",
+   "quote": "89.39.104[.]118",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.39.104[.]118"
+  },
+  {
+   "id": "evidence-181",
+   "quote": "89.39.105[.]108",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.39.105[.]108"
+  },
+  {
+   "id": "evidence-182",
+   "quote": "91.202.4[.]76",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.202.4[.]76"
+  },
+  {
+   "id": "evidence-183",
+   "quote": "91.222.174[.]95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.222.174[.]95"
+  },
+  {
+   "id": "evidence-184",
+   "quote": "91.229.76[.]187",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.229.76[.]187"
+  },
+  {
+   "id": "evidence-185",
+   "quote": "93.190.142[.]131",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.190.142[.]131"
+  },
+  {
+   "id": "evidence-186",
+   "quote": "92.118.36[.]249",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.118.36[.]249"
+  },
+  {
+   "id": "evidence-187",
+   "quote": "5.34.180[.]48",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.180[.]48"
+  },
+  {
+   "id": "evidence-188",
+   "quote": "185.33.86[.]225",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.33.86[.]225"
+  },
+  {
+   "id": "evidence-189",
+   "quote": "148.113.159[.]213",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "148.113.159[.]213"
+  },
+  {
+   "id": "evidence-190",
+   "quote": "15.235.13[.]184",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "15.235.13[.]184"
+  },
+  {
+   "id": "evidence-191",
+   "quote": "82.117.252[.]141",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "82.117.252[.]141"
+  },
+  {
+   "id": "evidence-192",
+   "quote": "185.80.52[.]230",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.80.52[.]230"
+  },
+  {
+   "id": "evidence-193",
+   "quote": "91.222.174[.]68",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91.222.174[.]68"
+  },
+  {
+   "id": "evidence-194",
+   "quote": "5.34.178[.]31",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.178[.]31"
+  },
+  {
+   "id": "evidence-195",
+   "quote": "185.104.194[.]134",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.104.194[.]134"
+  },
+  {
+   "id": "evidence-196",
+   "quote": "5.34.178[.]28",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.178[.]28"
+  },
+  {
+   "id": "evidence-197",
+   "quote": "185.81.113[.]156",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.81.113[.]156"
+  },
+  {
+   "id": "evidence-198",
+   "quote": "5.34.178[.]30",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.34.178[.]30"
+  },
+  {
+   "id": "evidence-199",
+   "quote": "77.83.197[.]66",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "77.83.197[.]66"
+  },
+  {
+   "id": "evidence-200",
+   "quote": "193.42.38[.]196",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.42.38[.]196"
+  },
+  {
+   "id": "evidence-201",
+   "quote": "209.222.98[.]25",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "209.222.98[.]25"
+  },
+  {
+   "id": "evidence-202",
+   "quote": "106.75.139[.]199",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "106.75.139[.]199"
+  },
+  {
+   "id": "evidence-203",
+   "quote": "79.141.166[.]119",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.141.166[.]119"
+  },
+  {
+   "id": "evidence-204",
+   "quote": "185.117.88[.]2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.117.88[.]2"
+  },
+  {
+   "id": "evidence-205",
+   "quote": "185.33.87[.]126",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.33.87[.]126"
+  },
+  {
+   "id": "evidence-206",
+   "quote": "82.117.252[.]142",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "82.117.252[.]142"
+  },
+  {
+   "id": "evidence-207",
+   "quote": "15.235.83[.]73",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "15.235.83[.]73"
+  },
+  {
+   "id": "evidence-208",
+   "quote": "81.56.49[.]148",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.56.49[.]148"
+  },
+  {
+   "id": "evidence-209",
+   "quote": "96.44.181[.]131",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "96.44.181[.]131"
+  },
+  {
+   "id": "evidence-210",
+   "quote": "192.42.116[.]191",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.42.116[.]191"
+  },
+  {
+   "id": "evidence-211",
+   "quote": "213.121.182[.]84",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "213.121.182[.]84"
+  },
+  {
+   "id": "evidence-212",
+   "quote": "104.200.72[.]149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.200.72[.]149"
+  },
+  {
+   "id": "evidence-213",
+   "quote": "152.57.231[.]216",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "152.57.231[.]216"
+  },
+  {
+   "id": "evidence-214",
+   "quote": "142.44.212[.]178",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.44.212[.]178"
+  },
+  {
+   "id": "evidence-215",
+   "quote": "54.39.133[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "54.39.133[.]41"
+  },
+  {
+   "id": "evidence-216",
+   "quote": "76.117.196[.]3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "76.117.196[.]3"
+  },
+  {
+   "id": "evidence-217",
+   "quote": "24.3.132[.]168",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "24.3.132[.]168"
+  },
+  {
+   "id": "evidence-218",
+   "quote": "166.70.47[.]90",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "166.70.47[.]90"
+  },
+  {
+   "id": "evidence-219",
+   "quote": "208.115.199[.]25",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "208.115.199[.]25"
+  },
+  {
+   "id": "evidence-220",
+   "quote": "216.144.248[.]20",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.144.248[.]20"
+  },
+  {
+   "id": "evidence-221",
+   "quote": "173.254.236[.]131",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "173.254.236[.]131"
+  },
+  {
+   "id": "evidence-222",
+   "quote": "3.101.53[.]11",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3.101.53[.]11"
+  },
+  {
+   "id": "evidence-223",
+   "quote": "54.184.187[.]134",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "54.184.187[.]134"
+  },
+  {
+   "id": "evidence-224",
+   "quote": "100.21.161[.]34",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "100.21.161[.]34"
+  },
+  {
+   "id": "evidence-225",
+   "quote": "44.206.3[.]111",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "44.206.3[.]111"
+  },
+  {
+   "id": "evidence-226",
+   "quote": "75.101.131[.]237",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "75.101.131[.]237"
+  },
+  {
+   "id": "evidence-227",
+   "quote": "20.47.120[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "20.47.120[.]195"
+  },
+  {
+   "id": "evidence-228",
+   "quote": "198.137.247[.]10",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "198.137.247[.]10"
+  },
+  {
+   "id": "evidence-229",
+   "quote": "PowerShell [CPG 2.E]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "112"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell [CPG 2.E]"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "MOVEit Transfer web application — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer web application 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer web application",
+    "action:a1 — exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software",
+    "action:a2 — installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+    "action:a4 — created a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service'",
+    "action:a5 — deleted an account with LoginName and RealName values set to 'Health Check Service'"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer web application",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "MOVEit Transfer web application — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer web application 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer web application",
+    "action:a1 — exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software",
+    "action:a2 — installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+    "action:a4 — created a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service'",
+    "action:a5 — deleted an account with LoginName and RealName values set to 'Health Check Service'"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer web application",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "MOVEit Transfer web application — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer web application 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — MOVEit Transfer web application",
+    "action:a1 — exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software",
+    "action:a2 — installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+    "action:a4 — created a new administrator privileged account with a randomly generated username and LoginName and RealName values set to 'Health Check Service'",
+    "action:a5 — deleted an account with LoginName and RealName values set to 'Health Check Service'"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer web application",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "MOVEit Transfer databases — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer databases 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — MOVEit Transfer databases",
+    "action:a3 — used the LEMURLOOT web shell to steal data from underlying MOVEit Transfer databases"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-24",
+      "evidence-21",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "MOVEit Transfer databases — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer databases 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — MOVEit Transfer databases",
+    "action:a3 — used the LEMURLOOT web shell to steal data from underlying MOVEit Transfer databases"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-24",
+      "evidence-21",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "MOVEit Transfer databases — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "MOVEit Transfer databases 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — MOVEit Transfer databases",
+    "action:a3 — used the LEMURLOOT web shell to steal data from underlying MOVEit Transfer databases"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "MOVEit Transfer databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-24",
+      "evidence-21",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Active Directory (AD) server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory (AD) server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Active Directory (AD) server",
+    "action:a9 — used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server",
+    "action:a10 — attempted to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory (AD) server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-12",
+      "evidence-11",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Active Directory (AD) server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory (AD) server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Active Directory (AD) server",
+    "action:a9 — used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server",
+    "action:a10 — attempted to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory (AD) server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-12",
+      "evidence-11",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Active Directory (AD) server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory (AD) server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Active Directory (AD) server",
+    "action:a9 — used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server",
+    "action:a10 — attempted to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory (AD) server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-12",
+      "evidence-11",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "MOVEit Transfer software — 版本",
+   "category": "version",
+   "reason": "IR 指出 MOVEit Transfer software，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 MOVEit Transfer software 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — MOVEit Transfer software",
+    "action:a1 — exploited the zero-day vulnerability CVE-2023-34362 affecting MOVEit Transfer software"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "MOVEit Transfer software",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-27",
+      "evidence-21"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s5-version",
+   "field": "Server Message Block (SMB) — 版本",
+   "category": "version",
+   "reason": "IR 指出 Server Message Block (SMB)，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Server Message Block (SMB) 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s5 — Server Message Block (SMB)",
+    "action:a10 — attempted to compromise the AD server using Server Message Block (SMB) vulnerabilities with follow-on Cobalt Strike activity"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Server Message Block (SMB)",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s6-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a11 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a11 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s6 — Remote Desktop Protocol (RDP)",
+    "action:a11 — used Remote Desktop Protocol (RDP) to interact with compromised systems after initial access"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s6.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-31"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "used Remote Desktop Protocol (RDP) to interact with compromised systems after initial access",
+     "source_ref": "actions:a11.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s6",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 涉及 Active Directory（h3 (Active Directory (AD) server)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h3 — Active Directory (AD) server",
+    "action:a9 — used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Active Directory (AD) server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-12"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "used Cobalt Strike to expand network access after gaining access to the Active Directory (AD) server",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2, a7, a8, a13 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a2 — installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+    "action:a7 — used FlawedAmmyy remote access trojan (RAT) to communicate with the Command and Control (C2)",
+    "action:a8 — used Truebot to download additional modules",
+    "action:a13 — used FlawedAmmyy remote access trojan (RAT) to download additional malware components"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "installed a web shell named LEMURLOOT on MOVEit Transfer web applications",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2",
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "used FlawedAmmyy remote access trojan (RAT) to communicate with the Command and Control (C2)",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "used Truebot to download additional modules",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "used FlawedAmmyy remote access trojan (RAT) to download additional malware components",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9389,
+  "unsupported_claim_count": 19,
+  "inferred_count": 9,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 7,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a2",
+    "technique": "T1505.003"
+   }
+  ]
+ },
+ "id": "scn_evidence"
+}

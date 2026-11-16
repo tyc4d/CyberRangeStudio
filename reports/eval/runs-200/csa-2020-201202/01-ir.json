@@ -1,0 +1,583 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-201202",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "3d083e7ed76e7c87200abc7444f6eb948a324b643254c42c3fb124eebc20a7a6",
+  "source_name": "csa-2020-201202"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Targeting U.S. think tanks by APT actors",
+   "source": "llm",
+   "description": "APT actors targeting U.S. think tanks, often focusing on individuals and organizations involved in international affairs or national security policy.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "Initial access via spearphishing emails and third-party message services",
+   "source": "llm",
+   "description": "APT actors use spearphishing emails and third-party message services directed at corporate and personal accounts to gain initial access.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+   "source": "llm",
+   "description": "APT actors exploit vulnerable web-facing devices and remote connection capabilities to gain initial access.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "Leverage VPNs and remote work tools for initial access or persistence",
+   "source": "llm",
+   "description": "Attackers may leverage virtual private networks (VPNs) and other remote work tools to gain initial access or persistence on a victim’s network.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "Steal sensitive information, acquire user credentials, and gain persistent access",
+   "source": "llm",
+   "description": "Successful initial access allows threat actors to steal sensitive information, acquire user credentials, and gain persistent access to victim networks.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using the newly acquired access to steal sensitive information, acquire user credentials, and gain persistent access",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using the newly acquired access to steal sensitive information, acquire user credentials, and gain persistent access",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using the newly acquired access or persistence to steal sensitive information, acquire user credentials, and gain persistent access",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted organizations",
+   "source": "llm",
+   "name": "U.S. think tanks",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "service-unspecified",
+   "name": "Unspecified service (absent)",
+   "epistemic_status": "absent",
+   "source": "program"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "service-unspecified"
+  ]
+ },
+ "artifacts": [],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cyberscoop.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-9"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "www.us-cert.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-11"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell [T1059.001] o Command and Scripting Interpreter: Windows Command Shell [T1059.003] o Command and Scripting Interpreter: Unix Shell [T1059.004] o Command and Scripting Interpreter: Visual Basic [T1059.005] o Command and Scripting Interpreter: Python [T1059.006] o Native API [T1106] o Exploitation for Client Execution [T1203] o User Execution: Malicious Link [T1204.001] o User Execution: Malicious File [T1204.002] o Inter-Process Communication: Dynamic Data Exchange [T1559.002] o System Services: Service Execution [T1569.002]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The Cybersecurity and Infrastructure Security Agency (CISA) and the Federal Bureau of Investigation (FBI) have observed persistent continued cyber intrusions by advanced persistent threat (APT) actors targeting U.S. think tanks. This malicious activity is often, but not exclusively, directed at individuals and organizations that focus on international affairs or national security policy.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Cybersecurity and Infrastructure Security Agency (CISA) and the Federal Bureau of Investigation (FBI) have observed persistent continued cyber intrusions by"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "APT actors have relied on multiple avenues for initial access. These have included low-effort capabilities such as spearphishing emails and third-party message services directed at both corporate and personal accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors have relied on multiple avenues for initial access. These have included low effort capabilities such as spearphishing emails and third party message "
+  },
+  {
+   "id": "evidence-3",
+   "quote": "APT actors have relied on multiple avenues for initial access. These have included ... as well as exploiting vulnerable web-facing devices and remote connection capabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "APT actors have relied on multiple avenues for initial access. These have included … as well as exploiting vulnerable web facing devices and remote connection c"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Attackers may leverage virtual private networks (VPNs) and other remote work tools to gain initial access or persistence on a victim’s network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attackers may leverage virtual private networks (VPNs) and other remote work tools to gain initial access or persistence on a victim’s network."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "When successful, these low-effort, high-reward approaches allow threat actors to steal sensitive information, acquire user credentials, and gain persistent access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When successful, these low effort, high reward approaches allow threat actors to steal sensitive information, acquire user credentials, and gain persistent acce"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Attackers may leverage virtual private networks (VPNs) and other remote work tools to gain initial access or persistence on a victim’s network. When successful, these low-effort, high-reward approaches allow threat actors to steal sensitive information, acquire user credentials, and gain persistent access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attackers may leverage virtual private networks (VPNs) and other remote work tools to gain initial access or persistence on a victim’s network. When successful,"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "APT actors targeting U.S. think tanks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8571,
+   "matched_text": "argeting U.S. "
+  },
+  {
+   "id": "evidence-8",
+   "quote": "APT actors targeting U.S. think tanks. This malicious activity is often, but not exclusively, directed at individuals and organizations that focus on international affairs or national security policy.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " actors targeting U.S. think tanks. This malicious activity is often, but not exclusively, directed at individuals and organizations that focus on international"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "www.cyberscoop.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cyberscoop.com"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "www.us-cert.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.gov"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cisa.gov"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "PowerShell o Command and Scripting Interpreter: Windows Command Shell o Command and Scripting Interpreter: Unix Shell o Command and Scripting Interpreter: Visual Basic o Command and Scripting Interpreter: Python o Native API o Exploitation for Client Execution o User Execution: Malicious Link o User Execution: Malicious File o Inter-Process Communication: Dynamic Data Exchange o System Services: Service Execution",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell o Command and Scripting Interpreter: Windows Command Shell o Command and Scripting Interpreter: Unix Shell o Command and Scripting Interpreter: Visua"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "U.S. think tanks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. think tanks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — U.S. think tanks",
+    "action:a1 — Targeting U.S. think tanks by APT actors",
+    "action:a2 — Initial access via spearphishing emails and third-party message services",
+    "action:a3 — Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+    "action:a4 — Leverage VPNs and remote work tools for initial access or persistence",
+    "action:a5 — Steal sensitive information, acquire user credentials, and gain persistent access"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. think tanks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "U.S. think tanks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. think tanks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — U.S. think tanks",
+    "action:a1 — Targeting U.S. think tanks by APT actors",
+    "action:a2 — Initial access via spearphishing emails and third-party message services",
+    "action:a3 — Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+    "action:a4 — Leverage VPNs and remote work tools for initial access or persistence",
+    "action:a5 — Steal sensitive information, acquire user credentials, and gain persistent access"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. think tanks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "U.S. think tanks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "U.S. think tanks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — U.S. think tanks",
+    "action:a1 — Targeting U.S. think tanks by APT actors",
+    "action:a2 — Initial access via spearphishing emails and third-party message services",
+    "action:a3 — Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+    "action:a4 — Leverage VPNs and remote work tools for initial access or persistence",
+    "action:a5 — Steal sensitive information, acquire user credentials, and gain persistent access"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "U.S. think tanks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "blocker",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：（IR 沒有任何目標軟體）。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a3 — Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+    "host:h1 — U.S. think tanks"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Initial access via exploiting vulnerable web-facing devices and remote connection capabilities",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a5 — Steal sensitive information, acquire user credentials, and gain persistent access",
+    "host:h1 — U.S. think tanks"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Steal sensitive information, acquire user credentials, and gain persistent access",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a5 — Steal sensitive information, acquire user credentials, and gain persistent access",
+    "host:h1 — U.S. think tanks"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Steal sensitive information, acquire user credentials, and gain persistent access",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8333,
+  "unsupported_claim_count": 2,
+  "inferred_count": 3,
+  "absent_count": 1,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

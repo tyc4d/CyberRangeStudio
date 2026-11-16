@@ -1,0 +1,502 @@
+[
+ {
+  "id": "p1",
+  "text": "# The Case for Memory Safe Roadmaps"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2023-12-06\n> - URL: https://www.ic3.gov/CSA/2023/231206.pdf\n> - PDF SHA-256: dfe3e72e075738e345aab81a541f72ab4c0cd149235426108090bf48787bc34b (`source.pdf`, 23 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (46 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "The Case for Memory Safe\nRoadmaps\nWhy Both C-Suite Executives and Technical Experts\nNeed to Take Memory Safe Coding Seriously\n Publication: December 2023"
+ },
+ {
+  "id": "p4",
+  "text": "United States Cybersecurity and Infrastructure Security Agency\n United States National Security Agency\n United States Federal Bureau of Investigation\n Australian Signals Directorate’s Australian Cyber Security Centre\n Canadian Centre for Cyber Security\n United Kingdom National Cyber Security Centre\n New Zealand National Cyber Security Centre\n Computer Emergency Response Team New Zealand"
+ },
+ {
+  "id": "p5",
+  "text": "This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries minimal or no\nforeseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to standard copyright rules,\nTLP:CLEAR information may be distributed without restriction. For more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p6",
+  "text": "Executive Summary\nMemory safety vulnerabilities are the most prevalent type of disclosed software\nvulnerability.1,2,3 They are a class of well-known and common coding errors that malicious\nactors routinely exploit. These vulnerabilities represent a major problem for the software\nindustry as they cause manufacturers to continually release security updates and their\ncustomers to continually patch. These vulnerabilities persist despite software manufacturers\nhistorically expending significant resources attempting to reduce their prevalence and\nimpact through various methods, including analyzing, patching, publishing new code and\ninvesting in training programs for developers. Customer organizations expend significant\nresources responding to these vulnerabilities through onerous patch management programs\nand incident response activities.\nMemory safe programming languages (MSLs) can eliminate memory safety vulnerabilities.\nTherefore, transitioning to MSLs would likely greatly lessen the need to invest in activities\naimed at reducing these vulnerabilities or minimizing their impact. Additionally, investments\nto migrate unsafe codebases to MSLs would pay long-term dividends in the form of safer\nproducts—defraying some of the upfront cost of transitioning to MSLs.\nThe U.S. Cybersecurity and Infrastructure\n                                                 The Secure by Design campaign urges\nSecurity Agency (CISA), National Security\n                                                 technology providers to take ownership of their\nAgency (NSA), Federal Bureau of                  customers’ security outcomes by building\nInvestigation (FBI), and the cybersecurity       cybersecurity into design and development. See\nauthorities of Australia, Canada, the            Secure by Design, Secure Your Products, and\nUnited Kingdom, and New Zealand *                Shifting the Balance of Cybersecurity Risk:\n(hereafter referred to as the authoring          Principles and Approaches for Security-by-Design\nagencies) jointly developed this guidance        and -Default.\nas part of our collective Secure by Design\ncampaign. With this guidance, the authoring agencies urge senior executives at every\nsoftware manufacturer to reduce customer risk by prioritizing design and development\npractices that implement MSLs. Additionally, the agencies urge software manufacturers to\ncreate and publish memory safe roadmaps that detail how they will eliminate memory safety\nvulnerabilities in their products. By publishing memory safe roadmaps, manufacturers will\nsignal to customers that they are taking ownership of security outcomes, embracing radical\ntransparency, and taking a top-down approach to developing secure products—key Secure\nby Design tenets.\nThis guidance provides manufacturers with steps to create memory safe roadmaps and\nimplement changes to eliminate memory safety vulnerabilities from their products. Eliminating\nthis vulnerability class should be seen as a business imperative likely requiring participation\nfrom many departments. The authoring agencies urge executives to lead from the top by\npublicly identifying senior staff who will drive publication of their roadmap and assist with\nrealigning resources as needed."
+ },
+ {
+  "id": "p7",
+  "text": "* The Australian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC), Canadian Centre for Cyber Security (CCCS),"
+ },
+ {
+  "id": "p8",
+  "text": "United Kingdom’s National Cyber Security Centre (NCSC-UK), and New Zealand’s National Cyber Security Centre (NCSC-NZ) and\nComputer Emergency Response Team New Zealand (CERT NZ)."
+ },
+ {
+  "id": "p9",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                                        2"
+ },
+ {
+  "id": "p10",
+  "text": "Table of Contents\nIntroduction .................................................................................................................................... 4\nMitigations ...................................................................................................................................... 4\n   Mitigations to Reduce Prevalence ......................................................................................................................... 5\n       Developer Training ............................................................................................................................................. 5\n       Code Coverage ................................................................................................................................................... 5\n       Secure Coding Guidelines ................................................................................................................................. 5\n       Fuzzing ................................................................................................................................................................ 5\n       SAST/DAST ......................................................................................................................................................... 6\n       Safer Language Subsets ................................................................................................................................... 6\n   Mitigations to Reduce Impact ................................................................................................................................ 6\n       Non-Executable Memory.................................................................................................................................... 6\n       Control Flow Integrity ......................................................................................................................................... 6\n       Address Space Layout Randomization (ASLR)................................................................................................. 7\n       Other Compiler Mitigations ................................................................................................................................ 7\n       Sandboxing ......................................................................................................................................................... 7\n       Hardening Memory Allocators ........................................................................................................................... 7\n   Potential Future Mitigations: Using Hardware ...................................................................................................... 8\nThe Case for Memory Safe Languages ......................................................................................... 9\nPlanning the Transition to Memory Safe Languages ................................................................. 10\n   Considerations ...................................................................................................................................................... 10\n   Prioritization Guidance ......................................................................................................................................... 10\n   Picking a Memory Safe Language ....................................................................................................................... 11\n   Staff Capabilities and Resourcing........................................................................................................................ 12\n   Implementation Challenges ................................................................................................................................. 12\n       Shifting Security Left ........................................................................................................................................ 12\n       Performance Impact ........................................................................................................................................ 13\n       Existing Memory Unsafe Libraries .................................................................................................................. 13\n       Memory Protection Exceptions........................................................................................................................ 13\n       Bringing Computer Science Education Up to Speed...................................................................................... 14\n       OT, Low Power, and IoT Systems .................................................................................................................... 14\nMemory Safe Roadmaps ............................................................................................................. 14\nConclusion .................................................................................................................................... 16\nResources ..................................................................................................................................... 18\nAppendix: Memory Safe Languages ........................................................................................... 19\nPurpose ......................................................................................................................................... 20\nAcknowledgements ...................................................................................................................... 20\nDisclaimer ..................................................................................................................................... 20\nContact Information ..................................................................................................................... 20\nReferences ................................................................................................................................... 21"
+ },
+ {
+  "id": "p11",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                                                                                3"
+ },
+ {
+  "id": "p12",
+  "text": "Introduction\nMemory safety vulnerabilities [CWE-1399: Comprehensive Categorization: Memory Safety]\nare a class of vulnerability affecting how memory can be accessed, written, allocated, or\ndeallocated in unintended ways in programming languages. 4,5,6\nThe concept underlying these errors can be understood by the metaphor of the software\nbeing able to ask for item number 11 or item number -1 from a list of only 10 items. Unless\nthe developer or language prevents these types of requests, the system might return data\nfrom some other list of items.\nDepending on the type of vulnerability, a malicious actor may be able to illicitly access data,\ncorrupt data, or run arbitrary malicious code. For example, a malicious actor may send a\ncarefully crafted payload to an application that corrupts the application’s memory, then\ncausing it to run malware. Alternatively, a malicious actor may send a malformed image file\nthat includes malware to create an interactive shell on the victim system. If an actor can\nexecute arbitrary code in this way, the actor may gain control of the account running the\nsoftware.\nModern industry reporting indicates that defects first identified several decades ago remain\ncommon vulnerabilities exploited by malicious actors today to routinely compromise\napplications and systems. 7 Yet, according to modern industry reporting, these vulnerabilities\nremain common, and malicious actors routinely exploit them to compromise applications\nand systems:"
+ },
+ {
+  "id": "p13",
+  "text": "•   About 70 percent of Microsoft common vulnerabilities and exposures (CVEs) are\n       memory safety vulnerabilities (based on 2006-2018 CVEs). 8\n   •   About 70 percent of vulnerabilities identified in Google’s Chromium project are\n       memory safety vulnerabilities. 9\n   •   In an analysis of Mozilla vulnerabilities, 32 of 34 critical/high bugs were memory\n       safety vulnerabilities. 10\n   •   Based on analysis by Google’s Project Zero team, 67 percent of zero-day\n       vulnerabilities in 2021 were memory safety vulnerabilities. 11"
+ },
+ {
+  "id": "p14",
+  "text": "Mitigations\nOver the past few decades, software developers have continually sought to address the\nprevalence and impact of memory safety vulnerabilities within their software development\nlife cycle (SDLC) through the following mitigation methods. Despite these continued efforts,\nmemory safety has remained a leading cause of disclosed vulnerabilities in software\nproducts. Nevertheless, these mitigations remain valuable, especially when used in\ncombination, to protect code that has not yet, or cannot be, transitioned to MSLs."
+ },
+ {
+  "id": "p15",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ               4"
+ },
+ {
+  "id": "p16",
+  "text": "Mitigations to Reduce Prevalence\nDeveloper Training\nProgramming languages such as C and C++ are examples of memory unsafe programming\nlanguages that can lead to memory unsafe code and are still among the most widely used\nlanguages today. In attempts to mitigate the dangers of memory unsafe code in C and C++,\nmany software manufacturers invest in training programs for their developers. Many of\nthese training programs include tactics designed to reduce the prevalence of memory\nunsafe vulnerabilities produced by those languages. Additionally, there are numerous\ncommercial and industry trade association training programs. Further, various organizations\nand universities offer trainings and a professional certificate for demonstrating knowledge of\nsecure coding practices in C and C++.\nWhile training can reduce the number of vulnerabilities a coder might introduce, given how\npervasive memory safety defects are, it is almost inevitable that memory safety\nvulnerabilities will still occur. Even the most experienced developers write bugs that can\nintroduce significant vulnerabilities. Training should be a bridge while an organization\nimplements more robust technical controls, such as memory safe languages."
+ },
+ {
+  "id": "p17",
+  "text": "Code Coverage\nCode coverage is the process of covering as much of the codebase as possible with unit and\nintegration tests. Industry practices encourage development teams to strive for 80%\ncoverage and greater, but this is not always achievable with time and resource constraints.\nDevelopment teams aim to cover all critical and security-sensitive areas of an application\nwith both positive and negative test cases. Teams can easily add these types of tests to an\nautomation pipeline or script for repeatability and regression testing. The benefits lay in\nensuring that no new vulnerabilities are added to functionality that has previously been\ntested but may have unintentionally been changed as part of an update and was therefore\nnot in a release test plan."
+ },
+ {
+  "id": "p18",
+  "text": "Secure Coding Guidelines\nOrganizations and industry have developed many secure coding guidelines for most\nprevalent programming languages. These guidelines outline the areas where developers\nneed to take more care due to language-specific traps, especially around memory handling.\nOrganizations have attempted to ensure that development teams are not only using a\nsecure coding guide for the programming language of choice but are actively updating the\nguide as the team identifies new issues or standardizes an approach to a common problem."
+ },
+ {
+  "id": "p19",
+  "text": "Fuzzing\nFuzzing tests software by sending it a wide variety of data, including invalid or random data,\nand detects when the test data causes the application to crash or fail code assertions. 12\nFuzzing is a common method for finding errors like buffer overflows. Fuzzing can aid in\ndiscovering vulnerabilities, but no tool can find every vulnerability. Since fuzzing is a non-\ndeterministic tactic applied after the initial coding mistakes are made, there will be limits to\nhow effective it can be. New fuzzing methods are continually created that find previously"
+ },
+ {
+  "id": "p20",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                5"
+ },
+ {
+  "id": "p21",
+  "text": "undiscovered vulnerabilities. Software manufacturers should ensure their fuzz testing\nstrategies are continually updated."
+ },
+ {
+  "id": "p22",
+  "text": "SAST/DAST\nDevelopers use Static Application Security Testing (SAST) and Dynamic Application Security\nTesting (DAST) tools to find a variety of software vulnerabilities, including memory-related\nbugs. 13 SAST tools look at static resources, specifically source code or binaries, and DAST\ntools examine a running system (or the unit test suite, which can be similarly effective) to\nfind problems that would be hard to detect by a SAST tool. Many organizations use both\ntypes of tools. Some larger organizations use more than one SAST or DAST tool from\ndifferent vendors to provide additional coverage using a wider range of approaches.\nDepending on the codebase, SAST tools and, to a lesser extent, DAST tools can generate a\nsignificant number of false positives, creating a burden for software developers.\nFurthermore, no SAST or DAST tool can catch every vulnerability."
+ },
+ {
+  "id": "p23",
+  "text": "Safer Language Subsets\nThe C++ community has been contemplating 14 the balance between backwards\ncompatibility, memory-safety defaults, and other priorities for the base language. 15 There\nare multiple targeted efforts to make C and C++ less vulnerable for existing code bases and\nproducts. For example, Apple has modified the C compiler toolchain used in the iBoot\nsystem 16 to mitigate memory and type safety issues. External analysis 17 indicates that there\nmay be non-trivial performance and memory usage costs. Microsoft has developed\n“Checked C” that “adds static and dynamic checking to C to detect or prevent common\nprogramming errors such as buffer overruns and out-of-bounds memory accesses.” 18 There\nare more general efforts to improve C++ memory safety for existing code, 19 including efforts\nlike Carbon. 20,21"
+ },
+ {
+  "id": "p24",
+  "text": "Mitigations to Reduce Impact\nNon-Executable Memory\nMost modern computer architectures do not contain separate memory for data and code,\nwhich allows malicious actors who exploit memory safety issues to introduce code as data\nthat the processor could then be coerced into executing. An early attempted mitigation for\nmemory safety issues was to mark some memory segments as non-executable. In such\ncases, a CPU would not execute instructions contained within such pages, as they were only\nintended for storing data, not code. Unfortunately, more sophisticated techniques have\nemerged, such as return oriented programming (ROP), which enables existing code\nsegments within a program to be repurposed to execute on adversary-controlled data to\nsubvert control of a program. 22"
+ },
+ {
+  "id": "p25",
+  "text": "Control Flow Integrity\nControl Flow Integrity (CFI) technology identifies all indirect branches and adds a check on\neach branch. 23 At runtime, the program will detect invalid branches, causing the operating"
+ },
+ {
+  "id": "p26",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ              6"
+ },
+ {
+  "id": "p27",
+  "text": "system to terminate the process. Despite some successes, numerous bypasses to CFI have\nbeen discovered, 24 including ones that have been exploited in the wild. 25"
+ },
+ {
+  "id": "p28",
+  "text": "Address Space Layout Randomization (ASLR)\nTraditionally, malicious cyber actors who find a memory vulnerability will craft a payload to\nexploit that vulnerability and attempt to find a way to execute their code. Finding the exact\nmemory layout to execute their code may require some experimentation. However, when\nthey find it, the exploit will work on any instance of the application.\nASLR is a technique in which the runtime system moves various components, such as the\nstack and heap, to different virtual addresses every time the program runs. ASLR aims to\nensure that malicious cyber actors do not have knowledge of how memory is organized,\nwhich makes it substantially harder to exploit the vulnerability. However, ASLR bypasses are\ncommon because programs can be coaxed into leaking memory addresses, 26,27,28,29 which\nmeans that ASLR does not entirely prevent exploitation of memory safety vulnerabilities."
+ },
+ {
+  "id": "p29",
+  "text": "Other Compiler Mitigations\nModern compilers include various mitigations against exploitation of memory safety issues.\nTechniques such as stack canaries and non-writable stacks leverage different approaches to\nmitigating some memory safety issues. However, actors have also identified techniques on\nthe exploit side to bypass these mitigations, such as identifying data leaks and ROP."
+ },
+ {
+  "id": "p30",
+  "text": "Sandboxing\nDeveloper teams can use sandboxing to isolate different parts of a system to limit the scope\nof any potential vulnerability. Developers will break the application into subsystems and\nrestrict the resources they can use, including memory, network access, and process control.\nSandboxing provides a layer of protection for many classes of vulnerability, even going back\nto chroot to prevent file system traversals.\nA subsystem that handles untrustworthy data, such as network communications or user-\ngenerated content, may be a good candidate to isolate from other parts of the system using\na sandbox. If malicious actors find a memory-related vulnerability in one subsystem, they are\nfaced with the additional task of breaking out of the sandbox. Forcing adversaries to find\nmultiple new defects raises the cost of attack.\nDespite the value sandboxing brings, there are limits to how far developers can push this\nmodel. The more sandboxes they use, the more complex the code becomes. Further, there\nare practical limits to how many sandboxes a system can tolerate, especially on constrained\ndevices, such as phones. Additionally, sandbox bypasses, also known as sandbox escapes,\nare often discovered, defeating security protections. Google’s presentation on sandboxing 30\nin the Android operating system demonstrates the limits associated with this mitigation\ntactic."
+ },
+ {
+  "id": "p31",
+  "text": "Hardening Memory Allocators\nAs is the case of ASLR and compiler mitigations, hardening allocators make creating a\nreliable exploit for a vulnerability more difficult, but it does not remove the memory safety"
+ },
+ {
+  "id": "p32",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ             7"
+ },
+ {
+  "id": "p33",
+  "text": "vulnerability. For example, Apple reported their allocator, called “kalloc_type,” “…makes\nexploiting most memory corruption vulnerabilities inherently unreliable.” There are also\ncommercial memory safe allocators that target specific domains, like OT devices."
+ },
+ {
+  "id": "p34",
+  "text": "Potential Future Mitigations: Using Hardware\nA promising area under active development involves using hardware to support memory\nprotections. The Capability Hardware Enhanced RISC Instructions (CHERI) 31 project is a joint\nresearch project of SRI International and the University of Cambridge that adds new features\nto existing chip architectures. The UK government’s Digital Security by Design (DSBD)\nprogram brought together £70m of government funding with £117m of industry co-\ninvestment to develop the technology further.32 In addition to a range of academic and\nindustry-supported research and development activities, the program enabled Arm to ship\nits CHERI-enabled Morello prototype processor, system-on-chip (SoC), and board in January\n2022. Both Arm and Microsoft have documented their CHERI efforts and a range of other\nactivities supported by DSBD. There is now a community of developers building tools and\nlibraries to enable widespread adoption of the technology.\nCHERI can be deployed on architectures other than Arm; DSBD also recently announced\n£1.2m of investment in a demonstrator project using the RISC-V architecture. 33 The aim is\nto show how the technology can beneficially be deployed in automotive systems, in which\nsafety is critical.\nArm introduced another technology called the Memory Tagging Extension (MTE) to some of\nits CPU product lines to detect use after free and out-of-bounds (also called buffer overflow)\ntype bugs. 34 When memory is allocated, the system assigns it a tag. All further access to that\nmemory must be made with that tag. The CPU will raise an error if the tags do not match.\nArm estimates that the overhead for MTE is between 1–2 percent. Mobile devices may see\nthe first widespread deployments. 35 Intel also announced memory tagging capabilities in\nfuture chipsets. 36\nOther hardware-based research includes FineIBT, which includes Control Flow Integrity (CFI)\nsupport on top of Intel's hardware-based Control-flow Enforcement Technology (CET). 37\nSome hardware features like MTE are going to be needed even in systems written in MSLs.\nFor example, Rust programmers can mark some code as “unsafe,” benefitting from\nhardware controls.\nAlthough memory protections in hardware are not yet widely available, some industry\nobservers believe they will be helpful in many deployment scenarios where migration to\nMSLs will take an extended amount of time. In such scenarios, hardware refresh cycles may\nbe short enough to provide important memory protections for customers until other\nprotections are available. Experiments with these hardware protections are underway,\nincluding work to measure the real-world performance impact and memory consumption\ncharacteristics of these new designs. In some cases, it is possible that hardware protections\nwill enable increased performance if used optimally by the software."
+ },
+ {
+  "id": "p35",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ               8"
+ },
+ {
+  "id": "p36",
+  "text": "The Case for Memory Safe Languages\nDespite software manufacturers investing vast resources attempting to mitigate memory\nsafety vulnerabilities, they remain pervasive. Customers must then expend significant\nresources responding to these vulnerabilities through both onerous patch management\nprograms and incident response activities.\nAs previously noted by NSA in the Software Memory Safety Cybersecurity Information Sheet\nand other publications, 38 the most promising mitigation is for software manufacturers to use\na memory safe programming language because it is a coding language not susceptible to\nmemory safety vulnerabilities. However, memory unsafe programming languages, such as C\nand C++, are among the most common programming languages. 39 Internet applications and\ndevices throughout the technology landscape use memory unsafe programming languages.\nThese languages run operating systems, resource-constrained systems, and applications\nthat require high-performance. The pervasiveness of memory unsafe languages means that\nthere is currently significant risk in the most critical computing functions.\nAt the same time, the authoring agencies acknowledge the commercial reality that\ntransitioning to MSLs will involve significant investments and executive attention. Further,\nany such transition will take careful planning over a period of years. Although there is an\nupfront cost in migrating codebases to MSLs, these investments will improve product\nreliability, quality, and—critically—customer security.\nSoftware manufacturers will benefit from using MSLs and their customers will benefit from\nmore secure products. Benefits for developers and customers may include:\n   •   Increased reliability. MSLs create more reliable code than memory unsafe\n       programming languages. For example, an operating system that uses a memory\n       unsafe programming language can only crash the application if it detects a memory\n       violation. If the application is a client server process, it could drop the connections of\n       all connected users. Additionally, the operating system itself may crash if the memory\n       corruption happens in the kernel. MSLs, on the other hand, prohibit memory\n       violations from occurring.\n   •   Fewer interruptions for developers. When someone reports a memory safety bug,\n       developers go into reactive mode and must stop other work to diagnose and mitigate\n       the problem. Fewer memory safety defects may mean fewer unplanned and often\n       urgent responses to vulnerability discoveries. Development teams have reported that\n       memory safety bugs are some of the most challenging to diagnose and correctly\n       address. Consequently, they often must pull their most senior developers from other\n       important work to find and correctly fix these defects. Transitioning to MSLs would\n       free developers to focus on current work priorities instead of reacting to newly\n       discovered vulnerabilities.\n   •   Fewer emergencies for supporting staff. Fewer memory safety vulnerabilities may\n       result in fewer emergency releases, saving time of teams like Build, Quality\n       Assurance, Product Management, and Support.\n   •   Fewer emergencies (and breaches) for customers. Removing the memory safety\n       class of vulnerability from a product by transitioning to an MSL eliminates the need"
+ },
+ {
+  "id": "p37",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                 9"
+ },
+ {
+  "id": "p38",
+  "text": "for memory issue security releases. This will reduce the number of urgent product\n       releases that a customer will need to accommodate, saving time and averting\n       breaches.\nIn addition to bringing benefits to software manufacturers and their customers, MSLs\nreduce a product’s attack surface. That reduction in attack surface will increase the cost to\nmalicious actors who then need to invest more resources discovering other exploitable\nvulnerabilities. As is the case with any mitigation, transitioning to MSLs will not, by itself, halt\nor deter cybercrime or espionage. Malicious cyber actor economics will dictate where the\nactor looks for the next intrusion vector to accomplish their mission. Yet, given the current\npervasiveness of memory safety vulnerabilities and exploitations, reducing and eventually\neliminating that attack path will significantly raise the cost of an attack."
+ },
+ {
+  "id": "p39",
+  "text": "Planning the Transition to Memory Safe Languages\nConsiderations\nSoftware manufacturers should consider the following technical and non-technical factors\nwhen developing their roadmap:\n   1. Prioritization guidance. Manufacturers should consider how to prioritize migration to\n      MSLs through the development of roadmaps and specific guidance for development\n      and technical teams.\n   2. Picking use-case appropriate MSLs. There are numerous MSLs, and each one has its\n      own set of tradeoffs in terms of architecture, tooling, performance, popularity, cost,\n      and other factors. No one MSL is right for all programming needs. Manufacturers\n      should look at use cases that use memory unsafe languages and pick the most\n      appropriate MSL for each. When selecting an MSL, software manufactures should\n      follow standard risk management processes, as MSLs are not free from other\n      potential vulnerabilities of critical severity. As part of their risk management program,\n      manufacturers should closely follow supply chain and secure development lifecycle\n      practices as defined in the National Institute of Standards and Technology (NIST)\n      Risk Management Framework and Secure Software Development Framework (SSDF).\n   3. Staff capabilities and resourcing. Manufacturers should consider how they will train\n      developers in a selected MSL, how they can prioritize hiring developers with the\n      relevant skills, and what resources they may need to support the selected language."
+ },
+ {
+  "id": "p40",
+  "text": "Prioritization Guidance\nAlthough there is no one way to prioritize a transition to MSLs, the following list of options\nwill assist development teams in picking appropriately sized migration projects that will\nprovide them experience, a tight feedback loop, and a manageable amount of risk.\n   •   Start with new and smaller projects. Re-writing existing code in an MSL can be a\n       significant challenge, especially if the code is already performing well and the\n       organization does not already have expertise in the chosen MSL. Consider starting\n       with new and smaller projects that carry lower risk to give teams time to experiment\n       with new tools and processes."
+ },
+ {
+  "id": "p41",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                   10"
+ },
+ {
+  "id": "p42",
+  "text": "•   Replace memory unsafe components. Consider taking a self-contained component\n       written in a memory unsafe programming language and rewriting it in your chosen\n       MSL. Consider ways to run the existing component in parallel with the newly updated\n       MSL component and compare the results. Once the updated MSL component\n       consistently produces the same output as the older component, it should be possible\n       to retire the older component.\n   •   Prioritize security critical code. Parts of your codebase may be sensitive from a\n       security perspective or along a critical attack path. 40 Examples include code that\n       performs operations on user-generated content, which is a notorious vector for\n       abuse. Other examples include code that handles secret keys, opens network\n       connections, performs authentication and authorization, or operates at low levels,\n       such as firmware. 41 Prioritize security-sensitive code when the team has the required\n       MSL expertise. Review the use of cryptographic components and other “roots of\n       trust” on which the system is built during the prioritization process.\n   •   Use instrumentation. For example, the GWP-ASan allocation tool in the Android\n       operating system can detect heap memory errors that fuzzing does not detect.\n   •   Evaluate performance and complexity. There are often reasons to re-write\n       components or larger systems to incorporate new requirements not anticipated by\n       the original design. The existing implementation of a system may have become\n       brittle, and the development team may therefore find it hard to support the evolution\n       needed to meet new requirements. If the team is going to rewrite the system for any\n       reason, they should consider breaking the requirements into smaller pieces and\n       writing parts or all of it in the organization’s chosen MSL.\n   •   Determine which modules are CPU-bound. Some applications are CPU-bound, which\n       means CPU speed limits the performance of the overall system. Specifically, in the\n       case of garbage collecting MSLs, a CPU-bound application may experience more\n       performance fluctuations than one that is limited by things like human response\n       time, network latency, or disk I/O.\n   •   Ramp up parallel systems. If a development team ports a highly parallel application\n       to an MSL, they should direct a small portion of the workflow to the new codebase\n       and monitor the results. Once there is confidence that the system is performing\n       correctly, the team should increase load-in increments until they completely phase\n       out the old system.\n   •   Wrap applications. Where a team cannot update an existing memory unsafe\n       application to an MSL, they should write an intermediary application for all public\n       interfaces in the MSL. The wrapping application will need to ensure all inputs cannot\n       exceed memory bounds within the child application."
+ },
+ {
+  "id": "p43",
+  "text": "Picking a Memory Safe Language\nThe authoring agencies recommend software manufacturers evaluate multiple MSLs before\nintegrating them into their programs of work. See the appendix for an overview of some\nmemory safe languages."
+ },
+ {
+  "id": "p44",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ              11"
+ },
+ {
+  "id": "p45",
+  "text": "Staff Capabilities and Resourcing\nSoftware manufacturers should consider:\n   •   Planning time for learning. Ensure that teams have access to training and learning\n       material they may need. Provide teams dedicated learning time for both self-study\n       and to learn from senior team members. Give new hires example problems previously\n       solved; include both stand-alone coding exercises and debugging challenges in the\n       MSL.\n   •   Planning time for integration. Create a strategy for integrating new staff into existing\n       teams and resolving potential conflicts, e.g., between new team members who are\n       familiar with the MSL and senior members more familiar with the existing languages.\n   •   Establishing both internal and external communities. Establish a group of internal\n       champions of MSLs. In addition to assigning them migration and development on\n       their normal projects, engineering leadership should give them time to work with and\n       understand the efforts, challenges, and successes of other teams. These champions\n       can build an internal community and cross-pollinate information across projects by\n       hosting internal meetups, training sessions, and chat rooms. In addition to building\n       an internal community, they can help connect their organization to external experts\n       by setting up both virtual and in-person meetups.\n   •   Hiring and onboarding. It will not always be practical for organizations to hire\n       developers who are already MSL experts. Rather than waiting to find a developer who\n       has the perfect set of skills, experience, and knowledge, some organizations report\n       success in hiring developers who have proficiency in multiple programming\n       languages, often including C and C++. To compensate for the new hire’s lack of\n       experience in the MSL of choice, organizations can modify their existing developer\n       onboarding process to include a buddy/mentor system and a boot camp in the MSL.\n   •   Creating a staffing pipeline. Organizations should signal their demand for developers\n       trained in security and memory safety to colleges, universities, and educational\n       institutions. Many institutions base their computer science and software engineering\n       curricula on the demand they receive from students expecting to receive offers from\n       employers. If there is no expectation that students will need a specific skill,\n       institutions will not expend resources to provide it."
+ },
+ {
+  "id": "p46",
+  "text": "Implementation Challenges\nThere are several challenges that software manufacturers need to be aware of as they\ndevelop and begin to implement their memory safe roadmap, including the following\nexamples."
+ },
+ {
+  "id": "p47",
+  "text": "Shifting Security Left\nThe authoring agencies encourage software manufacturers to move security considerations\nearlier in the SDLC, which can improve product security and reliability upon deployment.\nDepending on the programming language in question, there may be an increase in the\namount of up-front work. Some MSLs require that the development team access memory in\nparticular ways, which may require more time for the team to become proficient in creating"
+ },
+ {
+  "id": "p48",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                12"
+ },
+ {
+  "id": "p49",
+  "text": "idiomatically correct code. Although this extra effort may seem burdensome, mitigating the\nmemory safety vulnerabilities benefits the development team and customer.\nIt is worth considering the benefits of migrating from an environment where the code\nmanages memory properly most of the time to one where the programming language\nensures that the code will manage memory properly all the time."
+ },
+ {
+  "id": "p50",
+  "text": "Performance Impact\nSome MSLs use a garbage collector as part of their memory management. The process of\ngarbage collecting can introduce unpredictable latency that affects the application’s overall\nperformance characteristics—although, some languages can use additional threads to clean\nup and free memory. The garbage collector will also introduce some additional overhead in\nterms of CPU and memory. While the impact of garbage collection on 5th generation\nlanguages and modern hardware is negligible, these performance characteristics can still\naffect constrained devices, such as those in embedded systems. Developers will need to pay\nattention to these performance characteristics, especially in environments that demand\nreal-time performance and high scalability."
+ },
+ {
+  "id": "p51",
+  "text": "Existing Memory Unsafe Libraries\nMSLs, whether they use a garbage collection model or not, will almost certainly need to rely\non libraries written in languages such as C and C++. Although there are efforts to re-write\nwidely used libraries in MSLs, no such effort will be able to re-write them all anytime soon.\nFor the foreseeable future, most developers will need to work in a hybrid model of safe and\nunsafe programming languages. Developers who start writing in an MSL will need to call C\nand C++ libraries that are not memory safe. Likewise, there are going to be situations where\na memory unsafe application needs to call into a memory safe library. When calling a\nmemory unsafe component or application, the calling application needs to be explicitly\naware of—and limit any input passed to—the defined memory bounds.\nThe memory safety guarantees offered by MSLs are going to be qualified when data flows\nacross these boundaries. Other potential challenges include differences in data marshalling,\nerror handling, concurrency, debugging, and versioning.\nThis class of challenge is common and well-studied. Tools and techniques to manage the\ninteraction between languages are available and it is likely to be an area for future\ninnovation and development."
+ },
+ {
+  "id": "p52",
+  "text": "Memory Protection Exceptions\nIt is also worth noting that it is possible to defeat the memory protection guarantees in some\nMSLs. For example, software written in Rust can contain the “unsafe” keyword. 42 There are\nseveral important reasons to use this keyword, such as directly interacting with the\noperating system. However, developers should not use this keyword to avoid introducing\nmemory safety vulnerabilities."
+ },
+ {
+  "id": "p53",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ              13"
+ },
+ {
+  "id": "p54",
+  "text": "Bringing Computer Science Education Up to Speed\nMany, perhaps most, computer science degree\n                                                      Executive-level leadership should\nprograms do not teach students in depth about the\n                                                      drive the transition to memory safe\ndangers of memory unsafe programming languages        programming languages because\nand the real-world harms that come as a result. The   memory unsafety is fundamentally a\nreasons for that fact are numerous. For example,      business strategy problem. As such,\nhiring managers at many software manufacturers        the CEO or other business executive\nneed developers who can work in existing              should sign the roadmap.\nenvironments, many of which include large C and\nC++ codebases. They may have a short-term interest in hiring students who are proficient in\nthe languages they predominantly use. Yet, by addressing the short-term needs of software\nmanufacturers, it has become hard to create momentum around memory safe code.\nAnother reason for a lack of emphasis on MSLs in universities may stem from the incentive\nstructures that shape how professors spend their time. The cost to master new\nprogramming languages and update coursework is considerable, and few professors have\nspare time to make that investment in addition to fulfilling their other obligations. This area\nis ripe for additional research and exploration of possible options to provide professors with\nthe right tools to begin teaching MSLs.\nIt is worth noting that languages like C and C++ can help students understand how the\ncomputer works at lower levels, a useful skill when these students need to think deeply\nabout performance and scalability of complex systems. A thoughtful balance of coursework\non language choice and exercises on memory safety can produce a well-rounded graduate.\nThere are many ways that people learn how to write software outside of a university setting.\nMany people teach themselves to program by reading a book, taking an online course,\nreading blogs, or watching videos. Some start by modifying someone else’s extensions to\ntheir favorite video game or browser, and then learning to write their own. MSL advocates in\nthe industry should think about how to implement a bias toward MSLs in these common\nways people start to program."
+ },
+ {
+  "id": "p55",
+  "text": "OT, Low Power, and IoT Systems\nAlthough many MSLs are widely available for desktop, server, and mobile platforms, they are\nless available on constrained systems, where memory, CPU, and network connections are\nseverely limited. OT systems often prioritize availability and reliability over many other\nconsiderations and lack the wide spectrum of programming languages found on more\npowerful systems. Any transition to an MSL in OT systems will require a demonstration of\nperformance, reliability, and real-time guarantees. Further, that transition will require the\nsame type of tooling available to less constrained platforms so developers can build, test,\nand debug their systems."
+ },
+ {
+  "id": "p56",
+  "text": "Memory Safe Roadmaps\nThe authoring agencies strongly encourage software manufacturers to write and publish\nmemory safe roadmaps. By doing so, manufacturers will signal to customers that they are"
+ },
+ {
+  "id": "p57",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ               14"
+ },
+ {
+  "id": "p58",
+  "text": "embracing key secure by design principles of (1) taking ownership of their security\noutcomes, (2) adopting radical transparency, and (3) taking a top-down approach to\ndeveloping secure products.\nSoftware developers and support staff should develop the roadmap, which should detail\nhow the manufacturer will modify their SDLC to dramatically reduce and eventually eliminate\nmemory unsafe code in their products. To ensure adequate resourcing and signal executive-\nlevel support to customers, the authoring agencies strongly urge executives to publicly\nidentify senior staff to drive publication of the roadmap and assist with realigning resources\nas needed.\nThe roadmap should include the following elements:\n   1. Defined phases with dates and outcomes. As with all software development efforts,\n      development teams can break the larger effort into smaller projects with clear\n      outcomes to measure their progress. Phases might include:\n          a. Evaluation of MSLs.\n          b. A pilot to test writing a new component in an MSL or incorporating an MSL\n              into an existing component.\n          c. Threat modeling to find the most dangerous memory unsafe code.\n          d. Refactoring memory unsafe code.\n   2. Date for MSLs in new systems. Publish the date after which the company will write\n      new code solely in an MSL. Organizations can put a cap on the number of potential\n      memory safety vulnerabilities by writing new projects in an MSL. Publicly setting a\n      date for that change will demonstrate a commitment to customer security.\n   3. Internal developer training and integration plan. No MSL transition will be free, and\n      the manufacturer will need to set aside time for developers to become proficient at:\n          a. Writing software in the selected language.\n          b. Debugging.\n          c. Tooling.\n          d. Integrating the MSL into the builds.\n          e. Overall quality control processes.\n   4. External dependency plan. The roadmap should document the plan to handle\n      dependencies on libraries written in C and C++. Most software products are based on\n      numerous open source software (OSS) libraries, and many of those are written in C\n      and C++. A memory safe roadmap will not be complete without including OSS,\n      especially since most existing products use OSS.\n   5. Transparency plan. Keeping the above information current with regular, e.g., perhaps\n      quarterly or semi-annual, updates will further build confidence that the organization\n      is taking memory safety vulnerabilities seriously. Additionally, publishing a detailed\n      analysis of wins and challenges—especially SDLC improvements—can inspire others\n      to begin their memory safety journey.\n   6. CVE support program plan. The industry needs detailed and correct public data on\n      the classes of vulnerability that create risks for customers. It needs vulnerability\n      descriptions that provide enough details about the coding errors to distinguish\n      between C and C++ memory safety defects and other classes of defect. To that end,"
+ },
+ {
+  "id": "p59",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ              15"
+ },
+ {
+  "id": "p60",
+  "text": "organizations should publicly commit to supplying CWEs for 100 percent of CVEs in a\n       timely manner as well as any additional context to help the industry understand the\n       defect. While some vendors do this well today, there are notable players who do not,\n       limiting the insights the industry can learn from vulnerability data.\nFinally, the authoring agencies strongly encourage organizations that use a maturity model\nto evolve and improve their SDLC over time to integrate their memory safety efforts to\ndemonstrate a higher level of maturity."
+ },
+ {
+  "id": "p61",
+  "text": "Conclusion\nMemory unsafe code is a major problem for software manufacturers and their customers.\nPrevious attempts at solving the problem have made only partial gains, and today, two-thirds\nof reported vulnerabilities in memory unsafe programming languages still relate to memory\nissues. The most promising path towards eliminating memory safety vulnerabilities is for\nsoftware manufacturers to find ways to standardize on memory safe programming\nlanguages, and to migrate security critical software components to a memory safe\nprogramming language for existing codebases.\nThe authoring agencies urge executives of software manufacturers to prioritize using MSLs\nin their products and to demonstrate that commitment by writing and publishing memory\nsafe roadmaps. The authoring agencies encourage software manufacturers to lead from the\ntop by publicly naming a business executive who will personally drive the elimination of\nmemory safety vulnerabilities from the product line.\nBy publishing memory safe roadmaps, software manufacturers will signal to customers and\nindustry that they are aligned to the secure by design principles of:\n   •   Taking ownership of the security outcomes of their customers. Given the prevalence\n       of memory safety vulnerabilities in the software market, eliminating this class of\n       vulnerability will improve the customers’ security postures.\n   •   Radical transparency. The roadmap will be a public plan detailing the approach the\n       manufacturer plans to adopt to eliminate this class of vulnerability from their product\n       lines. The balance between short-term mitigations to reduce the dangers of memory\n       unsafe programming languages, MSL transitions, and hardware research will vary\n       widely among manufacturers. However, regardless of approach, the goal should be\n       the same: To set a public timeline with clear milestones to demonstrate to customers\n       that they are making urgent investments to solve this problem.\n   •   Lead from the top. Software manufacturers who publish their roadmap and publicly\n       name a business leader to support the efforts are demonstrating they are leading\n       from the top and that these important initiatives are not afterthoughts merely\n       delegated to lower-level staff.\nWhen software manufacturers run into stumbling blocks, they should articulate those\nchallenges and suggest potential solutions as part of the community of interest that seeks\nto solve this class of coding errors. By working on these challenges together, the software\nindustry can identify and promote solutions that no one organization can accomplish on its"
+ },
+ {
+  "id": "p62",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ               16"
+ },
+ {
+  "id": "p63",
+  "text": "own. This is an industry-wide problem and solving it will require a whole-of-industry\nresponse.\nRegardless of approach, the authoring agencies urge organizations to act immediately to\nreduce, and eventually eliminate, memory safety vulnerabilities from their products."
+ },
+ {
+  "id": "p64",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ       17"
+ },
+ {
+  "id": "p65",
+  "text": "Resources\nThe following is a non-exhaustive list of publicly available resources on memory safety and\nmemory safe programming languages:\n   •   CISA Blog: The Urgent Need for Memory Safety in Software Products\n   •   Open Source Security Foundation (Linux Foundation) https://openssf.org/\n   •   Internet Security Research Group (abetterinternet.org)\n       https://www.abetterinternet.org/\n   •   Chris Palmer presents Google’s efforts to prevent memory safety vulnerabilities in the\n       Android Operating System.\n       https://www.usenix.org/conference/enigma2021/presentation/palmer\n   •   Alex Gaynor presents common reactions to memory safe programming languages\n       https://www.usenix.org/conference/enigma2021/presentation/gaynor\n   •   Introduction to Memory Unsafety for VPs of Engineering\n       https://alexgaynor.net/2019/aug/12/introduction-to-memory-unsafety-for-vps-of-\n       engineering/\n   •   Prossimo, an Internet Security Research Group (ISRG) project:\n       https://www.memorysafety.org/docs/memory-safety/\n   •   Atlantic Council, Buying down risk: Memory safety:\n       https://www.atlanticcouncil.org/content-series/buying-down-risk/memory-safety/\n   •   “Retain Cycles and Memory Management in Swift” by İsmail GÖK which includes a\n       good explanation of Swift’s Automatic Reference Counting (ARC) system.\n       https://betterprogramming.pub/retain-cycles-and-memory-management-in-swift-\n       fb6226165b17\n   •   Visualizing memory management in Rust (part of a series) by Deepu K Sasidharan:\n       https://deepu.tech/memory-management-in-rust/\n   •   Ada SPARK is a programming language, a verification toolset, and a design method\n       intended for environment where high reliability is a requirement.\n       https://www.adacore.com/about-spark\n   •   Information about memory safe programming languages designed around the same\n       time as C: https://noncombatant.org/2023/05/21/protel-sos-dsm-100/\n   •   Adam Zabrocki, Alex Tereshkin: Exploitation in the era of Formal Verification\n       https://www.youtube.com/watch?v=TcIaZ9LW1WE SPARK mitigation at DEF CON\n       30.\n   •   C versus Rust performance: https://benchmarksgame-\n       team.pages.debian.net/benchmarksgame/fastest/rust.html\n   •   NSA Cybersecurity Information Sheet: Software Memory Safety:\n       https://media.defense.gov/2022/Nov/10/2003112742/-1/-\n       1/0/CSI_SOFTWARE_MEMORY_SAFETY.PDF"
+ },
+ {
+  "id": "p66",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ              18"
+ },
+ {
+  "id": "p67",
+  "text": "Appendix: Memory Safe Languages\nLanguage   Description\nC#         Microsoft introduced C# in 2000 and designed it to be a simple, efficient, and type-safe\n           language suitable for a wide range of applications, including mobile applications, web\n           applications, and games. C# source code is compiled to an intermediate language, called\n           Common Intermediate Language (CIL), before being executed by the .NET runtime\n           environment.\n           C# is widely used for building Windows desktop and server applications, and is also\n           available on Linux, and MacOS for x86, x64, and ARM architectures.\nGo         Go is a cross-platform, compiled programming language developed by Google and\n           released in 2007. Google designed it to be simple and efficient to use and it is well-suited\n           for developing concurrent and networked applications. It is syntactically like C, but with\n           memory safety, garbage collection, and structural typing.\n           Several high-profile companies have migrated some systems to Go from other languages\n           like Python. Apps like Terraform, Docker, and Kubernetes are written in Go.\nJava       Java is a garbage collecting MSL owned by Oracle and released in the mid-1990s. It is one\n           of the most popular languages 43 and is used in web applications, enterprise software, and\n           mobile applications. Java source code is compiled to Java Virtual Machine (JVM)\n           bytecodes that can run on any JVM machine and is platform independent.\nPython     Python was first released in 1991. It is generally an interpreted language, though it can be\n           compiled into bytecode. It is dynamically typed, and garbage collected. It runs on\n           Windows, Mac, and Linux, and is popular for writing web applications and some\n           embedded systems like Raspberry Pi.\n           It is frequently cited as the most popular programming language.44\nRust       Mozilla released Rust in 2015. It is a compiled language and focuses on performance,\n           type safety, and concurrency. It has an ownership model designed to ensure that there is\n           only one owner of a piece of data. It has a feature called a “borrow checker” designed to\n           ensure memory safety and prevent concurrent data races. While not perfect, the borrow\n           checker system goes a long way to addressing memory safety issues at compile time.\n           Rust enforces correctness at compile time to prevent memory safety and concurrency\n           problems at runtime. As an example, a data race is a class of software bug that is\n           notoriously hard to track down. “With Rust, you can statically verify that you don’t have\n           data races. This means you avoid tricky-to-debug bugs by just not letting them into your\n           code in the first place. The compiler won’t let you do it.”45\n           Rust has been getting a great deal of attention from several high-profile technologies,\n           including the Linux kernel, Android, and Windows. It is also used in apps like those from\n           Mozilla, and other online services, such as Dropbox, Amazon, and Facebook.46\nSwift      Apple released the Swift programming language in 2014 and designed it to be easy to\n           read and write. It is intended to be a replacement for C, C++, and Objective-C. It is possible\n           to incorporate Swift code into existing Objective-C code to make migration to Swift simpler.\n           Swift is primarily used for developing iOS, Watch OS, and Mac OS X applications. Apple\n           claims that Swift is up to 2.6 times faster than Objective-C."
+ },
+ {
+  "id": "p68",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                   19"
+ },
+ {
+  "id": "p69",
+  "text": "Purpose\nThis guidance was developed by U.S., Australian, Canadian, UK, and New Zealand\ncybersecurity authorities to further their respective cybersecurity missions, including their\nresponsibilities to develop and issue cybersecurity specifications and mitigations."
+ },
+ {
+  "id": "p70",
+  "text": "Acknowledgements\nThe U.S., Australian, Canadian, UK, and New Zealand cybersecurity authorities would like to\nacknowledge Microsoft for their contributions to this guidance."
+ },
+ {
+  "id": "p71",
+  "text": "Disclaimer\nThe information in this report is provided “as is” for informational purposes only. CISA, NSA,\nFBI, ACSC, CCCS, NCSC-UK, NCSC-NZ, and CERT-NZ do not endorse any commercial product or\nservice, including any subjects of analysis. Any reference to specific commercial products,\nprocesses, or services by service mark, trademark, manufacturer, or otherwise does not\nconstitute or imply endorsement, recommendation, or favoring."
+ },
+ {
+  "id": "p72",
+  "text": "Contact Information\nU.S. organizations: report incidents and anomalous activity to CISA 24/7 Operations Center at\nreport@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field office, the FBI’s\n24/7 CyWatch at (855) 292-3937, or CyWatch@fbi.gov. When available, please include the\nfollowing information regarding the incident: date, time, and location of the incident; type of\nactivity; number of people affected; type of equipment used for the activity; the name of the\nsubmitting company or organization; and a designated point of contact. For feedback on this\ndocument, please contact SecureByDesign@cisa.dhs.gov. Australian organizations: visit\ncyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report cybersecurity incidents and to\naccess alerts and advisories. Canadian organizations: report incidents by emailing CCCS at\ncontact@cyber.gc.ca. United Kingdom organizations: report a significant cyber security\nincident at ncsc.gov.uk/report-an-incident (monitored 24 hours) or, for urgent assistance, call\n03000 200 973. New Zealand organizations: report cyber security incidents to\nincidents@ncsc.govt.nz or call 04 498 7654."
+ },
+ {
+  "id": "p73",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ             20"
+ },
+ {
+  "id": "p74",
+  "text": "References"
+ },
+ {
+  "id": "p75",
+  "text": "1 Microsoft. “A Proactive Approach to More Secure Code.” Microsoft Security Response Center (MSRC) Blog."
+ },
+ {
+  "id": "p76",
+  "text": "July 16, 2019. https://msrc.microsoft.com/blog/2019/07/a-proactive-approach-to-more-secure-code/."
+ },
+ {
+  "id": "p77",
+  "text": "2 Chromium. “Memory Safety.” Chromium Security. n.d. https://www.chromium.org/Home/chromium-"
+ },
+ {
+  "id": "p78",
+  "text": "security/memory-safety/."
+ },
+ {
+  "id": "p79",
+  "text": "3 Hosfelt, Diane. “Implications of Rewriting a Browser Component in Rust.” Mozilla Hacks - the Web Developer"
+ },
+ {
+  "id": "p80",
+  "text": "Blog. March 5, 2019. https://hacks.mozilla.org/2019/02/rewriting-a-browser-component-in-rust/.\n4 There are several types of memory-related coding errors including, but not limited to:"
+ },
+ {
+  "id": "p81",
+  "text": "1. Buffer overflow [CWE-120: Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')],\n       where a program intends to write data to one buffer but exceeds the buffer’s boundary and overwrites\n       other memory in the address space.\n    2. Use after free [CWE-416: Use After Free], where a program dereferences a dangling pointer of an\n       object that has already been deleted.\n    3. Use of uninitialized memory [CWE-908: Use of Uninitialized Resource], where the application accesses\n       memory that has not been initialized.\n    4. Double free [CWE-415: Double Free], in which a program tries to release memory it no longer needs\n       twice, possibly corrupting memory management data structures.\n5 MITRE. “CWE CATEGORY: Comprehensive Categorization: Memory Safety.” Common Weakness Enumeration."
+ },
+ {
+  "id": "p82",
+  "text": "n.d. https://cwe.mitre.org/data/definitions/1399.html#:~:text=CWE%20-%20CWE-\n1399%3A%20Comprehensive%20Categorization%3A%20Memory%20Safety%20%284.12%29,Community-\nDeveloped%20List%20of%20Software%20%26%20Hardware%20Weakness%20Types\n6 Hicks, Michael. “What Is Memory Safety? - The PL Enthusiast.” The Programming Languages Enthusiast."
+ },
+ {
+  "id": "p83",
+  "text": "January 22, 2018. http://www.pl-enthusiast.net/2014/07/21/memory-safety/.\n7 One, Aleph. “Smashing The Stack For Fun And Profit.” University of California, Berkeley. 2008."
+ },
+ {
+  "id": "p84",
+  "text": "https://inst.eecs.berkeley.edu/~cs161/fa08/papers/stack_smashing.pdf.\n8 Microsoft. “A Proactive Approach to More Secure Code.” Microsoft Security Response Center (MSRC) Blog."
+ },
+ {
+  "id": "p85",
+  "text": "July 16, 2019. https://msrc.microsoft.com/blog/2019/07/a-proactive-approach-to-more-secure-code/.\n9 Chromium. “Memory Safety.” Chromium Security. n.d. https://www.chromium.org/Home/chromium-"
+ },
+ {
+  "id": "p86",
+  "text": "security/memory-safety/.\n10 Hosfelt, Diane. “Implications of Rewriting a Browser Component in Rust.” February 28, 2019."
+ },
+ {
+  "id": "p87",
+  "text": "https://hacks.mozilla.org/2019/02/rewriting-a-browser-component-in-rust/.\n11 Stone, Maddie. “The More You Know, The More You Know You Don’t Know.” April 2022."
+ },
+ {
+  "id": "p88",
+  "text": "https://googleprojectzero.blogspot.com/2022/04/the-more-you-know-more-you-know-you.html.\n12 Manès VJ, Han H, Han C, Cha SK, Egele M, Schwartz EJ, Woo M. “The Art, Science, and Engineering of"
+ },
+ {
+  "id": "p89",
+  "text": "Fuzzing: A Survey . IEEE Transactions on Software Engineering.” 2019 Oct 11;47(11):2312-31 [LINK]\n13 Open Web Application Security Project (OWASP) Foundation. “OWASP Top Ten.” OWASP. n.d."
+ },
+ {
+  "id": "p90",
+  "text": "https://owasp.org/www-project-top-ten/.\n14 Bastien, JF. “Keynote: Safety and Security: The Future of C++.” CppNow (YouTube Channel). 2023."
+ },
+ {
+  "id": "p91",
+  "text": "https://www.youtube.com/watch?v=Gh79wcGJdTg.\n15 Hinnant, H, Orr, B, Stroustrup, B, Vandevoorde, D, Wong, M. “Opinion on Safety for ISO C++”"
+ },
+ {
+  "id": "p92",
+  "text": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2759r0.pdf."
+ },
+ {
+  "id": "p93",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                       21"
+ },
+ {
+  "id": "p94",
+  "text": "16 Apple. “Memory Safe iBoot Implementation.” Apple Support. February 18, 2021."
+ },
+ {
+  "id": "p95",
+  "text": "https://support.apple.com/en-il/guide/security/sec30d8d9ec1/web.\n17 Amar, Saar. “Introduction to Firebloom (iBoot).” iBoot_Firebloom. n.d."
+ },
+ {
+  "id": "p96",
+  "text": "https://saaramar.github.io/iBoot_firebloom/.\n18 Microsoft. “GitHub - Microsoft/Checked” n.d. https://github.com/microsoft/checkedc."
+ },
+ {
+  "id": "p97",
+  "text": "19 Neumann, Thomas “P2771R0: Towards Memory Safety in C++.” Open STD. January 17, 2023."
+ },
+ {
+  "id": "p98",
+  "text": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2771r0.html.\n20 Carbon-Language. “GitHub - Carbon-Language.” n.d. https://github.com/carbon-language/carbon-"
+ },
+ {
+  "id": "p99",
+  "text": "lang#memory-safety.\n21 CppNow23. “YouTube: Carbon Language Successor Strategy: From C++ Interop to Memory Safety - Chandler"
+ },
+ {
+  "id": "p100",
+  "text": "Carruth - CppNow 23.” September 2023. https://youtu.be/1ZTJ9omXOQ0?si=t8KsLWBv1DDFOUXs&t=3455.\n22 Fei, Shufan, Zheng Yan, Wenxiu Ding, and Haomeng Xie. “Security Vulnerabilities of SGX and"
+ },
+ {
+  "id": "p101",
+  "text": "Countermeasures: A Survey.” July 13, 2021. ACM Computing Surveys 54 (6): 1–\n36. https://dl.acm.org/doi/abs/10.1145/3456631.\n23 Microsoft. “Control Flow Guard for Clang/LLVM and Rust.” Microsoft Security Response Center. August"
+ },
+ {
+  "id": "p102",
+  "text": "2020. https://msrc-blog.microsoft.com/2020/08/17/control-flow-guard-for-clang-llvm-and-rust/.\n24 Yunhai, Zhang. “Bypass Control Flow Guard Comprehensively.” BlackHat. July 19, 2015."
+ },
+ {
+  "id": "p103",
+  "text": "https://www.blackhat.com/docs/us-15/materials/us-15-Zhang-Bypass-Control-Flow-Guard-Comprehensively-\nwp.pdf.\n25 iamelli0t. “Exploiting Windows RPC to Bypass CFG Mitigation: Analysis of CVE-2021-26411 In-the-Wild"
+ },
+ {
+  "id": "p104",
+  "text": "Sample.” iamelli0t’s Blog (blog). April 10, 2021. https://iamelli0t.github.io/2021/04/10/RPC-Bypass-\nCFG.html.\n26 Groß, Samuel. “Remote iPhone Exploitation Part 2: Bringing Light into the Darkness -- a Remote ASLR"
+ },
+ {
+  "id": "p105",
+  "text": "Bypass.” Google Project Zero blog. January 2020. https://googleprojectzero.blogspot.com/2020/01/remote-\niphone-exploitation-part-2.html.\n27 Jurczyk, Mateusz. “MMS Exploit Part 5: Defeating Android ASLR, Getting RCE.” Google Project Zero blog."
+ },
+ {
+  "id": "p106",
+  "text": "August 2020. https://googleprojectzero.blogspot.com/2020/08/mms-exploit-part-5-defeating-aslr-getting-\nrce.html.\n28 Microsoft. “MS15-124. Vulnerability in Internet Explorer Could Lead to ASLR Bypass: December 16, 2015.”"
+ },
+ {
+  "id": "p107",
+  "text": "Microsoft Support. n.d. https://support.microsoft.com/en-us/topic/ms15-124-vulnerability-in-internet-explorer-\ncould-lead-to-aslr-bypass-december-16-2015-7e012708-4af6-487c-12e2-4ffa0f9d7b66.\n29 Boneh, Dan. “On the effectiveness of address-space randomization.” ACM Digital Library. October 25, 2004.\nhttps://dl.acm.org/doi/10.1145/1030083.1030124.\n30 Palmer, Chris (Google Chrome Security). “The Limits of Sandboxing and Next Steps.” February 03, 2021."
+ },
+ {
+  "id": "p108",
+  "text": "https://www.usenix.org/conference/enigma2021/presentation/palmer.\n31 Watson, Robert N. M. (University of Cambridge)., Moore, Simon W. (University of Cambridge), Sewell, Peter"
+ },
+ {
+  "id": "p109",
+  "text": "(University of Cambridge), Davis, Brooks (SRI International), Neumann, Peter (SRI International). “Capability\nHardware Enhanced RISC Instructions (CHERI).” September 2023.\nhttps://www.cl.cam.ac.uk/research/security/ctsrd/cheri/.\n32 Innovate UK, EPSRC and ESRC. “Digital Security by Design.” Digital Catapult. n.d. https://www.dsbd.tech/."
+ },
+ {
+  "id": "p110",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                          22"
+ },
+ {
+  "id": "p111",
+  "text": "33 Cowie, Alan. “Digital Security by Design Driving Investment in the Automotive Sector and Embedded Systems"
+ },
+ {
+  "id": "p112",
+  "text": "- Innovate UK KTN.” Innovate UK KTN (blog). September 12, 2023. https://iuk.ktn-uk.org/news/digital-security-\nby-design-driving-investment-in-the-automotive-sector-and-embedded-systems/.\n34 Mitsunami, Koki. “Enhanced Security through Memory Tagging Extension.” June 24, 2021."
+ },
+ {
+  "id": "p113",
+  "text": "https://community.arm.com/arm-community-blogs/b/architectures-and-processors-blog/posts/enhanced-\nsecurity-through-mte.\n35 Rahman, Mishaal. “Android 14 May Add an Advanced Memory Protection Feature to Protect Your Device"
+ },
+ {
+  "id": "p114",
+  "text": "from Memory Safety Bugs.” XDA Developers. February 8, 2023. https://www.xda-developers.com/android-14-\nadvanced-memory-protection/.\n36  Koduri, Raja. (Intel). Intel Architecture Day 2020. Intel.\nhttps://d1io3yog0oux5.cloudfront.net/_6f1902c731ed10bd8538c1c8c9ca7ca1/intel/db/861/8422/pdf/Int\nel-Architecture-Day-2020-Presentation-Slides.pdf.\n37 Larabel, Michael. “Intel Working To Combine The Best Of CET + CFI Into ‘FineIBT’” phoronix. August 6, 2021."
+ },
+ {
+  "id": "p115",
+  "text": "https://www.phoronix.com/news/Intel-FineIBT-Security.\n38 Grauer, Yael, Dhalla, Amira (Consumer Reports). “Report: Future of Memory Safety.” CR Advocacy. January"
+ },
+ {
+  "id": "p116",
+  "text": "23, 2023. https://advocacy.consumerreports.org/research/report-future-of-memory-safety/.\n39 TIOBE. “TIOBE Index for November 2023, November Headline: Kotlin still on the rise in the TIOBE index.”"
+ },
+ {
+  "id": "p117",
+  "text": "TIOBE Index. November 2023. https://www.tiobe.com/tiobe-index/.\n40 Palmer, Chris (Noncombatant.org). “Prioritizing Memory Safety Migrations.” April 9, 2021."
+ },
+ {
+  "id": "p118",
+  "text": "https://noncombatant.org/2021/04/09/prioritizing-memory-safety-migrations/.\n41 Walbran, Andrew (Android Rust Team, Google). “Bare-Metal Rust in Android.” Google Online Security Blog."
+ },
+ {
+  "id": "p119",
+  "text": "October 9, 2023. https://security.googleblog.com/2023/10/bare-metal-rust-in-android.html.\n42 Klabnik, Steve, Nichols, Carol. “Unsafe Rust - The Rust Programming Language.” The Rust Programming"
+ },
+ {
+  "id": "p120",
+  "text": "Language. February 9, 2023. https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html.\n43 TIOBE. “The Java Programming Language.” TIOBE Index. November 2023. https://www.tiobe.com/tiobe-"
+ },
+ {
+  "id": "p121",
+  "text": "index/java/.\n44 Cass, Stephen. “The Top Programming Languages 2023.” IEEE Spectrum, November 14, 2023."
+ },
+ {
+  "id": "p122",
+  "text": "https://spectrum.ieee.org/the-top-programming-languages-2023.\n45 Clark, Lin. “Inside a Super Fast CSS Engine: Quantum CSS (Aka Stylo) - Mozilla Hacks - the Web Developer"
+ },
+ {
+  "id": "p123",
+  "text": "Blog.” Mozilla Hacks – the Web Developer Blog. October 9, 2017. https://hacks.mozilla.org/2017/08/inside-\na-super-fast-css-engine-quantum-css-aka-stylo/.\n46 Newman, Lily Hay. “The Rise of Rust, the ‘Viral’ Secure Programming Language That’s Taking over Tech.”"
+ },
+ {
+  "id": "p124",
+  "text": "WIRED, November 2, 2022. https://www.wired.com/story/rust-secure-programming-language-memory-safe/."
+ },
+ {
+  "id": "p125",
+  "text": "CISA | NSA | FBI | ASD’s ACSC | CCCS | NCSC-UK | NCSC-NZ | CERT-NZ                          23"
+ }
+]

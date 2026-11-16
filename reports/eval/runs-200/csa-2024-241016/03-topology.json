@@ -1,0 +1,141 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "cloud environments hosting valid user and group email accounts used for initial access",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Microsoft 365、Azure、Okta 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "external-facing remote services exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Citrix external-facing remote services 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "public facing service used for self-service password reset and MFA registration",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Active Directory Federation Service (ADFS) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "target networks where actors conduct reconnaissance, lateral movement, credential access, and data exfiltration",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Kerberos authentication",
+     "port": 88,
+     "protocol": "tcp"
+    },
+    {
+     "name": "LDAP query",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP)、Active Directory (AD) Microsoft Graph API PowerShell application、Kerberos authentication、PowerShell、LDAP query、msedge.exe、Virtual Private Network (VPN) service 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 88,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:88 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h4",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h4:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "No port is known for service Microsoft 365 (s1); it remains unreachable by default.",
+  "No port is known for service Azure (s2); it remains unreachable by default.",
+  "No port is known for service Okta (s3); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Citrix external-facing remote services (s4); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Active Directory Federation Service (ADFS) (s5); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Active Directory (AD) Microsoft Graph API PowerShell application (s7); it remains unreachable by default.",
+  "No port is known for service PowerShell (s9); it remains unreachable by default.",
+  "No port is known for service msedge.exe (s11); it remains unreachable by default.",
+  "No port is known for service Virtual Private Network (VPN) service (s12); it remains unreachable by default.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Services without a resolved host association were left out of host service lists: svc-unsupported-ad-ds."
+ ]
+}

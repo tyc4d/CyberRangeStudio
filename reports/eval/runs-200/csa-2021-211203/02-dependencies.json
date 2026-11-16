@@ -1,0 +1,2004 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-211203",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "cd560721d70696e4d063d1023bc74bd19e44ba956710081e8ee01a84d25b57d9",
+  "source_name": "csa-2021-211203"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+   "source": "llm",
+   "description": "Exploitation of CVE-2021-44077, an unauthenticated remote code execution vulnerability in ServiceDesk Plus versions up to 11305, allowing unrestricted file upload and execution.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated Windows AD DC/member VM fixture and native health checks; this deployment environment has no VM backend/image configured."
+  },
+  {
+   "id": "a2",
+   "name": "Upload executable file msiexec.exe as dropper",
+   "source": "llm",
+   "description": "Upload of executable file msiexec.exe to C:\\ManageEngine\\Servicedesk\\bin\\ as a dropper containing an embedded encoded Godzilla JAR file.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Execute dropper to decode and drop Godzilla JAR file",
+   "source": "llm",
+   "description": "Execution of the uploaded dropper via a second POST request to decode the embedded Godzilla JAR file and drop it to C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "Write webshells to disk for initial persistence",
+   "source": "llm",
+   "description": "Writing webshells to disk to maintain initial persistence on compromised systems.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1505.003",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "Obfuscate and deobfuscate/decode files or information",
+   "source": "llm",
+   "description": "Obfuscation and deobfuscation/decoding of files or information to evade detection.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1027",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "Dump user credentials",
+   "source": "llm",
+   "description": "Dumping user credentials from compromised systems.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "Use signed Windows binaries for follow-on actions",
+   "source": "llm",
+   "description": "Living off the land by using only signed Windows binaries for subsequent actions.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1218",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "Add or delete user accounts as needed",
+   "source": "llm",
+   "description": "Adding or deleting user accounts on compromised systems as needed.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1136",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "Steal copies of Active Directory database or registry hives",
+   "source": "llm",
+   "description": "Stealing copies of the Active Directory database (NTDS.dit) or registry hives from compromised systems.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003.003",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a10",
+   "name": "Use Windows Management Instrumentation (WMI) for remote execution",
+   "source": "llm",
+   "description": "Using WMI for remote execution and lateral movement.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1047",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a11",
+   "name": "Delete files to remove indicators from the host",
+   "source": "llm",
+   "description": "Deleting files to remove indicators of compromise from the host.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1070.004",
+   "evidence_refs": [
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a12",
+   "name": "Discover domain accounts with net Windows command",
+   "source": "llm",
+   "description": "Discovering domain accounts using the net Windows command.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1087.002",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a13",
+   "name": "Use Windows utilities to collect and archive files for exfiltration",
+   "source": "llm",
+   "description": "Using Windows utilities to collect and archive files for exfiltration.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1560.001",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a14",
+   "name": "Use custom symmetric encryption for command and control",
+   "source": "llm",
+   "description": "Using custom symmetric encryption for command and control communications.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1573.001",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The dropper executable file is uploaded as a result of exploiting CVE-2021-44077",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Execution of the dropper depends on the uploaded dropper executable",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r8",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r9",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r10",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r11",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r12",
+   "from_action": "a12",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r13",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "affected system running Zoho ManageEngine ServiceDesk Plus",
+   "source": "llm",
+   "name": "ManageEngine ServiceDesk Plus server",
+   "os": "Windows",
+   "network_placement": "not explicitly stated",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-19",
+    "evidence-20",
+    "evidence-21",
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s2",
+    "svc-oss-postgres-h1",
+    "svc-oss-tomcat-h1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Zoho ManageEngine ServiceDesk Plus",
+   "source": "llm",
+   "version": "up to 11305",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2021-44077"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   },
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Active Directory database",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-22"
+   ],
+   "epistemic_status": "supported",
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "cve": []
+  },
+  {
+   "id": "svc-oss-postgres-h1",
+   "name": "postgres",
+   "cve": [],
+   "catalogue_component": "oss-postgres",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1",
+   "version_basis": "assumed",
+   "deployed_version": "16.16",
+   "placement": "conflict",
+   "placement_reason": "主機 h1 已由 Active Directory database（unsupported-ad-ds）決定映像；一台主機只能部署一個元件，postgres（oss-postgres）不會被部署在這台主機上。"
+  },
+  {
+   "id": "svc-oss-tomcat-h1",
+   "name": "tomcat",
+   "cve": [],
+   "catalogue_component": "oss-tomcat",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1",
+   "version_basis": "assumed",
+   "deployed_version": "9.0.124",
+   "placement": "conflict",
+   "placement_reason": "主機 h1 已由 Active Directory database（unsupported-ad-ds）決定映像；一台主機只能部署一個元件，tomcat（oss-tomcat）不會被部署在這台主機上。"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "msiexec.exe",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Godzilla JAR file",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "webshells",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "NTDS.dit",
+   "type": "file",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "registry hives",
+   "type": "file",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2021-44077",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29",
+    "evidence-30",
+    "evidence-31",
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34",
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "068D1B3813489E41116867729504C40019FF2B1FE32AAB4716D429780E666324",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "759bd8bd7a71a903a26ac8d5914e5b0093b96de61bf5085592be6cc96880e088",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "262cf67af22d37b5af2dc71d07a00ef02dc74f71380c72875ae1b29a3a5aa23d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "a44a5e8e65266611d5845d88b43c9e4a9d84fe074fd18f48b50fb837fa6e429d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "ce310ab611895db1767877bd1f635ee3c4350d6e17ea28f8d100313f62b87382",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "75574959bbdad4b4ac7b16906cd8f1fd855d2a7df8e63905ab18540e2d6f1600",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "5475aec3b9837b514367c89d8362a9d524bfa02e75b85b401025588839a40bcb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "009d23d85c1933715c3edcccb46438690a66eebbcccb690a7b27c9483ad9d0ac",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "083bdabbb87f01477f9cf61e78d19123b8099d04c93ef7ad4beb19f4a228589a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "342e85a97212bb833803e06621170c67f6620f08cc220cf2d8d44dff7f4b1fa3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "805b92787ca7833eef5e61e2df1310e4b6544955e812e60b5f834f904623fd9f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "3da8d1bfb8192f43cf5d9247035aa4445381d2d26bed981662e3db34824c71fd",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "5b8c307c424e777972c0fa1322844d4d04e9eb200fe9532644888c4b6386d755",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "3f868ac52916ebb6f6186ac20b20903f63bc8e9c460e2418f2b032a207d8f21d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "342a6d21984559accbc54077db2abf61fd9c3939a4b09705f736231cbc7836ae",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "7e4038e18b5104683d2a33650d8c02a6a89badf30ca9174576bf0aff08c03e72",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "3c90df0e02cc9b1cf1a86f9d7e6f777366c5748bd3cf4070b49460b48b4d4090",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "b4162f039172dcb85ca4b85c99dd77beb70743ffd2e6f9e0ba78531945577665",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "e391c2d3e8e4860e061f69b894cf2b1ba578a3e91de610410e7e9fa87c07304c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "bec067a0601a978229d291c82c35a41cd48c6fca1a3c650056521b01d15a72da",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "d0c3d7003b7f5b4a3bd74a41709cfecfabea1f94b47e1162142de76aa7a063c7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "7d2780cd9acc516b6817e9a51b8e2889f2dec455295ac6e6d65a6191abadebff",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "seed.nkn[.]org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60",
+    "evidence-61"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "CVE-2021-44077, which Zoho rated critical, is an unauthenticated remote code execution (RCE) vulnerability affecting all ServiceDesk Plus versions up to, and including, version 11305.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077, which Zoho rated critical, is an unauthenticated remote code execution (RCE) vulnerability affecting all ServiceDesk Plus versions up to, and in"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Compromise of the affected systems involves exploitation of CVE-2021-44077 in ServiceDesk Plus, allowing the attacker to: 1. Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe, with a SHA256 hash of ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Compromise of the affected systems involves exploitation of CVE 2021 44077 in ServiceDesk Plus, allowing the attacker to: 1. Achieve an unrestricted file upload"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "2. Gain execution for the dropper through a second POST request to a different REST API URL, which will then decode the embedded Godzilla JAR file and drop it to the filepath C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar with a SHA256 hash of 67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2. Gain execution for the dropper through a second POST request to a different REST API URL,\n              which will then decode the embedded Godzilla JAR file"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe, with a SHA256 hash of ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7. This executable file serves as a dropper and contains an embedded, encoded Godzilla JAR file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexe"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Gain execution for the dropper through a second POST request to a different REST API URL, which will then decode the embedded Godzilla JAR file and drop it to the filepath C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar with a SHA256 hash of 67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Gain execution for the dropper through a second POST request to a different REST API URL, which will then decode the embedded Godzilla JAR file and drop it to t"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Writing webshells to disk for initial persistence",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Writing webshells to disk for initial persistence"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Obfuscating and Deobfuscating/Decoding Files or Information [T1027 and T1140]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Obfuscating and Deobfuscating/Decoding Files or Information [T1027 and T1140]"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Conducting further operations to dump user credentials",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Conducting further operations to dump user credentials"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Living off the land by only using signed Windows binaries for follow-on actions",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Living off the land by only using signed Windows binaries for follow on actions"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Adding/deleting user accounts as needed",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Adding/deleting user accounts as needed"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Stealing copies of the Active Directory database (NTDS.dit) or registry hives",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Stealing copies of the Active Directory database (NTDS.dit) or registry hives"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Using Windows Management Instrumentation (WMI) for remote execution",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using Windows Management Instrumentation (WMI) for remote execution"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Deleting files to remove indicators from the host",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Deleting files to remove indicators from the host"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "attackers are known to run clean-up scripts designed to remove traces of the initial point of compromise and hide any relationship between exploitation of the vulnerability and the webshell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "attackers are known to run clean up scripts designed to remove traces of the initial point of compromise and hide any relationship between exploitation of the v"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Discovering domain accounts with the net Windows command",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Discovering domain accounts with the net Windows command"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Using Windows utilities to collect and archive files for exfiltration",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using Windows utilities to collect and archive files for exfiltration"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Using custom symmetric encryption for command and control (C2)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using custom symmetric encryption for command and control (C2)"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Exploitation of CVE-2021-44077, an unauthenticated remote code execution vulnerability in ServiceDesk Plus versions up to 11305",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " ServiceDesk Plus"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Achieve an unrestricted file upload through a POST request to the ServiceDesk REST API URL and upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexe"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "C:\\ManageEngine\\ServiceDesk\\bin\\msiexec.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C:\\ManageEngine\\ServiceDesk\\bin\\msiexec.exe"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Writing webshells to disk to maintain initial persistence on compromised systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.625,
+   "matched_text": "Writing webshells to disk "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Dumping NTDS.dit and SECURITY/SYSTEM/NTUSER registry hives",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Dumping NTDS.dit and SECURITY/SYSTEM/NTUSER registry hives"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "CVE-2021-44077, which Zoho rated critical, is an unauthenticated remote code execution (RCE) vulnerability affecting all ServiceDesk Plus versions up to, and including, version 11305",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077, which Zoho rated critical, is an unauthenticated remote code execution (RCE) vulnerability affecting all ServiceDesk Plus versions up to, and in"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Stealing copies of the Active Directory database (NTDS.dit)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Stealing copies of the Active Directory database (NTDS.dit)"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe, with a SHA256 hash of ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7. This executable file serves as a dropper",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "upload an executable file, C:\\ManageEngine\\Servicedesk\\bin\\msiexec.exe, with a SHA256 hash of ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7. "
+  },
+  {
+   "id": "evidence-26",
+   "quote": "decode the embedded Godzilla JAR file and drop it to the filepath C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat-postgres.jar",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "decode the embedded Godzilla JAR file and drop it to the filepath C:\\ManageEngine\\ServiceDesk\\lib\\tomcat\\tomcat postgres.jar"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Stealing copies of the ... registry hives",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Stealing copies of the … registry hives"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "CVE-2021-44077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "CVE-2021-44077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "CVE-2021-44077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "CVE-2021-44077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "CVE-2021-44077",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44077"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ecd8c9967b0127a12d6db61964a82970ee5d38f82618d5db4d8eddbb3b5726b7"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "67ee552d7c1d46885b91628c603f24b66a9755858e098748f7e7862a71baa015"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "068D1B3813489E41116867729504C40019FF2B1FE32AAB4716D429780E666324",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "068D1B3813489E41116867729504C40019FF2B1FE32AAB4716D429780E666324"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "759bd8bd7a71a903a26ac8d5914e5b0093b96de61bf5085592be6cc96880e088",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "759bd8bd7a71a903a26ac8d5914e5b0093b96de61bf5085592be6cc96880e088"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "262cf67af22d37b5af2dc71d07a00ef02dc74f71380c72875ae1b29a3a5aa23d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "262cf67af22d37b5af2dc71d07a00ef02dc74f71380c72875ae1b29a3a5aa23d"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "a44a5e8e65266611d5845d88b43c9e4a9d84fe074fd18f48b50fb837fa6e429d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a44a5e8e65266611d5845d88b43c9e4a9d84fe074fd18f48b50fb837fa6e429d"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "ce310ab611895db1767877bd1f635ee3c4350d6e17ea28f8d100313f62b87382",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ce310ab611895db1767877bd1f635ee3c4350d6e17ea28f8d100313f62b87382"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "75574959bbdad4b4ac7b16906cd8f1fd855d2a7df8e63905ab18540e2d6f1600",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "75574959bbdad4b4ac7b16906cd8f1fd855d2a7df8e63905ab18540e2d6f1600"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "5475aec3b9837b514367c89d8362a9d524bfa02e75b85b401025588839a40bcb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5475aec3b9837b514367c89d8362a9d524bfa02e75b85b401025588839a40bcb"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "009d23d85c1933715c3edcccb46438690a66eebbcccb690a7b27c9483ad9d0ac",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "009d23d85c1933715c3edcccb46438690a66eebbcccb690a7b27c9483ad9d0ac"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "083bdabbb87f01477f9cf61e78d19123b8099d04c93ef7ad4beb19f4a228589a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "083bdabbb87f01477f9cf61e78d19123b8099d04c93ef7ad4beb19f4a228589a"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "342e85a97212bb833803e06621170c67f6620f08cc220cf2d8d44dff7f4b1fa3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "342e85a97212bb833803e06621170c67f6620f08cc220cf2d8d44dff7f4b1fa3"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "805b92787ca7833eef5e61e2df1310e4b6544955e812e60b5f834f904623fd9f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "805b92787ca7833eef5e61e2df1310e4b6544955e812e60b5f834f904623fd9f"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "3da8d1bfb8192f43cf5d9247035aa4445381d2d26bed981662e3db34824c71fd",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3da8d1bfb8192f43cf5d9247035aa4445381d2d26bed981662e3db34824c71fd"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "5b8c307c424e777972c0fa1322844d4d04e9eb200fe9532644888c4b6386d755",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5b8c307c424e777972c0fa1322844d4d04e9eb200fe9532644888c4b6386d755"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "3f868ac52916ebb6f6186ac20b20903f63bc8e9c460e2418f2b032a207d8f21d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3f868ac52916ebb6f6186ac20b20903f63bc8e9c460e2418f2b032a207d8f21d"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "342a6d21984559accbc54077db2abf61fd9c3939a4b09705f736231cbc7836ae",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "342a6d21984559accbc54077db2abf61fd9c3939a4b09705f736231cbc7836ae"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "7e4038e18b5104683d2a33650d8c02a6a89badf30ca9174576bf0aff08c03e72",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7e4038e18b5104683d2a33650d8c02a6a89badf30ca9174576bf0aff08c03e72"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "3c90df0e02cc9b1cf1a86f9d7e6f777366c5748bd3cf4070b49460b48b4d4090",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3c90df0e02cc9b1cf1a86f9d7e6f777366c5748bd3cf4070b49460b48b4d4090"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "b4162f039172dcb85ca4b85c99dd77beb70743ffd2e6f9e0ba78531945577665",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b4162f039172dcb85ca4b85c99dd77beb70743ffd2e6f9e0ba78531945577665"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "e391c2d3e8e4860e061f69b894cf2b1ba578a3e91de610410e7e9fa87c07304c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e391c2d3e8e4860e061f69b894cf2b1ba578a3e91de610410e7e9fa87c07304c"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "bec067a0601a978229d291c82c35a41cd48c6fca1a3c650056521b01d15a72da",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bec067a0601a978229d291c82c35a41cd48c6fca1a3c650056521b01d15a72da"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "d0c3d7003b7f5b4a3bd74a41709cfecfabea1f94b47e1162142de76aa7a063c7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d0c3d7003b7f5b4a3bd74a41709cfecfabea1f94b47e1162142de76aa7a063c7"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "7d2780cd9acc516b6817e9a51b8e2889f2dec455295ac6e6d65a6191abadebff",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7d2780cd9acc516b6817e9a51b8e2889f2dec455295ac6e6d65a6191abadebff"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "seed.nkn[.]org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "seed.nkn[.]org"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "seed.nkn[.]org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "seed.nkn[.]org"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "ManageEngine ServiceDesk Plus server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "ManageEngine ServiceDesk Plus server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — ManageEngine ServiceDesk Plus server",
+    "action:a1 — Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+    "action:a2 — Upload executable file msiexec.exe as dropper",
+    "action:a3 — Execute dropper to decode and drop Godzilla JAR file",
+    "action:a4 — Write webshells to disk for initial persistence",
+    "action:a5 — Obfuscate and deobfuscate/decode files or information",
+    "action:a6 — Dump user credentials",
+    "action:a7 — Use signed Windows binaries for follow-on actions",
+    "action:a8 — Add or delete user accounts as needed",
+    "action:a9 — Steal copies of Active Directory database or registry hives",
+    "action:a10 — Use Windows Management Instrumentation (WMI) for remote execution",
+    "action:a11 — Delete files to remove indicators from the host",
+    "action:a12 — Discover domain accounts with net Windows command",
+    "action:a13 — Use Windows utilities to collect and archive files for exfiltration",
+    "action:a14 — Use custom symmetric encryption for command and control"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "ManageEngine ServiceDesk Plus server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "ManageEngine ServiceDesk Plus server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "ManageEngine ServiceDesk Plus server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — ManageEngine ServiceDesk Plus server",
+    "action:a1 — Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+    "action:a2 — Upload executable file msiexec.exe as dropper",
+    "action:a3 — Execute dropper to decode and drop Godzilla JAR file",
+    "action:a4 — Write webshells to disk for initial persistence",
+    "action:a5 — Obfuscate and deobfuscate/decode files or information",
+    "action:a6 — Dump user credentials",
+    "action:a7 — Use signed Windows binaries for follow-on actions",
+    "action:a8 — Add or delete user accounts as needed",
+    "action:a9 — Steal copies of Active Directory database or registry hives",
+    "action:a10 — Use Windows Management Instrumentation (WMI) for remote execution",
+    "action:a11 — Delete files to remove indicators from the host",
+    "action:a12 — Discover domain accounts with net Windows command",
+    "action:a13 — Use Windows utilities to collect and archive files for exfiltration",
+    "action:a14 — Use custom symmetric encryption for command and control"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "ManageEngine ServiceDesk Plus server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "ManageEngine ServiceDesk Plus server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "ManageEngine ServiceDesk Plus server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — ManageEngine ServiceDesk Plus server",
+    "action:a1 — Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+    "action:a2 — Upload executable file msiexec.exe as dropper",
+    "action:a3 — Execute dropper to decode and drop Godzilla JAR file",
+    "action:a4 — Write webshells to disk for initial persistence",
+    "action:a5 — Obfuscate and deobfuscate/decode files or information",
+    "action:a6 — Dump user credentials",
+    "action:a7 — Use signed Windows binaries for follow-on actions",
+    "action:a8 — Add or delete user accounts as needed",
+    "action:a9 — Steal copies of Active Directory database or registry hives",
+    "action:a10 — Use Windows Management Instrumentation (WMI) for remote execution",
+    "action:a11 — Delete files to remove indicators from the host",
+    "action:a12 — Discover domain accounts with net Windows command",
+    "action:a13 — Use Windows utilities to collect and archive files for exfiltration",
+    "action:a14 — Use custom symmetric encryption for command and control"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "ManageEngine ServiceDesk Plus server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "not explicitly stated",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 涉及 Active Directory，但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "action:a9 — Steal copies of Active Directory database or registry hives"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "AD 相關步驟",
+     "value": "Steal copies of Active Directory database or registry hives",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1, a2, a3, a14 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a1 — Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+    "action:a2 — Upload executable file msiexec.exe as dropper",
+    "action:a3 — Execute dropper to decode and drop Godzilla JAR file",
+    "action:a14 — Use custom symmetric encryption for command and control"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Exploit CVE-2021-44077 in Zoho ManageEngine ServiceDesk Plus",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Upload executable file msiexec.exe as dropper",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Execute dropper to decode and drop Godzilla JAR file",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Use custom symmetric encryption for command and control",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a6 — Dump user credentials",
+    "host:h1 — ManageEngine ServiceDesk Plus server"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Dump user credentials",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-zoho-manageengine-servicede",
+   "field": "software dependency: Zoho ManageEngine ServiceDesk Plus up to 11305",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Zoho ManageEngine ServiceDesk Plus up to 11305 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-database-h1",
+   "field": "version for Active Directory database",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-postgres-h1",
+   "field": "version for postgres",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-tomcat-h1",
+   "field": "version for tomcat",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_deployed-version-svc-oss-postgres-h1",
+   "field": "deployed version of postgres",
+   "category": "version",
+   "reason": "The source does not state a version; the catalogue provides 16.16.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Deploying PostgreSQL 16.16. This release is an assumption, not a fact from the source; results do not show that the original system ran it."
+  },
+  {
+   "id": "planner_dep_deployed-version-svc-oss-tomcat-h1",
+   "field": "deployed version of tomcat",
+   "category": "version",
+   "reason": "The source does not state a version; the catalogue provides 9.0.124.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Deploying Apache Tomcat 9.0.124. This release is an assumption, not a fact from the source; results do not show that the original system ran it."
+  },
+  {
+   "id": "planner_dep_host-component-conflict-h1",
+   "field": "主機 h1 的元件衝突",
+   "category": "dependency",
+   "reason": "主機 h1 的服務對應到多個元件（unsupported-ad-ds, oss-postgres, oss-tomcat），但一台主機只能部署一個映像。目前只會部署 Active Directory database（unsupported-ad-ds）；postgres, tomcat 不會被部署。請把它們移到另一台主機、改成同一個元件，或確認不部署。",
+   "severity": "blocker",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9672,
+  "unsupported_claim_count": 13,
+  "inferred_count": 13,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "needs_vm"
+}

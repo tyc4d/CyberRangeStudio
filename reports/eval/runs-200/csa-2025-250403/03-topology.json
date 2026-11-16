@@ -1,0 +1,94 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "botnet devices acting as proxies or relay points",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Domain Name System (DNS)",
+     "port": 53,
+     "protocol": "udp"
+    },
+    {
+     "name": "Domain Name System (DNS) name servers",
+     "port": 53,
+     "protocol": "udp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Domain Name System (DNS)、Domain Name System (DNS) name servers 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "Internet hosting that disregards or evades law enforcement requests and abuse notices, hosting malicious content and activities",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Internet hosting services 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 53,
+   "protocol": "udp",
+   "reason": "attacker shares no network with internal service h1:53 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 53,
+   "protocol": "udp",
+   "reason": "attacker shares no network with internal service h1:53 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Internet hosting services (s3); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

@@ -1,0 +1,94 @@
+[
+ {
+  "id": "p1",
+  "text": "# APT Actors Exploiting Newly Identified Vulnerability in ManageEngine ADSelfService Plus"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA21-259A\n> - Date: 2021-09-17\n> - URL: https://www.ic3.gov/CSA/2021/210917.pdf\n> - PDF SHA-256: 498ff84064a5a93a882f8c738c73eb7b55d66fb0ced64b86e83418286e79b16e (`source.pdf`, 5 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (17 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                      TLP:WHITE            Product ID: AA21-259A\n                                                                                                           September 16, 2021"
+ },
+ {
+  "id": "p4",
+  "text": "APT Actors Exploiting Newly Identified\n        Vulnerability in ManageEngine ADSelfService Plus\n        SUMMARY\n                                                                               This Joint Cybersecurity Advisory\n        This joint advisory is the result of analytic efforts between the\n                                                                               uses the MITRE Adversarial\n        Federal Bureau of Investigation (FBI), United States Coast\n                                                                               Tactics, Techniques, and Common\n        Guard Cyber Command (CGCYBER), and the Cybersecurity\n                                                                               Knowledge (ATT&CK®)\n        and Infrastructure Security Agency (CISA) to highlight the\n                                                                               framework, Version 8. See the\n        cyber threat associated with active exploitation of a newly\n                                                                               ATT&CK for Enterprise framework\n        identified vulnerability (CVE-2021-40539) in ManageEngine\n                                                                               for referenced threat actor\n        ADSelfService Plus—a self-service password management\n                                                                               techniques and for mitigations.\n        and single sign-on solution.\n        CVE-2021-40539, rated critical by the Common Vulnerability\n        Scoring System (CVSS), is an authentication bypass vulnerability affecting representational state\n        transfer (REST) application programming interface (API) URLs that could enable remote code\n        execution. The FBI, CISA, and CGCYBER assess that advanced persistent threat (APT) cyber actors\n        are likely among those exploiting the vulnerability. The exploitation of ManageEngine ADSelfService\n        Plus poses a serious risk to critical infrastructure companies, U.S.-cleared defense contractors,\n        academic institutions, and other entities that use the software. Successful exploitation of the\n        vulnerability allows an attacker to place webshells, which enable the adversary to conduct post-\n        exploitation activities, such as compromising administrator credentials, conducting lateral movement,\n        and exfiltrating registry hives and Active Directory files.\n        Zoho ManageEngine ADSelfService Plus build 6114, which Zoho released on September 6, 2021,\n        fixes CVE-2021-40539. FBI, CISA, and CGCYBER strongly urge users and administrators to update\n        to ADSelfService Plus build 6114. Additionally, FBI, CISA, and CGCYBER strongly urge\n        organizations ensure ADSelfService Plus is not directly accessible from the internet.\n        The FBI, CISA, and CGCYBER have reports of malicious cyber actors using exploits against CVE-\n        2021-40539 to gain access [T1190] to ManageEngine ADSelfService Plus, as early as August 2021.\n        The actors have been observed using various tactics, techniques, and procedures (TTPs), including:"
+ },
+ {
+  "id": "p5",
+  "text": "Disclaimer: The information in this Joint Cybersecurity Advisory is provided \"as is\" for informational purposes\n        only. FBI and CISA do not provide any warranties of any kind regarding this information or endorse any\n        commercial product or service, including any subjects of analysis. This document is marked TLP:WHITE.\n        Disclosure is not limited. Sources may use TLP:WHITE when information carries minimal or no foreseeable risk\n        of misuse, in accordance with applicable rules and procedures for public release. Subject to standard copyright\n        rules, TLP:WHITE information may be distributed without restriction. For more information on the Traffic Light\n        Protocol, see https://www.cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "    Frequently writing webshells [T1505.003] to disk for initial persistence\n               Obfuscating and Deobfuscating/Decoding Files or Information [T1027 and T1140]\n               Conducting further operations to dump user credentials [T1003]\n               Living off the land by only using signed Windows binaries for follow-on actions [T1218]\n               Adding/deleting user accounts as needed [T1136]\n               Stealing copies of the Active Directory database (NTDS.dit) [T1003.003] or registry hives\n               Using Windows Management Instrumentation (WMI) for remote execution [T1047]\n               Deleting files to remove indicators from the host [T1070.004]\n               Discovering domain accounts with the net Windows command [1087.002]\n               Using Windows utilities to collect and archive files for exfiltration [T1560.001]\n               Using custom symmetric encryption for command and control (C2) [T1573.001]"
+ },
+ {
+  "id": "p7",
+  "text": "The FBI, CISA, and CGCYBER are proactively investigating and responding to this malicious cyber\n       activity."
+ },
+ {
+  "id": "p8",
+  "text": "    FBI is leveraging specially trained cyber squads in each of its 56 field offices and CyWatch,\n                the FBI’s 24/7 operations center and watch floor, which provides around-the-clock support to\n                track incidents and communicate with field offices across the country and partner agencies.\n               CISA offers a range of no-cost cyber hygiene services to help organizations assess, identify,\n                and reduce their exposure to threats. By requesting these services, organizations of any size\n                could find ways to reduce their risk and mitigate attack vectors.\n               CGCYBER has deployable elements that provide cyber capability to marine transportation\n                system critical infrastructure in proactive defense or response to incidents."
+ },
+ {
+  "id": "p9",
+  "text": "Sharing technical and/or qualitative information with the FBI, CISA, and CGCYBER helps empower\n       and amplify our capabilities as federal partners to collect and share intelligence and engage with\n       victims while working to unmask and hold accountable, those conducting malicious cyber activities."
+ },
+ {
+  "id": "p10",
+  "text": "TECHNICAL DETAILS\n       Successful compromise of ManageEngine ADSelfService Plus, via exploitation of CVE-2021-40539,\n       allows the attacker to upload a .zip file containing a JavaServer Pages (JSP) webshell\n       masquerading as an x509 certificate: service.cer. Subsequent requests are then made to different\n       API endpoints to further exploit the victim's system."
+ },
+ {
+  "id": "p11",
+  "text": "After the initial exploitation, the JSP webshell is accessible at /help/admin-\n       guide/Reports/ReportGenerate.jsp. The attacker then attempts to move laterally using Windows\n       Management Instrumentation (WMI), gain access to a domain controller, dump NTDS.dit and\n       SECURITY/SYSTEM registry hives, and then, from there, continues the compromised access."
+ },
+ {
+  "id": "p12",
+  "text": "Confirming a successful compromise of ManageEngine ADSelfService Plus may be difficult—the\n       attackers run clean-up scripts designed to remove traces of the initial point of compromise and hide\n       any relationship between exploitation of the vulnerability and the webshell."
+ },
+ {
+  "id": "p13",
+  "text": "Targeted Sectors\n       APT cyber actors have targeted academic institutions, defense contractors, and critical infrastructure\n       entities in multiple industry sectors—including transportation, IT, manufacturing, communications,\n       logistics, and finance. Illicitly obtained access and information may disrupt company operations and\n       subvert U.S. research in multiple sectors."
+ },
+ {
+  "id": "p14",
+  "text": "Indicators of Compromise\n       Hashes:\n       068d1b3813489e41116867729504c40019ff2b1fe32aab4716d429780e666324\n       49a6f77d380512b274baff4f78783f54cb962e2a8a5e238a453058a351fcfbba"
+ },
+ {
+  "id": "p15",
+  "text": "File paths:\n       C:\\ManageEngine\\ADSelfService Plus\\webapps\\adssp\\help\\admin-\n       guide\\reports\\ReportGenerate.jsp\n       C:\\ManageEngine\\ADSelfService Plus\\webapps\\adssp\\html\\promotion\\adap.jsp\n       C:\\ManageEngine\\ADSelfService\n       Plus\\work\\Catalina\\localhost\\ROOT\\org\\apache\\jsp\\help\n       C:\\ManageEngine\\ADSelfService Plus\\jre\\bin\\SelfSe~1.key (filename varies with an\n       epoch timestamp of creation, extension may vary as well)\n       C:\\ManageEngine\\ADSelfService Plus\\webapps\\adssp\\Certificates\\SelfService.csr\n       C:\\ManageEngine\\ADSelfService Plus\\bin\\service.cer\n       C:\\Users\\Public\\custom.txt\n       C:\\Users\\Public\\custom.bat\n       C:\\ManageEngine\\ADSelfService\n       Plus\\work\\Catalina\\localhost\\ROOT\\org\\apache\\jsp\\help (including subdirectories\n       and contained files)"
+ },
+ {
+  "id": "p16",
+  "text": "Webshell URL Paths:\n       /help/admin-guide/Reports/ReportGenerate.jsp\n       /html/promotion/adap.jsp\n       Check log files located at C:\\ManageEngine\\ADSelfService Plus\\logs for evidence of successful\n       exploitation of the ADSelfService Plus vulnerability:"
+ },
+ {
+  "id": "p17",
+  "text": "    In access* logs:\n                    o /help/admin-guide/Reports/ReportGenerate.jsp\n                    o /ServletApi/../RestApi/LogonCustomization\n                    o /ServletApi/../RestAPI/Connection\n               In serverOut_* logs:\n                    o Keystore will be created for \"admin\"\n                    o The status of keystore creation is Upload!\n               In adslog* logs:"
+ },
+ {
+  "id": "p18",
+  "text": "o    Java traceback errors that include references to NullPointerException in\n                         addSmartCardConfig or getSmartCardConfig"
+ },
+ {
+  "id": "p19",
+  "text": "TTPs:\n               WMI for lateral movement and remote code execution (wmic.exe)\n               Using plaintext credentials acquired from compromised ADSelfService Plus host\n               Using pg_dump.exe to dump ManageEngine databases\n               Dumping NTDS.dit and SECURITY/SYSTEM/NTUSER registry hives\n               Exfiltration through webshells\n               Post-exploitation activity conducted with compromised U.S. infrastructure\n               Deleting specific, filtered log lines"
+ },
+ {
+  "id": "p20",
+  "text": "Yara Rules:\n       rule ReportGenerate_jsp {\n          strings:\n             $s1 = \"decrypt(fpath)\"\n             $s2 = \"decrypt(fcontext)\"\n             $s3 = \"decrypt(commandEnc)\"\n             $s4 = \"upload failed!\"\n             $s5 = \"sevck\"\n             $s6 = \"newid\"\n          condition:\n             filesize < 15KB and 4 of them\n       }"
+ },
+ {
+  "id": "p21",
+  "text": "rule EncryptJSP {\n          strings:\n             $s1 = \"AEScrypt\"\n             $s2 = \"AES/CBC/PKCS5Padding\"\n             $s3 = \"SecretKeySpec\"\n             $s4 = \"FileOutputStream\"\n             $s5 = \"getParameter\"\n             $s6 = \"new ProcessBuilder\"\n             $s7 = \"new BufferedReader\"\n             $s8 = \"readLine()\"\n          condition:\n             filesize < 15KB and 6 of them\n       }"
+ },
+ {
+  "id": "p22",
+  "text": "MITIGATIONS\n       Organizations that identify any activity related to ManageEngine ADSelfService Plus indicators of\n       compromise within their networks should take action immediately.\n       Zoho ManageEngine ADSelfService Plus build 6114, which Zoho released on September 6, 2021,\n       fixes CVE-2021-40539. FBI, CISA, and CGCYBER strongly urge users and administrators to update"
+ },
+ {
+  "id": "p23",
+  "text": "to ADSelfService Plus build 6114. Additionally, FBI, CISA, and CGCYBER strongly urge\n       organizations ensure ADSelfService Plus is not directly accessible from the internet.\n       Additionally, FBI, CISA, and CGCYBER strongly recommend domain-wide password resets and\n       double Kerberos Ticket Granting Ticket (TGT) password resets if any indication is found that the\n       NTDS.dit file was compromised."
+ }
+]

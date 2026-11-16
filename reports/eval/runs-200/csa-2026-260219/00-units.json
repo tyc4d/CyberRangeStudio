@@ -1,0 +1,282 @@
+[
+ {
+  "id": "p1",
+  "text": "# Increase in Malware Enabled ATM Jackpotting Incidents Across United States"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-02-19\n> - URL: https://www.ic3.gov/CSA/2026/260219.pdf\n> - PDF SHA-256: 226dd3b4ea7751fd9ff73f78bbb48e27cf04c6c8a02d08f78f5775ac61456aae (`source.pdf`, 9 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (34 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "FLASH Number\n                                                                                               FLASH-20260219-001"
+ },
+ {
+  "id": "p4",
+  "text": "D"
+ },
+ {
+  "id": "p5",
+  "text": "Increase in Malware Enabled ATM Jackpotting Incidents\nAcross United States"
+ },
+ {
+  "id": "p6",
+  "text": "Summary\nThe Federal Bureau of Investigation (FBI) is releasing this FLASH to disseminate indicators of compromise\n(IOCs) and technical details associated with malware enabled ATM jackpotting. Threat actors exploit\nphysical and software vulnerabilities in ATMs and deploy malware to dispense cash without a legitimate\ntransaction. The FBI has observed an increase in ATM jackpotting incidents across the United States. Out\nof 1,900 ATM jackpotting incidents reported since 2020, over 700 of them with more than $20 million in\nlosses occurred in 2025 alone. This FLASH is being provided to encourage organizations to implement the\nrecommended mitigation steps and to outline the information requested from the public."
+ },
+ {
+  "id": "p7",
+  "text": "Technical Details\nOverview\nThreat actors are deploying ATM jackpotting malware, including the Ploutus family malware, to infect ATMs\nand force them to dispense cash. Ploutus malware exploits the eXtensions for Financial Services (XFS), the\nlayer of software that instructs an ATM what to physically do. When a legitimate transaction occurs, the\nATM application sends instructions through XFS for bank authorization. If a threat actor can issue their own\ncommands to XFS, they can bypass bank authorization entirely and instruct the ATM to dispense cash on\ndemand. As a result, Ploutus allows threat actors to force an ATM to dispense cash without using a bank\ncard, customer account, or bank authorization. Once Ploutus is installed on an ATM, it gives threat actors\ndirect control over the machine, allowing them to trigger cash withdrawals. Ploutus attacks the ATM itself\nrather than customer accounts, enabling fast cash-out operations that can occur in minutes and are often\ndifficult to detect until after the money is withdrawn.\nCommon Methods of Infection\nAfter gaining access to ATMs, most often by opening an ATM face with widely available generic keys, ATM\njackpotting threat actors have used several main methods to deploy malware:"
+ },
+ {
+  "id": "p8",
+  "text": "•   Threat actors remove the ATM’s hard drive, connect it to their computer, copy the malware to the\n       hard drive, return the hard drive to the ATM, and reboot the ATM."
+ },
+ {
+  "id": "p9",
+  "text": "•   Threat actors remove the ATM’s hard drive, replace it with a foreign hard drive or other external\n       device with preloaded malware, and reboot the ATM."
+ },
+ {
+  "id": "p10",
+  "text": "FLASH Number\n                                                                                                FLASH-20260219-001"
+ },
+ {
+  "id": "p11",
+  "text": "D"
+ },
+ {
+  "id": "p12",
+  "text": "Malware Functionality\nThe malware interacts directly with the ATM hardware, bypassing any communications or security of the\noriginal ATM software. The malware does not require connection to an actual bank customer account to\ndispense cash. The malware can be used across ATMs of different manufacturers with very little\nadjustment to the code as the Windows operating system is exploited during the compromise."
+ },
+ {
+  "id": "p13",
+  "text": "Indicators of Compromise (IOCs)\nDisclaimer: The FBI recommends organizations investigate and vet indicators prior to taking action.\nDigital Indicators (as observed on affected ATMs running Windows OS)\n   •   Executable files not expected on the hard drive, including, but not limited to, the following:\n          o Newage.exe\n          o Color.exe\n          o Levantaito.exe\n          o NCRApp.exe\n          o sdelete.exe\n          o Promo.exe\n          o WinMonitor.exe\n          o WinMonitorCheck.exe\n          o Anydesk1.exe\n          o Identified MD5s:\n                  2C2D16658D8DA6B389934273EF8F8E22\n                  5F177B84F3D92AB5711BE446125FDBE3\n                  61EECEB5F9186A0BC01DC82798CD6C5F\n                  FDA82030AE92313E94B9339EA1FC107C\n                  C04A7CB926CCBF829D0A36A91EBF91BD"
+ },
+ {
+  "id": "p14",
+  "text": "•   Associated Files and Scripts:\n          o C.dat\n          o Restaurar.bat\n          o Restauraropteva.bat\n          o Logcontrol.txt\n          o Logc.txt\n          o Borrar_beta.txt"
+ },
+ {
+  "id": "p15",
+  "text": "•   New directories, including, but not limited to, the following:\n          o Anydesk1.exe Anydesk1.exe"
+ },
+ {
+  "id": "p16",
+  "text": "FLASH Number\n                                                                                           FLASH-20260219-001"
+ },
+ {
+  "id": "p17",
+  "text": "D"
+ },
+ {
+  "id": "p18",
+  "text": "o   C:\\<ATM_Manufacture>\\exe\\p\n           o   C:\\Users\\SSAuto1\\AppData\\Local\\P\\"
+ },
+ {
+  "id": "p19",
+  "text": "•   Remote connection applications, such as TeamViewer or AnyDesk, if unauthorized; or application\n       logs showing connections from unexpected IP addresses."
+ },
+ {
+  "id": "p20",
+  "text": "Persistence Mechanisms"
+ },
+ {
+  "id": "p21",
+  "text": "•   Abnormal autoruns:\n          o HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n          o HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\n          o HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Userinit"
+ },
+ {
+  "id": "p22",
+  "text": "•   Custom services:\n          o Custom service entries under:\n                  HKLM\\SYSTEM\\CurrentControlSet\\Services\\\n          o Services pointing to non-standard install paths\n          o Services running under SYSTEM without vendor signature\n          o Services running with generic or deceptive names:\n                  ATM Service\n                  Dispenser Service\n                  DIEBOLDP IP addresses."
+ },
+ {
+  "id": "p23",
+  "text": "Physical Interaction Indicators"
+ },
+ {
+  "id": "p24",
+  "text": "•   USB insertion events:\n          o Event ID 2003 -\n                   May appear with the insertion of USB storage device, or peripheral\n          o Event ID 6416 -\n                   The Security log records the detection of a newly connected external device when\n                      external storage auditing is enabled. This event can indicate the attachment of\n                      removable media such as USB storage devices, but does not confirm file access or\n                      execution\n          o Event ID 4663 -\n                   The Security log may record file access or modification activity involving removable\n                      media, provided object access auditing is enabled and appropriate system access\n                      control lists (SACLs) are configured on the target files or directories"
+ },
+ {
+  "id": "p25",
+  "text": "•   Detection of:\n          o USB keyboards\n          o USB hubs\n          o Flash drives"
+ },
+ {
+  "id": "p26",
+  "text": "FLASH Number\n                                                                                               FLASH-20260219-001"
+ },
+ {
+  "id": "p27",
+  "text": "D"
+ },
+ {
+  "id": "p28",
+  "text": "•   Physical Indicators\n          o ATM door open alerts outside of planned maintenance schedule\n          o Low/No cash indicators outside of expected use schedule\n          o Unauthorized devices plugged into the ATM\n          o Removal of hard drives from ATMs\n          o ATM unexpectedly out of service"
+ },
+ {
+  "id": "p29",
+  "text": "A key validation step during ATM incident response is confirming whether file hashes match the\norganization’s verified baseline. Each ATM should be deployed from a controlled “gold image” containing\ncryptographically verified executables, libraries, and configuration files approved by the vendor and the\ninstitution. Any deviation from these baseline hashes, particularly the presence of unsigned or newly\nintroduced binaries, should be treated as a potential compromise. Maintaining and routinely validating\nsystem integrity against a gold image is one of the most effective defenses against ATM-targeted malware,\nas jackpotting threats often rely on locally introduced files that bypass traditional network-based\ndetection."
+ },
+ {
+  "id": "p30",
+  "text": "Information Requested\nThe FBI encourages recipients of this document to report information concerning suspicious or criminal\nactivity to their local FBI field office at www.fbi.gov/contact-us/field-offices or the FBI Internet Crime\nComplaint Center at www.ic3.gov. If reporting an incident of jackpotting, please provide the following\ninformation:\nBank Information"
+ },
+ {
+  "id": "p31",
+  "text": "•   Bank name, branch, location, and contact information\nATM Information"
+ },
+ {
+  "id": "p32",
+  "text": "•   Manufacturer make and model\n   •   Vendor name and contact information\n   •   Available logging"
+ },
+ {
+  "id": "p33",
+  "text": "FLASH Number\n                                                                                             FLASH-20260219-001"
+ },
+ {
+  "id": "p34",
+  "text": "D"
+ },
+ {
+  "id": "p35",
+  "text": "Recommended Mitigations:\nThe FBI recommends a targeted audit policy focused on removable storage usage, controlled file access,\nand process creation providing high-fidelity detection of ATM jackpotting activity with minimal system\noverhead. When combined with gold image integrity validation, this approach enables early identification\nof physical intrusion and malware staging events that would otherwise evade network-based monitoring.\nThe application of the following mitigations could limit potential adversarial use of the Ploutus malware\nfamily and reduce the risk of ATM jackpotting:\nPhysical Security"
+ },
+ {
+  "id": "p36",
+  "text": "•   Threat sensors on devices and vestibules\n                  o Installing vibration, temperature change, and other sensors to alert security\n                      personnel to suspicious activity"
+ },
+ {
+  "id": "p37",
+  "text": "•   Locks and keypads\n                  o Changing the standard locks on ATM devices to prevent the use of keys available for\n                     purchase online\n                  o Installing keypads on devices that set off alarms if a code is not entered when the\n                     maintenance hatch is opened"
+ },
+ {
+  "id": "p38",
+  "text": "•   Physical barriers\n                  o Installing additional keyed barriers that prevent the cashbox and maintenance\n                       hatch from being accessed"
+ },
+ {
+  "id": "p39",
+  "text": "•   Security cameras and footage\n                  o Ensuring security cameras cover necessary areas and preserve security footage\n                     recordings in the event of an incident\nHardware Security\n   •   Automatic shutdown\n                 o Configuring security settings to take preventative action on the ATM when an\n                     established combination of IOCs for ATM Jackpotting is detected. Once a\n                     combination is identified for example, the ATM should enter an automatic shutdown\n                     or out of service status to prevent distribution of cash"
+ },
+ {
+  "id": "p40",
+  "text": "•   Device whitelisting\n                  o Whitelisting hardware devices could prevent connection of unauthorized devices,\n                      such as phones and hard drives"
+ },
+ {
+  "id": "p41",
+  "text": "FLASH Number\n                                                                                              FLASH-20260219-001"
+ },
+ {
+  "id": "p42",
+  "text": "D"
+ },
+ {
+  "id": "p43",
+  "text": "•   Firmware Checks\n                  o Firmware integrity checks using digital signatures use the Trusted Platform Module\n                     1.2 (ISO/IEC 11889-1:2009) to apply integrity checks at boot up time"
+ },
+ {
+  "id": "p44",
+  "text": "•   Disk encryption\n                  o Enabling hard drive encryption could prevent introduction of malware to an\n                      unplugged hard drive\n                   o   Apply hardware level permissions between devices"
+ },
+ {
+  "id": "p45",
+  "text": "•   Track components\n           o Track components using Software Bill of Materials and Hardware Bill of Materials for\n              software and hardware integrity\n   •   Memory integrity\n         o Enabling memory integrity in Windows security settings"
+ },
+ {
+  "id": "p46",
+  "text": "Logging"
+ },
+ {
+  "id": "p47",
+  "text": "•   If jackpotting risk exists, explicitly enable the following:\n            o Audit Removable Storage\n            o Audit Object Access (targeted SACLs only)"
+ },
+ {
+  "id": "p48",
+  "text": "•   Maintain logs\n          o Maintaining logging and, if available, centrally storing it, could allow security personnel to\n              detect suspicious activity quickly\n           o   Enabling removable media detection\n                   Enable Audit Removable Storage under Object Access which is found in Advanced\n                      Audit Policy Configuration. This will trigger Event ID 6416 when a USB storage\n                      device is connected\n                   Explore enabling Audit File System which results in Event ID 4663 and ONLY with\n                      SACLs applied to:\n                           • ATM Application Directory…. Audit RWX\n                           • Vendor middleware directories…. Audit WX\n                           • C:\\users\\Public\\..... Audit WX\n                           • Any writeable service paths…. Audit WX"
+ },
+ {
+  "id": "p49",
+  "text": "o   HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit\n                   ProcessCreationIncludeCmdLine_Enabled = 1\n                        • Results in Event ID 4688\n                        • Detection of unexpected executables\n                        • Correlation with USB insertion"
+ },
+ {
+  "id": "p50",
+  "text": "FLASH Number\n                                                                                             FLASH-20260219-001"
+ },
+ {
+  "id": "p51",
+  "text": "D"
+ },
+ {
+  "id": "p52",
+  "text": "•   Expands 4688 record to include the Process Command Line field\n                          •   Audit Process creation must be enabled\n                          •   Note: sensitive data passed in command line will be recorded Any writeable\n                              service paths…. Audit WX"
+ },
+ {
+  "id": "p53",
+  "text": "o   Enabling Audit Process Creation under Detailed Tracking\n                   Results in Event ID: 4688\n                          • Detection of unexpected executables…. Audit WX"
+ },
+ {
+  "id": "p54",
+  "text": "o   Enable Audit Security System Extension and Audit System Integrity under System\n                   Generating Event ID 1102, Security log cleared\n                   Generating Event ID 4719, Audit Policy changed"
+ },
+ {
+  "id": "p55",
+  "text": "•   Preserve logs\n          o Long periods of log retention could allow for greater insight if a suspicious event were to\n              occur"
+ },
+ {
+  "id": "p56",
+  "text": "•   Log device state\n          o Tracking the state of the ATM could further improve the security personnel’s ability to\n              quickly detect suspicious activity\n       Possible logged attack example:\n        Step                                              Event\n        USB inserted                                      6416\n        Malware copied                                    4663\n        Malware executed                                  4688\n        Service installed                                 4697\n        Logs cleared                                      1102"
+ },
+ {
+  "id": "p57",
+  "text": "Auditing\n   •   Audit ATM devices\n          o Security personnel should audit ATM devices to ensure all available security mechanisms\n              are properly enabled"
+ },
+ {
+  "id": "p58",
+  "text": "•   Change default credentials\n          o Changing default credentials can significantly impact the ability of subjects to get access to\n             elevated permissions on the ATM devices"
+ },
+ {
+  "id": "p59",
+  "text": "•   Pre-production assessment\n           o An audit of the device's updates and security implementations on a test device in a pre-\n              production environment could ensure they are operating in an expected way"
+ },
+ {
+  "id": "p60",
+  "text": "FLASH Number\n                                                                                            FLASH-20260219-001"
+ },
+ {
+  "id": "p61",
+  "text": "D"
+ },
+ {
+  "id": "p62",
+  "text": "Network Security"
+ },
+ {
+  "id": "p63",
+  "text": "•   IP whitelisting\n           o Whitelisting IP addresses could prevent the attackers from connecting to the ATM devices\n               remotely\nEndpoint Detection and Response"
+ },
+ {
+  "id": "p64",
+  "text": "•   Antimalware/Antivirus\n           o Antimalware and antivirus software could assist in preventing the deployment of malware\n              on ATM devices\n   •   Software whitelisting\n              Whitelisting software could give more granular control over what software is allowed to run\n              on the ATM, which could further assist in preventing the deployment of malware\nThreat Intelligence\n   •   Maintenance schedule\n          o Familiarization with software updates and physical maintenance schedules could allow\n              security personnel to easily identify unusual activity"
+ },
+ {
+  "id": "p65",
+  "text": "•   Industry groups\n          o Information sharing in the industry could keep security personnel updated about the threat\n              landscape, including possible attack vectors and the need for relevant defenses\n   •   Threat readiness and training\n           o Training employees on the specifics of ATM jackpotting could result in better reporting and\n               quicker responses to the threat"
+ },
+ {
+  "id": "p66",
+  "text": "Reporting Notice\n    If you identify suspicious activity within your enterprise or have information related to the contents of this\n    document, please contact your local FBI field office immediately at www.fbi.gov/contact-us/field-\n    offices. The FBI also encourages you to report suspicious or criminal activity to the FBI Internet Crime\n    Complaint Center at www.ic3.gov. When available, each report should include the date, time, location,\n    type of activity, number of people, and type of equipment used for the activity, the name of the submitting\n    company or organization, and a designated point of contact. Press inquiries should be directed to the FBI’s\n    National Press Office at npo@fbi.gov or (202) 324-3691.\n    Individual indicators included in this document should always be evaluated in light of your complete\n    information security situation. Some indicators, particularly those of a nondeterministic or ephemeral\n    nature (such as filenames or IP addresses), may not be indicative of a compromise.\n    Your organization has no obligation to provide information in response to this product. If, after reviewing\n    the information provided, your organization decides to provide information to the FBI, it must do so\n    consistent with applicable state and federal law."
+ },
+ {
+  "id": "p67",
+  "text": "Administrative Note\n    The information in this document is being provided by the FBI, with no guarantees or warranties, for\n    potential use at the sole discretion of recipients to protect against cyber threats. This data is provided to\n    help cybersecurity professionals and system administrators guard against the persistent malicious actions\n    of cyber actors. The FBI does not endorse any commercial entity, product, company, or service, including\n    any entities, products, or services linked within this document. Any reference to specific commercial\n    entities, products, processes, or services by service mark, trademark, manufacturer, or otherwise, does\n    not constitute or imply endorsement, recommendation, or favoring by the FBI."
+ },
+ {
+  "id": "p68",
+  "text": "Your feedback regarding this product is critical.\nPlease take a moment to complete the survey at the link below. Input can be submitted\nanonymously and should be specific to your experience with our written products."
+ },
+ {
+  "id": "p69",
+  "text": "https://www.ic3.gov/PIFSurvey"
+ },
+ {
+  "id": "p70",
+  "text": "This survey is for feedback on contact and value only. Reporting of technical information\nregarding FLASH reports must be submitted through your local FBI field office."
+ }
+]

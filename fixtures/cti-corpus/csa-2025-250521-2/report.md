@@ -1,0 +1,517 @@
+# Threat Actors Deploy LummaC2 Malware to Exfiltrate Sensitive Data from Organizations
+
+> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA25-141B
+> - Date: 2025-05-21
+> - URL: https://www.ic3.gov/CSA/2025/250521-2.pdf
+> - PDF SHA-256: 15b9706d95a9d8390b207164ee22286ae5cbcba7552f6acf80bf1d7a6d39376a (`source.pdf`, 14 pages)
+> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.
+> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (54 lines). No other edits.
+
+Co-Authored by:                                                                                                      Product ID: AA25-141B
+                                                                                                                             May 21, 2025
+
+
+       Threat Actors Deploy LummaC2 Malware to
+       Exfiltrate Sensitive Data from Organizations
+       Summary
+       The Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA)
+       are releasing this joint advisory to disseminate known tactics, techniques, and procedures (TTPs) and
+       indicators of compromise (IOCs) associated with threat actors deploying the LummaC2 information stealer
+       (infostealer) malware. LummaC2 malware is able to infiltrate victim computer networks and exfiltrate
+       sensitive information, threatening vulnerable individuals’ and organizations’ computer networks across
+       multiple U.S. critical infrastructure sectors. According to FBI information and trusted third-party reporting,
+       this activity has been observed as recently as May 2025. The IOCs included in this advisory were
+       associated with LummaC2 malware infections from November 2023 through May 2025.
+       The FBI and CISA encourage organizations to implement the recommendations in the Mitigations section of
+       this advisory to reduce the likelihood and impact of LummaC2 malware.
+       For a downloadable copy of IOCs, see:
+                 AA25-141B STIX XML (147 KB)
+                 AA25-141B STIX JSON (301 KB)
+
+       Technical Details
+       Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 17. See the MITRE
+       ATT&CK Tactics and Techniques section of this advisory for threat actor activity mapped to MITRE ATT&CK
+       tactics and techniques.
+
+
+       To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact your
+       local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When available, please
+       include the following information regarding the incident: date, time, and location of the incident; type of activity; number
+       of people affected; type of equipment used for the activity; the name of the submitting company or organization; and a
+       designated point of contact.
+       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries
+       minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release.
+       Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information
+       on the Traffic Light Protocol, see Traffic Light Protocol (TLP) Definitions and Usage.
+
+
+        Overview
+        LummaC2 malware first appeared for sale on multiple Russian-language speaking cybercriminal forums in
+        2022. Threat actors frequently use spearphishing hyperlinks and attachments to deploy LummaC2
+        malware payloads [T1566.001, T1566.002]. Additionally, threat actors rely on unsuspecting users to
+        execute the payload by clicking a fake Completely Automated Public Turing Test to tell Computers and
+        Humans Apart (CAPTCHA). The CAPTCHA contains instructions for users to then open the Windows Run
+        window (Windows Button + R) and paste clipboard contents (“CTRL + V”). After users press “enter” a
+        subsequent Base64-encoded PowerShell process is executed.
+        To obfuscate their operations, threat actors have embedded and distributed LummaC2 malware within
+        spoofed or fake popular software (i.e., multimedia player or utility software) [T1036]. The malware’s
+        obfuscation methods allow LummaC2 actors to bypass standard cybersecurity measures, such as Endpoint
+        Detection and Response (EDR) solutions or antivirus programs, designed to flag common phishing
+        attempts or drive-by downloads [T1027].
+        Once a victim’s computer system is infected, the malware can exfiltrate sensitive user information,
+        including personally identifiable information, financial credentials, cryptocurrency wallets, browser
+        extensions, and multifactor authentication (MFA) details without immediate detection [TA0010, T1119].
+        Private sector statistics indicate there were more than 21,000 market listings selling LummaC2 logs on
+        multiple cybercriminal forums from April through June of 2024, a 71.7 percent increase from April through
+        June of 2023.
+
+        File Execution
+        Upon execution, the LummaC2.exe file will enter its main routine, which includes four sub-routines (see
+        Figure 1).
+
+
+                                             Figure 1. LummaC2 Main Routine
+
+        The first routine decrypts strings for a message box that is displayed to the user (see Figure 2).
+
+
+                                                    Figure 2. Message Box
+
+        If the user selects No, the malware will exit. If the user selects Yes, the malware will move on to its next
+        routine, which decrypts its callback Command and Control (C2) domains [T1140]. A list of observed
+        domains is included in the Indicators of Compromise section.
+        After each domain is decoded, the implant will attempt a POST request [T1071.001] (see Figure 3).
+
+
+                                                    Figure 3. Post Request
+
+        If the POST request is successful, a pointer to the decoded domain string is saved in a global variable for
+        later use in the main C2 routine used to retrieve JSON formatted commands (see Figure 4).
+
+
+                                       Figure 4. Code Saving Successful Callback Request
+
+        Once a valid C2 domain is contacted and saved, the malware moves on to the next routine, which queries
+        the user’s name and computer name utilizing the Application Programming Interfaces (APIs)
+        GetUserNameW and GetComputerNameW respectively [T1012]. The returned data is then hashed and
+        compared against a hard-coded hash value (see Figure 5).
+
+
+                                         Figure 5. User and Computer Name Check
+
+        The hashing routine was not identified as a standard algorithm; however, it is a simple routine that
+        converts a Unicode string to a 32-bit hexadecimal value.
+        If the username hash is equal to the value 0x56CF7626, then the computer name is queried. If the
+        computer name queried is seven characters long, then the name is hashed and checked against the hard-
+        coded value of 0xB09406C7. If both values match, a final subroutine will be called with a static value of the
+        computer name hash as an argument. If this routine is reached, the process will terminate. This is most
+        likely a failsafe to prevent the malware from running on the attacker’s system, as its algorithms are one-
+        way only and will not reveal information on the details of the attacker’s own hostname and username.
+        If the username and hostname check function returns zero (does not match the hard-coded values), the
+        malware will enter its main callback routine. The LummaC2 malware will contact the saved hostname from
+        the previous check and send the following POST request (see Figure 6).
+
+
+                                               Figure 6. Second POST Request
+
+        The data returned from the C2 server is encrypted. Once decoded, the C2 data is in a JSON format and is
+        parsed by the LummaC2 malware. The C2 uses the JSON configuration to parse its browser extensions and
+        target lists using the ex key, which contains an array of objects (see Figure 7).
+
+
+                                             Figure 7. Parsing of ex JSON Value
+
+        Parsing the c key contains an array of objects, which will give the implant its C2 (see Figure 8).
+
+
+                                              Figure 8. Parsing of c JSON Value
+        C2 Instructions
+        Each array object that contains the JSON key value of t will be evaluated as a command opcode, resulting
+        in the C2 instructions in the subsections below.
+
+        1. Opcode 0 – Steal Data Generic
+        This command allows five fields to be defined when stealing data, offering the most flexibility. The Opcode
+        O command option allows LummaC2 affiliates to add their custom information gathering details (see Table
+        1).
+
+                                                    Table 1. Opcode 0 Options
+
+                                         Key                      Value
+
+                                         p         Path to steal from
+
+                                         m         File extensions to read
+
+                                         z         Output directory to store stolen data
+
+                                         d         Depth of recursiveness
+
+                                         fs        Maximum file size
+
+
+        2. Opcode 1 – Steal Browser Data
+        This command only allows for two options: a path and the name of the output directory. This command,
+        based on sample configuration downloads, is used for browser data theft for everything except Mozilla
+        [T1217] (see Table 2).
+
+                                                    Table 2. Opcode 1 Options
+
+                                               Key                Value
+
+                                               p       Path to steal from
+
+                                               z       Name of Browser – Output
+
+
+        3. Opcode 2 – Steal Browser Data (Mozilla)
+        This command is identical to Opcode 1; however, this option seems to be utilized solely for Mozilla browser
+        data (see Table 3).
+
+                                                    Table 3. Opcode 2 Options
+
+                                              Key                 Value
+
+                                              p         Path to steal from
+
+                                              z         Name of Browser – Output
+
+        4. Opcode 3 – Download a File
+        This command contains three options: a URL, file extension, and execution type. The configuration can
+        specify a remote file with u to download and create the extension specified in the ft key [T1105] (see
+        Table 4).
+
+                                                    Table 4. Opcode 3 Options
+
+                                                  Key              Value
+
+                                               u         URL for Download
+
+                                               ft        File Extension
+
+                                               e         Execution Type
+
+
+        The e value can take two values: 0 or 1. This specifies how to execute the downloaded file either with the
+        LoadLibrary API or via the command line with rundll32.exe [T1106] (see Table 5).
+
+                                                    Table 5. Execution Types
+
+                                            Key                   Value
+
+                                            e=0      Execute with LoadLibraryW()
+
+                                            e=1      Executive with rund1132.exe
+
+
+        5. Take Screenshot
+        If the configuration JSON file has a key of “se” and its value is “true,” the malware will take a screenshot
+        in BMP format and upload it to the C2 server.
+
+
+        6. Delete Self
+        If the configuration JSON file has a key of “ad” and its value is “true,” the malware will enter a routine to
+        delete itself.
+        The command shown in Figure 9 will be decoded and executed for self-deletion.
+
+
+                                           Figure 9. Self-Deletion Command Line
+
+        Figure 10 depicts the above command line during execution.
+
+
+                                       Figure 10. Decoded Command Line in Memory
+
+        Host Modifications
+        Without any C2 interactions, the LummaC2 malware does not create any files on the infected drive. It
+        simply runs in memory, gathers system information, and exfiltrates it to the C2 server [T1082]. The
+        commands returned from the C2 server could indicate that it drops additional files and/or saves data to
+        files on the local hard drive. This is variable, as these commands come from the C2 server and are
+        mutable.
+
+        Decrypted Strings
+        Below is a list of hard-coded decrypted strings located in the binary (see Figure 11).
+
+
+                                              Figure 11. Decoded Strings
+
+        Indicators of Compromise
+        See Table 6 and Table 7 for LummaC2 IOCs obtained by the FBI and trusted third parties.
+        Disclaimer: The authoring agencies recommend organizations investigate and vet these indicators of
+        compromise prior to taking action, such as blocking.
+
+                                         Table 6. LummaC2 Executable Hashes
+
+                                            Executables                                             Type
+
+          4AFDC05708B8B39C82E60ABE3ACE55DB (LummaC2.exe from November 2023)                  MD5
+
+          E05DF8EE759E2C955ACC8D8A47A08F42 (LummaC2.exe from November 2023)                  MD5
+
+          C7610AE28655D6C1BCE88B5D09624FEF                                                   MD5
+
+          1239288A5876C09D9F0A67BCFD645735168A7C80 (LummaC2.exe from November
+                                                                                             SHA1
+          2023)
+
+          B66DA4280C6D72ADCC68330F6BD793DF56A853CB (LummaC2.exe from November
+                                                                                             SHA1
+          2023)
+
+          3B267FA5E1D1B18411C22E97B367258986E871E5                                           TLSH
+
+
+                                                Executables                                               Type
+
+          19CC41A0A056E503CC2137E19E952814FBDF14F8D83F799AEA9B96ABFF11EFBB
+                                                                                                   SHA256
+          (November 2023)
+
+          2F31D00FEEFE181F2D8B69033B382462FF19C35367753E6906ED80F815A7924F
+                                                                                                   SHA256
+          (LummaC2.exe from November 2023)
+
+          4D74F8E12FF69318BE5EB383B4E56178817E84E83D3607213160276A7328AB5D                         SHA256
+
+          325daeb781f3416a383343820064c8e98f2e31753cd71d76a886fe0dbb4fe59a                         SHA256
+
+          76e4962b8ccd2e6fd6972d9c3264ccb6738ddb16066588dfcb223222aaa88f3c                         SHA256
+
+          7a35008a1a1ae3d093703c3a34a21993409af42eb61161aad1b6ae4afa8bbb70                         SHA256
+
+          a9e9d7770ff948bb65c0db24431f75dd934a803181afa22b6b014fac9a162dab                         SHA256
+
+          b287c0bc239b434b90eef01bcbd00ff48192b7cbeb540e568b8cdcdc26f90959                         SHA256
+
+          ca47c8710c4ffb4908a42bd986b14cddcca39e30bb0b11ed5ca16fe8922a468b                         SHA256
+
+
+                                                Table 7. LummaC2 DLL Binaries
+
+                                 DLL Binaries                                             Type
+
+          iphlpapi.dll                                            IP Helper API
+
+          winhttp.dll                                             Windows HTTP Services
+
+
+        The following are domains observed deploying LummaC2 malware.
+
+        Disclaimer: The domains below are historical in nature and may not currently be malicious.
+                 Pinkipinevazzey[.]pw               Forbidstow[.]site                   Faulteyotk[.]site
+                 Fragnantbui[.]shop                 gutterydhowi[.]shop                 Hemispheredodnkkl[.]pw
+                 Medicinebuckerrysa[.]pw            Fanlumpactiras[.]pw                 Goalyfeastz[.]site
+                 Musicallyageop[.]pw                Computeryrati[.]site                Authorizev[.]site
+                 stogeneratmns[.]shop               Contemteny[.]site                   ghostreedmnu[.]shop
+                 wallkedsleeoi[.]shop               Ownerbuffersuperw[.]pw              Servicedny[.]site
+                 Tirechinecarpet[.]pw               Seallysl[.]site                     blast-hubs[.]com
+                 reinforcenh[.]shop                 Dilemmadu[.]site                    offensivedzvju[.]shop
+                 reliabledmwqj[.]shop               Freckletropsao[.]pw                 friendseforever[.]help
+                 Musclefarelongea[.]pw              Opposezmny[.]site                   blastikcn[.]com
+
+
+                vozmeatillu[.]shop                triplooqp[.]world                   ironloxp[.]live
+                shiningrstars[.]help              easyfwdr[.]digital                  cjlaspcorne[.]icu
+                penetratebatt[.]pw                strawpeasaen[.]fun                  navstarx[.]shop
+                drawzhotdog[.]shop                xayfarer[.]live                     bugildbett[.]top
+                mercharena[.]biz                  jrxsafer[.]top                      latchclan[.]shop
+                pasteflawwed[.]world              quietswtreams[.]life                spacedbv[.]world
+                generalmills[.]pro                oreheatq[.]live                     starcloc[.]bet
+                citywand[.]live                   plantainklj[.]run                   rambutanvcx[.]run
+                hoyoverse[.]blog                  starrynsightsky[.]icu               galxnetb[.]today
+                nestlecompany[.]pro               castmaxw[.]run                      pomelohgj[.]top
+                esccapewz[.]run                   puerrogfh[.]live                    scenarisacri[.]top
+                dsfljsdfjewf[.]info               earthsymphzony[.]today              jawdedmirror[.]run
+                naturewsounds[.]help              weldorae[.]digital                  changeaie[.]top
+                travewlio[.]shop                  quavabvc[.]top                      lonfgshadow[.]live
+                decreaserid[.]world               citydisco[.]bet                     liftally[.]top
+                stormlegue[.]com                  steelixr[.]live                     nighetwhisper[.]top
+                touvrlane[.]bet                   furthert[.]run                      salaccgfa[.]top
+                governoagoal[.]pw                 featureccus[.]shop                  zestmodp[.]top
+                paleboreei[.]biz                  smeltingt[.]run                     owlflright[.]digital
+                calmingtefxtures[.]run            targett[.]top                       clarmodq[.]top
+                foresctwhispers[.]top             mrodularmall[.]top                  piratetwrath[.]run
+                tracnquilforest[.]life            ferromny[.]digital                  hemispherexz[.]top
+                sighbtseeing[.]shop               ywmedici[.]top                      quilltayle[.]live
+                advennture[.]top                  jowinjoinery[.]icu                  equatorf[.]run
+                collapimga[.]fun                  rodformi[.]run                      latitudert[.]live
+                holidamyup[.]today                legenassedk[.]top                   longitudde[.]digital
+                pepperiop[.]digital               htardwarehu[.]icu                   climatologfy[.]top
+                seizedsentec[.]online             metalsyo[.]digital                  starofliught[.]top
+
+        MITRE ATT&CK Tactics and Techniques
+        See Table 8 through Table 13 for all referenced threat actor tactics and techniques in this advisory. For
+        assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE
+        ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool.
+
+
+                                                      Table 8. Initial Access
+
+               Technique Title             ID                                     Use
+
+          Phishing                       T1566      Threat actors delivered LummaC2 malware through phishing emails.
+
+          Phishing:
+                                                    Threat actors used spearphishing attachments to deploy LummaC2
+          Spearphishing                 T1566.001
+                                                    malware payloads.
+          Attachment
+
+          Phishing:                                 Threat actors used spearphishing hyperlinks to deploy LummaC2
+                                        T1566.002
+          Spearphishing Link                        malware payloads.
+
+
+                                                    Table 9. Defense Evasion
+
+               Technique Title             ID                                     Use
+
+                                                    Threat actors obfuscated the malware to bypass standard
+          Obfuscated Files or
+                                         T1027      cybersecurity measures designed to flag common phishing attempts
+          Information
+                                                    or drive-by downloads.
+
+          Masquerading                   T1036      Threat actors delivered LummaC2 malware via spoofed software.
+
+          Deobfuscate/Decode                        Threat actors used LummaC2 malware to decrypt its callback C2
+                                         T1140
+          Files or Information                      domains.
+
+
+                                                       Table 10. Discovery
+
+               Technique Title             ID                                     Use
+
+                                                    Threat actors used LummaC2 malware to query the user’s name and
+          Query Registry                 T1012      computer name utilizing the APIs GetUserNameW and
+                                                    GetComputerNameW.
+
+          Browser Information
+                                         T1217      Threat actors used LummaC2 malware to steal browser data.
+          Discovery
+
+
+                                                       Table 11. Collection
+
+              Technique Title               ID                                     Use
+
+                                                     LummaC2 malware has automated collection of various
+          Automated Collection            T1119
+                                                     information including cryptocurrency wallet details.
+
+
+                                                  Table 12. Command and Control
+
+                 Technique Title            ID                                        Use
+
+          Application Layer
+                                        T1071.001    Threat actors used LummaC2 malware to attempt POST requests.
+          Protocol: Web Protocols
+
+                                                     Threat actors used LummaC2 malware to transfer a remote file to
+          Ingress Tool Transfer           T1105
+                                                     compromised systems.
+
+
+                                                        Table 13. Exfiltration
+
+                 Technique Title            ID                                        Use
+
+                                                     Threat actors used LummaC2 malware to exfiltrate sensitive user
+          Exfiltration                   TA0010      information, including traditional credentials, cryptocurrency wallets,
+                                                     browser extensions, and MFA details without immediate detection.
+
+                                                     Threat actors used LummaC2 malware to download files with native
+          Native API                      T1106
+                                                     OS APIs.
+
+
+        Mitigations
+        The FBI and CISA recommend organizations implement the mitigations below to reduce the risk of
+        compromise by LummaC2 malware. These mitigations align with the Cross-Sector Cybersecurity
+        Performance Goals (CPGs) developed by CISA and the National Institute of Standards and Technology
+        (NIST). The CPGs provide a minimum set of practices and protections that CISA and NIST recommend all
+        organizations implement. CISA and NIST based the CPGs on existing cybersecurity frameworks and
+        guidance to protect against the most common and impactful threats, tactics, techniques, and procedures.
+        Visit CISA’s CPGs webpage for more information on the CPGs, including additional recommended baseline
+        protections. These mitigations apply to all critical infrastructure organizations.
+                  Separate User and Privileged Accounts: Allow only necessary users and applications access to the
+                   registry [CPG 2.E].
+                  Monitor and detect suspicious behavior during exploitation [CPG 3.A].
+                   o     Monitor and detect suspicious behavior, creation and termination events, and unusual and
+                         unexpected processes running.
+                   o     Monitor API calls that may attempt to retrieve system information.
+                   o     Analyze behavior patterns from process activities to identify anomalies.
+                   o     For more information, visit CISA’s guidance on: Enhanced Visibility and Hardening Guidance for
+                         Communications Infrastructure.
+
+
+                Implement application controls to manage and control execution of software, including allowlisting
+                 remote access programs. Application controls should prevent installation and execution of portable
+                 versions of unauthorized remote access and other software. A properly configured application
+                 allowlisting solution will block any unlisted application execution. Allowlisting is important because
+                 antivirus solutions may fail to detect the execution of malicious portable executables when the files
+                 use any combination of compression, encryption, or obfuscation.
+                Protect against threat actor phishing campaigns by implementing CISA’s Phishing Guidance and
+                 Phishing-resistant multifactor authentication. [CPG 2.H]
+                Log Collection: Regularly monitoring and reviewing registry changes and access logs can support
+                 detection of LummaC2 malware [CPG 2.T].
+                Implement authentication, authorization, and accounting (AAA) systems [M1018] to limit actions
+                 users can perform and review logs of user actions to detect unauthorized use and abuse. Apply
+                 principles of least privilege to user accounts and groups, allowing only the performance of
+                 authorized actions.
+                Audit user accounts and revoke credentials for departing employees, removing those that are
+                 inactive or unnecessary on a routine basis [CPG 2.D]. Limit the ability for user accounts to create
+                 additional accounts.
+                Keep systems up to date with regular updates, patches, hot fixes, and service packs that may
+                 minimize vulnerabilities. Learn more by visiting CISA’s webpage: Secure our World Update
+                 Software.
+                Secure network devices to restrict command line access.
+                 o    Learn more about defending against the malicious use of remote access software by visiting
+                      CISA’s Guide to Securing Remote Access Software.
+                Use segmentation to prevent access to sensitive systems and information, possibly with the use of
+                 Demilitarized Zone (DMZ) or virtual private cloud (VPC) instances to isolate systems [CPG 2.F].
+                Monitor and detect API usage, looking for unusual or malicious behavior.
+
+        Validate Security Controls
+        In addition to applying mitigations, the FBI and CISA recommend exercising, testing, and validating your
+        organization’s security program against threat behaviors mapped to the MITRE ATT&CK Matrix for
+        Enterprise framework in this advisory. The FBI and CISA recommend testing your existing security controls
+        inventory to assess performance against the ATT&CK techniques described in this advisory.
+        To get started:
+             1. Select an ATT&CK technique described in this advisory (see Table 8 through Table 13).
+             2. Align your security technologies against the technique.
+             3. Test your technologies against the technique.
+             4. Analyze your detection and prevention technologies’ performance.
+
+
+             5. Repeat the process for all security technologies to obtain a set of comprehensive performance
+                data.
+             6. Tune your security program, including people, processes, and technologies, based on the data
+                generated by this process.
+        The FBI and CISA recommend continually testing your security program, at scale, in a production
+        environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this
+        advisory.
+
+        Reporting
+        Your organization has no obligation to respond or provide information to the FBI in response to this joint
+        advisory. If, after reviewing the information provided, your organization decides to provide information to
+        the FBI, reporting must be consistent with applicable state and federal laws.
+        The FBI is interested in any information that can be shared, to include the status and scope of infection,
+        estimated loss, date of infection, date detected, initial attack vector, and host- and network-based
+        indicators.
+        To report information, please contact the FBI’s Internet Crime Complaint Center (IC3), your local FBI field
+        office, or CISA’s 24/7 Operations Center at report@cisa.gov or (888) 282-0870.
+
+        Disclaimer
+        The information in this report is being provided “as is” for informational purposes only. The FBI and CISA do
+        not endorse any commercial entity, product, company, or service, including any entities, products, or
+        services linked within this document. Any reference to specific commercial entities, products, processes, or
+        services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply
+        endorsement, recommendation, or favor by the FBI and CISA.
+
+        Acknowledgements
+        ReliaQuest contributed to this advisory.
+
+        Version History
+        May 21, 2025: Initial version.

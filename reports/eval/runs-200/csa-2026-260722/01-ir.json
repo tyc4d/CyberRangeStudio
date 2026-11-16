@@ -1,0 +1,1579 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260722",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "50fc89c790f47a626226bfdc1237f76d04541e0d34c95639c7a15bfc99746f86",
+  "source_name": "csa-2026-260722"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Target internet-exposed PLCs with malicious project file interactions and data manipulation",
+   "source": "llm",
+   "description": "Iranian-affiliated APT actors targeted internet-connected operational technology devices, including programmable logic controllers (PLCs), causing operational disruption and financial loss by maliciously interacting with project files and manipulating data on HMI and SCADA displays.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Download malicious project file to targeted PLC using configuration software",
+   "source": "llm",
+   "description": "At one U.S. victim, the FBI observed the APT actors download a malicious project file to a targeted PLC using configuration software, which retained ladder logic for downstream function but added logic overriding safe operating parameters.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Access internet-facing PLCs using leased third-party hosted infrastructure and manufacturers’ PLC programming software",
+   "source": "llm",
+   "description": "Iranian-affiliated APT actors used several foreign-based IP addresses and leased third-party hosted infrastructure along with manufacturers’ PLC programming software to connect to misconfigured victim PLCs.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Use Dropbear SSH software on victim modems to gain remote access through port 22",
+   "source": "llm",
+   "description": "The actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable remote access through port 22.",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1219",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Exfiltrate device project files from PLC devices using configuration software to threat-actor-controlled infrastructure",
+   "source": "llm",
+   "description": "Iranian-affiliated APT actors used configuration software such as Rockwell Automation’s Studio 5000 Logix Designer, Schneider Electric’s EcoStruxure Control Expert, and Siemens’ Totally Integrated Automation (TIA) Portal on leased third-party hosted infrastructure to exfiltrate device project files from PLC devices to threat-actor-controlled infrastructure.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1041",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Modify and delete project file logic including Add-On Instructions and manipulate data on HMI and SCADA displays",
+   "source": "llm",
+   "description": "After extracting device project files, the actors modified and deleted project file logic including Add-On Instructions (AOIs) and manipulated data displayed on HMI and SCADA displays, disabling critical shutdown and alarm logic.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Target PLC devices on ports 44818, 2222, 102, 502, and modems on port 22",
+   "source": "llm",
+   "description": "Inbound malicious traffic targeted PLC devices on ports 44818, 2222, 102, and 502, as well as modems on port 22.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a3",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using leased, third-party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs enables downloading malicious project files",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "downloading malicious project files to PLCs causes malicious project file interactions and data manipulation",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "modification and deletion of project file logic occurred after extracting device project files",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using leased, third-party hosted infrastructure and manufacturers’ PLC programming software to exfiltrate device project files",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a4",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "using Dropbear SSH software on victim modems to gain remote access through port 22 is an instance of accessing internet-facing PLCs",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "targeting PLC devices on ports including modems on port 22 precedes use of Dropbear SSH software on victim modems",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing PLCs targeted by Iranian-affiliated APT actors",
+   "source": "llm",
+   "name": "Rockwell Automation CompactLogix and Micro850 PLCs",
+   "network_placement": "internet-exposed",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "internet-facing PLCs targeted by Iranian-affiliated APT actors",
+   "source": "llm",
+   "name": "Schneider Electric BMX P34/Modicon M340 PLCs",
+   "network_placement": "internet-exposed",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "internet-facing PLCs targeted by Iranian-affiliated APT actors",
+   "source": "llm",
+   "name": "Siemens S7-1200 series PLCs",
+   "network_placement": "internet-exposed",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "victim modems used to gain remote access through port 22",
+   "source": "llm",
+   "name": "Victim modems",
+   "network_placement": "internet-exposed",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Rockwell Automation Studio 5000 Logix Designer",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Schneider Electric EcoStruxure Control Expert",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Siemens Totally Integrated Automation (TIA) Portal",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "Dropbear Secure Shell (SSH)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h4",
+   "port": 22,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "malicious project file",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Add-On Instructions (AOIs)",
+   "type": "other",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "ip",
+   "value": "185.82.73[.]175",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "141.11.164[.]153",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "175.110.121[.]42",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "175.110.121[.]39",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "175.110.121[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "175.110.121[.]107",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "192.142.54[.]79",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "84.200.205[.]165",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "185.225.17[.]225",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "79.133.46[.]209",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "88.80.150[.]199",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "88.80.150[.]200",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "88.80.150[.]202",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "185.82.73[.]162",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "185.82.73[.]164",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "185.82.73[.]165",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "185.82.73[.]167",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "185.82.73[.]168",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "185.82.73[.]170",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "ip",
+   "value": "185.82.73[.]171",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "135.136.1[.]133",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The authoring agencies urgently warn U.S. organizations of ongoing Iranian-affiliated cyber targeting of internet-connected operational technology (OT) devices, including programmable logic controllers (PLCs). These actions disrupted PLCs across several U.S. critical infrastructure sectors through malicious project file interactions and manipulation of data on human machine interface (HMI) and supervisory control and data acquisition (SCADA) displays, resulting in operational disruption and financial loss.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " malicious project file interactions and manipulation of data on human machine interface (HMI) and supervisory control and data acquisition (SCADA) displays, re"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "At one U.S. victim, the FBI observed the APT actors download a malicious project file to a targeted PLC using configuration software. Analysis indicated the project file retained ladder logic for downstream function but added logic that overrode specific instruction sets responsible for maintaining safe operating parameters in the victim’s environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "At one U.S. victim, the FBI observed the APT actors download a malicious project file to a targeted PLC using configuration software. Analysis indicated the pro"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The authoring agencies observed Iranian-affiliated APT actors using several foreign-based IP addresses to access internet-facing PLCs manufactured by Rockwell Automation/Allen-Bradley, Schneider Electric, Siemens, and potentially other manufactured PLCs. The actors used leased, third-party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The authoring agencies observed Iranian affiliated APT actors using several foreign based IP addresses to access internet facing PLCs manufactured by Rockwell A"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "In one reported instance, the actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable them to gain remote access through port 22.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one reported instance, the actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable them to gain remote access through port 22."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The authoring agencies observed Iranian-affiliated APT actors using configuration software—such as Rockwell Automation’s Studio 5000 Logix Designer, Schneider Electric’s EcoStruxure Control Expert, and Siemens’ Totally Integrated Automation (TIA) Portal—on leased, third-party hosted infrastructure to exfiltrate device project files from PLC devices to threat-actor-controlled infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The authoring agencies observed Iranian affiliated APT actors using configuration software such as Rockwell Automation’s Studio 5000 Logix Designer, Schneider E"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "After the actors extracted device project files, the FBI and CISA identified the modification and deletion of project file logic, to include Add-On Instructions (AOIs) and data manipulation on HMI and SCADA displays. Additionally, the changes disabled critical shutdown and alarm logic, allowing systems to enter unsafe conditions without notifying operators of the anomalies.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the actors extracted device project files, the FBI and CISA identified the modification and deletion of project file logic, to include Add On Instructions"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Inbound malicious traffic has been observed targeting PLC devices on the following ports: 44818, 2222, 102, and 502, as well as targeting modems on port 22.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Inbound malicious traffic has been observed targeting PLC devices on the following ports: 44818, 2222, 102, and 502, as well as targeting modems on port 22."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The actors used leased, third-party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors used leased, third party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "After the actors extracted device project files, the FBI and CISA identified the modification and deletion of project file logic, to include Add-On Instructions (AOIs) and data manipulation on HMI and SCADA displays.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the actors extracted device project files, the FBI and CISA identified the modification and deletion of project file logic, to include Add On Instructions"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The authoring agencies observed Iranian-affiliated APT actors using configuration software—such as Rockwell Automation’s Studio 5000 Logix Designer, Schneider Electric’s EcoStruxure Control Expert, and Siemens’ Totally Integrated Automation (TIA) Portal—on leased, third-party hosted infrastructure to exfiltrate device project files from PLC devices to threat-actor-controlled infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The authoring agencies observed Iranian affiliated APT actors using configuration software such as Rockwell Automation’s Studio 5000 Logix Designer, Schneider E"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "In one reported instance, the actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable them to gain remote access through port 22.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one reported instance, the actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable them to gain remote access through port 22."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The actors used leased, third-party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs. Inbound malicious traffic has been observed targeting PLC devices on the following ports: 44818, 2222, 102, and 502",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors used leased, third party hosted infrastructure and manufacturers’ PLC programming software to connect to misconfigured victim PLCs. Inbound malicious"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Targeted devices include: Rockwell Automation: CompactLogix and Micro850 PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Rockwell Automation: CompactLogix and Micro850 PLCs"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Iranian-affiliated cyber targeting of internet-connected operational technology (OT) devices, including programmable logic controllers (PLCs)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian affiliated cyber targeting of internet connected operational technology (OT) devices, including programmable logic controllers "
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Targeted devices include: Schneider Electric: BMX P34/Modicon M340 PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Schneider Electric: BMX P34/Modicon M340 PLCs"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Targeted devices include: Siemens: S7-1200 series PLCs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Siemens: S7 1200 series PLCs"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "The actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable remote access through port 22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he actors utilized Dropbear Secure Shell (SSH) software on victim modems to enable "
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Inbound malicious traffic has been observed targeting ... modems on port 22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Inbound malicious traffic has been observed targeting … modems on port 22"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "the FBI observed the APT actors download a malicious project file to a targeted PLC using configuration software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the FBI observed the APT actors download a malicious project file to a targeted PLC using configuration software"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "modification and deletion of project file logic, to include Add-On Instructions (AOIs)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "modification and deletion of project file logic, to include Add On Instructions (AOIs)"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "185.82.73[.]175",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]175"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "141.11.164[.]153",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "141.11.164[.]153"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "175.110.121[.]42",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "175.110.121[.]42"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "175.110.121[.]39",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "175.110.121[.]39"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "175.110.121[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "175.110.121[.]41"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "175.110.121[.]107",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "175.110.121[.]107"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "192.142.54[.]79",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.142.54[.]79"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "84.200.205[.]165",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.200.205[.]165"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "185.225.17[.]225",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.225.17[.]225"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "79.133.46[.]209",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79.133.46[.]209"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "88.80.150[.]199",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "88.80.150[.]199"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "88.80.150[.]200",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "88.80.150[.]200"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "88.80.150[.]202",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "88.80.150[.]202"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "185.82.73[.]162",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]162"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "185.82.73[.]164",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]164"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "185.82.73[.]165",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]165"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "185.82.73[.]167",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]167"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "185.82.73[.]168",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]168"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "185.82.73[.]170",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]170"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "185.82.73[.]171",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.82.73[.]171"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "135.136.1[.]133",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "50"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "135.136.1[.]133"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Rockwell Automation CompactLogix and Micro850 PLCs — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Rockwell Automation CompactLogix and Micro850 PLCs 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Rockwell Automation CompactLogix and Micro850 PLCs"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Rockwell Automation CompactLogix and Micro850 PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Rockwell Automation CompactLogix and Micro850 PLCs — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Rockwell Automation CompactLogix and Micro850 PLCs 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Rockwell Automation CompactLogix and Micro850 PLCs"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Rockwell Automation CompactLogix and Micro850 PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Rockwell Automation CompactLogix and Micro850 PLCs — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Rockwell Automation CompactLogix and Micro850 PLCs 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Rockwell Automation CompactLogix and Micro850 PLCs"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Rockwell Automation CompactLogix and Micro850 PLCs",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-exposed",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Schneider Electric BMX P34/Modicon M340 PLCs — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Schneider Electric BMX P34/Modicon M340 PLCs 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Schneider Electric BMX P34/Modicon M340 PLCs"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Schneider Electric BMX P34/Modicon M340 PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Schneider Electric BMX P34/Modicon M340 PLCs — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Schneider Electric BMX P34/Modicon M340 PLCs 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Schneider Electric BMX P34/Modicon M340 PLCs"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Schneider Electric BMX P34/Modicon M340 PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Schneider Electric BMX P34/Modicon M340 PLCs — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Schneider Electric BMX P34/Modicon M340 PLCs 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Schneider Electric BMX P34/Modicon M340 PLCs"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Schneider Electric BMX P34/Modicon M340 PLCs",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-exposed",
+     "source_ref": "hosts:h2.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Siemens S7-1200 series PLCs — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7-1200 series PLCs 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Siemens S7-1200 series PLCs"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7-1200 series PLCs",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Siemens S7-1200 series PLCs — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7-1200 series PLCs 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Siemens S7-1200 series PLCs"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7-1200 series PLCs",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Siemens S7-1200 series PLCs — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Siemens S7-1200 series PLCs 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Siemens S7-1200 series PLCs"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Siemens S7-1200 series PLCs",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-exposed",
+     "source_ref": "hosts:h3.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "Victim modems — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim modems 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — Victim modems",
+    "action:a4 — Use Dropbear SSH software on victim modems to gain remote access through port 22"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim modems",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "Victim modems — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim modems 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — Victim modems",
+    "action:a4 — Use Dropbear SSH software on victim modems to gain remote access through port 22"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim modems",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "Victim modems — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim modems 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — Victim modems",
+    "action:a4 — Use Dropbear SSH software on victim modems to gain remote access through port 22"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim modems",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-exposed",
+     "source_ref": "hosts:h4.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a2 — Download malicious project file to targeted PLC using configuration software"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Download malicious project file to targeted PLC using configuration software",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "Target internet-exposed PLCs with malicious project file interactions and data manipulation — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「Target internet-exposed PLCs with malicious project file interactions and data manipulation」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — Target internet-exposed PLCs with malicious project file interactions and data manipulation"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "Target internet-exposed PLCs with malicious project file interactions and data manipulation",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8537,
+  "unsupported_claim_count": 9,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

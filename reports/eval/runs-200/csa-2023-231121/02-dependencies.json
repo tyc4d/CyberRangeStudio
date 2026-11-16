@@ -1,0 +1,2545 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-231121",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "e57bad762df07442ee51de00584e3d8ab193d43dc374edd955e87e000384d527",
+  "source_name": "csa-2023-231121"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploit CVE-2023-4966 Citrix Bleed vulnerability",
+   "source": "llm",
+   "description": "LockBit 3.0 affiliates exploited CVE-2023-4966 to bypass MFA and hijack legitimate user sessions on Citrix NetScaler ADC and Gateway appliances",
+   "target_host_ref": "h1",
+   "attack_technique": "T1556.006",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "acquire valid NetScaler AAA session cookie",
+   "source": "llm",
+   "description": "Threat actors send an HTTP GET request with a crafted HTTP Host header to obtain system memory information containing a valid NetScaler AAA session cookie",
+   "target_host_ref": "h1",
+   "attack_technique": "T1082",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "establish authenticated session without username, password, or MFA tokens",
+   "source": "llm",
+   "description": "LockBit 3.0 affiliates establish an authenticated session within the NetScaler appliance using the acquired valid session cookie",
+   "target_host_ref": "h1",
+   "attack_technique": "T1539",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "execute PowerShell script 123.ps1 to create adobelib.dll",
+   "source": "llm",
+   "description": "Execution of PowerShell script 123.ps1 concatenates two base64 strings, converts them to bytes, and writes them to C:\\Users\\Public\\adobelib.dll",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "execute adobelib.dll using rundll32 with 104 hex character key",
+   "source": "llm",
+   "description": "PowerShell script executes adobelib.dll using rundll32 with a required 104 hex character key",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "adobelib.dll sends POST request to adobe-us-updatefiles.digital",
+   "source": "llm",
+   "description": "adobelib.dll attempts to send a POST request to https://adobe-us-updatefiles.digital/index.php which resolves to specified IP addresses",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "use AnyDesk and Splashtop remote management and monitoring tools",
+   "source": "llm",
+   "description": "LockBit 3.0 affiliates have been observed using AnyDesk and Splashtop RMM tools during ransomware activity",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "use Batch and PowerShell scripts and execute HTA files via mshta.exe",
+   "source": "llm",
+   "description": "LockBit 3.0 affiliates use Batch and PowerShell scripts and execute HTA files using mshta.exe utility",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist",
+   "source": "llm",
+   "description": "LockBit 3.0 affiliates use various remote administration tools such as TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist for persistence and lateral movement",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a10",
+   "name": "dump LSASS process memory to disk",
+   "source": "llm",
+   "description": "Malware loads DLL into LSASS process and uses MiniDumpWriteDump function to dump LSASS process memory to disk",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a11",
+   "name": "establish WinRM session using Python script a.py",
+   "source": "llm",
+   "description": "Python script a.py attempts to leverage WinRM to establish a session using NTLM or basic authentication and execute commands remotely",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The acquisition of a valid NetScaler AAA session cookie depends on exploiting CVE-2023-4966 to obtain system memory information containing the cookie.",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Establishing an authenticated session without username, password, or MFA tokens depends on acquiring valid cookies.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Executing adobelib.dll using rundll32 depends on the PowerShell script creating the adobelib.dll file.",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The DLL sending a POST request to adobe-us-updatefiles.digital depends on the execution of adobelib.dll.",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The WinRM session establishment using Python script a.py occurs after dumping LSASS process memory to disk.",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "web application delivery control (ADC) and Gateway appliances",
+   "source": "llm",
+   "name": "Citrix NetScaler ADC and Gateway appliances",
+   "network_placement": "both private and public networks",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18",
+    "evidence-19"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "infected hosts where malware executes and credentials are harvested",
+   "source": "llm",
+   "name": "Windows hosts",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-20",
+    "evidence-21",
+    "evidence-22",
+    "evidence-23",
+    "evidence-24",
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s2",
+    "s3"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Citrix NetScaler ADC and NetScaler Gateway",
+   "source": "llm",
+   "cve": [
+    "CVE-2023-4966"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "LSASS process",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "WinRM",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "123.ps1",
+   "type": "script",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "adobelib.dll",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-30",
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "AnyDesk",
+   "type": "tool",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Splashtop",
+   "type": "tool",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Batch scripts",
+   "type": "script",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PowerShell scripts",
+   "type": "script",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "HTA files",
+   "type": "file",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "mshta.exe",
+   "type": "tool",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "TeamViewer",
+   "type": "tool",
+   "id": "art9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Plink",
+   "type": "tool",
+   "id": "art10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PsExec",
+   "type": "tool",
+   "id": "art11",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ScreenConnect",
+   "type": "tool",
+   "id": "art12",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Zoho Assist",
+   "type": "tool",
+   "id": "art13",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "a.py",
+   "type": "script",
+   "id": "art14",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-4966",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37",
+    "evidence-38",
+    "evidence-39",
+    "evidence-40",
+    "evidence-41",
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "172.67.129[.]176",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43",
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "104.21.1[.]180",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45",
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "updatefiles[.]digital",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47",
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "adobe-us-updatefiles[.]digital",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49",
+    "evidence-50",
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "url",
+   "value": "Hxxp://62.233.50[.]25/en-us/docs.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "url",
+   "value": "Hxxp://62.233.50[.]25/en-us/test.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "192.229.221[.]95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "193.201.9[.]224",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "62.233.50[.]25",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "70.37.82[.]20",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "185.17.40[.]178",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "domain",
+   "value": "docs.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "domain",
+   "value": "test.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "url",
+   "value": "hxxp://81.19.135[.]219/F8PtZ87fE8dJWqe.hta",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "url",
+   "value": "Hxxp://81.19.135[.]219:443/q0X5wzEh6P7.hta",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "81.19.135[.]2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "81.19.135[.]219",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64",
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "F8PtZ87fE8dJWqe.hta",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "q0X5wzEh6P7.hta",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "81.19.135[.]220",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "ip",
+   "value": "81.19.135[.]226",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "101.97.36[.]61",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "ip",
+   "value": "168.100.9[.]137",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71",
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "ip",
+   "value": "185.20.209[.]127",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "185.230.212[.]83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "ip",
+   "value": "206.188.197[.]22",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "ip",
+   "value": "54.84.248[.]205",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "ip",
+   "value": "141.98.9[.]137",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "domain",
+   "value": "eu1-dms.zoho[.]eu",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "domain",
+   "value": "fixme[.]it",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "domain",
+   "value": "unattended.techninline[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "98e79f95cf8de8ace88bf223421db5dce303b112152d66ffdf27ebdfcdf967e9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "ip",
+   "value": "127.0.0[.]1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "e557e1440e394537cca71ed3d61372106c3c70eb6ef9f07521768f23a0974068",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "6e8ca501c45a9b85fff2378cffaa24b2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "17a27b1759f10d1f6f1f51a11c0efea550e2075c2c394259af4d3f855bbcc994",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "hash",
+   "value": "906602ea3c887af67bcb4531bbbb459d7c24a2efcb866bcb1e3b028a51f12ae6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "eb842a9509dece779d138d2e6b0f6949",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell scripts, the execution of HTA files using the Windows native utility mshta.exe and other common software tools typically associated with ransomware incidents",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd.exe /q /c cd 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "command-3",
+   "interpreter": "cmd",
+   "command": "cmd.exe /q /c cd \\ 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "command-4",
+   "interpreter": "cmd",
+   "command": "cmd.exe /q /c query Command High wmiexec.exe usage user 1> \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "command-5",
+   "interpreter": "cmd",
+   "command": "cmd.exe /q /c taskkill Command High wmiexec.exe usage /f /im sqlwriter.exe /im winmysqladmin.exe /im w3sqlmgr.exe /im sqlwb.exe /im sqltob.exe /im sqlservr.exe /im sqlserver.exe /im sqlscan.exe /im sqlbrowser.exe /im sqlrep.exe /im sqlmangr.exe /im sqlexp3.exe /im sqlexp2.exe /im sqlex",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "command-6",
+   "interpreter": "cmd",
+   "command": "cmd.exe /q /c cd \\ 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698618133[.]54 2>&1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "command-7",
+   "interpreter": "powershell",
+   "command": "PowerShell [CPG 2.E]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "LockBit 3.0 affiliates exploiting CVE-2023-4966, to obtain initial access to Boeing Distribution Inc.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LockBit 3.0 affiliates exploiting CVE 2023 4966, to obtain initial access to Boeing Distribution Inc."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Citrix Bleed, known to be leveraged by LockBit 3.0 affiliates, allows threat actors to bypass password requirements and multifactor authentication (MFA), leading to successful session hijacking of legitimate user sessions on Citrix NetScaler web application delivery control (ADC) and Gateway appliances.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Citrix Bleed, known to be leveraged by LockBit 3.0 affiliates, allows threat actors to bypass password requirements and multifactor authentication (MFA), leadin"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "CVE-2023-4966 is a software vulnerability found in Citrix NetScaler ADC and NetScaler Gateway appliances with exploitation activity identified as early as August 2023. This vulnerability provides threat actors, including LockBit 3.0 ransomware affiliates, the capability to bypass MFA and hijack legitimate user sessions.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966 is a software vulnerability found in Citrix NetScaler ADC and NetScaler Gateway appliances with exploitation activity identified as early as Augus"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Affiliates acquire this by sending an HTTP GET request with a crafted HTTP Host header, leading to a vulnerable appliance returning system memory information. The information obtained through this exploit contains a valid NetScaler AAA session cookie.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Affiliates acquire this by sending an HTTP GET request with a crafted HTTP Host header, leading to a vulnerable appliance returning system memory information. T"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "After acquiring access to valid cookies, LockBit 3.0 affiliates establish an authenticated session within the NetScaler appliance without a username, password, or access to MFA tokens.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After acquiring access to valid cookies, LockBit 3.0 affiliates establish an authenticated session within the NetScaler appliance without a username, password, "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Threat actors with access to valid cookies can establish an authenticated session within the NetScaler appliance without a username, password, or access to multifactor authentication (MFA) tokens.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " establish an authenticated session within the NetScaler appliance without a username, password, or access to multifactor authentication (MFA) tokens."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Malware identified in this campaign is generated beginning with the execution of a PowerShell script (123.ps1) which concatenates two base64 strings together, converts them to bytes, and writes them to the designated file path.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Malware identified in this campaign is generated beginning with the execution of a PowerShell script (123.ps1) which concatenates two base64 strings together, c"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The resulting file (adobelib.dll) is then executed by the PowerShell script using rundll32. rundll32 C:\\Users\\Public\\adobelib.dll,main <104 hex char key>. The Dynamic Link Library (DLL) will not execute correctly without the 104 hex character key.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The resulting file (adobelib.dll) is then executed by the PowerShell script using rundll32. rundll32 C:\\Users\\Public\\adobelib.dll,main <104 hex char key>"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Following execution, the DLL attempts to send a POST request to https://adobe-us-updatefiles[.]digital/index.php which resolves to IP addresses 172.67.129[.]176 and 104.21.1[.]180 as of November 16, 2023.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Following execution, the DLL attempts to send a POST request to https://adobe us updatefiles[.]digital/index.php which resolves to IP addresses 172.67.129[.]176"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "LockBit 3.0 affiliates have been observed using AnyDesk and Splashtop remote management and monitoring (RMM), Batch and PowerShell scripts, the execution of HTA files using the Windows native utility mshta.exe and other common software tools typically associated with ransomware incidents.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LockBit 3.0 affiliates have been observed using AnyDesk and Splashtop remote management and monitoring (RMM), Batch and PowerShell scripts, the execution of HTA"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "LockBit is known to leverage Altera, a remote admin tool, such as Anydesk, team viewer, etc.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LockBit is known to leverage Altera, a remote admin tool, such as Anydesk, team viewer, etc."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "AnyDeskMSI.exe was installed as a service with \"auto start\" abilities for persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " with \"auto start\" abilities for persistence."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Psexec.exe used to deploy screenconnect.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "56"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " used to deploy screenconnect"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "zoho assist",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zoho assist"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Next, a.dll loads DbgCore.dll then utilizes MiniDumpWriteDump function to dump LSASS process memory to disk. If successful, the dumped process memory is written to a.png.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "112"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Next, a.dll loads DbgCore.dll then utilizes MiniDumpWriteDump function to dump LSASS process memory to disk. If successful, the dumped process memory is written"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "This file is a Python script called a.py that attempts to leverage WinRM to establish a session. The script attempts to authenticate to the remote machine using NT LAN Manager (NTLM) if the keyword \"hashpasswd\" is present. If the keyword \"hashpasswd\" is not present, then the script attempts to authenticate using basic authentication. Once a WinRM session is established with the remote machine, the script has the ability to execute command line arguments on the remote machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "114"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This file is a Python script called a.py that attempts to leverage WinRM to establish a session. The script attempts to authenticate to the remote machine using"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Citrix NetScaler web application delivery control (ADC) and NetScaler Gateway appliances",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Citrix NetScaler web application delivery control (ADC) and NetScaler Gateway appliances"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "CVE-2023-4966 is a software vulnerability found in Citrix NetScaler ADC and NetScaler Gateway appliances",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966 is a software vulnerability found in Citrix NetScaler ADC and NetScaler Gateway appliances"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Due to the ease of exploitation, CISA and the authoring organizations expect to see widespread exploitation of the Citrix vulnerability in unpatched software services throughout both private and public networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Due to the ease of exploitation, CISA and the authoring organizations expect to see widespread exploitation of the Citrix vulnerability in unpatched software se"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Execution of PowerShell script 123.ps1 concatenates two base64 strings, converts them to bytes, and writes them to C:\\Users\\Public\\adobelib.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ", converts them to bytes, and writes them to "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "PowerShell script executes adobelib.dll using rundll32",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8571,
+   "matched_text": "PowerShell script "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Malware loads DLL into LSASS process and uses MiniDumpWriteDump function to dump LSASS process memory to disk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "s and "
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The file a.exe loads this file into the running LSASS process on the infected machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "111"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The file a.exe loads this file into the running LSASS process on the infected machine."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "The file a.dll calls the Windows API CreateFileW to create a file called a.png in the path C:\\Users\\Public.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "111"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The file a.dll calls the Windows API CreateFileW to create a file called a.png in the path C:\\Users\\Public."
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Next, a.dll loads DbgCore.dll then utilizes MiniDumpWriteDump function to dump LSASS process memory to disk.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "112"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Next, a.dll loads DbgCore.dll then utilizes MiniDumpWriteDump function to dump LSASS process memory to disk."
+  },
+  {
+   "id": "evidence-26",
+   "quote": "LockBit 3.0 affiliates exploited CVE-2023-4966 to bypass MFA and hijack legitimate user sessions on Citrix NetScaler ADC and Gateway appliances",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a1"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Malware loads DLL into LSASS process and uses MiniDumpWriteDump function to dump LSASS process memory to disk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Python script a.py attempts to leverage WinRM to establish a session using NTLM or basic authentication and execute commands remotely",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Execution of PowerShell script 123.ps1 concatenates two base64 strings, converts them to bytes, and writes them to C:\\Users\\Public\\adobelib.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-30",
+   "quote": "PowerShell script executes adobelib.dll using rundll32 with a required 104 hex character key",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-31",
+   "quote": "adobelib.dll attempts to send a POST request to https://adobe-us-updatefiles.digital/index.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a6"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-32",
+   "quote": "LockBit 3.0 affiliates have been observed using AnyDesk and Splashtop remote management and monitoring (RMM) tools during ransomware activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-33",
+   "quote": "LockBit 3.0 affiliates use Batch and PowerShell scripts and execute HTA files using mshta.exe utility",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-34",
+   "quote": "execute HTA files via mshta.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-35",
+   "quote": "LockBit 3.0 affiliates use various remote administration tools such as TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist for persistence and lateral movement",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-36",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "CVE-2023-4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "134"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "CVE-2023-\n       4966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "134"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 4966"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "172.67.129[.]176",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "172.67.129[.]176"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "172.67.129[.]176",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "172.67.129[.]176"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "104.21.1[.]180",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.21.1[.]180"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "104.21.1[.]180",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.21.1[.]180"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "updatefiles[.]digital",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "updatefiles[.]digital"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "updatefiles[.]digital",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "updatefiles[.]digital"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "adobe-us-updatefiles[.]digital",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "adobe us updatefiles[.]digital"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "adobe-us-updatefiles[.]digital",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "adobe us updatefiles[.]digital"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "Adobe-us-updatefiles[.]digital",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Adobe us updatefiles[.]digital"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "Hxxp://62.233.50[.]25/en-us/docs.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hxxp://62.233.50[.]25/en us/docs.html"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "Hxxp://62.233.50[.]25/en-us/test.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hxxp://62.233.50[.]25/en us/test.html"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "192.229.221[.]95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.229.221[.]95"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "193.201.9[.]224",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.201.9[.]224"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "62.233.50[.]25",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62.233.50[.]25"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "70.37.82[.]20",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "70.37.82[.]20"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "185.17.40[.]178",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.17.40[.]178"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "docs.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "docs.html"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "test.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "test.html"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "hxxp://81.19.135[.]219/F8PtZ87fE8dJWqe.hta",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxp://81.19.135[.]219/F8PtZ87fE8dJWqe.hta"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "Hxxp://81.19.135[.]219:443/q0X5wzEh6P7.hta",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hxxp://81.19.135[.]219:443/q0X5wzEh6P7.hta"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "81.19.135[.]2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.19.135[.]2"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "81.19.135[.]219",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.19.135[.]219"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "81.19.135[.]219",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.19.135[.]219"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "F8PtZ87fE8dJWqe.hta",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "F8PtZ87fE8dJWqe.hta"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "q0X5wzEh6P7.hta",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "q0X5wzEh6P7.hta"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "81.19.135[.]220",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.19.135[.]220"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "81.19.135[.]226",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81.19.135[.]226"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "101.97.36[.]61",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "101.97.36[.]61"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "168.100.9[.]137",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "67"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "168.100.9[.]137"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "168.100.9[.]137",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "84"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "168.100.9[.]137"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "185.20.209[.]127",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.20.209[.]127"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "185.230.212[.]83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "69"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.230.212[.]83"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "206.188.197[.]22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.188.197[.]22"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "54.84.248[.]205",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "71"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "54.84.248[.]205"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "141.98.9[.]137",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "72"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "141.98.9[.]137"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "eu1-dms.zoho[.]eu",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eu1 dms.zoho[.]eu"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "fixme[.]it",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "86"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fixme[.]it"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "unattended.techninline[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "unattended.techninline[.]net"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "98e79f95cf8de8ace88bf223421db5dce303b112152d66ffdf27ebdfcdf967e9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "98e79f95cf8de8ace88bf223421db5dce303b112152d66ffdf27ebdfcdf967e9"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "127.0.0[.]1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "102"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "127.0.0[.]1"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "e557e1440e394537cca71ed3d61372106c3c70eb6ef9f07521768f23a0974068",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "106"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e557e1440e394537cca71ed3d61372106c3c70eb6ef9f07521768f23a0974068"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "6e8ca501c45a9b85fff2378cffaa24b2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "106"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6e8ca501c45a9b85fff2378cffaa24b2"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "17a27b1759f10d1f6f1f51a11c0efea550e2075c2c394259af4d3f855bbcc994",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "108"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "17a27b1759f10d1f6f1f51a11c0efea550e2075c2c394259af4d3f855bbcc994"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "906602ea3c887af67bcb4531bbbb459d7c24a2efcb866bcb1e3b028a51f12ae6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "113"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "906602ea3c887af67bcb4531bbbb459d7c24a2efcb866bcb1e3b028a51f12ae6"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "eb842a9509dece779d138d2e6b0f6949",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "118"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eb842a9509dece779d138d2e6b0f6949"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "PowerShell scripts, the execution of HTA files using the Windows native utility mshta.exe and other common software tools typically associated with ransomware incidents",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell scripts, the execution of HTA files using the Windows native utility mshta.exe and other common software tools typically associated with ransomware i"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "cmd.exe /q /c cd 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /q /c cd 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "cmd.exe /q /c cd \\ 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /q /c cd \\ 1>          Command          High       wmiexec.exe usage\n        \\\\127.0.0.1\\admin$\\__\n        1698617793[.]44\n        2>&1"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "cmd.exe /q /c query Command High wmiexec.exe usage user 1> \\\\127.0.0.1\\admin$\\__ 1698617793[.]44 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /q /c query            Command          High       wmiexec.exe usage\n        user 1>\n        \\\\127.0.0.1\\admin$\\__\n        1698617793[.]44\n        2>&1"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "cmd.exe /q /c taskkill Command High wmiexec.exe usage /f /im sqlwriter.exe /im winmysqladmin.exe /im w3sqlmgr.exe /im sqlwb.exe /im sqltob.exe /im sqlservr.exe /im sqlserver.exe /im sqlscan.exe /im sqlbrowser.exe /im sqlrep.exe /im sqlmangr.exe /im sqlexp3.exe /im sqlexp2.exe /im sqlex",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /q /c taskkill         Command          High       wmiexec.exe usage\n        /f /im sqlwriter.exe /im\n        winmysqladmin.exe\n        /im w3sqlmgr.exe"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "cmd.exe /q /c cd \\ 1> Command High wmiexec.exe usage \\\\127.0.0.1\\admin$\\__ 1698618133[.]54 2>&1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /q /c cd \\ 1>          Command          High       wmiexec.exe usage\n        \\\\127.0.0.1\\admin$\\__\n        1698618133[.]54\n        2>&1"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "PowerShell [CPG 2.E]",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell [CPG 2.E]"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Citrix NetScaler ADC and Gateway appliances — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix NetScaler ADC and Gateway appliances 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Citrix NetScaler ADC and Gateway appliances",
+    "action:a1 — exploit CVE-2023-4966 Citrix Bleed vulnerability",
+    "action:a2 — acquire valid NetScaler AAA session cookie",
+    "action:a3 — establish authenticated session without username, password, or MFA tokens"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix NetScaler ADC and Gateway appliances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Citrix NetScaler ADC and Gateway appliances — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix NetScaler ADC and Gateway appliances 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Citrix NetScaler ADC and Gateway appliances",
+    "action:a1 — exploit CVE-2023-4966 Citrix Bleed vulnerability",
+    "action:a2 — acquire valid NetScaler AAA session cookie",
+    "action:a3 — establish authenticated session without username, password, or MFA tokens"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix NetScaler ADC and Gateway appliances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Windows hosts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows hosts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Windows hosts",
+    "action:a4 — execute PowerShell script 123.ps1 to create adobelib.dll",
+    "action:a5 — execute adobelib.dll using rundll32 with 104 hex character key",
+    "action:a6 — adobelib.dll sends POST request to adobe-us-updatefiles.digital",
+    "action:a7 — use AnyDesk and Splashtop remote management and monitoring tools",
+    "action:a8 — use Batch and PowerShell scripts and execute HTA files via mshta.exe",
+    "action:a9 — use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist",
+    "action:a10 — dump LSASS process memory to disk",
+    "action:a11 — establish WinRM session using Python script a.py"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows hosts",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h2.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Windows hosts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows hosts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Windows hosts",
+    "action:a4 — execute PowerShell script 123.ps1 to create adobelib.dll",
+    "action:a5 — execute adobelib.dll using rundll32 with 104 hex character key",
+    "action:a6 — adobelib.dll sends POST request to adobe-us-updatefiles.digital",
+    "action:a7 — use AnyDesk and Splashtop remote management and monitoring tools",
+    "action:a8 — use Batch and PowerShell scripts and execute HTA files via mshta.exe",
+    "action:a9 — use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist",
+    "action:a10 — dump LSASS process memory to disk",
+    "action:a11 — establish WinRM session using Python script a.py"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows hosts",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Windows hosts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Windows hosts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Windows hosts",
+    "action:a4 — execute PowerShell script 123.ps1 to create adobelib.dll",
+    "action:a5 — execute adobelib.dll using rundll32 with 104 hex character key",
+    "action:a6 — adobelib.dll sends POST request to adobe-us-updatefiles.digital",
+    "action:a7 — use AnyDesk and Splashtop remote management and monitoring tools",
+    "action:a8 — use Batch and PowerShell scripts and execute HTA files via mshta.exe",
+    "action:a9 — use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist",
+    "action:a10 — dump LSASS process memory to disk",
+    "action:a11 — establish WinRM session using Python script a.py"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Windows hosts",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20",
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-psexec-version",
+   "field": "PsExec version",
+   "category": "software",
+   "reason": "IR 指出 PsExec 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 提到 PsExec，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a9 — use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "use remote administration tools including TeamViewer, Plink, PsExec, ScreenConnect, and Zoho Assist",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Citrix NetScaler ADC and NetScaler Gateway — 版本",
+   "category": "version",
+   "reason": "IR 指出 Citrix NetScaler ADC and NetScaler Gateway（CVE-2023-4966），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Citrix NetScaler ADC and NetScaler Gateway 的哪個版本？請選受 CVE-2023-4966 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Citrix NetScaler ADC and NetScaler Gateway"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Citrix NetScaler ADC and NetScaler Gateway",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-26"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-4966",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a3 — establish authenticated session without username, password, or MFA tokens",
+    "host:h1 — Citrix NetScaler ADC and Gateway appliances"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "establish authenticated session without username, password, or MFA tokens",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-citrix-netscaler-adc-and-ne",
+   "field": "software dependency: Citrix NetScaler ADC and NetScaler Gateway",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Citrix NetScaler ADC and NetScaler Gateway 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-lsass-process",
+   "field": "software dependency: LSASS process",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "LSASS process 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-winrm",
+   "field": "software dependency: WinRM",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "WinRM 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8191,
+  "unsupported_claim_count": 22,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

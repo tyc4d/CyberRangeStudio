@@ -1,0 +1,72 @@
+# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
+name: cr-demo-evidence
+x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
+services:
+  h1:
+    container_name: cr-demo-evidence-h1
+    networks:
+    - scenario-internal
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m,uid=70,gid=70,mode=0700
+    - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=70,gid=70,mode=0700
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: postgres:16.16-alpine3.23@sha256:48340c4811085e083751cab526e533662da19585c1e6942a28b9c48ce7fcb8b2
+    user: 70:70
+    environment:
+      POSTGRES_PASSWORD: ${CR_PG_PASSWORD:?set at deploy time}
+      POSTGRES_HOST_AUTH_METHOD: ${CR_PG_AUTH_METHOD:-trust}
+    healthcheck:
+      test:
+      - CMD
+      - pg_isready
+      - -h
+      - 127.0.0.1
+      - -p
+      - '5432'
+      - -U
+      - postgres
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+  attacker:
+    container_name: cr-demo-evidence-attacker
+    networks:
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+    user: 65532:65532
+    command:
+    - sh
+    - -c
+    - sleep 2147483647
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+networks:
+  external:
+    name: cr-demo-evidence-external
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  scenario-internal:
+    name: cr-demo-evidence-scenario-internal
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated

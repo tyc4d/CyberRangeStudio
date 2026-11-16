@@ -1,0 +1,6846 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240725",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "60120140f02263bd8dfa30c2a68f0ca9c26be8f1eb1b4c2eff9c4a7a34b1bcbc",
+  "source_name": "csa-2024-240725"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "gain initial access through exploitation of web servers",
+   "source": "llm",
+   "description": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE-2021-44228 (“Log4Shell”) in Apache’s Log4j software library and other CVEs listed, to deploy web shells and gain access to sensitive information and applications for further exploitation.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  },
+  {
+   "id": "a2",
+   "name": "deploy web shell malware",
+   "source": "llm",
+   "description": "The actors deploy web shell malware on victim web servers to execute arbitrary system commands.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "No application fixture or explicit Log4j/JVM version is identified. Supply app, Log4j and JVM versions, configuration, and harmless validation step."
+  },
+  {
+   "id": "a3",
+   "name": "perform system discovery and enumeration",
+   "source": "llm",
+   "description": "The actors perform system, network, and account enumeration using native tools such as Windows command line, PowerShell, WMIC, and Linux bash, including netstat commands.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1059",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "establish persistence using Scheduled Tasks",
+   "source": "llm",
+   "description": "The actors establish persistence on compromised systems using Scheduled Tasks.",
+   "target_host_ref": "h2",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "perform privilege escalation using credential stealing tools",
+   "source": "llm",
+   "description": "The actors perform privilege escalation using common credential stealing tools such as Mimikatz, Dumpert, and ProcDump, and by accessing the Active Directory domain database through targeting of the NTDS.dit file.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1003",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8",
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "use custom malware implants and remote access tools",
+   "source": "llm",
+   "description": "The actors deploy and leverage custom malware implants and remote access tools (RATs) for execution, lateral movement, and data exfiltration.",
+   "target_host_ref": "h2",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "conduct phishing activity using malicious attachments",
+   "source": "llm",
+   "description": "The actors conduct phishing activity using malicious attachments, including Microsoft Windows Shortcut File (LNK) files or HTML Application (HTA) script files inside encrypted or unencrypted zip archives.",
+   "target_host_ref": "unknown",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "use system logging for discovery and lateral movement",
+   "source": "llm",
+   "description": "The actors log active window changes, clipboard data, and keystrokes and save the collected logging information to the %Temp% directory to aid in discovery and lateral movement.",
+   "target_host_ref": "h2",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "use Remote Desktop Protocol (RDP) for lateral movement",
+   "source": "llm",
+   "description": "The actors have used Remote Desktop Protocol (RDP) to move laterally within victim networks.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1021",
+   "attack_tactic": "lateral-movement",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a10",
+   "name": "use Server Message Block (SMB) protocol for discovery",
+   "source": "llm",
+   "description": "The actors enumerate directories and files of connected devices using Server Message Block (SMB) protocol to request services and programs from a network.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1021.002",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a11",
+   "name": "compress collected files into RAR archives",
+   "source": "llm",
+   "description": "The actors collect relevant files into RAR archives, sometimes using a version of WinRAR brought into the victim’s environment with other malicious tooling.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1560",
+   "attack_tactic": "collection",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a12",
+   "name": "exfiltrate data to cloud storage or actor-controlled servers",
+   "source": "llm",
+   "description": "The actors exfiltrate data to web services such as cloud storage or servers not associated with their primary C2, including logging into actor-controlled cloud-based storage service accounts directly from victim networks and using PuTTY and WinSCP to exfiltrate data via FTP and other protocols.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1567",
+   "attack_tactic": "exfiltration",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a13",
+   "name": "use tunneling tools for command and control",
+   "source": "llm",
+   "description": "The actors use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from inside a network back to a C2 server, disguising malware within HTTP packets to appear as benign network traffic.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1090",
+   "attack_tactic": "command-and-control",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a14",
+   "name": "use publicly available credential theft utilities and dual-use tools",
+   "source": "llm",
+   "description": "The actors use publicly available credential theft utilities and dual-use tools such as Mimikatz, Dumpert, and ProcDump to steal credentials.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1003",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a15",
+   "name": "use customized file system enumeration tooling",
+   "source": "llm",
+   "description": "The actors used customized file system enumeration tooling written in .NET capable of receiving and executing command line arguments to enumerate directories and files and compress output files, collecting detailed information for each drive targeted on a system.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1083",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a16",
+   "name": "pack late-stage tooling with VMProtect and Themida",
+   "source": "llm",
+   "description": "The actors routinely pack late-stage tooling in VMProtect and Themida to make executables difficult to discover or analyze by encrypting, encoding, or otherwise obfuscating their content.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1027",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "web shells deployed using initial access gained by exploiting web servers",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "system discovery and enumeration follows deployment of web shells",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "establish persistence using Scheduled Tasks follows system discovery and enumeration",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "privilege escalation using credential stealing tools follows persistence establishment",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "use of custom malware implants and RATs follows privilege escalation",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "use system logging for discovery and lateral movement follows use of custom malware implants and RATs",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a6",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "use of RDP for lateral movement follows use of custom malware implants and RATs",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a3",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "use of SMB protocol for discovery follows system discovery and enumeration",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r9",
+   "from_action": "a10",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "use of customized file system enumeration tooling follows SMB enumeration",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a15",
+   "to_action": "a11",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "collected files compressed into RAR archives using tooling that enumerates and compresses files",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r11",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "exfiltration uses the compressed RAR archives",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r12",
+   "from_action": "a13",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "tunneling tools used to tunnel traffic from inside network back to C2 server, supporting custom malware implants and RATs",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r13",
+   "from_action": "a16",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "packing late-stage tooling with VMProtect and Themida applies to malicious tooling used for execution, lateral movement, and data exfiltration",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r14",
+   "from_action": "a7",
+   "to_action": "a1",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access targets",
+   "source": "llm",
+   "name": "victim web servers",
+   "evidence_refs": [
+    "evidence-26",
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "svc-unsupported-log4j-unspecified-h1",
+    "svc-oss-httpd-h1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "systems used for enumeration, persistence, privilege escalation, lateral movement, and data staging",
+   "source": "llm",
+   "name": "compromised systems",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29",
+    "evidence-30",
+    "evidence-31",
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s2",
+    "s3",
+    "s4",
+    "svc-unsupported-ad-ds-h2"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Apache Log4j",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2021-44228"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   },
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "Server Message Block (SMB) protocol",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "Active Directory domain database",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "svc-unsupported-log4j-unspecified-h1",
+   "name": "Log4j application",
+   "matched_text": "CVE-2021-44228",
+   "cve": [],
+   "catalogue_component": "unsupported-log4j-unspecified",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1"
+  },
+  {
+   "id": "svc-oss-httpd-h1",
+   "name": "Apache",
+   "cve": [],
+   "catalogue_component": "oss-httpd",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1",
+   "version_basis": "assumed",
+   "deployed_version": "2.4.71"
+  },
+  {
+   "id": "svc-unsupported-ad-ds-h2",
+   "name": "Active Directory",
+   "cve": [],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h2"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "web shell malware",
+   "type": "malware",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Scheduled Tasks",
+   "type": "other",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Mimikatz",
+   "type": "tool",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Dumpert",
+   "type": "tool",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ProcDump",
+   "type": "tool",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "custom malware implants and remote access tools (RATs)",
+   "type": "malware",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-38"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Microsoft Windows Shortcut File (LNK) files",
+   "type": "file",
+   "id": "a7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-39"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "HTML Application (HTA) script files",
+   "type": "file",
+   "id": "a8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-39"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "WinRAR",
+   "type": "tool",
+   "id": "a9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "PuTTY",
+   "type": "tool",
+   "id": "a10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "WinSCP",
+   "type": "tool",
+   "id": "a11",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "3Proxy",
+   "type": "tool",
+   "id": "a12",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PLINK",
+   "type": "tool",
+   "id": "a13",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Stunnel",
+   "type": "tool",
+   "id": "a14",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "customized file system enumeration tooling written in .NET",
+   "type": "tool",
+   "id": "a15",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-41"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "VMProtect",
+   "type": "tool",
+   "id": "a16",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Themida",
+   "type": "tool",
+   "id": "a17",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2023-46604",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2023-42793",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45",
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2023-3519",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "cve",
+   "value": "CVE-2023-35078",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "cve",
+   "value": "CVE-2023-34362",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "cve",
+   "value": "CVE-2023-33246",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "cve",
+   "value": "CVE-2023-32784",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "cve",
+   "value": "CVE-2023-32315",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "cve",
+   "value": "CVE-2023-3079",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "cve",
+   "value": "CVE-2023-28771",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "cve",
+   "value": "CVE-2023-33010",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "cve",
+   "value": "CVE-2023-2868",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "cve",
+   "value": "CVE-2023-27997",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "cve",
+   "value": "CVE-2023-25690",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "cve",
+   "value": "CVE-2023-21932",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "cve",
+   "value": "CVE-2023-0669",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "cve",
+   "value": "CVE-2022-47966",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "cve",
+   "value": "CVE-2022-41352",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "cve",
+   "value": "CVE-2022-27925",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "cve",
+   "value": "CVE-2022-30190",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "cve",
+   "value": "CVE-2022-25064",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "cve",
+   "value": "CVE-2022-24990",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "cve",
+   "value": "CVE-2021-45837",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "cve",
+   "value": "CVE-2022-24785",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "cve",
+   "value": "CVE-2022-24665",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "cve",
+   "value": "CVE-2022-24664",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "cve",
+   "value": "CVE-2022-24663",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "cve",
+   "value": "CVE-2022-22965",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "cve",
+   "value": "CVE-2022-22947",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "cve",
+   "value": "CVE-2022-22005",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "cve",
+   "value": "CVE-2022-21882",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "cve",
+   "value": "CVE-2021-44228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76",
+    "evidence-77",
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "cve",
+   "value": "CVE-2021-44142",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "cve",
+   "value": "CVE-2021-43226",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "cve",
+   "value": "CVE-2021-36955",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "cve",
+   "value": "CVE-2021-41773",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "cve",
+   "value": "CVE-2021-40684",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "cve",
+   "value": "CVE-2021-3018",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "cve",
+   "value": "CVE-2021-20038",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "cve",
+   "value": "CVE-2021-20028",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "cve",
+   "value": "CVE-2019-15637",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "cve",
+   "value": "CVE-2019-7609",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "cve",
+   "value": "CVE-2019-0708",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "cve",
+   "value": "CVE-2017-4946",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "hash",
+   "value": "88a7c84ac7f7ed310b5ee791ec8bd6c5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "hash",
+   "value": "97ce00c7ef1f7d98b48291d73d900181",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "hash",
+   "value": "6ab4eb4c23c9e419fbba85884ea141f4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "hash",
+   "value": "079b4588eaa99a1e802adf5e0b26d8aa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "hash",
+   "value": "0873b5744d8ab6e3fe7c9754cf7761a3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "hash",
+   "value": "4896da30a745079cd6265b6332886d45",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "hash",
+   "value": "0d696d27bae69a62def82e308d28857a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "hash",
+   "value": "73eb2f4f101aab6158c615094f7a632a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "hash",
+   "value": "0ecf4bac2b070cf40f0b17e18ce312e6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "hash",
+   "value": "7f33d2d2a2ce9c195202acb59de31eee",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "hash",
+   "value": "17c46ed7b80c2e4dbea6d0e88ea0827c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-57",
+   "type": "hash",
+   "value": "e1afd01400ef405e46091e8ef10c721c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-58",
+   "type": "hash",
+   "value": "1f2410c3c25dadf9e0943cd634558800",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-59",
+   "type": "hash",
+   "value": "fe25c192875ec1914b8880ea3896cda2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-60",
+   "type": "hash",
+   "value": "2968c20a07cfc97a167aa3dd54124cda",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-61",
+   "type": "hash",
+   "value": "232586f8cfe82b80fd0dfa6ed8795c56",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-62",
+   "type": "hash",
+   "value": "33e85d0f3ef2020cdb0fc3c8d80e8e69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-63",
+   "type": "hash",
+   "value": "c1f266f7ec886278f030e7d7cd4e9131",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-64",
+   "type": "hash",
+   "value": "4118d9adce7350c3eedeb056a3335346",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-65",
+   "type": "hash",
+   "value": "49bb2ad67a8c5dfbfe8db2169e6fa46e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-66",
+   "type": "hash",
+   "value": "4aa57e1c66c2e01f2da3f106ed2303fa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-67",
+   "type": "hash",
+   "value": "beb199b15bd075996fa8d6a0ed554ca8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-68",
+   "type": "hash",
+   "value": "58ad3103295afcc22bde8d81e77c282f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113"
+   ]
+  },
+  {
+   "id": "indicator-69",
+   "type": "hash",
+   "value": "4053ca3e37ed1f8d37b29eed61c2e729",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-70",
+   "type": "hash",
+   "value": "5c41cbf8a7620e10f158f6b70963d1cb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-71",
+   "type": "hash",
+   "value": "3a0c8ae783116c1840740417c4fbe678",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-72",
+   "type": "hash",
+   "value": "61a949553d35f31957db6442f36730c5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-73",
+   "type": "hash",
+   "value": "0414a2ab718d44bf6f7103cff287b312",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-74",
+   "type": "hash",
+   "value": "72a22afde3f820422cfdbba7a4cbabde",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-75",
+   "type": "hash",
+   "value": "ca564428a29faf1a613f35d9fa36313f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-76",
+   "type": "hash",
+   "value": "84bd45e223b018e67e4662c057f2c47e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-77",
+   "type": "hash",
+   "value": "ad6d4eb34d29e350f96dc8df6d8a092e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-78",
+   "type": "hash",
+   "value": "86465d92f0d690b62866f52f5283b9fc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-79",
+   "type": "hash",
+   "value": "dc70dc9845aa747001ebf2a02467c203",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-80",
+   "type": "hash",
+   "value": "8b395cc6ecdec0900facf6e93ec48fbb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-81",
+   "type": "hash",
+   "value": "3d2ec58f37c8176e0dbcc47ff93e5a76",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126"
+   ]
+  },
+  {
+   "id": "indicator-82",
+   "type": "hash",
+   "value": "97f352e2808c78eef9b31c758ca13032",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-83",
+   "type": "hash",
+   "value": "0a09b7f2317b3d5f057180be6b6d0755",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  },
+  {
+   "id": "indicator-84",
+   "type": "hash",
+   "value": "a50f3b7aa11b977ae89285b60968aa67",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-129"
+   ]
+  },
+  {
+   "id": "indicator-85",
+   "type": "hash",
+   "value": "1ffccc23fef2964e9b1747098c19d956",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-130"
+   ]
+  },
+  {
+   "id": "indicator-86",
+   "type": "hash",
+   "value": "afd25ce56b9808c5ed7eade75d2e12a7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-131"
+   ]
+  },
+  {
+   "id": "indicator-87",
+   "type": "hash",
+   "value": "9112efb49cae021abebd3e9a564e6ca4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-132"
+   ]
+  },
+  {
+   "id": "indicator-88",
+   "type": "hash",
+   "value": "afdeb24975a318fc5f20d9e61422a308",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-133"
+   ]
+  },
+  {
+   "id": "indicator-89",
+   "type": "hash",
+   "value": "ac0ada011f1544aa3a1cf27a26f2e288",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-134"
+   ]
+  },
+  {
+   "id": "indicator-90",
+   "type": "hash",
+   "value": "b697b81b341692a0b137b2c748310ea7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-135"
+   ]
+  },
+  {
+   "id": "indicator-91",
+   "type": "hash",
+   "value": "0211a3160cc5871cbcd4e5514449162b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-136"
+   ]
+  },
+  {
+   "id": "indicator-92",
+   "type": "hash",
+   "value": "bcac28919fa33704a01d7a9e5e3ddf3f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-137"
+   ]
+  },
+  {
+   "id": "indicator-93",
+   "type": "hash",
+   "value": "7416ea48102e2715c87edd49ddbd1526",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-138"
+   ]
+  },
+  {
+   "id": "indicator-94",
+   "type": "hash",
+   "value": "c027d641c4c1e9d9ad048cda2af85db6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-139",
+    "evidence-140"
+   ]
+  },
+  {
+   "id": "indicator-95",
+   "type": "hash",
+   "value": "a2aefb7ab6c644aa8eeb482e27b2dbc4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-141"
+   ]
+  },
+  {
+   "id": "indicator-96",
+   "type": "hash",
+   "value": "c892c60817e6399f939987bd2bf5dee0",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-142"
+   ]
+  },
+  {
+   "id": "indicator-97",
+   "type": "hash",
+   "value": "e7fd7f48fbf5635a04e302af50dfb651",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-143"
+   ]
+  },
+  {
+   "id": "indicator-98",
+   "type": "hash",
+   "value": "cdeae978f3293f4e783761bc61b34810",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-144"
+   ]
+  },
+  {
+   "id": "indicator-99",
+   "type": "hash",
+   "value": "33b2b5b7c830c34c688cf6ced287e5be",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-145"
+   ]
+  },
+  {
+   "id": "indicator-100",
+   "type": "hash",
+   "value": "d0f310c99476f1712ac082f78dd29fdc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-146"
+   ]
+  },
+  {
+   "id": "indicator-101",
+   "type": "hash",
+   "value": "e5410abaaac69c88db84ab3d0e9485ac",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-147"
+   ]
+  },
+  {
+   "id": "indicator-102",
+   "type": "hash",
+   "value": "d8da33fae924b991b776797ba8cde24c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-148"
+   ]
+  },
+  {
+   "id": "indicator-103",
+   "type": "hash",
+   "value": "eb35b75369805e7a6371577b1d2c4531",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-149"
+   ]
+  },
+  {
+   "id": "indicator-104",
+   "type": "hash",
+   "value": "e230c5728f9ea5a94e390e7da7bf1ffa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-150"
+   ]
+  },
+  {
+   "id": "indicator-105",
+   "type": "hash",
+   "value": "5a3f3f75048b9cec177838fb8b40b945",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-151"
+   ]
+  },
+  {
+   "id": "indicator-106",
+   "type": "hash",
+   "value": "f4d46629ca15313b94992f3798718df7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-152"
+   ]
+  },
+  {
+   "id": "indicator-107",
+   "type": "hash",
+   "value": "9d7bd0caed10cc002670faff7ca130f5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-153"
+   ]
+  },
+  {
+   "id": "indicator-108",
+   "type": "hash",
+   "value": "fb84a392601fc19aeb7f8ce11b3a4907",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-154"
+   ]
+  },
+  {
+   "id": "indicator-109",
+   "type": "hash",
+   "value": "8434cdd34425916be234b19f933ad7ea",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-155"
+   ]
+  },
+  {
+   "id": "indicator-110",
+   "type": "hash",
+   "value": "ff3194d3d5810a42858f3e22c91500b1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-156"
+   ]
+  },
+  {
+   "id": "indicator-111",
+   "type": "hash",
+   "value": "bbaee4fe73ccff1097d635422fdc0483",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-157"
+   ]
+  },
+  {
+   "id": "indicator-112",
+   "type": "hash",
+   "value": "13b4ce1fc26d400d34ede460a8530d93",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-158"
+   ]
+  },
+  {
+   "id": "indicator-113",
+   "type": "hash",
+   "value": "79e474e056b4798e0a3e7c60dd67fd28",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-159"
+   ]
+  },
+  {
+   "id": "indicator-114",
+   "type": "hash",
+   "value": "41895c5416fdc82f7e0babc6bb6c7216",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-160"
+   ]
+  },
+  {
+   "id": "indicator-115",
+   "type": "hash",
+   "value": "95c276215dcc1bd7606c0cb2be06bf70",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-161"
+   ]
+  },
+  {
+   "id": "indicator-116",
+   "type": "hash",
+   "value": "c2f8c9bb7df688d0a7030a96314bb493",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-162"
+   ]
+  },
+  {
+   "id": "indicator-117",
+   "type": "hash",
+   "value": "426bb55531e8e3055c942a1a035e46b9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-163"
+   ]
+  },
+  {
+   "id": "indicator-118",
+   "type": "hash",
+   "value": "33a3da2de78418b89a603e28a1e8852c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-164"
+   ]
+  },
+  {
+   "id": "indicator-119",
+   "type": "hash",
+   "value": "cfae52529468034dbbb40c9a985fa504",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-165"
+   ]
+  },
+  {
+   "id": "indicator-120",
+   "type": "hash",
+   "value": "deae4be61c90ad6d499f5bdac5dad242",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-166"
+   ]
+  },
+  {
+   "id": "indicator-121",
+   "type": "hash",
+   "value": "0055a266aa536b2fdadb3336ef8d4fba",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-167"
+   ]
+  },
+  {
+   "id": "indicator-122",
+   "type": "hash",
+   "value": "bda0686d02a8b7685adf937cbcd35f46",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-168"
+   ]
+  },
+  {
+   "id": "indicator-123",
+   "type": "hash",
+   "value": "55bb271bbbf19108fec73d224c9b4218",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-169"
+   ]
+  },
+  {
+   "id": "indicator-124",
+   "type": "hash",
+   "value": "6de6c27ca8f4e00f0b3e8ff5185a59d1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-170"
+   ]
+  },
+  {
+   "id": "indicator-125",
+   "type": "hash",
+   "value": "0c046a2f5304ed8d768795a49b99d6e4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-171"
+   ]
+  },
+  {
+   "id": "indicator-126",
+   "type": "hash",
+   "value": "c61a8c4f6f6870c7ca0013e084b893d2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-172"
+   ]
+  },
+  {
+   "id": "indicator-127",
+   "type": "hash",
+   "value": "f34664e0d9a10974da117c1ca859dba8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-173"
+   ]
+  },
+  {
+   "id": "indicator-128",
+   "type": "hash",
+   "value": "5291aed100cc48415636c4875592f70c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-174"
+   ]
+  },
+  {
+   "id": "indicator-129",
+   "type": "hash",
+   "value": "a2c2099d503fcc29478205f5aef0283b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-175"
+   ]
+  },
+  {
+   "id": "indicator-130",
+   "type": "hash",
+   "value": "f4795f7aec4389c8323f7f40b50ae46f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-176"
+   ]
+  },
+  {
+   "id": "indicator-131",
+   "type": "hash",
+   "value": "e439f850aa8ead560c99a8d93e472225",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-177"
+   ]
+  },
+  {
+   "id": "indicator-132",
+   "type": "hash",
+   "value": "cf1a90e458966bcba8286d46d6ab052c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-178"
+   ]
+  },
+  {
+   "id": "indicator-133",
+   "type": "hash",
+   "value": "7c30ed6a612a1fd252565300c03c7523",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-179"
+   ]
+  },
+  {
+   "id": "indicator-134",
+   "type": "hash",
+   "value": "792370eb01e16ac3dc511143932d0e1d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-180"
+   ]
+  },
+  {
+   "id": "indicator-135",
+   "type": "hash",
+   "value": "81738405a7783c09906da5c7212e606b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-181"
+   ]
+  },
+  {
+   "id": "indicator-136",
+   "type": "hash",
+   "value": "612538328e0c4f3e445fb58ef811336a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-182"
+   ]
+  },
+  {
+   "id": "indicator-137",
+   "type": "hash",
+   "value": "9767aa592ec2d6ae3c7d40b6049d0466",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-183"
+   ]
+  },
+  {
+   "id": "indicator-138",
+   "type": "hash",
+   "value": "eb7ba9f7424dffdb7d695b00007a3c6d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-184"
+   ]
+  },
+  {
+   "id": "indicator-139",
+   "type": "hash",
+   "value": "b22fd0604c4f189f2b7a59c8f48882dd",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-185"
+   ]
+  },
+  {
+   "id": "indicator-140",
+   "type": "hash",
+   "value": "3e9ee5982e3054dc76d3ba5cc88ae3de",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-186"
+   ]
+  },
+  {
+   "id": "indicator-141",
+   "type": "hash",
+   "value": "e53ca714787a86c13f07942a56d64efa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-187"
+   ]
+  },
+  {
+   "id": "indicator-142",
+   "type": "hash",
+   "value": "073e3170a8e7537ff985ec8316319351",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-188"
+   ]
+  },
+  {
+   "id": "indicator-143",
+   "type": "hash",
+   "value": "c7b09f1dd0a5694de677f3ecceda41b7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-189"
+   ]
+  },
+  {
+   "id": "indicator-144",
+   "type": "hash",
+   "value": "9b0e7c460a80f740d455a7521f0eada1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-190"
+   ]
+  },
+  {
+   "id": "indicator-145",
+   "type": "hash",
+   "value": "c8346b39418f92725719f364068a218d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-191"
+   ]
+  },
+  {
+   "id": "indicator-146",
+   "type": "hash",
+   "value": "2d02f5499d35a8dffb4c8bc0b7fec5c2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-192"
+   ]
+  },
+  {
+   "id": "indicator-147",
+   "type": "hash",
+   "value": "730bff14e80ffd7737a97cdf11362ab5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-193"
+   ]
+  },
+  {
+   "id": "indicator-148",
+   "type": "hash",
+   "value": "0984954526232f7d05910aa5b07c5893",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-194"
+   ]
+  },
+  {
+   "id": "indicator-149",
+   "type": "hash",
+   "value": "9a481bc83fea1dea3e3bdfff5e154d44",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-195"
+   ]
+  },
+  {
+   "id": "indicator-150",
+   "type": "hash",
+   "value": "4156a7283284ece739e1bae05f99e17c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-196"
+   ]
+  },
+  {
+   "id": "indicator-151",
+   "type": "hash",
+   "value": "ddb1f970371fa32faae61fc5b8423d4b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-197"
+   ]
+  },
+  {
+   "id": "indicator-152",
+   "type": "hash",
+   "value": "3026d419ee140f3c6acd5bff54132795",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-198"
+   ]
+  },
+  {
+   "id": "indicator-153",
+   "type": "hash",
+   "value": "6c2b947921e7c77d9af62ce9a3ed7621",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-199"
+   ]
+  },
+  {
+   "id": "indicator-154",
+   "type": "hash",
+   "value": "7aa132c0cc63a38fb4d1789553266fc7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-200"
+   ]
+  },
+  {
+   "id": "indicator-155",
+   "type": "hash",
+   "value": "977d30b261f64cc582b48960909d0a89",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-201"
+   ]
+  },
+  {
+   "id": "indicator-156",
+   "type": "hash",
+   "value": "1a0811472fad0ff507a92c957542fffd",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-202"
+   ]
+  },
+  {
+   "id": "indicator-157",
+   "type": "hash",
+   "value": "7ce51b56a6b0f8f78056ddfc5b5de67c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-203"
+   ]
+  },
+  {
+   "id": "indicator-158",
+   "type": "hash",
+   "value": "f8aef59d0c5afe8df31e11a1984fbc0a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-204"
+   ]
+  },
+  {
+   "id": "indicator-159",
+   "type": "hash",
+   "value": "dd9625be4a1201c6dfb205c12cf3a381",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-205"
+   ]
+  },
+  {
+   "id": "indicator-160",
+   "type": "hash",
+   "value": "82491b42b9a2d34b13137e36784a67d7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-206"
+   ]
+  },
+  {
+   "id": "indicator-161",
+   "type": "hash",
+   "value": "ecb4a09618e2aba77ea37bd011d7d7f7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-207"
+   ]
+  },
+  {
+   "id": "indicator-162",
+   "type": "hash",
+   "value": "0a199944f757d5615164e8808a3c712a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-208"
+   ]
+  },
+  {
+   "id": "indicator-163",
+   "type": "hash",
+   "value": "0fd8c6f56c52c21c061a94e5765b27b4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-209"
+   ]
+  },
+  {
+   "id": "indicator-164",
+   "type": "hash",
+   "value": "9c97ea18da290a6833a1d36e2d419efc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-210"
+   ]
+  },
+  {
+   "id": "indicator-165",
+   "type": "hash",
+   "value": "c90d094a8fbeaa8a0083c7372bfc1897",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-211"
+   ]
+  },
+  {
+   "id": "indicator-166",
+   "type": "hash",
+   "value": "16f768eac33f79775a9672018e0d64f5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-212"
+   ]
+  },
+  {
+   "id": "indicator-167",
+   "type": "hash",
+   "value": "ed8ec7a8dd089019cfd29143f008fa0951c56a35d73b2e1b274315152d0c0ee6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-213"
+   ]
+  },
+  {
+   "id": "indicator-168",
+   "type": "hash",
+   "value": "db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-214",
+    "evidence-215"
+   ]
+  },
+  {
+   "id": "indicator-169",
+   "type": "hash",
+   "value": "773760fd71d52457ba53a314f15dddb1a74e8b2f5a90e5e150dea48a21aa76df",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-216"
+   ]
+  },
+  {
+   "id": "indicator-170",
+   "type": "hash",
+   "value": "05e9fe8e9e693cb073ba82096c291145c953ca3a3f8b3974f9c66d15c1a3a11d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-217"
+   ]
+  },
+  {
+   "id": "indicator-171",
+   "type": "hash",
+   "value": "e3027062e602c5d1812c039739e2f93fc78341a67b77692567a4690935123abe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-218"
+   ]
+  },
+  {
+   "id": "indicator-172",
+   "type": "hash",
+   "value": "1962ebb7bf8d2b306c6f3b55c3dcd69a755eeff1a17577b7606894b781841c3a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-219"
+   ]
+  },
+  {
+   "id": "indicator-173",
+   "type": "hash",
+   "value": "f226086b5959eb96bd30dec0ffcbf0f09186cd11721507f416f1c39901addafb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-220"
+   ]
+  },
+  {
+   "id": "indicator-174",
+   "type": "hash",
+   "value": "6db57bbc2d07343dd6ceba0f53c73756af78f09fe1cb5ce8e8008e5e7242eae1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-221"
+   ]
+  },
+  {
+   "id": "indicator-175",
+   "type": "hash",
+   "value": "b7435d23769e79fcbe69b28df4aef062685d1a631892c2354f96d833eae467be",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-222"
+   ]
+  },
+  {
+   "id": "indicator-176",
+   "type": "hash",
+   "value": "66415464a0795d0569efa5cb5664785f74ed0b92a593280d689f3a2ac68dca66",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-223"
+   ]
+  },
+  {
+   "id": "indicator-177",
+   "type": "hash",
+   "value": "def2f01fbd4be85f48101e5ab7ddd82efb720e67daa6838f30fd8dcda1977563",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-224"
+   ]
+  },
+  {
+   "id": "indicator-178",
+   "type": "hash",
+   "value": "323cbe7a3d050230cfaa822c2a22160b4f8c5fe65481dd329841ee2754b522d9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-225"
+   ]
+  },
+  {
+   "id": "indicator-179",
+   "type": "hash",
+   "value": "74529dd15d1953a47f0d7ecc2916b2b92865274a106e453a24943ca9ee434643",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-226"
+   ]
+  },
+  {
+   "id": "indicator-180",
+   "type": "hash",
+   "value": "1e4de822695570421eb2f12fdfe1d32ab8639655e12180a7ab3cf429e7811b8f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-227"
+   ]
+  },
+  {
+   "id": "indicator-181",
+   "type": "hash",
+   "value": "8ce219552e235dcaf1c694be122d6339ed4ff8df70bf358cd165e6eb487ccfc5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-228"
+   ]
+  },
+  {
+   "id": "indicator-182",
+   "type": "hash",
+   "value": "c2904dc8bbb569536c742fca0c51a766e836d0da8fac1c1abd99744e9b50164f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-229"
+   ]
+  },
+  {
+   "id": "indicator-183",
+   "type": "hash",
+   "value": "dda53eee2c5cb0abdbf5242f5e82f4de83898b6a9dd8aa935c2be29bafc9a469",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-230"
+   ]
+  },
+  {
+   "id": "indicator-184",
+   "type": "hash",
+   "value": "90fb0cd574155fd8667d20f97ac464eca67bdb6a8ee64184159362d45d79b6a4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-231"
+   ]
+  },
+  {
+   "id": "indicator-185",
+   "type": "hash",
+   "value": "452ca47230afd4bb85c45af54fcacbfa544208ef8b4604c3c5caefe3a64dcc19",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-232"
+   ]
+  },
+  {
+   "id": "indicator-186",
+   "type": "hash",
+   "value": "199ba618efc6af9280c5abd86c09cdf2d475c09c8c7ffc393a35c3d70277aed1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-233"
+   ]
+  },
+  {
+   "id": "indicator-187",
+   "type": "hash",
+   "value": "2eb16dbc1097a590f07787ab285a013f5fe235287cb4fb948d4f9cce9efa5dbc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-234"
+   ]
+  },
+  {
+   "id": "indicator-188",
+   "type": "hash",
+   "value": "ce779e30502ecee991260fd342cc0d7d5f73d1a070395b4120b8d300ad11d694",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-235"
+   ]
+  },
+  {
+   "id": "indicator-189",
+   "type": "hash",
+   "value": "c28bb61de4a6ad1c5e225ad9ec2eaf4a6c8ccfff40cf45a640499c0adb0d8740",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-236"
+   ]
+  },
+  {
+   "id": "indicator-190",
+   "type": "hash",
+   "value": "34d5a5d8bec893519f204b573c33d54537b093c52df01b3d8c518af08ee94947",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-237"
+   ]
+  },
+  {
+   "id": "indicator-191",
+   "type": "hash",
+   "value": "664f8d19af3400a325998b332343a9304f03bab9738ddab1530869eff13dae54",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-238"
+   ]
+  },
+  {
+   "id": "indicator-192",
+   "type": "hash",
+   "value": "772b06f34facf6a2ce351b8679ff957cf601ef3ad29645935cb050b4184c8d51",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-239"
+   ]
+  },
+  {
+   "id": "indicator-193",
+   "type": "hash",
+   "value": "aa29bf4292b68d197f4d8ca026b97ec7785796edcb644db625a8f8b66733ab54",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-240"
+   ]
+  },
+  {
+   "id": "indicator-194",
+   "type": "hash",
+   "value": "9a5504dcfb7e664259bfa58c46cfd33e554225daf1cedea2ec2a9d83bbbfe238",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-241"
+   ]
+  },
+  {
+   "id": "indicator-195",
+   "type": "hash",
+   "value": "c2500a6e12f22b16e221ba01952b69c92278cd05632283d8b84c55c916efe27c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-242"
+   ]
+  },
+  {
+   "id": "indicator-196",
+   "type": "hash",
+   "value": "8aa6612c95c7cef49709596da43a0f8354f14d8c08128c4cb9b1f37e548f083b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-243"
+   ]
+  },
+  {
+   "id": "indicator-197",
+   "type": "hash",
+   "value": "38f0f2d658e09c57fc78698482f2f638843eb53412d860fb3a99bb6f51025b07",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-244"
+   ]
+  },
+  {
+   "id": "indicator-198",
+   "type": "domain",
+   "value": "rewardsforjustice.net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-245"
+   ]
+  },
+  {
+   "id": "indicator-199",
+   "type": "domain",
+   "value": "www.fbi.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-246"
+   ]
+  },
+  {
+   "id": "indicator-200",
+   "type": "domain",
+   "value": "asec.ahnlab.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-247"
+   ]
+  },
+  {
+   "id": "indicator-201",
+   "type": "url",
+   "value": "https://medium.com/@DCSO_CyTec/andariels-jupiter-malware-and-the-case-of-the-curious-c2-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-248"
+   ]
+  },
+  {
+   "id": "indicator-202",
+   "type": "url",
+   "value": "https://github.com/ditekshen/detection/blob/master/yara/indicator_packed.yar",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-249"
+   ]
+  },
+  {
+   "id": "indicator-203",
+   "type": "domain",
+   "value": "www.boredhackerblog.info",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-250"
+   ]
+  },
+  {
+   "id": "indicator-204",
+   "type": "domain",
+   "value": "blog.talosintelligence.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-251"
+   ]
+  },
+  {
+   "id": "indicator-205",
+   "type": "domain",
+   "value": "medium.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-252"
+   ]
+  },
+  {
+   "id": "indicator-206",
+   "type": "domain",
+   "value": "Github.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-253",
+    "evidence-254"
+   ]
+  },
+  {
+   "id": "indicator-207",
+   "type": "domain",
+   "value": "indicator_packed.yar",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-255"
+   ]
+  },
+  {
+   "id": "indicator-208",
+   "type": "domain",
+   "value": "blogs.jpcert.or.jp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-256"
+   ]
+  },
+  {
+   "id": "indicator-209",
+   "type": "domain",
+   "value": "Lazarus_malware3.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-257"
+   ]
+  },
+  {
+   "id": "indicator-210",
+   "type": "domain",
+   "value": "yamabot.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-258"
+   ]
+  },
+  {
+   "id": "indicator-211",
+   "type": "domain",
+   "value": "www.mandiant.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-259"
+   ]
+  },
+  {
+   "id": "indicator-212",
+   "type": "domain",
+   "value": "www.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-260"
+   ]
+  },
+  {
+   "id": "indicator-213",
+   "type": "domain",
+   "value": "www.ncsc.gov.uk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-261"
+   ]
+  },
+  {
+   "id": "indicator-214",
+   "type": "domain",
+   "value": "symantec-enterprise-blogs.security.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-262"
+   ]
+  },
+  {
+   "id": "indicator-215",
+   "type": "domain",
+   "value": "blogs.vmware.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-263"
+   ]
+  },
+  {
+   "id": "indicator-216",
+   "type": "domain",
+   "value": "labs.withsecure.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-264"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c systeminfo | findstr Logon",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-265"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE-2021-44228 (“Log4Shell”) in Apache’s Log4j software library and other CVEs listed above, to deploy web shells and gain access to sensitive information and applications for further exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE 2021 44228 (“Log4Shell”) in Apache’s Lo"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actors continue to breach organizations by exploiting web server vulnerabilities in public-facing devices and have conducted widespread activity against a number of different organizations simultaneously.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors continue to breach organizations by exploiting web server vulnerabilities in public facing devices and have conducted widespread activity against a n"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities ... to deploy web shells and gain access to sensitive information and applications for further exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities … to deploy web shells and gain access to sensitive "
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Web shell malware is deployed by adversaries on a victim’s web server to execute arbitrary system commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Web shell malware is deployed by adversaries on a victim’s web server to execute arbitrary system commands."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The actors are well-versed in using native tools and processes on systems, known as living off the land (LOTL). They use Windows command line, PowerShell, Windows Management Instrumentation command line (WMIC), and Linux bash for system, network, and account enumeration. While individual commands typically vary, the authoring agencies assess the actors prefer netstat commands, such as netstat –naop and netstat –noa.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors are well versed in using native tools and processes on systems, known as living off the land (LOTL). They use Windows command line, PowerShell, Windo"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The actors then employ standard system discovery and enumeration techniques, establish persistence using Scheduled Tasks, and perform privilege escalation using common credential stealing tools such as Mimikatz.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors then employ standard system discovery and enumeration techniques, establish persistence using Scheduled Tasks, and perform privilege escalation using"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The actors employ a multi-pronged approach to stealing credentials to gain additional access to systems, including the use of publicly available credential theft utilities and dual-use tools such as Mimikatz, Dumpert, and ProcDump, and accessing the Active Directory domain database through targeting of the NTDS.dit file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors employ a multi pronged approach to stealing credentials to gain additional access to systems, including the use of publicly available credential thef"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The authoring agencies assess the actors change settings on compromised systems to force the system to store credentials and then use the aforementioned tools to steal credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The authoring agencies assess the actors change settings on compromised systems to force the system to store credentials and then use the aforementioned tools t"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "In one instance, the actors used the vssadmin command-line utility to back up a volume to retrieve a copy of the NTDS.dit file containing Active Directory data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one instance, the actors used the vssadmin command line utility to back up a volume to retrieve a copy of the NTDS.dit file containing Active Directory data."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "In another instance, the actors were observed collecting registry hive data for offline extraction of credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In another instance, the actors were observed collecting registry hive data for offline extraction of credentials."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The actors deploy and leverage custom malware implants, remote access tools (RATs), and open source tooling for execution, lateral movement, and data exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors deploy and leverage custom malware implants, remote access tools (RATs), and open source tooling for execution, lateral movement, and data exfiltrati"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The actors also conduct phishing activity using malicious attachments, including Microsoft Windows Shortcut File (LNK) files or HTML Application (HTA) script files inside encrypted or unencrypted zip archives.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also conduct phishing activity using malicious attachments, including Microsoft Windows Shortcut File (LNK) files or HTML Application (HTA) script fi"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The group logs active window changes, clipboard data, and keystrokes and saves the collected logging information to the %Temp% directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The group logs active window changes, clipboard data, and keystrokes and saves the collected logging information to the %Temp% directory."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "The actors have also used Remote Desktop Protocol (RDP) to move laterally.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors have also used Remote Desktop Protocol (RDP) to move laterally."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The actors also enumerate directories and files of connected devices using Server Message Block (SMB) protocol, which enables network file sharing and the ability to request services and programs from a network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also enumerate directories and files of connected devices using Server Message Block (SMB)\n       protocol, which enables network file sharing and th"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The actors collect the relevant files into RAR archives, sometimes using a version of WinRAR brought into the victim’s environment with other malicious tooling.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9938,
+   "matched_text": "The actors collect the relevant files into RAR archives, sometimes using a version of WinRAR brought into the victim’s environment with other malicious tooling"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "The actors typically exfiltrate data to web services such as cloud storage or servers not associated with their primary C2. Notably, the actors have been observed logging into actor-controlled cloud-based storage service accounts directly from victim networks to exfiltrate data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors typically exfiltrate data to web services such as cloud storage or servers not associated with their primary C2. Notably, the actors have been observ"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The actors have also been observed using the utilities PuTTY and WinSCP to exfiltrate data to North Korea-controlled servers via File Transfer Protocol (FTP) and other protocols.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors have also been observed using the utilities PuTTY and WinSCP to exfiltrate data to North Korea controlled servers via File Transfer Protocol (FTP) an"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "The actors disguise their malware within HTTP packets to appear as benign network traffic. They also use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from inside a network back to a C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors disguise their malware within HTTP packets to appear as benign network traffic. They also use tunneling tools such as 3Proxy, PLINK, and Stunnel as w"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The actors employ a multi-pronged approach to stealing credentials to gain additional access to systems, including the use of publicly available credential theft utilities and dual-use tools such as Mimikatz, Dumpert, and ProcDump.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9957,
+   "matched_text": "The actors employ a multi pronged approach to stealing credentials to gain additional access to systems, including the use of publicly available credential thef"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The actors used customized file system enumeration tooling written in .NET. The tool is capable of receiving and executing command line arguments to enumerate directories and files and compress output files. The tool collects the following information for each drive targeted on a system: depth relative to starting path, name, last write time, last access time, creation time, size, and attributes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9975,
+   "matched_text": "The actors used customized file system enumeration tooling written in .NET. The tool is capable of receiving and executing command line arguments to enumerate d"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The actors routinely pack late-stage tooling in VMProtect and Themida. Malicious tooling packed with these and other commercial tools have advanced anti-debugging and detection capabilities. These files are typically multiple megabytes in size and often contain unusual file section names such as vmp0 and vmp1 for VMProtect and Themida or randomized file section names for Themida.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors routinely pack late stage tooling in VMProtect and Themida. Malicious tooling packed with these and other commercial tools have advanced anti debuggi"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The actors used customized file system enumeration tooling written in .NET. The tool is capable of receiving and executing command line arguments to enumerate directories and files and compress output files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors used customized file system enumeration tooling written in .NET. The tool is capable of receiving and executing command line arguments to enumerate d"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "They also use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from inside a network back to a C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They also use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from insi"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "The actors routinely pack late-stage tooling in VMProtect and Themida. Malicious tooling packed with these and other commercial tools have advanced anti-debugging and detection capabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors routinely pack late stage tooling in VMProtect and Themida. Malicious tooling packed with these and other commercial tools have advanced anti debuggi"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE-2021-44228 (“Log4Shell”) in Apache’s Log4j software library and other CVEs listed, to deploy web shells and gain access to sensitive information and applications for further exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7273,
+   "matched_text": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "The actors deploy web shell malware on victim web servers to execute arbitrary system commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6667,
+   "matched_text": "The actors deploy "
+  },
+  {
+   "id": "evidence-28",
+   "quote": "The actors perform system, network, and account enumeration using native tools such as Windows command line, PowerShell, WMIC, and Linux bash, including netstat commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " tools such as "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "The actors establish persistence on compromised systems using Scheduled Tasks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.75,
+   "matched_text": " establish persistence "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "The actors perform privilege escalation using common credential stealing tools such as Mimikatz, Dumpert, and ProcDump, and by accessing the Active Directory domain database through targeting of the NTDS.dit file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " perform privilege escalation using common credential stealing tools such as Mimikatz"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "The actors log active window changes, clipboard data, and keystrokes and save the collected logging information to the %Temp% directory to aid in discovery and lateral movement.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8333,
+   "matched_text": " active window changes, clipboard data, and keystrokes and save"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "The actors have also been identified staging files for exfiltration on victim machines, establishing Remote Desktop Protocol connections, and conducting HTTP GET requests on port 80 to receive information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors have also been identified staging files for exfiltration on victim machines, establishing Remote Desktop Protocol connections, and conducting HTTP GE"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE-2021-44228 (“Log4Shell”) in Apache’s Log4j software library",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors gain initial access through widespread exploitation of web servers through known vulnerabilities, such as CVE 2021 44228 (“Log4Shell”) in Apache’s Lo"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "The actors have used Remote Desktop Protocol (RDP) to move laterally within victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7273,
+   "matched_text": " used Remote Desktop Protocol (RDP) to move laterally"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "The actors enumerate directories and files of connected devices using Server Message Block (SMB) protocol to request services and programs from a network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " enumerate directories and files of connected devices using Server Message Block (SMB) protocol"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "perform privilege escalation using common credential stealing tools such as Mimikatz, Dumpert, and ProcDump, and by accessing the Active Directory domain database through targeting of the NTDS.dit file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "perform privilege escalation using common credential stealing tools such as Mimikatz"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "The actors perform privilege escalation using common credential stealing tools such as Mimikatz, Dumpert, and ProcDump",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8333,
+   "matched_text": " perform privilege escalation using common credential stealing tools such as Mimikatz"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "The actors deploy and leverage custom malware implants and remote access tools (RATs) for execution, lateral movement, and data exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " for execution, lateral movement, and data exfiltration."
+  },
+  {
+   "id": "evidence-39",
+   "quote": "The actors conduct phishing activity using malicious attachments, including Microsoft Windows Shortcut File (LNK) files or HTML Application (HTA) script files inside encrypted or unencrypted zip archives.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " conduct phishing activity using malicious attachments, including Microsoft Windows Shortcut File (LNK) files or HTML Application (HTA) script files inside encr"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "The actors use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from inside a network back to a C2 server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " use tunneling tools such as 3Proxy, PLINK, and Stunnel as well as custom proxy tunneling tools to tunnel traffic over a variety of protocols from inside a netw"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "The actors used customized file system enumeration tooling written in .NET capable of receiving and executing command line arguments to enumerate directories and files and compress output files, collecting detailed information for each drive targeted on a system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9286,
+   "matched_text": " capable of receiving and executing command line arguments to enumerate directories and files and compress output files"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "The actors routinely pack late-stage tooling in VMProtect and Themida to make executables difficult to discover or analyze by encrypting, encoding, or otherwise obfuscating their content.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The actors routinely pack late stage tooling in VMProtect and Themida"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "CVE-2023-46604",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 46604"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "cve-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cve 2023 42793"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "CVE-2023-3519",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3519"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "CVE-2023-35078",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 35078"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CVE-2023-34362",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 34362"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "CVE-2023-33246",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 33246"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "CVE-2023-32784",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 32784"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2023-32315",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 32315"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2023-3079",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3079"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "CVE-2023-28771",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 28771"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "CVE-2023-33010",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 33010"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "CVE-2023-2868",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 2868"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "CVE-2023-27997",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 27997"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "CVE-2023-25690",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 25690"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "CVE-2023-21932",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 21932"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "CVE-2023-0669",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 0669"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "CVE-2022-41352",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 41352"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "CVE-2022-27925",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 27925"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "CVE-2022-30190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 30190"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "CVE-2022-25064",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 25064"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "CVE-2022-24990",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 24990"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "CVE-2021-45837",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 45837"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "CVE-2022-24785",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 24785"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "CVE-2022-24665",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 24665"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "CVE-2022-24664",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 24664"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "CVE-2022-24663",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 24663"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "CVE-2022-22965",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 22965"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "CVE-2022-22947",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 22947"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "CVE-2022-22005",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 22005"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "CVE-2022-21882",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 21882"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "CVE-2021-44142",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44142"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "CVE-2021-43226",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 43226"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "CVE-2021-36955",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 36955"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "CVE-2021-41773",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 41773"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "CVE-2021-40684",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 40684"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "CVE-2021-3018",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 3018"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "CVE-2021-20038",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 20038"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "CVE-2021-20028",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 20028"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "CVE-2019-15637",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 15637"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "CVE-2019-7609",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 7609"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "CVE-2019-0708",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 0708"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "CVE-2017-4946",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2017 4946"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "88a7c84ac7f7ed310b5ee791ec8bd6c5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "88a7c84ac7f7ed310b5ee791ec8bd6c5"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "97ce00c7ef1f7d98b48291d73d900181",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "97ce00c7ef1f7d98b48291d73d900181"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "6ab4eb4c23c9e419fbba85884ea141f4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6ab4eb4c23c9e419fbba85884ea141f4"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "079b4588eaa99a1e802adf5e0b26d8aa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "079b4588eaa99a1e802adf5e0b26d8aa"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "0873b5744d8ab6e3fe7c9754cf7761a3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0873b5744d8ab6e3fe7c9754cf7761a3"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "4896da30a745079cd6265b6332886d45",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4896da30a745079cd6265b6332886d45"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "0d696d27bae69a62def82e308d28857a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0d696d27bae69a62def82e308d28857a"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "73eb2f4f101aab6158c615094f7a632a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "73eb2f4f101aab6158c615094f7a632a"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "0ecf4bac2b070cf40f0b17e18ce312e6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0ecf4bac2b070cf40f0b17e18ce312e6"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "7f33d2d2a2ce9c195202acb59de31eee",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7f33d2d2a2ce9c195202acb59de31eee"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "17c46ed7b80c2e4dbea6d0e88ea0827c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "17c46ed7b80c2e4dbea6d0e88ea0827c"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "e1afd01400ef405e46091e8ef10c721c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e1afd01400ef405e46091e8ef10c721c"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "1f2410c3c25dadf9e0943cd634558800",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1f2410c3c25dadf9e0943cd634558800"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "fe25c192875ec1914b8880ea3896cda2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fe25c192875ec1914b8880ea3896cda2"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "2968c20a07cfc97a167aa3dd54124cda",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2968c20a07cfc97a167aa3dd54124cda"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "232586f8cfe82b80fd0dfa6ed8795c56",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "232586f8cfe82b80fd0dfa6ed8795c56"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "33e85d0f3ef2020cdb0fc3c8d80e8e69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "33e85d0f3ef2020cdb0fc3c8d80e8e69"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "c1f266f7ec886278f030e7d7cd4e9131",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c1f266f7ec886278f030e7d7cd4e9131"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "4118d9adce7350c3eedeb056a3335346",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4118d9adce7350c3eedeb056a3335346"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "49bb2ad67a8c5dfbfe8db2169e6fa46e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "49bb2ad67a8c5dfbfe8db2169e6fa46e"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "4aa57e1c66c2e01f2da3f106ed2303fa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4aa57e1c66c2e01f2da3f106ed2303fa"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "beb199b15bd075996fa8d6a0ed554ca8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "beb199b15bd075996fa8d6a0ed554ca8"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "58ad3103295afcc22bde8d81e77c282f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "58ad3103295afcc22bde8d81e77c282f"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "4053ca3e37ed1f8d37b29eed61c2e729",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4053ca3e37ed1f8d37b29eed61c2e729"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "5c41cbf8a7620e10f158f6b70963d1cb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5c41cbf8a7620e10f158f6b70963d1cb"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "3a0c8ae783116c1840740417c4fbe678",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3a0c8ae783116c1840740417c4fbe678"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "61a949553d35f31957db6442f36730c5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "61a949553d35f31957db6442f36730c5"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "0414a2ab718d44bf6f7103cff287b312",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0414a2ab718d44bf6f7103cff287b312"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "72a22afde3f820422cfdbba7a4cbabde",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "72a22afde3f820422cfdbba7a4cbabde"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "ca564428a29faf1a613f35d9fa36313f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ca564428a29faf1a613f35d9fa36313f"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "84bd45e223b018e67e4662c057f2c47e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84bd45e223b018e67e4662c057f2c47e"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "ad6d4eb34d29e350f96dc8df6d8a092e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ad6d4eb34d29e350f96dc8df6d8a092e"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "86465d92f0d690b62866f52f5283b9fc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "86465d92f0d690b62866f52f5283b9fc"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "dc70dc9845aa747001ebf2a02467c203",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dc70dc9845aa747001ebf2a02467c203"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "8b395cc6ecdec0900facf6e93ec48fbb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8b395cc6ecdec0900facf6e93ec48fbb"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "3d2ec58f37c8176e0dbcc47ff93e5a76",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3d2ec58f37c8176e0dbcc47ff93e5a76"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "97f352e2808c78eef9b31c758ca13032",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "97f352e2808c78eef9b31c758ca13032"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "0a09b7f2317b3d5f057180be6b6d0755",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0a09b7f2317b3d5f057180be6b6d0755"
+  },
+  {
+   "id": "evidence-129",
+   "quote": "a50f3b7aa11b977ae89285b60968aa67",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a50f3b7aa11b977ae89285b60968aa67"
+  },
+  {
+   "id": "evidence-130",
+   "quote": "1ffccc23fef2964e9b1747098c19d956",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1ffccc23fef2964e9b1747098c19d956"
+  },
+  {
+   "id": "evidence-131",
+   "quote": "afd25ce56b9808c5ed7eade75d2e12a7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "afd25ce56b9808c5ed7eade75d2e12a7"
+  },
+  {
+   "id": "evidence-132",
+   "quote": "9112efb49cae021abebd3e9a564e6ca4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9112efb49cae021abebd3e9a564e6ca4"
+  },
+  {
+   "id": "evidence-133",
+   "quote": "afdeb24975a318fc5f20d9e61422a308",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "afdeb24975a318fc5f20d9e61422a308"
+  },
+  {
+   "id": "evidence-134",
+   "quote": "ac0ada011f1544aa3a1cf27a26f2e288",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ac0ada011f1544aa3a1cf27a26f2e288"
+  },
+  {
+   "id": "evidence-135",
+   "quote": "b697b81b341692a0b137b2c748310ea7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b697b81b341692a0b137b2c748310ea7"
+  },
+  {
+   "id": "evidence-136",
+   "quote": "0211a3160cc5871cbcd4e5514449162b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0211a3160cc5871cbcd4e5514449162b"
+  },
+  {
+   "id": "evidence-137",
+   "quote": "bcac28919fa33704a01d7a9e5e3ddf3f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bcac28919fa33704a01d7a9e5e3ddf3f"
+  },
+  {
+   "id": "evidence-138",
+   "quote": "7416ea48102e2715c87edd49ddbd1526",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7416ea48102e2715c87edd49ddbd1526"
+  },
+  {
+   "id": "evidence-139",
+   "quote": "c027d641c4c1e9d9ad048cda2af85db6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c027d641c4c1e9d9ad048cda2af85db6"
+  },
+  {
+   "id": "evidence-140",
+   "quote": "c027d641c4c1e9d9ad048cda2af85db6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c027d641c4c1e9d9ad048cda2af85db6"
+  },
+  {
+   "id": "evidence-141",
+   "quote": "a2aefb7ab6c644aa8eeb482e27b2dbc4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a2aefb7ab6c644aa8eeb482e27b2dbc4"
+  },
+  {
+   "id": "evidence-142",
+   "quote": "c892c60817e6399f939987bd2bf5dee0",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c892c60817e6399f939987bd2bf5dee0"
+  },
+  {
+   "id": "evidence-143",
+   "quote": "e7fd7f48fbf5635a04e302af50dfb651",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e7fd7f48fbf5635a04e302af50dfb651"
+  },
+  {
+   "id": "evidence-144",
+   "quote": "cdeae978f3293f4e783761bc61b34810",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cdeae978f3293f4e783761bc61b34810"
+  },
+  {
+   "id": "evidence-145",
+   "quote": "33b2b5b7c830c34c688cf6ced287e5be",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "33b2b5b7c830c34c688cf6ced287e5be"
+  },
+  {
+   "id": "evidence-146",
+   "quote": "d0f310c99476f1712ac082f78dd29fdc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d0f310c99476f1712ac082f78dd29fdc"
+  },
+  {
+   "id": "evidence-147",
+   "quote": "e5410abaaac69c88db84ab3d0e9485ac",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e5410abaaac69c88db84ab3d0e9485ac"
+  },
+  {
+   "id": "evidence-148",
+   "quote": "d8da33fae924b991b776797ba8cde24c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d8da33fae924b991b776797ba8cde24c"
+  },
+  {
+   "id": "evidence-149",
+   "quote": "eb35b75369805e7a6371577b1d2c4531",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eb35b75369805e7a6371577b1d2c4531"
+  },
+  {
+   "id": "evidence-150",
+   "quote": "e230c5728f9ea5a94e390e7da7bf1ffa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e230c5728f9ea5a94e390e7da7bf1ffa"
+  },
+  {
+   "id": "evidence-151",
+   "quote": "5a3f3f75048b9cec177838fb8b40b945",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5a3f3f75048b9cec177838fb8b40b945"
+  },
+  {
+   "id": "evidence-152",
+   "quote": "f4d46629ca15313b94992f3798718df7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f4d46629ca15313b94992f3798718df7"
+  },
+  {
+   "id": "evidence-153",
+   "quote": "9d7bd0caed10cc002670faff7ca130f5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9d7bd0caed10cc002670faff7ca130f5"
+  },
+  {
+   "id": "evidence-154",
+   "quote": "fb84a392601fc19aeb7f8ce11b3a4907",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fb84a392601fc19aeb7f8ce11b3a4907"
+  },
+  {
+   "id": "evidence-155",
+   "quote": "8434cdd34425916be234b19f933ad7ea",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8434cdd34425916be234b19f933ad7ea"
+  },
+  {
+   "id": "evidence-156",
+   "quote": "ff3194d3d5810a42858f3e22c91500b1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ff3194d3d5810a42858f3e22c91500b1"
+  },
+  {
+   "id": "evidence-157",
+   "quote": "bbaee4fe73ccff1097d635422fdc0483",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bbaee4fe73ccff1097d635422fdc0483"
+  },
+  {
+   "id": "evidence-158",
+   "quote": "13b4ce1fc26d400d34ede460a8530d93",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "13b4ce1fc26d400d34ede460a8530d93"
+  },
+  {
+   "id": "evidence-159",
+   "quote": "79e474e056b4798e0a3e7c60dd67fd28",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "79e474e056b4798e0a3e7c60dd67fd28"
+  },
+  {
+   "id": "evidence-160",
+   "quote": "41895c5416fdc82f7e0babc6bb6c7216",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "41895c5416fdc82f7e0babc6bb6c7216"
+  },
+  {
+   "id": "evidence-161",
+   "quote": "95c276215dcc1bd7606c0cb2be06bf70",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95c276215dcc1bd7606c0cb2be06bf70"
+  },
+  {
+   "id": "evidence-162",
+   "quote": "c2f8c9bb7df688d0a7030a96314bb493",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c2f8c9bb7df688d0a7030a96314bb493"
+  },
+  {
+   "id": "evidence-163",
+   "quote": "426bb55531e8e3055c942a1a035e46b9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "426bb55531e8e3055c942a1a035e46b9"
+  },
+  {
+   "id": "evidence-164",
+   "quote": "33a3da2de78418b89a603e28a1e8852c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "33a3da2de78418b89a603e28a1e8852c"
+  },
+  {
+   "id": "evidence-165",
+   "quote": "cfae52529468034dbbb40c9a985fa504",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cfae52529468034dbbb40c9a985fa504"
+  },
+  {
+   "id": "evidence-166",
+   "quote": "deae4be61c90ad6d499f5bdac5dad242",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "deae4be61c90ad6d499f5bdac5dad242"
+  },
+  {
+   "id": "evidence-167",
+   "quote": "0055a266aa536b2fdadb3336ef8d4fba",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0055a266aa536b2fdadb3336ef8d4fba"
+  },
+  {
+   "id": "evidence-168",
+   "quote": "bda0686d02a8b7685adf937cbcd35f46",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bda0686d02a8b7685adf937cbcd35f46"
+  },
+  {
+   "id": "evidence-169",
+   "quote": "55bb271bbbf19108fec73d224c9b4218",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "55bb271bbbf19108fec73d224c9b4218"
+  },
+  {
+   "id": "evidence-170",
+   "quote": "6de6c27ca8f4e00f0b3e8ff5185a59d1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6de6c27ca8f4e00f0b3e8ff5185a59d1"
+  },
+  {
+   "id": "evidence-171",
+   "quote": "0c046a2f5304ed8d768795a49b99d6e4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0c046a2f5304ed8d768795a49b99d6e4"
+  },
+  {
+   "id": "evidence-172",
+   "quote": "c61a8c4f6f6870c7ca0013e084b893d2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c61a8c4f6f6870c7ca0013e084b893d2"
+  },
+  {
+   "id": "evidence-173",
+   "quote": "f34664e0d9a10974da117c1ca859dba8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f34664e0d9a10974da117c1ca859dba8"
+  },
+  {
+   "id": "evidence-174",
+   "quote": "5291aed100cc48415636c4875592f70c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5291aed100cc48415636c4875592f70c"
+  },
+  {
+   "id": "evidence-175",
+   "quote": "a2c2099d503fcc29478205f5aef0283b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a2c2099d503fcc29478205f5aef0283b"
+  },
+  {
+   "id": "evidence-176",
+   "quote": "f4795f7aec4389c8323f7f40b50ae46f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f4795f7aec4389c8323f7f40b50ae46f"
+  },
+  {
+   "id": "evidence-177",
+   "quote": "e439f850aa8ead560c99a8d93e472225",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e439f850aa8ead560c99a8d93e472225"
+  },
+  {
+   "id": "evidence-178",
+   "quote": "cf1a90e458966bcba8286d46d6ab052c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cf1a90e458966bcba8286d46d6ab052c"
+  },
+  {
+   "id": "evidence-179",
+   "quote": "7c30ed6a612a1fd252565300c03c7523",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7c30ed6a612a1fd252565300c03c7523"
+  },
+  {
+   "id": "evidence-180",
+   "quote": "792370eb01e16ac3dc511143932d0e1d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "792370eb01e16ac3dc511143932d0e1d"
+  },
+  {
+   "id": "evidence-181",
+   "quote": "81738405a7783c09906da5c7212e606b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "81738405a7783c09906da5c7212e606b"
+  },
+  {
+   "id": "evidence-182",
+   "quote": "612538328e0c4f3e445fb58ef811336a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "612538328e0c4f3e445fb58ef811336a"
+  },
+  {
+   "id": "evidence-183",
+   "quote": "9767aa592ec2d6ae3c7d40b6049d0466",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9767aa592ec2d6ae3c7d40b6049d0466"
+  },
+  {
+   "id": "evidence-184",
+   "quote": "eb7ba9f7424dffdb7d695b00007a3c6d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eb7ba9f7424dffdb7d695b00007a3c6d"
+  },
+  {
+   "id": "evidence-185",
+   "quote": "b22fd0604c4f189f2b7a59c8f48882dd",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b22fd0604c4f189f2b7a59c8f48882dd"
+  },
+  {
+   "id": "evidence-186",
+   "quote": "3e9ee5982e3054dc76d3ba5cc88ae3de",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3e9ee5982e3054dc76d3ba5cc88ae3de"
+  },
+  {
+   "id": "evidence-187",
+   "quote": "e53ca714787a86c13f07942a56d64efa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e53ca714787a86c13f07942a56d64efa"
+  },
+  {
+   "id": "evidence-188",
+   "quote": "073e3170a8e7537ff985ec8316319351",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "073e3170a8e7537ff985ec8316319351"
+  },
+  {
+   "id": "evidence-189",
+   "quote": "c7b09f1dd0a5694de677f3ecceda41b7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c7b09f1dd0a5694de677f3ecceda41b7"
+  },
+  {
+   "id": "evidence-190",
+   "quote": "9b0e7c460a80f740d455a7521f0eada1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9b0e7c460a80f740d455a7521f0eada1"
+  },
+  {
+   "id": "evidence-191",
+   "quote": "c8346b39418f92725719f364068a218d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c8346b39418f92725719f364068a218d"
+  },
+  {
+   "id": "evidence-192",
+   "quote": "2d02f5499d35a8dffb4c8bc0b7fec5c2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2d02f5499d35a8dffb4c8bc0b7fec5c2"
+  },
+  {
+   "id": "evidence-193",
+   "quote": "730bff14e80ffd7737a97cdf11362ab5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "730bff14e80ffd7737a97cdf11362ab5"
+  },
+  {
+   "id": "evidence-194",
+   "quote": "0984954526232f7d05910aa5b07c5893",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0984954526232f7d05910aa5b07c5893"
+  },
+  {
+   "id": "evidence-195",
+   "quote": "9a481bc83fea1dea3e3bdfff5e154d44",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9a481bc83fea1dea3e3bdfff5e154d44"
+  },
+  {
+   "id": "evidence-196",
+   "quote": "4156a7283284ece739e1bae05f99e17c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4156a7283284ece739e1bae05f99e17c"
+  },
+  {
+   "id": "evidence-197",
+   "quote": "ddb1f970371fa32faae61fc5b8423d4b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ddb1f970371fa32faae61fc5b8423d4b"
+  },
+  {
+   "id": "evidence-198",
+   "quote": "3026d419ee140f3c6acd5bff54132795",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3026d419ee140f3c6acd5bff54132795"
+  },
+  {
+   "id": "evidence-199",
+   "quote": "6c2b947921e7c77d9af62ce9a3ed7621",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6c2b947921e7c77d9af62ce9a3ed7621"
+  },
+  {
+   "id": "evidence-200",
+   "quote": "7aa132c0cc63a38fb4d1789553266fc7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7aa132c0cc63a38fb4d1789553266fc7"
+  },
+  {
+   "id": "evidence-201",
+   "quote": "977d30b261f64cc582b48960909d0a89",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "977d30b261f64cc582b48960909d0a89"
+  },
+  {
+   "id": "evidence-202",
+   "quote": "1a0811472fad0ff507a92c957542fffd",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1a0811472fad0ff507a92c957542fffd"
+  },
+  {
+   "id": "evidence-203",
+   "quote": "7ce51b56a6b0f8f78056ddfc5b5de67c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7ce51b56a6b0f8f78056ddfc5b5de67c"
+  },
+  {
+   "id": "evidence-204",
+   "quote": "f8aef59d0c5afe8df31e11a1984fbc0a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f8aef59d0c5afe8df31e11a1984fbc0a"
+  },
+  {
+   "id": "evidence-205",
+   "quote": "dd9625be4a1201c6dfb205c12cf3a381",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dd9625be4a1201c6dfb205c12cf3a381"
+  },
+  {
+   "id": "evidence-206",
+   "quote": "82491b42b9a2d34b13137e36784a67d7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "82491b42b9a2d34b13137e36784a67d7"
+  },
+  {
+   "id": "evidence-207",
+   "quote": "ecb4a09618e2aba77ea37bd011d7d7f7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ecb4a09618e2aba77ea37bd011d7d7f7"
+  },
+  {
+   "id": "evidence-208",
+   "quote": "0a199944f757d5615164e8808a3c712a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0a199944f757d5615164e8808a3c712a"
+  },
+  {
+   "id": "evidence-209",
+   "quote": "0fd8c6f56c52c21c061a94e5765b27b4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0fd8c6f56c52c21c061a94e5765b27b4"
+  },
+  {
+   "id": "evidence-210",
+   "quote": "9c97ea18da290a6833a1d36e2d419efc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9c97ea18da290a6833a1d36e2d419efc"
+  },
+  {
+   "id": "evidence-211",
+   "quote": "c90d094a8fbeaa8a0083c7372bfc1897",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c90d094a8fbeaa8a0083c7372bfc1897"
+  },
+  {
+   "id": "evidence-212",
+   "quote": "16f768eac33f79775a9672018e0d64f5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "16f768eac33f79775a9672018e0d64f5"
+  },
+  {
+   "id": "evidence-213",
+   "quote": "ed8ec7a8dd089019cfd29143f008fa0951c56a35d73b2e1b274315152d0c0ee6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ed8ec7a8dd089019cfd29143f008fa0951c56a35d73b2e1b274315152d0c0ee6"
+  },
+  {
+   "id": "evidence-214",
+   "quote": "db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984"
+  },
+  {
+   "id": "evidence-215",
+   "quote": "db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984"
+  },
+  {
+   "id": "evidence-216",
+   "quote": "773760fd71d52457ba53a314f15dddb1a74e8b2f5a90e5e150dea48a21aa76df",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "773760fd71d52457ba53a314f15dddb1a74e8b2f5a90e5e150dea48a21aa76df"
+  },
+  {
+   "id": "evidence-217",
+   "quote": "05e9fe8e9e693cb073ba82096c291145c953ca3a3f8b3974f9c66d15c1a3a11d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "05e9fe8e9e693cb073ba82096c291145c953ca3a3f8b3974f9c66d15c1a3a11d"
+  },
+  {
+   "id": "evidence-218",
+   "quote": "e3027062e602c5d1812c039739e2f93fc78341a67b77692567a4690935123abe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e3027062e602c5d1812c039739e2f93fc78341a67b77692567a4690935123abe"
+  },
+  {
+   "id": "evidence-219",
+   "quote": "1962ebb7bf8d2b306c6f3b55c3dcd69a755eeff1a17577b7606894b781841c3a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1962ebb7bf8d2b306c6f3b55c3dcd69a755eeff1a17577b7606894b781841c3a"
+  },
+  {
+   "id": "evidence-220",
+   "quote": "f226086b5959eb96bd30dec0ffcbf0f09186cd11721507f416f1c39901addafb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f226086b5959eb96bd30dec0ffcbf0f09186cd11721507f416f1c39901addafb"
+  },
+  {
+   "id": "evidence-221",
+   "quote": "6db57bbc2d07343dd6ceba0f53c73756af78f09fe1cb5ce8e8008e5e7242eae1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6db57bbc2d07343dd6ceba0f53c73756af78f09fe1cb5ce8e8008e5e7242eae1"
+  },
+  {
+   "id": "evidence-222",
+   "quote": "b7435d23769e79fcbe69b28df4aef062685d1a631892c2354f96d833eae467be",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b7435d23769e79fcbe69b28df4aef062685d1a631892c2354f96d833eae467be"
+  },
+  {
+   "id": "evidence-223",
+   "quote": "66415464a0795d0569efa5cb5664785f74ed0b92a593280d689f3a2ac68dca66",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66415464a0795d0569efa5cb5664785f74ed0b92a593280d689f3a2ac68dca66"
+  },
+  {
+   "id": "evidence-224",
+   "quote": "def2f01fbd4be85f48101e5ab7ddd82efb720e67daa6838f30fd8dcda1977563",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "def2f01fbd4be85f48101e5ab7ddd82efb720e67daa6838f30fd8dcda1977563"
+  },
+  {
+   "id": "evidence-225",
+   "quote": "323cbe7a3d050230cfaa822c2a22160b4f8c5fe65481dd329841ee2754b522d9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "323cbe7a3d050230cfaa822c2a22160b4f8c5fe65481dd329841ee2754b522d9"
+  },
+  {
+   "id": "evidence-226",
+   "quote": "74529dd15d1953a47f0d7ecc2916b2b92865274a106e453a24943ca9ee434643",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "74529dd15d1953a47f0d7ecc2916b2b92865274a106e453a24943ca9ee434643"
+  },
+  {
+   "id": "evidence-227",
+   "quote": "1e4de822695570421eb2f12fdfe1d32ab8639655e12180a7ab3cf429e7811b8f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1e4de822695570421eb2f12fdfe1d32ab8639655e12180a7ab3cf429e7811b8f"
+  },
+  {
+   "id": "evidence-228",
+   "quote": "8ce219552e235dcaf1c694be122d6339ed4ff8df70bf358cd165e6eb487ccfc5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8ce219552e235dcaf1c694be122d6339ed4ff8df70bf358cd165e6eb487ccfc5"
+  },
+  {
+   "id": "evidence-229",
+   "quote": "c2904dc8bbb569536c742fca0c51a766e836d0da8fac1c1abd99744e9b50164f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c2904dc8bbb569536c742fca0c51a766e836d0da8fac1c1abd99744e9b50164f"
+  },
+  {
+   "id": "evidence-230",
+   "quote": "dda53eee2c5cb0abdbf5242f5e82f4de83898b6a9dd8aa935c2be29bafc9a469",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dda53eee2c5cb0abdbf5242f5e82f4de83898b6a9dd8aa935c2be29bafc9a469"
+  },
+  {
+   "id": "evidence-231",
+   "quote": "90fb0cd574155fd8667d20f97ac464eca67bdb6a8ee64184159362d45d79b6a4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "90fb0cd574155fd8667d20f97ac464eca67bdb6a8ee64184159362d45d79b6a4"
+  },
+  {
+   "id": "evidence-232",
+   "quote": "452ca47230afd4bb85c45af54fcacbfa544208ef8b4604c3c5caefe3a64dcc19",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "452ca47230afd4bb85c45af54fcacbfa544208ef8b4604c3c5caefe3a64dcc19"
+  },
+  {
+   "id": "evidence-233",
+   "quote": "199ba618efc6af9280c5abd86c09cdf2d475c09c8c7ffc393a35c3d70277aed1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "199ba618efc6af9280c5abd86c09cdf2d475c09c8c7ffc393a35c3d70277aed1"
+  },
+  {
+   "id": "evidence-234",
+   "quote": "2eb16dbc1097a590f07787ab285a013f5fe235287cb4fb948d4f9cce9efa5dbc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2eb16dbc1097a590f07787ab285a013f5fe235287cb4fb948d4f9cce9efa5dbc"
+  },
+  {
+   "id": "evidence-235",
+   "quote": "ce779e30502ecee991260fd342cc0d7d5f73d1a070395b4120b8d300ad11d694",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ce779e30502ecee991260fd342cc0d7d5f73d1a070395b4120b8d300ad11d694"
+  },
+  {
+   "id": "evidence-236",
+   "quote": "c28bb61de4a6ad1c5e225ad9ec2eaf4a6c8ccfff40cf45a640499c0adb0d8740",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c28bb61de4a6ad1c5e225ad9ec2eaf4a6c8ccfff40cf45a640499c0adb0d8740"
+  },
+  {
+   "id": "evidence-237",
+   "quote": "34d5a5d8bec893519f204b573c33d54537b093c52df01b3d8c518af08ee94947",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "34d5a5d8bec893519f204b573c33d54537b093c52df01b3d8c518af08ee94947"
+  },
+  {
+   "id": "evidence-238",
+   "quote": "664f8d19af3400a325998b332343a9304f03bab9738ddab1530869eff13dae54",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "664f8d19af3400a325998b332343a9304f03bab9738ddab1530869eff13dae54"
+  },
+  {
+   "id": "evidence-239",
+   "quote": "772b06f34facf6a2ce351b8679ff957cf601ef3ad29645935cb050b4184c8d51",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "772b06f34facf6a2ce351b8679ff957cf601ef3ad29645935cb050b4184c8d51"
+  },
+  {
+   "id": "evidence-240",
+   "quote": "aa29bf4292b68d197f4d8ca026b97ec7785796edcb644db625a8f8b66733ab54",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "aa29bf4292b68d197f4d8ca026b97ec7785796edcb644db625a8f8b66733ab54"
+  },
+  {
+   "id": "evidence-241",
+   "quote": "9a5504dcfb7e664259bfa58c46cfd33e554225daf1cedea2ec2a9d83bbbfe238",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9a5504dcfb7e664259bfa58c46cfd33e554225daf1cedea2ec2a9d83bbbfe238"
+  },
+  {
+   "id": "evidence-242",
+   "quote": "c2500a6e12f22b16e221ba01952b69c92278cd05632283d8b84c55c916efe27c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c2500a6e12f22b16e221ba01952b69c92278cd05632283d8b84c55c916efe27c"
+  },
+  {
+   "id": "evidence-243",
+   "quote": "8aa6612c95c7cef49709596da43a0f8354f14d8c08128c4cb9b1f37e548f083b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8aa6612c95c7cef49709596da43a0f8354f14d8c08128c4cb9b1f37e548f083b"
+  },
+  {
+   "id": "evidence-244",
+   "quote": "38f0f2d658e09c57fc78698482f2f638843eb53412d860fb3a99bb6f51025b07",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "38f0f2d658e09c57fc78698482f2f638843eb53412d860fb3a99bb6f51025b07"
+  },
+  {
+   "id": "evidence-245",
+   "quote": "rewardsforjustice.net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "rewardsforjustice.net"
+  },
+  {
+   "id": "evidence-246",
+   "quote": "www.fbi.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "99"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fbi.gov"
+  },
+  {
+   "id": "evidence-247",
+   "quote": "asec.ahnlab.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "100"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "asec.ahnlab.com"
+  },
+  {
+   "id": "evidence-248",
+   "quote": "https://medium.com/@DCSO_CyTec/andariels-jupiter-malware-and-the-case-of-the-curious-c2-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://medium.com/@DCSO_CyTec/andariels jupiter malware and the case of the curious c2"
+  },
+  {
+   "id": "evidence-249",
+   "quote": "https://github.com/ditekshen/detection/blob/master/yara/indicator_packed.yar",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://github.com/ditekshen/detection/blob/master/yara/indicator_packed.yar"
+  },
+  {
+   "id": "evidence-250",
+   "quote": "www.boredhackerblog.info",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.boredhackerblog.info"
+  },
+  {
+   "id": "evidence-251",
+   "quote": "blog.talosintelligence.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "blog.talosintelligence.com"
+  },
+  {
+   "id": "evidence-252",
+   "quote": "medium.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "medium.com"
+  },
+  {
+   "id": "evidence-253",
+   "quote": "Github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Github.com"
+  },
+  {
+   "id": "evidence-254",
+   "quote": "github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "github.com"
+  },
+  {
+   "id": "evidence-255",
+   "quote": "indicator_packed.yar",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "indicator_packed.yar"
+  },
+  {
+   "id": "evidence-256",
+   "quote": "blogs.jpcert.or.jp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "blogs.jpcert.or.jp"
+  },
+  {
+   "id": "evidence-257",
+   "quote": "Lazarus_malware3.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Lazarus_malware3.html"
+  },
+  {
+   "id": "evidence-258",
+   "quote": "yamabot.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "yamabot.html"
+  },
+  {
+   "id": "evidence-259",
+   "quote": "www.mandiant.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.mandiant.com"
+  },
+  {
+   "id": "evidence-260",
+   "quote": "www.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.microsoft.com"
+  },
+  {
+   "id": "evidence-261",
+   "quote": "www.ncsc.gov.uk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ncsc.gov.uk"
+  },
+  {
+   "id": "evidence-262",
+   "quote": "symantec-enterprise-blogs.security.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "symantec enterprise blogs.security.com"
+  },
+  {
+   "id": "evidence-263",
+   "quote": "blogs.vmware.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "blogs.vmware.com"
+  },
+  {
+   "id": "evidence-264",
+   "quote": "labs.withsecure.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "labs.withsecure.com"
+  },
+  {
+   "id": "evidence-265",
+   "quote": "cmd.exe /c systeminfo | findstr Logon",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c systeminfo | findstr Logon"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim web servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim web servers",
+    "action:a1 — gain initial access through exploitation of web servers",
+    "action:a2 — deploy web shell malware"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim web servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim web servers",
+    "action:a1 — gain initial access through exploitation of web servers",
+    "action:a2 — deploy web shell malware"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim web servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim web servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim web servers",
+    "action:a1 — gain initial access through exploitation of web servers",
+    "action:a2 — deploy web shell malware"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim web servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "compromised systems — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "compromised systems 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — compromised systems",
+    "action:a3 — perform system discovery and enumeration",
+    "action:a4 — establish persistence using Scheduled Tasks",
+    "action:a5 — perform privilege escalation using credential stealing tools",
+    "action:a6 — use custom malware implants and remote access tools",
+    "action:a8 — use system logging for discovery and lateral movement",
+    "action:a9 — use Remote Desktop Protocol (RDP) for lateral movement",
+    "action:a10 — use Server Message Block (SMB) protocol for discovery",
+    "action:a11 — compress collected files into RAR archives",
+    "action:a12 — exfiltrate data to cloud storage or actor-controlled servers",
+    "action:a13 — use tunneling tools for command and control",
+    "action:a14 — use publicly available credential theft utilities and dual-use tools",
+    "action:a15 — use customized file system enumeration tooling",
+    "action:a16 — pack late-stage tooling with VMProtect and Themida"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "compromised systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-32",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "compromised systems — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "compromised systems 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — compromised systems",
+    "action:a3 — perform system discovery and enumeration",
+    "action:a4 — establish persistence using Scheduled Tasks",
+    "action:a5 — perform privilege escalation using credential stealing tools",
+    "action:a6 — use custom malware implants and remote access tools",
+    "action:a8 — use system logging for discovery and lateral movement",
+    "action:a9 — use Remote Desktop Protocol (RDP) for lateral movement",
+    "action:a10 — use Server Message Block (SMB) protocol for discovery",
+    "action:a11 — compress collected files into RAR archives",
+    "action:a12 — exfiltrate data to cloud storage or actor-controlled servers",
+    "action:a13 — use tunneling tools for command and control",
+    "action:a14 — use publicly available credential theft utilities and dual-use tools",
+    "action:a15 — use customized file system enumeration tooling",
+    "action:a16 — pack late-stage tooling with VMProtect and Themida"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "compromised systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-32",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "compromised systems — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "compromised systems 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — compromised systems",
+    "action:a3 — perform system discovery and enumeration",
+    "action:a4 — establish persistence using Scheduled Tasks",
+    "action:a5 — perform privilege escalation using credential stealing tools",
+    "action:a6 — use custom malware implants and remote access tools",
+    "action:a8 — use system logging for discovery and lateral movement",
+    "action:a9 — use Remote Desktop Protocol (RDP) for lateral movement",
+    "action:a10 — use Server Message Block (SMB) protocol for discovery",
+    "action:a11 — compress collected files into RAR archives",
+    "action:a12 — exfiltrate data to cloud storage or actor-controlled servers",
+    "action:a13 — use tunneling tools for command and control",
+    "action:a14 — use publicly available credential theft utilities and dual-use tools",
+    "action:a15 — use customized file system enumeration tooling",
+    "action:a16 — pack late-stage tooling with VMProtect and Themida"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "compromised systems",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-32",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-apache-log4j-version",
+   "field": "Log4j version used by the Log4Shell step",
+   "category": "version",
+   "reason": "IR 指出 Apache Log4j 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 已知是 Log4Shell 初始入侵；不必再問如何取得立足點。為重建漏洞條件，該 VMware Horizon 主機上與此漏洞相關的 Apache Log4j 確切版本是什麼？",
+   "affects": [
+    "service:s1 — Apache Log4j",
+    "service:svc-unsupported-log4j-unspecified-h1 — Log4j application",
+    "action:a1 — gain initial access through exploitation of web servers"
+   ],
+   "suggestions": [
+    "Apache Log4j 2.x（確切版號請由 JAR/SBOM 核對）",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Log4Shell (Apache Log4j)",
+     "source_ref": "services:s1",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-33"
+     ]
+    },
+    {
+     "field": "受害軟體/服務",
+     "value": "Log4Shell (Apache Log4j)",
+     "source_ref": "services:svc-unsupported-log4j-unspecified-h1",
+     "epistemic_status": "inferred"
+    },
+    {
+     "field": "相關步驟",
+     "value": "gain initial access through exploitation of web servers",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-product-mimikatz-version",
+   "field": "Mimikatz version",
+   "category": "software",
+   "reason": "IR 指出 Mimikatz 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5, a14 提到 Mimikatz，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a5 — perform privilege escalation using credential stealing tools",
+    "action:a14 — use publicly available credential theft utilities and dual-use tools"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "perform privilege escalation using credential stealing tools",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "use publicly available credential theft utilities and dual-use tools",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Apache Log4j — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a1 使用 Apache Log4j，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 依賴 Apache Log4j。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Apache Log4j",
+    "action:a1 — gain initial access through exploitation of web servers"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Apache Log4j",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-33"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "gain initial access through exploitation of web servers",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s2-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a9 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s2 — Remote Desktop Protocol (RDP)",
+    "action:a9 — use Remote Desktop Protocol (RDP) for lateral movement"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-34"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "use Remote Desktop Protocol (RDP) for lateral movement",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 涉及 Active Directory，但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "action:a5 — perform privilege escalation using credential stealing tools"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "AD 相關步驟",
+     "value": "perform privilege escalation using credential stealing tools",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a13 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a13 — use tunneling tools for command and control"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "use tunneling tools for command and control",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a5 — perform privilege escalation using credential stealing tools",
+    "action:a14 — use publicly available credential theft utilities and dual-use tools",
+    "host:h2 — compromised systems"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "perform privilege escalation using credential stealing tools",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "use publicly available credential theft utilities and dual-use tools",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-apache-log4j",
+   "field": "software dependency: Apache Log4j",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Apache Log4j 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-remote-desktop-protocol-rdp",
+   "field": "software dependency: Remote Desktop Protocol (RDP)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-server-message-block-smb-pr",
+   "field": "software dependency: Server Message Block (SMB) protocol",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "Server Message Block (SMB) protocol 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-active-directory-domain-dat",
+   "field": "software dependency: Active Directory domain database",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "Active Directory domain database 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "PostgreSQL（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-cve-2021-44228-h1",
+   "field": "version for Log4j application",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-apache-h1",
+   "field": "version for Apache",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-active-directory-h2",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_deployed-version-svc-oss-httpd-h1",
+   "field": "deployed version of Apache",
+   "category": "version",
+   "reason": "The source does not state a version; the catalogue provides 2.4.71.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Deploying Apache HTTP Server 2.4.71. This release is an assumption, not a fact from the source; results do not show that the original system ran it."
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9434,
+  "unsupported_claim_count": 20,
+  "inferred_count": 7,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

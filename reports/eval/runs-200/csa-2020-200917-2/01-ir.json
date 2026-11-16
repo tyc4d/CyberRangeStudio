@@ -1,0 +1,4247 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-200917-2",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "d7fbd8c9f603c09cd208b3e8e0a208d401519c9b4449df2f1872a8f7f2839551",
+  "source_name": "csa-2020-200917-2"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Embedded malicious VBS scripts in Microsoft Office documents and sent via spear phishing or social engineering",
+   "source": "llm",
+   "description": "The VBS malware was embedded in Microsoft Office documents and sent to victims via spear phishing or other social engineering techniques.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "VBS malware sets upload/download paths and creates files",
+   "source": "llm",
+   "description": "Sets upload/download paths to %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn and up, deobfuscates and creates files named [script name].vbs and tm.ps1",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "VBS malware runs scheduled task every 2 minutes",
+   "source": "llm",
+   "description": "Runs Schedule Task Command to run [script name].vbs file with unique/obscure name every 2 minutes. Scheduled tasks named UpdatMachine and UpdateMachineG",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "VBS malware runs PowerShell script tm.ps1",
+   "source": "llm",
+   "description": "Runs PowerShell, normally under a script named tm.ps1",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "VBS malware communicates with actor IP or URL via update.php",
+   "source": "llm",
+   "description": "The VBS file reaches out to <actor IP or URL>:port/update.php?req=<victim identifier> followed by upload/download commands &m=d, &m=u, or &m=b",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a6",
+   "name": "VBS malware uploads victim files and executes commands via cmd.exe",
+   "source": "llm",
+   "description": "Both [script name].vbs and tm.ps1 work together to upload victim files and execute commands via cmd.exe on a victim machine",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a7",
+   "name": "Embedded malicious AutoIt malware scripts sent via spear phishing or social engineering",
+   "source": "llm",
+   "description": "The AutoIt malware was embedded in Microsoft Office documents or malicious links, and sent to victims via spear phishing or other social engineering techniques.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a8",
+   "name": "AutoIt malware executes App.au3 script with hardcoded C2 domain",
+   "source": "llm",
+   "description": "When the malware is run, an AutoIt script named App.au3 executes. This script contains a hardcoded domain that will act as a command and control (C2).",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a9",
+   "name": "AutoIt malware performs DNS flush and creates directories",
+   "source": "llm",
+   "description": "The script performs a DNS flush and creates two directories: <USER_DIR>\\appdata\\microsoft\\Taskbar\\dn and up",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a10",
+   "name": "AutoIt malware reads and writes registry keys for C2 communication",
+   "source": "llm",
+   "description": "The script looks for values UMe, UN, UT from registry key HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion and writes values UMe, UN, UT to same key",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a11",
+   "name": "AutoIt malware selects C2 communication method based on DNS or HTTP response",
+   "source": "llm",
+   "description": "Method 1: If IP returned for hardcoded server begins with 65.. run dnip.ps1; Method 2: If nslookup matches regex run dntx.ps1; Method 3: If GET request to update.php returns 200 run PowerShell commands similar to VBS malware",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a12",
+   "name": "BITS 1.0 malware installed by VBS/AutoIt malware",
+   "source": "llm",
+   "description": "The VBS and/or AutoIt malware pulled down the BITS 1.0 malware from actor controlled infrastructure for further victimization.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a13",
+   "name": "BITS 1.0 malware installed dropper with two CAB files",
+   "source": "llm",
+   "description": "Installed a dropper that contained two Microsoft CAB files. Droppers named Bird.exe, Reg.exe, or natgeo-desktop.exe. CAB file 1 empty named Empty.exe. CAB file 2 contained two executables, one configuration file, and other files/folders.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a14",
+   "name": "BITS 1.0 malware executables perform data aggregation, encryption, and exfiltration",
+   "source": "llm",
+   "description": "Executable 1 (Svc.exe or events.exe) accepts commands including search, update, upload, shell execute, install, uninstall. Executable 2 (Splitter.exe) performs mouse capture, screen capture, key logger, IP config. Configuration file obfuscated with XOR cipher containing ZipPass key. Other files include log.txt, task.xml, upped.txt. Executables aggregate victim data, encrypt using XOR key, zip with ZipPass key, and transmit via Microsoft BITS protocol over HTTP port 80.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a15",
+   "name": "BITS 2.0 malware self-extracting executable with image, icon, VBS script, and executable",
+   "source": "llm",
+   "description": "BITS 2.0 is a self-extracting executable containing an image (Chrysanthemum.jpg), an icon, a VBS script (events.vbs), and an executable (events.exe).",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a16",
+   "name": "BITS 2.0 malware creates scheduled tasks for persistence",
+   "source": "llm",
+   "description": "Events.vbs creates scheduled tasks named \"Update Windows\" and \"Update Windows_<username>\" for persistence and execution, placed in C:\\Users\\user\\AppData\\Local\\Microsoft\\Events\\",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a17",
+   "name": "BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+   "source": "llm",
+   "description": "Events.exe uploads/downloads files, searches for files to upload, executes cmd.exe commands, collects screenshots, clipboard data, keylogger info, disables legitimate BITSADMIN process, bundles victim data into encrypted .bak.zak files, and exfiltrates to C2",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a18",
+   "name": "BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2",
+   "source": "llm",
+   "description": "Target sends zipped and encrypted .bak.zak files to http://[C2 IP].test.asp and sends beacons to http://[C2 IP]/checkupdate.asp?uname=[target username]&pid=[target operation name]",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a19",
+   "name": "Malware masquerading as Mozilla Firefox with multiple components",
+   "source": "llm",
+   "description": "Malware named 1.exe containing 7z.dll (legitimate 7zip), autoGetKbd.dll (keylogger), autoScreenShot.dll (screenshot utility), CrachReport.exe (file compression), fort.vbs (runs SafeBrowser.exe), Logging.dll (creates encrypted screenshots and keylogs), MozillaFirefox.exe (fake Firefox executable), MozillaSciencedent.vbs (runs MozillaFirefox.exe), MozillaUpdate.exe (similar to MozillaFirefox.exe and Logging.dll), SafeBrowser.exe (creates scheduled task to run Mozillafox)",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a20",
+   "name": "Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot",
+   "source": "llm",
+   "description": "Python-based malware contained in .rar file with script ma.py that conducts HTTP GET to [Actor IP]/service.html, downloads files to C:\\Windows\\Temp\\ImageVeiwer.exe, and runs ImageVeiwer.exe at system reboot",
+   "target_host_ref": "h5",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a21",
+   "name": "Android malware implant Optimizer.apk collects device data and communicates with C2",
+   "source": "llm",
+   "description": "Optimizer.apk implant collects device data, compresses and AES-encrypts it, sends via HTTP POST to C2 saveingone.com, records audio and takes photos, gains root access without user knowledge, retrieves HTTP GET requests from C2 for updates or commands",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a22",
+   "name": "Optimizer.apk implant maintains persistence and runs multiple processes and services after reboot",
+   "source": "llm",
+   "description": "After device reboot, Optimizer.apk implant initiates three running processes (Optimizer, Android Core Apps, Calendar Storage) and two services (Optimizer, Helper), maintains persistence, and does not show app icon or allow Force Stop/Uninstall initially",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a23",
+   "name": "Depot.dat malware dropper decrypts CAB file and establishes persistence",
+   "source": "llm",
+   "description": "Dropper decrypts depot.dat CAB file using a password seed to create Blowfish key, sets LoadAppInit_DLLs registry key to persist Bootmgr.dll, disables RequireSigned, deletes encrypted depot.dat after extraction",
+   "target_host_ref": "h7",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a24",
+   "name": "Depot.dat malware components collect keystrokes and screenshots and package data for exfiltration",
+   "source": "llm",
+   "description": "Bootmgr.dll starts bootui.dll. Bootui.dll deobfuscates mlp.dat config file, collects keystrokes and screenshots, stores data as .tmp files, packages data into CAB file, encrypts with Blowfish key, stores victim data in C:\\Windows\\Help\\OEM",
+   "target_host_ref": "h7",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a2 happens after a1 as the VBS malware sets paths and creates files after being embedded and sent",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a3 runs scheduled task after files are created by a2",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a4 runs PowerShell script after scheduled task runs the VBS script",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a5 communication happens after PowerShell script runs",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a6 uses both the VBS script and PowerShell script to upload files and execute commands",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a8 executes after AutoIt malware is embedded and sent via spear phishing",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a9 happens after the App.au3 script executes",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a10 reads and writes registry keys after directories are created",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r9",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a11 selects C2 communication method based on registry and DNS/HTTP responses",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a2",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "BITS 1.0 malware is pulled down by VBS and/or AutoIt malware",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r11",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "BITS 1.0 malware is pulled down by VBS and/or AutoIt malware, including AutoIt which uses a method described in a11",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r12",
+   "from_action": "a12",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a13 describes installation of dropper by BITS 1.0 malware",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r13",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a14 describes executables and their functions after dropper installation in a13",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r14",
+   "from_action": "a12",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "BITS 2.0 malware is a separate variant related to BITS 1.0 malware pulled down by VBS/AutoIt malware",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r15",
+   "from_action": "a15",
+   "to_action": "a16",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a16 describes scheduled tasks created by events.vbs in BITS 2.0 malware after self-extracting executable in a15",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r16",
+   "from_action": "a16",
+   "to_action": "a17",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a17 describes events.exe functionality after events.vbs creates scheduled tasks in a16",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r17",
+   "from_action": "a17",
+   "to_action": "a18",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a18 exfiltrates data collected and packaged by events.exe in a17",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r19",
+   "from_action": "a21",
+   "to_action": "a22",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a22 describes persistence and running processes after initial installation of Optimizer.apk in a21",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r20",
+   "from_action": "a23",
+   "to_action": "a24",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a24 describes components collecting data after dropper decrypts depot.dat and establishes persistence in a23",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "target machine for VBS and AutoIt malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-33",
+    "evidence-1",
+    "evidence-34",
+    "evidence-35",
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "target machine for BITS 1.0 malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-37",
+    "evidence-27",
+    "evidence-38",
+    "evidence-39"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h3",
+   "role": "target machine for BITS 2.0 malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-40",
+    "evidence-41",
+    "evidence-42",
+    "evidence-43",
+    "evidence-44",
+    "evidence-45",
+    "evidence-46"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "target machine for Firefox malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-47",
+    "evidence-48",
+    "evidence-49",
+    "evidence-50"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h5",
+   "role": "target machine for Python-based malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-51",
+    "evidence-52",
+    "evidence-53",
+    "evidence-54",
+    "evidence-55"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h6",
+   "role": "target device for Android malware implant Optimizer.apk",
+   "source": "llm",
+   "name": "Android device",
+   "os": "Android",
+   "os_version": "minimum SDK 8, target 22, maximum 23",
+   "evidence_refs": [
+    "evidence-56",
+    "evidence-57",
+    "evidence-58",
+    "evidence-59",
+    "evidence-60",
+    "evidence-61",
+    "evidence-62"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h7",
+   "role": "target machine for depot.dat malware",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-63",
+    "evidence-64",
+    "evidence-65",
+    "evidence-66",
+    "evidence-67",
+    "evidence-68",
+    "evidence-69",
+    "evidence-70"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Microsoft BITS protocol",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Microsoft BITS protocol",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h3",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "FTP",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h4",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "HTTP",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h5",
+   "port": 80,
+   "protocol": "tcp",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s5",
+   "name": "HTTP",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h6",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "h6",
+   "h7"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "VBS malware scripts",
+   "type": "malware",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-71"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "[script name].vbs",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-72"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "tm.ps1",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-73"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Scheduled tasks UpdatMachine and UpdateMachineG",
+   "type": "other",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-74"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "AutoIt malware scripts",
+   "type": "malware",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-75"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "App.au3",
+   "type": "script",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-76"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Bird.exe",
+   "type": "file",
+   "id": "a7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Svc.exe",
+   "type": "file",
+   "id": "a8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-77"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Splitter.exe",
+   "type": "file",
+   "id": "a9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-78"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "final1.exe",
+   "type": "file",
+   "id": "a10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-79"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "events.vbs",
+   "type": "file",
+   "id": "a11",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-80"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "events.exe",
+   "type": "file",
+   "id": "a12",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-81"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "MozillaFirefox.exe",
+   "type": "file",
+   "id": "a13",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-82"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Logging.dll",
+   "type": "file",
+   "id": "a14",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-83"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SafeBrowser.exe",
+   "type": "file",
+   "id": "a15",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-84"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ma.py",
+   "type": "script",
+   "id": "a16",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-51"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "ImageVeiwer.exe",
+   "type": "file",
+   "id": "a17",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-54"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Optimizer.apk",
+   "type": "malware",
+   "id": "a18",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-56"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "depot.dat",
+   "type": "file",
+   "id": "a19",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-64"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "installer.exe",
+   "type": "file",
+   "id": "a20",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-85"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "svchost.exe",
+   "type": "file",
+   "id": "a21",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-86"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Bootmgr.dll",
+   "type": "file",
+   "id": "a22",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-68"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "bootui.dll",
+   "type": "file",
+   "id": "a23",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-69"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "mlp.dat",
+   "type": "file",
+   "id": "a24",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-87"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "tfd.log",
+   "type": "file",
+   "id": "a25",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-70"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "update.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88",
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "url",
+   "value": "http://[C2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "run.xml",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "events.vbs",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "test.asp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "checkupdate.asp",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "3153abb3ee1acea396b0f7b77c0162c9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "b15196f34a69e6579532c69fefad7ac6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "9e98ecf93ca86751dbdb7049f6d24e9b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "fc105956b5b2d33411b2c0e362abb6b3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "e169c4d3430c8342d809055dc5f3373e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "e998fa518523ccc092c4167718b069cb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "3f3f39bacfe115df5b55c9ab06b93aeb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "d661d2dd1c28efd4b4f7c9c70f763354",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "54c166c313c684eaa54c0c861cc34987",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "dbc67d46cb7b6aa7406c979b248421c4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "domain",
+   "value": "service.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "426351383DFE8F88A0959A9D5E8C43C7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106",
+    "evidence-107",
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "0C23F62BA98EBFA2C062C485E5704F193909E421",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109",
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "A1481B251328B50D268B815DEBD614F539039E6E7012C90B66DAEE717712D524",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "185.165.116.47",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "saveingone.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113",
+    "evidence-114",
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "fcc61b3a0277c47748a185dccccad5d8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "4d8e2fdb16877f693d8e90410f90a164",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "ce456b20f6cb4d5d74f00d976e2e7a91",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "66cb23c223ec4d78d683292d1b928fbf",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "hash",
+   "value": "46506fa669ec116da3d967c36eab7ba7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "hash",
+   "value": "f3d2c6084f09433a87f248726de288e0",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "hash",
+   "value": "d363ecffbe6a0a62546051fc383399f4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "hash",
+   "value": "9f7c280b20d021f0a0984d1ad0aeba41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "hash",
+   "value": "486aa8849c173450911f886116f4b5d6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "hash",
+   "value": "91e1793bd5f3f274ddb22b47662cb860",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "2f01092e9cd49448b0de7da48e545682",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "hash",
+   "value": "0d6d385354584264e2b37ff3a199ea04",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "8f848b67af0d6ad3dd3419c9d11c28c1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "45045fa9d428f29e8a3a988048e3aff1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-129"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "43124f6d418b086f3107a8cb708c3d2b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-130"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "hash",
+   "value": "6269e8ae9d86c648c15e41c7d89509ab",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-131"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "eee655c5522267d63314a0b20162d619",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-132"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "hash",
+   "value": "de8986682ab25d98448e688506250b94",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-133"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "hash",
+   "value": "50ded657ff5a1c80d736fe3b80beb87f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-134"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "hash",
+   "value": "59c2c1c6451417f054efaee32416c652",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-135"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-136"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The VBS malware was embedded in Microsoft Office documents and sent to victims via spear phishing or other social engineering techniques.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The VBS malware was embedded in Microsoft Office documents and sent to victims via spear phishing or other social engineering techniques."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "1. Sets upload/download paths to: a. %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn b. %userprofile%\\appdata\\local\\Microsoft\\Feed\\up 2. Deobfuscates and creates files named: a. %userprofile%\\appdata\\local\\Microsoft\\Feed\\[script name].vbs b. %userprofile%\\appdata\\local\\Microsoft\\Feed\\tm.ps1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1. Sets upload/download paths to: a. %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn b. %userprofile%\\appdata\\local\\Microsoft\\Feed\\up 2. Deobfuscates and creates "
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Runs Schedule Task Command to run [script name].vbs file with unique/obscure name every 2 minutes. The APT names the scheduled tasks as follows: a. UpdatMachine and UpdateMachineG",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Runs Schedule Task Command to run [script name].vbs file with unique/obscure name every 2 minutes. The APT names the scheduled tasks as follows: a. UpdatMachine"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Runs PowerShell, normally under a script named tm.ps1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Runs PowerShell, normally under a script named tm.ps1"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The VBS file reaches out to <actor IP or URL>:port/update.php?req=<victim identifier>. This request is followed by additional upload or download commands of the form &m=d, &m=u, or&m=b.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The VBS file reaches out to <actor IP or URL>:port/update.php?req=<victim identifier>. This request is followed by additional upload or download commands of the"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Both [script name].vbs and tm.ps1 work together to upload victim files and execute commands via cmd.exe on a victim machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Both [script name].vbs and tm.ps1 work together to upload victim files and execute commands via cmd.exe on a victim machine."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The FBI assesses the AutoIt malware was embedded in Microsoft Office documents or malicious links, and sent to victims via spear phishing or other social engineering techniques.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI assesses the AutoIt malware was embedded in Microsoft Office documents or malicious links, and sent to victims via spear phishing or other social engine"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "When the malware is run, an AutoIt script named App.au3 executes. This script contains a hardcoded domain that will act as a command and control (C2).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When the malware is run, an AutoIt script named App.au3 executes. This script contains a hardcoded domain that will act as a command and control (C2)."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The script performs a DNS flush and creates two directories: a. <USER_DIR>\\appdata\\microsoft\\Taskbar\\dn b. <USER_DIR>\\appdata\\microsoft\\Taskbar\\up",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The script performs a DNS flush and creates two directories: a. <USER_DIR>\\appdata\\microsoft\\Taskbar\\dn b. <USER_DIR>\\appdata\\microsoft\\Taskbar\\up"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The script looks for the values UMe (called \"method\"), UN (called \"rndname\"), UT (called \"lastMethodFinderTime\") from the registry key: HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion. The script will write to the registry key: HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion, and the following values: UMe : \"0\" or a method name, UN : size 4 random string, UT : a timestamp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The script looks for the values UMe (called \"method\"), UN (called \"rndname\"), UT (called \"lastMethodFinderTime\") from the registry key: "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "This method, which is used for C2, was determined based on one of three methods described below: a. Method 1: Selected in the case that the IP returned for the hardcoded server address begins with 65.. Execute PowerShell command to run dnip.ps1 file. b. Method 2: Selected in the case that an nslookup of the hardcoded server name matches a specific regular expression in the code. Execute PowerShell command to run dntx.ps1 file. c. Method 3: Selected in the case that a successful GET request (results in code 200) occurs to http://<server address>/update.php. Execute PowerShell commands very similar to those found in the VBS malware, specifically going to the update.php?m=b and update.php?m=d for uploading/downloading commands and files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This method, which is used for C2, was determined based on one of three methods described below: a. Method 1: Selected in the case that the IP returned for the "
+  },
+  {
+   "id": "evidence-12",
+   "quote": "This malware, identified as BITS 1.0, appeared to work in conjunction with the above VBS and AutoIt malware. The VBS and/or AutoIt malware pulled down the BITS 1.0 malware from actor controlled infrastructure for further victimization.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This malware, identified as BITS 1.0, appeared to work in conjunction with the above VBS and AutoIt malware. The VBS and/or AutoIt malware pulled down the BITS "
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Installed a dropper that contained two Microsoft CAB files. Observed droppers were named Bird.exe, Reg.exe, or natgeo-desktop.exe. CAB file 1 was empty, and observed as being named Empty.exe. CAB file 2 contained two executables, one configuration file, and other files and folders detailed below.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Installed a dropper that contained two Microsoft CAB files. Observed droppers were named Bird.exe, Reg.exe, or natgeo desktop.exe. "
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Executable 1: Entitled Svc.exe or events.exe. This executable accepts multiple commands to include the following: search, update, upload, shell execute, install, uninstall, and more. Executable 2: Entitled Splitter.exe. This executable contains the following functions: mouse capture, screen capture, key logger, and IP configuration. Configuration file: Located in CAB file 2, is obfuscated using a simple XOR cipher, and contains a ZipPass key. Each target may be assigned a unique cipher and key. Other files: Log.txt, task.xml, upped.txt. Analysis indicated thatlog.txt logs malware functions, task.xml triggers events.exe to keep running, XPTask.xml runs the scheduled tasks, and upped.txt contains obfuscated logging. The two executables worked together to aggregate victim data, encrypt it using the XOR key as a seed, and zip the data using the ZipPass key to password protect the files. The victim data was then transmitted utilizing the Microsoft BITS protocol to actor controlled infrastructure. Executable 1 used a BITS_POST to send victim data to the actor controlled infrastructure. The BITS_POST path and query string has the following format: /asp.asp?ui=[User ID, Persian Calendar Date, MAC Address, Computer Name]. The traffic occurred over port 80 http traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Executable 1: Entitled Svc.exe or events.exe. This executable accepts multiple commands to include the following: search, update, upload, shell execute, install"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "BITS 2.0 is a self-extracting executable file containing an image, an icon, a VBS script, and an executable. In one instance, this self-extracting executable file contained two additional files named run.xml and events.log. The following file names were observed: a. Self extracting executable named: final1.exe b. Image name: Chrysanthemum.jpg (This file is a legitimate JPG.) c. VBS script named: events.vbs d. An executable named: events.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "BITS 2.0 is a self extracting executable file containing an image, an icon, a VBS script, and an executable. In one instance, this self extracting executable fi"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Events.vbs: Creates a scheduled task for persistence and execution. Two scheduled task names have been observed: \"Update Windows\" (sic) and \"Update Windows_<username>\". The FBI Observed events.vbs installed in the following target directory: C:\\Users\\user\\AppData\\Local\\Microsoft\\Events\\[events.vbs].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Events.vbs: Creates a scheduled task for persistence and execution. Two scheduled task names have been observed: \"Update Windows\" (sic) and \"Update Windows_<use"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Events.exe: Analysis of this file determined it to contain similar functionality to the events.exe detailed in the BITS 1.0 analysis, however it is not the same file. This events.exe has the ability to execute the following commands on the victim machine: Upload and download files, search for a file to upload, and use cmd.exe to execute command line operations on the target machine. Events.exe also works to automatically obtain the following target information: screenshots, clipboard data, and keylogger information. Events.exe listened for incoming commands, turns off the legitimate BITSADMIN process, and bundles the victim data into an encrypted .bak.zak file for exfiltration. Lastly, events.exe exfiltrated the encrypted victim files to the C2.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Events.exe: Analysis of this file determined it to contain similar functionality to the events.exe detailed in the BITS 1.0 analysis, however it is not the same"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Target files to C2: Once compromised, the target sends the zipped and encrypted .bak .zak files to the following location on the C2 server: http://[C2 IP].test.asp. Target beacons to C2: Once compromised, the target sends beacons to the following location on the C2 server: http://[C2 IP]/checkupdate.asp?uname=[target username]&pid=[target operation name].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Target files to C2: Once compromised, the target sends the zipped and encrypted .bak .zak files to the following location on the C2 server: "
+  },
+  {
+   "id": "evidence-19",
+   "quote": "The FBI identified malware that was masquerading as legitimate Mozilla Firefox. The malware was entitled 1.exe, and contained the following files and functionalities: 1. 7z.dll: Analysis indicates this was a legitimate copy of 7zip. 2. autoGetKbd.dll: Analysis indicates this was a key logger of unknown origin. 3. autoScreenShot.dll: Analysis indicates this was a screenshot utility of unknown origin. 4. CrachReport.exe: Analysis indicates this conducts file compression. 5. fort.vbs: Analysis indicates this created a shell command to run the SafeBrowser.exe binary. 6. Logging.dll: Analysis indicated that upon running, screenshots are created and dumped to C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Cache. These are encrypted with a password. Keylogs current window information are created and dumped to C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Extensions. In the folder C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Config. Two files are created: 1.txt and 2.txt. File 1.txt contains what appears to be a formatted date string: 2018_6_12_11_31_32. File 2.txt contains a string of numbers: 5759153778925404000. 7. MozillaFirefox.exe: Analysis indicated this executable pretends to be legitimate Firefox, but is not. Does file egress for some of the paths listed above. 8. MozillaSciencedent.vbs: Analysis indicated this created a shell command to run MozillaFirefox.exe binary. 9. MozillaUpdate.exe: Analysis indicated this was similar to MozillaFirefox.exe and logging.dll. 10. SafeBrowser.exe: Analysis indicated this created a scheduled task to run a task named Mozillafox which appears to be MozillaFirefox.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The FBI identified malware that was masquerading as legitimate Mozilla Firefox. The malware was entitled 1.exe, and contained the following files and functional"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The FBI identified a Python-based malware used by Rana. The Python-based malware was normally contained in a .rar file, which also contained a script named ma.py. When run, the file conducted a HTTP GET request to a command and control server conforming to [Actor IP]/service.html. This GET request then downloaded additional malicious files to the victim machine. The file directed additional files from the command and control server to be written out as: C:\\\\Windows\\\\Temp\\\\ImageVeiwer.exe. The file also directed ImageVeiwer.exe to be run at system reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI identified a Python based malware used by Rana. The Python based malware was normally contained in a .rar file, which also contained a script named ma.p"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The APK implant had information stealing and remote access functionality which gained root access on an Android device without the user’s knowledge. The main capabilities include retrieving HTTP GET requests from the C2 server (typically updates or commands for the device), obtaining device data, compressing and AES-encrypting the collected data, and sending it via HTTP POST requests to the malicious C2 server. The APK implant also had permissions to record audio and take photos, using the microphone and camera on the compromised device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APK implant had information stealing and remote access functionality which gained root access on an Android device without the user’s knowledge. The main ca"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Upon initial installation, the Optimizer APK implant did not generate an application (app) icon that was visible on the android emulator’s Apps screen. ... only after the device was rebooted did the APK start and maintain persistence in the infected device. When the emulator device was rebooted after installation, the Optimizer APK implant app initiated an instance of itself on the device with three running processes: Optimizer (com.android.providers.optimizer), Android Core Apps (android.process.acore), Calendar Storage (com.android.providers.calendar) and two running services: Optimizer (Started by app), Helper (Started by app)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Upon initial installation, the Optimizer APK implant did not generate an application (app) icon that was visible on the android emulator’s Apps screen. "
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The dropper decrypted the depot.dat file and established a persistent mechanism for the malware. The dropper executed with a password at runtime. The password was a number between 0 and 0x10000 that represented a seed. The seed was used to create a 72-byte Blowfish decryption key. ... In order to persist, the dropper sets LoadAppInit_DLLs in the registry key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows to persist Bootmgr.dll (extracted from the decrypted depot.dat) and turns off RequireSigned ... Once the depot.dat file was extracted and the components deployed, the dropper would delete the encrypted depot.dat file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "120"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "The dropper decrypted the depot.dat file and established a persistent mechanism for the malware. The dropper executed with a password at runtime. The password w"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Bootmgr.dll is responsible for starting bootui.dll. Bootmgr.dll is persisted in the registry by the dropper. Bootui.dll opens and deobfuscates the configuration file, mlp.dat, as well as performs the majority of the malware’s data collection and packaging functionality. After decrypting the configuration file, bootui.dll creates and starts threads to monitor keystrokes and collect screenshots. These files are placed into a directory listed in the configuration file (and tfd.log) and end with .tmp. Prior to exfiltration, these files are placed in a CAB file and encrypted using the key obtained from the encryption file. Mlp.dat is deobfuscated by bootui.dll using a slightly different sophisticated XOR routine from the one used by the dropper to obfuscate the persistence mechanism. The configuration file contains the directory into which data for exfiltration will be stored, a Blowfish encryption key for victim data, a sleep timer, and some other unique data. For these pieces of malware, analysis victim data prior to egress will be stored in: C:\\Windows\\Help\\OEM which is the sole contents of tfd.log",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Bootmgr.dll is responsible for starting bootui.dll. Bootmgr.dll is persisted in the registry by the dropper."
+  },
+  {
+   "id": "evidence-25",
+   "quote": "The VBS malware was embedded in Microsoft Office documents and sent to victims via spear phishing or other social engineering techniques. Once opened, the Office document deobfuscated and broke out two scripts that perform the following actions: 1. Sets upload/download paths to: a. %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn b. %userprofile%\\appdata\\local\\Microsoft\\Feed\\up 2. Deobfuscates and creates files named: a. %userprofile%\\appdata\\local\\Microsoft\\Feed\\[script name].vbs b. %userprofile%\\appdata\\local\\Microsoft\\Feed\\tm.ps1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The VBS malware was embedded in Microsoft Office documents and sent to victims via spear phishing or other social engineering techniques. Once opened, the Offic"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "The FBI assesses the AutoIt malware was embedded in Microsoft Office documents or malicious links, and sent to victims via spear phishing or other social engineering techniques. Analysis of the AutoIt malware code revealed the following: 1. When the malware is run, an AutoIt script named App.au3 executes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The FBI assesses the AutoIt malware was embedded in Microsoft Office documents or malicious links, and sent to victims via spear phishing or other social engine"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Installed a dropper that contained two Microsoft CAB files. Observed droppers were named Bird.exe, Reg.exe, or natgeo-desktop.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Installed a dropper that contained two Microsoft CAB files. Observed droppers were named Bird.exe, Reg.exe, or natgeo desktop.exe."
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Executable 1: Entitled Svc.exe or events.exe. This executable accepts multiple commands to include the following: search, update, upload, shell execute, install, uninstall, and more. Executable 2: Entitled Splitter.exe. This executable contains the following functions: mouse capture, screen capture, key logger, and IP configuration. Configuration file: Located in CAB file 2, is obfuscated using a simple XOR cipher, and contains a ZipPass key. Each target may be assigned a unique cipher and key. Other files: Log.txt, task.xml, upped.txt. Analysis indicated thatlog.txt logs malware functions, task.xml triggers events.exe to keep running, XPTask.xml runs the scheduled tasks, and upped.txt contains obfuscated logging. The two executables worked together to aggregate victim data, encrypt it using the XOR key as a seed, and zip the data using the ZipPass key to password protect the files. The victim data was then transmitted utilizing the Microsoft BITS protocol to actor controlled infrastructure. Executable 1 used a BITS_POST to send victim data to the actor controlled infrastructure. The BITS_POST path and query string has the following format: /asp.asp?ui=[User ID, Persian Calendar Date, MAC Address, Computer Name]. The traffic occurred over port 80 http traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:p29-30"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-29",
+   "quote": "The FBI identified a separate variant of the \"BITS_1.0\" malware referred to as \"BITS 2.0.\" This malware used similar communication channels and techniques as BITS 1.0 detailed previously, however with significant changes in technical details. The BITS 2.0 malware does the following: 1. BITS 2.0 is a self-extracting executable file containing an image, an icon, a VBS script, and an executable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI identified a separate variant of the \"BITS_1.0\" malware referred to as \"BITS 2.0.\" This malware used similar communication channels and techniques as BI"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "When run, the file conducted a HTTP GET request to a command and control server conforming to [Actor IP]/service.html. This GET request then downloaded additional malicious files to the victim machine. The file directed additional files from the command and control server to be written out as: C:\\\\Windows\\\\Temp\\\\ImageVeiwer.exe. The file also directed ImageVeiwer.exe to be run at system reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When run, the file conducted a HTTP GET request to a command and control server conforming to [Actor IP]/service.html. This GET request then downloaded addition"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Upon initial installation, the Optimizer APK implant did not generate an application (app) icon that was visible on the android emulator’s Apps screen. ... only after the device was rebooted did the APK start and maintain persistence in the infected device. When the emulator device was rebooted after installation, the Optimizer APK implant app initiated an instance of itself on the device with three running processes: Optimizer (com.android.providers.optimizer), Android Core Apps (android.process.acore), Calendar Storage (com.android.providers.calendar) and two running services: Optimizer (Started by app), Helper (Started by app)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:p103-105"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-32",
+   "quote": "The dropper decrypted the depot.dat file and established a persistent mechanism for the malware. ... Bootmgr.dll is responsible for starting bootui.dll. Bootmgr.dll is persisted in the registry by the dropper. Bootui.dll opens and deobfuscates the configuration file, mlp.dat, as well as performs the majority of the malware’s data collection and packaging functionality. After decrypting the configuration file, bootui.dll creates and starts threads to monitor keystrokes and collect screenshots. These files are placed into a directory listed in the configuration file (and tfd.log) and end with .tmp. Prior to exfiltration, these files are placed in a CAB file and encrypted using the key obtained from the encryption file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:p120, p124-125"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-33",
+   "quote": "Sets upload/download paths to %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn and up, deobfuscates and creates files named [script name].vbs and tm.ps1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " %userprofile%\\appdata\\local\\Microsoft\\Feed\\dn "
+  },
+  {
+   "id": "evidence-34",
+   "quote": "The script performs a DNS flush and creates two directories: <USER_DIR>\\appdata\\microsoft\\Taskbar\\dn and up",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The script performs a DNS flush and creates two directories: "
+  },
+  {
+   "id": "evidence-35",
+   "quote": "The script looks for values UMe, UN, UT from registry key HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion and writes values UMe, UN, UT to same key",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9091,
+   "matched_text": " HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion "
+  },
+  {
+   "id": "evidence-36",
+   "quote": "Both [script name].vbs and tm.ps1 work together to upload victim files and execute commands via cmd.exe on a victim machine",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Both [script name].vbs and tm.ps1 work together to upload victim files and execute commands via cmd.exe on a victim machine"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "The VBS and/or AutoIt malware pulled down the BITS 1.0 malware from actor controlled infrastructure for further victimization.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The VBS and/or AutoIt malware pulled down the BITS 1.0 malware from actor controlled infrastructure for further victimization."
+  },
+  {
+   "id": "evidence-38",
+   "quote": "The two executables worked together to aggregate victim data, encrypt it using the XOR key as a seed, and zip the data using the ZipPass key to password protect the files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The two executables worked together to aggregate victim data, encrypt it using the XOR key as a seed, and zip the data using the ZipPass key to password protect"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "The victim data was then transmitted utilizing the Microsoft BITS protocol to actor controlled infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The victim data was then transmitted utilizing the Microsoft BITS protocol to actor controlled infrastructure."
+  },
+  {
+   "id": "evidence-40",
+   "quote": "BITS 2.0 is a self-extracting executable file containing an image, an icon, a VBS script, and an executable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "BITS 2.0 is a self extracting executable file containing an image, an icon, a VBS script, and an executable."
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Events.vbs: Creates a scheduled task for persistence and execution. Two scheduled task names have been observed: \"Update Windows\" (sic) and \"Update Windows_<username>\".",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Events.vbs: Creates a scheduled task for persistence and execution. Two scheduled task names have been observed: \"Update Windows\" (sic) and \"Update Windows_<use"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Events.exe: Analysis of this file determined it to contain similar functionality to the events.exe detailed in the BITS 1.0 analysis, however it is not the same file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Events.exe: Analysis of this file determined it to contain similar functionality to the events.exe detailed in the BITS 1.0 analysis, however it is not the same"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "Events.exe also works to automatically obtain the following target information: screenshots, clipboard data, and keylogger information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Events.exe also works to automatically obtain the following target information: screenshots, clipboard data, and keylogger information."
+  },
+  {
+   "id": "evidence-44",
+   "quote": "Events.exe listened for incoming commands, turns off the legitimate BITSADMIN process, and bundles the victim data into an encrypted .bak.zak file for exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Events.exe listened for incoming commands, turns off the legitimate BITSADMIN process, and bundles the victim data into an encrypted .bak.zak file for exfiltrat"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "Events.exe exfiltrated the encrypted victim files to the C2.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "vents.exe exfiltrated the encrypted victim files to the C2."
+  },
+  {
+   "id": "evidence-46",
+   "quote": "Events.vbs installed in the following target directory: C:\\Users\\user\\AppData\\Local\\Microsoft\\Events\\[events.vbs].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " C:\\Users\\user\\AppData\\Local\\Microsoft\\Events\\[events.vbs]."
+  },
+  {
+   "id": "evidence-47",
+   "quote": "Malware named 1.exe containing 7z.dll (legitimate 7zip), autoGetKbd.dll (keylogger), autoScreenShot.dll (screenshot utility), CrachReport.exe (file compression), fort.vbs (runs SafeBrowser.exe), Logging.dll (creates encrypted screenshots and keylogs), MozillaFirefox.exe (fake Firefox executable), MozillaSciencedent.vbs (runs MozillaFirefox.exe), MozillaUpdate.exe (similar to MozillaFirefox.exe and Logging.dll), SafeBrowser.exe (creates scheduled task to run Mozillafox)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "legitimate "
+  },
+  {
+   "id": "evidence-48",
+   "quote": "Screenshots are created and dumped to C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Cache. These are encrypted with a password. Keylogs current window information are created and dumped to C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Extensions.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "creenshots are created and dumped to C:\\Users\\user\\AppData\\Local\\MozillaFirefox\\Cache. These are encrypted with a password. Keylogs current window information a"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "Two files are created: 1.txt and 2.txt. File 1.txt contains what appears to be a formatted date string: 2018_6_12_11_31_32. File 2.txt contains a string of numbers: 5759153778925404000.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Two files are created: 1.txt and 2.txt. File 1.txt contains what appears to be a formatted date string: 2018_6_12_11_31_32. File 2.txt contains a string of numb"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "SafeBrowser.exe created a scheduled task to run a task named Mozillafox which appears to be MozillaFirefox.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " created a scheduled task to run a task named Mozillafox which appears to be MozillaFirefox.exe."
+  },
+  {
+   "id": "evidence-51",
+   "quote": "The Python-based malware was normally contained in a .rar file, which also contained a script named ma.py.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Python based malware was normally contained in a .rar file, which also contained a script named ma.py."
+  },
+  {
+   "id": "evidence-52",
+   "quote": "When run, the file conducted a HTTP GET request to a command and control server conforming to [Actor IP]/service.html.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When run, the file conducted a HTTP GET request to a command and control server conforming to [Actor IP]/service.html."
+  },
+  {
+   "id": "evidence-53",
+   "quote": "This GET request then downloaded additional malicious files to the victim machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This GET request then downloaded additional malicious files to the victim machine."
+  },
+  {
+   "id": "evidence-54",
+   "quote": "The file directed additional files from the command and control server to be written out as: C:\\Windows\\Temp\\ImageVeiwer.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The file directed additional files from the command and control server to be written out as: C:\\"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "The file also directed ImageVeiwer.exe to be run at system reboot.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The file also directed ImageVeiwer.exe to be run at system reboot."
+  },
+  {
+   "id": "evidence-56",
+   "quote": "The FBI identified Android malware used by Rana named optimizer.apk.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI identified Android malware used by Rana named optimizer.apk."
+  },
+  {
+   "id": "evidence-57",
+   "quote": "The APK implant collected detailed device data and sends the data in AES-encrypted zip files to the C2 as HTTP POST requests.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "99"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.992,
+   "matched_text": "The APK implant collected detailed device data and sends the data in AES encrypted zip files to the C2 as HTTP POST requests"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "The APK implant had information stealing and remote access functionality which gained root access on an Android device without the user’s knowledge.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APK implant had information stealing and remote access functionality which gained root access on an Android device without the user’s knowledge."
+  },
+  {
+   "id": "evidence-59",
+   "quote": "The APK implant collected device data, compressed and AES-encrypted it, sent via HTTP POST to C2 saveingone.com, recorded audio and took photos, gained root access without user knowledge, retrieved HTTP GET requests from C2 for updates or commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7812,
+   "matched_text": " HTTP GET requests from "
+  },
+  {
+   "id": "evidence-60",
+   "quote": "The APK implant did not generate an application (app) icon that was visible on the android emulator’s Apps screen.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "103"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9737,
+   "matched_text": " APK implant did not generate an application (app) icon that was visible on the android emulator’s Apps screen."
+  },
+  {
+   "id": "evidence-61",
+   "quote": "After device reboot, Optimizer.apk implant initiated three running processes (Optimizer, Android Core Apps, Calendar Storage) and two services (Optimizer, Helper), maintains persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "105"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8636,
+   "matched_text": " three running processes"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "The APK implant created several folders on the device and saved the HTTP POST requests contents locally.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "108"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9712,
+   "matched_text": " APK implant created several folders on the device and saved the HTTP POST requests contents locally."
+  },
+  {
+   "id": "evidence-63",
+   "quote": "The depot.dat malware had the ability to collect victim screenshots, keylogger information, and other data, and then send this data to Rana controlled infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The depot.dat malware had the ability to collect victim screenshots, keylogger information, and other data, and then send this data to Rana controlled infrastru"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "The malware comprised two components: a dropper and an encrypted Microsoft CAB file. The CAB file is named depot.dat and contains four files that make up the second stage of the malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware comprised two components: a dropper and an encrypted Microsoft CAB file. The CAB file is named depot.dat and contains four files that make up the se"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "The dropper decrypted the depot.dat file and established a persistent mechanism for the malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "120"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The dropper decrypted the depot.dat file and established a persistent mechanism for the malware."
+  },
+  {
+   "id": "evidence-66",
+   "quote": "The dropper sets LoadAppInit_DLLs in the registry key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows to persist Bootmgr.dll (extracted from the decrypted depot.dat) and turns off RequireSigned.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "120"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he dropper sets LoadAppInit_DLLs in the registry key SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows to persist Bootmgr.dll (extracted from the decrypted d"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "Once depot.dat was decrypted, four files are extracted from the CAB file: Bootmgr.dll, bootui.dll, mlp.dat, tfd.log.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6471,
+   "matched_text": " Bootmgr.dll"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "Bootmgr.dll is responsible for starting bootui.dll. Bootmgr.dll is persisted in the registry by the dropper.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Bootmgr.dll is responsible for starting bootui.dll. Bootmgr.dll is persisted in the registry by the\ndropper."
+  },
+  {
+   "id": "evidence-69",
+   "quote": "Bootui.dll opens and deobfuscates the configuration file, mlp.dat, as well as performs the majority of the malware’s data collection and packaging functionality.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "125"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Bootui.dll opens and deobfuscates the configuration file, mlp.dat, as well as performs the majority of the malware’s data collection and packaging functionality"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "Victim data prior to egress will be stored in: C:\\Windows\\Help\\OEM which is the sole contents of tfd.log",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "126"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "ictim data prior to egress will be stored in: C:\\Windows\\Help\\OEM which is the sole contents of tfd.log"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "The FBI identified several malicious VBS scripts used by Rana.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI identified several malicious VBS scripts used by Rana."
+  },
+  {
+   "id": "evidence-72",
+   "quote": "Deobfuscates and creates files named: %userprofile%\\appdata\\local\\Microsoft\\Feed\\[script name].vbs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " %userprofile%\\appdata\\local\\Microsoft\\Feed\\[script name].vbs"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "Deobfuscates and creates files named: %userprofile%\\appdata\\local\\Microsoft\\Feed\\tm.ps1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " %userprofile%\\appdata\\local\\Microsoft\\Feed\\tm.ps1"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "Runs Schedule Task Command to run [script name].vbs file with unique/obscure name every 2 minutes. The APT names the scheduled tasks as follows: UpdatMachine and UpdateMachineG",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Runs Schedule Task Command to run [script name].vbs file with unique/obscure name every 2 minutes. The APT names the scheduled tasks as follows: "
+  },
+  {
+   "id": "evidence-75",
+   "quote": "The FBI identified several malicious AutoIt malware scripts used by Rana.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI identified several malicious AutoIt malware scripts used by Rana."
+  },
+  {
+   "id": "evidence-76",
+   "quote": "When the malware is run, an AutoIt script named App.au3 executes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When the malware is run, an AutoIt script named App.au3 executes."
+  },
+  {
+   "id": "evidence-77",
+   "quote": "Executable 1: Entitled Svc.exe or events.exe. This executable accepts multiple commands to include the following: search, update, upload, shell execute, install, uninstall, and more.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Executable 1: Entitled Svc.exe or events.exe. This executable accepts multiple commands to include the following: search, update, upload, shell execute, install"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "Executable 2: Entitled Splitter.exe. This executable contains the following functions: mouse capture, screen capture, key logger, and IP configuration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Executable 2: Entitled Splitter.exe. This executable contains the following functions: mouse capture, screen capture, key logger, and IP configuration."
+  },
+  {
+   "id": "evidence-79",
+   "quote": "Self extracting executable named: final1.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Self extracting executable named: final1.exe"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "VBS script named: events.vbs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "VBS script named: events.vbs"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "An executable named: events.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "An executable named: events.exe"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "Malware named 1.exe containing ... MozillaFirefox.exe (fake Firefox executable)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "ed 1.exe"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "Logging.dll (creates encrypted screenshots and keylogs)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "s and "
+  },
+  {
+   "id": "evidence-84",
+   "quote": "SafeBrowser.exe (creates scheduled task to run Mozillafox)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " Mozilla"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "Dropper Files installer.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Dropper Files installer.exe"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "Dropper Files svchost.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Dropper Files "
+  },
+  {
+   "id": "evidence-87",
+   "quote": "Mlp.dat is deobfuscated by bootui.dll using a slightly different sophisticated XOR routine from the one used by the dropper to obfuscate the persistence mechanism.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "126"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Mlp.dat is deobfuscated by bootui.dll using a slightly different sophisticated XOR routine from the one used by the dropper to obfuscate the persistence mechani"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "update.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "update.php"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "update.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "update.php"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "http://[C2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://[C2"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "run.xml",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "run.xml"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "events.vbs",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "events.vbs"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "test.asp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "test.asp"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "checkupdate.asp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "checkupdate.asp"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "3153abb3ee1acea396b0f7b77c0162c9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3153abb3ee1acea396b0f7b77c0162c9"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "b15196f34a69e6579532c69fefad7ac6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b15196f34a69e6579532c69fefad7ac6"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "9e98ecf93ca86751dbdb7049f6d24e9b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9e98ecf93ca86751dbdb7049f6d24e9b"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "fc105956b5b2d33411b2c0e362abb6b3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fc105956b5b2d33411b2c0e362abb6b3"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "e169c4d3430c8342d809055dc5f3373e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e169c4d3430c8342d809055dc5f3373e"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "e998fa518523ccc092c4167718b069cb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e998fa518523ccc092c4167718b069cb"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "3f3f39bacfe115df5b55c9ab06b93aeb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3f3f39bacfe115df5b55c9ab06b93aeb"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "d661d2dd1c28efd4b4f7c9c70f763354",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d661d2dd1c28efd4b4f7c9c70f763354"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "54c166c313c684eaa54c0c861cc34987",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "54c166c313c684eaa54c0c861cc34987"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "dbc67d46cb7b6aa7406c979b248421c4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dbc67d46cb7b6aa7406c979b248421c4"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "service.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "service.html"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "426351383DFE8F88A0959A9D5E8C43C7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "426351383DFE8F88A0959A9D5E8C43C7"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "426351383DFE8F88A0959A9D5E8C43C7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "113"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "426351383DFE8F88A0959A9D5E8C43C7"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "426351383DFE8F88A0959A9D5E8C43C7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "148"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "426351383DFE8F88A0959A9D5E8C43C7"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "0C23F62BA98EBFA2C062C485E5704F193909E421",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0C23F62BA98EBFA2C062C485E5704F193909E421"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "0C23F62BA98EBFA2C062C485E5704F193909E421",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "113"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0C23F62BA98EBFA2C062C485E5704F193909E421"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "A1481B251328B50D268B815DEBD614F539039E6E7012C90B66DAEE717712D524",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "A1481B251328B50D268B815DEBD614F539039E6E7012C90B66DAEE717712D524"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "185.165.116.47",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.165.116.47"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "saveingone.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "saveingone.com"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "saveingone.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "102"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "saveingone.com"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "saveingone.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "saveingone.com"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "fcc61b3a0277c47748a185dccccad5d8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "117"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fcc61b3a0277c47748a185dccccad5d8"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "4d8e2fdb16877f693d8e90410f90a164",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "118"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4d8e2fdb16877f693d8e90410f90a164"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "ce456b20f6cb4d5d74f00d976e2e7a91",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "118"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ce456b20f6cb4d5d74f00d976e2e7a91"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "66cb23c223ec4d78d683292d1b928fbf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "66cb23c223ec4d78d683292d1b928fbf"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "46506fa669ec116da3d967c36eab7ba7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46506fa669ec116da3d967c36eab7ba7"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "f3d2c6084f09433a87f248726de288e0",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f3d2c6084f09433a87f248726de288e0"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "d363ecffbe6a0a62546051fc383399f4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d363ecffbe6a0a62546051fc383399f4"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "9f7c280b20d021f0a0984d1ad0aeba41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "142"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9f7c280b20d021f0a0984d1ad0aeba41"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "486aa8849c173450911f886116f4b5d6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "143"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "486aa8849c173450911f886116f4b5d6"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "91e1793bd5f3f274ddb22b47662cb860",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91e1793bd5f3f274ddb22b47662cb860"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "2f01092e9cd49448b0de7da48e545682",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2f01092e9cd49448b0de7da48e545682"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "0d6d385354584264e2b37ff3a199ea04",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0d6d385354584264e2b37ff3a199ea04"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "8f848b67af0d6ad3dd3419c9d11c28c1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8f848b67af0d6ad3dd3419c9d11c28c1"
+  },
+  {
+   "id": "evidence-129",
+   "quote": "45045fa9d428f29e8a3a988048e3aff1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45045fa9d428f29e8a3a988048e3aff1"
+  },
+  {
+   "id": "evidence-130",
+   "quote": "43124f6d418b086f3107a8cb708c3d2b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "145"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "43124f6d418b086f3107a8cb708c3d2b"
+  },
+  {
+   "id": "evidence-131",
+   "quote": "6269e8ae9d86c648c15e41c7d89509ab",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "145"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6269e8ae9d86c648c15e41c7d89509ab"
+  },
+  {
+   "id": "evidence-132",
+   "quote": "eee655c5522267d63314a0b20162d619",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "146"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "eee655c5522267d63314a0b20162d619"
+  },
+  {
+   "id": "evidence-133",
+   "quote": "de8986682ab25d98448e688506250b94",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "147"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "de8986682ab25d98448e688506250b94"
+  },
+  {
+   "id": "evidence-134",
+   "quote": "50ded657ff5a1c80d736fe3b80beb87f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "147"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "50ded657ff5a1c80d736fe3b80beb87f"
+  },
+  {
+   "id": "evidence-135",
+   "quote": "59c2c1c6451417f054efaee32416c652",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "149"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "59c2c1c6451417f054efaee32416c652"
+  },
+  {
+   "id": "evidence-136",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "157"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a1 — Embedded malicious VBS scripts in Microsoft Office documents and sent via spear phishing or social engineering",
+    "action:a2 — VBS malware sets upload/download paths and creates files",
+    "action:a3 — VBS malware runs scheduled task every 2 minutes",
+    "action:a4 — VBS malware runs PowerShell script tm.ps1",
+    "action:a5 — VBS malware communicates with actor IP or URL via update.php",
+    "action:a6 — VBS malware uploads victim files and executes commands via cmd.exe",
+    "action:a7 — Embedded malicious AutoIt malware scripts sent via spear phishing or social engineering",
+    "action:a8 — AutoIt malware executes App.au3 script with hardcoded C2 domain",
+    "action:a9 — AutoIt malware performs DNS flush and creates directories",
+    "action:a10 — AutoIt malware reads and writes registry keys for C2 communication",
+    "action:a11 — AutoIt malware selects C2 communication method based on DNS or HTTP response"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-33",
+      "evidence-1",
+      "evidence-34",
+      "evidence-35",
+      "evidence-36",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-33",
+      "evidence-1",
+      "evidence-34",
+      "evidence-35",
+      "evidence-36",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a1 — Embedded malicious VBS scripts in Microsoft Office documents and sent via spear phishing or social engineering",
+    "action:a2 — VBS malware sets upload/download paths and creates files",
+    "action:a3 — VBS malware runs scheduled task every 2 minutes",
+    "action:a4 — VBS malware runs PowerShell script tm.ps1",
+    "action:a5 — VBS malware communicates with actor IP or URL via update.php",
+    "action:a6 — VBS malware uploads victim files and executes commands via cmd.exe",
+    "action:a7 — Embedded malicious AutoIt malware scripts sent via spear phishing or social engineering",
+    "action:a8 — AutoIt malware executes App.au3 script with hardcoded C2 domain",
+    "action:a9 — AutoIt malware performs DNS flush and creates directories",
+    "action:a10 — AutoIt malware reads and writes registry keys for C2 communication",
+    "action:a11 — AutoIt malware selects C2 communication method based on DNS or HTTP response"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-33",
+      "evidence-1",
+      "evidence-34",
+      "evidence-35",
+      "evidence-36",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a1 — Embedded malicious VBS scripts in Microsoft Office documents and sent via spear phishing or social engineering",
+    "action:a2 — VBS malware sets upload/download paths and creates files",
+    "action:a3 — VBS malware runs scheduled task every 2 minutes",
+    "action:a4 — VBS malware runs PowerShell script tm.ps1",
+    "action:a5 — VBS malware communicates with actor IP or URL via update.php",
+    "action:a6 — VBS malware uploads victim files and executes commands via cmd.exe",
+    "action:a7 — Embedded malicious AutoIt malware scripts sent via spear phishing or social engineering",
+    "action:a8 — AutoIt malware executes App.au3 script with hardcoded C2 domain",
+    "action:a9 — AutoIt malware performs DNS flush and creates directories",
+    "action:a10 — AutoIt malware reads and writes registry keys for C2 communication",
+    "action:a11 — AutoIt malware selects C2 communication method based on DNS or HTTP response"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-33",
+      "evidence-1",
+      "evidence-34",
+      "evidence-35",
+      "evidence-36",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — victim machine",
+    "action:a12 — BITS 1.0 malware installed by VBS/AutoIt malware",
+    "action:a13 — BITS 1.0 malware installed dropper with two CAB files",
+    "action:a14 — BITS 1.0 malware executables perform data aggregation, encryption, and exfiltration"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-37",
+      "evidence-27",
+      "evidence-38",
+      "evidence-39",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — victim machine",
+    "action:a12 — BITS 1.0 malware installed by VBS/AutoIt malware",
+    "action:a13 — BITS 1.0 malware installed dropper with two CAB files",
+    "action:a14 — BITS 1.0 malware executables perform data aggregation, encryption, and exfiltration"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-37",
+      "evidence-27",
+      "evidence-38",
+      "evidence-39",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — victim machine",
+    "action:a15 — BITS 2.0 malware self-extracting executable with image, icon, VBS script, and executable",
+    "action:a16 — BITS 2.0 malware creates scheduled tasks for persistence",
+    "action:a17 — BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+    "action:a18 — BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-46",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h3.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-46",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — victim machine",
+    "action:a15 — BITS 2.0 malware self-extracting executable with image, icon, VBS script, and executable",
+    "action:a16 — BITS 2.0 malware creates scheduled tasks for persistence",
+    "action:a17 — BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+    "action:a18 — BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-46",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — victim machine",
+    "action:a15 — BITS 2.0 malware self-extracting executable with image, icon, VBS script, and executable",
+    "action:a16 — BITS 2.0 malware creates scheduled tasks for persistence",
+    "action:a17 — BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+    "action:a18 — BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-46",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — victim machine",
+    "action:a19 — Malware masquerading as Mozilla Firefox with multiple components"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-19"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h4.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-19"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — victim machine",
+    "action:a19 — Malware masquerading as Mozilla Firefox with multiple components"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-19"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — victim machine",
+    "action:a19 — Malware masquerading as Mozilla Firefox with multiple components"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-19"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — victim machine",
+    "action:a20 — Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-54",
+      "evidence-55",
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h5.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-54",
+      "evidence-55",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — victim machine",
+    "action:a20 — Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-54",
+      "evidence-55",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — victim machine",
+    "action:a20 — Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-54",
+      "evidence-55",
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os",
+   "field": "Android device — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Android device 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h6 — Android device",
+    "action:a21 — Android malware implant Optimizer.apk collects device data and communicates with C2",
+    "action:a22 — Optimizer.apk implant maintains persistence and runs multiple processes and services after reboot"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Android device",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-56",
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-21",
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Android",
+     "source_ref": "hosts:h6.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-56",
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os-version",
+   "field": "Android device — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Android device 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h6 — Android device",
+    "action:a21 — Android malware implant Optimizer.apk collects device data and communicates with C2",
+    "action:a22 — Optimizer.apk implant maintains persistence and runs multiple processes and services after reboot"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Android device",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-56",
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-21",
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "作業系統版本",
+     "value": "minimum SDK 8, target 22, maximum 23",
+     "source_ref": "hosts:h6.os_version",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-56",
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-network",
+   "field": "Android device — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Android device 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h6 — Android device",
+    "action:a21 — Android malware implant Optimizer.apk collects device data and communicates with C2",
+    "action:a22 — Optimizer.apk implant maintains persistence and runs multiple processes and services after reboot"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Android device",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-56",
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-21",
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h7 — victim machine",
+    "action:a23 — Depot.dat malware dropper decrypts CAB file and establishes persistence",
+    "action:a24 — Depot.dat malware components collect keystrokes and screenshots and package data for exfiltration"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-70",
+      "evidence-23",
+      "evidence-24"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h7.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-70",
+      "evidence-23",
+      "evidence-24"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h7 — victim machine",
+    "action:a23 — Depot.dat malware dropper decrypts CAB file and establishes persistence",
+    "action:a24 — Depot.dat malware components collect keystrokes and screenshots and package data for exfiltration"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-70",
+      "evidence-23",
+      "evidence-24"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h7 — victim machine",
+    "action:a23 — Depot.dat malware dropper decrypts CAB file and establishes persistence",
+    "action:a24 — Depot.dat malware components collect keystrokes and screenshots and package data for exfiltration"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-70",
+      "evidence-23",
+      "evidence-24"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a2, a5, a6, a8, a14, a17, a20 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a2 — VBS malware sets upload/download paths and creates files",
+    "action:a5 — VBS malware communicates with actor IP or URL via update.php",
+    "action:a6 — VBS malware uploads victim files and executes commands via cmd.exe",
+    "action:a8 — AutoIt malware executes App.au3 script with hardcoded C2 domain",
+    "action:a14 — BITS 1.0 malware executables perform data aggregation, encryption, and exfiltration",
+    "action:a17 — BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+    "action:a20 — Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "VBS malware sets upload/download paths and creates files",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "VBS malware communicates with actor IP or URL via update.php",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "VBS malware uploads victim files and executes commands via cmd.exe",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "AutoIt malware executes App.au3 script with hardcoded C2 domain",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "BITS 1.0 malware executables perform data aggregation, encryption, and exfiltration",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "BITS 2.0 malware executable events.exe performs data collection and exfiltration",
+     "source_ref": "actions:a17.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Python-based malware downloads additional malicious files and runs ImageVeiwer.exe at reboot",
+     "source_ref": "actions:a20.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a16 — BITS 2.0 malware creates scheduled tasks for persistence",
+    "action:a18 — BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2",
+    "action:a23 — Depot.dat malware dropper decrypts CAB file and establishes persistence",
+    "host:h3 — victim machine",
+    "host:h7 — victim machine"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "BITS 2.0 malware creates scheduled tasks for persistence",
+     "source_ref": "actions:a16.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-16"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "BITS 2.0 malware exfiltrates zipped encrypted .bak.zak files to C2",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Depot.dat malware dropper decrypts CAB file and establishes persistence",
+     "source_ref": "actions:a23.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-23"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.75,
+  "unsupported_claim_count": 37,
+  "inferred_count": 6,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

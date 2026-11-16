@@ -1,0 +1,785 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-210402",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "c01f3e60aa787036781e48cb36050ddb7bfc5dc28d034f6a78c61fa235def1dd",
+  "source_name": "csa-2021-210402"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "scanned devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "enumerated devices for CVE-2020-12812 and CVE-2019-5591",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "exploited Fortinet FortiOS vulnerabilities CVE-2018-13379, CVE-2020-12812, and CVE-2019-5591",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "used CVEs to gain access to networks across multiple critical infrastructure sectors",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "used other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states enumeration followed scanning",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exploitation uses the vulnerabilities found by scanning",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exploitation uses the vulnerabilities enumerated",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Using the CVEs to gain access to networks depends on exploiting the vulnerabilities",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Other CVEs or techniques such as spearphishing are used to gain access to critical infrastructure networks",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted networks",
+   "source": "llm",
+   "name": "multiple government, commercial, and technology services networks",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "targeted networks",
+   "source": "llm",
+   "name": "multiple critical infrastructure sectors",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Fortinet FortiOS",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "CVE-2018-13379",
+   "type": "vulnerability",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "CVE-2020-12812",
+   "type": "vulnerability",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "CVE-2019-5591",
+   "type": "vulnerability",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "spearphishing",
+   "type": "technique",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2018-13379",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2020-12812",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2019-5591",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "In March 2021 the Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA) observed Advanced Persistent Threat (APT) actors scanning devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In March 2021 the Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA) observed Advanced Persistent Threat (APT"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "and enumerated devices for CVE-2020-12812 and CVE-2019-5591",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "and enumerated devices for CVE 2020 12812 and CVE 2019 5591"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The FBI and CISA have information indicating APT actors are using multiple CVEs to exploit Fortinet FortiOS vulnerabilities. The FBI and CISA believe the APT actors are likely exploiting these Fortinet FortiOS vulnerabilities—CVE 2018-13379, CVE-2020-12812, and CVE-2019-5591—to gain access to multiple government, commercial, and technology services networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have information indicating APT actors are using multiple CVEs to exploit Fortinet FortiOS vulnerabilities. The FBI and CISA believe the APT ac"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The APT actors may be using any or all of these CVEs to gain access to networks across multiple critical infrastructure sectors to gain access to key networks as pre-positioning for follow-on data exfiltration or data encryption attacks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actors may be using any or all of these CVEs to gain access to networks across multiple critical infrastructure sectors to gain access to key networks a"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "APT actors may use other CVEs or common exploitation techniques—such as spearphishing—to gain access to critical infrastructure networks to pre-position for follow-on attacks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors may use other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks to pre position for fol"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "In March 2021 the Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA) observed Advanced Persistent Threat (APT) actors scanning devices on ports 4443, 8443, and 10443 for CVE-2018-13379, and enumerated devices for CVE-2020-12812 and CVE-2019-5591.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In March 2021 the Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA) observed Advanced Persistent Threat (APT"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "It is likely that the APT actors are scanning for these vulnerabilities to gain access to multiple government, commercial, and technology services networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "It is likely that the APT actors are scanning for these vulnerabilities to gain access to multiple government, commercial, and technology services networks."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "The FBI and CISA believe the APT actors are likely exploiting these Fortinet FortiOS vulnerabilities—CVE 2018-13379, CVE-2020-12812, and CVE-2019-5591—to gain access to multiple government, commercial, and technology services networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA believe the APT actors are likely exploiting these Fortinet FortiOS vulnerabilities CVE 2018 13379, CVE 2020 12812, and CVE 2019 5591 to gain a"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The FBI and CISA have information indicating APT actors are using multiple CVEs to exploit Fortinet FortiOS vulnerabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have information indicating APT actors are using multiple CVEs to exploit Fortinet FortiOS vulnerabilities."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "APT actors scanning devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " actors scanning devices on ports 4443, 8443, and 10443 for CVE 2018 13379"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "enumerated devices for CVE-2020-12812",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "enumerated devices for CVE 2020 12812"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "enumerated devices for CVE-2019-5591",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "enumerated devices for CVE 20"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "APT actors may use other CVEs or common exploitation techniques—such as spearphishing—to gain access to critical infrastructure networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors may use other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CVE-2018-13379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2018 13379"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2020-12812",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 12812"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2020-12812",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 12812"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2019-5591",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 5591"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "CVE-2019-5591",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 5591"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "multiple government, commercial, and technology services networks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple government, commercial, and technology services networks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — multiple government, commercial, and technology services networks",
+    "action:a1 — scanned devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+    "action:a2 — enumerated devices for CVE-2020-12812 and CVE-2019-5591",
+    "action:a3 — exploited Fortinet FortiOS vulnerabilities CVE-2018-13379, CVE-2020-12812, and CVE-2019-5591"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple government, commercial, and technology services networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "multiple government, commercial, and technology services networks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple government, commercial, and technology services networks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — multiple government, commercial, and technology services networks",
+    "action:a1 — scanned devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+    "action:a2 — enumerated devices for CVE-2020-12812 and CVE-2019-5591",
+    "action:a3 — exploited Fortinet FortiOS vulnerabilities CVE-2018-13379, CVE-2020-12812, and CVE-2019-5591"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple government, commercial, and technology services networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "multiple government, commercial, and technology services networks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple government, commercial, and technology services networks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — multiple government, commercial, and technology services networks",
+    "action:a1 — scanned devices on ports 4443, 8443, and 10443 for CVE-2018-13379",
+    "action:a2 — enumerated devices for CVE-2020-12812 and CVE-2019-5591",
+    "action:a3 — exploited Fortinet FortiOS vulnerabilities CVE-2018-13379, CVE-2020-12812, and CVE-2019-5591"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple government, commercial, and technology services networks",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7",
+      "evidence-8",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "multiple critical infrastructure sectors — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple critical infrastructure sectors 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — multiple critical infrastructure sectors",
+    "action:a4 — used CVEs to gain access to networks across multiple critical infrastructure sectors",
+    "action:a5 — used other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple critical infrastructure sectors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "multiple critical infrastructure sectors — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple critical infrastructure sectors 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — multiple critical infrastructure sectors",
+    "action:a4 — used CVEs to gain access to networks across multiple critical infrastructure sectors",
+    "action:a5 — used other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple critical infrastructure sectors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "multiple critical infrastructure sectors — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "multiple critical infrastructure sectors 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — multiple critical infrastructure sectors",
+    "action:a4 — used CVEs to gain access to networks across multiple critical infrastructure sectors",
+    "action:a5 — used other CVEs or common exploitation techniques such as spearphishing to gain access to critical infrastructure networks"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "multiple critical infrastructure sectors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Fortinet FortiOS — 版本",
+   "category": "version",
+   "reason": "IR 指出 Fortinet FortiOS，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Fortinet FortiOS 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Fortinet FortiOS",
+    "action:a3 — exploited Fortinet FortiOS vulnerabilities CVE-2018-13379, CVE-2020-12812, and CVE-2019-5591"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Fortinet FortiOS",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8947,
+  "unsupported_claim_count": 2,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

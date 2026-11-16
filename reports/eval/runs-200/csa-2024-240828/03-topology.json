@@ -1,0 +1,160 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "public-facing networking devices exploited for initial access and persistence",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Citrix Netscaler 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "public-facing networking devices exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 F5 BIG-IP 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "public-facing networking devices exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Pulse Secure/Ivanti VPN 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "public-facing networking devices exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 PanOS firewall 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h5",
+   "role": "public-facing networking devices exploited for initial access",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Check Point Security Gateway 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h6",
+   "role": "networks targeted for account creation, persistence, lateral movement, and ransomware enabling",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "NGINX",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "oss-nginx",
+   "substitute_for": "NGINX",
+   "substitute_basis": "catalogue_substitute",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h7",
+   "role": "servers on victim networks used for persistence, discovery, and command and control",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Windows Scheduled Task、Windows PowerShell Web Access 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h6",
+   "port": 80,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h6:80 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "No port is known for service Citrix Netscaler (s1); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service F5 BIG-IP (s2); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Pulse Secure/Ivanti VPN (s3); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service PanOS firewall (s4); it remains unreachable by default.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Check Point Security Gateway (s5); it remains unreachable by default.",
+  "Host h5 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Citrix XenDesktop (s6); it remains unreachable by default.",
+  "No port is known for service Domain controllers (s7); it remains unreachable by default.",
+  "No port is known for service Windows Scheduled Task (s8); it remains unreachable by default.",
+  "No port is known for service Windows PowerShell Web Access (s9); it remains unreachable by default.",
+  "Host h7 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Services without a resolved host association were left out of host service lists: svc-unsupported-ad-ds."
+ ]
+}

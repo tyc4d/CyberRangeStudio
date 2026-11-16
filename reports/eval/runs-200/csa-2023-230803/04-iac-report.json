@@ -1,0 +1,299 @@
+{
+ "scenario_id": "evidence",
+ "deployable": false,
+ "blockers": [
+  {
+   "code": "port_not_served_by_image",
+   "message": "主機 h2 的服務「Microsoft Client Access Service (CAS)」宣告在埠 443，但這台主機選用的映像 NGINX（oss-nginx）只在埠 80 提供服務。一台主機只會跑一個映像，所以這個埠上不會有東西在聽。",
+   "fix": "擇一處理：(1) 若「Microsoft Client Access Service (CAS)」其實不是另一套軟體（例如只是通訊協定或加密通道），在依賴頁把它移除或併入主要服務；(2) 若它是另一套軟體，把它放到另一台主機；(3) 若它就是同一個服務，把埠改成 80。改完重新產生拓樸並核准。",
+   "error": "host h2 declares port 443, unsupported by oss-nginx",
+   "host": "h2",
+   "service": "Microsoft Client Access Service (CAS)",
+   "port": 443,
+   "image": "oss-nginx",
+   "supported_ports": [
+    80
+   ]
+  }
+ ],
+ "plan_notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Log4j application (svc-unsupported-log4j-unspecified-h5); it remains unreachable by default.",
+  "Host h5 has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.",
+  "Host h5 needs Log4j application (version/fixture unspecified), which the catalogue cannot deploy (not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture). It is not replaced by a stand-in.",
+  "Host h6 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h7 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h8 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ],
+ "platform_components": [],
+ "not_deployed_hosts": [
+  {
+   "host_id": "h1",
+   "role": "FortiOS and FortiProxy SSL VPN",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  },
+  {
+   "host_id": "h3",
+   "role": "Zoho ManageEngine ADSelfService Plus",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  },
+  {
+   "host_id": "h4",
+   "role": "Atlassian Confluence Server and Data Center (a web-based collaboration tool)",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  },
+  {
+   "host_id": "h5",
+   "role": "Apache Log4j logging framework",
+   "reason": "Log4j application (version/fixture unspecified) 無法由元件目錄部署（not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture）；這台主機不會被部署，也不以替身頂替。",
+   "image_hint": "unsupported-log4j-unspecified",
+   "runtime": "unsupported",
+   "services": [
+    "Apache"
+   ]
+  },
+  {
+   "host_id": "h6",
+   "role": "VMware Workspace ONE Access, Identity Manager, and other VMware products",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  },
+  {
+   "host_id": "h7",
+   "role": "F5 BIG-IP application delivery and security software",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  },
+  {
+   "host_id": "h8",
+   "role": "Microsoft Support Diagnostic Tool (MSDT) in Windows",
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。",
+   "image_hint": null,
+   "runtime": "container",
+   "services": []
+  }
+ ],
+ "skipped_connections": [],
+ "deployed_host_ids": [
+  "h2",
+  "attacker"
+ ],
+ "components": [
+  {
+   "host_id": "h1",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "h2",
+   "image_hint": "oss-nginx",
+   "component": "oss-nginx",
+   "component_mode": "real",
+   "runtime": "container",
+   "deployable": false,
+   "image": "nginx:1.31.8@sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+   "version": "1.31.8",
+   "digest": "sha256:165ddde8751e75a1c907d24ef10d9f6deb08b57e0fe56caf67512486aff76d82",
+   "substitute": true,
+   "substitute_for": "NGINX",
+   "substitute_basis": "catalogue_substitute",
+   "catalogue_component": "oss-nginx",
+   "published": false,
+   "exposure": "internal_only",
+   "healthcheck": true,
+   "limits": {
+    "mem_limit": "256m",
+    "cpus": 1.0,
+    "pids_limit": 256
+   },
+   "fidelity_difference": "deployed as oss-nginx in place of NGINX; does not reproduce that software or its vulnerabilities",
+   "reason": "主機 h2 的服務「Microsoft Client Access Service (CAS)」宣告在埠 443，但這台主機選用的映像 NGINX（oss-nginx）只在埠 80 提供服務。一台主機只會跑一個映像，所以這個埠上不會有東西在聽。",
+   "service_ports": [
+    {
+     "port": 443,
+     "protocol": "tcp",
+     "names": [
+      "Microsoft Client Access Service (CAS)"
+     ]
+    },
+    {
+     "port": 80,
+     "protocol": "tcp",
+     "names": [
+      "NGINX"
+     ]
+    }
+   ],
+   "blockers": [
+    "port_not_served_by_image"
+   ]
+  },
+  {
+   "host_id": "h3",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "h4",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "h5",
+   "image_hint": "unsupported-log4j-unspecified",
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "unsupported",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "Log4j application (version/fixture unspecified) 無法由元件目錄部署（not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture）；這台主機不會被部署，也不以替身頂替。"
+  },
+  {
+   "host_id": "h6",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "h7",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "h8",
+   "image_hint": null,
+   "component": "not_deployed",
+   "component_mode": "not_deployed",
+   "runtime": "container",
+   "deployable": false,
+   "skipped": true,
+   "image": null,
+   "version": null,
+   "digest": null,
+   "substitute": false,
+   "published": false,
+   "reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "host_id": "attacker",
+   "image_hint": "oss-attacker",
+   "component": "oss-attacker",
+   "component_mode": "real",
+   "runtime": "container",
+   "deployable": true,
+   "image": "alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+   "version": "3.22",
+   "digest": "sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f",
+   "substitute": false,
+   "catalogue_component": "oss-attacker",
+   "published": false,
+   "exposure": "publishable",
+   "healthcheck": false,
+   "limits": {
+    "mem_limit": "256m",
+    "cpus": 1.0,
+    "pids_limit": 256
+   },
+   "reason": "resolved to a catalogue image pinned by version and sha256 digest",
+   "service_ports": []
+  }
+ ],
+ "vms": [],
+ "host_port_mappings": [],
+ "host_port_assignment": "host_port is a default; the deploy runtime assigns a free port in 42000-42999",
+ "publishing": "nothing is published on the host",
+ "host_isolation": "plan networks use Docker gateway mode 'isolated' (no host-side bridge address); needs Docker >= 28",
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "name": "cr-demo-evidence-scenario-internal",
+   "internal": true,
+   "plan_internal": true,
+   "role": "internal_segment",
+   "published_to_host": false,
+   "description": "計畫中的內部網段：只有同網段的實驗主機互相可達，不對本機開埠。"
+  },
+  {
+   "id": "external",
+   "name": "cr-demo-evidence-external",
+   "internal": true,
+   "plan_internal": false,
+   "role": "exposed_segment",
+   "published_to_host": false,
+   "description": "計畫中的對外網段：其上的服務（漏洞映像除外）可經轉發埠從本機連入；容器本身仍不能連到外部或宿主機。"
+  }
+ ],
+ "errors": [
+  "host h2 declares port 443, unsupported by oss-nginx"
+ ]
+}

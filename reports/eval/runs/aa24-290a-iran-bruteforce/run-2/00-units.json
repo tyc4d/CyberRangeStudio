@@ -1,0 +1,134 @@
+[
+ {
+  "id": "p1",
+  "text": "# FBI/CISA/NSA et al. AA24-290A — Iranian Cyber Actors’ Brute Force and Credential Access Activity Compromises Critical Infrastructure Organizations"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI, CISA, NSA, CSE, AFP and ASD’s ACSC, Joint Cybersecurity Advisory, Product ID AA24-290A, October 16, 2024 (TLP:CLEAR)\n> - Download URL (FBI IC3 copy of the joint advisory): https://www.ic3.gov/CSA/2024/241016.pdf\n> - CISA web page (not fetched; returns 403 from the retrieval host): https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-290a\n> - PDF SHA-256: 45a286b1f7ed9a8df77a0f295f67507575c35f4d2f370cb7cfc8feaf4594f78d (`source.pdf`, 15 pages)\n> - License: U.S. Government work, TLP:CLEAR\n> - Scope of this file: Summary (pp.1–2), Technical Details from \"Overview of Activity\" to \"Exfiltration and Collection\" (pp.2–4), and the attribution caveat paragraph that follows the Disclaimer (p.7), verbatim. Detection, Mitigations, IOC tables and ATT&CK appendix are in `source.pdf.txt`.\n> - Retrieved: 2026-11-16\n> - Wording: the source's own wording; only page furniture, line wrapping and line-break hyphenation were removed."
+ },
+ {
+  "id": "p3",
+  "text": "## Summary"
+ },
+ {
+  "id": "p4",
+  "text": "The Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency (CISA), the National Security Agency (NSA), the Communications Security Establishment Canada (CSE), the Australian Federal Police (AFP), and Australian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC) are releasing this joint Cybersecurity Advisory to warn network defenders of Iranian cyber actors’ use of brute force and other techniques to compromise organizations across multiple critical infrastructure sectors, including the healthcare and public health (HPH), government, information technology, engineering, and energy sectors. The actors likely aim to obtain credentials and information describing the victim’s network that can then be sold to enable access to cybercriminals."
+ },
+ {
+  "id": "p5",
+  "text": "Since October 2023, Iranian actors have used brute force, such as password spraying, and multi-factor authentication (MFA) ‘push bombing’ to compromise user accounts and obtain access to organizations. The actors frequently modified MFA registrations, enabling persistent access. The actors performed discovery on the compromised networks to obtain additional credentials and identify other information that could be used to gain additional points of access. The authoring agencies assess the Iranian actors sell this information on cybercriminal forums to actors who may use the information to conduct additional malicious activity."
+ },
+ {
+  "id": "p6",
+  "text": "This advisory provides the actors’ tactics, techniques, and procedures (TTPs) and indicators of compromise (IOCs). The information is derived from FBI engagements with entities impacted by this malicious activity."
+ },
+ {
+  "id": "p7",
+  "text": "The authoring agencies recommend critical infrastructure organizations follow the guidance provided in the Mitigations section. At a minimum, organizations should ensure all accounts use strong passwords and register a second form of authentication."
+ },
+ {
+  "id": "p8",
+  "text": "## Technical Details"
+ },
+ {
+  "id": "p9",
+  "text": "Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 15. See the MITRE ATT&CK Tactics and Techniques section in Appendix A for a table of the actors’ activity mapped to MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p10",
+  "text": "### Overview of Activity"
+ },
+ {
+  "id": "p11",
+  "text": "The actors likely conduct reconnaissance operations to gather victim identity [T1589] information. Once obtained, the actors gain persistent access to victim networks frequently via brute force [T1110]. After gaining access, the actors use a variety of techniques to further gather credentials, escalate privileges, and gain information about the entity’s systems and network. The actors also move laterally and download information that could assist other actors with access and exploitation."
+ },
+ {
+  "id": "p12",
+  "text": "### Initial Access and Persistence"
+ },
+ {
+  "id": "p13",
+  "text": "The actors use valid user and group email accounts [T1078], frequently obtained via brute force such as password spraying [T1110.003] although other times via unknown methods, to obtain initial access to Microsoft 365, Azure [T1078.004], and Citrix systems [T1133]. In some cases where push notification-based MFA was enabled, the actors send MFA requests to legitimate users seeking acceptance of the request. This technique—bombarding users with mobile phone push notifications until the user either approves the request by accident or stops the notifications— is known as “MFA fatigue” or “push bombing” [T1621]."
+ },
+ {
+  "id": "p14",
+  "text": "Once the threat actors gain access to an account, they frequently register their devices with MFA to protect their access to the environment via the valid account:"
+ },
+ {
+  "id": "p15",
+  "text": "- In two confirmed compromises, the actors leveraged a compromised user’s open registration for MFA [T1556.006] to register the actor’s own device [T1098.005] to access the environment.\n- In another confirmed compromise, the actors used a self-service password reset (SSPR) tool associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts with expired passwords [T1484.002] and then registered MFA through Okta for compromised accounts without MFA already enabled [T1556] [T1556.006]."
+ },
+ {
+  "id": "p16",
+  "text": "The actors frequently conduct their activity using a virtual private network (VPN) service [T1572]. Several of the IP addresses in the actors’ malicious activity originate from exit nodes tied to the Private Internet Access VPN service."
+ },
+ {
+  "id": "p17",
+  "text": "### Lateral Movement"
+ },
+ {
+  "id": "p18",
+  "text": "The actors use Remote Desktop Protocol (RDP) for lateral movement [T1021.001]. In one instance, the actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe [T1202]."
+ },
+ {
+  "id": "p19",
+  "text": "### Credential Access"
+ },
+ {
+  "id": "p20",
+  "text": "The actors likely use open-source tools and methodologies to gather more credentials. The actors performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received Kerberos tickets [T1558.003]. In one instance, the actors used the Active Directory (AD) Microsoft Graph Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD accounts. Also, the actors imported the tool [T1105] DomainPasswordSpray.ps1, which is openly available on GitHub [T1588.002], likely to conduct password spraying. The actors also used the command Cmdkey /list, likely to display usernames and credentials [T1555]."
+ },
+ {
+  "id": "p21",
+  "text": "### Privilege Escalation"
+ },
+ {
+  "id": "p22",
+  "text": "In one instance, the actors attempted impersonation of the domain controller, likely by exploiting Microsoft’s Netlogon (also known as “Zerologon”) privilege escalation vulnerability (CVE-2020-1472) [T1068]."
+ },
+ {
+  "id": "p23",
+  "text": "### Discovery"
+ },
+ {
+  "id": "p24",
+  "text": "The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal networks. The actors used the following Windows command-line tools to gather information about domain controllers [T1018], trusted domains [T1482], lists of domain administrators, and enterprise administrators [T1087.002] [T1069.002] [T1069.003]:"
+ },
+ {
+  "id": "p25",
+  "text": "- Nltest /dclist\n- Nltest /domain_trusts\n- Nltest /domain_trusts/all_trusts\n- Net group “Enterprise admins” /domain\n- Net group “Domain admins” /domain"
+ },
+ {
+  "id": "p26",
+  "text": "Next, the actors used the following Lightweight Directory Access Protocol (LDAP) query in PowerShell [T1059.001] to search the AD for computer display names, operating systems, descriptions, and distinguished names [T1082]."
+ },
+ {
+  "id": "p27",
+  "text": "```\n$i=0\n$D=\n[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()\n$L='LDAP://' . $D\n$D = [ADSI]$L\n$Date = $((Get-Date).AddDays(-90).ToFileTime())\n$str =\n'(&(objectcategory=computer)(operatingSystem=*serv*)(|(lastlogon>='+$D\nate+')(lastlogontimestamp>='+$Date+')))'\n$s = [adsisearcher]$str\n$s.searchRoot = $L.$D.distinguishedName\n$s.PropertiesToLoad.Add('cn') > $Null\n$s.PropertiesToLoad.Add('operatingsystem') > $Null\n$s.PropertiesToLoad.Add('description') > $Null\n$s.PropertiesToLoad.Add('distinguishedName') > $Null\nForeach ($CA in $s.FindAll()) {\nWrite-Host $CA.Properties.Item('cn')\n$CA.Properties.Item('operatingsystem')\n$CA. Properties.Item('description')\n$CA.Properties.Item('distinguishedName')\n$i++\n}\nWrite-host Total servers: $i\n```"
+ },
+ {
+  "id": "p28",
+  "text": "### Command and Control"
+ },
+ {
+  "id": "p29",
+  "text": "On one occasion, using msedge.exe, the actors likely made outbound connections to Cobalt Strike Beacon command and control (C2) infrastructure [T1071.001]."
+ },
+ {
+  "id": "p30",
+  "text": "### Exfiltration and Collection"
+ },
+ {
+  "id": "p31",
+  "text": "In a couple instances, while logged in to victim accounts, the actors downloaded files related to gaining remote access to the organization and to the organization’s inventory [T1005], likely exfiltrating the files to further persist in the victim network or to sell the information online."
+ },
+ {
+  "id": "p32",
+  "text": "## (p.7, after the Disclaimer)"
+ },
+ {
+  "id": "p33",
+  "text": "Intrusion events connected to this Iranian group may also include a different set of cyber actors–likely the third-party actors who purchased access from the Iranian group via cybercriminal forums or other channels. As a result, some TTPs and IOCs noted in this advisory may be tied to these third-party actors, not the Iranian actors. The TTPs and IOCs are in the advisory to provide recipients the most complete picture of malicious activity that may be observed on compromised networks. However, exercise caution if formulating attribution assessments based solely on matching TTPs and IOCs."
+ }
+]

@@ -1,0 +1,145 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "user endpoints and systems targeted for credential gathering and privilege escalation",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    },
+    {
+     "name": "SMB",
+     "port": 445,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Windows Server",
+     "port": 445,
+     "protocol": "tcp"
+    }
+   ],
+   "unplaced_services": [
+    {
+     "name": "Active Directory Domain Services",
+     "component": "unsupported-ad-ds",
+     "reason": "host already uses another component"
+    }
+   ],
+   "image_hint": "windows-server-eval-vm",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": 2,
+    "memory_mib": 4096,
+    "disk_gib": 50
+   },
+   "deployable": false,
+   "not_deployed_reason": "Windows Server Evaluation VM (user supplied media) 需要尚未備妥的 VM 映像（OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied）；這台主機不會被部署。"
+  },
+  {
+   "id": "h2",
+   "role": "user endpoints and systems targeted for log clearing",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "initial access targets",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Citrix ADC (NetScaler)、FortiOS SSL-VPN、Apache ActiveMQ Java OpenWire protocol、Confluence Data Center and Server、BIG-IP system management port and/or self IP addresses、Fortinet FortiClientEMS 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h1:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 445,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h1:445 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "port": 445,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h1:445 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h3 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "Host h1 deploys one component; not deployed there: Active Directory Domain Services (unsupported-ad-ds). Move them to another host or remove them.",
+  "No port is known for service Windows Management Instrumentation (s2); it remains unreachable by default.",
+  "No port is known for service Netlogon Remote Protocol (MS-NRPC) (s10); it remains unreachable by default.",
+  "Host h1 needs Windows Server Evaluation VM (user supplied media) as a VM, which is not deployable yet (OS-level Windows behavior only when a validated local image and release are supplied; no AD/Horizon or vulnerability fidelity implied).",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Citrix ADC (NetScaler) (s4); it remains unreachable by default.",
+  "No port is known for service FortiOS SSL-VPN (s5); it remains unreachable by default.",
+  "No port is known for service Apache ActiveMQ Java OpenWire protocol (s6); it remains unreachable by default.",
+  "No port is known for service Confluence Data Center and Server (s7); it remains unreachable by default.",
+  "No port is known for service BIG-IP system management port and/or self IP addresses (s8); it remains unreachable by default.",
+  "No port is known for service Fortinet FortiClientEMS (s9); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Actions for host h3 do not identify one of its multiple services; no inbound service port was opened."
+ ]
+}

@@ -1,0 +1,586 @@
+[
+ {
+  "id": "p1",
+  "text": "# People's Republic of China-Linked Actors Compromise Routers and IoT Devices for Botnet Operations"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2024-09-18\n> - URL: https://www.ic3.gov/CSA/2024/240918.pdf\n> - PDF SHA-256: 4bac572c4d294e810bc88703ddb4833de669d37fa3edcae04c4fbee1c675c7dd (`source.pdf`, 18 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (52 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                            Product ID: JCSA-20240918-001\n                                                                                                                September 18, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "People’s Republic of China-Linked Actors\n       Compromise Routers and IoT Devices for\n       Botnet Operations\n       Summary\n       The Federal Bureau of Investigation (FBI), Cyber National Mission Force (CNMF), and National Security\n       Agency (NSA) assess that People’s Republic of China (PRC)-linked cyber actors have compromised\n       thousands of Internet-connected devices, including small office/home office (SOHO) routers, firewalls,\n       network-attached storage (NAS) and Internet of Things (IoT) devices with the goal of creating a network of\n       compromised nodes (a “botnet”) positioned for malicious activity. The actors may then use the botnet as a\n       proxy to conceal their identities while deploying distributed denial of service (DDoS) attacks or\n       compromising targeted U.S. networks.\n       Integrity Technology Group (Integrity Tech), a PRC-based company, has controlled and managed a botnet\n       active since mid-2021. The botnet has regularly maintained between tens to hundreds of thousands of\n       compromised devices. As of June 2024, the botnet consisted of over 260,000 devices. Victim devices\n       which are part of the botnet have been observed in North America, South America, Europe, Africa,\n       Southeast Asia and Australia.\n       While devices aged beyond their end-of-life dates are known to be more vulnerable to intrusion, many of the\n       compromised devices in the Integrity Tech-controlled botnet are likely still supported by their respective vendors.\n       FBI, CNMF, NSA, and allied partners are releasing this Joint Cyber Security Advisory to highlight the threat\n       posed by these actors and their botnet activity and to encourage exposed device vendors, owners, and\n       operators to update and secure their devices from being compromised and joining the botnet. Network\n       defenders are advised to follow the guidance in the mitigations section to protect against the PRC-linked\n       cyber actors’ botnet activity. Cyber security companies can also leverage the information in this advisory to\n       assist with identifying malicious activity and reducing the number of devices present in botnets worldwide.\n       For additional information, see U.S. Department of Justice (DOJ) press release.\n       To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n       your local FBI field office. When available, please include the following information regarding the incident: date,\n       time, and location of the incident; type of activity; number of people affected; type of equipment used for the\n       activity; the name of the submitting company or organization; and a designated point of contact.\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n       more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p5",
+  "text": "Technical Details\n      Attribution\n      Integrity Tech is a company based in the PRC with links to the PRC government. Integrity Tech has used\n      China Unicom Beijing Province Network IP addresses to control and manage the botnet described in this\n      advisory.\n      In addition to managing the botnet, these same China Unicom Beijing Province Network IP addresses were\n      used to access other operational infrastructure employed in computer intrusion activities against U.S.\n      victims. FBI has engaged with multiple U.S. victims of these computer intrusions and found activity\n      consistent with the tactics, techniques, and infrastructure associated with the cyber threat group known\n      publicly as Flax Typhoon, RedJuliett, and Ethereal Panda.\n      Note: Cybersecurity companies have different methods of tracking and attributing cyber actors, and these\n      may not be a 1:1 correlation to the U.S. Government’s methodology and understanding for all activity\n      related to these groupings."
+ },
+ {
+  "id": "p6",
+  "text": "Botnet Command and Control\n      As with similar botnets, this botnet infrastructure is comprised of a network of devices, known as “bots,”\n      which are infected with a type of malware that provides threat actors with unauthorized remote access. A\n      functioning botnet can be used for a variety of purposes, including malware delivery, distributed denial of\n      service (DDoS) attacks, or routing nefarious Internet traffic.\n      The botnet uses the Mirai family of malware, designed to hijack IoT devices such as webcams, DVRs, IP\n      cameras, and routers running Linux-based operating systems. The Mirai source code was posted publicly\n      on the Internet in 2016, resulting in other hackers creating their own botnets based on the malware. Since\n      that time, various Mirai botnets have been used to conduct DDoS and other malicious activities against\n      victim entities within the U.S.\n      The investigated botnet’s customized Mirai malware is a component of a system that automates the\n      compromise of a variety of devices. To recruit a new “bot,” the botnet system first compromises an\n      Internet-connected device using one of a variety of known vulnerability exploits (see Appendix B: Observed\n      CVEs). Post-compromise, the victim device executes a Mirai-based malware payload from a remote server.\n      Once executed, the payload starts processes on the device to establish a connection with a command-and-\n      control (C2) server using Transport Layer Security (TLS) on port 443. The processes gather system\n      information from the infected device, including but not limited to the operating system version and\n      processor, memory and bandwidth details to send to the C2 server for enumeration purposes. The malware\n      also makes requests to “c.speedtest.net,” likely to gather additional Internet connection details. Some\n      malware payloads were self-deleting to evade detection.\n      A variety of subdomains of “w8510.com” were linked to the botnet’s C2 servers. As of September 2024,\n      investigators identified over 80 subdomains associated with w8510.com (see Appendix A: Indicators of\n      Compromise)."
+ },
+ {
+  "id": "p7",
+  "text": "Botnet Management\n      A tier of upstream management servers using TCP port 34125 manage the botnet’s C2 servers. These\n      management servers host a MySQL database which stored information used for the control of the botnet.\n      As of June 2024, this database contained over 1.2 million records of compromised devices, including over\n      385,000 unique U.S. victim devices, both previously and actively exploited.\n      The management servers hosted an application known as “Sparrow,” which allows users to interact with\n      the botnet. The actors used specific IP addresses registered to China Unicom Beijing Province Network to\n      access this application, including the same IP addresses previously used by Flax Typhoon to access the\n      systems used in computer intrusion activities against U.S.-based victims.\n      The code for the Sparrow application, stored within a Git repository, defines functions that allow registered\n      users to manage and control the botnet and C2 servers, sending tasks to victim devices including DDoS\n      and exploitation commands to grow the botnet. Sparrow also contains functionality providing device\n      vulnerability information to users. A subcomponent called “vulnerability arsenal” also allows users to\n      exploit traditional computer networks through the victim devices in the botnet."
+ },
+ {
+  "id": "p8",
+  "text": "Compromised Device Distribution\n      The following tables approximate the count of devices compromised by the botnet system as of June 2024,\n      by location and by processor architecture. There were at least 50 different Linux operating system versions\n      found among botnet nodes. Based on the operating system versions of the nodes, infected systems\n      include devices that ceased receiving support as early as 2016 to devices that are currently supported.\n      Affected devices were running Linux kernel versions 2.6 through 5.4."
+ },
+ {
+  "id": "p9",
+  "text": "Table 1: Botnet devices per country"
+ },
+ {
+  "id": "p10",
+  "text": "Country                        Node Count      Percentage\n                              United States                  126,000         47.9%\n                              Vietnam                        21,100          8.0%\n                              Germany                        18,900          7.2%\n                              Romania                        9,600           3.7%\n                              Hong Kong                      9,400           3.6%\n                              Canada                         9,200           3.5%\n                              South Africa                   9,000           3.4%\n                              United Kingdom                 8,500           3.2%\n                              India                          5,800           2.2%\n                              France                         5,600           2.1%\n                              Bangladesh                     4,100           1.6%\n                              Italy                          4,000           1.5%\n                              Lithuania                      3,300           1.3%\n                              Albania                        2,800           1.1%\n                              Netherlands                    2,700           1.0%\n                              China                          2,600           1.0%\n                              Australia                      2,400           0.9%\n                              Poland                         2,100           0.8%\n                              Spain                          2,000           0.8%\n                                               Table 2: Botnet devices per continent"
+ },
+ {
+  "id": "p11",
+  "text": "Continent                      Node Count       Percentage\n                              North America                  135,300          51.3%\n                              Europe                         65,600           24.9%\n                              Asia                           50,400           19.1%\n                              Africa                         9,200            3.5%\n                              Oceania                        2,400            0.9%\n                              South America                  800              0.3%\n                                       Table 3: Botnet devices by processor architecture"
+ },
+ {
+  "id": "p12",
+  "text": "Processor Architecture          Node Count        Percentage\n                              x86                             236,000           89.2%\n                              MIPS                            21,400            8.1%\n                              ARM                             3,900             1.5%\n                              x86_64                          1,900             0.7%\n                              MIPSEL                          1,400             0.5%"
+ },
+ {
+  "id": "p13",
+  "text": "Exploited Processor Architectures"
+ },
+ {
+  "id": "p14",
+  "text": "x86   mips   arm   x86_64    mipsel"
+ },
+ {
+  "id": "p15",
+  "text": "Figure 1: Exploited processor architectures chart"
+ },
+ {
+  "id": "p16",
+  "text": "Recommended Mitigations\n      The FBI recommends network defenders take the following actions to mitigate threats posed by\n      adversaries attempting to use botnets for malicious cyber activity. The following guidance applies both to\n      preventing IoT devices from becoming part of a botnet, as well as to defending networks from botnets\n      already in operation.\n           •   Disable unused services and ports such as automatic configuration, remote access or file sharing\n               protocols. Routers and IoT devices may provide features such as Universal Plug and Play (UPnP),\n               remote management options, and file sharing services, which threat actors may abuse to gain\n               initial access or to spread malware to other networked devices. Disable these features if not\n               needed.\n           •   Implement network segmentation to ensure IoT devices within a larger network pose known,\n               limited, and tolerable risks. Use the principle of least privilege to provide devices with just enough\n               connectivity needed to perform their intended function.\n           •   Monitor for high network traffic volume. Since DDoS attacks originating from botnets may at first\n               appear similar to normal traffic, it is critical for organizations to define, monitor and prepare for\n               abnormal traffic volumes. Monitoring is possible via firewalls or intrusion detection systems. Some\n               network solutions such as proxies may mitigate DDoS incidents.\n           •   Apply patches and updates, including software and firmware updates. Regular patching mitigates\n               many high-risk security vulnerabilities. If available, take advantage of automatic update channels\n               from trusted network locations. Do not trust email messages claiming to provide software updates\n               as attachments or via links to untrusted websites.\n           •   Replace default passwords with strong passwords. Many IoT products implement a device\n               administration password in addition to other account passwords. Ensure all passwords are\n               changed from their defaults, using a strong password policy. If possible, disable password hints.\n           •   Plan for device reboots. Rebooting a device terminates all running processes, which may remove"
+ },
+ {
+  "id": "p17",
+  "text": "specific types of malware, such as “fileless” malware that runs in the host’s memory. As a reboot\n           may disrupt legitimate activity, users may need to prepare for service interruptions. Some devices\n           provide scheduled reboot features, enabling reboots to occur at preferred times. If a compromised\n           device fails to respond to reboot commands issued remotely, reboot physically.\n         • Replace end-of-life equipment with devices that remain in respective vendor support plans."
+ },
+ {
+  "id": "p18",
+  "text": "Disclaimer\n      The information in this report is being provided “as is” for informational purposes only. The authoring\n      organizations do not endorse any commercial entity, product, company, or service, including any entities,\n      products, or services linked within this document. Any reference to specific commercial entities, products,\n      processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n      imply endorsement, recommendation, or favoring by the authoring organizations."
+ },
+ {
+  "id": "p19",
+  "text": "Version History\n      September 18, 2024: Initial version."
+ },
+ {
+  "id": "p20",
+  "text": "Appendix A: Indicators of Compromise\n      The following listed domain names were observed subdomains of “w8510.com,” the observed\n      command and control system domain.\n                                               Table 4: List of w8510.com subdomains"
+ },
+ {
+  "id": "p21",
+  "text": "Domain                                          IP Address                     Last Seen"
+ },
+ {
+  "id": "p22",
+  "text": "acqv.w8510.com                                  208.85.16.100                  8/29/2024"
+ },
+ {
+  "id": "p23",
+  "text": "aewreiuicajo.w8510.com                          45.77.231.209                  9/1/2024"
+ },
+ {
+  "id": "p24",
+  "text": "apdfhhjcxcb.w8510.com                           139.180.137.219                8/31/2024"
+ },
+ {
+  "id": "p25",
+  "text": "asdvxzzxvza.w8510.com                           45.135.117.131                 9/3/2024"
+ },
+ {
+  "id": "p26",
+  "text": "awbpxtpi.w8510.com                              155.138.151.225                9/3/2024"
+ },
+ {
+  "id": "p27",
+  "text": "bzbatflwb.w8510.com                             45.77.231.209                  9/3/2024"
+ },
+ {
+  "id": "p28",
+  "text": "cansqra.w8510.com                               222.186.48.201                 8/22/2023"
+ },
+ {
+  "id": "p29",
+  "text": "canwtrow.w8510.com                              222.186.48.204                 10/7/2023"
+ },
+ {
+  "id": "p30",
+  "text": "cccasdqawer.w8510.com                           92.38.185.45                   9/3/2024"
+ },
+ {
+  "id": "p31",
+  "text": "ccccasdasdq.w8510.com                           85.90.216.115                  9/3/2024"
+ },
+ {
+  "id": "p32",
+  "text": "cccvbsdfsdf.w8510.com                           195.234.62.197                 9/3/2024"
+ },
+ {
+  "id": "p33",
+  "text": "ccmmkmnkna.w8510.com                            85.90.216.69                   9/3/2024"
+ },
+ {
+  "id": "p34",
+  "text": "cpooooim.w8510.com                              85.90.216.110                  9/3/2024"
+ },
+ {
+  "id": "p35",
+  "text": "dftiscasdwe.w8510.com                           207.148.122.69                 9/2/2024"
+ },
+ {
+  "id": "p36",
+  "text": "dvasrdftqgqg.w8510.com                          45.10.58.129                   9/3/2024"
+ },
+ {
+  "id": "p37",
+  "text": "iiiiopasdfcasd.w8510.com                        92.38.185.46                   9/3/2024"
+ },
+ {
+  "id": "p38",
+  "text": "iikljhg.w8510.com                               85.90.216.116                  9/3/2024"
+ },
+ {
+  "id": "p39",
+  "text": "iuyrdfvv.w8510.com                              45.10.58.133                   9/3/2024"
+ },
+ {
+  "id": "p40",
+  "text": "iyasdasfda.w8510.com                            195.234.62.184                 9/1/2024"
+ },
+ {
+  "id": "p41",
+  "text": "kliscjaisdjhi.w8510.com                149.248.51.22     9/4/2024"
+ },
+ {
+  "id": "p42",
+  "text": "lkljjhidjaiwd.w8510.com                37.61.229.15      9/3/2024"
+ },
+ {
+  "id": "p43",
+  "text": "lkopiyut.w8510.com                     5.181.27.219      9/3/2024"
+ },
+ {
+  "id": "p44",
+  "text": "lyblqwesfawe.w8510.com                 78.141.238.97     8/28/2024"
+ },
+ {
+  "id": "p45",
+  "text": "mjiudwajhkf.w8510.com                  45.77.231.209     9/3/2024"
+ },
+ {
+  "id": "p46",
+  "text": "mmjkjiu.w8510.com                      92.38.185.43      9/3/2024"
+ },
+ {
+  "id": "p47",
+  "text": "mmnajsdh.w8510.com                     37.9.35.91        9/1/2024"
+ },
+ {
+  "id": "p48",
+  "text": "mnbghjj.w8510.com                      45.92.70.71       9/2/2024"
+ },
+ {
+  "id": "p49",
+  "text": "ocmnusdjdik.w8510.com                  139.180.137.219   9/2/2024"
+ },
+ {
+  "id": "p50",
+  "text": "oiuiasdads.w8510.com                   195.234.62.188    9/3/2024"
+ },
+ {
+  "id": "p51",
+  "text": "plllkkoasdko.w8510.com                 195.234.62.198    9/3/2024"
+ },
+ {
+  "id": "p52",
+  "text": "poiaqqrjk.w8510.com                    195.234.62.192    9/3/2024"
+ },
+ {
+  "id": "p53",
+  "text": "pojkkaka.w8510.com                     45.10.58.130      9/3/2024"
+ },
+ {
+  "id": "p54",
+  "text": "poooooiioasd.w8510.com                 37.61.229.17      9/3/2024"
+ },
+ {
+  "id": "p55",
+  "text": "ppppoiiua.w8510.com                    92.38.185.44      9/3/2024"
+ },
+ {
+  "id": "p56",
+  "text": "qacassdfawemp.w8510.com                155.138.133.56    9/4/2024"
+ },
+ {
+  "id": "p57",
+  "text": "qmmklou.w8510.com                      45.92.70.68       9/3/2024"
+ },
+ {
+  "id": "p58",
+  "text": "qwertdvvaaz.w8510.com                  45.135.117.136    9/3/2024"
+ },
+ {
+  "id": "p59",
+  "text": "ssacawfafwa.w8510.com                  45.10.58.132      9/3/2024"
+ },
+ {
+  "id": "p60",
+  "text": "testate.w8510.com                      207.148.68.131    8/30/2024"
+ },
+ {
+  "id": "p61",
+  "text": "testateone.w8510.com                   108.61.177.81     9/3/2024"
+ },
+ {
+  "id": "p62",
+  "text": "tuisasdcxzd.w8510.com                  78.141.238.97     8/29/2024"
+ },
+ {
+  "id": "p63",
+  "text": "uqooapp.w8510.com                      85.90.216.112     9/3/2024"
+ },
+ {
+  "id": "p64",
+  "text": "uuiyiyasd.w8510.com                    92.38.185.47     9/3/2024"
+ },
+ {
+  "id": "p65",
+  "text": "wmllxwkg.w8510.com                     45.77.231.209    9/3/2024"
+ },
+ {
+  "id": "p66",
+  "text": "zasdfgasd.w8510.com                    65.20.97.251     9/3/2024"
+ },
+ {
+  "id": "p67",
+  "text": "zda4g4.w8510.com                       91.216.190.154   9/3/2024"
+ },
+ {
+  "id": "p68",
+  "text": "zda896.w8510.com                       45.13.199.152    9/3/2024"
+ },
+ {
+  "id": "p69",
+  "text": "zda9ol.w8510.com                       91.216.190.247   9/3/2024"
+ },
+ {
+  "id": "p70",
+  "text": "zdaaac.w8510.com                       5.181.27.6       9/1/2024"
+ },
+ {
+  "id": "p71",
+  "text": "zdaasdafq.w8510.com                    45.80.215.156    9/3/2024"
+ },
+ {
+  "id": "p72",
+  "text": "zdabnv.w8510.com                       23.236.68.161    9/3/2024"
+ },
+ {
+  "id": "p73",
+  "text": "zdacasc.w8510.com                      45.80.215.150    9/2/2024"
+ },
+ {
+  "id": "p74",
+  "text": "zdacasdc.w8510.com                     195.234.62.19    9/3/2024"
+ },
+ {
+  "id": "p75",
+  "text": "zdacawca.w8510.com                     45.13.199.84     8/28/2024"
+ },
+ {
+  "id": "p76",
+  "text": "zdacccz.w8510.com                      5.181.27.21      8/23/2024"
+ },
+ {
+  "id": "p77",
+  "text": "zdacppao.w8510.com                     45.13.199.140    9/2/2024"
+ },
+ {
+  "id": "p78",
+  "text": "zdacscswc.w8510.com                    89.44.198.195    8/30/2024"
+ },
+ {
+  "id": "p79",
+  "text": "zdacvb.w8510.com                       23.236.69.110    9/3/2024"
+ },
+ {
+  "id": "p80",
+  "text": "zdacvbzzs.w8510.com                    45.13.199.104    9/3/2024"
+ },
+ {
+  "id": "p81",
+  "text": "zdacwaca.w8510.com                     45.80.215.153    9/2/2024"
+ },
+ {
+  "id": "p82",
+  "text": "zdacwrf.w8510.com                      45.92.70.111     9/1/2024"
+ },
+ {
+  "id": "p83",
+  "text": "zdacx46.w8510.com                      23.236.68.213    8/24/2024"
+ },
+ {
+  "id": "p84",
+  "text": "zdacxdawdas.w8510.com                  45.13.199.45     8/28/2024"
+ },
+ {
+  "id": "p85",
+  "text": "zdacxzd.w8510.com                      89.44.198.200    9/2/2024"
+ },
+ {
+  "id": "p86",
+  "text": "zdaczcaaw.w8510.com                    45.80.215.151    8/30/2024"
+ },
+ {
+  "id": "p87",
+  "text": "zdaczcvs1.w8510.com                     92.38.176.156   7/22/2024"
+ },
+ {
+  "id": "p88",
+  "text": "zdaczsc.w8510.com                       45.92.70.113    8/13/2024"
+ },
+ {
+  "id": "p89",
+  "text": "zdaczvs.w8510.com                       45.80.215.149   9/2/2024"
+ },
+ {
+  "id": "p90",
+  "text": "zdaczxc1.w8510.com                      23.236.68.193   9/4/2024"
+ },
+ {
+  "id": "p91",
+  "text": "zdafaa.w8510.com                        91.216.190.74   9/3/2024"
+ },
+ {
+  "id": "p92",
+  "text": "zdamkl.w8510.com                        5.181.27.19     9/2/2024"
+ },
+ {
+  "id": "p93",
+  "text": "zdaplm.w8510.com                        45.92.70.115    8/28/2024"
+ },
+ {
+  "id": "p94",
+  "text": "zdapoi.w8510.com                        45.80.215.152   9/2/2024"
+ },
+ {
+  "id": "p95",
+  "text": "zdapoq.w8510.com                        45.13.199.96    9/2/2024"
+ },
+ {
+  "id": "p96",
+  "text": "zdaqggh.w8510.com                       23.236.69.82    9/1/2024"
+ },
+ {
+  "id": "p97",
+  "text": "zdaqwfasf.w8510.com                     45.92.70.112    8/31/2024"
+ },
+ {
+  "id": "p98",
+  "text": "zdavva.w8510.com                        195.234.62.18   8/27/2024"
+ },
+ {
+  "id": "p99",
+  "text": "zdaxcxzc.w8510.com                      91.216.190.80   9/2/2024"
+ },
+ {
+  "id": "p100",
+  "text": "zdazzz.w8510.com                        45.13.199.207   8/29/2024"
+ },
+ {
+  "id": "p101",
+  "text": "zdcacaw.w8510.com                       45.80.215.155   8/31/2024"
+ },
+ {
+  "id": "p102",
+  "text": "zdcawca.w8510.com                       45.80.215.154   8/25/2024"
+ },
+ {
+  "id": "p103",
+  "text": "zdpoa.w8510.com                         89.44.198.254   9/3/2024"
+ },
+ {
+  "id": "p104",
+  "text": "zdpog.w8510.com                         45.80.215.47    9/3/2024"
+ },
+ {
+  "id": "p105",
+  "text": "zdqqqqwe.w8510.com                      91.216.190.2    9/2/2024"
+ },
+ {
+  "id": "p106",
+  "text": "zdzvbs.w8510.com                        23.236.68.229   9/3/2024"
+ },
+ {
+  "id": "p107",
+  "text": "zzxnjiq.w8510.com                       85.90.216.111   9/3/2024"
+ },
+ {
+  "id": "p108",
+  "text": "zzzcmsq.w8510.com                       5.45.184.68     9/2/2024"
+ },
+ {
+  "id": "p109",
+  "text": "Appendix B: Observed CVEs\n      Integrity Tech relied on the following vulnerabilities to acquire new botnet victims and allow botnet users to\n      exploit further victims through the compromised botnet devices.\n                        Table 5: CVEs exploited to add devices to botnet and exploit further victims"
+ },
+ {
+  "id": "p110",
+  "text": "CVE              Vendor                 Product        Versions affected               Vulnerability type"
+ },
+ {
+  "id": "p111",
+  "text": "CVE-2024-        ServiceNow             Now Platform   Washington DC, Vancouver,       RCE\n        5217                                                   and earlier Now Platform\n                                                               releases\n        CVE-2024-        PHP Group              PHP            PHP versions 8.1.* before       OS command\n        4577                                                   8.1.29, 8.2.* before 8.2.20,    injection\n                                                               8.3.* before 8.3.8, when\n                                                               using Apache and PHP-CGI on\n                                                               Windows\n        CVE-2024-        Zyxel                  NAS326         NAS326 firmware versions        OS command\n        29973                                   NAS542         before V5.21(AAZF.17)C0 and     injection\n                                                               NAS542 firmware versions\n                                                               before V5.21(ABAG.14)C0"
+ },
+ {
+  "id": "p112",
+  "text": "CVE-2024-        Telesquare             TLR-2005Ksh    1.0.0 and 1.1.4                 Arbitrary system\n        29269                                                                                  commands\n        CVE-2024-        Fortinet               FortiOS        FortiOS 7.4.0 through 7.4.2,    RCE\n        21762                                                  7.2.0 through 7.2.6, 7.0.0\n                                                               through 7.0.13, 6.4.0 through\n                                                               6.4.14, 6.2.0 through 6.2.15,\n                                                               6.0.0 through 6.0.17,"
+ },
+ {
+  "id": "p113",
+  "text": "FortiProxy     FortiProxy versions 7.4.0\n                                                               through 7.4.2, 7.2.0 through\n                                                               7.2.8, 7.0.0 through 7.0.14,\n                                                               2.0.0 through 2.0.13, 1.2.0\n                                                               through 1.2.13, 1.1.0 through\n                                                               1.1.6, 1.0.0 through 1.0.7"
+ },
+ {
+  "id": "p114",
+  "text": "CVE-2023-        Apache                 Solr           6.0.0 through 8.11.2, 9.0.0     Unrestricted file\n        50386                                                  before 9.4.1                    upload\n        CVE-2023-        QNAP                   QTS            QTS 5.1.x before 5.1.5.2645     OS command\n        47218                                   QuTS hero      build 20240116,                 injection\n                                                QuTScloud      QuTS hero h5.1.x before\n                                                               h5.1.5.2647 build\n                                                               20240118,\n                                                               QuTScloud c5.x before\n                                                               c5.1.5.2651"
+ },
+ {
+  "id": "p115",
+  "text": "CVE              Vendor                 Product             Versions affected               Vulnerability type\n        CVE-2023-        F5                     F5 Big-IP           Big-IP (all modules) 17.1.0-    Authentication bypass\n        46747                                                       17.1., 16.1.0-16.1.4, 15.1.0-\n                                                                    15.1.10, 14.1.0-\n                                                                    14.1.5,13.1.0-13.1.5"
+ },
+ {
+  "id": "p116",
+  "text": "CVE-2023-        Apache                 Apache ActiveMQ     Before 5.15.16, 5.16.7,         RCE\n        46604                                                       5.17.6, or 5.18.3\n        CVE-2023-        Telstra                Smart Modem         Firmware versions before        Code execution as\n        43478                                   Gen 2               0.18.15r                        root\n        CVE-2023-        Tongda OA              Tongda2000          11.10                           SQL injection\n        4166\n        CVE-2023-        Metabase               Metabase and        Metabase before 0.46.6.1,       Arbitrary command\n        38646                                   Metabase            Metabase Enterprise before      execution\n                                                Enterprise          1.46.6.1\n        CVE-2023-        OpenRapid              Yuque RapidCMS      Up to version 1.3.1             Arbitrary file upload\n        3852\n        CVE-2023-        Ivanti                 MobileIron Sentry   9.18.0 and below                Authentication bypass\n        38035                                   (MICS Admin\n                                                Portal)\n        CVE-2023-        Apache                 RocketMQ            5.1.1                           Remote command\n        37582                                                                                       execution\n        CVE-2023-        Juniper                Juniper Junos       20.4, 21.1, 21.2, 21.3, 21.4,   PHP external variable\n        36844                                                       22.1, 22.2, 22.3, 22.4          modification\n        CVE-2023-        Apache                 Apache NiFi         0.0.2 through 1.22.0            Code injection\n        36542\n        CVE-2023-        CloudPanel             CloudPanel 2        Before 2.3.1                    Insecure file-manager\n        35885                                                                                       cookie authentication\n        CVE-2023-        NocoDB                 NocoDB              Through 0.106.0 (or 0.109.1)    Path traversal\n        35843\n        CVE-2023-        Citrix                 Netscaler           12.1-NDcPP before 55.297,       Unauthenticated\n        3519                                    Gateway,            12.1-FIPS before 55.297,        remote code\n                                                Application         13.1-FIPS before 37.159,        execution\n                                                Delivery            13.0 before 91.13, 13.1\n                                                Controller (ADC)    before 49.13\n        CVE-2023-        Ivanti                 Endpoint            11.10x<11.10.0.3,               Path traversal\n        35081                                   Manager Mobile      11.9x<11.91.2, and\n                                                (EPMM)              11.8<11.8.12\n        CVE-2023-        Chamilo                Chamilo             v1.11.* up to v1.11.18          Command injection\n        34960\n        CVE-2023-        Gibbonedu              Gibbon              25.0.00                         Local File Inclusion\n        34598                                                                                       (LFI) vulnerability"
+ },
+ {
+  "id": "p117",
+  "text": "CVE              Vendor                 Product             Versions affected                  Vulnerability type"
+ },
+ {
+  "id": "p118",
+  "text": "CVE-2023-        Chamilo                Chamilo LMS         <= v1.11.20                        Command injection\n        3368                                                                                           leading to remote\n                                                                                                       code execution (RCE)\n                                                                                                       Bypass of CVE-2023-\n                                                                                                       34960\n        CVE-2023-        WordPress              Jeecg P3 Bix Chat   Jeecg P3 Biz Chat Project          Allows remote\n        33510                                                       Jeecg P3 Biz Chat 1.0.5            attackers to read\n                                                                                                       arbitrary files\n        CVE-2023-        MikroTik               MikroTik            Stable before 6.49.7 and           Privilege escalation\n        30799                                   RouterOS            long-term through 6.48.6"
+ },
+ {
+  "id": "p119",
+  "text": "CVE-2023-        Zyxel                  ZyWALL/USG                                             OS command\n                                                                    ZyWALL/USG ZLD 4.60 to\n        28771                                   series                                                 injection\n                                                                    4.73, VPN ZLD 4.60 to 5.35,\n                                                                    USG FLEX ZLD 4.60 to 5.35,\n                                                                    ATP ZLD 4.60 to 5.35\n        CVE-2023-        Ubiquiti               UI UniFi            7.3.83 and earlier                 Backup file\n        28365                                                                                          vulnerability\n        CVE-2023-        Fortinet               FortiOS             FortiOS version 7.2.4 and          Buffer overflow\n        27997                                                       below, version 7.0.11 and\n                                                                    below, version 6.4.12 and\n                                                                    below, version 6.0.16 and\n                                                                    below\n                                                FortiProxy          FortiProxy 7.2.3 and below,\n                                                                    7.0.9 and below, 2.0.12 and\n                                                                    below, 1.2 all versions, 1.1 all\n                                                                    versions\n        CVE-2023-        Apache                 Apache Superset     Versions up to and including       Authenticate and\n        27524                                                       2.0.1.                             access unauthorized\n                                                                                                       resources\n        CVE-2023-        Jorani                 Jorani              1.0.0                              Path traversal to RCE\n        26469\n        CVE-2023-        Apache                 Apache HTTP         2.4.0 through 2.4.55               HTTP request\n        25690                                   Server                                                 smuggling\n        CVE-2023-        DrayTek                Vigor2960           Firmware v1.5.1.4                  Command injection\n        24229                                                       No longer supported by\n                                                                    maintainer"
+ },
+ {
+  "id": "p120",
+  "text": "CVE-2023-        Contec                 SolarView           Firmware through 6.00              Command injection\n        23333                                   Compact"
+ },
+ {
+  "id": "p121",
+  "text": "CVE-2023-        Confluence             Data Center and     < 8.5.5 (LTS)                      Template injection\n        22527                                   Server              < 8.7.2 (Data Center Only)         leading to RCE"
+ },
+ {
+  "id": "p122",
+  "text": "CVE              Vendor                 Product           Versions affected              Vulnerability type"
+ },
+ {
+  "id": "p123",
+  "text": "CVE-2023-        Confluence             Data Center and   >=8.0.0, >= 8.1.0, >=8.2.0,    Privilege escalation\n        22515                                   Server            >=8.30 to <8.3.3, >=8.4.0 to\n                                                                  <8.4.3, >=8.5.0 to <8.5.2\n        CVE-2022-        Fortinet               FortiOS           FortiOS SSL-VPN 7.2.0          Buffer overflow\n        42475                                                     through 7.22, 7.00 through\n                                                                  7.0.8, 6.4.0 through 6.4.10,\n                                                                  6.2.0 through 6.211, 6.0.15\n                                                                  and earlier\n                                                FortiProxy        FortiProxy SSL VPN 7.2.0\n                                                                  through 7.2.1, 7.0.7 and\n                                                                  earlier.\n        CVE-2022-        Contec                 SolarView         Firmware 6.00                  Command injection\n        40881                                   Compact\n        CVE-2022-        WordPress              WordPress         WordPress 4.1                  Unauthenticated blind\n        3590                                                                                     SSRF in the pingback\n                                                                                                 feature\n        CVE-2022-        Netgate                pfSense           Through 2.1.4_26               OS command\n        31814                                   pfBlockerNG                                      injection"
+ },
+ {
+  "id": "p124",
+  "text": "CVE-2022-        Zyxel                  USG FLEX, ATP,    USG FLEX                       OS command\n        30525                                   and VPN series    100(W)/200/500/700 ZLD         injection\n                                                firmware          5.00 through 5.21 Patch 1,\n                                                                  USG FLEX 50(W)/USG20(W)-\n                                                                  VPN ZLD 5.10 through 5.21\n                                                                  Patch 1, ATP series ZLD 5.10\n                                                                  through 5.21 Patch 1,\n                                                                  VPN series ZLD 4.60 through\n                                                                  5.21 Patch 1\n        CVE-2022-        Atlassian              Confluence Data   7.18.0                         OGNL Injection\n        26134                                   Center\n                                                Confluence\n                                                server\n        CVE-2022-        Cisco                  Small Business    RV160, RV260, RV340, and       RCE\n        20707                                   Series Routers    RV345"
+ },
+ {
+  "id": "p125",
+  "text": "CVE              Vendor                 Product       Versions affected                Vulnerability type"
+ },
+ {
+  "id": "p126",
+  "text": "CVE-2022-        F5                     BIG-IP        16.1.x versions prior to         Authentication bypass\n        1388                                                  16.1.2.2,\n                                                              15.1.x versions prior to\n                                                              15.1.5.1,\n                                                              14.1.x versions prior to\n                                                              14.1.4.6,\n                                                              13.1.x versions prior to\n                                                              13.1.5,\n                                                              all 12.1.x and 11.6.x versions"
+ },
+ {
+  "id": "p127",
+  "text": "CVE-2021-        Telesquare             SDT-CW3B1     1.1.0                            OS command\n        46422                                                                                  injection\n        CVE-2021-        NETGEAR                NETGEAR       AC2100 before 2021-08-27,        Authentication bypass\n        45511                                                 AC2400 before 2021-08-27,\n                                                              AC2600 before 2021-08-27,\n                                                              D7000 before 2021-08-27,\n                                                              R6220 before 2021-08-27,\n                                                              R6230 before 2021-08-27,\n                                                              R6260 before 2021-08-27,\n                                                              R6330 before 2021-08-27,\n                                                              R6350 before 2021-08-27,\n                                                              R6700v2 before 2021-08-27,\n                                                              R6800 before 2021-08-27,\n                                                              R6850 before 2021-08-27,\n                                                              R6900v2 before 2021-08-27,\n                                                              R7200 before 2021-08-27,\n                                                              R7350 before 2021-08-27,\n                                                              R7400 before 2021-08-27,\n                                                              R7450 before 2021-08-27"
+ },
+ {
+  "id": "p128",
+  "text": "CVE-2021-        Apache                 Log4j2        2.0-beta9 through 2.15.0         Input validation code\n        44228                                                 (excluding security releases     execution\n                                                              2.12.2, 2.12.3, and 2.3.1)\n        CVE-2021-        Hikvision              Web servers   Various DS-2CD, DS-2X, DS-       Command injection\n        36260                                   firmware      2DY, PTZ-N, DS-2DF, DS-2TD,\n                                                              IDS, DS-76, DS-71"
+ },
+ {
+  "id": "p129",
+  "text": "CVE              Vendor                 Product          Versions affected               Vulnerability type"
+ },
+ {
+  "id": "p130",
+  "text": "CVE-2021-        QNAP Systems           Hybrid Backup    versions prior to v16.0.0415    Improper\n        28799            Inc.                   Sync (HBS) 3     on QTS 4.5.2;                   authorization\n                                                                 versions prior to v3.0.210412\n                                                                 on QTS 4.3.6;\n                                                                 versions prior to v3.0.210411\n                                                                 on QTS 4.3.4;\n                                                                 versions prior to v3.0.210411\n                                                                 on QTS 4.3.3;\n                                                                 versions prior to v16.0.0419\n                                                                 on QuTS hero h4.5.1;\n                                                                 versions prior to v16.0.0419\n                                                                 on QuTScloud c4.5.1~c4.5.4"
+ },
+ {
+  "id": "p131",
+  "text": "CVE-2021-        Buffalo                Buffalo WSR      WSR-2533DHPL2 firmware          Path traversal\n        20090                                                    version <= 1.02,\n                         Arcadyan               Arcadyan\n                                                                 WSR-2533DHP3 firmware\n                                                firmware\n                                                                 version <= 1.24"
+ },
+ {
+  "id": "p132",
+  "text": "CVE-2021-        Cisco                  Small Business   RV340/RV340W,                   OS command\n        1473                                    RV Series        RV345/RV345P before             injection\n                                                Routers          1.0.03.21\n        CVE-2021-        Cisco                  Small Business   RV160, RV160W, RV260,           Arbitrary code\n        1472                                    Series Routers   RV260P, RV260W, RV340,          execution\n                                                firmware         RV340W, RV345, RV345P"
+ },
+ {
+  "id": "p133",
+  "text": "CVE-2020-        DrayTek                Vigor            Vigor2960 1.3.1_Beta,           RCE\n        8515                                                     Vigor3900 1.4.4_Beta,\n                                                                 Vigor300B 1.3.3_Beta,\n                                                                 1.4.2.1_Beta, 1.4.4_Beta\n        CVE-2020-        IBM                    WebSphere        8.5 and 9.0 traditional         Arbitrary code\n        4450                                    Application                                      execution\n                                                Server"
+ },
+ {
+  "id": "p134",
+  "text": "CVE-2020-        Tenda                  Tenda F3         Tenda F3 Firmware               Forced browsing\n        35391                                   Firmware         12.01.01.48"
+ },
+ {
+  "id": "p135",
+  "text": "CVE              Vendor                 Product             Versions affected              Vulnerability type"
+ },
+ {
+  "id": "p136",
+  "text": "CVE-2020-        Cisco                  Adaptive Security   ASA <9.6.4.42, <9.8.4.20,      Path traversal\n        3452                                    Appliance           <9.9.2.74, <9.10.1.42,\n                                                (ASA) and           <9.12.3.12, <9.13.1.10,\n                                                Firepower Threat    <9.14.1.10\n                                                Defense (FTD)\n                                                                    FTD <6.2.3.16, <6.3.0.6,\n                                                Software\n                                                                    <6.4.0.10, <6.5.05, <6.6.0.1"
+ },
+ {
+  "id": "p137",
+  "text": "CVE-2020-        Cisco                  Small Business      RV340W,                        Multiple Security\n        3451                                    Series Routers      RV340,                         Vulnerabilities – like\n                                                Firmware            RV345,                         Buffer overflow via\n                                                                    RV345P                         environment\n                                                                                                   variables, server side\n                                                                                                   include (SSI) injection"
+ },
+ {
+  "id": "p138",
+  "text": "CVE-2020-        DrayTek                Vigor Firmware      3900, 2960, and 300b           Command injection\n        15415"
+ },
+ {
+  "id": "p139",
+  "text": "CVE-2019-        Linear eMerge          E3-Series           Nortekcontrol Linear Emerge    Command injection\n        7256                                                        Essential Firmware\n                                                                    Nortekcontrol Linear Emerge\n                                                                    Elite Firmware"
+ },
+ {
+  "id": "p140",
+  "text": "CVE-2019-        TOTOLINK               SDK based           A3002Ru through 2.0.0,         OS command\n        19824            Realtek                routers             A702R through 2.1.3,           injection\n                                                                    N301Rt through 2.16, N302R\n                                                                    through 3.4.0, N300Rt\n                                                                    through 3.4.0, N200Re\n                                                                    through 4.0.0, N150Rt\n                                                                    through 3.4.0, N100Re\n                                                                    through 3.4.0, N302RE\n                                                                    through 2.0.2"
+ },
+ {
+  "id": "p141",
+  "text": "CVE              Vendor                 Product           Versions affected               Vulnerability type"
+ },
+ {
+  "id": "p142",
+  "text": "CVE-2019-        D-Link                 DIR-859 Wi-Fi     DIR-818Lx Bx                    OS command\n        17621                                   router 1.05 and   <=v2.05b03_Beta08, DIR-         injection related to\n                                                1.06B01 Beta01    822 Bx <=v2.03b01, DIR-822      UPnP service\n                                                                  Cx <=v3.12b04, DIR-823 Ax\n                                                                  <=v1.00b06_Beta, DIR-859\n                                                                  Ax <=v1.06b01Beta01, DIR-\n                                                                  868L Ax <=v1.12b04, DIR-\n                                                                  868L Bx <=v2.05b02, DIR-\n                                                                  869 Ax <=v1.03b02Beta02,\n                                                                  DIR-880L Ax <=v1.08b04,\n                                                                  DIR-890L/R Ax\n                                                                  <=v1.11b01_Beta01, DIR-\n                                                                  885L/R Ax <=v1.12b05, DIR-\n                                                                  895L/R Ax <=v1.12b10"
+ },
+ {
+  "id": "p143",
+  "text": "CVE-2019-        Four-Faith             Four-Faith        Firmware 1.0                    RCE via command\n        12168                                   Wireless Mobile                                   shell\n                                                Router F3x24"
+ },
+ {
+  "id": "p144",
+  "text": "CVE-2019-        Microsoft              Windows 10        Server 2016                     OS command\n        11829                                                                                     injection\n                                                Server 2016       1607\n                                                                  1703"
+ },
+ {
+  "id": "p145",
+  "text": "CVE-2018-        Cerio                  Cerio Dt-300N     DT-300N 1.1.6 through           OS command\n        18852                                   Firmware          1.1.12 devices                  injection\n                                                Cerio Dt-300n"
+ },
+ {
+  "id": "p146",
+  "text": "CVE-2017-        QNAP                   QTS               QTS 4.2.6 before build          Command injection\n        7876                                                      20170517, QTS 4.3.3.0174\n                                                                  before build 20170503\n        CVE-2015-        IBM                    Tivoli Common     3.1.0.2, 3.1, 3.1.2, 3.1.2.1,   Code injection\n        7450                                    Reporting         2.1, 2.1.1.2, 3.1.0.1, 2.1.1,"
+ }
+]

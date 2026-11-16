@@ -1,0 +1,83 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "web application delivery control (ADC) and Gateway appliances",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "stated",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Citrix NetScaler ADC and NetScaler Gateway 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "infected hosts where malware executes and credentials are harvested",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "WinRM",
+     "port": 5985,
+     "protocol": "tcp"
+    }
+   ],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 LSASS process、WinRM 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 5985,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:5985 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "No port is known for service Citrix NetScaler ADC and NetScaler Gateway (s1); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service LSASS process (s2); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

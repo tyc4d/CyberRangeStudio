@@ -1,0 +1,600 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230712",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "3832109451319edeab708146f877a9af331a36cca2d2ecb162d5e65f65e6df07",
+  "source_name": "csa-2023-230712"
+ },
+ "actions": [
+  {
+   "id": "a3",
+   "name": "accessed and exfiltrated unclassified Exchange Online Outlook data",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a4",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the forged tokens were used to impersonate users to access and exfiltrate data",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "cloud environment targeted by APT actors",
+   "source": "llm",
+   "name": "Microsoft 365 (M365) cloud environment",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": []
+  },
+  {
+   "id": "h2",
+   "role": "mailbox service targeted for data access and exfiltration",
+   "source": "llm",
+   "name": "Exchange Online",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Exchange Online",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Microsoft account (MSA) consumer key",
+   "type": "account",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Microsoft determined that APT actors accessed and exfiltrated unclassified Exchange Online Outlook data from a small number of accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Microsoft determined that APT actors accessed and exfiltrated unclassified Exchange Online Outlook data from a small number of accounts."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The APT actors used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The APT actors used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Microsoft determined that APT actors accessed and exfiltrated unclassified Exchange Online Outlook data from a small number of accounts. The APT actors used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Microsoft determined that APT actors accessed and exfiltrated unclassified Exchange Online Outlook data from a small number of accounts. The APT actors used a M"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "In June 2023, a Federal Civilian Executive Branch (FCEB) agency identified suspicious activity in their Microsoft 365 (M365) cloud environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In June 2023, a Federal Civilian Executive Branch (FCEB) agency identified suspicious activity in their Microsoft 365 (M365) cloud environment."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Microsoft determined that advanced persistent threat (APT) actors accessed and exfiltrated unclassified Exchange Online Outlook data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Microsoft determined that advanced persistent threat (APT) actors accessed and exfiltrated unclassified Exchange Online Outlook data."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The MailItemsAccessed event is generated when licensed users access items in Exchange Online mailboxes using any connectivity protocol from any client.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The MailItemsAccessed event is generated when licensed users access items in Exchange Online mailboxes using any connectivity protocol from any client."
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Microsoft 365 (M365) cloud environment — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365 (M365) cloud environment 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Microsoft 365 (M365) cloud environment",
+    "action:a4 — used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365 (M365) cloud environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Microsoft 365 (M365) cloud environment — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365 (M365) cloud environment 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Microsoft 365 (M365) cloud environment",
+    "action:a4 — used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365 (M365) cloud environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Microsoft 365 (M365) cloud environment — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft 365 (M365) cloud environment 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Microsoft 365 (M365) cloud environment",
+    "action:a4 — used a Microsoft account (MSA) consumer key to forge tokens to impersonate consumer and enterprise users"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft 365 (M365) cloud environment",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-5",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Exchange Online — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Exchange Online 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Exchange Online",
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Exchange Online",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Exchange Online — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Exchange Online 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Exchange Online",
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Exchange Online",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Exchange Online — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Exchange Online 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Exchange Online",
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Exchange Online",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Exchange Online — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a3 使用 Exchange Online，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 依賴 Exchange Online。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Exchange Online",
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Exchange Online",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "accessed and exfiltrated unclassified Exchange Online Outlook data",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-action-a3-start-condition",
+   "field": "accessed and exfiltrated unclassified Exchange Online Outlook data — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「accessed and exfiltrated unclassified Exchange Online Outlook data」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "accessed and exfiltrated unclassified Exchange Online Outlook data",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a3 — accessed and exfiltrated unclassified Exchange Online Outlook data",
+    "host:h2 — Exchange Online"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "accessed and exfiltrated unclassified Exchange Online Outlook data",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-exchange-online",
+   "field": "software dependency: Exchange Online",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Exchange Online 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 1,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a1",
+    "name": "observed MailItemsAccessed events with unexpected ClientAppID and AppID in M365 Audit Logs",
+    "actor": "defender"
+   },
+   {
+    "id": "a2",
+    "name": "reported suspicious activity to Microsoft and CISA",
+    "actor": "defender"
+   },
+   {
+    "id": "a5",
+    "name": "remediated the issue by blocking tokens issued with the acquired key and replacing the key",
+    "actor": "defender"
+   },
+   {
+    "id": "a6",
+    "name": "leveraged enhanced logging of MailItemsAccessed events and baseline of normal Outlook activity to identify suspicious activity",
+    "actor": "defender"
+   },
+   {
+    "id": "a7",
+    "name": "enabled audit logging",
+    "actor": "defender"
+   },
+   {
+    "id": "a8",
+    "name": "enabled Purview Audit (Premium) logging",
+    "actor": "defender"
+   },
+   {
+    "id": "a9",
+    "name": "ensured logs are searchable by operators",
+    "actor": "defender"
+   },
+   {
+    "id": "a10",
+    "name": "enabled Microsoft 365 Unified Audit Logging (UAL)",
+    "actor": "defender"
+   },
+   {
+    "id": "a11",
+    "name": "understood organization’s cloud baseline to detect outliers and abnormal traffic",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

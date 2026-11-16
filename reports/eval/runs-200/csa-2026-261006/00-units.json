@@ -1,0 +1,330 @@
+[
+ {
+  "id": "p1",
+  "text": "# FortiBleed Operations Continue Targeting Exposed Systems Leading to Reports of Lockouts"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2026-10-06\n> - URL: https://www.ic3.gov/CSA/2026/261006.pdf\n> - PDF SHA-256: 4bb731259721fa460811b288bd1568cba1d69358978c69bd14f0e80e4d9c63b7 (`source.pdf`, 11 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (42 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                          JCSA-20261006-01"
+ },
+ {
+  "id": "p4",
+  "text": "FortiBleed Operations\nContinue Targeting\nExposed Systems\nLeading to Reports of\nLockouts\nPublication: October 6, 2026\nU.S. Federal Bureau of Investigation                               United States Secret Service"
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact the FBI’s Internet\nCrime Complaint Center (IC3), your local FBI field office, and/or CISA’s 24/7 Operations Center at contact@cisa.dhs.gov or 1-\n844-Say-CISA (1-844-729-2472). When available, please include the following information regarding the incident: date, time,\nand location of the incident; type of activity; number of people affected; type of equipment used for the activity; the name of the\nsubmitting company or organization; and a designated point of contact. For NSA-client requirements or cybersecurity inquiries, contact\nCybersecurity_Requests@nsa.gov.\nThis document is distributed as TLP:CLEAR. Recipients may only share this information without restriction. Information is subject\nto standard copyright rules.For more information on the Traffic Light Protocol, see Traffic Light Protocol (TLP) Definitions and\nUsage."
+ },
+ {
+  "id": "p6",
+  "text": "Advisory at a Glance\n          Title                  FortiBleed Operations Continue Targeting Exposed Systems Leading to Reports of\n                                 Lockouts"
+ },
+ {
+  "id": "p7",
+  "text": "Original Publication   October 6, 2026"
+ },
+ {
+  "id": "p8",
+  "text": "Executive Summary      This joint cybersecurity advisory was developed by the Federal Bureau of\n                                 Investigation (FBI) and the U.S. Secret Service (USSS) to provide information and\n                                 disseminate indicators of compromise (IOCs) related to the ongoing FortiBleed\n                                 compromise.\n                                 FortiBleed is an active, global credential-compromise campaign targeting\n                                 internet-facing Fortinet FortiGate firewalls and secure socket layer (SSL) virtual\n                                 private network (VPN) gateways, with SOCRadar verifying more than 86,644\n                                 compromised devices across 194 countries1. This advisory provides details on the\n                                 campaign exploits reused or leaked credentials and a legacy SHA-256 password\n                                 storage, enabling threat actors to harvest and crack authentication data at scale."
+ },
+ {
+  "id": "p9",
+  "text": "Key Actions              ▪ Reduce your attack surface and lock down management access. Restrict\n                                     external management of your devices via trusted hosts (good), a local-in\n                                     policy (better), or remove internet administration altogether (best).\n                                   ▪ Terminate all admin and VPN sessions and reset credentials. Terminate all\n                                     active administrative sessions. Reset all Fortinet VPN and administrative\n                                     passwords, especially on internet-facing systems, and enforce strong\n                                     password policies.\n                                   ▪ Enable phishing-resistant multifactor authentication (MFA). Require\n                                     phishing-resistant MFA on all remote access and administrative accounts\n                                     and ensure it is enforced on all external gateways and administrative\n                                     interfaces."
+ },
+ {
+  "id": "p10",
+  "text": "Intended Audience      Organizations: This cybersecurity advisory applies to all 16 sectors, chemical,\n                                 commercial facilities, communications, critical manufacturing, dams, defense\n                                 industrial base, emergency services, energy, financial, food and agriculture,\n                                 government facilities, healthcare and public health, information technology,\n                                 nuclear reactors, materials, and waste sector, transportation systems, and water\n                                 and wastewater sector.\n                                 Roles: This cybersecurity advisory focuses on the indicators of compromise and\n                                 mitigation strategies related to the Fortibleed attach chain, making the target\n                                 audience defensive cybersecurity analysts, vulnerability analysts, and Chief\n                                 Information Security Officers (CISO) of organizations."
+ },
+ {
+  "id": "p11",
+  "text": "Introduction\n        This joint cybersecurity advisory was developed by the Federal Bureau of Investigation (FBI) and the U.S.\n        Secret Service (USSS) to provide information and disseminate indicators of compromise (IOCs) related to\n        the ongoing FortiBleed compromise. FortiBleed is an active, global credential-compromise campaign\n        targeting internet-facing Fortinet FortiGate firewalls and secure socket layer (SSL) virtual private network\n        (VPN) gateways, with SOCRadar verifying more than 86,644 compromised devices across 194 countries2.\n        The campaign exploits reused or leaked credentials and legacy SHA-256 password storage, enabling threat\n        actors to harvest and crack authentication data at scale. Initial findings indicate attackers are continuing to\n        scan internet-exposed Fortinet firewalls using previously obtained compromised credentials. Affected\n        organizations may find themselves locked out of their systems if threat actors disable accounts or change\n        passwords, requiring remediation steps beyond standard patching and password resets. In addition, the\n        FortiBleed attack chain has been observed as an initial entry point for ransomware affiliates. The FBI and\n        USSS encourage organizations to implement the mitigations outlined in this advisory to help minimize the\n        potential for impact from the FortiBleed attack chain."
+ },
+ {
+  "id": "p12",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 19.1. See the MITRE\n        ATT&CK Tactics and Techniques section of this advisory table of the threat actors’ activity mapped to\n        MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p13",
+  "text": "Overview\n        FortiBleed refers to a credential-harvesting and access-broker operation whose internal workflow became\n        visible only after the threat actors unintentionally exposed their own backend server. The open directory\n        revealed a mature, multi-stage campaign targeting FortiGate SSL VPN appliances, harvesting credentials at\n        scale, and cracking them using a distributed graphics processing unit (GPU) cluster. The recovered tooling\n        and datasets provide a rare, end-to-end view of how the operators identified targets, validated stolen\n        credentials, and expanded access inside victim networks. The following points summarize the attackers’\n        progression based on the artifacts left behind.3\n             ▪   Attackers began by scanning [T1595] the internet for exposed [T1190] FortiGate SSL VPN portals,\n                 using automated scripts to identify reachable devices and harvestable authentication surfaces.\n             ▪   They collected large volumes of credentials and authentication artifacts using credential stuffing\n                 [T1110.004] and password spraying [T1110.003] attacks based on prior Fortinet leak dumps and\n                 infostealer logs.\n             ▪   Exfiltrated [T1041] password hashes obtained via credential dumping [T1003] were funneled into\n                 a GPU-accelerated cracking cluster to perform offline password cracking [T1110.002],where"
+ },
+ {
+  "id": "p14",
+  "text": "Hashcat and Hashtopolis1 orchestrated distributed jobs to convert stolen data into usable plaintext\n                 credentials.\n             ▪   Cracked credentials were enriched, sorted, and validated, with scripts filtering out honeypots,\n                 mapping organizations, and prioritizing high-value targets based on revenue and network structure.\n                 New administrative accounts were created [T1136.001] on the firewall to maintain persistence.\n             ▪   With verified credentials [T1078] in hand, attackers moved into victim environments, conducting\n                 Active Directory enumeration [T1087] and password spraying to expand access and identify\n                 privileged accounts.\n             ▪   The operation culminated in packaging and selling access, with working VPN configurations and\n                 target lists indicating the group’s role as an initial-access broker supplying compromised networks\n                 to downstream threat actors.\n        Potential Lockout\n        Based on initial responses, some victims may get locked out of their Fortinet devices if the threat actor\n        either deletes or changes the password for original accounts on the system [T1531]. During the initial\n        intrusion, threat actors create new accounts not previously on the device. In certain cases, threat actors\n        delete existing accounts to block organizations from accessing affected devices and to maintain\n        persistence on the system while attempting lateral movement within the environment."
+ },
+ {
+  "id": "p15",
+  "text": "Indicators of Compromise\n        IP Addresses in Victim Logs\n        Initial responses revealed ongoing scanning activity on exposed Fortinet firewalls. Threat actors use a\n        combination of Internet Protocol (IP) addresses for their infrastructure to include their Command and\n        Control (C2) servers, Relay Nodes, performing scanning activities, and using Hashtopolis. IP address\n        45.154.12.132 was seen in instances as a C2 server, with IP addresses 154.202.59.169 and\n        103.27.186.156 as proxy nodes used by the threat actors to obfuscate their presence, and\n        45.155.250.158 as a beacon relay. Threat actors use multiple different ports, including 4332 and 4432,\n        but usually beaconing to (Hypertext Transfer Protocol Secure) HTTPS. In addition, IP addresses\n        193.8.187.2, 193.8.187.42, and 85.11.187.8 were seen facilitating the FortiBleed attack chain, with IP\n        address 85.11.187.8 being used for the Hashtopolis tool.4 The following IP addresses have been identified\n        as currently conducting brute force attacks or have successfully authenticated using a compromised\n        account."
+ },
+ {
+  "id": "p16",
+  "text": "1 (U) Note: Hashtopolis is an open-source platform used to distribute password cracking capabilities across"
+ },
+ {
+  "id": "p17",
+  "text": "computing and network resources."
+ },
+ {
+  "id": "p18",
+  "text": "Table 1: Observed IP Addresses\n                     IP Addresses Used by Threat Actors                       Dates Observed"
+ },
+ {
+  "id": "p19",
+  "text": "104.28.155.27                             06/19/26 to 06/20/26"
+ },
+ {
+  "id": "p20",
+  "text": "185.136.15.43                             06/27/26 to 07/23/26\n                               185.136.15.66                             06/27/26 to 07/23/26"
+ },
+ {
+  "id": "p21",
+  "text": "185.199.199.56                                   06/25/26"
+ },
+ {
+  "id": "p22",
+  "text": "193.8.186.33                             06/18/26 to 07/20/26\n                               45.227.254.210                            06/18/26 to 07/23/26"
+ },
+ {
+  "id": "p23",
+  "text": "77.91.118.10                             06/18/26 to 07/05/26"
+ },
+ {
+  "id": "p24",
+  "text": "80.75.212.113                             06/26/26 to 07/05/26\n                                87.251.64.13                             06/18/26 to 07/22/26\n                                87.251.64.16                             06/18/26 to 07/20/26"
+ },
+ {
+  "id": "p25",
+  "text": "87.251.64.17                             06/18/26 to 07/20/26"
+ },
+ {
+  "id": "p26",
+  "text": "87.251.64.44                                    07/04/26\n                               66.175.220.111                            07/17/26 to 07/19/26"
+ },
+ {
+  "id": "p27",
+  "text": "Table 1: Observed IP addresses identified currently conducting brute force attacks or have conducted\n        successful authentication using compromised accounts. The authoring agencies recognize that\n        infrastructure used for malicious activity may be hosted on cloud or virtualized platforms where IP\n        addresses can be dynamically or temporarily assigned. As a result, an address associated with malicious\n        activity at one point in time may later be reassigned to benign services. Accordingly, these indicators\n        should be interpreted as historically observed infrastructure within the activity window and should be\n        corroborated with current network telemetry or additional intelligence sources when used for defensive or\n        investigative purposes."
+ },
+ {
+  "id": "p28",
+  "text": "Compromised Account Names\n        After initial access is gained, threat actors begin adding accounts to the system. Initial investigations\n        revealed the creation of multiple new accounts to maintain persistence within the network. It is\n        recommended that organizations review all Fortinet accounts and verify their legitimacy. In some\n        instances, threat actors may have exploited SSH if the port was open on the firewall. The following list of\n        commonly identified compromised account names is provided to assist with the review process."
+ },
+ {
+  "id": "p29",
+  "text": "Table 2: Compromised Account Names"
+ },
+ {
+  "id": "p30",
+  "text": "Compromised Account Names"
+ },
+ {
+  "id": "p31",
+  "text": "adminin                             fortiAdmin                           forticloud-sync"
+ },
+ {
+  "id": "p32",
+  "text": "admin                               fgtsecure                            pakedge"
+ },
+ {
+  "id": "p33",
+  "text": "forticloud-tech                     districtadmin                        system_config"
+ },
+ {
+  "id": "p34",
+  "text": "gttadmin                            roadmin                              itadmin"
+ },
+ {
+  "id": "p35",
+  "text": "Technical_support                   adminsslvpn                          IT_Manager"
+ },
+ {
+  "id": "p36",
+  "text": "my_admin                            support_fortinet                     fgtsec"
+ },
+ {
+  "id": "p37",
+  "text": "forti_support2"
+ },
+ {
+  "id": "p38",
+  "text": "Table 2: Observed usernames of compromised accounts found on victim systems after threat actors\n        performed initial intrusion."
+ },
+ {
+  "id": "p39",
+  "text": "Ransomware Connection with FortiBleed Attack Chain\n        Reporting indicates initial access brokers (IABs), utilizing the FortiBleed attack chain, have provided further\n        access to ransomware affiliates, currently including INC/Lynx ransomware and Payload ransomware."
+ },
+ {
+  "id": "p40",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 3 to Table 9 for all referenced threat actor tactics and techniques in this advisory. For assistance\n        with mapping malicious cyber activity to the MITRE ATT&CK framework, see Cybersecurity and\n        Infrastructure Security Agency (CISA) and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping and\n        CISA’s Decider Tool."
+ },
+ {
+  "id": "p41",
+  "text": "Table 3: Resource Development"
+ },
+ {
+  "id": "p42",
+  "text": "Technique Title                 ID                                         Use"
+ },
+ {
+  "id": "p43",
+  "text": "Acquire                          T1583              Adversaries rented GPU infrastructure to support\n          Infrastructure                                      large-scale cracking of stolen password hashes."
+ },
+ {
+  "id": "p44",
+  "text": "Table 4: Initial Access"
+ },
+ {
+  "id": "p45",
+  "text": "Technique Title         ID                                         Use"
+ },
+ {
+  "id": "p46",
+  "text": "Active Scanning          T1595               Adversaries scanned the internet to identify\n                                                       internet-facing FortiGate SSL-VPN portals for\n                                                       potential compromise."
+ },
+ {
+  "id": "p47",
+  "text": "Exploit Public-Facing    T1190               Adversaries targeted publicly exposed FortiGate\n          Application                                  infrastructure."
+ },
+ {
+  "id": "p48",
+  "text": "Password Spraying       T1110.003            Adversaries attempted a small set of common\n                                                       passwords across many accounts to obtain valid\n                                                       credentials."
+ },
+ {
+  "id": "p49",
+  "text": "Credential Stuffing     T1110.004            Adversaries used credentials obtained from prior\n                                                       breaches to authenticate FortiGate devices and VPN\n                                                       portals."
+ },
+ {
+  "id": "p50",
+  "text": "Table 5: Credential Access"
+ },
+ {
+  "id": "p51",
+  "text": "Technique Title         ID                                         Use"
+ },
+ {
+  "id": "p52",
+  "text": "Credential Dumping       T1003               Adversaries extracted FortiOS user databases and\n                                                       session tokens from compromised devices to obtain\n                                                       additional credentials."
+ },
+ {
+  "id": "p53",
+  "text": "Table 6: Persistence"
+ },
+ {
+  "id": "p54",
+  "text": "Technique Title         ID                                         Use"
+ },
+ {
+  "id": "p55",
+  "text": "Create Local            T1136.001            Adversaries created new administrative accounts on\n          Accounts                                     FortiGate devices to maintain persistent access."
+ },
+ {
+  "id": "p56",
+  "text": "Table 7: Discovery"
+ },
+ {
+  "id": "p57",
+  "text": "Technique Title         ID                                         Use"
+ },
+ {
+  "id": "p58",
+  "text": "Account Discovery        T1087               Active Directory account enumeration was reported\n                                                       to identify users and privileges for further lateral\n                                                       movement."
+ },
+ {
+  "id": "p59",
+  "text": "Table 8: Exfiltration"
+ },
+ {
+  "id": "p60",
+  "text": "Technique Title                  ID                                         Use"
+ },
+ {
+  "id": "p61",
+  "text": "Exfiltration Over C2              T1041               Compromised devices continuously transmitted\n          Channel                                               harvested credentials to attacker-controlled servers,\n                                                                feeding the scanning and cracking pipeline."
+ },
+ {
+  "id": "p62",
+  "text": "Table 9: Impact"
+ },
+ {
+  "id": "p63",
+  "text": "Technique Title                  ID                                         Use"
+ },
+ {
+  "id": "p64",
+  "text": "Account Access                    T1531               Adversaries intentionally locked, disabled, or altered\n          Removal                                               account access so legitimate administrators could\n                                                                not log in."
+ },
+ {
+  "id": "p65",
+  "text": "Incident Response\n        If a potential compromise is detected, organizations should take the following actions:\n             1. Determine which hosts were compromised and isolated them by quarantining or taking them\n                offline.\n             2. Initiate threat hunting activities to scope the intrusion—collect and review relevant artifacts, logs,\n                and other data to identify threat actor TTPs, compromised devices and accounts, a timeline of\n                activity, etc.\n             3. Report the compromise to the FBI, USSS, and other agencies as appropriate (see Contact\n                Information for details).\n             4. Apply eviction countermeasures, including those listed below, to contain the incident and eradicate\n                the threat actor from the network (Note: Start applying countermeasures after collecting enough\n                threat hunting data to inform effective countermeasure selection; this will likely overlap with threat\n                hunting activities):\n                 a. Use CISA’s Eviction Strategies Tool to assemble countermeasures for a systematic eviction\n                    plan—the tool comprises Playbook-NG (a web application) and COUN7ER (a database of post-\n                    compromise countermeasures mapped to adversary TTPs).\n                     i.   Use Playbook-NG and COUN7ER together to assemble a systematic eviction plan, or\n                          playbook, that leverages distinct countermeasures to contain and evict cyber threat actors.\n                          The playbook features a list of recommended response actions based on threat actor TTPs\n                          and includes each action’s intended outcome, preparatory steps, and associated risks. For\n                          more information, see CISA’s Eviction Strategies Tool Fact Sheet.\n             5. Harden the network to prevent additional malicious activity (see Mitigations for guidance)."
+ },
+ {
+  "id": "p66",
+  "text": "Mitigations\n        Due to the potential damage this attack chain can lead to with lockout and ransomware, the FBI and USSS\n        encourage organizations to review the following mitigations to help defend against this malicious cyber\n        activity, impacting all Fortinet customers with exposed gateways:5\n             ▪   Reduce your attack surface and lock down management access. Restrict external management of\n                 your devices via trusted hosts (good), a local-in policy (better), or remove internet administration\n                 altogether (best).\n             ▪   Terminate all admin and VPN sessions and reset credentials. Terminate all active administrative\n                 sessions. Reset all Fortinet VPN and administrative passwords, especially on internet-facing\n                 systems, and enforce strong password policies.\n             ▪   Enable phishing-resistant multifactor authentication (MFA). Require phishing-resistant MFA on all\n                 remote access and administrative accounts and ensure it is enforced on all external gateways and\n                 administrative interfaces.\n             ▪   Validate configuration. Review firewall and VPN users and other configuration for unauthorized\n                 changes. Preferably, compare configurations to a well-known configuration. Pay particular attention\n                 to the addition of unrecognized accounts. A list of well-known compromised account names has\n                 been mentioned in this report.\n             ▪   Review logs. Review firewall, VPN, authentication, and domain controller logs for lateral movement,\n                 unusual access, suspicious accounts, or unauthorized configuration changes. A list of commonly\n                 identified IP addresses has been referenced in this report to assist with a review.\n             ▪   Ensure secure credential storage. Confirm your organization’s use of the Password-Based Key\n                 Derivation Function 2 (PBKDF2) algorithm to store administrator credentials and remove weaker\n                 legacy hashes per Fortinet’s guidance. Refer to Fortinet's technical guidance on enforcing PBKDF2\n                 as hash function for administrator accounts in FortiOS v7.2.11 and later.6"
+ },
+ {
+  "id": "p67",
+  "text": "The authoring organizations recommend organizations investigate or vet IOCs prior to acting, such as\n        blocking."
+ },
+ {
+  "id": "p68",
+  "text": "REST APIs\n        Representational state transfer (REST) application programming interface (API) keys can enable automated\n        configuration, backup creation, and monitoring of FortiGate firewalls.7 Any unknown or unexpected keys\n        may present a significant security risk. All API keys should be reviewed to confirm they have a valid purpose\n        in the environment. It is recommended to identify and remove any unknown API keys and refresh all\n        legitimate keys to ensure threat actors cannot leverage them for access."
+ },
+ {
+  "id": "p69",
+  "text": "Reporting\n        Your organization has no obligation to respond to or provide information to the authoring agencies in\n        response to this joint advisory. If, after reviewing the information provided, your organization decides to\n        provide information to FBI and/or USSS, reporting must be consistent with applicable state and federal\n        laws."
+ },
+ {
+  "id": "p70",
+  "text": "The FBI and the USSS are interested in any information and IOCs that can be shared, including IP\n        addresses and usernames used by the threat actors.\n        The authoring agencies do not encourage paying ransom as payment does not guarantee victim files will\n        be recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n        encourage other criminal actors to engage in the distribution of ransomware, and/or fund illicit activities.\n        Regardless of whether you or your organization have decided to pay the ransom, the FBI and USSS urge\n        prompt reporting of cyber incidents to the FBI’s Internet Crime Complaint Center (IC3), your local FBI field\n        office, and/or your local USSS field office."
+ },
+ {
+  "id": "p71",
+  "text": "Contact Information\n        U.S. organizations are encouraged to report suspicious or criminal activity related to information in this\n        advisory to the FBI, and/or USSS:\n             ▪    File a claim with FBI’s Internet Crime Complaint Center (IC3) or contact your local FBI field office,\n                  and/or your local USSS field office. When available, please include the following information\n                  regarding the incident:\n                  o   Date, time, and location of the incident;\n                  o   Type of activity;\n                  o   Number of people affected;\n                  o   Type of equipment used for the activity; and\n                  o   Name of the submitting company or organization, and a designated point of contact."
+ },
+ {
+  "id": "p72",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. FBI and USSS do\n        not endorse any commercial products or services, including any subjects of analysis. Any reference to\n        specific commercial products, processes, or services by service, trademark, manufacturer, or otherwise,\n        does not constitute or imply endorsement, recommendation, or favoring by the authoring agencies."
+ },
+ {
+  "id": "p73",
+  "text": "Version History\n        October 6, 2026: Initial version."
+ },
+ {
+  "id": "p74",
+  "text": "Notes"
+ },
+ {
+  "id": "p75",
+  "text": "1 https://socradar.io/blog/fortibleed-fortinet-firewalls-compromised/"
+ },
+ {
+  "id": "p76",
+  "text": "2 https://socradar.io/blog/fortibleed-fortinet-firewalls-compromised/"
+ },
+ {
+  "id": "p77",
+  "text": "3 https://www.cloudsek.com/blog/inside-the-fortibleed-open-directory-a-technical-analysis-of-what-the-"
+ },
+ {
+  "id": "p78",
+  "text": "attacker-left-behind\n        4 https://www.cloudsek.com/blog/inside-the-fortibleed-open-directory-a-technical-analysis-of-what-the-"
+ },
+ {
+  "id": "p79",
+  "text": "attacker-left-behind\n        5 https://www.fortinet.com/blog/psirt-blogs/analysis-of-reported-credential-compromise-of-fortigate-"
+ },
+ {
+  "id": "p80",
+  "text": "devices\n        6 https://community.fortinet.com/fortigate-3/technical-tip-enforcing-pbkdf2-as-hash-function-for-"
+ },
+ {
+  "id": "p81",
+  "text": "administrator-accounts-in-fortios-v7-2-11-and-later-220652\n        7 https://docs.fortinet.com/document/fortigate/8.0.0/administration-guide/399023/rest-api-"
+ },
+ {
+  "id": "p82",
+  "text": "administrator"
+ }
+]

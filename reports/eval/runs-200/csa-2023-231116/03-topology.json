@@ -1,0 +1,88 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted organization’s network",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Active Directory (AD)、SharePoint、VMware vCenter infrastructure、Slack、Microsoft Teams、Microsoft Exchange online 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "preexisting and actor-created cloud instances used for lateral movement and data collection",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Amazon Web Services (AWS) Systems Manager Inventory、Amazon Elastic Compute Cloud (EC2) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "identity provider environment targeted for account takeovers and persistence",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h2 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a6)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Active Directory (AD) (s1); it remains unreachable by default.",
+  "No port is known for service SharePoint (s2); it remains unreachable by default.",
+  "No port is known for service VMware vCenter infrastructure (s3); it remains unreachable by default.",
+  "No port is known for service Slack (s6); it remains unreachable by default.",
+  "No port is known for service Microsoft Teams (s7); it remains unreachable by default.",
+  "No port is known for service Microsoft Exchange online (s8); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Amazon Web Services (AWS) Systems Manager Inventory (s4); it remains unreachable by default.",
+  "No port is known for service Amazon Elastic Compute Cloud (EC2) (s5); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Services without a resolved host association were left out of host service lists: svc-unsupported-ad-ds."
+ ]
+}

@@ -1,0 +1,1991 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240227",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "f79a5a36574344c29deb8d673ce11c41cedb66ea595d26da647d8827cbc0d8a9",
+  "source_name": "csa-2024-240227"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "used compromised Ubiquiti EdgeRouters to harvest credentials",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "used compromised Ubiquiti EdgeRouters to collect NTLMv2 digests",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "used compromised Ubiquiti EdgeRouters to proxy network traffic",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "used compromised Ubiquiti EdgeRouters to host spear-phishing landing pages and custom tools",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "accessed EdgeRouters compromised by Moobot OpenSSH trojan",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1588",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "exploited CVE-2023-23397 to collect NTLMv2 digests from targeted Outlook accounts",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "wrote MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines",
+   "source": "llm",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "used compromised Ubiquiti EdgeRouters as command-and-control infrastructure for MASEPIE backdoors deployed against targets",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com",
+   "source": "llm",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a5",
+   "to_action": "a13",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "trojanized OpenSSH server binaries replaced legitimate binaries on EdgeRouters accessed by APT28",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "installed publicly available tools on compromised Ubiquiti routers",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "tools used to exploit CVE-2023-23397 to collect NTLMv2 digests",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a8",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "custom Python scripts hosted on compromised EdgeRouters to collect and validate stolen credentials",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a9",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "iptables rules used on EdgeRouters to establish reverse proxy connections",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a10",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "uploaded SSH RSA keys to establish reverse SSH tunnels and access compromised devices",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a12",
+   "to_action": "a11",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "used compromised EdgeRouters as command-and-control infrastructure for MASEPIE backdoors",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "compromised routers used by APT28 actors",
+   "source": "llm",
+   "name": "Ubiquiti EdgeRouters",
+   "os": "Linux-based operating system",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "systems belonging to targeted individuals and organizations where MASEPIE backdoors are deployed",
+   "source": "llm",
+   "name": "Victim machines targeted by MASEPIE backdoors",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "OpenSSH server",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Impacket ntlmrelayx.py",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Responder",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "Microsoft Outlook",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2023-23397"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Moobot OpenSSH trojan",
+   "type": "malware",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "custom Python scripts",
+   "type": "script",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "MASEPIE",
+   "type": "malware",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "trojanized OpenSSH server binaries",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Impacket ntlmrelayx.py",
+   "type": "tool",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Responder",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SSH RSA keys",
+   "type": "file",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "packinstall[.]kozow[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "4E32B04930D1F745EBA92255EE1C5E5AC82B939FF12DE0522C8A4905431D033D",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "C51C6AA0230A2FEA888EBCD213D302F1CC9F6051FDB268AE5C7A09415845C404",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "cve",
+   "value": "CVE-2023-23397",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33",
+    "evidence-34",
+    "evidence-35",
+    "evidence-36",
+    "evidence-37",
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "api[.]anti-captcha[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "acbb64c3de5ea5e5936df4a1eecf1235",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "40a7fd89b9e51b0a515ac2355036d203357be90a2200b9c506b95c12db54c7aa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "18f891a3737bb53cd1ab451e2140654a376a43b2d75f6695f3133d47a41952b6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "0429bdc6a302b4288aea1b1e2f2a7545731c50d647672fa65b012b2a2caa386e",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "3B5ED45345193B06F40515DA342FF146267E8340B2E1AB6D55A257D2E3554A2B",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "ADAE1BD8938B9A0D825A2EF7E7C4E000F01966C397306027119F20D7ECCE955D",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "C09F8D0A9FA0F9BB3E19556182A95782DAEC2F2F532CAB5EEB5528F2CD783583",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "1CC20155517860557C94308EC913E4C3BFC072C34CE33449641CC9FB1D571B21",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "551EB82D82B7A8830549C9183EB39ACF19719C84B9BCCC7FB443504B093F6BB9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "CD83DD9470603B1A1951EEFA95B602E34207C4D5E62C649642E7160574A9C50D",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "FBC2E6820C874ED102BAB304382EDEFFB9708E7B8445E126C227A6C289D92708",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "C9E06C7C62395DA32C91CC0C4ACB95F29A0AA3380A833E7C7B24B8D4DB50C0C6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "5FACBE53B4C63DBC865F3713385358DF490A4BAD9211337241D85F0554CCA40A",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "C7C40CDCDD65E468EE29D330A34E8EE94C26AA8B3F1830E0A8DFEA8ACA3CDD50",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "A4A95807F1C5B200D5D94E3E811A7C4AF2D0D9CA88CA4D7F9D02015574F4716F",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "104E3EA9A190BA039488F5200824FE883B98F6FE01D05A1B55E15ED2199C807A",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "208[.]67[.]220[.]222",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "resolv.conf",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "domain",
+   "value": "matbaiteahe[.]mooo[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "domain",
+   "value": "lalapoc[.]kozow[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "gneivaientga[.]ignorelist[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "antotehlant[.]theworkpc[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "domain",
+   "value": "onechoice[.]gleeze[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "domain",
+   "value": "mumucnc[.]kozow[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "have used compromised EdgeRouters globally to harvest credentials",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "have used compromised EdgeRouters globally to harvest credentials"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "have used compromised EdgeRouters globally to ... collect NTLMv2 digests",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "have used compromised EdgeRouters globally to … collect NTLMv2 digests"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "have used compromised EdgeRouters globally to ... proxy network traffic",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "have used compromised EdgeRouters globally to … proxy network traffic"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "have used compromised EdgeRouters globally to ... host spear-phishing landing pages and custom tools",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "have used compromised EdgeRouters globally to … host spear phishing landing pages and custom tools"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "APT28 actors accessed EdgeRouters compromised by Moobot, a botnet that installs OpenSSH trojans on compromised hardware",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors accessed EdgeRouters compromised by Moobot, a botnet that installs OpenSSH trojans on compromised hardware"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "APT28 threat actors installed publicly available tools such as Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9286,
+   "matched_text": " installed publicly available tools such as Impacket ntlmrelayx.py"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "APT28 actors had exploited CVE-2023-23397, a zero-day vulnerability at the time, to collect NTLMv2 digests from targeted Outlook accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors had exploited CVE 2023 23397, a zero day vulnerability at the time, to collect NTLMv2 digests from targeted Outlook accounts"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "APT28 actors uploaded these custom Python scripts to a subset of compromised Ubiquiti routers to validate stolen webmail account credentials",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors uploaded these custom Python scripts to a subset of compromised Ubiquiti routers to validate stolen webmail account credentials"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "APT28 threat actors authored custom Python scripts to collect account credentials for specifically targeted webmail users",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " collect account credentials for specifically targeted webmail users"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "APT28 actors have used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors have used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "APT28 actors have uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels and access compromised devices",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors have uploaded adversary controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels and access compromised devices"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "In December 2023, APT28 actors wrote MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ", a small Python backdoor capable of executing arbitrary commands on victim machines"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "APT28 used compromised Ubiquiti EdgeRouters as command-and-control infrastructure for MASEPIE backdoors deployed against targets",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 used compromised Ubiquiti EdgeRouters as command and control infrastructure for MASEPIE backdoors deployed against targets"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Trojanized OpenSSH server binaries downloaded from packinstall[.]kozow[.]com replaced legitimate binaries on EdgeRouters accessed by APT28",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Trojanized OpenSSH server binaries downloaded from packinstall[.]kozow[.]com replaced legitimate binaries on EdgeRouters accessed by APT28"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Russian state-sponsored cyber actors’ use of compromised Ubiquiti EdgeRouters (EdgeRouters) to facilitate malicious cyber operations worldwide.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " to facilitate malicious cyber operations worldwide."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Ubiquiti EdgeRouters have a user-friendly, Linux-based operating system that makes them popular for both consumers and malicious cyber actors.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ubiquiti EdgeRouters have a user friendly, Linux based operating system that makes them popular for both consumers and malicious cyber actors."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "APT28 does not deploy MASEPIE on EdgeRouters, but rather on systems belonging to targeted individuals and organizations.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 does not deploy MASEPIE on EdgeRouters, but rather on systems belonging to targeted individuals and organizations."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The compromised router housed a collection of Bash scripts and ELF binaries designed to backdoor OpenSSH daemons and related services.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " scripts and ELF binaries designed to backdoor OpenSSH "
+  },
+  {
+   "id": "evidence-19",
+   "quote": "APT28 threat actors installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers to execute NTLM relay attacks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " ntlmrelayx.py and Responder "
+  },
+  {
+   "id": "evidence-20",
+   "quote": "APT28 actors exploited CVE-2023-23397, a zero-day vulnerability at the time, to collect NTLMv2 digests from targeted Outlook accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " exploited CVE 2023 23397, a zero day vulnerability at the time, to collect NTLMv2 digests from targeted Outlook accounts"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "APT28 actors authored custom Python scripts to collect account credentials for specifically targeted webmail users.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT28 actors authored custom Python scripts to collect account credentials for specifically targeted webmail users."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "APT28 actors hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials."
+  },
+  {
+   "id": "evidence-23",
+   "quote": "MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ", a small Python backdoor capable of executing arbitrary commands on victim machines"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ".com"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "APT28 threat actors installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " ntlmrelayx.py and Responder "
+  },
+  {
+   "id": "evidence-26",
+   "quote": "uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "uploaded adversary controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "packinstall[.]kozow[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "packinstall[.]kozow[.]com"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "packinstall[.]kozow[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "packinstall[.]kozow[.]com"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "4E32B04930D1F745EBA92255EE1C5E5AC82B939FF12DE0522C8A4905431D033D",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4E32B04930D1F745EBA92255EE1C5E5AC82B939FF12DE0522C8A4905431D033D"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "C51C6AA0230A2FEA888EBCD213D302F1CC9F6051FDB268AE5C7A09415845C404",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C51C6AA0230A2FEA888EBCD213D302F1CC9F6051FDB268AE5C7A09415845C404"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "CVE-2023-23397",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 23397"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "api[.]anti-captcha[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "api[.]anti captcha[.]com"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "acbb64c3de5ea5e5936df4a1eecf1235",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "acbb64c3de5ea5e5936df4a1eecf1235"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "40a7fd89b9e51b0a515ac2355036d203357be90a2200b9c506b95c12db54c7aa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "40a7fd89b9e51b0a515ac2355036d203357be90a2200b9c506b95c12db54c7aa"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "18f891a3737bb53cd1ab451e2140654a376a43b2d75f6695f3133d47a41952b6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "18f891a3737bb53cd1ab451e2140654a376a43b2d75f6695f3133d47a41952b6"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "0429bdc6a302b4288aea1b1e2f2a7545731c50d647672fa65b012b2a2caa386e",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0429bdc6a302b4288aea1b1e2f2a7545731c50d647672fa65b012b2a2caa386e"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "3B5ED45345193B06F40515DA342FF146267E8340B2E1AB6D55A257D2E3554A2B",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3B5ED45345193B06F40515DA342FF146267E8340B2E1AB6D55A257D2E3554A2B"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "ADAE1BD8938B9A0D825A2EF7E7C4E000F01966C397306027119F20D7ECCE955D",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ADAE1BD8938B9A0D825A2EF7E7C4E000F01966C397306027119F20D7ECCE955D"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "C09F8D0A9FA0F9BB3E19556182A95782DAEC2F2F532CAB5EEB5528F2CD783583",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C09F8D0A9FA0F9BB3E19556182A95782DAEC2F2F532CAB5EEB5528F2CD783583"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "1CC20155517860557C94308EC913E4C3BFC072C34CE33449641CC9FB1D571B21",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1CC20155517860557C94308EC913E4C3BFC072C34CE33449641CC9FB1D571B21"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "551EB82D82B7A8830549C9183EB39ACF19719C84B9BCCC7FB443504B093F6BB9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "551EB82D82B7A8830549C9183EB39ACF19719C84B9BCCC7FB443504B093F6BB9"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CD83DD9470603B1A1951EEFA95B602E34207C4D5E62C649642E7160574A9C50D",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CD83DD9470603B1A1951EEFA95B602E34207C4D5E62C649642E7160574A9C50D"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "FBC2E6820C874ED102BAB304382EDEFFB9708E7B8445E126C227A6C289D92708",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "FBC2E6820C874ED102BAB304382EDEFFB9708E7B8445E126C227A6C289D92708"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "C9E06C7C62395DA32C91CC0C4ACB95F29A0AA3380A833E7C7B24B8D4DB50C0C6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C9E06C7C62395DA32C91CC0C4ACB95F29A0AA3380A833E7C7B24B8D4DB50C0C6"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "5FACBE53B4C63DBC865F3713385358DF490A4BAD9211337241D85F0554CCA40A",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5FACBE53B4C63DBC865F3713385358DF490A4BAD9211337241D85F0554CCA40A"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "C7C40CDCDD65E468EE29D330A34E8EE94C26AA8B3F1830E0A8DFEA8ACA3CDD50",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C7C40CDCDD65E468EE29D330A34E8EE94C26AA8B3F1830E0A8DFEA8ACA3CDD50"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "A4A95807F1C5B200D5D94E3E811A7C4AF2D0D9CA88CA4D7F9D02015574F4716F",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "A4A95807F1C5B200D5D94E3E811A7C4AF2D0D9CA88CA4D7F9D02015574F4716F"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "104E3EA9A190BA039488F5200824FE883B98F6FE01D05A1B55E15ED2199C807A",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104E3EA9A190BA039488F5200824FE883B98F6FE01D05A1B55E15ED2199C807A"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "208[.]67[.]220[.]222",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "208[.]67[.]220[.]222"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "resolv.conf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "resolv.conf"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "matbaiteahe[.]mooo[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "matbaiteahe[.]mooo[.]com"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "lalapoc[.]kozow[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "lalapoc[.]kozow[.]com"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "gneivaientga[.]ignorelist[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gneivaientga[.]ignorelist[.]com"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "antotehlant[.]theworkpc[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "antotehlant[.]theworkpc[.]com"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "onechoice[.]gleeze[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "onechoice[.]gleeze[.]com"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "mumucnc[.]kozow[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "mumucnc[.]kozow[.]com"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Ubiquiti EdgeRouters — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ubiquiti EdgeRouters 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Ubiquiti EdgeRouters",
+    "action:a1 — used compromised Ubiquiti EdgeRouters to harvest credentials",
+    "action:a2 — used compromised Ubiquiti EdgeRouters to collect NTLMv2 digests",
+    "action:a3 — used compromised Ubiquiti EdgeRouters to proxy network traffic",
+    "action:a4 — used compromised Ubiquiti EdgeRouters to host spear-phishing landing pages and custom tools",
+    "action:a5 — accessed EdgeRouters compromised by Moobot OpenSSH trojan",
+    "action:a6 — installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+    "action:a7 — exploited CVE-2023-23397 to collect NTLMv2 digests from targeted Outlook accounts",
+    "action:a8 — hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+    "action:a9 — used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+    "action:a10 — uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+    "action:a12 — used compromised Ubiquiti EdgeRouters as command-and-control infrastructure for MASEPIE backdoors deployed against targets",
+    "action:a13 — replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ubiquiti EdgeRouters",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-5",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Linux-based operating system",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-5",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Ubiquiti EdgeRouters — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ubiquiti EdgeRouters 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Ubiquiti EdgeRouters",
+    "action:a1 — used compromised Ubiquiti EdgeRouters to harvest credentials",
+    "action:a2 — used compromised Ubiquiti EdgeRouters to collect NTLMv2 digests",
+    "action:a3 — used compromised Ubiquiti EdgeRouters to proxy network traffic",
+    "action:a4 — used compromised Ubiquiti EdgeRouters to host spear-phishing landing pages and custom tools",
+    "action:a5 — accessed EdgeRouters compromised by Moobot OpenSSH trojan",
+    "action:a6 — installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+    "action:a7 — exploited CVE-2023-23397 to collect NTLMv2 digests from targeted Outlook accounts",
+    "action:a8 — hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+    "action:a9 — used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+    "action:a10 — uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+    "action:a12 — used compromised Ubiquiti EdgeRouters as command-and-control infrastructure for MASEPIE backdoors deployed against targets",
+    "action:a13 — replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ubiquiti EdgeRouters",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-5",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Ubiquiti EdgeRouters — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ubiquiti EdgeRouters 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Ubiquiti EdgeRouters",
+    "action:a1 — used compromised Ubiquiti EdgeRouters to harvest credentials",
+    "action:a2 — used compromised Ubiquiti EdgeRouters to collect NTLMv2 digests",
+    "action:a3 — used compromised Ubiquiti EdgeRouters to proxy network traffic",
+    "action:a4 — used compromised Ubiquiti EdgeRouters to host spear-phishing landing pages and custom tools",
+    "action:a5 — accessed EdgeRouters compromised by Moobot OpenSSH trojan",
+    "action:a6 — installed publicly available tools Impacket ntlmrelayx.py and Responder on compromised Ubiquiti routers",
+    "action:a7 — exploited CVE-2023-23397 to collect NTLMv2 digests from targeted Outlook accounts",
+    "action:a8 — hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+    "action:a9 — used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+    "action:a10 — uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+    "action:a12 — used compromised Ubiquiti EdgeRouters as command-and-control infrastructure for MASEPIE backdoors deployed against targets",
+    "action:a13 — replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ubiquiti EdgeRouters",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-5",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-13",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Victim machines targeted by MASEPIE backdoors — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim machines targeted by MASEPIE backdoors 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Victim machines targeted by MASEPIE backdoors",
+    "action:a11 — wrote MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim machines targeted by MASEPIE backdoors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Victim machines targeted by MASEPIE backdoors — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim machines targeted by MASEPIE backdoors 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Victim machines targeted by MASEPIE backdoors",
+    "action:a11 — wrote MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim machines targeted by MASEPIE backdoors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Victim machines targeted by MASEPIE backdoors — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim machines targeted by MASEPIE backdoors 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Victim machines targeted by MASEPIE backdoors",
+    "action:a11 — wrote MASEPIE, a small Python backdoor capable of executing arbitrary commands on victim machines"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim machines targeted by MASEPIE backdoors",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s4-version",
+   "field": "Microsoft Outlook — 版本",
+   "category": "version",
+   "reason": "IR 指出 Microsoft Outlook（CVE-2023-23397），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Microsoft Outlook 的哪個版本？請選受 CVE-2023-23397 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s4 — Microsoft Outlook"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Microsoft Outlook",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-23397",
+     "source_ref": "services:s4.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "OpenSSH server — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a13 使用 OpenSSH server，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a13 依賴 OpenSSH server。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — OpenSSH server",
+    "action:a13 — replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "OpenSSH server",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9, a10, a13 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a9 — used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+    "action:a10 — uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+    "action:a13 — replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "used iptables rules on EdgeRouters to establish reverse proxy connections to dedicated infrastructure",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "uploaded adversary-controlled SSH RSA keys to compromised EdgeRouters to establish reverse SSH tunnels",
+     "source_ref": "actions:a10.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "replaced legitimate OpenSSH server binaries on EdgeRouters with trojanized OpenSSH server binaries downloaded from packinstall.kozow.com",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a1 — used compromised Ubiquiti EdgeRouters to harvest credentials",
+    "action:a8 — hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+    "host:h1 — Ubiquiti EdgeRouters"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "used compromised Ubiquiti EdgeRouters to harvest credentials",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "hosted custom Python scripts on compromised EdgeRouters to collect and validate stolen webmail account credentials",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8254,
+  "unsupported_claim_count": 15,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

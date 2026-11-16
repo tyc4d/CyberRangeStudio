@@ -1,0 +1,113 @@
+# Safeguarding Our Secrets
+
+> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing
+> - Date: 2026-06-03
+> - URL: https://www.ic3.gov/CSA/2026/260603.pdf
+> - PDF SHA-256: 42c19a3c54e8b3c01ef32a0af228b253a3e91cf792f14f01864c445798e2531b (`source.pdf`, 3 pages)
+> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.
+> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (0 lines). No other edits.
+
+Safeguarding                           China’s military intelligence services use
+  OUR SECRETS                            Western online job platforms to lure Five Eyes
+                                         nationals with access to sensitive information
+
+
+THE THREAT                                           Who is at RISK?
+China’s military intelligence services are using     Chinese intelligence officers attempt
+an increasingly wide array of professional           to recruit and cultivate long-term
+networking sites and online job platforms            relationships with the following types
+to target Five Eyes government and military          of individuals in exchange for classified
+personnel—and anyone with access to                  or privileged information:
+classified or privileged information.
+These actors use an aggressive online                •   Security clearance holders,
+recruitment strategy whereby intelligence                particularly those who specialize in
+                                                         defense, foreign affairs and security &
+officers or their affiliates pose as employees
+                                                         intelligence.
+of private consultancies, think tanks or
+human resources (HR) firms, and place
+                                                     •   Military personnel, including those
+online job advertisements for foreign
+                                                         stationed in the Indo-Pacific region,
+policy and defense analysts (or similar).
+                                                         with knowledge of regional capabilities
+Successful candidates are pressured to                   and general activities.
+provide “non-public” information for
+unspecified clients who are associated with          •   Persons with either indirect or
+the Chinese government. China’s military                 peripheral access to government
+intelligence services ultimately seek to                 information, e.g. academics,
+acquire privileged military, political and               journalists, freelance writers,
+economic intelligence that can provide                   think tank employees, or anyone with
+China with a strategic and tactical                      links to defense, security, policy and
+advantage over the Five Eyes.                            economic sectors.
+
+                            Chinese intelligence officers pose as online HR recruiters
+RECRUITMENT                 or consultants who represent fake, but often legitimate-
+                            looking, “cover companies” and claim to be located
+                            in countries other than China.
+
+
+1   First contact. Recruiters post job      2      Interview. When they are required,
+    ads on professional networking                 interviews are held virtually.
+    platforms and online hiring and                Recruiters conceal their identity,
+    freelance “gig work” websites                  and may start probing applicants
+    like LinkedIn, Indeed, and                     about access to government contacts.
+    Upwork. Resumes are ranked                     Military members may be asked about
+    based on likelihood of access to               their roles and unit activities, home
+    sensitive information; recruiters              base or naval vessel.
+    begin their contact strategies.
+
+
+3   Initial testing. Candidates are         4      Subsequent requests and platform
+    asked to write a trial report on               shift. Recruits are informed that for
+    a topic such as China’s bilateral              additional reports, the client requires
+    relations, the Indo-Pacific region,            more privileged information. At some
+    and related defense issues,                    point in the recruitment process,
+    or international trade.                        intelligence officers typically move
+                                                   the conversation to a more “secure”
+                                                   platform, such as encrypted
+                                                   messaging applications.
+
+
+5   Payment. Recruits receive anywhere from a few hundred to several thousand dollars
+    per report, and may be offered more money in return for increasingly sensitive
+    information. Payment methods include third-party payment platforms, such as
+    PayPal, Payoneer, Zelle, Skrill, and Wise, as well as Western Union, e-transfer
+    and cryptocurrency. Recruits will often be compensated by an account belonging
+    to an individual they have not met as part of the recruitment process.
+
+   Why does it MATTER?
+    While applicants often have no direct access                                                       Individuals engaged in the unauthorized
+    to classified information, even unclassified                                                       disclosure of sensitive or classified information
+    information on government policy, or on military                                                   could face a number of consequences including
+    strategy, capabilities and installations, can                                                      prosecution under national laws such as those
+    be collected and combined with more sensitive                                                      relating to espionage.
+    reporting to form a comprehensive operational
+    picture.                                                                                           Five Eyes agencies have identified individuals
+                                                                                                       who have undertaken these activities, leading
+    Certain types of data can place the lives of                                                       to criminal prosecutions, job losses, and
+    frontline military or other personnel at risk,                                                     security-clearance revocation.
+    can weaken our economic prosperity, and enable
+    interference in our democratic processes.
+
+    Applicants who provide their resumes and
+    other personally identifiable information risk
+    compromises of personal privacy.
+
+
+  REPORTING                                                   If you or someone you know is being targeted via any of the means
+                                                              listed above, contact your institution or department’s corporate
+  incidents                                                   security office for further guidance and direction. Our respective
+                                                              agencies are liaising with corporate security offices regarding this
+                                                              threat.
+
+
+To report non-                                            Federal Bureau of Investigation
+immediate threat                                           By phone: 1-800-CALL-FBI (1-800-225-5324)
+information related to
+                                                           Online: tips.fbi.gov
+national security:
+                                                           In-person: Visit your local FBI field office
+
+References in this alert to any specific commercial product, process or service, or the use of any corporate name, is for informational purposes only and does not constitute an endorsement,
+recommendation or disparagement of that product, process service, or corporation on behalf of the Five Eyes intelligence community.

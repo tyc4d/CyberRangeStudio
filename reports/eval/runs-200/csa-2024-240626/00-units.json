@@ -1,0 +1,350 @@
+[
+ {
+  "id": "p1",
+  "text": "# Exploring Memory Safety in Critical Open Source Projects"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2024-06-26\n> - URL: https://www.ic3.gov/CSA/2024/240626.pdf\n> - PDF SHA-256: 00da1da87009c56efbfc335d4b4f2cf3ffee7833e3aa686ea79d393e22d1af0f (`source.pdf`, 22 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (54 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Exploring Memory Safety in\nCritical Open Source Projects\nPublication: June 26, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "Cybersecurity and Infrastructure Security Agency (CISA)\nFederal Bureau of Investigation (FBI)\nAustralian Signals Directorate’s (ASD’s) Australian Cyber Security Centre (ACSC)\nCanadian Centre for Cyber Security (CCCS)"
+ },
+ {
+  "id": "p5",
+  "text": "This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\nminimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject\nto standard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information on the\nTraffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p6",
+  "text": "Table of Contents\nExecutive Summary ....................................................................................................................... 3\nBackground .................................................................................................................................... 4\n   Recent Efforts.............................................................................................................................. 4\n   Report Terminology .................................................................................................................... 6\nMethodology and Results ............................................................................................................. 6\n   Dependencies............................................................................................................................ 11\nDiscussion .................................................................................................................................... 14\nDisclaimer .................................................................................................................................... 15\nAnnex ............................................................................................................................................ 16"
+ },
+ {
+  "id": "p7",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS                           2"
+ },
+ {
+  "id": "p8",
+  "text": "Executive Summary\nIn December 2023, the Cybersecurity and Infrastructure Security Agency (CISA), the National\nSecurity Agency (NSA), the Federal Bureau of Investigation (FBI), and international\ncybersecurity authorities from Australia, Canada, New Zealand, and the United Kingdom,\npublished The Case for Memory Safe Roadmaps. This joint publication notes that memory\nsafety vulnerabilities are among the most prevalent classes of software vulnerability and\ngenerate substantial costs for both software manufacturers and consumers related to\npatching, incident response, and other efforts. It further recommends software\nmanufacturers create memory safe roadmaps, including plans to address memory safety in\nexternal dependencies, which commonly include open source software (OSS).\nThis joint report, authored by CISA, FBI, the Australian Signals Directorate’s Australian Cyber\nSecurity Center (ASD’s ACSC), and the Canadian Centre for Cybersecurity (CCCS), provides a\nstarting point for these roadmaps by investigating the scale of memory safety risk in\nselected OSS. To understand the state of memory unsafety in OSScode, we explored a set of\ncritical open source projects to determine the extent to which they are written in memory-\nunsafe languages. 1 Memory-unsafe languages require developers to properly manage\nmemory use and allocation. Mistakes, which inevitably occur, can result in memory-safety\nvulnerabilities such as buffer overflows and use after free. Successful exploitation of these\ntypes of vulnerabilities can allow adversaries to take control of software, systems, and data.\nMemory-safe languages shift the abstraction layer and responsibility for writing memory-safe\ncode from the developer to the compiler or interpreter, vastly reducing opportunities to\nintroduce memory-safety vulnerabilities.\nUpon analyzing a list of 172 projects derived from the Open Source Security Foundation\n(OpenSSF) Securing Critical Projects Working Group’s List of Critical Projects, 2 we observe\nthat:\n     •    52% of the projects contain code written in a memory-unsafe language.\n     •    55% of the total lines of code (LoC) for all projects were written in a memory-unsafe\n          language.\n     •    The largest projects are disproportionately written in memory-unsafe languages. Of\n          the ten largest projects by total LoC, each has a proportion of memory unsafe LoC\n          above 26%. The median proportion using memory-unsafe languages across the ten\n          projects is 62.5% and four of the ten project proportions exceed 94%.\n     •    Dependency analysis of three projects written in memory-safe languages\n          demonstrated that each one depended on other components written in memory-\n          unsafe languages."
+ },
+ {
+  "id": "p9",
+  "text": "1 Memory-unsafe languages used in this analysis are defined in Table 1.\n2 https://github.com/ossf/wg-securing-critical-projects/tree/main/Initiatives/Identifying-Critical-Projects."
+ },
+ {
+  "id": "p10",
+  "text": "Hence, we determine that most critical open source projects analyzed, even those written in\nmemory-safe languages, potentially contain memory safety vulnerabilities. This can be\ncaused by direct use of memory-unsafe languages or external dependency on projects that\nuse memory-unsafe languages. Additionally, low-level functional requirements to disable\nmemory safety may create opportunities for memory safety vulnerabilities in code written in\notherwise memory-safe languages. These limitations highlight the need for continued\ndiligent use of memory safe programming languages, secure coding practices, and security\ntesting.\nWe encourage additional efforts to understand the scope of memory-unsafety risks in OSS\nand continued discussion of the best approaches to managing and reducing this risk. These\ndiscussions should not only consider the risk reduction of a given approach, but also\nresource constraints, performance requirements, and direct and indirect costs of\nimplementation. We note that while memory safety vulnerabilities are the most prevalent\nclass of vulnerabilities, there is important work to be done to reduce other systemic classes\nof vulnerabilities. 3 Please read further recommendations to address memory safety in the\njoint document, The Case for Memory Safe Roadmaps and CISA’s Technical Advisory Council\nof CISA’s Cybersecurity Advisory Committee report on memory safety."
+ },
+ {
+  "id": "p11",
+  "text": "Background\nRecent Efforts\nThe cybersecurity community renewed its focus on memory safety in recent years. Consumer\nReports released an October 2022 report noting that “roughly 60 to 70 percent of browser\nand kernel vulnerabilities—and security bugs found in C/C++ code bases—are due to\nmemory unsafety.” 4 The report also cited an interesting discussion of the security costs and\nbenefits of using memory-safe languages instead of memory-unsafe ones. 5\nIn November 2022, the NSA released guidance for software developers and operators on\nprotecting against memory safety issues. 6 The 2023 National Cybersecurity Strategy (March\n2023) and corresponding implementation plan (July 2023) both discuss investing in\nmemory safety and collaborating with the open source community. 7 The National\nCybersecurity Strategy Implementation Plan Initiative 4.1.2, titled “Promote Open Source\nSoftware Security and the Adoption of Memory Safe Programming Languages,” directs the\nestablishment of “an Open Source Software Security Initiative (OS3I) to champion the"
+ },
+ {
+  "id": "p12",
+  "text": "3 CVE-2022-44228 is an example of an impactful vulnerability that is outside the class of memory safety vulnerabilities:"
+ },
+ {
+  "id": "p13",
+  "text": "https://www.cisa.gov/news-events/news/apache-log4j-vulnerability-guidance.\n4 Grauer, Yael. “Future of Memory Safety,” Consumer Reports, January 2023. https://advocacy.consumerreports.org/wp-"
+ },
+ {
+  "id": "p14",
+  "text": "content/uploads/2023/01/Memory-Safety-Convening-Report.pdf.\n5 Gaynor, Alex. “What science can tell us about C and C++'s security.” 27 May 2020."
+ },
+ {
+  "id": "p15",
+  "text": "https://alexgaynor.net/2020/may/27/science-on-memory-unsafety-and-security/.\n6 National Security Agency, “Software Memory Safety Cybersecurity Information Sheet”"
+ },
+ {
+  "id": "p16",
+  "text": "https://media.defense.gov/2022/Nov/10/2003112742/-1/-1/0/CSI_SOFTWARE_MEMORY_SAFETY.PDF.\n7 “National Cybersecurity Strategy.” March 2023. https://www.whitehouse.gov/wp-content/uploads/2023/03/National-"
+ },
+ {
+  "id": "p17",
+  "text": "Cybersecurity-Strategy-2023.pdf."
+ },
+ {
+  "id": "p18",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS               4"
+ },
+ {
+  "id": "p19",
+  "text": "adoption of memory safe programming languages and open source software security.” 8\nInitiative 4.2.1 in the same document, titled “Accelerate Maturity, Adoption, and Security of\nMemory Safe Programming Languages,” also calls for investment in memory-safe\nprogramming languages and seeks the involvement of the newly-established OS3I. 9 In\nFebruary 2024, the Office of the National Cyber Director released a report calling on\ntechnology manufacturers to migrate to memory safe programming languages. 10\nIn August 2023, CISA and the Office of the National Cyber Director, in coordination with the\nOS3I, the National Science Foundation, Defense Advanced Research Projects Agency, and\nthe Office of Management and Budget, published a request for information on OSS security\nseeking input on “areas of long-term focus and prioritization efforts.” 11\nIn a 2023 speech, CISA’s Director remarked on the need to address memory-unsafety, via\n“migrating to memory safe code from legacy code bases,” and by addressing memory-\nunsafety in open source projects and university coursework. 12 In December 2023, CISA\njointly published The Case for Memory Safe Roadmaps. In the same month, the Technical\nAdvisory Council of CISA’s Cybersecurity Advisory Committee issued recommendations for\nCISA action in the area of memory safety. 13\nThe OSS community produced a wealth of commentary and research relating to memory\nsafety. Of particular interest is the work of the OpenSSF Best Practices Working Group. 14 The\nmission of this working group’s Memory Safety Special Interest Group is to “understand and\nreduce memory safety vulnerabilities in OSS.” 15 Another OpenSSF working group, Securing\nCritical Projects Working Group, produced the list of software from which we derived our\ndataset. 16\nOther efforts to promote memory safety across the open source ecosystem include\nProssimo, an Internet Security Research Group project whose “first goal is to move the\nInternet's security-sensitive software infrastructure to memory safe code.” 17 Another is\nGoogle’s OSS-Fuzz, a tool for debugging open source projects that evolved to detect\nproblems in both memory-safe and memory-unsafe languages. 18"
+ },
+ {
+  "id": "p20",
+  "text": "8Initiative 4.1.2, “National Cybersecurity Strategy Implementation Plan,” July 2023. https://www.whitehouse.gov/wp-"
+ },
+ {
+  "id": "p21",
+  "text": "content/uploads/2023/07/National-Cybersecurity-Strategy-Implementation-Plan-WH.gov_.pdf p. 36.\n9 Initiative 4.2.1, “National Cybersecurity Strategy Implementation Plan,” July 2023. https://www.whitehouse.gov/wp-"
+ },
+ {
+  "id": "p22",
+  "text": "content/uploads/2023/07/National-Cybersecurity-Strategy-Implementation-Plan-WH.gov_.pdf p. 39.\n10 Office of the National Cyber Director, “Back to the Building Blocks: A Path Toward Secure and Measurable Software,” February"
+ },
+ {
+  "id": "p23",
+  "text": "2024. https://www.whitehouse.gov/wp-content/uploads/2024/02/Final-ONCD-Technical-Report.pdf.\n11 Office of the National Cyber Director, https://www.federalregister.gov/documents/2023/08/10/2023-17239/request-for-"
+ },
+ {
+  "id": "p24",
+  "text": "information-on-open-source-software-security-areas-of-long-term-focus-and-prioritization.\n12Easterly, “CISA Director Easterly Remarks at Carnegie Mellon University.” https://www.cisa.gov/cisa-director-easterly-remarks-"
+ },
+ {
+  "id": "p25",
+  "text": "carnegie-mellon-university.\n13 CISA Cybersecurity Advisory Committee Technical Advisory Council, “Report to the CISA Director,” December 2023."
+ },
+ {
+  "id": "p26",
+  "text": "https://www.cisa.gov/sites/default/files/2023-12/CSAC_TAC_Recommendations-Memory-Safety_Final_20231205_508.pdf.\n14 https://openssf.org/; https://best.openssf.org/.\n15 https://github.com/ossf/Memory-Safety.\n16 https://github.com/ossf/wg-securing-critical-projects/tree/main/Initiatives/Identifying-Critical-Projects.\n17 Prossimo, ”About Prossimo,” https://www.memorysafety.org/about/.\n18 ”OSS-Fuzz“ https://google.github.io/oss-fuzz/."
+ },
+ {
+  "id": "p27",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS                  5"
+ },
+ {
+  "id": "p28",
+  "text": "Report Terminology\nThis report refers to code, programming languages, and projects as “memory-safe” or\n“memory-unsafe” (or simply, “unsafe”). This terminology is based on our designation of\ncertain programming languages in Table 1 as memory unsafe for the purposes of this\nanalysis. A memory-safe language handles memory management on behalf of the developer.\nIn theory, a program written in a memory safe language will never encounter a memory\nallocation or memory use error, two error types that the report collectively describes as\n“memory-safety” errors. 19 Our language designations simplify the complexities of\ndetermining memory safety to make it possible to draw rough conclusions from millions of\nlines of code (MLoC). We acknowledge that more granular analysis would identify numerous\ninstances of memory unsafety within code written in languages other than those designated\nto be generally “memory-unsafe,” (e.g., Rust code contained within an “Unsafe” block). We\nmake no judgments about code quality, other security aspects, or other kinds of safety such\nas physical safety of material property."
+ },
+ {
+  "id": "p29",
+  "text": "Methodology and Results\nThis section describes the methods (how) and the results (what) of our analysis.\nInterpretation (why) and recommendations follow in the Discussion section.\nOur analysis is based on the OpenSSF Securing Critical Projects Working Group’s Securing\nCritical Projects List. 20 This list is developed using a combination of quantitative and expert\nqualitative inputs, including the OpenSSF Criticality Score. 21 The list acknowledges various\npotential sources of bias, including that the Criticality Score, “…prefers projects that are\nextremely active on specific forges. Such projects are likely to be important (at least to the\nparticipants). However, this is not a perfect measure; some projects will score low here and\nyet be very critical.” 22\nWhile we identified GitHub repositories for all projects in the list, GitHub is only one code\nhosting provider and does not represent all open source repositories. 23 Despite these\npotential sources of bias, we consider the Securing Critical Projects List to be a reasonable\nselection of open source projects to analyze.\nWe modified the Securing Critical Projects List as necessary to identify specific repositories\nfor analysis. In some cases, these modifications excluded projects that were not clearly\ndefined at the repository level (e.g., Alpine Linux), and in other cases, selected specific\nrepositories from multiple repositories that could potentially represent a given project."
+ },
+ {
+  "id": "p30",
+  "text": "19 Yang H, O’Hearn P. A semantic basis for local reasoning. International Conference on Foundations of Software Science and"
+ },
+ {
+  "id": "p31",
+  "text": "Computation Structures 2002 Mar 15 (pp. 402-416). Berlin, Heidelberg: Springer Berlin Heidelberg.\n20 https://github.com/ossf/wg-securing-critical-projects/tree/main/Initiatives/Identifying-Critical-Projects.\n21 https://openssf.org/blog/2023/07/28/understanding-and-applying-the-openssf-criticality-score-in-open-source-projects/.\n22 https://github.com/ossf/wg-securing-critical-projects#meetings-times.\n23 Trujillo, Milo Z., Laurent Hébert-Dufresne, James Bagrow, ”The penumbra of open source: projects outside of centralized"
+ },
+ {
+  "id": "p32",
+  "text": "platforms are longer maintained, more academic and more collaborative.” Cornell University. 22 May 2022.\nhttps://doi.org/10.48550/arXiv.2106.15611."
+ },
+ {
+  "id": "p33",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS              6"
+ },
+ {
+  "id": "p34",
+  "text": "Through this process, we confirmed and identified public source code repositories for 172\nprojects on the Securing Critical Projects List, most of them hosted on GitHub. We then\nanalyzed these repositories using the “cloc” tool, which identifies files that contain source\ncode and counts LoC within each such file that correspond to a given programming\nlanguage. 24 We did not evaluate the accuracy of “cloc.” It is possible that “cloc” incorrectly\nclassified some files or LoC."
+ },
+ {
+  "id": "p35",
+  "text": "Table 1: Memory-Unsafe and Non-Executable Languages and File Types"
+ },
+ {
+  "id": "p36",
+  "text": "Language and File Type                                        Languages and File Types"
+ },
+ {
+  "id": "p37",
+  "text": "Memory-unsafe                                                 Assembly, C, C++, C/C++ Header, Cython, D"
+ },
+ {
+  "id": "p38",
+  "text": "Non-executable                                                CSV, diff, HTML, INI, JavaScript Object\n                                                               Notation (JSON), Markdown,\n                                                               reStructuredText, Text, Web Services\n                                                               Description, XHTML, XML, XSD, XSLT, YAML"
+ },
+ {
+  "id": "p39",
+  "text": "In the following results (including the full project list in Table 6), “Unsafe LoC” represents the\nsum of LoC written in the set of languages that we defined as memory-unsafe in Table 1 and\n“Total LoC” represents the sum of LoC written in any language, excluding blank lines,\ncomments, and non-executable languages as defined in Table 1. The categories in Table 1\nare based on our analysis of languages detectable by “cloc” and are not necessarily\ncomprehensive or complete sets of all memory-unsafe or non-executable languages or file\ntypes. 25\nWe observed that source code repositories often include test code that is usually only used\nin development and not by the fielded software. For example, the “packaging” project has\nsix lines of memory-unsafe C code in a single file: ./tests/hello-world.c. It would make\nsense to exclude development test code that is not likely to be exposed to attacks, however,\nbroadly excluding repository directories named /test and /tests may be too coarse of an\napproach. Thus, our analysis did not attempt to identify or exclude test code and therefore\nincludes some LoC that are not likely to be exposed to attacks.\nThe “By Project” heading in Table 2 identifies projects containing any amount of memory-\nunsafe code, and the “By LoC” heading identifies memory-unsafe LoC in the aggregate,\nindependent of project. Roughly half of the projects contain some code written in a memory-\nunsafe language and slightly more than half of the total executable LoC in our analysis were\nwritten in a memory-unsafe language."
+ },
+ {
+  "id": "p40",
+  "text": "24 https://github.com/AlDanial/cloc.\n25 https://github.com/AlDanial/cloc?tab=readme-ov-file#recognized-languages."
+ },
+ {
+  "id": "p41",
+  "text": "Table 2: Proportion of Memory Unsafety"
+ },
+ {
+  "id": "p42",
+  "text": "By Project             By LoC\n Only memory-                    82                48%      141,167,614                45%\n safe language"
+ },
+ {
+  "id": "p43",
+  "text": "Any memory-                     90                52%      173,588,291                55%\n unsafe\n language"
+ },
+ {
+  "id": "p44",
+  "text": "Total                         172                          314,755,905"
+ },
+ {
+  "id": "p45",
+  "text": "Table 3 and Figures 1 and 2 describe the interquartile ranges for total and memory-unsafe\nLoC by project. Note that the ranges are calculated independently for each column (e.g., the\nproject with the maximum Total LoC is not necessarily the same as the project with the\nmaximum Unsafe ratio). The largest projects (Chromium, the Linux kernel, gecko-dev, kvm,\nand linux-yocto-contrib) contain 25 million or more LoC, much of which is written in memory-\nunsafe languages. Most projects are smaller than one million LoC. These characteristics\ncreate the skewed distribution and compressed interquartile ranges visible in Figure 1.\nFigure 2 limits the maximum vertical axis value to 3 MLoC to zoom in on the interquartile\nranges.\n                                Table 3: Interquartile Ranges"
+ },
+ {
+  "id": "p46",
+  "text": "Total LoC             Unsafe LoC          Unsafe Ratio\n Minimum                                  234                       0                  0%\n Q1                                     82,498                      0                  0%\n Q2 (median)                           310,495                      25                 0%\n Q3                               1,012,546                 136,124                   53%\n Maximum                        34,677,183                24,721,815                  99%"
+ },
+ {
+  "id": "p47",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS     8"
+ },
+ {
+  "id": "p48",
+  "text": "Figure 1: Interquartile Ranges"
+ },
+ {
+  "id": "p49",
+  "text": "Figure 2: Interquartile Ranges, Y Axis Limited to 3 MLoC"
+ },
+ {
+  "id": "p50",
+  "text": "Figures 3 and 4 compare project size (in MLoC) to the proportion of memory-unsafe code\nused in each project. Figure 4 limits the maximum vertical axis value to 3 MLoC to zoom in\non smaller projects. Note that the locations of project name labels in Figures 3 and 4 are\napproximate."
+ },
+ {
+  "id": "p51",
+  "text": "Figure 3: Comparison of Project Size to Memory-Unsafety"
+ },
+ {
+  "id": "p52",
+  "text": "Figure 4: Comparison of Smaller Project Sizes to Memory-Unsafety, Y Axis Limited to 3 MLoC"
+ },
+ {
+  "id": "p53",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS     10"
+ },
+ {
+  "id": "p54",
+  "text": "Most of the largest projects (including the Linux kernel) predominantly use memory-unsafe\nlanguages. Some other large projects (Chromium and Gecko web browser frameworks) use\nmemory-unsafe languages for roughly half of their code. This is expected since operating\nsystems and web browsers perform functions, such as providing multiple code execution\nenvironments and managing memory directly, that have traditionally been difficult to\nimplement in fully memory-safe ways.\nTable 4 shows the count and distribution of projects based on the percentage of code in each\nproject that is written in a memory-unsafe language.\n                              Table 4: Proportional Memory-Unsafe Language Use"
+ },
+ {
+  "id": "p55",
+  "text": "Percentage of            Number of projects                  Proportion of all                 Proportion of\n         memory-unsafe                                                         projects                memory-unsafe\n          language use                                                                                       projects\n                          0%                              82                           48%\n             > 0%, ≤ 25%                                  31                           18%                             34%\n           > 25%, ≤ 50%                                   12                             7%                            13%\n           > 50%, ≤ 75%                                   23                           13%                             26%\n           > 75%, ≤ 95%                                   20                           12%                             22%\n         > 95%, ≤ 100%                                      4                            2%                              5%"
+ },
+ {
+  "id": "p56",
+  "text": "Dependencies\nThe initial LoC analysis did not consider dependencies because dependency analysis at\nscale is complex. Different projects and languages have different, and sometimes multiple,\nways to specify dependencies. The computation time required to identify and analyze\ndependencies increases substantially compared to analyzing the project alone. Due to the\neffort required to perform comprehensive dependency analysis on all the projects, we\nselected three: Ansible, Distribution, and Home Assistant.\nOf the three projects, only Distribution directly contained any memory-unsafe code.\nDistribution contained approximately ten thousand lines of code (10 KLoC), making up\n1.72% of the total LoC. This code is part of a Go module dependency that is included as part\nof the Distribution repository for cryptography and low-level interactions with operating\nsystems. 26 The inclusion of dependencies bundled with a project source repository further\ncomplicates the comparison of “project only” to “project with all dependencies.”"
+ },
+ {
+  "id": "p57",
+  "text": "26 https://pkg.go.dev/golang.org/x/sys, https://github.com/distribution/distribution/tree/main/vendor/golang.org/x/sys/unix."
+ },
+ {
+  "id": "p58",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS                11"
+ },
+ {
+  "id": "p59",
+  "text": "We evaluated multiple source code dependency analysis tools and primarily used It-\nDepends, ScanCode Toolkit, CMake, and—for visualization--Graphviz. 27,28,29,30 These tools\nexamine source code repositories, sometimes relying on included dependency information,\nand sometimes analyzing source code directly. For example, It-Depends looks for\nrequirements.txt or setup.py but does not analyze import statements. 31 To understand and\nconfirm the tool results we performed manual analysis, primarily using mechanisms\ninherent to the languages (such as pip show and requirements.txt for Python and go\nlist -m all for go). We also limited the analysis to dependencies specified by the project\nin some way. We did not include development or build requirements, operating system\nlibraries, or application programming interfaces (APIs).\nThe tools typically output lists of dependencies, their relationships, and sometimes the type\nof dependency. Output is usually graph information in a variety of formats such as JSON,\ncomma-separated values, or Graphviz DOT. 32 For each dependency, we downloaded the\nsource code, performed the “cloc” tool analysis to measure use of unsafe languages, and\ncompared the LoC counts for each project by itself to the project with all dependencies\nincluded, as shown in Table 5."
+ },
+ {
+  "id": "p60",
+  "text": "Table 5: Selected Projects and Their Dependencies"
+ },
+ {
+  "id": "p61",
+  "text": "Project only                    Project and dependencies\n Project (language)\n                                    Total       Unsafe               Dependency Total         Unsafe\n                                                       Ratio                                         Ratio\n                                    KLoC        KLoC                 count      KLoC          KLoC"
+ },
+ {
+  "id": "p62",
+  "text": "Ansible (python)                      171           0        0%                 8      693      19      2.7%"
+ },
+ {
+  "id": "p63",
+  "text": "1.72\n Distribution (go)                     600          10                        283    18,001     227      1.3%\n                                                                %"
+ },
+ {
+  "id": "p64",
+  "text": "Home Assistant\n                                    1,792            0        0%                44    2,379      44      1.9%\n (python)"
+ },
+ {
+  "id": "p65",
+  "text": "Superficially, the projects alone contain very little memory-unsafe code, but each has\ndependencies that do contain memory-unsafe code. Cursory analysis shows that\ndependencies using unsafe languages commonly provide features such as interfaces to\nmemory-unsafe languages (typically C), graphics, cryptography, and compression."
+ },
+ {
+  "id": "p66",
+  "text": "27 https://github.com/trailofbits/it-depends.\n28 https://github.com/nexB/scancode-toolkit.\n29 https://cmake.org/.\n30 https://graphviz.org/.\n31 https://github.com/trailofbits/it-depends/blob/master/it_depends/pip.py.\n32 https://graphviz.org/doc/info/lang.html."
+ },
+ {
+  "id": "p67",
+  "text": "For the purpose of our initial dependency analysis, the tools worked reasonably well for\nlanguages that explicitly support dependencies (for example, requirements.txt for\nPython, pom.xml for Java Maven, package.json for Node.js npm, go.sum for go). Some\ncomplexity remains, however, because even languages with explicit dependency\nspecifications may have multiple ways to create dependencies. In Python, for example,\nimport statements may create dependencies on modules that are not included in the\nstandard Python library or a specific Python distribution. 33 Both requirements.txt and\ninstall_requires (setuptools) are methods to specify dependencies needed to install a\nPython project. All three methods may be necessary to analyze dependencies."
+ },
+ {
+  "id": "p68",
+  "text": "Figure 5: Ansible Dependencies"
+ },
+ {
+  "id": "p69",
+  "text": "Graphs are a common way to visualize dependencies, subject to practical limitations on the\nsize of the graph. Ansible has eight effective dependencies (the lowest number of the\nprojects analyzed). Its dependencies are displayed in Figure 5.\nThe graph in Figure 5 is limited to explicitly declared Python package dependencies,\neffectively the results of pip show. A cursory examination of the Python cryptography\npackage reveals additional static dependencies on a number of Rust crates and OpenSSL\n(written primarily in C). 34 We did not attempt to analyze the extent of memory unsafety\nintroduced by the Rust or OpenSSL dependencies. Nonetheless, this example further\nillustrates the challenges of dependency analysis, specifically that multiple methods and\nabstractions are necessary to fully resolve dependencies and that otherwise memory-safe\ncode can include memory-unsafe dependencies that use different programming languages."
+ },
+ {
+  "id": "p70",
+  "text": "33 A custom analysis of Python dependencies: https://www.hudsonrivertrading.com/hrtbeat/dependency-graph-python-codebase/.\n34 https://cryptography.io/en/latest/faq/#why-does-cryptography-require-rust and https://cryptography.io/en/latest/openssl."
+ },
+ {
+  "id": "p71",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS              13"
+ },
+ {
+  "id": "p72",
+  "text": "Discussion\nWe observed that many critical open source projects are partially written in memory-unsafe\nlanguages and limited dependency analysis indicates that projects inherit code written in\nmemory-unsafe languages through dependencies.\nWhere performance and resource constraints are critical factors, we have seen, and expect\nthe continued use of, memory-unsafe languages. Examples include operating system\nkernels and drivers, cryptography, and networking, particularly in embedded applications. It\nmay, however, be an effective security investment to transition these types of projects to\nmemory safe languages, and new projects should also consider using memory safe\nlanguages. Recent advancements allow memory safe programming languages, such as\nRust, to parallel the performance of memory-unsafe languages. 35\nEven when using memory-safe languages, developers may disable memory-safety features.\nIn their response to the Request for Information on Open Source Software Security, Amazon\nWeb Services (AWS) included a recommendation to \"write new code in memory safe\nlanguages like Rust, but note that not all code written in nominally memory-safe languages\nis actually memory-safe.\" AWS cites two studies that support a comment that \"…it’s easy and\nfairly common (and often reasonable) for developers to disable the compiler features that\nmake Rust memory safe.\" 36\nOur analysis explored the challenges of assessing memory safety at scale, especially with\nlimited resources for dependency analysis. Complete dependency analysis is difficult,\npossibly intractable, for at least two major reasons. First, languages often have multiple\nmechanisms to specify or create dependencies. In some cases, and more commonly among\nmemory-safe languages, there are explicit mechanisms to define dependencies for a project.\nAs noted in a previous example, Python dependencies can be created using import\nstatements and specified using requirements.txt and install_requires/setup.py\n(setuptools). The second, related issue, is the computational cost of comprehensively and\nrecursively identifying dependencies to some limit. This report only examined dependencies\nfor a few selected projects and limited the recursion depth to what was readily available\nusing language-specific dependency mechanisms.\nObstacles to achieving full memory safety are fundamental to how computers work. Source\ncode must be compiled or interpreted to execute as native code on a given operating system\nand hardware platform. Somewhere underneath every programming language stack and\ndependency graph, memory-unsafe code is written and executed. Despite these\nfundamental issues, using memory-safe languages clearly reduces memory-safety\nvulnerabilities. Memory-safe languages shift the abstraction layer and responsibility for"
+ },
+ {
+  "id": "p73",
+  "text": "35 The Computer Language Benchmarks Game https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html.\n36 Comment from Amazon Web Services https://www.regulations.gov/comment/ONCD-2023-0002-0082."
+ },
+ {
+  "id": "p74",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS            14"
+ },
+ {
+  "id": "p75",
+  "text": "writing memory-safe code from the developer to the compiler or interpreter, decreasing\nreliance on fallible humans.\nThis analysis is primarily limited by data selection issues associated with both the choice of\nprojects and the lack of systemic dependency resolution. Improved project selection and\ndependency resolution would offer increased accuracy and greater insight into the use of\nmemory-unsafe languages but would also require significant tooling and analysis effort.\nAnalyzing closed-source or proprietary software would require different techniques and\nadditional effort but would grant insight into otherwise opaque software. A more extensive\ndataset, especially one designed to include important projects that are not hosted on\ncentralized platforms, may provide a more representative sample of OSS. Additional analysis\nwould be required to estimate the costs of rewriting existing projects and the future benefits\nassociated with reducing the number of memory-safety vulnerabilities.\nWe encourage others to build on this analysis to further expand our collective understanding\nof memory-unsafety risk in OSS, evaluate approaches—such as targeted rewrites of critical\ncomponents in memory-safe languages—to reducing this risk, and to continue efforts to\ndrive risk-reducing action by software manufacturers. For those considering further\ninvestment in memory safe programming practices, we recommend two references: The\nCase for Memory Safe Roadmaps and the December 2023 report on memory safety by the\nTechnical Advisory Council of CISA’s Cybersecurity Advisory Committee. 37"
+ },
+ {
+  "id": "p76",
+  "text": "Disclaimer\nCISA, FBI, ASD’s ACSC, and CCCS do not endorse any commercial entity, product, company,\nor service, including any entities, products, or services mentioned within this document. Any\nreference to specific commercial entities, products, processes, or services by service mark,\ntrademark, manufacturer, or otherwise, does not constitute or imply endorsement,\nrecommendation, or favoring by CISA, FBI, ASD’s ACSC, or CCCS."
+ },
+ {
+  "id": "p77",
+  "text": "37 CISA Cybersecurity Advisory Committee Technical Advisory Council, “Report to the CISA Director,” December 2023."
+ },
+ {
+  "id": "p78",
+  "text": "https://www.cisa.gov/sites/default/files/2023-12/CSAC_TAC_Recommendations-Memory-Safety_Final_20231205_508.pdf."
+ },
+ {
+  "id": "p79",
+  "text": "CISA | FBI | ASD’s ACSC | CCCS            15"
+ },
+ {
+  "id": "p80",
+  "text": "Annex\nTable 6 contains the list of projects and basic KLoC statistics.\n                           Table 6: Summary Project List and Data Set"
+ },
+ {
+  "id": "p81",
+  "text": "Project                           Total KLoC            Unsafe KLoC                 Ratio\n chromium                              34,677                  17,718                51%\n gecko-dev                             33,821                  11,084                33%\n kvm                                   26,024                  24,722                95%\n linux                                 26,023                  24,721                95%\n linux-yocto-contrib                   25,860                  24,570                95%\n linux-yocto                           22,765                  21,751                96%\n llvm-project                          14,133                      8,775             62%\n gcc                                   10,874                      6,814             63%\n jdk                                    8,172                      2,101             26%\n node                                   7,963                      3,602             45%\n bitwarden-clients                      5,393                           0              0%\n kubernetes                             5,039                           9              0%\n mysql-server                           4,289                      3,589             84%\n tensorflow                             3,932                      2,527             64%\n DefinitelyTyped                        3,141                           0              0%\n nixpkgs                                2,872                           5              0%\n php-src                                2,798                      1,391             50%\n pytorch                                2,489                      1,254             50%\n ua-parser-js                           2,320                      2,169             94%\n TypeScript                             2,316                           0              0%\n go                                     2,213                       133                6%\n magento2                               2,206                           0              0%\n MariaDB_server                         2,192                      1,771             81%\n ceph                                   1,951                      1,278             66%"
+ },
+ {
+  "id": "p82",
+  "text": "Project           Total KLoC   Unsafe KLoC                Ratio\nzephyr                1,822         1,530                 84%\nrubygems              1,802           425                 24%\nhome-assistant        1,792             0                   0%\nRust                  1,747             6                   0%\nPostgres              1,689           962                 57%\ncpython               1,566           629                 40%\nglibc                 1,560         1,328                 85%\nvscode                1,545             0                   0%\nperl5                 1,494           676                 45%\ngrafana               1,474             0                   0%\ngradle                1,421            15                   1%\nspark                 1,421             0                   0%\nsymfony               1,362             0                   0%\nsolr                  1,356             0                   0%\nflutter               1,284             4                   0%\nkata-containers       1,212             8                   1%\nnss                   1,164           859                 74%\nWordPress             1,043             0                   0%\nCMake                 1,014           682                 67%\ngit                   1,012           282                 28%\nopenssl                 989           588                 60%\ncli                     949             0                   0%\nmaterial-ui             928             0                   0%\nsystemd                 906           588                 65%\nkeycloak                905             0                   0%\nsalt                    900             0                   0%\ndrupal                  889             0                   0%"
+ },
+ {
+  "id": "p83",
+  "text": "Project                Total KLoC   Unsafe KLoC                Ratio\nPrestaShop                   886             0                   0%\nSignal-Desktop               851             0                   0%\namphtml                      817            38                   5%\nthree.js                     804             0                   0%\ngatsby                       779             0                   0%\ncassandra                    759             0                   0%\nangular                      691             0                   0%\ngettext                      662           366                 55%\nbabel                        639             0                   0%\nPowerShell                   628             0                   0%\nvault                        609             0                   0%\ndistribution                 604            10                   2%\ngnupg                        537           284                 53%\npandas                       534            33                   6%\nnumpy                        508           212                 42%\nreact-native                 492            88                 18%\narm-trusted-firmware         491           438                 89%\nSignal-iOS                   486             7                   1%\nguava                        479             0                   0%\nSignal-Android               450             0                   0%\nbitwarden-server             425             0                   0%\ntomcat                       410             0                   0%\nbash                         390           125                 32%\nsqlite                       389           278                 72%\njulia                        384           113                 30%\nrabbitmq-server              378             0                   0%\nrails                        370             0                   0%"
+ },
+ {
+  "id": "p84",
+  "text": "Project              Total KLoC   Unsafe KLoC                Ratio\nresolvelib                 365             0                   0%\nhttpd                      351           242                 69%\nhomebrew-core              349             0                   0%\ntor                        343           320                 93%\npoky                       338             3                   1%\ngrub                       322           281                 87%\njoomla-cms                 318             0                   0%\npuppet                     314             0                   0%\nredis                      307           199                 65%\nhaproxy                    278           230                 83%\ncryptography               272             0                   0%\nyocto-kernel-cache         241             0                   0%\nstorybook                  232             0                   0%\nbuildroot                  231            17                   7%\nkong                       230             0                   0%\ncurl                       226           173                 77%\nframework                  222             0                   0%\nbusybox                    220           192                 88%\nlogging-log4j2             214             0                   0%\njackson-databind           203             0                   0%\nmbedtls                    202           147                 73%\nwebpack                    183             0                   0%\nzookeeper                  177            26                 15%\nlibarchive                 172           162                 94%\npip                        172             0                   0%\nansible                    171             0                   0%\nnginx                      166           163                 99%"
+ },
+ {
+  "id": "p85",
+  "text": "Project                 Total KLoC   Unsafe KLoC                Ratio\nelectron                      165            78                 47%\nant-design-charts             158             0                   0%\nbrew                          155             0                   0%\nopenssh-portable              142           120                 85%\ntraefik                       139             0                   0%\nruby                          127             0                   0%\nbootstrap                     118             0                   0%\nopenvpn                       112            98                 88%\nzstd                          111            92                 83%\nmeson                         111             9                   9%\nmaven                         111             0                   0%\njackson-core                  106             0                   0%\ncommons-lang                  105             0                   0%\nSignal-Server                 105             0                   0%\npro-components                103             0                   0%\nlibpng                        102            57                 56%\ncoreutils                      98            67                 69%\nasync                          93             0                   0%\nhomebrew-cask                  92             0                   0%\nmusl                           91            90                 99%\nmobile                         91             0                   0%\nmosquitto                      90            52                 58%\nautomake                       85             0                   0%\nhttpcomponents-core            84             0                   0%\nhttpcomponents-client          77             0                   0%\nlogback                        77             0                   0%\nlibsignal                      72             1                   1%"
+ },
+ {
+  "id": "p86",
+  "text": "Project              Total KLoC   Unsafe KLoC                Ratio\nreprepro                    65            52                 81%\nant-design                  60             0                   0%\ncommons-io                  53             0                   0%\nant-design-mobile           49             0                   0%\nmemcached                   48            32                 68%\nrekor                       48             0                   0%\nlibjpeg                     44            37                 83%\nzlib                        44            30                 68%\ncffi                        44            15                 34%\nautoconf                    42             0                   0%\nmake                        34            30                 87%\ncommons-codec               32             0                   0%\ncosign                      32             0                   0%\nreadable-stream             32             0                   0%\nlodash                      23             0                   0%\nlibtool                     18             4                 24%\njinja                       18             0                   0%\nfulcio                      17             0                   0%\nu-boot                      17             0                   0%\nslf4j                       16             0                   0%\nsigstore-java               15             0                   0%\nyocto-kernel-tools          15             0                   0%\nm4                          12             6                 51%\npycparser                   11             2                 18%\nisarray                     10             0                   0%\npyyaml                       8             1                 17%\npackaging                    8             0                   0%"
+ },
+ {
+  "id": "p87",
+  "text": "Project           Total KLoC   Unsafe KLoC                Ratio\ninherits                  8             0                   0%\nant-design-pro            7             0                   0%\ncommunity                 7             0                   0%\nsigstore-python           6             0                   0%\nqs                        4             0                   0%\nnatives                   3             0                   0%\nstring_decoder            3             0                   0%\nmarkupsafe                2             0                 18%\ncoa                       1             0                   0%\nkind-of                   1             0                   0%\nminimist                  1             0                   0%\nrc                        0             0                   0%\nsafe-buffer               0             0                   0%"
+ }
+]

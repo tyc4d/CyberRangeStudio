@@ -1,0 +1,141 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "initial access targets",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Apache",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "unsupported-log4j-unspecified",
+   "runtime": "unsupported",
+   "deployable": false,
+   "not_deployed_reason": "Log4j application (version/fixture unspecified) 無法由元件目錄部署（not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture）；這台主機不會被部署，也不以替身頂替。"
+  },
+  {
+   "id": "h2",
+   "role": "systems used for enumeration, persistence, privilege escalation, lateral movement, and data staging",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Server Message Block (SMB) protocol",
+     "port": 445,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false,
+   "not_deployed_reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2 require access to Apache.",
+   "port": 80,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 80
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 3389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:3389 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 445,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:445 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1, a2); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Apache Log4j (s1); it remains unreachable by default.",
+  "No port is known for service Log4j application (svc-unsupported-log4j-unspecified-h1); it remains unreachable by default.",
+  "Host h1 has services from multiple catalogue components; the plan schema has one image_hint, so inspect its image selection.",
+  "Host h1 needs Log4j application (version/fixture unspecified), which the catalogue cannot deploy (not reproducible without explicit app, Log4j/JVM versions, configuration and harmless validation fixture). It is not replaced by a stand-in.",
+  "No port is known for service Active Directory domain database (s4); it remains unreachable by default.",
+  "Host h2 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology)."
+ ]
+}

@@ -1,0 +1,3971 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240828",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "43c7d0db23adfc5b3f64b140992973058c3a39c0a533db3a669380f8a84f80a0",
+  "source_name": "csa-2024-240828"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit public-facing networking devices to gain initial access",
+   "source": "llm",
+   "description": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as Citrix Netscaler, F5 BIG-IP, Pulse Secure/Ivanti VPNs, PanOS firewalls, and Check Point Security Gateways to gain initial access to victim networks.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2",
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Use Shodan search engine to identify vulnerable IP addresses",
+   "source": "llm",
+   "description": "The actors use the Shodan search engine to identify and enumerate IP addresses hosting devices vulnerable to particular CVEs.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Deploy webshells on compromised Citrix Netscaler devices",
+   "source": "llm",
+   "description": "The actors deploy webshells on compromised Citrix Netscaler devices, including creating directories and placing files such as netscaler.1, netscaler.php, ctxHeaderLogon.php, and others for credential capture and persistence.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7",
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Create accounts on victim networks",
+   "source": "llm",
+   "description": "The actors create local accounts on victim networks with observed names including sqladmin$, adfsservice, IIS_Admin, iis-admin, and John McCain.",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1136.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Request exemptions to zero-trust application and security policies",
+   "source": "llm",
+   "description": "The actors request exemptions to zero-trust application and security policies for tools they intend to deploy on victim networks.",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1098",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Create malicious scheduled task using DLL side-loading technique",
+   "source": "llm",
+   "description": "The actors create a malicious scheduled task named SpaceAgentTaskMgrSHR in Windows/Spaceport/task folder that uses DLL side-loading against contig.exe (renamed to dllhost.ext) to load a payload from version.dll executed from the Windows Downloads directory.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1053",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Place malicious backdoor version.dll in C:\\Windows\\ADFS\\ directory",
+   "source": "llm",
+   "description": "The actors place a malicious backdoor file named version.dll in the C:\\Windows\\ADFS\\ directory.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1505.003",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Use scheduled tasks to load malware through installed backdoors",
+   "source": "llm",
+   "description": "The actors use scheduled tasks to load malware through installed backdoors for persistence.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1053",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "Deploy Meshcentral for remote access",
+   "source": "llm",
+   "description": "The actors deploy Meshcentral to connect with compromised servers for remote access.",
+   "target_host_ref": "h7",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1219",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "Create daily Windows service task with random name for persistence",
+   "source": "llm",
+   "description": "The actors create a daily Windows service task with a random eight-character name and attempt execution of a similarly named DLL in C:\\Windows\\system32\\drivers\\ directory for persistence.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1505",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "Repurpose compromised credentials to log into other applications",
+   "source": "llm",
+   "description": "The actors repurpose compromised credentials from exploited networking devices such as Citrix Netscaler to log into other applications like Citrix XenDesktop.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1078.003",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "Repurpose administrative credentials to log into domain controllers and infrastructure",
+   "source": "llm",
+   "description": "The actors repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks.",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-23",
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1078.002",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "Disable antivirus and security software using administrator credentials",
+   "source": "llm",
+   "description": "The actors use administrator credentials to disable antivirus and security software on victim networks.",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a14",
+   "name": "Lower PowerShell policies to a less secure level",
+   "source": "llm",
+   "description": "The actors lower PowerShell policies to a less secure level to evade defenses.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a15",
+   "name": "Attempt to enter security exemption tickets to get tools allowlisted",
+   "source": "llm",
+   "description": "The actors attempt to enter security exemption tickets to the network security device or contractor to get their tools allowlisted.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-29",
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a16",
+   "name": "Initiate remote desktop session using compromised administrator account",
+   "source": "llm",
+   "description": "The actors use a compromised administrator account to initiate a remote desktop session to another server on the network and attempt to start Microsoft Windows PowerShell ISE to run commands.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-31",
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a17",
+   "name": "Export system registry hives and network firewall configurations",
+   "source": "llm",
+   "description": "The actors export system registry hives and network firewall configurations on compromised servers for discovery.",
+   "target_host_ref": "h7",
+   "evidence_refs": [
+    "evidence-33",
+    "evidence-34"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1012",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a18",
+   "name": "Exfiltrate account usernames and access configuration files and logs",
+   "source": "llm",
+   "description": "The actors exfiltrate account usernames from the victim domain controller and access configuration files and logs to gather network and user account information for further exploitation.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-35",
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1482",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a19",
+   "name": "Install AnyDesk remote access program as backup access",
+   "source": "llm",
+   "description": "The actors install the AnyDesk remote access program as a backup access method on compromised systems.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-37",
+    "evidence-38"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1219",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a20",
+   "name": "Enable Windows PowerShell Web Access on servers",
+   "source": "llm",
+   "description": "The actors enable servers to use Windows PowerShell Web Access for command and control.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-39",
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1059.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a21",
+   "name": "Use Ligolo and NGROK for tunneling and outbound connections",
+   "source": "llm",
+   "description": "The actors use the open source tunneling tool Ligolo (ligolo/ligolo-ng) and NGROK (ngrok[.]io) to create outbound connections to random subdomains for command and control.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-41",
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a22",
+   "name": "Collaborate with ransomware affiliates to enable ransomware attacks",
+   "source": "llm",
+   "description": "After infiltrating victim networks, the actors collaborate with ransomware affiliates including NoEscape, Ransomhouse, and ALPHV (BlackCat) by providing access, locking victim networks, and strategizing extortion in exchange for a percentage of ransom payments.",
+   "target_host_ref": "h6",
+   "evidence_refs": [
+    "evidence-43",
+    "evidence-44"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1657",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a2",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Shodan search engine is used to identify vulnerable IP addresses before exploiting devices",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Webshells are deployed on compromised Netscaler devices after exploiting them",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a11",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Compromised credentials captured via webshells are repurposed to log into other applications",
+   "evidence_refs": [
+    "evidence-46"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Administrative credentials repurposed from earlier compromised credentials are used to log into domain controllers and infrastructure",
+   "evidence_refs": [
+    "evidence-47"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a12",
+   "to_action": "a13",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Administrator credentials obtained are used to disable antivirus and security software",
+   "evidence_refs": [
+    "evidence-48"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a13",
+   "to_action": "a15",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "After disabling security software, actors attempt to enter security exemption tickets to get tools allowlisted",
+   "evidence_refs": [
+    "evidence-49"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Accounts on victim networks are created following compromise of devices and credential capture",
+   "evidence_refs": [
+    "evidence-50"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r8",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Actors request exemptions to zero-trust policies for tools they intend to deploy after creating accounts",
+   "evidence_refs": [
+    "evidence-51"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r9",
+   "from_action": "a7",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Malicious scheduled task uses DLL side-loading to load payload from version.dll placed earlier",
+   "evidence_refs": [
+    "evidence-52"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a6",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Scheduled tasks are used to load malware through installed backdoors created by earlier scheduled tasks",
+   "evidence_refs": [
+    "evidence-53"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r11",
+   "from_action": "a1",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Meshcentral is deployed after initial compromise of servers",
+   "evidence_refs": [
+    "evidence-54"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r12",
+   "from_action": "a9",
+   "to_action": "a19",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "AnyDesk is installed as backup remote access after Meshcentral deployment",
+   "evidence_refs": [
+    "evidence-55"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r13",
+   "from_action": "a12",
+   "to_action": "a16",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Compromised administrator credentials are used to initiate remote desktop sessions",
+   "evidence_refs": [
+    "evidence-56"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r14",
+   "from_action": "a16",
+   "to_action": "a20",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r15",
+   "from_action": "a16",
+   "to_action": "a17",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r16",
+   "from_action": "a17",
+   "to_action": "a18",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r17",
+   "from_action": "a21",
+   "to_action": "a22",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "public-facing networking devices exploited for initial access and persistence",
+   "source": "llm",
+   "name": "Citrix Netscaler devices",
+   "network_placement": "internet-facing",
+   "evidence_refs": [
+    "evidence-57",
+    "evidence-58"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "public-facing networking devices exploited for initial access",
+   "source": "llm",
+   "name": "F5 BIG-IP devices",
+   "evidence_refs": [
+    "evidence-59"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "public-facing networking devices exploited for initial access",
+   "source": "llm",
+   "name": "Pulse Secure/Ivanti VPN devices",
+   "evidence_refs": [
+    "evidence-60"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "public-facing networking devices exploited for initial access",
+   "source": "llm",
+   "name": "PanOS firewalls",
+   "evidence_refs": [
+    "evidence-61"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h5",
+   "role": "public-facing networking devices exploited for initial access",
+   "source": "llm",
+   "name": "Check Point Security Gateways",
+   "evidence_refs": [
+    "evidence-62"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h6",
+   "role": "networks targeted for account creation, persistence, lateral movement, and ransomware enabling",
+   "source": "llm",
+   "name": "Victim networks",
+   "evidence_refs": [
+    "evidence-63",
+    "evidence-64",
+    "evidence-65"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h7",
+   "role": "servers on victim networks used for persistence, discovery, and command and control",
+   "source": "llm",
+   "name": "Compromised servers",
+   "evidence_refs": [
+    "evidence-66",
+    "evidence-67",
+    "evidence-68",
+    "evidence-69"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Citrix Netscaler",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-57"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2019-19781",
+    "CVE-2023-3519",
+    "CVE-2022-1388"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s2",
+   "name": "F5 BIG-IP",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-59"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2022-1388"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s3",
+   "name": "Pulse Secure/Ivanti VPN",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-60"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2022-1388",
+    "CVE-2024-21887"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s4",
+   "name": "PanOS firewall",
+   "source": "llm",
+   "host_ref": "h4",
+   "evidence_refs": [
+    "evidence-61"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2024-3400"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s5",
+   "name": "Check Point Security Gateway",
+   "source": "llm",
+   "host_ref": "h5",
+   "evidence_refs": [
+    "evidence-62"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2024-24919"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s6",
+   "name": "Citrix XenDesktop",
+   "source": "llm",
+   "host_ref": "h6",
+   "evidence_refs": [
+    "evidence-70"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s7",
+   "name": "Domain controllers",
+   "source": "llm",
+   "host_ref": "h6",
+   "evidence_refs": [
+    "evidence-64"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s8",
+   "name": "Windows Scheduled Task",
+   "source": "llm",
+   "host_ref": "h7",
+   "evidence_refs": [
+    "evidence-66",
+    "evidence-71"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s9",
+   "name": "Windows PowerShell Web Access",
+   "source": "llm",
+   "host_ref": "h7",
+   "evidence_refs": [
+    "evidence-69"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "h6",
+   "h7"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6",
+   "s7",
+   "s8",
+   "s9"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "netscaler.1",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-72"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "netscaler.php",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-73"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ctxHeaderLogon.php",
+   "type": "file",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-74"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "version.dll",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-75",
+    "evidence-76"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SpaceAgentTaskMgrSHR",
+   "type": "scheduled task",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-77"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Meshcentral",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-78"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "AnyDesk",
+   "type": "tool",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-79"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "contig.exe (renamed to dllhost.ext)",
+   "type": "file",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-80"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2024-3400",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82",
+    "evidence-83",
+    "evidence-84",
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2019-19781",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86",
+    "evidence-87",
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2023-3519",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89",
+    "evidence-90",
+    "evidence-91",
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "cve",
+   "value": "CVE-2022-1388",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93",
+    "evidence-94",
+    "evidence-95",
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "cve",
+   "value": "CVE-2024-21887",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97",
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "ui_style.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "files.catbox[.]moe",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100",
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "ngrok[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102",
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "Shodan[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "cve",
+   "value": "CVE-2024-24919",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "138.68.90[.]19",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "167.99.202[.]130",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "78.141.238[.]182",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "51.16.51[.]81",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "51.20.138[.]134",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "134.209.30[.]220",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "13.53.124[.]246",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "api.gupdate[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "githubapp[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "18.134.0[.]66",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "ip",
+   "value": "193.149.190[.]248",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "45.76.65[.]42",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "ip",
+   "value": "206.71.148[.]78",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "ip",
+   "value": "193.149.187[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "domain",
+   "value": "login.forticloud[.]online",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "cloud.sophos[.]one",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "***.ngrok[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The Iranian cyber actors’ initial intrusions rely upon exploits of remote external services on internet-facing assets to gain initial access to victim networks. As of July 2024, these actors have been observed scanning IP addresses hosting Check Point Security Gateways, probing for devices potentially vulnerable to CVE-2024-24919. As of April 2024, these actors have conducted mass scanning of IP addresses hosting Palo Alto Networks PAN-OS and GlobalProtect VPN devices. The actors were likely conducting reconnaissance and probing for devices vulnerable to CVE-2024-3400. Historically, this group has exploited organizations by leveraging CVE-2019-19781 and CVE-2023-3519 related to Citrix Netscaler, and CVE-2022-1388 related to BIG-IP F5 devices.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Iranian cyber actors’ initial intrusions rely upon exploits of remote external services on internet facing assets to gain initial access to victim networks."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actors’ initial access is usually obtained via exploiting a public-facing networking device, such as Citrix Netscaler (CVE-2019-19781 and CVE-2023-3519), F5 BIG-IP (CVE-2022-1388), Pulse Secure/Ivanti VPNs (CVE-2024-21887), and, more recently, PanOS firewalls (CVE-2024-3400).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors’ initial access is usually obtained via exploiting a public facing networking device, such as Citrix Netscaler (CVE 2019 19781 and CVE 2023 3519), F5"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Iranian cyber actors scan and exploit public-facing networking devices, including the following devices and associated CVEs: Citrix Netscaler (CVEs-2019-19781 and CVE-2023-3519), F5 BIG-IP (CVE-2022-1388), Pulse Secure/Ivanti VPNs (CVE-2024-21887), PanOS firewalls (CVE-2024-3400), Check Point Security Gateways (CVE-2024-24919)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors scan and exploit public facing networking devices, including the following devices and associated CVEs: "
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The actors have been observed using the Shodan search engine to identify and enumerate IP addresses that host devices vulnerable to a particular CVE.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors have been observed using the Shodan search engine to identify and enumerate IP addresses that host devices vulnerable to a particular CVE."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Iranian cyber actors use Shodan (Shodan[.]io) to identify internet infrastructure hosting devices vulnerable to particular CVEs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors use Shodan (Shodan[.]io) to identify internet "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Create the directory /var/vpn/themes/imgs/ on Citrix Netscaler devices to deploy a webshell. Malicious files deployed to this directory include: netscaler.1, netscaler.php, ctxHeaderLogon.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Create the directory /var/vpn/themes/imgs/ on Citrix Netscaler devices to deploy a webshell. Malicious files deployed to this directory include: "
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Specifically related to Netscaler, place additional webshells on compromised devices immediately after system owners patch the exploited vulnerability. The following file locations and filenames have been observed on devices: /netscaler/logon/LogonPoint/uiareas/ui_style.php, /netscaler/logon/sanpdebug.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Specifically related to Netscaler, place additional webshells on compromised devices immediately after system owners patch the exploited vulnerability. The foll"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Iranian cyber actors capture login credentials on compromised Netscaler devices via deployed webshell; create a directory on Netscaler devices for webshell deployment; deploy webshells on compromised Netscaler devices in two directories (observed closely after system owning patching); and place the malicious backdoor version.dll.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " devices in two directories (observed closely after system owning patching); and place the malicious backdoor version.dll."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Create accounts on victim networks; observed names include “sqladmin$,” “adfsservice,” “IIS_Admin,” “iis-admin,” and “John McCain”.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Create accounts on victim networks; observed names include “sqladmin$,” “adfsservice,” “IIS_Admin,” “iis admin,” and “John McCain”."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Iranian cyber actors create local accounts on victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors create local accounts on victim networks."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Request exemptions to the zero-trust application and security policies for tools they intend to deploy on a victim network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Request exemptions to the zero trust application and security policies for tools they intend to deploy on a victim network."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Iranian cyber actors request exemptions to zero-trust application for tools they intend to deploy.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors request exemptions to zero trust application for tools "
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/ task folder. This task uses a DLL side-loading technique against the signed Microsoft SysInternals executable contig.exe, which may be renamed to dllhost.ext, to load a payload from version.dll. This file has been observed being executed from the Windows Downloads directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/ task folder. This task uses a DLL side loading technique against the signed Microsoft"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Place a malicious backdoor version.dll in C:\\Windows\\ADFS\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Place a malicious backdoor version.dll in C:\\Windows\\ADFS\\ directory."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Use a scheduled task to load malware through installed backdoors.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use a scheduled task to load malware through installed backdoors."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Deployment of Meshcentral to connect with compromised servers for remote access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Deployment of Meshcentral to connect with compromised servers for remote access."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Iranian cyber actors deploy Meshcentral to connect with compromised servers for remote access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors deploy Meshcentral to connect with compromised servers for remote access."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "For persistence and as detection and mitigation occurs, the actors create a daily Windows service task with random eight characters and attempt execution of a similarly named DLL contained in the C:\\Windows\\system32\\drivers\\ directory. For example, a service named “test” was observed attempting to load a file located at C:\\WINDOWS\\system32\\drivers\\test.sys.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "For persistence and as detection and mitigation occurs, the actors create a daily Windows service task with random eight characters and attempt execution of a s"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Iranian cyber actors implement the daily creation of a Windows service task for persistence as detection and mitigation occur.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "38"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors implement the daily creation of a Windows service "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Repurpose compromised credentials from exploiting networking devices, such as Citrix Netscaler, to log into other applications (i.e., Citrix XenDesktop).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Repurpose compromised credentials from exploiting networking devices, such as Citrix Netscaler, to log into other applications (i.e., Citrix XenDesktop)."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Iranian cyber actors repurpose compromised credentials (e.g., from a Netscaler device) to log into other applications.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors repurpose compromised credentials (e.g., from a "
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Iranian cyber actors repurpose administrative credentials of network admins to log into domain controllers and other infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors repurpose administrative credentials of network "
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Use administrator credentials to disable antivirus and security software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9863,
+   "matched_text": "Use administrator credentials to disable antivirus and security software"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Iranian cyber actors use administrator credentials to disable antivirus and security software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors use administrator credentials to disable "
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Lower PowerShell policies to a less secure level.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "ower PowerShell policies to a less secure level."
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Iranian cyber actors lower PowerShell policies to a less secure level.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors lower PowerShell policies to a less secure "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Attempt to enter security exemption tickets to the network security device or contractor to get the actor’s tools allowlisted.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attempt to enter security exemption tickets to the network security device or contractor to get the actor’s tools allowlisted."
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Iranian cyber actors attempt to enter security exemption tickets to the network security device or contractor to get their tools allowlisted.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors attempt to enter security exemption tickets "
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Use a compromised administrator account to initiate a remote desktop session to another server on the network. In one instance, the FBI observed this technique being used to attempt to start Microsoft Windows PowerShell Integrated Scripted Environment (ISE) to run the command “Invoke-WebRequest” with a URI including files.catbox[.]moe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use a compromised administrator account to initiate a remote desktop session to another server on the network. In one instance, the FBI observed this technique "
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Iranian cyber actors use an admin account to initiate a remote desktop session to start Microsoft Windows PowerShell ISE.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "55"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors use an admin account to initiate a remote "
+  },
+  {
+   "id": "evidence-33",
+   "quote": "Export system registry hives and network firewall configurations on compromised servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Export system registry hives and network firewall configurations on compromised servers."
+  },
+  {
+   "id": "evidence-34",
+   "quote": "Iranian cyber actors export registry hives and network firewall configurations.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors export registry hives and network firewall configurations."
+  },
+  {
+   "id": "evidence-35",
+   "quote": "Exfiltrate account usernames from the victim domain controller, as well as access configuration files and logs—presumably to gather network and user account information for use in further exploitation efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Exfiltrate account usernames from the victim domain controller, as well as access configuration files and logs presumably to gather network and user account inf"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "Iranian cyber actors exfiltrate account usernames from the domain controller and access configuration files and logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors exfiltrate account usernames from the domain "
+  },
+  {
+   "id": "evidence-37",
+   "quote": "Install “AnyDesk” remote access program as a backup access method.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Install “AnyDesk” remote access program as a backup access method."
+  },
+  {
+   "id": "evidence-38",
+   "quote": "Iranian cyber actors install “AnyDesk” remote access program.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors install “AnyDesk” remote access program."
+  },
+  {
+   "id": "evidence-39",
+   "quote": "Enable servers to use Windows PowerShell Web Access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Enable servers to use Windows PowerShell Web Access."
+  },
+  {
+   "id": "evidence-40",
+   "quote": "Iranian cyber actors enable servers to use Windows PowerShell Web Access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "56"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Iranian cyber actors enable servers to use Windows PowerShell Web "
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Use the open source tunneling tool Ligolo (ligolo/ligolo-ng). Use NGROK (ngrok[.]io) deployment to create outbound connections to a random subdomain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Use NGROK (ngrok[.]io) deployment to create outbound connections to a random subdomain."
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Iranian cyber actors use ligolo / ligolo-ng for open source tunneling and ngrok[.]io NGROK to create outbound connections to a random subdomain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " source tunneling and ngrok[.]io NGROK to create outbound connections to a random subdomain."
+  },
+  {
+   "id": "evidence-43",
+   "quote": "After infiltrating victim networks, the actors collaborate with ransomware affiliates (including NoEscape, Ransomhouse, and ALPHV [aka BlackCat]) in exchange for a percentage of the ransom payments by providing affiliates with access to victim networks, locking victim networks, and strategizing to extort victims.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After infiltrating victim networks, the actors collaborate with ransomware affiliates (including NoEscape, Ransomhouse, and ALPHV [aka BlackCat]) in exchange fo"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "The actors offer full domain control privileges, as well as domain admin credentials, to numerous networks worldwide. More recently, the FBI identified these actors collaborating directly with ransomware affiliates to enable encryption operations in exchange for a percentage of the ransom payments. These actors have collaborated with the ransomware affiliates NoEscape, Ransomhouse, and ALPHV (aka BlackCat). The Iranian cyber actors’ involvement in these ransomware attacks goes beyond providing access; they work closely with ransomware affiliates to lock victim networks and strategize on approaches to extort victims.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors offer full domain control privileges, as well as domain admin credentials, to numerous networks worldwide. More recently, the FBI identified these ac"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "Following exploitation of vulnerable devices, the actors use the following techniques: Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Following exploitation of vulnerable devices, the actors use the following techniques:"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "Repurpose compromised credentials from exploiting networking devices, such as Citrix Netscaler, to log into other applications (i.e., Citrix XenDesktop)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Repurpose compromised credentials from exploiting networking devices, such as Citrix Netscaler, to log into other applications (i.e., Citrix XenDesktop)"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "Repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "Use administrator credentials to disable antivirus and security software",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use administrator credentials to disable antivirus and security software"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "Attempt to enter security exemption tickets to the network security device or contractor to get the actor’s tools allowlisted",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attempt to enter security exemption tickets to the network security device or contractor to get the actor’s tools allowlisted"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "Following exploitation of vulnerable devices, the actors use the following techniques: Create accounts on victim networks",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6667,
+   "matched_text": "Following exploitation of vulnerable devices, the actors use the following techniques:"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "Following exploitation of vulnerable devices, the actors use the following techniques: Request exemptions to the zero-trust application and security policies for tools they intend to deploy on a victim network",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Following exploitation of vulnerable devices, the actors use the following techniques:"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/ task folder. This task uses a DLL side-loading technique ... to load a payload from version.dll.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/ task folder. This task uses a DLL side loading technique … to load a payload from ver"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "Use a scheduled task to load malware through installed backdoors",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use a scheduled task to load malware through installed backdoors"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "Deployment of Meshcentral to connect with compromised servers for remote access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Deployment of Meshcentral to connect with compromised servers for remote access"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "Install “AnyDesk” remote access program as a backup access method",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Install “AnyDesk” remote access program as a backup access method"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "Use a compromised administrator account to initiate a remote desktop session to another server on the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Use a compromised administrator account to initiate a remote desktop session to another server on the network."
+  },
+  {
+   "id": "evidence-57",
+   "quote": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as Citrix Netscaler ... to gain initial access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " public facing networking device"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "Following exploitation of vulnerable devices, the actors use the following techniques: Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.875,
+   "matched_text": " Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as ... F5 BIG-IP ... to gain initial access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " public facing networking device"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as ... Pulse Secure/Ivanti VPNs ... to gain initial access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6111,
+   "matched_text": " public facing networking device"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as ... PanOS firewalls ... to gain initial access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " public facing networking device"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "The Iranian cyber actors exploit vulnerabilities in public-facing networking devices such as ... Check Point Security Gateways to gain initial access to victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " public facing networking device"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "The actors create local accounts on victim networks with observed names including sqladmin$, adfsservice, IIS_Admin, iis-admin, and John McCain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8824,
+   "matched_text": " accounts on victim networks"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "The actors repurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9231,
+   "matched_text": "epurpose administrative credentials of network administrators to log into domain controllers and other infrastructure on victim networks."
+  },
+  {
+   "id": "evidence-65",
+   "quote": "The actors use administrator credentials to disable antivirus and security software on victim networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9,
+   "matched_text": "se administrator credentials to disable antivirus and security software"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "The actors create a malicious scheduled task named SpaceAgentTaskMgrSHR in Windows/Spaceport/task folder ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " SpaceAgentTaskMgrSHR in Windows/Spaceport/"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "The actors place a malicious backdoor version.dll in the C:\\Windows\\ADFS\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "lace a malicious backdoor version.dll in "
+  },
+  {
+   "id": "evidence-68",
+   "quote": "The actors export system registry hives and network firewall configurations on compromised servers for discovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9091,
+   "matched_text": "xport system registry hives and network firewall configurations on compromised servers"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "The actors enable servers to use Windows PowerShell Web Access for command and control.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9,
+   "matched_text": "nable servers to use Windows PowerShell Web Access"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "The actors repurpose compromised credentials from exploited networking devices such as Citrix Netscaler to log into other applications like Citrix XenDesktop.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8,
+   "matched_text": "epurpose compromised credentials from exploit"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "Use scheduled tasks to load malware through installed backdoors for persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-72",
+   "quote": "Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Capture login credentials using webshells on compromised Netscaler devices and append to file named netscaler.1 in the same directory as the webshell"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "Malicious files deployed to this directory include: netscaler.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Malicious files deployed to this directory include: "
+  },
+  {
+   "id": "evidence-74",
+   "quote": "Malicious files deployed to this directory include: ctxHeaderLogon.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Malicious files deployed to this directory include: "
+  },
+  {
+   "id": "evidence-75",
+   "quote": "Place a malicious backdoor version.dll in C:\\Windows\\ADFS\\ directory",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Place a malicious backdoor version.dll in C:\\Windows\\ADFS\\ directory"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "This task uses a DLL side-loading technique ... to load a payload from version.dll executed from the Windows Downloads directory",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " executed from the Windows Downloads directory"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/task folder",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Create malicious scheduled task SpaceAgentTaskMgrSHR in Windows/Spaceport/"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "Deploy Meshcentral to connect with compromised servers for remote access",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Meshcentral to connect with compromised servers for remote access"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "Install AnyDesk remote access program as a backup access method",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " remote access program as a backup access method"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "This task uses a DLL side-loading technique against the signed Microsoft SysInternals executable contig.exe, which may be renamed to dllhost.ext",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This task uses a DLL side loading technique against the signed Microsoft SysInternals executable contig.exe, which may be renamed to dllhost.ext"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "CVE-2024-3400",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 3400"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "CVE-2024-3400",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 3400"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "CVE-2024-3400",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 3400"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "CVE-2024-3400",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 3400"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "CVE-2019-19781",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2019 19781"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "CVE-2023-3519",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3519"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "CVE-2023-3519",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3519"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "CVE-2023-3519",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3519"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "CVE-2023-3519",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 3519"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "CVE-2022-1388",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 1388"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "CVE-2022-1388",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 1388"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "CVE-2022-1388",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 1388"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "CVE-2022-1388",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "94"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 1388"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "CVE-2024-21887",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 21887"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "CVE-2024-21887",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 21887"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "ui_style.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ui_style.php"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "files.catbox[.]moe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "files.catbox[.]moe"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "files.catbox[.]moe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "files.catbox[.]moe"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "ngrok[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ngrok[.]io"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "ngrok[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "65"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ngrok[.]io"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "Shodan[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Shodan[.]io"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "CVE-2024-24919",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2024 24919"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "138.68.90[.]19",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "69"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "138.68.90[.]19"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "167.99.202[.]130",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "70"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "167.99.202[.]130"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "78.141.238[.]182",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "71"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "78.141.238[.]182"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "51.16.51[.]81",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "72"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.16.51[.]81"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "51.20.138[.]134",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "73"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.20.138[.]134"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "134.209.30[.]220",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "74"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "134.209.30[.]220"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "13.53.124[.]246",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "77"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "13.53.124[.]246"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "api.gupdate[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "78"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "api.gupdate[.]net"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "githubapp[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "79"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "githubapp[.]net"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "18.134.0[.]66",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "83"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "18.134.0[.]66"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "193.149.190[.]248",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "84"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.149.190[.]248"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "45.76.65[.]42",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.76.65[.]42"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "206.71.148[.]78",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "86"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "206.71.148[.]78"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "193.149.187[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "87"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.149.187[.]41"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "login.forticloud[.]online",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "login.forticloud[.]online"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "cloud.sophos[.]one",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "90"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cloud.sophos[.]one"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "***.ngrok[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "***.ngrok[.]io"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Citrix Netscaler devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix Netscaler devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Citrix Netscaler devices",
+    "action:a3 — Deploy webshells on compromised Citrix Netscaler devices"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix Netscaler devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Citrix Netscaler devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix Netscaler devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Citrix Netscaler devices",
+    "action:a3 — Deploy webshells on compromised Citrix Netscaler devices"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix Netscaler devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Citrix Netscaler devices — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Citrix Netscaler devices 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Citrix Netscaler devices",
+    "action:a3 — Deploy webshells on compromised Citrix Netscaler devices"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Citrix Netscaler devices",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "internet-facing",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "F5 BIG-IP devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "F5 BIG-IP devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — F5 BIG-IP devices"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "F5 BIG-IP devices",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-59"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "F5 BIG-IP devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "F5 BIG-IP devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — F5 BIG-IP devices"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "F5 BIG-IP devices",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-59"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "F5 BIG-IP devices — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "F5 BIG-IP devices 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — F5 BIG-IP devices"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "F5 BIG-IP devices",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-59"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Pulse Secure/Ivanti VPN devices — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Pulse Secure/Ivanti VPN devices 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Pulse Secure/Ivanti VPN devices"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Pulse Secure/Ivanti VPN devices",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-60"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Pulse Secure/Ivanti VPN devices — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Pulse Secure/Ivanti VPN devices 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Pulse Secure/Ivanti VPN devices"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Pulse Secure/Ivanti VPN devices",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-60"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Pulse Secure/Ivanti VPN devices — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Pulse Secure/Ivanti VPN devices 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Pulse Secure/Ivanti VPN devices"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Pulse Secure/Ivanti VPN devices",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-60"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "PanOS firewalls — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PanOS firewalls 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — PanOS firewalls"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PanOS firewalls",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-61"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "PanOS firewalls — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "PanOS firewalls 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — PanOS firewalls"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PanOS firewalls",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-61"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "PanOS firewalls — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PanOS firewalls 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — PanOS firewalls"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PanOS firewalls",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-61"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "Check Point Security Gateways — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Check Point Security Gateways 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — Check Point Security Gateways"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Check Point Security Gateways",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-62"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "Check Point Security Gateways — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Check Point Security Gateways 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — Check Point Security Gateways"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Check Point Security Gateways",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-62"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "Check Point Security Gateways — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Check Point Security Gateways 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — Check Point Security Gateways"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Check Point Security Gateways",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-62"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os",
+   "field": "Victim networks — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h6 — Victim networks",
+    "action:a4 — Create accounts on victim networks",
+    "action:a5 — Request exemptions to zero-trust application and security policies",
+    "action:a12 — Repurpose administrative credentials to log into domain controllers and infrastructure",
+    "action:a13 — Disable antivirus and security software using administrator credentials",
+    "action:a22 — Collaborate with ransomware affiliates to enable ransomware attacks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-43",
+      "evidence-44"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os-version",
+   "field": "Victim networks — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h6 — Victim networks",
+    "action:a4 — Create accounts on victim networks",
+    "action:a5 — Request exemptions to zero-trust application and security policies",
+    "action:a12 — Repurpose administrative credentials to log into domain controllers and infrastructure",
+    "action:a13 — Disable antivirus and security software using administrator credentials",
+    "action:a22 — Collaborate with ransomware affiliates to enable ransomware attacks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-43",
+      "evidence-44"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-network",
+   "field": "Victim networks — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h6 — Victim networks",
+    "action:a4 — Create accounts on victim networks",
+    "action:a5 — Request exemptions to zero-trust application and security policies",
+    "action:a12 — Repurpose administrative credentials to log into domain controllers and infrastructure",
+    "action:a13 — Disable antivirus and security software using administrator credentials",
+    "action:a22 — Collaborate with ransomware affiliates to enable ransomware attacks"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-63",
+      "evidence-64",
+      "evidence-65",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-43",
+      "evidence-44"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-os",
+   "field": "Compromised servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h7 — Compromised servers",
+    "action:a9 — Deploy Meshcentral for remote access",
+    "action:a17 — Export system registry hives and network firewall configurations"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised servers",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-17",
+      "evidence-18",
+      "evidence-33",
+      "evidence-34"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-os-version",
+   "field": "Compromised servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h7 — Compromised servers",
+    "action:a9 — Deploy Meshcentral for remote access",
+    "action:a17 — Export system registry hives and network firewall configurations"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised servers",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-17",
+      "evidence-18",
+      "evidence-33",
+      "evidence-34"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h7-network",
+   "field": "Compromised servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h7 — Compromised servers",
+    "action:a9 — Deploy Meshcentral for remote access",
+    "action:a17 — Export system registry hives and network firewall configurations"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised servers",
+     "source_ref": "hosts:h7.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-66",
+      "evidence-67",
+      "evidence-68",
+      "evidence-69",
+      "evidence-17",
+      "evidence-18",
+      "evidence-33",
+      "evidence-34"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h7",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-ngrok-version",
+   "field": "Ngrok version",
+   "category": "software",
+   "reason": "IR 指出 Ngrok 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a21 提到 Ngrok，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a21 — Use Ligolo and NGROK for tunneling and outbound connections"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Use Ligolo and NGROK for tunneling and outbound connections",
+     "source_ref": "actions:a21.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41",
+      "evidence-42"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Citrix Netscaler — 版本",
+   "category": "version",
+   "reason": "IR 指出 Citrix Netscaler（CVE-2019-19781, CVE-2023-3519, CVE-2022-1388），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Citrix Netscaler 的哪個版本？請選受 CVE-2019-19781, CVE-2023-3519, CVE-2022-1388 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Citrix Netscaler",
+    "action:a1 — Exploit public-facing networking devices to gain initial access",
+    "action:a3 — Deploy webshells on compromised Citrix Netscaler devices",
+    "action:a11 — Repurpose compromised credentials to log into other applications"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Citrix Netscaler",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2019-19781, CVE-2023-3519, CVE-2022-1388",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s2-version",
+   "field": "F5 BIG-IP — 版本",
+   "category": "version",
+   "reason": "IR 指出 F5 BIG-IP（CVE-2022-1388），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 F5 BIG-IP 的哪個版本？請選受 CVE-2022-1388 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s2 — F5 BIG-IP",
+    "action:a1 — Exploit public-facing networking devices to gain initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "F5 BIG-IP",
+     "source_ref": "services:s2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-59"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2022-1388",
+     "source_ref": "services:s2.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-59"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s2",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s3-version",
+   "field": "Pulse Secure/Ivanti VPN — 版本",
+   "category": "version",
+   "reason": "IR 指出 Pulse Secure/Ivanti VPN（CVE-2022-1388, CVE-2024-21887），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Pulse Secure/Ivanti VPN 的哪個版本？請選受 CVE-2022-1388, CVE-2024-21887 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s3 — Pulse Secure/Ivanti VPN",
+    "action:a1 — Exploit public-facing networking devices to gain initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Pulse Secure/Ivanti VPN",
+     "source_ref": "services:s3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-60"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2022-1388, CVE-2024-21887",
+     "source_ref": "services:s3.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-60"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s3",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s4-version",
+   "field": "PanOS firewall — 版本",
+   "category": "version",
+   "reason": "IR 指出 PanOS firewall（CVE-2024-3400），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 PanOS firewall 的哪個版本？請選受 CVE-2024-3400 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s4 — PanOS firewall",
+    "action:a1 — Exploit public-facing networking devices to gain initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "PanOS firewall",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-61"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2024-3400",
+     "source_ref": "services:s4.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-61"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s5-version",
+   "field": "Check Point Security Gateway — 版本",
+   "category": "version",
+   "reason": "IR 指出 Check Point Security Gateway（CVE-2024-24919），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Check Point Security Gateway 的哪個版本？請選受 CVE-2024-24919 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s5 — Check Point Security Gateway",
+    "action:a1 — Exploit public-facing networking devices to gain initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Check Point Security Gateway",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-62"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2024-24919",
+     "source_ref": "services:s5.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-62"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s6-version",
+   "field": "Citrix XenDesktop — 版本",
+   "category": "version",
+   "reason": "IR 指出 Citrix XenDesktop，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Citrix XenDesktop 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s6 — Citrix XenDesktop",
+    "action:a11 — Repurpose compromised credentials to log into other applications"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Citrix XenDesktop",
+     "source_ref": "services:s6.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-70"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s6",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a12, a18 涉及 Active Directory，但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "action:a12 — Repurpose administrative credentials to log into domain controllers and infrastructure",
+    "action:a18 — Exfiltrate account usernames and access configuration files and logs"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "AD 相關步驟",
+     "value": "Repurpose administrative credentials to log into domain controllers and infrastructure",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-24"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Exfiltrate account usernames and access configuration files and logs",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a6, a20, a21 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a6 — Create malicious scheduled task using DLL side-loading technique",
+    "action:a20 — Enable Windows PowerShell Web Access on servers",
+    "action:a21 — Use Ligolo and NGROK for tunneling and outbound connections"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Create malicious scheduled task using DLL side-loading technique",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Enable Windows PowerShell Web Access on servers",
+     "source_ref": "actions:a20.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-39",
+      "evidence-40"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Use Ligolo and NGROK for tunneling and outbound connections",
+     "source_ref": "actions:a21.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41",
+      "evidence-42"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a3 — Deploy webshells on compromised Citrix Netscaler devices",
+    "action:a11 — Repurpose compromised credentials to log into other applications",
+    "action:a12 — Repurpose administrative credentials to log into domain controllers and infrastructure",
+    "action:a13 — Disable antivirus and security software using administrator credentials",
+    "action:a18 — Exfiltrate account usernames and access configuration files and logs",
+    "host:h1 — Citrix Netscaler devices",
+    "host:h6 — Victim networks"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Deploy webshells on compromised Citrix Netscaler devices",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Repurpose compromised credentials to log into other applications",
+     "source_ref": "actions:a11.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Repurpose administrative credentials to log into domain controllers and infrastructure",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-24"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Disable antivirus and security software using administrator credentials",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Exfiltrate account usernames and access configuration files and logs",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-35",
+      "evidence-36"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.6475,
+  "unsupported_claim_count": 44,
+  "inferred_count": 11,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

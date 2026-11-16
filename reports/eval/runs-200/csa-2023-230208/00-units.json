@@ -1,0 +1,142 @@
+[
+ {
+  "id": "p1",
+  "text": "# ESXiArgs Ransomware Virtual Machine Recovery Guidance"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-039A\n> - Date: 2023-02-08\n> - URL: https://www.ic3.gov/CSA/2023/230208.pdf\n> - PDF SHA-256: 2a395f81051ab0b22051d89d5a2a8214622b9823a1b74404a0b27a06d6ef1556 (`source.pdf`, 8 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (29 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR             Product ID: AA23-039A\n                                                                                                                    February 8, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "ESXiArgs Ransomware Virtual Machine\n        Recovery Guidance\n        SUMMARY\n        The Cybersecurity and Infrastructure Security Agency (CISA) and the Federal Bureau of Investigation\n        (FBI) are releasing this joint Cybersecurity Advisory (CSA) in response to the ongoing ransomware\n        campaign, known as “ESXiArgs.” Malicious actors may be exploiting known vulnerabilities in VMware\n        ESXi servers that are likely running unpatched and out-of-service or out-of-date versions of VMware\n        ESXi software to gain access and deploy ransomware. The ESXiArgs ransomware encrypts\n        configuration files on ESXi servers, potentially rendering virtual machines (VMs) unusable.\n        CISA has released an ESXiArgs recovery script at github.com/cisagov/ESXiArgs-Recover.\n        Organizations that have fallen victim to ESXiArgs ransomware can use this script to attempt to\n        recover their files. This CSA provides guidance on how to use the script."
+ },
+ {
+  "id": "p5",
+  "text": "ESXiArgs actors have compromised over 3,800 servers globally. CISA and FBI encourage all\n        organizations managing VMware ESXi servers to:"
+ },
+ {
+  "id": "p6",
+  "text": "•     Update servers to the latest version of VMware ESXi software,\n            •     Harden ESXi hypervisors by disabling the Service Location Protocol (SLP) service, and\n            •     Ensure the ESXi hypervisor is not exposed to the public internet."
+ },
+ {
+  "id": "p7",
+  "text": "If malicious actors have compromised your organization with ESXiArgs ransomware, CISA and FBI\n        recommend following the script and guidance provided in this CSA to attempt to recover access to\n        your files."
+ },
+ {
+  "id": "p8",
+  "text": "Note: CISA and FBI will update this CSA as more information becomes available."
+ },
+ {
+  "id": "p9",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n        your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n        available, please include the following information regarding the incident: date, time, and location of the incident;\n        type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n        company or organization; and a designated point of contact.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when\n        information carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and\n        procedures for public release. Subject to standard copyright rules, TLP:CLEAR information may be distributed\n        without restriction. For more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p10",
+  "text": "TECHNICAL DETAILS\n       Open-source reporting indicates that malicious actors are exploiting known vulnerabilities in VMware\n       ESXi software to gain access to servers and deploy ESXiArgs ransomware. The actors are likely\n       targeting end-of-life ESXi servers or ESXi servers that do not have the available ESXi software\n       patches applied.[1]\n       ESXiArgs ransomware encrypts certain configuration files on ESXi servers, potentially rendering VMs\n       unusable. Specifically, the ransomware encrypts configuration files associated with the VMs; it does\n       not encrypt flat files. As a result, it is possible, in some cases, for victims to reconstruct the encrypted\n       configuration files based on the unencrypted flat file. The recovery script documented below\n       automates the process of recreating configuration files. The full list of file extensions encrypted by the\n       malware is: vmdk, vmx, vmxf, vmsd, vmsn, vswp, vmss, nvram, vmem."
+ },
+ {
+  "id": "p11",
+  "text": "RECOVERY GUIDANCE\n       CISA and FBI do not encourage paying the ransom as payment does not guarantee victim files will be\n       recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n       encourage other criminal actors to engage in the distribution of ransomware, and/or fund illicit\n       activities. Regardless of whether you or your organization have decided to pay the ransom, CISA and\n       FBI urge you to promptly report ransomware incidents to a local FBI Field Office, or to CISA\n       at cisa.gov/report.\n       CISA is providing these steps to enable organizations to attempt recovery of their VMs. CISA’s\n       GitHub ESXiArgs recovery script, which also outlines these steps, is available at\n       github.com/cisagov/ESXiArgs-Recover. CISA is aware that some organizations have reported\n       success in recovering files without paying ransoms. CISA’s script is based on findings published by\n       third-party researchers.[2]\n       Any organization seeking to use CISA’s ESXiArgs recovery script should carefully review the script to\n       determine if it is appropriate for their environment before deploying it. This script does not seek to\n       delete the encrypted configuration files, but instead seeks to create new configuration files that enable\n       access to the VMs. While CISA works to ensure that scripts like this one are safe and effective, this\n       script is delivered without warranty, either implicit or explicit. Do not use this script without\n       understanding how it may affect your system. CISA does not assume liability for damage caused by\n       this script. Note: Organizations that run into problems with the script can create a GitHub issue at\n       https://github.com/cisagov/ESXiArgs-Recover/issues; CISA will do our best to resolve concerns.\n           1. Quarantine or take affected hosts offline to ensure that repeat infection does not occur.\n           2. Download CISA’s recovery script and save it as /tmp/recover.sh."
+ },
+ {
+  "id": "p12",
+  "text": "o    For example, with wget: wget -O /tmp/recover.sh\n                         https://raw.githubusercontent.com/cisagov/ESXiArgs-\n                         Recover/main/recover.sh."
+ },
+ {
+  "id": "p13",
+  "text": "3. Give the script execute permissions: chmod +x /tmp/recover.sh."
+ },
+ {
+  "id": "p14",
+  "text": "4. Navigate to the folder of a VM you would like to recover and run ls to view the files."
+ },
+ {
+  "id": "p15",
+  "text": "o    Note: You may browse these folders by running ls /vmfs/volumes/datastore1. For\n                         instance, if the folder is called example, run cd /vmfs/volumes/datastore1/example."
+ },
+ {
+  "id": "p16",
+  "text": "5. View files by running ls. Note the name of the VM (via naming convention: [name].vmdk).\n           6. Run the recovery script with /tmp/recover.sh [name], where [name] is the name of the\n              VM determined previously.\n                    a. If the VM is a thin format, run /tmp/recover.sh [name] thin.\n                   b. If successful, the recovery script will output that it has successfully run. If unsuccessful,\n                       it may not be possible for the recovery script to recover your VMs; consider engaging\n                       external incident response help.\n           7. If the script succeeded, re-register the VM.\n                    a. If the ESXi web interface is inaccessible, remove the ransom note and restore\n                       access via the following steps. (Note: Taking the steps below moves the ransom note\n                       to the file ransom.html. Consider archiving this file for future incident review.)\n                              i. Run cd /usr/lib/vmware/hostd/docroot/ui/ && mv index.html\n                                 ransom.html && mv index1.html index.html.\n                             ii. Run cd /usr/lib/vmware/hostd/docroot && mv index.html\n                                 ransom.html && rm index.html && mv index1.html index.html.\n                             iii. Reboot the ESXi server (e.g., with the reboot command). After a few\n                                  minutes, you should be able to navigate to the web interface.\n                    b. In the ESXi web interface, navigate to the Virtual Machines page.\n                              i. If the VM you restored already exists, right click on the VM and select\n                                 Unregister (see figure 1)."
+ },
+ {
+  "id": "p17",
+  "text": "Figure 1: Unregistering the virtual machine"
+ },
+ {
+  "id": "p18",
+  "text": "ii. Select Create / Register VM (see figure 2).\n                             iii. Select Register an existing virtual machine (see figure 2)."
+ },
+ {
+  "id": "p19",
+  "text": "Figure 2: Registering the virtual machine, selecting machine to register"
+ },
+ {
+  "id": "p20",
+  "text": "iv. Click Select one or more virtual machines, a datastore or a\n                                 directory to navigate to the folder of the VM you restored. Select the vmx file\n                                 in the folder (see figure 3)."
+ },
+ {
+  "id": "p21",
+  "text": "Figure 3: Registering the virtual machine, finalizing registration"
+ },
+ {
+  "id": "p22",
+  "text": "v. Select Next and Finish. You should now be able to use the VM as normal.\n           8. Update servers to the latest software version, disable the Service Location Protocol\n              (SLP) service, and ensure the ESXi hypervisor is not configured to be exposed to the\n              public internet before putting systems back online."
+ },
+ {
+  "id": "p23",
+  "text": "Additional Incident Response\n       The above script only serves as a method to recover essential services. Although CISA and FBI have\n       not seen any evidence that the actors have established persistence, we recommend organizations\n       take the following additional incident response actions after applying the script:\n            1. Review network logging to and from ESXi hosts and the guest VMs for unusual scanning\n               activity.\n            2. Review traffic from network segments occupied by the ESXi hosts and guests. Consider\n               restricting non-essential traffic to and from these segments.\n       If you detect activity from the above, implement your incident response plan. CISA and FBI urge you\n       to promptly report ransomware incidents to a local FBI Field Office, or to CISA at cisa.gov/report.\n       Organizations should also collect and review artifacts, such as running processes/services, unusual\n       authentications, and recent network connections.\n       See the joint CSA from the cybersecurity authorities of Australia, Canada, New Zealand, the United\n       Kingdom, and the United States on Technical Approaches to Uncovering and Remediating Malicious"
+ },
+ {
+  "id": "p24",
+  "text": "Activity for additional guidance on hunting or investigating a network, and for common mistakes in\n       incident handling. CISA also encourages government network administrators to see CISA’s Federal\n       Government Cybersecurity Incident and Vulnerability Response Playbooks. Although tailored to\n       federal civilian branch agencies, these playbooks provide operational procedures for planning and\n       conducting cybersecurity incident and vulnerability response activities and detail steps for both\n       incident and vulnerability response.\n       Additional resources for recovering .vmdk files can be found on a third-party researcher’s website.[2]"
+ },
+ {
+  "id": "p25",
+  "text": "MITIGATIONS\n       Note: These mitigations align with the cross-sector Cybersecurity Performance Goals (CPGs)\n       developed by CISA and the National Institute of Standards and Technology (NIST). The CPGs\n       provide a minimum set of practices and protections that CISA and NIST recommend all organizations\n       implement. CISA and NIST based the CPGs on existing cybersecurity frameworks and guidance to\n       protect against the most common and impactful threats, tactics, techniques, and procedures. For\n       more information on the CPGs, including additional recommended baseline protections, see\n       cisa.gov/cpg.\n       CISA and FBI recommend all organizations:\n           •    Temporarily remove connectivity for the associated ESXi server(s).\n                   o Upgrade your ESXi servers to the latest version of VMware ESXi software [CPG\n                     5.1]. ESXi releases are cumulative, and the latest builds are documented in VMware’s\n                     article, Build numbers and versions of VMware ESXi/ESX.\n                   o Harden ESXi hypervisors by disabling the Service Location Protocol (SLP)\n                     service, which ESXiArgs may leverage. For more information on executing\n                     workarounds, see VMware’s guidance How to Disable/Enable the SLP Service on\n                     VMware ESXi.\n                   o Ensure your ESXi hypervisor is not configured to be exposed to the public\n                     internet."
+ },
+ {
+  "id": "p26",
+  "text": "In addition, CISA and FBI recommend organizations apply the following recommendations to prepare\n       for, mitigate/prevent, and respond to ransomware incidents."
+ },
+ {
+  "id": "p27",
+  "text": "Preparing for Ransomware\n           •    Maintain offline backups of data, and regularly test backup and restoration [CPG 7.3]. These\n                practices safeguard an organization’s continuity of operations or at least minimize potential\n                downtime from a ransomware incident and protect against data losses.\n           •    Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and covers\n                the entire organization’s data infrastructure.\n           •    Create, maintain, and exercise a basic cyber incident response plan and associated\n                communications plan that includes response procedures for a ransomware incident [CPG\n                7.1, 7.2]."
+ },
+ {
+  "id": "p28",
+  "text": "Mitigating and Preventing Ransomware\n           •    Restrict Server Message Block (SMB) Protocol within the network to only access servers that\n                are necessary and remove or disable outdated versions of SMB (i.e., SMB version 1). Threat\n                actors use SMB to propagate malware across organizations.\n           •    Require phishing-resistant MFA for as many services as possible [CPG 1.3]—particularly for\n                webmail, VPNs, accounts that access critical systems, and privileged accounts that manage\n                backups.\n           •    Review the security posture of third-party vendors and those interconnected with your\n                organization. Ensure all connections between third-party vendors and outside software or\n                hardware are monitored and reviewed for suspicious activity.\n           •    Implement allow-listing policies for applications and remote access that only allow systems to\n                execute known and permitted programs.\n           •    Open document readers in protected viewing modes to help prevent active content from\n                running.\n           •    Implement user training program and phishing exercises to raise awareness among users\n                about the risks of visiting suspicious websites, clicking on suspicious links, and opening\n                suspicious attachments. Reinforce the appropriate user response to phishing and\n                spearphishing emails.\n           •    Use strong passwords [CPG 1.4] and avoid reusing passwords for multiple accounts. See\n                CISA Tip Choosing and Protecting Passwords and the NIST’s Special Publication 800-63B:\n                Digital Identity Guidelines for more information.\n           •    Require administrator credentials to install software [CPG 1.5].\n           •    Audit user accounts with administrative or elevated privileges and configure access controls\n                with least privilege in mind [CPG 1.5].\n           •    Install and regularly update antivirus and antimalware software on all hosts.\n           •    Consider adding an email banner to messages coming from outside your organizations.\n           •    Disable hyperlinks in received emails.\n           •    Consider participating in CISA’s no-cost Automated Indicator Sharing (AIS) program to\n                receive real-time exchange of machine-readable cyber threat indicators and defensive\n                measures."
+ },
+ {
+  "id": "p29",
+  "text": "Responding to Ransomware Incidents\n       If a ransomware incident occurs at your organization:\n           •    Follow your organization’s Ransomware Response Checklist (see Preparing for Ransomware\n                section).\n           •    Scan backups. If possible, scan backup data with an antivirus program to check that it is free\n                of malware. This should be performed using an isolated, trusted system to avoid exposing\n                backups to potential compromise.\n           •    Follow the notification requirements as outlined in your cyber incident response plan."
+ },
+ {
+  "id": "p30",
+  "text": "•    Report incidents to CISA at cisa.gov/report, FBI at a local FBI Field Office, or the U.S. Secret\n                Service (USSS) at a USSS Field Office.\n           •    Apply incident response best practices found in the joint Cybersecurity Advisory, Technical\n                Approaches to Uncovering and Remediating Malicious Activity, developed by CISA and the\n                cybersecurity authorities of Australia, Canada, New Zealand, and the United Kingdom."
+ },
+ {
+  "id": "p31",
+  "text": "Note: CISA and FBI strongly discourage paying ransoms as doing so does not guarantee files and\n       records will be recovered. Furthermore, payment may also embolden adversaries to target additional\n       organizations, encourage other criminal actors to engage in the distribution of ransomware, and/or\n       fund illicit activities."
+ },
+ {
+  "id": "p32",
+  "text": "RESOURCES\n       See Stopransomware.gov, a whole-of-government approach, for ransomware resources and alerts."
+ },
+ {
+  "id": "p33",
+  "text": "REFERENCES\n       [1] VMware Security Response Center (vSRC) Response to 'ESXiArgs' Ransomware Attacks -\n       VMware Security Blog\n       [2] Enes Sonmez and Ahmet Aykac, YoreGroup Tech Team: decrypt your crypted files in ESXi\n       servers affected by CVE-2020-3992 / CryptoLocker attack"
+ },
+ {
+  "id": "p34",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA and FBI\n       do not endorse any commercial product or service, including any subjects of analysis. Any reference\n       to specific commercial products, processes, or services by service mark, trademark, manufacturer, or\n       otherwise, does not constitute or imply endorsement, recommendation, or favoring by CISA or FBI."
+ },
+ {
+  "id": "p35",
+  "text": "ACKNOWLEDGEMENTS\n       CISA and FBI would like to thank VMware for their contributions to this CSA."
+ }
+]

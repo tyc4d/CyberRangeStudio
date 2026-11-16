@@ -1,0 +1,154 @@
+[
+ {
+  "id": "p1",
+  "text": "# Indicators of Compromise Associated with Hive Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id MC-000150-MW\n> - Date: 2021-08-25\n> - URL: https://www.ic3.gov/CSA/2021/210825.pdf\n> - PDF SHA-256: f7e8708738f0a56b8f9396b6948595a4f9a52359e715dff5e41070c6200bbb6c (`source.pdf`, 8 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (16 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "The following information is being provided by the FBI, with no\n                 guarantees or warranties, for potential use at the sole discretion of\n 25 AUG 2021     recipients in order to protect against cyber threats. This data is\n                 provided to help cyber security professionals and system\n  Alert Number   administrators guard against the persistent malicious actions of cyber\nMC-000150-MW     actors. This FLASH was coordinated with DHS-CISA."
+ },
+ {
+  "id": "p4",
+  "text": "This FLASH has been released TLP:WHITE. Subject to standard\n                 copyright rules, TLP:WHITE information may be distributed without\n                 restriction."
+ },
+ {
+  "id": "p5",
+  "text": "Indicators of Compromise Associated with Hive\n                 Ransomware\n                 Summary"
+ },
+ {
+  "id": "p6",
+  "text": "Hive ransomware, which was first observed in June 2021 and likely\n                 operates as an affiliate-based ransomware, employs a wide variety of\n                 tactics, techniques, and procedures (TTPs), creating significant\n                 challenges for defense and mitigation. Hive ransomware uses multiple\n                 mechanisms to compromise business networks, including phishing\n                 emails with malicious attachments to gain access and Remote Desktop\n                 Protocol (RDP) to move laterally once on the network."
+ },
+ {
+  "id": "p7",
+  "text": "After compromising a victim network, Hive ransomware actors\n                 exfiltrate data and encrypt files on the network. The actors leave a\n                 ransom note in each affected directory within a victim’s system, which\n                 provides instructions on how to purchase the decryption software.\n                 The ransom note also threatens to leak exfiltrated victim data on the\n                 Tor site, “HiveLeaks.”"
+ },
+ {
+  "id": "p8",
+  "text": "Technical Details"
+ },
+ {
+  "id": "p9",
+  "text": "Hive ransomware seeks processes related to backups, anti-virus/anti-spyware, and file copying and\nterminates them to facilitate file encryption. The encrypted files commonly end with a .hive\nextension. The Hive ransomware then drops a hive.bat script into the directory, which enforces an\nexecution timeout delay of one second in order to perform cleanup after the encryption is finished\nby deleting the Hive executable and the hive.bat script. A second file, shadow.bat, is dropped into\nthe directory to delete shadow copies, including disc backup copies or snapshots, without notifying\nthe victim and then deletes the shadow.bat file. During the encryption process, encrypted files are\nrenamed with the double final extension of *.key.hive or *.key.*. The ransom note,\n“HOW_TO_DECRYPT.txt” is dropped into each affected directory and states the *key.* file\ncannot be modified, renamed, or deleted, otherwise the encrypted files cannot be recovered. The\nnote contains a “sales department” link, accessible through a TOR browser, enabling victims to\ncontact the actors through a live chat. Some victims reported receiving phone calls from Hive actors\nrequesting payment for their files. The initial deadline for payment fluctuates between 2 to 6 days,\nbut actors have prolonged the deadline in response to contact by the victim company. The ransom\nnote also informs victims that a public disclosure or leak site, accessible on a TOR browser, contains\ndata exfiltrated from victim companies who do not pay the ransom demand."
+ },
+ {
+  "id": "p10",
+  "text": "Indicators of Compromise"
+ },
+ {
+  "id": "p11",
+  "text": "The following indicators were leveraged by the threat actors during Hive ransomware compromises.\nSome of these indicators might appear as applications within your enterprise supporting legitimate\npurposes; however, these applications can be used by threat actors to aid in further malicious\nexploration of your enterprise. The FBI recommends removing any application not deemed\nnecessary for day-to-day operations."
+ },
+ {
+  "id": "p12",
+  "text": "Hive Tor Domain\n http://hiveleakdbtnp76ulyhi52eag6c6tyc3xw7ez7iqy6wc34gd2nekazyd.onion"
+ },
+ {
+  "id": "p13",
+  "text": "Winlo.exe\nMD5                    b5045d802394f4560280a7404af69263\nSHA256                 321d0c4f1bbb44c53cd02186107a18b7a44c840a9a5f0a78bdac06868136b72c\nFile Path Observed     C:\\Windows\\SysWOW64\\winlo.exe\nDescription            Drops 7zG.exe\n7zG.exe\nMD5                04FB3AE7F05C8BC333125972BA907398\nDescription        This is a legitimate 7zip, version 19.0.0\n                   Drops Winlo_dump_64_SCY.exe\nWinlo_dump_64_SCY.exe\nMD5                BEE9BA70F36FF250B31A6FDF7FA8AFEB\nDescription        Encrypts files with *.key.* extension\n                   Drops HOW_TO_DECRYPT.txt\nHOW_TO_DECRYPT.txt\nDescription        Stops and disables Windows Defender\n                   Deletes all Windows Defender definitions\n                   Removes context menu for Windows Defender\n                   Stops the following services and disables them from restart\n                            LanmanWorkstation\n                            SamSs\n                            SDRSVC\n                            SstpSVc\n                            UI0Detect\n                            Vmicvss\n                            Vmss\n                            VSS\n                            Wbengine\n                            Unistoresvc\n                   Attempts to delete Volume Shadow Copies (vssadmin and wmic)\n                   Deletes Windows Event Logs -> System, Security, Application\n                   and powershell\n                   Uses notepad++ to create key file\n                   Changes bootup to ignore errors and not attempt recovery\n                   Drops PowerShell script"
+ },
+ {
+  "id": "p14",
+  "text": "Other IOCs\n*.key.hive\n*.key.*\nHOW_TO_DECRYPT.txt\nhive.bat\nshadow.bat\nvssadmin.exe delete shadows /all /quiet\nwmic.exe SHADOWCOPY /nointeractive\nwmic.exe shadowcopy delete\nwevtutil.exe cl system\nwevtutil.exe cl security\nwevtutil.exe cl application\nbcdedit.exe /set {default} bootstatuspolicy ignoreallfailures\nbcdedit.exe /set {default} recoveryenabled no"
+ },
+ {
+  "id": "p15",
+  "text": "Anonymous File Sharing Links\nhttps://anonfiles.com\nhttps://mega.nz\nhttps://send.exploit.in\nhttps://ufile.io\nhttps://www.sendspace.com"
+ },
+ {
+  "id": "p16",
+  "text": "Sample Ransom Note"
+ },
+ {
+  "id": "p17",
+  "text": "Your network has been breached and all data were encrypted.\n     Personal data, financial reports and important documents are ready to disclose."
+ },
+ {
+  "id": "p18",
+  "text": "To decrypt all the data or to prevent exfiltrated files to be disclosed at\n     http://hiveleakdbtnp76ulyhi52eag6c6tyc3xw7ez7iqy6wc34gd2nekazyd.onion/\n     you will need to purchase our decryption software."
+ },
+ {
+  "id": "p19",
+  "text": "Please contact our sales department at:"
+ },
+ {
+  "id": "p20",
+  "text": "REDACTED"
+ },
+ {
+  "id": "p21",
+  "text": "Login: REDACTED\n     Password: REDACTED"
+ },
+ {
+  "id": "p22",
+  "text": "To get access to .onion websites download and install Tor Browser at:\n     https://www.torproject.org/ (Tor Browser is not related to us)"
+ },
+ {
+  "id": "p23",
+  "text": "Follow the guidelines below to avoid losing your data:"
+ },
+ {
+  "id": "p24",
+  "text": "- Do not shutdown or reboot your computers, unmount external storages.\n     - Do not try to decrypt data using third party software. It may cause\n     irreversible damage.\n     - Do not fool yourself. Encryption has perfect secrecy and it's impossible\n     to decrypt without knowing the key.\n     - Do not modify, rename or delete *.key.k6thw files. Your\n     data will be undecryptable.\n     - Do not modify or rename encrypted files. You will lose them.\n     - Do not report to authorities. The negotiation process will be terminated\n     immediately and the key will be erased.\n     - Do not reject to purchase. Your sensitive data will be publicly disclosed."
+ },
+ {
+  "id": "p25",
+  "text": "Information Requested"
+ },
+ {
+  "id": "p26",
+  "text": "The FBI does not encourage paying a ransom to criminal actors. Paying a ransom may embolden\nadversaries to target additional organizations, encourage other criminal actors to engage in the\ndistribution of ransomware, and/or fund illicit activities. Paying the ransom also does not guarantee\nthat a victim’s files will be recovered. However, the FBI understands that when businesses are faced\nwith an inability to function, executives will evaluate all options to protect their shareholders,\nemployees, and customers. Regardless of whether you or your organization decide to pay the\nransom, the FBI urges you to report ransomware incidents to your local field office. Doing so\nprovides investigators with the critical information they need to track ransomware attackers, hold\nthem accountable under US law, and prevent future attacks."
+ },
+ {
+  "id": "p27",
+  "text": "The FBI may seek the following information that you determine you can legally share, including:"
+ },
+ {
+  "id": "p28",
+  "text": "   Recovered executable files\n      Live memory (RAM) capture\n      Images of infected systems\n      Malware samples\n      IP addresses identified as malicious or suspicious\n      Email addresses of the attackers\n      A copy of the ransom note\n      Ransom amount\n      Bitcoin wallets used by the attackers\n      Bitcoin wallets used to pay the ransom\n      Post-incident forensic reports"
+ },
+ {
+  "id": "p29",
+  "text": "Recommended Mitigations"
+ },
+ {
+  "id": "p30",
+  "text": " Back-up critical data offline.\n    Ensure copies of critical data are in the cloud or on an external hard drive or storage device.\n    Secure your back-ups and ensure data is not accessible for modification or deletion from the\n     system where the data resides.\n    Use two-factor authentication with strong passwords, including for remote access services."
+ },
+ {
+  "id": "p31",
+  "text": " Monitor cyber threat reporting regarding the publication of compromised VPN login\n     credentials and change passwords/settings if applicable.\n    Keep computers, devices, and applications patched and up-to-date.\n    Install and regularly update anti-virus or anti-malware software on all hosts.\n    Review the following additional resources.\n         o The joint advisory from Australia, Canada, New Zealand, the United Kingdom, and the\n             United States on Technical Approaches to Uncovering and Remediating Malicious\n             Activity provides additional guidance when hunting or investigating a network and\n             common mistakes to avoid in incident handling.\n         o The Cybersecurity and Infrastructure Security Agency-Multi-State Information Sharing\n             & Analysis Center Joint Ransomware Guide covers additional best practices and ways\n             to prevent, protect, and respond to a ransomware attack.\n         o StopRansomware.gov is the U.S. Government’s official one-stop location for resources\n             to tackle ransomware more effectively."
+ },
+ {
+  "id": "p32",
+  "text": "If your organization is impacted by a ransomware incident, the FBI and CISA recommend the\nfollowing actions."
+ },
+ {
+  "id": "p33",
+  "text": " Isolate the infected system. Remove the infected system from all networks, and disable the\n     computer’s wireless, Bluetooth, and any other potential networking capabilities. Ensure all\n     shared and networked drives are disconnected, whether wired or wireless.\n    Turn off other computers and devices. Power-off and segregate (i.e., remove from the\n     network) the infected computer(s). Power-off and segregate any other computers or devices\n     that share a network with the infected computer(s) that have not been fully encrypted by\n     ransomware. If possible, collect and secure all infected and potentially infected computers\n     and devices in a central location, making sure to clearly label any computers that have been\n     encrypted. Powering-off and segregating infected computers and computers that have not\n     been fully encrypted may allow for the recovery of partially encrypted files by specialists.\n    Secure your backups. Ensure that your backup data is offline and secure. If possible, scan\n     your backup data with an antivirus program to check that it is free of malware."
+ },
+ {
+  "id": "p34",
+  "text": "Reporting Notice"
+ },
+ {
+  "id": "p35",
+  "text": "The FBI encourages recipients of this document to report information concerning suspicious or\ncriminal activity to their local FBI field office. Field office contacts can be identified at\nwww.fbi.gov/contact-us/field-offices. When available, each report submitted should include the\ndate, time, location, type of activity, number of people, and type of equipment used for the activity,\nthe name of the submitting company or organization, and a designated point of contact."
+ },
+ {
+  "id": "p36",
+  "text": "Administrative Note"
+ },
+ {
+  "id": "p37",
+  "text": "This product is marked TLP:WHITE. Subject to standard copyright rules, TLP:WHITE information may\nbe distributed without restriction."
+ },
+ {
+  "id": "p38",
+  "text": "Your Feedback on the Value of this Product Is Critical\n   Was this product of value to your organization? Was the content clear and concise?\n   Your comments are very important to us and can be submitted anonymously. Please\n take a moment to complete the survey at the link below. Feedback should be specific to\n      your experience with our written products to enable the FBI to make quick and\n  continuous improvements to such products. Feedback may be submitted online here:\n                              https://www.ic3.gov/PIFSurvey"
+ }
+]

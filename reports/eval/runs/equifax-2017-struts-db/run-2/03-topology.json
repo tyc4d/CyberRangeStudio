@@ -1,0 +1,92 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "server housing Equifax’s online dispute portal",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Apache Struts Web Framework",
+     "port": 8080,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "vuln-struts2-s2-045",
+   "version_basis": "assumed",
+   "deployed_version": "2.3.30",
+   "runtime": "container",
+   "component_mode": "real"
+  },
+  {
+   "id": "h2",
+   "role": "databases containing PII and credentials",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 databases 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a8 require access to Apache Struts Web Framework.",
+   "port": 8080,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 8080
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service databases (s2); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Action a5 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a6 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied.",
+  "Action a7 is stated to run from h1 against h2, but no destination service port is identified; the path stays denied."
+ ]
+}

@@ -1,0 +1,310 @@
+[
+ {
+  "id": "p1",
+  "text": "# Fast Flux: A National Security Threat"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing\n> - Date: 2025-04-03\n> - URL: https://www.ic3.gov/CSA/2025/250403.pdf\n> - PDF SHA-256: c986d3690a2c5f0e54e744e82e2565c5f33208e3c4f7dadbf9a75cf31bc79757 (`source.pdf`, 10 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (20 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Cybersecurity Advisory"
+ },
+ {
+  "id": "p4",
+  "text": "Executive summary\nMany networks have a gap in their defenses for detecting and blocking a malicious\ntechnique known as “fast flux.” This technique poses a significant threat to national\nsecurity, enabling malicious cyber actors to consistently evade detection. Malicious\ncyber actors, including cybercriminals and nation-state actors, use fast flux to obfuscate\nthe locations of malicious servers by rapidly changing Domain Name System (DNS)\nrecords. Additionally, they can create resilient, highly available command and control\n(C2) infrastructure, concealing their subsequent malicious operations. This resilient and\nfast changing infrastructure makes tracking and blocking malicious activities that use\nfast flux more difficult."
+ },
+ {
+  "id": "p5",
+  "text": "The National Security Agency (NSA), Cybersecurity and Infrastructure Security Agency\n(CISA), Federal Bureau of Investigation (FBI), Australian Signals Directorate’s\nAustralian Cyber Security Centre (ASD’s ACSC), Canadian Centre for Cyber Security\n(CCCS), and New Zealand National Cyber Security Centre (NCSC-NZ) are releasing\nthis joint cybersecurity advisory (CSA) to warn organizations, Internet service providers\n(ISPs), and cybersecurity service providers of the ongoing threat of fast flux enabled\nmalicious activities as a defensive gap in many networks. This advisory is meant to\nencourage service providers, especially Protective DNS (PDNS) providers, to help\nmitigate this threat by taking proactive steps to develop accurate, reliable, and timely\nfast flux detection analytics and blocking capabilities for their customers. This CSA also\nprovides guidance on detecting and mitigating elements of malicious fast flux by\nadopting a multi-layered approach that combines DNS analysis, network monitoring,\nand threat intelligence.\nThe authoring agencies recommend all stakeholders—government and providers—\ncollaborate to develop and implement scalable solutions to close this ongoing gap in\nnetwork defenses against malicious fast flux activity."
+ },
+ {
+  "id": "p6",
+  "text": "This information is marked TLP:CLEAR. Recipients may share this information without restriction."
+ },
+ {
+  "id": "p7",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                         TLP:CLEAR"
+ },
+ {
+  "id": "p8",
+  "text": "Technical details\nWhen malicious cyber actors compromise devices and networks, the malware they use\nneeds to “call home” to send status updates and receive further instructions. To\ndecrease the risk of detection by network defenders, malicious cyber actors use\ndynamic resolution techniques, such as fast flux, so their communications are less likely\nto be detected as malicious and blocked.\nFast flux refers to a domain-based technique that is characterized by rapidly changing\nthe DNS records (e.g., IP addresses) associated with a single domain [T1568.001]."
+ },
+ {
+  "id": "p9",
+  "text": "Single and double flux\nMalicious cyber actors use two common variants of fast flux to perform operations:"
+ },
+ {
+  "id": "p10",
+  "text": "1. Single flux: A single domain name is linked to numerous IP addresses, which are\n        frequently rotated in DNS responses. This setup ensures that if one IP address is\n        blocked or taken down, the domain remains accessible through the other IP\n        addresses. See Figure 1 as an example to illustrate this technique."
+ },
+ {
+  "id": "p11",
+  "text": "Figure 1: Single flux technique"
+ },
+ {
+  "id": "p12",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                     TLP:CLEAR   2"
+ },
+ {
+  "id": "p13",
+  "text": "Note: This behavior can also be used for legitimate purposes for performance\n           reasons in dynamic hosting environments, such as in content delivery networks\n           and load balancers."
+ },
+ {
+  "id": "p14",
+  "text": "2. Double flux: In addition to rapidly changing the IP addresses as in single flux, the\n        DNS name servers responsible for resolving the domain also change frequently.\n        This provides an additional layer of redundancy and anonymity for malicious\n        domains. Double flux techniques have been observed using both Name Server\n        (NS) and Canonical Name (CNAME) DNS records. See Figure 2 as an example\n        to illustrate this technique."
+ },
+ {
+  "id": "p15",
+  "text": "Figure 2: Double flux technique"
+ },
+ {
+  "id": "p16",
+  "text": "Both techniques leverage a large number of compromised hosts, usually as a botnet\nfrom across the Internet that acts as proxies or relay points, making it difficult for\nnetwork defenders to identify the malicious traffic and block or perform legal\nenforcement takedowns of the malicious infrastructure. Numerous malicious cyber\nactors have been reported using the fast flux technique to hide C2 channels and remain\noperational. Examples include:"
+ },
+ {
+  "id": "p17",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                     TLP:CLEAR   3"
+ },
+ {
+  "id": "p18",
+  "text": "     Bulletproof hosting (BPH) services offer Internet hosting that disregards or\n           evades law enforcement requests and abuse notices. These providers host\n           malicious content and activities while providing anonymity for malicious cyber\n           actors. Some BPH companies also provide fast flux services, which help\n           malicious cyber actors maintain connectivity and improve the reliability of their\n           malicious infrastructure. [1]"
+ },
+ {
+  "id": "p19",
+  "text": " Refer to ASD’s ACSC’s “Bulletproof” hosting providers: Cracks in the\n                   armour of cybercriminal infrastructure for more information on BPH\n                   providers. [2]"
+ },
+ {
+  "id": "p20",
+  "text": "     Fast flux has been used in Hive and Nefilim ransomware attacks. [3], [4]"
+ },
+ {
+  "id": "p21",
+  "text": "     Gamaredon uses fast flux to limit the effectiveness of IP blocking. [5], [6], [7]"
+ },
+ {
+  "id": "p22",
+  "text": "The key advantages of fast flux networks for malicious cyber actors include:"
+ },
+ {
+  "id": "p23",
+  "text": "     Increased resilience. As a fast flux network rapidly rotates through botnet\n           devices, it is difficult for law enforcement or abuse notifications to process the\n           changes quickly and disrupt their services."
+ },
+ {
+  "id": "p24",
+  "text": "     Render IP blocking ineffective. The rapid turnover of IP addresses renders IP\n           blocking irrelevant since each IP address is no longer in use by the time it is\n           blocked. This allows criminals to maintain resilient operations."
+ },
+ {
+  "id": "p25",
+  "text": "     Anonymity. Investigators face challenges in tracing malicious content back to\n           the source through fast flux networks. This is because malicious cyber actors’ C2\n           botnets are constantly changing the associated IP addresses throughout the\n           investigation."
+ },
+ {
+  "id": "p26",
+  "text": "Additional malicious uses\nFast flux is not only used for maintaining C2 communications, it also can play a\nsignificant role in phishing campaigns to make social engineering websites harder to\nblock or take down. Phishing is often the first step in a larger and more complex cyber\ncompromise. Phishing is typically used to trick victims into revealing sensitive\ninformation (such as login passwords, credit card numbers, and personal data), but can\nalso be used to distribute malware or exploit system vulnerabilities. Similarly, fast flux is"
+ },
+ {
+  "id": "p27",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                   TLP:CLEAR   4"
+ },
+ {
+  "id": "p28",
+  "text": "used for maintaining high availability for cybercriminal forums and marketplaces, making\nthem resilient against law enforcement takedown efforts."
+ },
+ {
+  "id": "p29",
+  "text": "Some BPH providers promote fast flux as a service differentiator that increases the\neffectiveness of their clients’ malicious activities. For example, one BPH provider posted\non a dark web forum that it protects clients from being added to Spamhaus blocklists by\neasily enabling the fast flux capability through the service management panel (see\nFigure 3). A customer just needs to add a \"dummy server interface,\" which redirects\nincoming queries to the host server automatically. By doing so, only the dummy server\ninterfaces are reported for abuse and added to the Spamhaus blocklist, while the\nservers of the BPH customers remain \"clean\" and unblocked."
+ },
+ {
+  "id": "p30",
+  "text": "Figure 3: Example dark web fast flux advertisement"
+ },
+ {
+  "id": "p31",
+  "text": "The BPH provider further explained that numerous malicious activities beyond C2,\nincluding botnet managers, fake shops, credential stealers, viruses, spam mailers, and\nothers, could use fast flux to avoid identification and blocking."
+ },
+ {
+  "id": "p32",
+  "text": "As another example, a BPH provider that offers fast flux as a service advertised that it\nautomatically updates name servers to prevent the blocking of customer domains.\nAdditionally, this provider further promoted its use of separate pools of IP addresses for\neach customer, offering globally dispersed domain registrations for increased reliability."
+ },
+ {
+  "id": "p33",
+  "text": "Detection techniques\nThe authoring agencies recommend that ISPs and cybersecurity service providers,\nespecially PDNS providers, implement a multi-layered approach, in coordination with\ncustomers, using the following techniques to aid in detecting fast flux activity [CISA\nCPG 3.A]. However, quickly detecting malicious fast flux activity and differentiating it\nfrom legitimate activity remains an ongoing challenge to developing accurate, reliable,\nand timely fast flux detection analytics.\n     1. Leverage threat intelligence feeds and reputation services to identify known fast\n        flux domains and associated IP addresses, such as in boundary firewalls, DNS\n        resolvers, and/or SIEM solutions."
+ },
+ {
+  "id": "p34",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                        TLP:CLEAR   5"
+ },
+ {
+  "id": "p35",
+  "text": "2. Implement anomaly detection systems for DNS query logs to identify domains\n        exhibiting high entropy or IP diversity in DNS responses and frequent IP address\n        rotations. Fast flux domains will frequently cycle though tens or hundreds of IP\n        addresses per day."
+ },
+ {
+  "id": "p36",
+  "text": "3. Analyze the time-to-live (TTL) values in DNS records. Fast flux domains often\n        have unusually low TTL values. A typical fast flux domain may change its IP\n        address every 3 to 5 minutes."
+ },
+ {
+  "id": "p37",
+  "text": "4. Review DNS resolution for inconsistent geolocation. Malicious domains\n           associated with fast flux typically generate high volumes of traffic with\n           inconsistent IP-geolocation information."
+ },
+ {
+  "id": "p38",
+  "text": "5. Use flow data to identify large-scale communications with numerous different IP\n        addresses over short periods."
+ },
+ {
+  "id": "p39",
+  "text": "6. Develop fast flux detection algorithms to identify anomalous traffic patterns that\n        deviate from usual network DNS behavior."
+ },
+ {
+  "id": "p40",
+  "text": "7. Monitor for signs of phishing activities, such as suspicious emails, websites, or\n        links, and correlate these with fast flux activity. Fast flux may be used to rapidly\n           spread phishing campaigns and to keep phishing websites online despite\n           blocking attempts."
+ },
+ {
+  "id": "p41",
+  "text": "8. Implement customer transparency and share information about detected fast flux\n        activity, ensuring to alert customers promptly after confirmed presence of\n        malicious activity."
+ },
+ {
+  "id": "p42",
+  "text": "Mitigations"
+ },
+ {
+  "id": "p43",
+  "text": "All organizations\nTo defend against fast flux, government and critical infrastructure organizations should\ncoordinate with their Internet service providers, cybersecurity service providers, and/or\ntheir Protective DNS services to implement the following mitigations utilizing accurate,\nreliable, and timely fast flux detection analytics."
+ },
+ {
+  "id": "p44",
+  "text": "Note: Some legitimate activity, such as common content delivery network (CDN)\nbehaviors, may look like malicious fast flux activity. Protective DNS services, service"
+ },
+ {
+  "id": "p45",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                  TLP:CLEAR   6"
+ },
+ {
+  "id": "p46",
+  "text": "providers, and network defenders should make reasonable efforts, such as allowlisting\nexpected CDN services, to avoid blocking or impeding legitimate content."
+ },
+ {
+  "id": "p47",
+  "text": "1. DNS and IP blocking and sinkholing of malicious fast flux domains and IP\n        addresses"
+ },
+ {
+  "id": "p48",
+  "text": " Block access to domains identified as using fast flux through non-routable\n                   DNS responses or firewall rules."
+ },
+ {
+  "id": "p49",
+  "text": " Consider sinkholing the malicious domains, redirecting traffic from those\n                   domains to a controlled server to capture and analyze the traffic, helping\n                       to identify compromised hosts within the network."
+ },
+ {
+  "id": "p50",
+  "text": " Block IP addresses known to be associated with malicious fast flux\n                   networks."
+ },
+ {
+  "id": "p51",
+  "text": "2. Reputational filtering of fast flux enabled malicious activity"
+ },
+ {
+  "id": "p52",
+  "text": " Block traffic to and from domains or IP addresses with poor reputations,\n                   especially ones identified as participating in malicious fast flux activity."
+ },
+ {
+  "id": "p53",
+  "text": "3. Enhanced monitoring and logging"
+ },
+ {
+  "id": "p54",
+  "text": " Increase logging and monitoring of DNS traffic and network\n                   communications to identify new or ongoing fast flux activities."
+ },
+ {
+  "id": "p55",
+  "text": " Implement automated alerting mechanisms to respond swiftly to detected\n                   fast flux patterns."
+ },
+ {
+  "id": "p56",
+  "text": " Refer to ASD’s ACSC joint publication, Best practices for event logging\n                   and threat detection, for further logging recommendations."
+ },
+ {
+  "id": "p57",
+  "text": "4. Collaborative defense and information sharing"
+ },
+ {
+  "id": "p58",
+  "text": " Share detected fast flux indicators (e.g., domains, IP addresses) with\n                   trusted partners and threat intelligence communities to enhance collective\n                   defense efforts. Examples of indicator sharing initiatives include CISA’s\n                       Automated Indicator Sharing or sector-based Information Sharing and\n                       Analysis Centers (ISACs) and ASD’s Cyber Threat Intelligence Sharing\n                       Platform (CTIS) in Australia."
+ },
+ {
+  "id": "p59",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                    TLP:CLEAR    7"
+ },
+ {
+  "id": "p60",
+  "text": " Participate in public and private information-sharing programs to stay\n                   informed about emerging fast flux tactics, techniques, and procedures\n                   (TTPs). Regular collaboration is particularly important because most\n                   malicious activity by these domains occurs within just a few days of their\n                   initial use; therefore, early discovery and information sharing by the\n                   cybersecurity community is crucial to minimizing such malicious activity.\n                   [8]"
+ },
+ {
+  "id": "p61",
+  "text": "5. Phishing awareness and training"
+ },
+ {
+  "id": "p62",
+  "text": " Implement employee awareness and training programs to help personnel\n                   identify and respond appropriately to phishing attempts."
+ },
+ {
+  "id": "p63",
+  "text": " Develop policies and procedures to manage and contain phishing\n                   incidents, particularly those facilitated by fast flux networks."
+ },
+ {
+  "id": "p64",
+  "text": " For more information on mitigating phishing, see joint Phishing Guidance:\n                   Stopping the Attack Cycle at Phase One."
+ },
+ {
+  "id": "p65",
+  "text": "Network defenders\nThe authoring agencies encourage organizations to use cybersecurity and PDNS\nservices that detect and block fast flux. By leveraging providers that detect fast flux and\nimplement capabilities for DNS and IP blocking, sinkholing, reputational filtering,\nenhanced monitoring, logging, and collaborative defense of malicious fast flux domains\nand IP addresses, organizations can mitigate many risks associated with fast flux and\nmaintain a more secure environment.\nHowever, some PDNS providers may not detect and block malicious fast flux activities.\nOrganizations should not assume that their PDNS providers block malicious fast flux\nactivity automatically, and should contact their PDNS providers to validate coverage of\nthis specific cyber threat."
+ },
+ {
+  "id": "p66",
+  "text": "For more information on PDNS services, see the 2021 joint cybersecurity information\nsheet from NSA and CISA about Selecting a Protective DNS Service. [9] In addition,\nNSA offers no-cost cybersecurity services to Defense Industrial Base (DIB) companies,\nincluding a PDNS service. For more information, see NSA’s DIB Cybersecurity Services\nand factsheet. CISA also offers a Protective DNS service for federal civilian executive"
+ },
+ {
+  "id": "p67",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                 TLP:CLEAR     8"
+ },
+ {
+  "id": "p68",
+  "text": "branch (FCEB) agencies. See CISA’s Protective Domain Name System Resolver page\nand factsheet for more information."
+ },
+ {
+  "id": "p69",
+  "text": "Conclusion\nFast flux represents a persistent threat to network security, leveraging rapidly changing\ninfrastructure to obfuscate malicious activity. By implementing robust detection and\nmitigation strategies, organizations can significantly reduce their risk of compromise by\nfast flux-enabled threats."
+ },
+ {
+  "id": "p70",
+  "text": "The authoring agencies strongly recommend organizations engage their cybersecurity\nproviders on developing a multi-layered approach to detect and mitigate malicious fast\nflux operations. Utilizing services that detect and block fast flux enabled malicious cyber\nactivity can significantly bolster an organization's cyber defenses."
+ },
+ {
+  "id": "p71",
+  "text": "Works cited\n     [1] Intel471. Bulletproof Hosting: A Critical Cybercriminal Service. 2024.\n         https://intel471.com/blog/bulletproof-hosting-a-critical-cybercriminal-service\n     [2] Australian Signals Directorate’s Australian Cyber Security Centre. \"Bulletproof\" hosting providers:\n         Cracks in the armour of cybercriminal infrastructure. 2025. https://www.cyber.gov.au/about-\n         us/view-all-content/publications/bulletproof-hosting-providers\n     [3] Logpoint. A Comprehensive guide to Detect Ransomware. 2023. https://www.logpoint.com/wp-\n         content/uploads/2023/04/logpoint-a-comprehensive-guide-to-detect-ransomware.pdf\n     [4] Trendmicro. Modern Ransomware’s Double Extortion Tactic’s and How to Protect Enterprises\n         Against Them. 2021. https://www.trendmicro.com/vinfo/us/security/news/cybercrime-and-digital-\n         threats/modern-ransomwares-double-extortion-tactics-and-how-to-protect-enterprises-against-\n         them\n     [5] Unit 42. Russia’s Trident Ursa (aka Gamaredon APT) Cyber Conflict Operations Unwavering\n         Since Invasion of Ukraine. 2022. https://unit42.paloaltonetworks.com/trident-ursa/\n     [6] Recorded Future. BlueAlpha Abuses Cloudflare Tunneling Service for GammaDrop Staging\n         Infrastructure. 2024. https://www.recordedfuture.com/research/bluealpha-abuses-cloudflare-\n         tunneling-service\n     [7] Silent Push. 'From Russia with a 71': Uncovering Gamaredon's fast flux infrastructure. New apex\n         domains and ASN/IP diversity patterns discovered. 2023. https://www.silentpush.com/blog/from-\n         russia-with-a-71/\n     [8] DNS Filter. Security Categories You Should be Blocking (But Probably Aren’t). 2023.\n         https://www.dnsfilter.com/blog/security-categories-you-should-be-blocking-but-probably-arent\n     [9] National Security Agency. Selecting a Protective DNS Service. 2021.\n         https://media.defense.gov/2025/Mar/24/2003675043/-1/-1/0/CSI-SELECTING-A-PROTECTIVE-\n         DNS-SERVICE-V1.3.PDF"
+ },
+ {
+  "id": "p72",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                            TLP:CLEAR         9"
+ },
+ {
+  "id": "p73",
+  "text": "Disclaimer of endorsement\nThe information and opinions contained in this document are provided \"as is\" and without any warranties or\nguarantees. Reference herein to any specific commercial product, process, or service by trade name, trademark,\nmanufacturer, or otherwise, does not constitute or imply its endorsement, recommendation, or favoring by the United\nStates Government, and this guidance shall not be used for advertising or product endorsement purposes."
+ },
+ {
+  "id": "p74",
+  "text": "Purpose\nThis document was developed in furtherance of the authoring cybersecurity agencies’ missions, including their\nresponsibilities to identify and disseminate threats, and develop and issue cybersecurity specifications and\nmitigations. This information may be shared broadly to reach all appropriate stakeholders."
+ },
+ {
+  "id": "p75",
+  "text": "Contact\nNational Security Agency (NSA):\n     Cybersecurity Report Feedback: CybersecurityReports@nsa.gov\n     Defense Industrial Base Inquiries and Cybersecurity Services: DIB_Defense@cyber.nsa.gov\n     Media Inquiries / Press Desk: NSA Media Relations: 443-634-0721, MediaRelations@nsa.gov"
+ },
+ {
+  "id": "p76",
+  "text": "Cybersecurity and Infrastructure Security Agency (CISA):\nAll organizations should report incidents and anomalous activity to CISA via the agency’s Incident Reporting System,\nits 24/7 Operations Center at report@cisa.gov, or by calling 1-844-Say-CISA (1-844-729-2472). When available,\nplease include the following information regarding the incident: date, time, and location of the incident; type of activity;\nnumber of people affected; type of equipment user for the activity; the name of the submitting company or\norganization; and a designated point of contact.\nFederal Bureau of Investigation (FBI):\nTo report suspicious or criminal activity related to information found in this advisory, contact your local FBI field office\nor the FBI’s Internet Crime Complaint Center (IC3). When available, please include the following information\nregarding the incident: date, time, and location of the incident; type of activity; number of people affected; type of\nequipment used for the activity; the name of the submitting company or organization; and a designated point of\ncontact.\nAustralian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC):\nFor inquiries, visit ASD’s website at www.cyber.gov.au or call the Australian Cyber Security Hotline at 1300 CYBER1\n(1300 292 371).\nCanadian Centre for Cyber Security (CCCS):\nCCCS supports Canadian organizations. Visit www.cyber.gc.ca for publications and guidance or contact CCCS via 1-\n833-CYBER-88 or email contact@cyber.gc.ca.\nNew Zealand National Cyber Security Centre (NCSC-NZ):\nThe NCSC-NZ assists New Zealand organizations. Visit www.ncsc.govt.nz for guidance and resources, or email\nNCSC-NZ at info@ncsc.govt.nz."
+ },
+ {
+  "id": "p77",
+  "text": "U/OO/136180-25 | PP-25-1337 | April 2025 Ver. 1.0                                                         TLP:CLEAR            10"
+ }
+]

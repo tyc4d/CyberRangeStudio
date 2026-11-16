@@ -1,0 +1,128 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim entities in critical infrastructure sectors",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP)、Hancitor loader、Impacket 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "compromised systems hosting Active Directory and domain controllers",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [
+    {
+     "name": "Active Directory Kerberos ticket service",
+     "port": 88,
+     "protocol": "tcp"
+    },
+    {
+     "name": "Domain Controller",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false,
+   "not_deployed_reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a3, a4, a5, a6, a7, a12, a13, a14, a15, a16 require access to Remote Desktop Protocol (RDP).",
+   "port": 3389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 3389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "verify_blocked": [
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 88,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:88 and must not reach it."
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h2",
+   "port": 389,
+   "protocol": "tcp",
+   "reason": "attacker shares no network with internal service h2:389 and must not reach it."
+  }
+ ],
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a3, a4); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Hancitor loader (s6); it remains unreachable by default.",
+  "No port is known for service Impacket (s7); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Windows Common Log File System (CLFS) driver (s1); it remains unreachable by default.",
+  "No port is known for service Local Security Authority Server Service (LSASS) (s3); it remains unreachable by default.",
+  "Host h2 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology)."
+ ]
+}

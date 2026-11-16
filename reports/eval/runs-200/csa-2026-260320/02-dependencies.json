@@ -1,0 +1,1235 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260320",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "dcae7c1dd2eaaa06eea89188eb7ad683ac2b8ca2bd6e295d6527300d0b731fe9",
+  "source_name": "csa-2026-260320"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "used Telegram as a command-and-control (C2) infrastructure to push malware",
+   "source": "llm",
+   "description": "MOIS cyber actors are responsible for using Telegram as a command-and-control (C2) infrastructure to push malware targeting Iranian dissidents, journalists opposed to Iran, and other opposition groups around the world.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a2",
+   "name": "deployed multiple versions of malware to infect Windows machines",
+   "source": "llm",
+   "description": "Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems, dating back to the Fall of 2023.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "used social engineering to deliver stage 1 masquerading malware",
+   "source": "llm",
+   "description": "Threat actors relied upon social engineering to deliver malware and infect victim devices by masquerading as a known individual or technical support from the social messaging platform and convincing the victim to accept a file transfer consisting of the masquerading stage 1 malware.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "infected victim device and launched persistent implant stage 2 malware",
+   "source": "llm",
+   "description": "When the victim opened the file containing stage 1 malware, the malware infected the victim’s device and launched the persistent implant stage 2 malware.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "configured Telegram bot as command and control (C2) for persistent implant malware",
+   "source": "llm",
+   "description": "At stage 2, the Iran MOIS cyber actors configured a command and control (C2) using a Telegram bot, allowing bidirectional communication between the compromised device and api.telegram[.]org.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "performed defensive evasion and persistence via Windows registry autorun",
+   "source": "llm",
+   "description": "Malware performed defensive evasion, excluded directories, allowed PowerShell to execute malware without warning, and added a reference to malware in the Windows registry to autorun stage 2 malware, which served as persistent implants.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "exfiltrated data using multiple malware samples",
+   "source": "llm",
+   "description": "The malware campaign used multiple malware samples including MicDriver.exe/dll, Winappx.exe, MsCache.exe, RuntimeSSH.exe, and smqdservice.exe to exfiltrate data such as screen recordings, audio, cache captures, compressed files, and staged compressed files to api.telegram[.]org.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "stage 1 malware infection leads to stage 2 malware launch",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "configuration of Telegram bot C2 happens after infection and implant",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "persistent implant malware enables exfiltration using multiple malware samples",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "social engineering used to deliver stage 1 malware after deployment of malware versions",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r5",
+   "from_action": "a1",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Telegram C2 infrastructure used to configure Telegram bot for persistent implant malware",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "defensive evasion and persistence via Windows registry autorun applied to stage 2 malware",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "infected victim device",
+   "source": "llm",
+   "name": "victim device",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-13",
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Telegram bot command and control (C2)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Telegram_authenticator.exe",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "WhatssApp.exe",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "KeePass.exe",
+   "type": "file",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Pictory_premium_ver9.0.4.exe",
+   "type": "file",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "MicDriver.exe",
+   "type": "file",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "MicDriver.dll",
+   "type": "file",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Winappx.exe",
+   "type": "file",
+   "id": "a7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "MsCache.exe",
+   "type": "file",
+   "id": "a8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "RuntimeSSH.exe",
+   "type": "file",
+   "id": "a9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "smqdservice.exe",
+   "type": "file",
+   "id": "a10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "api.telegram[.]org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "api.telelgram[.]org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "7402F2F9263782A4C469570035843510",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "F8B5554808428291ACC65D1FD2EFE01C",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "D70EBF20E3D697897BAD5BEBF72EA271",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "3E7A2FCEF1D038D05B20148C573A6499",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "1E6B601F733BC40EAA58916986BFC5B9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "A3394EF7FFA7E88B2E7EFAEE4617FE04",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "2965817D063F1E8F9889F9126443D631",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "EBDD9595B79B39F53909D862499DBC94",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "E51FF37FB431767DCDEC0B5E6D2A786A",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "7E23FFADB664B0E53D821478A249D84C",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "B9086413E7B6A0C6A11C25D14C22615F",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "481C5B5E69A08C3DF206C59FD8DDC0DC",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "MOIS cyber actors are responsible for using Telegram as a command-and-control (C2) infrastructure to push malware targeting Iranian dissidents, journalists opposed to Iran, and other opposition groups around the world.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MOIS cyber actors are responsible for using Telegram as a command and control (C2) infrastructure to push malware targeting Iranian dissidents, journalists oppo"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The FBI assesses Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems, dating back to the Fall of 2023.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI assesses Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems, dating back to the Fall "
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Threat actors relied upon social engineering to deliver malware and infect victim devices. The Iranian cyber actors engaged with a targeted victim via social messaging applications and masqueraded as a known individual or technical support from the social messaging platform. The Iranian cyber actors then convinced the victim to accept a file transfer consisting of the masquerading stage 1 malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors relied upon social engineering to deliver malware and infect victim devices. The Iranian cyber actors engaged with a targeted victim via social me"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "When the victim opened the file, the malware infected the victim’s device and launched the persistent implant stage 2 malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "When the victim opened the file, the malware infected the victim’s device and launched the persistent implant stage 2 malware."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "At this stage, the Iran MOIS cyber actors configured a command and control (C2) using a Telegram bot, allowing bidirectional communication between the compromised device and api.telegram[.]org.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "At this stage, the Iran MOIS cyber actors configured a command and control (C2) using a Telegram bot, allowing bidirectional communication between the compromis"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Malware performed defensive evasion, which excluded directories and allowed PowerShell to execute malware without warning. Furthermore, a reference to malware was added to the Windows registry to autorun stage 2 malware. Stage 2 malware samples served as persistent implants.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Malware performed defensive evasion, which excluded directories and allowed PowerShell to execute\nmalware without warning. Furthermore, a reference to malware w"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The malware campaign used multiple malware samples to exfiltrate data. These included the following samples: MicDriver.exe/MicDriver.dll, Winappx.exe, MsCache.exe, RuntimeSSH.exe, smqdservice.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The malware campaign used multiple malware samples to exfiltrate data. These included the following samples:"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Functionality of the above-mentioned malware samples included: Screen recordings and audio, cache captures, perform file compression with a password, perform file deletion, and stage compressed files to be sent to api.telelgram[.]org.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Functionality of the above-mentioned malware samples included: Screen recordings and audio, cache\ncaptures, perform file compression with a password, perform fi"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Stage 2 malware samples served as persistent implants.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Stage 2 malware samples served as persistent implants."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The malware campaign used multiple malware samples to exfiltrate data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware campaign used multiple malware samples to exfiltrate data."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The FBI assesses Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems, dating back to the Fall of 2023. The malware used as part of this cyber activity included a multi-stage payload enabling remote user access to the infected devices. Threat actors used social engineering to customize the first stage of the malware to masquerade as commonly used programs or services on Windows machines.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ". The malware used as part of this cyber activity included a multi stage payload enabling remote user access to the infected devices. Threat actors used social "
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Furthermore, a reference to malware was added to the Windows registry to autorun stage 2 malware. Stage 2 malware samples served as persistent implants.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Furthermore, a reference to malware was added to the Windows registry to autorun stage 2 malware. Stage 2 malware samples served as persistent implants."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Iran MOIS cyber actors deployed multiple versions of the malware to infect machines running Windows operating systems"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "When the victim opened the file containing stage 1 malware, the malware infected the victim’s device and launched the persistent implant stage 2 malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "alware "
+  },
+  {
+   "id": "evidence-15",
+   "quote": "At stage 2, the Iran MOIS cyber actors configured a command and control (C2) using a Telegram bot, allowing bidirectional communication between the compromised device and api.telegram[.]org.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " a command and control (C2) "
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The second stage connected the infected machine to Telegram command and control bots that enabled remote user access to exfiltrate screen captures or files from the victim devices.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The second stage connected the infected machine to Telegram command and control bots that enabled remote user access to exfiltrate screen captures or files from"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Telegram_authenticator.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Telegram_authenticator.exe"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "WhatssApp.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "WhatssApp.exe"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "KeePass.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "KeePass.exe"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Pictory_premium_ver9.0.4.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Pictory_premium_ver9.0.4.exe"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "MicDriver.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MicDriver.exe"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "MicDriver.dll",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MicDriver.dll"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Winappx.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Winappx.exe"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "MsCache.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MsCache.exe"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "RuntimeSSH.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "RuntimeSSH.exe"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "smqdservice.exe",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "smqdservice.exe"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "api.telegram[.]org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "api.telegram[.]org"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "api.telelgram[.]org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "api.telelgram[.]org"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "7402F2F9263782A4C469570035843510",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7402F2F9263782A4C469570035843510"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "F8B5554808428291ACC65D1FD2EFE01C",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "F8B5554808428291ACC65D1FD2EFE01C"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "D70EBF20E3D697897BAD5BEBF72EA271",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "D70EBF20E3D697897BAD5BEBF72EA271"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "3E7A2FCEF1D038D05B20148C573A6499",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "3E7A2FCEF1D038D05B20148C573A6499"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "1E6B601F733BC40EAA58916986BFC5B9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1E6B601F733BC40EAA58916986BFC5B9"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "A3394EF7FFA7E88B2E7EFAEE4617FE04",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "A3394EF7FFA7E88B2E7EFAEE4617FE04"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "2965817D063F1E8F9889F9126443D631",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2965817D063F1E8F9889F9126443D631"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "EBDD9595B79B39F53909D862499DBC94",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "EBDD9595B79B39F53909D862499DBC94"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "E51FF37FB431767DCDEC0B5E6D2A786A",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "E51FF37FB431767DCDEC0B5E6D2A786A"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "7E23FFADB664B0E53D821478A249D84C",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7E23FFADB664B0E53D821478A249D84C"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "B9086413E7B6A0C6A11C25D14C22615F",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "B9086413E7B6A0C6A11C25D14C22615F"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "481C5B5E69A08C3DF206C59FD8DDC0DC",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "481C5B5E69A08C3DF206C59FD8DDC0DC"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim device — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim device 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim device",
+    "action:a2 — deployed multiple versions of malware to infect Windows machines",
+    "action:a3 — used social engineering to deliver stage 1 masquerading malware",
+    "action:a4 — infected victim device and launched persistent implant stage 2 malware",
+    "action:a5 — configured Telegram bot as command and control (C2) for persistent implant malware",
+    "action:a6 — performed defensive evasion and persistence via Windows registry autorun",
+    "action:a7 — exfiltrated data using multiple malware samples"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-14",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-14",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim device — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim device 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim device",
+    "action:a2 — deployed multiple versions of malware to infect Windows machines",
+    "action:a3 — used social engineering to deliver stage 1 masquerading malware",
+    "action:a4 — infected victim device and launched persistent implant stage 2 malware",
+    "action:a5 — configured Telegram bot as command and control (C2) for persistent implant malware",
+    "action:a6 — performed defensive evasion and persistence via Windows registry autorun",
+    "action:a7 — exfiltrated data using multiple malware samples"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-14",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim device — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim device 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim device",
+    "action:a2 — deployed multiple versions of malware to infect Windows machines",
+    "action:a3 — used social engineering to deliver stage 1 masquerading malware",
+    "action:a4 — infected victim device and launched persistent implant stage 2 malware",
+    "action:a5 — configured Telegram bot as command and control (C2) for persistent implant malware",
+    "action:a6 — performed defensive evasion and persistence via Windows registry autorun",
+    "action:a7 — exfiltrated data using multiple malware samples"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim device",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13",
+      "evidence-14",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a5 — configured Telegram bot as command and control (C2) for persistent implant malware"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "configured Telegram bot as command and control (C2) for persistent implant malware",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "used Telegram as a command-and-control (C2) infrastructure to push malware — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「used Telegram as a command-and-control (C2) infrastructure to push malware」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — used Telegram as a command-and-control (C2) infrastructure to push malware"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "used Telegram as a command-and-control (C2) infrastructure to push malware",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-telegram-bot-command-and-co",
+   "field": "software dependency: Telegram bot command and control (C2)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Telegram bot command and control (C2) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9024,
+  "unsupported_claim_count": 4,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

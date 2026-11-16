@@ -1,0 +1,2777 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-260723",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "ada8fcc650480c2d841f66085a24b896393e9f4ce1671b77b97b450929250a05",
+  "source_name": "csa-2026-260723"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "target and compromise users using Zimbra Collaboration Suite",
+   "source": "llm",
+   "description": "A group of Russian state-supported cyber actors has been targeting and compromising various Western government and commercial organizations using the Zimbra Collaboration Suite (ZCS) software since at least July 2025.",
+   "target_host_ref": "h1",
+   "attack_tactic": "TA0001",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "send email containing malicious JavaScript payload exploiting CVE-2025-66376",
+   "source": "llm",
+   "description": "LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target. Through exploitation of CVE-2025-66376, this JavaScript payload is immediately executed once the user views the malicious email in the ZCS webmail platform.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1566",
+   "attack_tactic": "TA0001",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "send phishing emails from victim infrastructure through compromised accounts",
+   "source": "llm",
+   "description": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts to obfuscate and frustrate anti-phishing tools and training.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1199",
+   "attack_tactic": "TA0001",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a4",
+   "name": "execute JavaScript payload exploiting zero-day vulnerability CVE-2025-66376",
+   "source": "llm",
+   "description": "The JavaScript payload included in the malicious email exploits CVE-2025-66376, a zero-day vulnerability at the time of initial exploitation, allowing execution of arbitrary JavaScript when the email is viewed.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1587.004",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "collect victim information in 12 asynchronous stages",
+   "source": "llm",
+   "description": "The malicious JavaScript payload attempts to collect and exfiltrate victim information in 12 asynchronous stages including email address, environment data, 2FA codes, application passwords, device status, OAuth consumers, autocomplete passwords, mail protocol enabling, Global Address List, and email archives.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1119",
+   "attack_tactic": "collection",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "establish persistence by modifying account preferences and collecting authentication information",
+   "source": "llm",
+   "description": "The script attempts to establish sustained persistence into the victim’s email account by modifying account preferences such as enabling IMAP, creating Application Passcodes, and collecting 2FA tokens.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7",
+    "evidence-8",
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1556.006",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure",
+   "source": "llm",
+   "description": "The script exfiltrates collected victim information using DNS A record queries and HTTPS POST requests to actor-controlled Flowerbed infrastructure, employing Base32 encoding for DNS and encrypted HTTPS with valid certificates.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1048.003",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a8",
+   "name": "use compromised accounts to send phishing emails",
+   "source": "llm",
+   "description": "LAUNDRY BEAR uses previously compromised victim accounts to send phishing emails containing the malicious payload, to obfuscate and frustrate anti-phishing tools and training.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1199",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a2 happens after a1 as initial access is gained by sending malicious email to targeted users",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a4 exploits the vulnerability using the JavaScript payload sent in a2",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a5 collects victim information using the executed JavaScript payload from a4",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a6 establishes persistence by modifying account preferences and collecting authentication information during stages of the payload collection process in a5",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a7 exfiltrates collected data at the end of each stage of collection in a5",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a3",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a3 sending phishing emails from victim infrastructure through compromised accounts happens after initial sending of malicious emails in a2",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a3 uses compromised accounts which are previous victims from a8",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a1",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted and compromised users' email accounts",
+   "source": "llm",
+   "name": "Zimbra Collaboration Suite (ZCS) webmail servers",
+   "network_placement": "Internet-facing webmail service",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-22",
+    "evidence-23",
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "actor-controlled servers receiving exfiltrated data",
+   "source": "llm",
+   "name": "Flowerbed infrastructure VPS servers",
+   "network_placement": "cloud-based VPS servers",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-26",
+    "evidence-27",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Zimbra Collaboration Suite (ZCS) webmail service",
+   "source": "llm",
+   "cve": [
+    "CVE-2025-66376"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-29",
+    "evidence-30",
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "SOAP API of ZCS webmail",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "IMAP mail protocol",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s4",
+   "name": "Flowerbed Catcher DNS and HTTP server",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "port": 53,
+   "protocol": "udp",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-35"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s5",
+   "name": "Flowerbed Catcher HTTPS reverse proxy (Nginx)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "port": 443,
+   "protocol": "tcp",
+   "evidence_refs": [
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Ulej",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-37",
+    "evidence-38"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Flowerbed",
+   "type": "tool",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "malicious JavaScript payload exploiting CVE-2025-66376",
+   "type": "malware",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-39"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Application Passcodes named 'ZimbraWeb'",
+   "type": "artifact",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40",
+    "evidence-41"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Compromised victim email accounts",
+   "type": "account",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-42",
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2025-66376",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44",
+    "evidence-45",
+    "evidence-46",
+    "evidence-47",
+    "evidence-48",
+    "evidence-49",
+    "evidence-50",
+    "evidence-51",
+    "evidence-52",
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "pixel.gif",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "hash",
+   "value": "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "216.252.238[.]104",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "216.252.238[.]18",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "37.120.247[.]228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "185.86.79[.]95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "104.248.134[.]194",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "64.226.124[.]190",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "193.238.152[.]66",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "216.252.238[.]64",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "194.156.103[.]193",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "domain",
+   "value": "zmailanalytics[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65",
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "domain",
+   "value": "zimbra-metadata[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "domain",
+   "value": "analyticemailmeter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "domain",
+   "value": "emailanalytics.com[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "domain",
+   "value": "mailnalysis[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "domain",
+   "value": "zimbrastat[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "zimbrasoft.com[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "synacorzimbra[.]nl",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "istc-cloud[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "*.i.zmailanalytics[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "domain",
+   "value": "*.i.zimbra-metadata[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "*.i.analyticemailmeter[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "domain",
+   "value": "*.i.emailanalytics.com[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "domain",
+   "value": "*.i.mailnalysis[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "*.i.zimbrastat[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "*.i.zimbrasoft.com[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "domain",
+   "value": "*.i.synacorzimbra[.]nl",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "domain",
+   "value": "*.i.istc-cloud[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "hash",
+   "value": "2e4f314bc9943cab5005d6fde0b271c74d47bc9d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "hash",
+   "value": "50a87d926621dd06389ba50d86e0ff574ed713a8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "c5a72420e7bb308d078e62128430897f82194c95",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "hash",
+   "value": "8959c4d29e29f02ea94ea8bb21c8df2594c5549d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "62eb76432597694edb01c1fe57aab0cfe03a7178",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "cddf5c3be1e07f28140aed165b929bf2d614922a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "18b3ad442ce73cc8656d51d75bbd7c855f2cb7e8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "hash",
+   "value": "1b25041ececf2457eef0270fc1d785cec8ec9ded",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "hash",
+   "value": "e4fe6466a4f9a4249fe330651e914e45bbdca44a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "hash",
+   "value": "b6b77c9a455225d525834a403ca9ef5481ed0447",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "domain",
+   "value": "isofts.kiev[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "domain",
+   "value": "kiev[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "domain",
+   "value": "navs.edu[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "domain",
+   "value": "edu[.]ua",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "hash",
+   "value": "98df604ecc57f884a2e6ce3266a0013ad64455cac48442c2312cfa4765007aaf",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "hash",
+   "value": "60db9abae75cd8ccc49dd7ea5feb41677566dcd442f12ebc5745ffd2810fb874",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "hash",
+   "value": "b1f5beb1175fc5c7d1806a2f0d900eb124c54f0286c5c52b66eea7a6633adb1d",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "hash",
+   "value": "1517b3caa495f6c4e832df9c75fc94667e3c233773f7fa4e056d5e30e5ead760",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "domain",
+   "value": "www.aivd.nl",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102",
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "domain",
+   "value": "www.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "domain",
+   "value": "unit42.paloaltonetworks.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "domain",
+   "value": "www.proofpoint.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "domain",
+   "value": "www.seqrite.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "domain",
+   "value": "dibnet.dod.mil",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "domain",
+   "value": "www.defensie.nl",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "domain",
+   "value": "www.sicurezzanazionale.gov.it",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "A group of Russian state-supported cyber actors has been targeting and compromising various Western government and commercial organizations using the Zimbra Collaboration Suite (ZCS) software since at least July 2025.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "A group of Russian state supported cyber actors has been targeting and compromising various Western government and commercial organizations using the Zimbra Col"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "To gain initial access, LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target. Through exploitation of CVE-2025-66376, this JavaScript payload is immediately executed once the user views the malicious email, such as the one shown in Figure 1, in the ZCS webmail platform.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To gain initial access, LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target. Through exploitation of CVE 2025 66376, this JavaSc"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts, as shown in the email metadata in Figure 2. These compromised accounts were likely previous victims of this, or another LAUNDRY BEAR, campaign and their use is intended to further obfuscate and frustrate anti-phishing tools and training.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts, as shown in the email me"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Because the activity attributed to this campaign began in July 2025—months before Synacor released a patch and the CVE was published—the payload initially exploited a zero-day vulnerability at that time.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Because the activity attributed to this campaign began in July 2025 months before Synacor released a patch and the CVE was published the payload initially explo"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "This vulnerability allows for execution of a JavaScript payload included in email content due to improper sanitization of Cascading Style Sheet’s (CSS) @import directives within an email [5].",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This vulnerability allows for execution of a JavaScript payload included in email content due to improper sanitization of Cascading Style Sheet’s (CSS) @import "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "This malicious payload attempts to collect and exfiltrate information in 12 asynchronous stages. The stages in order of appearance within the payload are as follows: 1. sendStartPing, 2. gather_email, 3. gather_environment, 4. gather_2fa_codes, 5. gather_app_password, 6. gather_device_status, 7. gather_oauth_consumers, 8. gather_autocomplete_password, 9. enable_mail_protocols, 10. gather_gal, 11. sendArchives, and 12. sendFinishPing.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "This malicious payload attempts to collect and exfiltrate information in 12 asynchronous stages. The stages in order of appearance within the payload are as fol"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "To establish sustained persistence into the victim’s email account, the script attempts to modify account preferences and collect authentication information. Any collected credentials are later exfiltrated, as further described in the Exfiltration section below.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To establish sustained persistence into the victim’s email account, the script attempts to modify account preferences and collect authentication information. An"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "During the enable_mail_protocols stage, a SOAP request leveraging the “ModifyPrefsRequest” command under the “zimbraAccount” namespace is sent. This request attempts to set the “zimbraPrefImapEnabled” preference to TRUE.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the enable_mail_protocols stage, a SOAP request leveraging the “ModifyPrefsRequest” command under the “zimbraAccount” namespace is sent. This request att"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "During the gather_app_password stage, the script makes a SOAP request using the “CreateAppSpecificPasswordRequest” command under the “zimbraAccount” namespace to create a new Application Passcode. The SOAP request uses “ZimbraWeb” as the name of the application.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the gather_app_password stage, the script makes a SOAP request using the “CreateAppSpecificPasswordRequest” command under the “zimbraAccount” namespace t"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "During the gather_2fa_codes stage, the script makes a SOAP request using the “GetScratchCodesRequest” command under the “zimbraAccount” namespace. The script then attempts to exfiltrate any non-null 2FA codes collected this way.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the gather_2fa_codes stage, the script makes a SOAP request using the “GetScratchCodesRequest” command under the “zimbraAccount” namespace. The script th"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "At the end of each stage in the collection process, the script attempts to exfiltrate acquired information to Flowerbed. The script primarily relies on two forms of data exfiltration: DNS and HTTPS.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "At the end of each stage in the collection process, the script attempts to exfiltrate acquired information to Flowerbed. The script primarily relies on two form"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "DNS exfiltration occurs through DNS A record queries. To ensure data exfiltrated through DNS is not corrupted when traversing through non-actor-controlled DNS infrastructure, Ulej maintains compliance with RFC 1035, Domain Names - Implementation and Specification, specifically accounting for the case insensitivity and subdomain length requirements.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "59"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "DNS exfiltration occurs through DNS A record queries. To ensure data exfiltrated through DNS is not corrupted when traversing through non actor controlled DNS i"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "By using Let’s Encrypt certificates, this group can quickly deploy new infrastructure and leverage encrypted HTTPS communications with valid server certificates when exfiltrating information from the victim’s environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "By using Let’s Encrypt certificates, this group can quickly deploy new infrastructure and leverage encrypted HTTPS communications with valid server certificates"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "To gain initial access, LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To gain initial access, LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Through exploitation of CVE-2025-66376, this JavaScript payload is immediately executed once the user views the malicious email",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through exploitation of CVE 2025 66376, this JavaScript payload is immediately executed once the user views the malicious email"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "This malicious payload attempts to collect and exfiltrate information in 12 asynchronous stages.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This malicious payload attempts to collect and exfiltrate information in 12 asynchronous stages."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "To establish sustained persistence into the victim’s email account, the script attempts to modify account preferences and collect authentication information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To establish sustained persistence into the victim’s email account, the script attempts to modify account preferences and collect authentication information."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "At the end of each stage in the collection process, the script attempts to exfiltrate acquired information to Flowerbed.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "At the end of each stage in the collection process, the script attempts to exfiltrate acquired information to Flowerbed."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "These compromised accounts were likely previous victims of this, or another LAUNDRY BEAR, campaign and their use is intended to further obfuscate and frustrate anti-phishing tools and training.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "These compromised accounts were likely previous victims of this, or another LAUNDRY BEAR, campaign and their use is intended to further obfuscate and frustrate "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "LAUNDRY BEAR successfully targeted and exfiltrated sensitive user information from organizations who use the Zimbra Collaboration Suite (ZCS) product",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LAUNDRY BEAR successfully targeted and exfiltrated sensitive user information from organizations who use the Zimbra Collaboration Suite (ZCS) product"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target. Through exploitation of CVE-2025-66376, this JavaScript payload is immediately executed once the user views the malicious email in the ZCS webmail platform.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "LAUNDRY BEAR sends an email containing a malicious JavaScript payload to the target. Through exploitation of CVE 2025 66376, this JavaScript payload is immediat"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "The exploit attempts to exfiltrate the victim’s last 90 days of email communications, the organization email directory (i.e., Global Address List [GAL]), and other sensitive information to servers controlled by LAUNDRY BEAR.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he exploit attempts to exfiltrate the victim’s last 90 days of email communications, the organization email directory (i.e., Global Address List [GAL]), and oth"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "ZCS logs from these requests are stored, by default, in the /opt/zimbra/log/mailbox.log file",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "95"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ZCS logs from these requests are stored, by default, in the /opt/zimbra/log/mailbox.log file"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Ulej exfiltrates emails and other sensitive user data from a victim’s system immediately after exploitation and stores the data in an actor-controlled unattributable virtual private server (VPS) running LAUNDRY BEAR’s “Flowerbed” collection framework.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " exfiltrates emails and other sensitive user data from a victim’s system immediately after exploitation and stores the data in an actor controlled unattributabl"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Flowerbed is a Python project that uses Docker for containerization. The project includes four different Docker containers: Catcher, Certbot, Nginx, and Gardener.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.75,
+   "matched_text": "Flowerbed is a Python project that uses Docker for containerization. The project includes four different Docker containers:"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Catcher acts as both a DNS and HTTP server to receive and aggregate exfiltrated victim information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Catcher acts as both a DNS and HTTP server to receive and aggregate exfiltrated victim information."
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Flowerbed server infrastructure ... zmailanalytics[.]com, zimbra-metadata[.]com, analyticemailmeter[.]com, emailanalytics.com[.]ua, mailnalysis[.]com, zimbrastat[.]com, zimbrasoft.com[.]ua, synacorzimbra[.]nl, istc-cloud[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Flowerbed server infrastructure "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "LAUNDRY BEAR has been targeting and compromising various Western government and commercial organizations using the Zimbra Collaboration Suite (ZCS) software since at least July 2025.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " has been targeting and compromising various Western government and commercial organizations using the Zimbra Collaboration Suite (ZCS) software since at least "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Through exploitation of CVE-2025-66376, this JavaScript payload is immediately executed once the user views the malicious email in the ZCS webmail platform.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Through exploitation of CVE 2025 66376, this JavaScript payload is immediately executed once the user views the malicious email"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "A patch for CVE-2025-66376 was released for both 10.1.13 and 10.0.18 versions of ZCS.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "81"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9882,
+   "matched_text": "A patch for CVE 2025 66376 was released for both 10.1.13 and 10.0.18 versions of ZCS"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "The script relies heavily on SOAP requests to collect victim information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9589,
+   "matched_text": " script relies heavily on SOAP requests to collect victim information."
+  },
+  {
+   "id": "evidence-33",
+   "quote": "The script uses SOAP commands such as GetIdentitiesRequest, ModifyPrefsRequest, CreateAppSpecificPasswordRequest, GetScratchCodesRequest, GetInfoRequest, GetDeviceStatusRequest, GetOAuthConsumersRequest, SearchGalRequest.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "GetIdentitiesRequest"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "LAUNDRY BEAR almost certainly relies on a mail client using the Internet Message Access Protocol (IMAP) for persistent access to the victim’s mailbox.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "LAUNDRY BEAR almost certainly relies on a mail client using the Internet Message Access Protocol (IMAP) for persistent access to the victim’s mailbox."
+  },
+  {
+   "id": "evidence-35",
+   "quote": "Catcher acts as an HTTP server over port 8000 and a DNS server on port 53.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "72"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Catcher acts as an HTTP server over port 8000 and a DNS server on port 53."
+  },
+  {
+   "id": "evidence-36",
+   "quote": "Flowerbed uses an Nginx container which serves as an HTTPS reverse proxy for Catcher, enabling Flowerbed to disguise some of its exfiltration activity through an encrypted communications channel.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9474,
+   "matched_text": " which serves as an HTTPS reverse proxy for Catcher, enabling Flowerbed to disguise some of its exfiltration activity through an encrypted communications channe"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "Using a custom-developed capability named “Улей” or “Ulej” (Russian for beehive), LAUNDRY BEAR successfully targeted and exfiltrated sensitive user information from organizations who use the Zimbra Collaboration Suite (ZCS) product.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using a custom developed capability named “Улей” or “Ulej” (Russian for beehive), LAUNDRY BEAR successfully targeted and exfiltrated sensitive user information "
+  },
+  {
+   "id": "evidence-38",
+   "quote": "Ulej is a novel data exfiltration and aggregation capability, that currently supports a campaign specifically targeting users of ZCS webmail servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Ulej is a novel data exfiltration and aggregation capability, that currently "
+  },
+  {
+   "id": "evidence-39",
+   "quote": "The JavaScript payload included in the malicious email exploits CVE-2025-66376, a zero-day vulnerability at the time of initial exploitation, allowing execution of arbitrary JavaScript when the email is viewed.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " JavaScript payload i"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "During the gather_app_password stage, the script makes a SOAP request using the “CreateAppSpecificPasswordRequest” command under the “zimbraAccount” namespace to create a new Application Passcode. The SOAP request uses “ZimbraWeb” as the name of the application.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the gather_app_password stage, the script makes a SOAP request using the “CreateAppSpecificPasswordRequest” command under the “zimbraAccount” namespace t"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Instances of these passcodes with the name “ZimbraWeb” are almost certainly malicious.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9884,
+   "matched_text": "nstances of these passcodes with the name “ZimbraWeb” are almost certainly malicious."
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9926,
+   "matched_text": "Since at least November 2025, LAUNDRY BEAR began sending these phishing emails from victim infrastructure through compromised accounts"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "LAUNDRY BEAR uses previously compromised victim accounts to send phishing emails containing the malicious payload.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7692,
+   "matched_text": " phishing emails "
+  },
+  {
+   "id": "evidence-44",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "CVE-2025-\n 66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "81"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "97"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "98"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2025-66376",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "114"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2025 66376"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "pixel.gif",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "75"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "pixel.gif"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "75"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "216.252.238[.]104",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.252.238[.]104"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "216.252.238[.]18",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.252.238[.]18"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "37.120.247[.]228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37.120.247[.]228"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "185.86.79[.]95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.86.79[.]95"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "104.248.134[.]194",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104.248.134[.]194"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "64.226.124[.]190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "64.226.124[.]190"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "193.238.152[.]66",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.238.152[.]66"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "216.252.238[.]64",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "216.252.238[.]64"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "194.156.103[.]193",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "194.156.103[.]193"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "zmailanalytics[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zmailanalytics[.]com"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "zmailanalytics[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zmailanalytics[.]com"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "zimbra-metadata[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zimbra metadata[.]com"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "analyticemailmeter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "analyticemailmeter[.]com"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "emailanalytics.com[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "emailanalytics.com[.]ua"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "mailnalysis[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "mailnalysis[.]com"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "zimbrastat[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zimbrastat[.]com"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "zimbrasoft.com[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "zimbrasoft.com[.]ua"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "synacorzimbra[.]nl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "synacorzimbra[.]nl"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "istc-cloud[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "88"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "istc cloud[.]com"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "*.i.zmailanalytics[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.zmailanalytics[.]com"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "*.i.zimbra-metadata[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.zimbra metadata[.]com"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "*.i.analyticemailmeter[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.analyticemailmeter[.]com"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "*.i.emailanalytics.com[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.emailanalytics.com[.]ua"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "*.i.mailnalysis[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.mailnalysis[.]com"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "*.i.zimbrastat[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.zimbrastat[.]com"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "*.i.zimbrasoft.com[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.zimbrasoft.com[.]ua"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "*.i.synacorzimbra[.]nl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.synacorzimbra[.]nl"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "*.i.istc-cloud[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "*.i.istc cloud[.]com"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "2e4f314bc9943cab5005d6fde0b271c74d47bc9d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2e4f314bc9943cab5005d6fde0b271c74d47bc9d"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "50a87d926621dd06389ba50d86e0ff574ed713a8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "50a87d926621dd06389ba50d86e0ff574ed713a8"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "c5a72420e7bb308d078e62128430897f82194c95",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c5a72420e7bb308d078e62128430897f82194c95"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "8959c4d29e29f02ea94ea8bb21c8df2594c5549d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8959c4d29e29f02ea94ea8bb21c8df2594c5549d"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "62eb76432597694edb01c1fe57aab0cfe03a7178",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62eb76432597694edb01c1fe57aab0cfe03a7178"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "cddf5c3be1e07f28140aed165b929bf2d614922a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cddf5c3be1e07f28140aed165b929bf2d614922a"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "18b3ad442ce73cc8656d51d75bbd7c855f2cb7e8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "18b3ad442ce73cc8656d51d75bbd7c855f2cb7e8"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "1b25041ececf2457eef0270fc1d785cec8ec9ded",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1b25041ececf2457eef0270fc1d785cec8ec9ded"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "e4fe6466a4f9a4249fe330651e914e45bbdca44a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e4fe6466a4f9a4249fe330651e914e45bbdca44a"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "b6b77c9a455225d525834a403ca9ef5481ed0447",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "89"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b6b77c9a455225d525834a403ca9ef5481ed0447"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "isofts.kiev[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "isofts.kiev[.]ua"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "kiev[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "kiev[.]ua"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "navs.edu[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "navs.edu[.]ua"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "edu[.]ua",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "edu[.]ua"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "98df604ecc57f884a2e6ce3266a0013ad64455cac48442c2312cfa4765007aaf",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "98df604ecc57f884a2e6ce3266a0013ad64455cac48442c2312cfa4765007aaf"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "60db9abae75cd8ccc49dd7ea5feb41677566dcd442f12ebc5745ffd2810fb874",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "60db9abae75cd8ccc49dd7ea5feb41677566dcd442f12ebc5745ffd2810fb874"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "b1f5beb1175fc5c7d1806a2f0d900eb124c54f0286c5c52b66eea7a6633adb1d",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "b1f5beb1175fc5c7d1806a2f0d900eb124c54f0286c5c52b66eea7a6633adb1d"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "1517b3caa495f6c4e832df9c75fc94667e3c233773f7fa4e056d5e30e5ead760",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "93"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1517b3caa495f6c4e832df9c75fc94667e3c233773f7fa4e056d5e30e5ead760"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "www.aivd.nl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "100"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.aivd.nl"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "www.aivd.nl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.aivd.nl"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "www.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.microsoft.com"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "unit42.paloaltonetworks.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "unit42.paloaltonetworks.com"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "www.proofpoint.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.proofpoint.com"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "www.seqrite.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "101"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.seqrite.com"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "dibnet.dod.mil",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "dibnet.dod.mil"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "www.defensie.nl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "107"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.defensie.nl"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "www.sicurezzanazionale.gov.it",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "108"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.sicurezzanazionale.gov.it"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Zimbra Collaboration Suite (ZCS) webmail servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Zimbra Collaboration Suite (ZCS) webmail servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Zimbra Collaboration Suite (ZCS) webmail servers",
+    "action:a1 — target and compromise users using Zimbra Collaboration Suite",
+    "action:a2 — send email containing malicious JavaScript payload exploiting CVE-2025-66376",
+    "action:a4 — execute JavaScript payload exploiting zero-day vulnerability CVE-2025-66376",
+    "action:a5 — collect victim information in 12 asynchronous stages",
+    "action:a6 — establish persistence by modifying account preferences and collecting authentication information"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Zimbra Collaboration Suite (ZCS) webmail servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Zimbra Collaboration Suite (ZCS) webmail servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Zimbra Collaboration Suite (ZCS) webmail servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Zimbra Collaboration Suite (ZCS) webmail servers",
+    "action:a1 — target and compromise users using Zimbra Collaboration Suite",
+    "action:a2 — send email containing malicious JavaScript payload exploiting CVE-2025-66376",
+    "action:a4 — execute JavaScript payload exploiting zero-day vulnerability CVE-2025-66376",
+    "action:a5 — collect victim information in 12 asynchronous stages",
+    "action:a6 — establish persistence by modifying account preferences and collecting authentication information"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Zimbra Collaboration Suite (ZCS) webmail servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Zimbra Collaboration Suite (ZCS) webmail servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Zimbra Collaboration Suite (ZCS) webmail servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Zimbra Collaboration Suite (ZCS) webmail servers",
+    "action:a1 — target and compromise users using Zimbra Collaboration Suite",
+    "action:a2 — send email containing malicious JavaScript payload exploiting CVE-2025-66376",
+    "action:a4 — execute JavaScript payload exploiting zero-day vulnerability CVE-2025-66376",
+    "action:a5 — collect victim information in 12 asynchronous stages",
+    "action:a6 — establish persistence by modifying account preferences and collecting authentication information"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Zimbra Collaboration Suite (ZCS) webmail servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "Internet-facing webmail service",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Flowerbed infrastructure VPS servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Flowerbed infrastructure VPS servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Flowerbed infrastructure VPS servers",
+    "action:a7 — exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Flowerbed infrastructure VPS servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Flowerbed infrastructure VPS servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Flowerbed infrastructure VPS servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Flowerbed infrastructure VPS servers",
+    "action:a7 — exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Flowerbed infrastructure VPS servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Flowerbed infrastructure VPS servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Flowerbed infrastructure VPS servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Flowerbed infrastructure VPS servers",
+    "action:a7 — exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Flowerbed infrastructure VPS servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "cloud-based VPS servers",
+     "source_ref": "hosts:h2.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Zimbra Collaboration Suite (ZCS) webmail service — 版本",
+   "category": "version",
+   "reason": "IR 指出 Zimbra Collaboration Suite (ZCS) webmail service（CVE-2025-66376），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Zimbra Collaboration Suite (ZCS) webmail service 的哪個版本？請選受 CVE-2025-66376 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Zimbra Collaboration Suite (ZCS) webmail service"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Zimbra Collaboration Suite (ZCS) webmail service",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29",
+      "evidence-30",
+      "evidence-31"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2025-66376",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29",
+      "evidence-30",
+      "evidence-31"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a7 — exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure",
+    "host:h2 — Flowerbed infrastructure VPS servers"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a5 — collect victim information in 12 asynchronous stages",
+    "action:a7 — exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure",
+    "host:h1 — Zimbra Collaboration Suite (ZCS) webmail servers",
+    "host:h2 — Flowerbed infrastructure VPS servers"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "collect victim information in 12 asynchronous stages",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate collected data via DNS and HTTPS to Flowerbed infrastructure",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8818,
+  "unsupported_claim_count": 11,
+  "inferred_count": 8,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a4",
+    "technique": "T1203"
+   },
+   {
+    "action": "a6",
+    "technique": "T1098"
+   },
+   {
+    "action": "a7",
+    "technique": "T1048"
+   }
+  ]
+ },
+ "id": "scn_evidence"
+}

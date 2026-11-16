@@ -1,0 +1,1376 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230830",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "369874abb05a91f2286b8afed2c152c69b3bc35440bd4f3e93d9cbfad3fc8265",
+  "source_name": "csa-2023-230830"
+ },
+ "actions": [
+  {
+   "id": "a3",
+   "name": "set up persistence via the Registry Run Key",
+   "source": "llm",
+   "description": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart: HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\<random_string>",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "writes its binary back to disk to maintain persistence",
+   "source": "llm",
+   "description": "QakBot will also write its binary back to disk to maintain persistence in the following folder: C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "writes an encrypted registry configuration detailing information about the bot",
+   "source": "llm",
+   "description": "QakBot will write an encrypted registry configuration detailing information about the bot to the following registry key: HKEY_CURRENT_USER\\Software\\Microsoft\\<random_string>",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source lists these actions in order, implying a sequence",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "QakBot-affected (victim) devices",
+   "source": "llm",
+   "name": "victim computers",
+   "os": "Microsoft Windows",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6",
+    "evidence-7",
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "service-unspecified",
+   "name": "Unspecified service (absent)",
+   "epistemic_status": "absent",
+   "source": "program"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "service-unspecified"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "QakBot binary",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Registry Run Key",
+   "type": "artifact",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "encrypted registry configuration",
+   "type": "artifact",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "ip",
+   "value": "85.14.243[.]111",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-8"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "51.38.62[.]181",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-9"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "51.38.62[.]182",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-10"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "185.4.67[.]6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-11"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "62.141.42[.]36",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "87.117.247[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-13"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "89.163.212[.]111",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "193.29.187[.]57",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "193.201.9[.]93",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "94.198.50[.]147",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "94.198.50[.]210",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "188.127.243[.]130",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "188.127.243[.]133",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "94.198.51[.]202",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "188.127.242[.]119",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "188.127.242[.]178",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "190.2.143[.]38",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "51.161.202[.]232",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "51.195.49[.]228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "ip",
+   "value": "188.127.243[.]148",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "ip",
+   "value": "23.236.181[.]102",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "ip",
+   "value": "45.84.224[.]23",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "46.151.30[.]109",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "ip",
+   "value": "94.103.85[.]86",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "ip",
+   "value": "94.198.53[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "95.211.95[.]14",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "ip",
+   "value": "95.211.172[.]6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "ip",
+   "value": "95.211.172[.]7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "ip",
+   "value": "95.211.172[.]86",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "ip",
+   "value": "95.211.172[.]108",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "ip",
+   "value": "95.211.172[.]109",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "ip",
+   "value": "95.211.198[.]177",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "ip",
+   "value": "95.211.250[.]97",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "ip",
+   "value": "95.211.250[.]98",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "ip",
+   "value": "95.211.250[.]117",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "ip",
+   "value": "185.81.114[.]188",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "ip",
+   "value": "188.127.243[.]145",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "ip",
+   "value": "188.127.243[.]147",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "ip",
+   "value": "188.127.243[.]193",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "ip",
+   "value": "188.241.58[.]140",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "ip",
+   "value": "193.29.187[.]41",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "hash",
+   "value": "7cdee5a583eacf24b1f142413aabb4e556ccf4ef3a4764ad084c1526cc90e117",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "domain",
+   "value": "cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart:\nHKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\<random_string>",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart: HKEY_CURRENT_USE"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "QakBot will also write its binary back to disk to maintain persistence in the following folder:\nC:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "QakBot will also write its binary back to disk to maintain persistence in the following folder: C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "QakBot will write an encrypted registry configuration detailing information about the bot to the following registry key: HKEY_CURRENT_USER\\Software\\Microsoft\\<random_string>",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "QakBot will write an encrypted registry configuration detailing information about the bot to the following registry key: HKEY_CURRENT_USER\\Software\\Microsoft\\<r"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "QakBot will also write its binary back to disk to maintain persistence in the following folder:\nC:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\\n           3. QakBot will write an encrypted registry configuration detailing information about the bot to the\n              following registry key: HKEY_CURRENT_USER\\Software\\Microsoft\\<random_string>",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "QakBot will also write its binary back to disk to maintain persistence in the following folder: C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\ 3. Qa"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "At any given time, thousands of victim computers running Microsoft Windows were infected with QakBot",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "At any given time, thousands of victim computers running Microsoft Windows were infected with QakBot"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart: HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\<random_string>",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "QakBot sets up persistence via the Registry Run Key as needed. It will delete this key when running and set it back up before computer restart: HKEY_CURRENT_USE"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "QakBot will also write its binary back to disk to maintain persistence in the following folder: C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "QakBot will also write its binary back to disk to maintain persistence in the following folder: C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\<random_string>\\"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "85.14.243[.]111",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "85.14.243[.]111"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "51.38.62[.]181",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.38.62[.]181"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "51.38.62[.]182",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.38.62[.]182"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "185.4.67[.]6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.4.67[.]6"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "62.141.42[.]36",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62.141.42[.]36"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "87.117.247[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "87.117.247[.]41"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "89.163.212[.]111",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.163.212[.]111"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "193.29.187[.]57",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.29.187[.]57"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "193.201.9[.]93",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.201.9[.]93"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "94.198.50[.]147",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "94.198.50[.]147"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "94.198.50[.]210",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "94.198.50[.]210"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "188.127.243[.]130",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]130"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "188.127.243[.]133",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]133"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "94.198.51[.]202",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "94.198.51[.]202"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "188.127.242[.]119",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.242[.]119"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "188.127.242[.]178",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.242[.]178"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "190.2.143[.]38",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "190.2.143[.]38"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "51.161.202[.]232",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.161.202[.]232"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "51.195.49[.]228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51.195.49[.]228"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "188.127.243[.]148",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]148"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "23.236.181[.]102",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23.236.181[.]102"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "45.84.224[.]23",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.84.224[.]23"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "46.151.30[.]109",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.151.30[.]109"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "94.103.85[.]86",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "94.103.85[.]86"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "94.198.53[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "94.198.53[.]17"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "95.211.95[.]14",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.95[.]14"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "95.211.172[.]6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.172[.]6"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "95.211.172[.]7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.172[.]7"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "95.211.172[.]86",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.172[.]86"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "95.211.172[.]108",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.172[.]108"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "95.211.172[.]109",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.172[.]109"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "95.211.198[.]177",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.198[.]177"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "95.211.250[.]97",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.250[.]97"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "95.211.250[.]98",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.250[.]98"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "95.211.250[.]117",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.211.250[.]117"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "185.81.114[.]188",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.81.114[.]188"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "188.127.243[.]145",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]145"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "188.127.243[.]147",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]147"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "188.127.243[.]193",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.127.243[.]193"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "188.241.58[.]140",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "188.241.58[.]140"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "193.29.187[.]41",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193.29.187[.]41"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "7cdee5a583eacf24b1f142413aabb4e556ccf4ef3a4764ad084c1526cc90e117",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "21"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7cdee5a583eacf24b1f142413aabb4e556ccf4ef3a4764ad084c1526cc90e117"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cisa.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim computers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim computers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim computers",
+    "action:a3 — set up persistence via the Registry Run Key",
+    "action:a4 — writes its binary back to disk to maintain persistence",
+    "action:a5 — writes an encrypted registry configuration detailing information about the bot"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim computers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-3",
+      "evidence-1",
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Microsoft Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-3",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim computers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim computers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim computers",
+    "action:a3 — set up persistence via the Registry Run Key",
+    "action:a4 — writes its binary back to disk to maintain persistence",
+    "action:a5 — writes an encrypted registry configuration detailing information about the bot"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim computers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-3",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim computers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim computers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim computers",
+    "action:a3 — set up persistence via the Registry Run Key",
+    "action:a4 — writes its binary back to disk to maintain persistence",
+    "action:a5 — writes an encrypted registry configuration detailing information about the bot"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim computers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-3",
+      "evidence-1",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-action-a3-start-condition",
+   "field": "set up persistence via the Registry Run Key — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「set up persistence via the Registry Run Key」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a3 — set up persistence via the Registry Run Key"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "set up persistence via the Registry Run Key",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.96,
+  "unsupported_claim_count": 4,
+  "inferred_count": 0,
+  "absent_count": 1,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a1",
+    "name": "executed a coordinated operation to disrupt QakBot infrastructure worldwide",
+    "actor": "defender"
+   },
+   {
+    "id": "a2",
+    "name": "took over the QakBot botnet",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

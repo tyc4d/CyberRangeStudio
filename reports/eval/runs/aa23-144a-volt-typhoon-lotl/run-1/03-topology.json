@@ -1,0 +1,102 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "hosts targeted for exfiltration of ntds.dit file and SYSTEM registry hive",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Active Directory",
+     "port": 389,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "image_hint": "unsupported-ad-ds",
+   "runtime": "vm",
+   "guest": {
+    "os_family": "windows",
+    "os_release": null,
+    "image_ref": null,
+    "image_digest": null,
+    "cpu": null,
+    "memory_mib": null,
+    "disk_gib": null
+   },
+   "deployable": false,
+   "not_deployed_reason": "Active Directory Domain Services (unsupported pending fixture) 需要尚未備妥的 VM 映像（not currently reproducible; requires versioned isolated DC/member topology）；這台主機不會被部署。"
+  },
+  {
+   "id": "h2",
+   "role": "intermediate infrastructure to obscure activity by redirecting C2 traffic",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a7, a8, a9 require access to Active Directory.",
+   "port": 389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: earliest action with a named target (a1)); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service Windows Management Instrumentation Command Line (WMIC) (s1); it remains unreachable by default.",
+  "No port is known for service ntdsutil.exe (s2); it remains unreachable by default.",
+  "No port is known for service netsh interface portproxy (s3); it remains unreachable by default.",
+  "No port is known for service PowerShell (s4); it remains unreachable by default.",
+  "No port is known for service Impacket wmiexec (s5); it remains unreachable by default.",
+  "Host h1 needs Active Directory Domain Services (unsupported pending fixture) as a VM, which is not deployable yet (not currently reproducible; requires versioned isolated DC/member topology).",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

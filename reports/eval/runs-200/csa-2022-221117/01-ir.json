@@ -1,0 +1,3426 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-221117",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "7759a67df01504b2d9741d3681472b52fa7b8a30edaf59bcd05e61c0accc7ef0",
+  "source_name": "csa-2022-221117"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "gain initial access via single factor logins",
+   "source": "llm",
+   "description": "Hive actors have gained initial access to victim networks by using single factor logins via Remote Desktop Protocol (RDP), virtual private networks (VPNs), and other remote network connection protocols",
+   "target_host_ref": "h3",
+   "attack_technique": "T1133",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "gain initial access by exploiting Microsoft Exchange vulnerabilities",
+   "source": "llm",
+   "description": "Hive actors have gained initial access to victim networks by exploiting Microsoft Exchange Server vulnerabilities CVE-2021-31207, CVE-2021-34473, and CVE-2021-34523",
+   "target_host_ref": "h2",
+   "attack_technique": "T1190",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a3",
+   "name": "gain initial access via phishing emails with malicious attachments",
+   "source": "llm",
+   "description": "Hive actors have gained initial access to victim networks by distributing phishing emails with malicious attachments",
+   "target_host_ref": "h3",
+   "attack_technique": "T1566.001",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a4",
+   "name": "bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812",
+   "source": "llm",
+   "description": "Hive actors have bypassed multifactor authentication and gained access to FortiOS servers by exploiting CVE-2020-12812, enabling login without a prompt for the second authentication factor when changing the case of the username",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "terminate processes related to backups, antivirus/anti-spyware, and file copying",
+   "source": "llm",
+   "description": "Hive ransomware attempts to evade detection by identifying and terminating processes related to backups, antivirus/anti-spyware, and file copying to facilitate file encryption",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a6",
+   "name": "stop volume shadow copy services and remove all existing shadow copies",
+   "source": "llm",
+   "description": "Hive ransomware stops the volume shadow copy services and removes all existing shadow copies via vssadmin on command line or via PowerShell",
+   "target_host_ref": "h3",
+   "attack_technique": "T1059",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a7",
+   "name": "delete Windows event logs",
+   "source": "llm",
+   "description": "Hive ransomware deletes Windows event logs, specifically the System, Security and Application logs",
+   "target_host_ref": "h3",
+   "attack_technique": "T1070",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a8",
+   "name": "remove virus definitions and disable Windows Defender and other antivirus programs",
+   "source": "llm",
+   "description": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system registry",
+   "target_host_ref": "h3",
+   "attack_technique": "T1112",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a9",
+   "name": "exfiltrate data using Rclone and Mega.nz",
+   "source": "llm",
+   "description": "Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz",
+   "target_host_ref": "h3",
+   "attack_technique": "T1537",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a10",
+   "name": "create *.key file in root directory during encryption",
+   "source": "llm",
+   "description": "During the encryption process, a file named *.key is created in the root directory (C:\\ or /root/), required for decryption and unique to the machine where it was created",
+   "target_host_ref": "h3",
+   "attack_technique": "T1486",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "drop ransom note HOW_TO_DECRYPT.txt into each affected directory",
+   "source": "llm",
+   "description": "Hive ransomware drops the ransom note HOW_TO_DECRYPT.txt into each affected directory stating the *.key file cannot be modified, renamed, or deleted or files cannot be recovered",
+   "target_host_ref": "h3",
+   "attack_technique": "T1486",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "communicate ransom demand via live chat panel on TOR",
+   "source": "llm",
+   "description": "The ransom note contains a .onion link accessible through a TOR browser enabling victim organizations to contact Hive actors through a live chat panel to discuss payment",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+   "source": "llm",
+   "description": "The ransom note threatens victims that a public disclosure or leak site accessible on the TOR site, HiveLeaks, contains data exfiltrated from victim organizations who do not pay the ransom",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a14",
+   "name": "disclose exfiltrated data on anonymous file sharing sites",
+   "source": "llm",
+   "description": "Hive actors have used anonymous file sharing sites such as anonfiles.com, mega.nz, send.exploit.in, ufile.io, sendspace.com, privatlab.net, and privatlab.com to disclose exfiltrated data",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a15",
+   "name": "negotiate ransom amount and payment deadline via live chat",
+   "source": "llm",
+   "description": "Once the victim contacts Hive actors on the live chat panel, Hive actors communicate the ransom amount and payment deadline and negotiate ransom demands in U.S. dollars payable in Bitcoin",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a16",
+   "name": "reinfect victim networks after restoration without ransom payment",
+   "source": "llm",
+   "description": "Hive actors have been known to reinfect the networks of victim organizations who restored their network without making a ransom payment",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that after gaining access, Hive ransomware attempts to evade detection by terminating processes.",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that after gaining access, Hive ransomware stops volume shadow copy services and removes shadow copies.",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that after gaining access, Hive ransomware deletes Windows event logs.",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a8",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that prior to encryption, Hive ransomware removes virus definitions and disables antivirus programs, and during encryption creates the *.key file.",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r5",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that during encryption the *.key file is created and the ransom note is dropped into each affected directory.",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that the ransom note contains a .onion link enabling victims to contact actors via live chat.",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a12",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that once the victim contacts Hive actors on live chat, actors communicate ransom amount and payment deadline.",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a11",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that the ransom note threatens victims with public disclosure of exfiltrated data on HiveLeaks TOR site.",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r9",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states that additionally, Hive actors have used anonymous file sharing sites to disclose exfiltrated data.",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a1",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Terminating processes related to backups, antivirus, and file copying depends on having gained initial access via single factor logins.",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r11",
+   "from_action": "a1",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Stopping volume shadow copy services and removing shadow copies depends on having gained initial access via single factor logins.",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r12",
+   "from_action": "a1",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Deleting Windows event logs depends on having gained initial access via single factor logins.",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r13",
+   "from_action": "a9",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The ransom note threatens victims with public disclosure of exfiltrated data, implying exfiltration precedes the threat.",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r14",
+   "from_action": "a16",
+   "to_action": "a1",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "servers targeted by Hive actors exploiting CVE-2020-12812 to bypass multifactor authentication",
+   "source": "llm",
+   "name": "FortiOS servers",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h2",
+   "role": "servers targeted by Hive actors exploiting Microsoft Exchange Server vulnerabilities",
+   "source": "llm",
+   "name": "Microsoft Exchange servers",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "hosts infected and encrypted by Hive ransomware, running Microsoft Windows OS",
+   "source": "llm",
+   "name": "Victim networks' Windows hosts",
+   "evidence_refs": [
+    "evidence-26",
+    "evidence-27",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "hosts infected by Hive ransomware variants for Linux",
+   "source": "llm",
+   "name": "Victim networks' Linux hosts",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h5",
+   "role": "hosts infected by Hive ransomware variants for VMware ESXi",
+   "source": "llm",
+   "name": "Victim networks' VMware ESXi hosts",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "h6",
+   "role": "hosts infected by Hive ransomware variants for FreeBSD",
+   "source": "llm",
+   "name": "Victim networks' FreeBSD hosts",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s2",
+   "name": "Virtual Private Networks (VPNs)",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s3",
+   "name": "Microsoft Exchange Server",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient",
+   "cve": [
+    "CVE-2021-31207",
+    "CVE-2021-34473",
+    "CVE-2021-34523"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s4",
+   "name": "FortiOS",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2020-12812"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s5",
+   "name": "Windows Defender",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "h6"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "HOW_TO_DECRYPT.txt",
+   "type": "file",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "*.key file",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Rclone",
+   "type": "tool",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Mega.nz",
+   "type": "service",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2020-12812",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2021-31207",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34",
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2021-34473",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2021-34523",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38",
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "url",
+   "value": "https://anonfiles[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "url",
+   "value": "https://mega[.]nz",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "url",
+   "value": "https://send.exploit[.]in",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "url",
+   "value": "https://ufile[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "url",
+   "value": "https://www.sendspace[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "anonfiles[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "mega[.]nz",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "domain",
+   "value": "send.exploit[.]in",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "domain",
+   "value": "ufile[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "domain",
+   "value": "www.sendspace[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "url",
+   "value": "https://privatlab[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "url",
+   "value": "https://privatlab[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "domain",
+   "value": "privatlab[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "domain",
+   "value": "privatlab[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "hive.bat",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "shadow.bat",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "asq.r77vh0[.]pw",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "domain",
+   "value": "asq.d6shiiwz[.]pw",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "domain",
+   "value": "asq.swhw71un[.]pw",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "asd.s7610rir[.]pw",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "ip",
+   "value": "84.32.188[.]57",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60",
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "84.32.188[.]238",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62",
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "ip",
+   "value": "93.115.26[.]251",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64",
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "ip",
+   "value": "185.8.105[.]67",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66",
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "ip",
+   "value": "181.231.81[.]239",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68",
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "ip",
+   "value": "185.8.105[.]112",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70",
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "ip",
+   "value": "186.111.136[.]37",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72",
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "ip",
+   "value": "192.53.123[.]202",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74",
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "ip",
+   "value": "158.69.36[.]149",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76",
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "ip",
+   "value": "46.166.161[.]123",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78",
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "ip",
+   "value": "108.62.118[.]190",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80",
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "ip",
+   "value": "46.166.161[.]93",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82",
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "ip",
+   "value": "185.247.71[.]106",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84",
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "ip",
+   "value": "46.166.162[.]125",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86",
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "ip",
+   "value": "5.61.37[.]207",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88",
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "ip",
+   "value": "46.166.162[.]96",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90",
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "ip",
+   "value": "185.8.105[.]103",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92",
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "ip",
+   "value": "46.166.169[.]34",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94",
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "ip",
+   "value": "5.199.162[.]220",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96",
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "ip",
+   "value": "93.115.25[.]139",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98",
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "ip",
+   "value": "5.199.162[.]229",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100",
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "ip",
+   "value": "93.115.27[.]148",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102",
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "ip",
+   "value": "89.147.109[.]208",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104",
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "ip",
+   "value": "83.97.20[.]81",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106",
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "cve",
+   "value": "CVE-2021-42321",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell [T1059] [T1490]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Hive actors have gained initial access to victim networks by using single factor logins via Remote Desktop Protocol (RDP), virtual private networks (VPNs), and other remote network connection protocols.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have gained initial access to victim networks by using single factor logins via Remote Desktop Protocol (RDP), virtual private networks (VPNs), and "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Hive actors have also gained initial access to victim networks by distributing phishing emails with malicious attachments and by exploiting the following vulnerabilities against Microsoft Exchange servers:\n           •    CVE-2021-31207 - Microsoft Exchange Server Security Feature Bypass Vulnerability\n           •    CVE-2021-34473 - Microsoft Exchange Server Remote Code Execution Vulnerability\n           •    CVE-2021-34523 - Microsoft Exchange Server Privilege Escalation Vulnerability",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have also gained initial access to victim networks by distributing phishing emails with malicious attachments and by exploiting the following vulner"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Hive actors have also gained initial access to victim networks by distributing phishing emails with malicious attachments",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have also gained initial access to victim networks by distributing phishing emails with malicious attachments"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "In some cases, Hive actors have bypassed multifactor authentication (MFA) and gained access to FortiOS servers by exploiting Common Vulnerabilities and Exposures (CVE) CVE-2020-12812. This vulnerability enables a malicious cyber actor to log in without a prompt for the user’s second authentication factor (FortiToken) when the actor changes the case of the username.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In some cases, Hive actors have bypassed multifactor authentication (MFA) and gained access to FortiOS servers by exploiting Common Vulnerabilities and Exposure"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Hive ransomware attempts to evade detention by executing processes to: Identify processes related to backups, antivirus/anti-spyware, and file copying and then terminating those processes to facilitate file encryption.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Identify processes related to backups, antivirus/anti spyware, and file copying and then terminating those processes to facilitate file encryption."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Hive ransomware attempts to evade detention by executing processes to: Stop the volume shadow copy services and remove all existing shadow copies via vssadmin on command line or via PowerShell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Stop the volume shadow copy services and remove all existing shadow copies via vssadmin on command line or via PowerShell."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Hive ransomware attempts to evade detention by executing processes to: Delete Windows event logs, specifically the System, Security and Application logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Delete Windows event logs, specifically the System, Security and Application logs."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system registry.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system r"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/). Required for decryption, this key file only exists on the machine where it was created and cannot be reproduced.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/). Required for decryption, this key file "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The ransom note, HOW_TO_DECRYPT.txt is dropped into each affected directory and states the *.key file cannot be modified, renamed, or deleted, otherwise the encrypted files cannot be recovered.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The ransom note, HOW_TO_DECRYPT.txt is dropped into each affected directory and states the *.key file cannot be modified, renamed, or deleted, otherwise the enc"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "The ransom note contains a “sales department” .onion link accessible through a TOR browser, enabling victim organizations to contact the actors through a live chat panel to discuss payment for their files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The ransom note contains a “sales department” .onion link accessible through a TOR browser, enabling victim organizations to contact the actors through a live c"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The ransom note also threatens victims that a public disclosure or leak site accessible on the TOR site, “HiveLeaks”, contains data exfiltrated from victim organizations who do not pay the ransom demand",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The ransom note also threatens victims that a public disclosure or leak site accessible on the TOR site, “HiveLeaks”, contains data exfiltrated from victim orga"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Additionally, Hive actors have used anonymous file sharing sites to disclose exfiltrated data (see table 1 below).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Additionally, Hive actors have used anonymous file sharing sites to disclose exfiltrated data (see table 1 below)."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "https://anonfiles[.]com\nhttps://mega[.]nz\nhttps://send.exploit[.]in\nhttps://ufile[.]io\nhttps://www.sendspace[.]com\nhttps://privatlab[.]net\nhttps://privatlab[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8636,
+   "matched_text": "https://anonfiles[.]com https://mega[.]nz https://send.exploit[.]in https://ufile[.]io https://www.sendspace[.]com"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Once the victim organization contacts Hive actors on the live chat panel, Hive actors communicate the ransom amount and the payment deadline. Hive actors negotiate ransom demands in U.S. dollars, with initial amounts ranging from several thousand to millions of dollars. Hive actors demand payment in Bitcoin.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once the victim organization contacts Hive actors on the live chat panel, Hive actors communicate\n       the ransom amount and the payment deadline. Hive actors"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Hive actors have been known to reinfect—with either Hive ransomware or another ransomware variant—the networks of victim organizations who have restored their network without making a ransom payment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have been known to reinfect—with either Hive ransomware or another ransomware\n       variant—the networks of victim organizations who have restored "
+  },
+  {
+   "id": "evidence-18",
+   "quote": "After gaining access, Hive ransomware attempts to evade detention by executing processes to: Identify processes related to backups, antivirus/anti-spyware, and file copying and then terminating those processes to facilitate file encryption.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Identify processes related to backups, antivirus/anti spyware, and file copying and then terminating those processes to facilitate file encryption."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "After gaining access, Hive ransomware attempts to evade detention by executing processes to: Stop the volume shadow copy services and remove all existing shadow copies via vssadmin on command line or via PowerShell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Stop the volume shadow copy services and remove all existing shadow copies via vssadmin on command line or via PowerShell."
+  },
+  {
+   "id": "evidence-20",
+   "quote": "After gaining access, Hive ransomware attempts to evade detention by executing processes to: Delete Windows event logs, specifically the System, Security and Application logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "After gaining access, Hive ransomware attempts to evade detention by executing processes to: "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system registry. During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Prior to encryption, Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system r"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/). Required for decryption, this key file only exists on the machine where it was created and cannot be reproduced. The ransom note, HOW_TO_DECRYPT.txt is dropped into each affected directory and states the *.key file cannot be modified, renamed, or deleted, otherwise the encrypted files cannot be recovered.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/). Required for decryption, this key file "
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Once the victim organization contacts Hive actors on the live chat panel, Hive actors communicate the ransom amount and the payment deadline.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once the victim organization contacts Hive actors on the live chat panel, Hive actors communicate the ransom amount and the payment deadline."
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Hive actors have bypassed multifactor authentication (MFA) and gained access to FortiOS servers by exploiting Common Vulnerabilities and Exposures (CVE) CVE-2020-12812",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have bypassed multifactor authentication (MFA) and gained access to FortiOS servers by exploiting Common Vulnerabilities and Exposures (CVE) CVE 202"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Hive actors have gained initial access to victim networks by exploiting Microsoft Exchange Server vulnerabilities CVE-2021-31207, CVE-2021-34473, and CVE-2021-34523",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have gained initial access to victim networks by "
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system registry",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive ransomware removes virus definitions and disables all portions of Windows Defender and other common antivirus programs in the system registry"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "During the encryption process, a file named *.key (previously *.key.*) is created in the root directory (C:\\ or /root/)"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Hive ransomware drops the ransom note HOW_TO_DECRYPT.txt into each affected directory",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9091,
+   "matched_text": " into each affected directory"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "In addition to its capabilities against the Microsoft Windows operating system, Hive ransomware has known variants for Linux, VMware ESXi, and FreeBSD",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In addition to its capabilities against the Microsoft Windows operating system, Hive ransomware has known variants for Linux, VMware ESXi, and FreeBSD"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Hive actors have gained initial access to victim networks by using single factor logins via Remote Desktop Protocol (RDP)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have gained initial access to victim networks by using single factor logins via Remote Desktop Protocol (RDP)"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Hive actors have gained initial access to victim networks by using single factor logins via ... virtual private networks (VPNs)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Hive actors have gained initial access to victim networks by using single factor logins via … virtual private networks (VPNs)"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Hive actors exfiltrate data likely using a combination of Rclone and the cloud storage service Mega.nz"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "CVE-2020-12812",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2020 12812"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "CVE-2021-31207",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 31207"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "CVE-2021-\n                                                                      31207",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 31207"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "CVE-2021-34473",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34473"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "CVE-2021-\n                                                                      34473",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34473"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "CVE-2021-34523",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34523"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "CVE-2021-34523",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34523"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "https://anonfiles[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://anonfiles[.]com"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "https://mega[.]nz",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://mega[.]nz"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "https://send.exploit[.]in",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://send.exploit[.]in"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "https://ufile[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://ufile[.]io"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "https://www.sendspace[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://www.sendspace[.]com"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "anonfiles[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "anonfiles[.]com"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "mega[.]nz",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "mega[.]nz"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "send.exploit[.]in",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "send.exploit[.]in"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "ufile[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ufile[.]io"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "www.sendspace[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.sendspace[.]com"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "https://privatlab[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://privatlab[.]net"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "https://privatlab[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://privatlab[.]com"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "privatlab[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "privatlab[.]net"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "privatlab[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "privatlab[.]com"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "hive.bat",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "hive.bat"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "shadow.bat",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "shadow.bat"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "asq.r77vh0[.]pw",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "asq.r77vh0[.]pw"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "asq.d6shiiwz[.]pw",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "asq.d6shiiwz[.]pw"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "asq.swhw71un[.]pw",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "asq.swhw71un[.]pw"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "asd.s7610rir[.]pw",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "asd.s7610rir[.]pw"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "84.32.188[.]57",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.32.188[.]57"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "84.32.188[.]57",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.32.188[.]57"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "84.32.188[.]238",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.32.188[.]238"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "84.32.188[.]238",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "84.32.188[.]238"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "93.115.26[.]251",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.26[.]251"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "93.115.26[.]251",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.26[.]251"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "185.8.105[.]67",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]67"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "185.8.105[.]67",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]67"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "181.231.81[.]239",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "181.231.81[.]239"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "181.231.81[.]239",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "181.231.81[.]239"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "185.8.105[.]112",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]112"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "185.8.105[.]112",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]112"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "186.111.136[.]37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "186.111.136[.]37"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "186.111.136[.]37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "186.111.136[.]37"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "192.53.123[.]202",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.53.123[.]202"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "192.53.123[.]202",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.53.123[.]202"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "158.69.36[.]149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "158.69.36[.]149"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "158.69.36[.]149",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "158.69.36[.]149"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "46.166.161[.]123",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.161[.]123"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "46.166.161[.]123",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.161[.]123"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "108.62.118[.]190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.62.118[.]190"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "108.62.118[.]190",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "108.62.118[.]190"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "46.166.161[.]93",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.161[.]93"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "46.166.161[.]93",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.161[.]93"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "185.247.71[.]106",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.247.71[.]106"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "185.247.71[.]106",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.247.71[.]106"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "46.166.162[.]125",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.162[.]125"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "46.166.162[.]125",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.162[.]125"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "5.61.37[.]207",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.61.37[.]207"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "5.61.37[.]207",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.61.37[.]207"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "46.166.162[.]96",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.162[.]96"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "46.166.162[.]96",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.162[.]96"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "185.8.105[.]103",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]103"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "185.8.105[.]103",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185.8.105[.]103"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "46.166.169[.]34",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.169[.]34"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "46.166.169[.]34",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46.166.169[.]34"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "5.199.162[.]220",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.199.162[.]220"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "5.199.162[.]220",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.199.162[.]220"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "93.115.25[.]139",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.25[.]139"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "93.115.25[.]139",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.25[.]139"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "5.199.162[.]229",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.199.162[.]229"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "5.199.162[.]229",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5.199.162[.]229"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "93.115.27[.]148",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.27[.]148"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "93.115.27[.]148",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "93.115.27[.]148"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "89.147.109[.]208",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.147.109[.]208"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "89.147.109[.]208",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "89.147.109[.]208"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "83.97.20[.]81",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "83.97.20[.]81"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "83.97.20[.]81",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "83.97.20[.]81"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "CVE-2021-42321",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 42321"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "PowerShell",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "FortiOS servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "FortiOS servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — FortiOS servers",
+    "action:a4 — bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FortiOS servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "FortiOS servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "FortiOS servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — FortiOS servers",
+    "action:a4 — bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FortiOS servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "FortiOS servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "FortiOS servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — FortiOS servers",
+    "action:a4 — bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "FortiOS servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Microsoft Exchange servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Microsoft Exchange servers",
+    "action:a2 — gain initial access by exploiting Microsoft Exchange vulnerabilities"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Microsoft Exchange servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Microsoft Exchange servers",
+    "action:a2 — gain initial access by exploiting Microsoft Exchange vulnerabilities"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Microsoft Exchange servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Microsoft Exchange servers",
+    "action:a2 — gain initial access by exploiting Microsoft Exchange vulnerabilities"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange servers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-2"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Victim networks' Windows hosts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Windows hosts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Victim networks' Windows hosts",
+    "action:a1 — gain initial access via single factor logins",
+    "action:a3 — gain initial access via phishing emails with malicious attachments",
+    "action:a5 — terminate processes related to backups, antivirus/anti-spyware, and file copying",
+    "action:a6 — stop volume shadow copy services and remove all existing shadow copies",
+    "action:a7 — delete Windows event logs",
+    "action:a8 — remove virus definitions and disable Windows Defender and other antivirus programs",
+    "action:a9 — exfiltrate data using Rclone and Mega.nz",
+    "action:a10 — create *.key file in root directory during encryption",
+    "action:a11 — drop ransom note HOW_TO_DECRYPT.txt into each affected directory",
+    "action:a12 — communicate ransom demand via live chat panel on TOR",
+    "action:a13 — threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+    "action:a14 — disclose exfiltrated data on anonymous file sharing sites",
+    "action:a15 — negotiate ransom amount and payment deadline via live chat",
+    "action:a16 — reinfect victim networks after restoration without ransom payment"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Windows hosts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Victim networks' Windows hosts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Windows hosts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Victim networks' Windows hosts",
+    "action:a1 — gain initial access via single factor logins",
+    "action:a3 — gain initial access via phishing emails with malicious attachments",
+    "action:a5 — terminate processes related to backups, antivirus/anti-spyware, and file copying",
+    "action:a6 — stop volume shadow copy services and remove all existing shadow copies",
+    "action:a7 — delete Windows event logs",
+    "action:a8 — remove virus definitions and disable Windows Defender and other antivirus programs",
+    "action:a9 — exfiltrate data using Rclone and Mega.nz",
+    "action:a10 — create *.key file in root directory during encryption",
+    "action:a11 — drop ransom note HOW_TO_DECRYPT.txt into each affected directory",
+    "action:a12 — communicate ransom demand via live chat panel on TOR",
+    "action:a13 — threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+    "action:a14 — disclose exfiltrated data on anonymous file sharing sites",
+    "action:a15 — negotiate ransom amount and payment deadline via live chat",
+    "action:a16 — reinfect victim networks after restoration without ransom payment"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Windows hosts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Victim networks' Windows hosts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Windows hosts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Victim networks' Windows hosts",
+    "action:a1 — gain initial access via single factor logins",
+    "action:a3 — gain initial access via phishing emails with malicious attachments",
+    "action:a5 — terminate processes related to backups, antivirus/anti-spyware, and file copying",
+    "action:a6 — stop volume shadow copy services and remove all existing shadow copies",
+    "action:a7 — delete Windows event logs",
+    "action:a8 — remove virus definitions and disable Windows Defender and other antivirus programs",
+    "action:a9 — exfiltrate data using Rclone and Mega.nz",
+    "action:a10 — create *.key file in root directory during encryption",
+    "action:a11 — drop ransom note HOW_TO_DECRYPT.txt into each affected directory",
+    "action:a12 — communicate ransom demand via live chat panel on TOR",
+    "action:a13 — threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+    "action:a14 — disclose exfiltrated data on anonymous file sharing sites",
+    "action:a15 — negotiate ransom amount and payment deadline via live chat",
+    "action:a16 — reinfect victim networks after restoration without ransom payment"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Windows hosts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "Victim networks' Linux hosts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Linux hosts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — Victim networks' Linux hosts"
+   ],
+   "suggestions": [
+    "原文提及的 Linux 發行版（請填確切名稱）",
+    "Ubuntu Server（候選；需確認）",
+    "Debian（候選；需確認）",
+    "其他作業系統"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Linux hosts",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "原文提及的 Linux 發行版（請填確切名稱）",
+    "Ubuntu Server（候選；需確認）",
+    "Debian（候選；需確認）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "Victim networks' Linux hosts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Linux hosts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — Victim networks' Linux hosts"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Linux hosts",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "Victim networks' Linux hosts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' Linux hosts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — Victim networks' Linux hosts"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' Linux hosts",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "Victim networks' VMware ESXi hosts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' VMware ESXi hosts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — Victim networks' VMware ESXi hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' VMware ESXi hosts",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "Victim networks' VMware ESXi hosts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' VMware ESXi hosts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — Victim networks' VMware ESXi hosts"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' VMware ESXi hosts",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "Victim networks' VMware ESXi hosts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' VMware ESXi hosts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — Victim networks' VMware ESXi hosts"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' VMware ESXi hosts",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os",
+   "field": "Victim networks' FreeBSD hosts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' FreeBSD hosts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h6 — Victim networks' FreeBSD hosts"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' FreeBSD hosts",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os-version",
+   "field": "Victim networks' FreeBSD hosts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' FreeBSD hosts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h6 — Victim networks' FreeBSD hosts"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' FreeBSD hosts",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-network",
+   "field": "Victim networks' FreeBSD hosts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Victim networks' FreeBSD hosts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h6 — Victim networks' FreeBSD hosts"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Victim networks' FreeBSD hosts",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s3-version",
+   "field": "Microsoft Exchange Server — 版本",
+   "category": "version",
+   "reason": "IR 指出 Microsoft Exchange Server（CVE-2021-31207, CVE-2021-34473, CVE-2021-34523），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Microsoft Exchange Server 的哪個版本？請選受 CVE-2021-31207, CVE-2021-34473, CVE-2021-34523 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s3 — Microsoft Exchange Server",
+    "action:a2 — gain initial access by exploiting Microsoft Exchange vulnerabilities"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Microsoft Exchange Server",
+     "source_ref": "services:s3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2021-31207, CVE-2021-34473, CVE-2021-34523",
+     "source_ref": "services:s3.cve",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s3",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s4-version",
+   "field": "FortiOS — 版本",
+   "category": "version",
+   "reason": "IR 指出 FortiOS（CVE-2020-12812），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 FortiOS 的哪個版本？請選受 CVE-2020-12812 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s4 — FortiOS",
+    "action:a4 — bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "FortiOS",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2020-12812",
+     "source_ref": "services:s4.cve",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-security-windows-defender-state",
+   "field": "Windows Defender 初始保護狀態/排除項",
+   "category": "dependency",
+   "reason": "步驟提到新增 Defender 排除項或停用 Defender，但靶場初始狀態與版本/政策未提供。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8 執行前，Windows Defender 的即時防護、既有排除項與套用政策是什麼？請給初始狀態；不要貼任何真實機密。原文描述的停用/新增排除行為不代表初始狀態。",
+   "affects": [
+    "service:s5 — Windows Defender",
+    "action:a8 — remove virus definitions and disable Windows Defender and other antivirus programs"
+   ],
+   "suggestions": [
+    "由隔離靶場決定初始保護/排除項狀態",
+    "複製報告明確描述的狀態並標記證據",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "安全產品",
+     "value": "Windows Defender",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-26"
+     ]
+    },
+    {
+     "field": "已描述的行為",
+     "value": "remove virus definitions and disable Windows Defender and other antivirus programs",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a1 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a1 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s1 — Remote Desktop Protocol (RDP)",
+    "action:a1 — gain initial access via single factor logins"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-30"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "gain initial access via single factor logins",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a4 — bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812",
+    "host:h1 — FortiOS servers"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "bypass multifactor authentication on FortiOS servers by exploiting CVE-2020-12812",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a9 — exfiltrate data using Rclone and Mega.nz",
+    "action:a13 — threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+    "action:a14 — disclose exfiltrated data on anonymous file sharing sites",
+    "host:h3 — Victim networks' Windows hosts"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate data using Rclone and Mega.nz",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "threaten victims with public disclosure of exfiltrated data on HiveLeaks TOR site",
+     "source_ref": "actions:a13.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "disclose exfiltrated data on anonymous file sharing sites",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9083,
+  "unsupported_claim_count": 16,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

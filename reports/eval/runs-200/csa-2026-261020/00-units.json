@@ -1,0 +1,654 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: SafePay Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA26-293A\n> - Date: 2026-10-20\n> - URL: https://www.ic3.gov/CSA/2026/261020.pdf\n> - PDF SHA-256: d5162f75b2be8edfae2f7437dfbd6804f4f48fe687e313011c02d998e1e05725 (`source.pdf`, 19 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (74 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                    Product ID: AA26-293A"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware:\nSafePay Ransomware\nPublication: October 20, 2026\nU.S. Federal Bureau of Investigation                               United Kingdom’s National Crime Agency\nU.S. Cybersecurity and Infrastructure Security Agency              United Kingdom's North West Regional Organised\nU.S. Secret Service                                                Crime Unit\nGermany’s Landeskriminalamt Rheinland-Pfalz"
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact the FBI’s Internet\nCrime Complaint Center (IC3), your local FBI field office, and/or CISA’s 24/7 Operations Center at contact@cisa.dhs.gov or 1-\n844-Say-CISA (1-844-729-2472). When available, please include the following information regarding the incident: date, time,\nand location of the incident; type of activity; number of people affected; type of equipment used for the activity; the name of the\nsubmitting company or organization; and a designated point of contact.\nThis document is distributed as TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\nminimal or no forseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\nstandard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information on the Traffic Light\nProtocol, see Traffic Light Protocol (TLP) Definitions and Usage."
+ },
+ {
+  "id": "p6",
+  "text": "Advisory at a Glance\n          Title                        #StopRansomware: SafePay Ransomware"
+ },
+ {
+  "id": "p7",
+  "text": "Original Publication         October 20, 2026"
+ },
+ {
+  "id": "p8",
+  "text": "Executive Summary            This advisory details recent activity by the SafePay ransomware group. SafePay\n                                       actors have been highly active since August 2024, targeting businesses and\n                                       critical infrastructure across North America, South America, Europe, and Australia.\n                                       SafePay actors typically gain access to networks by stealing or guessing\n                                       passwords, exploiting vulnerabilities in security systems, and using phishing\n                                       tactics. Once inside the network, SafePay actors establish control by creating new\n                                       accounts or taking over existing ones. They then use legitimate system tools to\n                                       move through the network, identify valuable files, and disable security protections\n                                       to avoid detection. Next, they encrypt the victim’s files, making them inaccessible,\n                                       and leave a ransom note demanding payment in cryptocurrency. This advisory\n                                       urges organizations to follow recommended security measures to reduce the risk\n                                       and impact of SafePay ransomware attacks."
+ },
+ {
+  "id": "p9",
+  "text": "Affected Products               CVE-2020-3259 [Common Weakness Enumeration (CWE)-200: Exposure of\n                                           Sensitive Information to an Unauthorized Actor]\n                                          CVE-2023-20269 [CWE-288: Authentication Bypass Using an Alternate Path\n                                           or Channel]\n                                          CVE-2023-27532 [CWE-306: Missing Authentication for Critical Function]\n                                          CVE-2024-40711 [CWE-502: Deserialization of Untrusted Data]\n                                          CVE-2024-40766 [CWE-284: Improper Access Control]"
+ },
+ {
+  "id": "p10",
+  "text": "Key Actions                     Regularly patch and update systems, especially firewalls, and other edge\n                                           devices.\n                                          Implement Zero Trust Principle.\n                                          Restrict administrative tools and privileges to necessary users only.\n                                          Strengthen account security by implementing identity, credential, and\n                                           access management (ICAM) policies and multifactor authentication (MFA)."
+ },
+ {
+  "id": "p11",
+  "text": "Indicators of                For a downloadable copy of indicators of compromise, see:\n          Compromise\n                                          AA26-293A STIX XML (40KB), AA26-293A STIX JSON (38KB)"
+ },
+ {
+  "id": "p12",
+  "text": "Intended Audience            Organizations: Government; Federal Civilian Executive Branch (FCEB); State,\n                                       Local, Tribal, and Territorial (SLTT); Critical Infrastructure\n                                       Roles: Defensive cybersecurity analysts, vulnerability analysts, security systems\n                                       managers, and operational technology (OT) owners and operators"
+ },
+ {
+  "id": "p13",
+  "text": "Table of Contents\n        Advisory at a Glance ............................................................................................................................................ 2\n        Introduction ......................................................................................................................................................... 4\n        Technical Details ................................................................................................................................................. 4\n           Initial Access ....................................................................................................................................................... 4\n           Execution, Persistence, Stealth, and Defense Impairment ............................................................................. 5\n           Privilege Escalation ............................................................................................................................................ 5\n           Lateral Movement .............................................................................................................................................. 5\n           Collection, Exfiltration, and Impact ................................................................................................................... 5\n           Leveraged Tools ................................................................................................................................................. 6\n        Indicators of Compromise ................................................................................................................................... 7\n        MITRE ATT&CK Tactics and Techniques .......................................................................................................... 11\n        Incident Response............................................................................................................................................ 14\n        Mitigations ........................................................................................................................................................ 15\n        Validate Security Controls ................................................................................................................................ 17\n        Resources ......................................................................................................................................................... 17\n        Reporting .......................................................................................................................................................... 18\n        Disclaimer ......................................................................................................................................................... 19\n        Version History ................................................................................................................................................. 19"
+ },
+ {
+  "id": "p14",
+  "text": "Introduction\n        Note: This joint Cybersecurity Advisory is part of an ongoing #StopRansomware effort to publish advisories\n        for network defenders that detail various ransomware variants and ransomware threat actors. These\n        #StopRansomware advisories include recently and historically observed tactics, techniques, and\n        procedures (TTPs) and indicators of compromise (IOCs) to help organizations protect against ransomware.\n        Visit stopransomware.gov to see all #StopRansomware advisories and to learn more about other\n        ransomware threats and no-cost resources.\n        The Federal Bureau of Investigation (FBI), Cybersecurity and Infrastructure Security Agency (CISA), United\n        States Secret Service (USSS), Germany’s Landeskriminalamt Rheinland-Pfalz, the United Kingdom’s\n        National Crime Agency, and the United Kingdom’s North West Regional Organised Crime Unit—hereafter\n        referred to as the authoring agencies—are releasing this joint advisory to disseminate known SafePay\n        ransomware TTPs and IOCs identified through FBI, USSS, and Landeskriminalamt Rheinland-Pfalz\n        investigations as recently as August 2026.\n        Since August 2024, SafePay ransomware group’s operations have affected a wide range of businesses\n        and critical infrastructure in North America, South America, Europe, and Australia. SafePay ransomware\n        was among the most active ransomware groups in 2026. The SafePay threat actors have impacted at least\n        600 separate victims from multiple critical infrastructure sectors.\n        The authoring agencies encourage organizations to implement the recommendations in the Mitigations\n        section of this advisory to reduce the likelihood and impact of SafePay ransomware incidents.\n        For a downloadable copy of IOCs, see:\n                AA26-293A STIX XML (40KB)\n                AA26-293A STIX JSON (38KB)"
+ },
+ {
+  "id": "p15",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 20. See MITRE\n        ATT&CK Tactics and Techniques section of this advisory for a table of the threat actors’ activity mapped to\n        MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p16",
+  "text": "Initial Access\n        The FBI, USSS, and cybersecurity researchers observed SafePay threat actors obtaining initial access\n        [TA0001] to organizations through various means, including credential exposure, implementing brute force\n        password attacks [T1110], and exploiting virtual private network (VPN) access. SafePay threat actors use\n        the IP addresses of the VPN provider “Mullvad” to attain initial access—specifically, SafePay threat actors\n        use phished account profiles to access victim networks to exploit the following known Common\n        Vulnerabilities and Exposures (CVEs) for edge device products:\n                CVE-2020-3259 [Common Weakness Enumeration (CWE)-200: Exposure of Sensitive Information\n                 to an Unauthorized Actor]\n                CVE-2023-20269 [CWE-288: Authentication Bypass Using an Alternate Path or Channel]"
+ },
+ {
+  "id": "p17",
+  "text": "Additionally, the authoring agencies observed SafePay threat actors exploiting the following vulnerabilities\n        across internet-exposed systems [T1190] for initial access through automated scripts:\n                CVE-2023-27532 [CWE-306: Missing Authentication for Critical Function]\n                CVE-2024-40711 [CWE-502: Deserialization of Untrusted Data]\n                CVE-2024-40766 [CWE-284: Improper Access Control]"
+ },
+ {
+  "id": "p18",
+  "text": "Execution, Persistence, Stealth, and Defense Impairment\n        After SafePay threat actors gain access to a victim network, they establish persistence by gaining\n        administrative privileges on existing accounts [T1098], or on newly created accounts [T1136], using built-\n        in administrative tools consistent with living off the land (LOTL) techniques. Once SafePay threat actors\n        establish a foothold in a victim’s network, they use LOTL binaries (LOLBins) [T1218], such as PsExec\n        [T1021.002] and Windows Remote Management (WinRM) [T1021.006], to execute commands on remote\n        systems. In several instances, SafePay threat actors used ShareFinder.ps1—a PowerShell script function\n        used for enumerating network file shares in Windows Active Directory environments—to identify valuable\n        assets for exfiltration [T1059.001, T1059.003]. Additionally, SafePay threat actors used\n        SharpShares.exe, a tool used to identify and enumerate network file shares.\n        As SafePay threat actors prepare for lateral movement, they commonly disable security software [T1685]\n        to avoid detection. In some cases, the threat actors changed the passwords of system users, making valid\n        logins impossible. SafePay threat actors have also been observed using software packing or virtual\n        machine software protection to conceal their code [T1027.002]."
+ },
+ {
+  "id": "p19",
+  "text": "Privilege Escalation\n        The authoring agencies observed SafePay threat actors using a User Account Control (UAC) Bypass\n        Privilege Escalation technique [T1548.002] that creates an elevated process through a specified\n        component object model, enabling the execution of malicious commands or binaries [T1059]. SafePay\n        threat actors have also been observed using token impersonation methods [T1134.001]."
+ },
+ {
+  "id": "p20",
+  "text": "Lateral Movement\n        To pivot laterally through a network and identify files for exfiltration [TA0010] and encryption, SafePay\n        threat actors use legitimate tools like PsExec, WinRM, and Remote Management and Monitoring\n        [T1569.002] software. They also employ Remote Desktop Protocol (RDP) [T1021.001, T1133] to expand\n        their presence within the compromised network [T1021]. As SafePay threat actors move laterally through a\n        network, they look for credentials to gain admin access and will create accounts, if needed."
+ },
+ {
+  "id": "p21",
+  "text": "Collection, Exfiltration, and Impact\n        SafePay threat actors use legitimate tools, such as FileZilla, 7-Zip, RClone, and WinRAR to compress files\n        and collect data [T1560.001], and WinSCP and RClone to facilitate the exfiltration of data [T1048] from\n        the compromised network to actor-controlled accounts. In some instances, SafePay threat actors use\n        OneDrive to exfiltrate data [T1567]. In other instances, the SafePay threat actors installed legitimate\n        remote desktop tools like AnyDesk or TeamViewer on the victim’s systems. SafePay threat actors use these\n        tools to transfer ransomware and other software onto a victim’s system. Additionally, SafePay threat actors"
+ },
+ {
+  "id": "p22",
+  "text": "halt the Volume Shadow Copy Service and reset Network Attached Storage containing victim backup data\n        to initial factory settings to inhibit system recovery attempts [T1490].\n        Following exfiltration, SafePay threat actors encrypt files [T1486] using a sophisticated hybrid encryption\n        scheme to lock data. This involves combining a ChaCha20 stream cipher with an RSA public-key\n        cryptosystem for a fast and secure key exchange. This multilayered approach customizes encryption\n        methods based on file type and size and enables full or partial encryption. Data encrypted with the SafePay\n        ransomware variant (appended with .SafePay) cannot be recovered without the decryption key. SafePay\n        threat actors hold the encrypted data for ransom and typically demand a subset of company revenue in\n        cryptocurrency in exchange for decryption software. SafePay threat actors leave a ransom note on the\n        victim’s system, typically on the desktop or root directory, advising them that SafePay locked their system\n        and to reach out over a chat portal at a TOR .onion website link with a victim ID as the login. To put\n        pressure on the victim, a representative makes phone calls on behalf of the ransomware group. If the\n        victim does not pay, SafePay posts the exfiltrated data to their SafePay leak website, which is linked in the\n        ransom note. Following encryption, SafePay may delete itself from the victim’s filesystem [T1070.004]."
+ },
+ {
+  "id": "p23",
+  "text": "Leveraged Tools\n        Table 1 lists publicly available tools and applications used by SafePay threat actors, including legitimate\n        tools repurposed for their operations.\n        Note: These tools and applications should not be attributed as malicious without analytical evidence to\n        support threat actor use and/or control."
+ },
+ {
+  "id": "p24",
+  "text": "Table 1. Tools Leveraged by SafePay Threat Actors"
+ },
+ {
+  "id": "p25",
+  "text": "Tool Name                                                 Description"
+ },
+ {
+  "id": "p26",
+  "text": "7-Zip                        An open source software that enables users to compress various file formats.\n                                       SafePay threat actors maliciously use 7-Zip for data packaging and movement."
+ },
+ {
+  "id": "p27",
+  "text": "FileZilla                    An open source client that enables users to transfer files between servers. SafePay\n                                       threat actors use FileZilla maliciously for data exfiltration."
+ },
+ {
+  "id": "p28",
+  "text": "Mimikatz                     A credential dumper that enables users to view and save authentication credentials,\n                                       such as Kerberos tickets [T1550.002]. SafePay threat actors use Mimikatz for\n                                       password exfiltration."
+ },
+ {
+  "id": "p29",
+  "text": "PowerShell                   A cross-platform task automation solution used for various malicious activities,\n                                       including command execution. It is composed of a command-line shell, a scripting\n                                       language, and a configuration management framework—which runs on Windows,\n                                       Linux, and macOS."
+ },
+ {
+  "id": "p30",
+  "text": "PsExec                       A tool designed to run programs that SafePay threat actors use to execute\n                                       commands on remote systems."
+ },
+ {
+  "id": "p31",
+  "text": "Tool Name                                                   Description"
+ },
+ {
+  "id": "p32",
+  "text": "RClone                       A legitimate command-line program used to sync files with cloud storage services,\n                                       such as Mega. SafePay threat actors maliciously use RClone for data packaging and\n                                       movement."
+ },
+ {
+  "id": "p33",
+  "text": "ScreenConnect                A remote support, access, and meeting software that allows users to control devices\n                                       remotely over the internet. SafePay threat actors use ScreenConnect for persistence\n                                       and access."
+ },
+ {
+  "id": "p34",
+  "text": "ShareFinder.ps1              A PowerShell script used to scan an Active Directory network for shared folders.\n                                       SafePay threat actors use ShareFinder.ps1 for exfiltration hunting."
+ },
+ {
+  "id": "p35",
+  "text": "WinRAR                       Archive utility used to split compromised data into segments and to compress\n                                       [T1560.001] files into a .RAR format prior to exfiltration. SafePay threat actors use\n                                       WinRAR for data packaging and movement."
+ },
+ {
+  "id": "p36",
+  "text": "WinRM                        A Windows-based protocol designed to facilitate remote management and\n                                       automation. SafePay threat actors use WinRM for command execution."
+ },
+ {
+  "id": "p37",
+  "text": "AnyDesk and                  Legitimate remote desktop tool used for accessing and controlling computers over\n          TeamViewer                   the internet. SafePay threat actors use AnyDesk and TeamViewer to transfer malware\n                                       to the victim’s system."
+ },
+ {
+  "id": "p38",
+  "text": "AcronisDiskDirector          A legitimate disk management tool."
+ },
+ {
+  "id": "p39",
+  "text": "SharpShares.exe              A network scanning tool used for host discovery and enumeration."
+ },
+ {
+  "id": "p40",
+  "text": "NetExec                      A legitimate network assessment tool to enumerate systems, validate credentials, and\n                                       manage remote operations across private networks."
+ },
+ {
+  "id": "p41",
+  "text": "A command-line tool for file management within Backblaze B2 cloud storage.\n          Backblaze\n                                       SafePay threat actors executed commands via b2.exe to exfiltrate a victim’s data."
+ },
+ {
+  "id": "p42",
+  "text": "Indicators of Compromise\n        Table 2 through Table 5 list IOCs associated with SafePay ransomware that allowed for the identification of\n        malicious activity.\n        Disclaimer: The authoring agencies recommend organizations investigate or verify IP addresses prior to\n        taking action, such as blocking. These IOCs were observed between November 2024 and August 2026."
+ },
+ {
+  "id": "p43",
+  "text": "Table 2. IP Addresses"
+ },
+ {
+  "id": "p44",
+  "text": "IP Address                                            Description"
+ },
+ {
+  "id": "p45",
+  "text": "104.26.2[.]223                                         SafePay victim intrusion"
+ },
+ {
+  "id": "p46",
+  "text": "140.82.114[.]4                                         SafePay victim intrusion"
+ },
+ {
+  "id": "p47",
+  "text": "185.199.108[.]133                                      SafePay victim intrusion"
+ },
+ {
+  "id": "p48",
+  "text": "77.37.49[.]40                                          SafePay victim intrusion"
+ },
+ {
+  "id": "p49",
+  "text": "173.194.194[.]94                                       Hosting victim data"
+ },
+ {
+  "id": "p50",
+  "text": "167.235.225[.]149                                      Client login panels"
+ },
+ {
+  "id": "p51",
+  "text": "5.255.11[.]134                                         Used in exfiltration"
+ },
+ {
+  "id": "p52",
+  "text": "88.119.167[.]239                                       soc.dll command and control"
+ },
+ {
+  "id": "p53",
+  "text": "37.10.71[.]188                                         Used in exfiltration"
+ },
+ {
+  "id": "p54",
+  "text": "Table 3. Malicious Files\n        Note: Some of these files are legitimate tools. The authoring organizations recommend organizations\n        investigate or verify tool use prior to taking action, such as blocking."
+ },
+ {
+  "id": "p55",
+  "text": "Filename                                             Description"
+ },
+ {
+  "id": "p56",
+  "text": "A batch script likely used to copy, stage, or move files during lateral\n          1 - Copy.bat\n                                               movement or data collection."
+ },
+ {
+  "id": "p57",
+  "text": "A legitimate system utility; however, it is suspicious if deployed in\n          CCleaner.exe/ CCleaner64.exe\n                                               enterprise environments for file cleanup or anti-forensics."
+ },
+ {
+  "id": "p58",
+  "text": "A file used for potential masquerading or abuse of CCleaner\n          CCleaner*.exe / *.dll\n                                               components for execution or persistence."
+ },
+ {
+  "id": "p59",
+  "text": "A tool used to perform DCSync operations to extract Active Directory\n          dcsync.exe\n                                               credentials; high-confidence credential theft activity."
+ },
+ {
+  "id": "p60",
+  "text": "domains.txt                          An output file likely containing enumerated domain information."
+ },
+ {
+  "id": "p61",
+  "text": "DYRasWtb.exe                         A suspected malicious executable."
+ },
+ {
+  "id": "p62",
+  "text": "A library associated with Server Message Block (SMB) communication;\n          libsmb2.dll\n                                               may support lateral movement or file transfer."
+ },
+ {
+  "id": "p63",
+  "text": "Filename                                       Description"
+ },
+ {
+  "id": "p64",
+  "text": "A suspicious library set; likely part of a custom toolset or malware\n          Libwa*.dll\n                                       framework; requires further analysis."
+ },
+ {
+  "id": "p65",
+  "text": "A benign file that may accompany tool packages or be used for\n          License.txt                  masquerading. In one instance, it accompanied the tool “S.P_Network\n                                       Scanner.”"
+ },
+ {
+  "id": "p66",
+  "text": "locker.dll                   A potential ransomware or encryption-related component."
+ },
+ {
+  "id": "p67",
+  "text": "netscan.exe                  A network scanning tool used for host discovery and enumeration."
+ },
+ {
+  "id": "p68",
+  "text": "netscan.lic / netscan.xml    Output or configuration files associated with network scanning activity."
+ },
+ {
+  "id": "p69",
+  "text": "netscanNEW.zip               Archive file potentially used to stage or transfer scanning tools."
+ },
+ {
+  "id": "p70",
+  "text": "Legitimate Windows tool used for domain trust enumeration;\n          nltest.exe\n                                       suspicious when used outside admin workflows."
+ },
+ {
+  "id": "p71",
+  "text": "A MAC address vendor lookup output—network reconnaissance\n          oui.txt\n                                       artifact."
+ },
+ {
+  "id": "p72",
+  "text": "ping.txt                     An output file from network connectivity testing."
+ },
+ {
+  "id": "p73",
+  "text": "portable.dat                 A potential configuration or staging file (context-dependent)."
+ },
+ {
+  "id": "p74",
+  "text": "scan.xml                     An output file from scanning/enumeration tools."
+ },
+ {
+  "id": "p75",
+  "text": "A PowerShell script used to enumerate network shares\n          sharefinder.ps1\n                                       (reconnaissance)."
+ },
+ {
+  "id": "p76",
+  "text": "Socks.exe                    A tool used to establish SOCKS proxy for tunneling traffic."
+ },
+ {
+  "id": "p77",
+  "text": "Socks_werfault.exe           A binary likely masquerading to blend with Windows processes."
+ },
+ {
+  "id": "p78",
+  "text": "subs.txt                     A possible staging file or list of targets/data for exfiltration."
+ },
+ {
+  "id": "p79",
+  "text": "A legitimate Windows process; suspicious if located outside System32\n          svchost.exe\n                                       or used for masquerading."
+ },
+ {
+  "id": "p80",
+  "text": "A file of suspicious binaries—likely part of SafePay threat actor toolset\n          wa_3rd_party_host_*.exe\n                                       or masquerading components."
+ },
+ {
+  "id": "p81",
+  "text": "A legitimate archiving tool frequently used for data staging prior to\n          winrar.exe\n                                       exfiltration."
+ },
+ {
+  "id": "p82",
+  "text": "Filename                                             Description"
+ },
+ {
+  "id": "p83",
+  "text": "A legitimate remote desktop tool for accessing and controlling\n          AnyDesk.exe                           computers over the internet; most of the time it is used to transfer\n                                                malware to a victim’s system."
+ },
+ {
+  "id": "p84",
+  "text": "SharpShares.exe                       A network scanning tool used for host discovery and enumeration."
+ },
+ {
+  "id": "p85",
+  "text": "AcronisDiskDirector-12.5 / acro.exe\n                                                A legitimate disk management tool.\n          / DiskDirector.exe / Acronis.exe"
+ },
+ {
+  "id": "p86",
+  "text": "A command-line tool for data exfiltration to Backblaze B2 cloud\n          b2.exe\n                                                storage."
+ },
+ {
+  "id": "p87",
+  "text": "The executable for NetExec, a legitimate network assessment tool\n          nxc.exe                               used to enumerate systems, validate credentials, and manage remote\n                                                operations across private networks."
+ },
+ {
+  "id": "p88",
+  "text": "Table 4. SHA-1 Hash Values"
+ },
+ {
+  "id": "p89",
+  "text": "Hash                                                 File/Description"
+ },
+ {
+  "id": "p90",
+  "text": "1.exe (ransomware\n          07353237350c35d6dc2c8f143b649cd07c71f62b\n                                                                                                     binary)"
+ },
+ {
+  "id": "p91",
+  "text": "Locker.dll PE32\n          b498a2683640c983bb069fa2ea9e67cef4a3797d\n                                                                                                     executable"
+ },
+ {
+  "id": "p92",
+  "text": "BBFED53E3BB1F306F4DA97D995CF4AE5B73AD081                                                   locker.dll"
+ },
+ {
+  "id": "p93",
+  "text": "d711a5af5aed48a3b36b98f4fcf52809aebef7a2                                                   nxc"
+ },
+ {
+  "id": "p94",
+  "text": "Table 5. SHA-256 Hash Files"
+ },
+ {
+  "id": "p95",
+  "text": "Hash                                                 File/Description"
+ },
+ {
+  "id": "p96",
+  "text": "921df888aaabcd828a3723f4c9f5fe8b8379c6b7067d16b2ea10152300417eae                           soc.dll"
+ },
+ {
+  "id": "p97",
+  "text": "RunPE bundled\n          6c1d36df94ebe367823e73ba33cfb4f40756a5e8ee1e30e8f0ae55d47e220a6a\n                                                                                                     DLL"
+ },
+ {
+  "id": "p98",
+  "text": "e79608cf1d6b51324c14bef8883054c1238ed5f080222cc464810e6e14adc346                           Injected PE"
+ },
+ {
+  "id": "p99",
+  "text": "locker.dll PE32\n          327b8b61eb446cc4f710771e44484f62b804ae3d262b57a56575053e2df67917\n                                                                                                     executable"
+ },
+ {
+  "id": "p100",
+  "text": "Hash                                                File/Description"
+ },
+ {
+  "id": "p101",
+  "text": "a0dc80a37eb7e2716c02a94adc8df9baedec192a77bde31669faed228d9ff526                            locker.dll"
+ },
+ {
+  "id": "p102",
+  "text": "BBDD3620A67AEDEC4B9A68B2C9CC880B6631215E129816AEA19902A6F4BC6F41                            SharpShares.exe"
+ },
+ {
+  "id": "p103",
+  "text": "The following are IOC hostnames:\n                WIN-SBOE3CPNAL\n                WIN-3IUUOFVTQAR\n                WIN-DK18BI83M0S\n                WIN-I1HRRJHCEIV"
+ },
+ {
+  "id": "p104",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 6 through Table 16 for all referenced threat actor tactics and techniques in this advisory. For\n        assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE\n        ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p105",
+  "text": "Table 6. Initial Access"
+ },
+ {
+  "id": "p106",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p107",
+  "text": "External Remote                           SafePay threat actors use external remote services, such as VPNs or\n                                         T1133\n          Services                                  other tools, to externally connect to an internal network."
+ },
+ {
+  "id": "p108",
+  "text": "SafePay threat actors attempt to exploit a vulnerability within a\n          Exploit Public-Facing\n                                         T1190      system to gain access. Common vulnerabilities include software\n          Application\n                                                    bugs, glitches, or misconfigurations."
+ },
+ {
+  "id": "p109",
+  "text": "Table 7. Execution"
+ },
+ {
+  "id": "p110",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p111",
+  "text": "Command and                               SafePay threat actors use PowerShell, an interactive command-line\n          Scripting Interpreter:        T1059.001   interface and scripting environment contained within Windows, to\n          PowerShell                                identify code within a targeted network."
+ },
+ {
+  "id": "p112",
+  "text": "Command and\n                                                    SafePay threat actors use the Windows command shell prompt to\n          Scripting Interpreter:\n                                        T1059.003   gain control of a component on a system that requires specific\n          Windows Command\n                                                    permissions depending on the command executed.\n          Shell"
+ },
+ {
+  "id": "p113",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p114",
+  "text": "System Services:                          SafePay threat actors use tools, such as PsExec, to execute\n                                        T1569.002\n          Service Execution                         commands on remote systems."
+ },
+ {
+  "id": "p115",
+  "text": "SafePay threat actors use Windows UAC to elevate a program’s\n          Command and\n                                         T1059      privileges, enabling the execution of malicious commands or\n          Scripting Interpreter\n                                                    binaries."
+ },
+ {
+  "id": "p116",
+  "text": "Table 8. Persistence"
+ },
+ {
+  "id": "p117",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p118",
+  "text": "SafePay threat actors establish persistence by gaining administrative\n          Account Manipulation           T1098\n                                                    privileges on existing accounts."
+ },
+ {
+  "id": "p119",
+  "text": "Table 9. Privilege Escalation"
+ },
+ {
+  "id": "p120",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p121",
+  "text": "Abuse Elevation\n                                                    SafePay threat actors use Windows UAC to elevate a program’s\n          Control Mechanism:\n                                        T1548.002   privileges and execute a task on an administrator-level permission\n          Bypass User Account\n                                                    scale.\n          Control"
+ },
+ {
+  "id": "p122",
+  "text": "Table 10. Stealth"
+ },
+ {
+  "id": "p123",
+  "text": "Technique Title              ID                                         Use"
+ },
+ {
+  "id": "p124",
+  "text": "Obfuscated Files or\n                                                    SafePay threat actors use software packing to conceal malicious\n          Information: Software         T1027.002\n                                                    code by means of encrypting an executable to avoid detection.\n          Packing"
+ },
+ {
+  "id": "p125",
+  "text": "SafePay threat actors delete files associated with the intrusion\n          Indicator Removal: File\n                                        T1070.004   activity to minimize their digital footprint and obfuscate malicious\n          Deletion\n                                                    activities."
+ },
+ {
+  "id": "p126",
+  "text": "SafePay threat actors proxy the execution of malicious content with a\n          System Binary Proxy\n                                         T1218      trusted binary, often a Microsoft-signed file, to bypass signature-\n          Execution\n                                                    based network defenses."
+ },
+ {
+  "id": "p127",
+  "text": "Table 11. Defense Impairment"
+ },
+ {
+  "id": "p128",
+  "text": "Technique Title              ID                                          Use"
+ },
+ {
+  "id": "p129",
+  "text": "SafePay threat actors disable security features, modify or delete\n          Disable or Modify\n                                         T1685       registry keys or configuration files to impair functionality, and disable\n          Tools\n                                                     updates such as security patches on a system or network."
+ },
+ {
+  "id": "p130",
+  "text": "Table 12. Credential Access"
+ },
+ {
+  "id": "p131",
+  "text": "Technique Title              ID                                          Use"
+ },
+ {
+  "id": "p132",
+  "text": "SafePay threat actors gain access to accounts by implementing\n          Brute Force                    T1110\n                                                     brute force password attacks."
+ },
+ {
+  "id": "p133",
+  "text": "Table 13. Lateral Movement"
+ },
+ {
+  "id": "p134",
+  "text": "Technique Title              ID                                          Use"
+ },
+ {
+  "id": "p135",
+  "text": "Remote Services:                           SafePay threat actors gain access to a valid account using RDP and\n          Remote Desktop                T1021.001    typically disable cybersecurity features, such as Windows Defender,\n          Protocol                                   while using LOLBins."
+ },
+ {
+  "id": "p136",
+  "text": "Remote Services:\n                                                     SafePay threat actors gain access to a valid account using SMB to\n          SMB/Windows Admin             T1021.002\n                                                     enable lateral movement throughout a network.\n          Shares"
+ },
+ {
+  "id": "p137",
+  "text": "SafePay threat actors employ remote services to expand their\n          Remote Services                T1021\n                                                     presence within the compromised network."
+ },
+ {
+  "id": "p138",
+  "text": "Remote Services:\n                                                     SafePay threat actors use tools, such as WinRM, to execute\n          Windows Remote                T1021.006\n                                                     commands on remote systems.\n          Management"
+ },
+ {
+  "id": "p139",
+  "text": "Table 14. Collection"
+ },
+ {
+  "id": "p140",
+  "text": "Technique Title              ID                                          Use"
+ },
+ {
+  "id": "p141",
+  "text": "SafePay threat actors use utilities to compress or encrypt collected\n          Archive Collected\n                                        T1560.001    data prior to exfiltration to change the format of the data to one\n          Data: Archive via Utility\n                                                     compatible for transportation."
+ },
+ {
+  "id": "p142",
+  "text": "Archive Collected\n                                                     SafePay threat actors use credential dumpers, such as Mimikatz, for\n          Data: Archive via             T1560.002\n                                                     password exfiltration.\n          Library"
+ },
+ {
+  "id": "p143",
+  "text": "Table 15. Exfiltration"
+ },
+ {
+  "id": "p144",
+  "text": "Technique Title            ID                                          Use"
+ },
+ {
+  "id": "p145",
+  "text": "SafePay threat actors exfiltrate data over an alternative protocol,\n          Exfiltration Over                        including file transfer protocol, simple mail transfer protocol, HTTP/S,\n                                        T1048\n          Alternative Protocol                     domain name system, SMB, or another network protocol variation\n                                                   that is not the main or current command and control channel."
+ },
+ {
+  "id": "p146",
+  "text": "Exfiltration Over Web                    SafePay threat actors exfiltrate data over web services, such as\n                                        T1567\n          Service                                  OneDrive."
+ },
+ {
+  "id": "p147",
+  "text": "Table 16. Impact"
+ },
+ {
+  "id": "p148",
+  "text": "Technique Title            ID                                          Use"
+ },
+ {
+  "id": "p149",
+  "text": "SafePay threat actors encrypt data on targeted systems to disrupt\n          Data Encrypted for\n                                        T1486      access to a particular system or network service. They then demand\n          Impact\n                                                   a ransom payment in exchange for a decryption key."
+ },
+ {
+  "id": "p150",
+  "text": "SafePay threat actors disable services designed to assist in recovery\n          Inhibit System\n                                        T1490      of a corrupted system. In some cases, SafePay threat actors deleted\n          Recovery\n                                                   all network-attached backups of company data."
+ },
+ {
+  "id": "p151",
+  "text": "Incident Response\n        If a potential compromise is detected, but ransomware actors have not (yet) encrypted items, organizations\n        should take the following actions:\n             1. Determine which hosts were compromised and isolate them by quarantining or taking them offline.\n             2. Initiate threat hunting activities to scope the intrusion. Collect and review relevant artifacts, logs,\n                and other data to identify threat actor TTPs, compromised devices and accounts, a timeline of\n                activity, etc.\n             3. Report the suspected compromise to the FBI and other agencies as appropriate (if located within\n                the U.K., report the compromise to Report Fraud or local police force) (see the Reporting section for\n                contact information).\n             4. Apply eviction countermeasures, including those listed below, to contain the incident and eradicate\n                the threat actor from the network (Note: Start applying countermeasures after collecting enough\n                threat hunting data to inform effective countermeasure selection; this will likely overlap with threat\n                hunting activities).\n                 a. Use CISA’s Eviction Strategies Tool to assemble countermeasures for a systematic eviction\n                    plan—the tool comprises Playbook-NG (a web application) and COUN7ER (a database of post-\n                    compromise countermeasures mapped to adversary TTPs)."
+ },
+ {
+  "id": "p152",
+  "text": "i.   Use Playbook-NG and COUN7ER together to assemble a systematic eviction plan, or\n                           playbook, that leverages distinct countermeasures to contain and evict cyber threat actors.\n                           The playbook features a list of recommended response actions based on threat actor TTPs\n                           and includes each action’s intended outcome, preparatory steps, and associated risks. For\n                           more information, see CISA’s Eviction Strategies Tool fact sheet.\n             5. Harden the network to prevent additional malicious activity (see Mitigations for guidance).\n        If compromise is detected and items have been encrypted, see the “Ransomware and Data Extortion\n        Response Checklist” in CISA’s joint #StopRansomware Guide."
+ },
+ {
+  "id": "p153",
+  "text": "Mitigations\n        The authoring agencies recommend organizations implement the mitigations below to improve their\n        cybersecurity posture on the basis of the threat actors’ activity. These mitigations align with the Cross-\n        Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the National Institute of Standards\n        and Technology (NIST). The CPGs provide a minimum set of practices and protections that CISA and NIST\n        recommend all organizations implement. CISA and NIST based the CPGs on existing cybersecurity\n        frameworks and guidance to protect against the most common and impactful threats, tactics, techniques,\n        and procedures. Visit CISA’s CPGs webpage for more information on the CPGs, including additional\n        recommended baseline protections.\n        Organizations should implement the following mitigations:\n                Prioritize remediating known exploited vulnerabilities (KEVs) and keep all operating systems,\n                 software, and firmware up to date, as timely patching is one of the most efficient and cost-effective\n                 steps an organization can take to minimize its exposure to cybersecurity threats; specifically,\n                 prioritize patching KEVs in internet-facing systems. [CPG 2.B].\n                 o    Additionally, using Binding Operational Directive 26-04 offers a framework for patch\n                      prioritization based on technology type and steps for forensics triage. Under its implementation\n                      guidance, it offers guidance and steps to perform forensic triage for severe vulnerability cases.\n                Implement identity, credential, and access management (ICAM) policies across the organization\n                 and require MFA for all services to the greatest extent possible—particularly for webmail, VPNs, and\n                 accounts that access critical systems [CPG 3.F].\n                Require all accounts with password logins (e.g., service accounts, admin accounts, and domain\n                 admin accounts) to comply with NIST’s digital identity guidelines; require employees to use long\n                 passwords and consider not requiring recurring password changes, as these can weaken security\n                 [CPG 3.B].\n                 o    Use longer passwords consisting of at least 15 characters and no more than 64 characters in\n                      length.\n                 o    Store passwords in a hashed format using industry-recognized password managers.\n                 o    Add password user “salts” to shared login credentials.\n                 o    Avoid reusing passwords [CPG 3.C].\n                 o    Implement multiple failed login attempt account lockouts [CPG 3.E]."
+ },
+ {
+  "id": "p154",
+  "text": "o    Disable password “hints.”\n                 o    Refrain from requiring password changes more frequently than once per year.\n                      Note: NIST guidance suggests favoring longer passwords instead of requiring frequent\n                      password resets. Frequent password resets are more likely to result in users developing\n                      password patterns cyber threat actors can easily decipher.\n                Maintain offline backups of data and regularly test and maintain backup and restoration processes\n                 [CPG 3.O]; implementing this practice helps organizations avoid severe operational interruptions\n                 and prevents scenarios in which data is irretrievable.\n                Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and covers the\n                 entire organization’s data infrastructure [CPG 3.K].\n                Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary data\n                 and servers in a physically separate, segmented, and secure location (e.g., hard drives, storage\n                 devices, or the cloud) [CPG 3.I, 3.O, 1.C].\n                Segment networks to prevent the spread of ransomware, as network segmentation can help\n                 control traffic flows between, and access to, various subnetworks and restrict adversary lateral\n                 movement [CPG 3.I].\n                Identify, detect, and investigate abnormal activity and potential traversal of the indicated\n                 ransomware with a network monitoring tool [CPG 4.B].\n                 o    To aid in detecting ransomware, implement a tool that logs and reports all network traffic,\n                      including lateral movement activity on a network.\n                 o    Endpoint Detection and Response (EDR) tools are particularly useful for detecting lateral\n                      connections as they have insight into common and uncommon network connections for each\n                      host.\n                Filter network traffic by preventing unknown or untrusted origins from accessing remote services\n                 on internal systems—this prevents threat actors from directly connecting to remote access services\n                 that they have established for persistence.\n                Review domain controllers, servers, workstations, and Active Directories for new, unactive and/or\n                 unrecognized accounts.\n                Disable unused ports.\n                Consider adding an email banner to emails received from outside of your organization.\n                Audit user accounts with administrative privileges and configure access controls according to the\n                 principle of least privilege [CPG 3.G].\n                Implement time-based access for accounts set at the admin level and higher; for example, the Just-\n                 in-Time (JIT) access method provisions privileged access when needed and can support\n                 enforcement of the principle of least privilege (as well as the Zero Trust Maturity Model).\n                 o    This is a process where a network-wide policy is set in place to automatically disable admin\n                      accounts at the Active Directory level when the account is not in direct need."
+ },
+ {
+  "id": "p155",
+  "text": "o    Individual users may submit their requests through an automated process that grants them\n                      access to a specified system for a set timeframe when they need to support the completion of\n                      a certain task.\n                Disable command-line and scripting activities and permissions, since privilege escalation and\n                 lateral movement often depend on software utilities running from the command line; if threat\n                 actors cannot run these tools, they will have difficulty escalating privileges and moving laterally\n                 [CPG 3.M]."
+ },
+ {
+  "id": "p156",
+  "text": "These mitigations align with principles provided in the joint guide Shifting the Balance of Cybersecurity\n        Risk: Principles and Approaches for Secure by Design Software. CISA urges software manufacturers to take\n        ownership of improving the security outcomes of their customers by applying these and other secure by\n        design tactics. By implementing secure by design tactics, software manufacturers can make their product\n        lines secure “out of the box” without requiring customers to make additional configuration changes,\n        purchasing product security add-in software and logs, monitoring, and making frequent security updates."
+ },
+ {
+  "id": "p157",
+  "text": "Validate Security Controls\n        In addition to applying mitigations, the authoring agencies recommend exercising, testing, and validating\n        your organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n        Enterprise framework in this advisory.\n        To get started:\n             1. Select an ATT&CK technique described in this advisory (see Table 6 to Table 16).\n             2. Align your security technologies against the technique.\n             3. Test your technologies against the technique.\n             4. Analyze your detection and prevention technologies’ performance.\n             5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n                data.\n             6. Tune your security program, including people, processes, and technologies, based on the data\n                generated by this process.\n        The authoring agencies recommend continually testing your security program, at scale, in a production\n        environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n        advisory."
+ },
+ {
+  "id": "p158",
+  "text": "Resources\n                Stopransomware.gov is a whole-of-government approach that provides one central location for\n                 ransomware resources and alerts.\n                CISA’s #StopRansomware Guide provides organizations with comprehensive best practices to\n                 mitigate the risk of ransomware attacks."
+ },
+ {
+  "id": "p159",
+  "text": "   CISA’s Known Exploited Vulnerabilities Catalog is an authoritative resource for organizations to\n                 support improvement of their patch management best practices.\n                CISA’s Multifactor Authentication webpage provides best practices for network defenders to\n                 mitigate threats to accounts and systems that use MFA.\n                CISA’s Cyber Hygiene Services help organizations reduce the risk of a successful cyberattack.\n                USSS’s Preparing for a Cyber Incident outlines basic steps an organization can take before, during,\n                 and after a cyber incident.\n                CISA’s Cyber Security Evaluation Tool (CSET) provides a systematic, disciplined, and repeatable\n                 approach for evaluating an organization’s security posture; see Downloading and Installing CSET\n                 for step-by-step guidance to help your organization evaluate cybersecurity practices on your\n                 networks.\n                CISA’s Ransomware Risk Assessment helps assess an organization’s ability to counteract a\n                 ransomware infection.\n                Department of Health and Human Services’ Cybersecurity Performance Goals is a resource to help\n                 healthcare organizations implement high-impact cybersecurity practices.\n                CISA’s Binding Operational Directive 26-04: Prioritizing Security Updates Based on Risk and its\n                 implementation guidance\n                CISA’s CI Fortify: Strengthening Resilience Across Critical Infrastructure\n                CISA’s Eviction Strategies Tool enables incident response teams to quickly turn observed behaviors\n                 into remediation plans\n                U.K.’s National Cyber Security Centre\n                U.K.’s National Crime Agency"
+ },
+ {
+  "id": "p160",
+  "text": "Reporting\n        Your organization has no obligation to respond or provide information to the FBI and other authoring\n        agencies in response to this joint advisory. If, after reviewing the information provided, your organization\n        decides to provide information to the FBI or other authoring agencies, reporting must be consistent with\n        applicable state and federal laws.\n        The FBI and other authoring agencies are interested in any information, to include boundary logs showing\n        communication to and from foreign IP addresses, a sample ransom note, communications with threat\n        actors, Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted file.\n        Additional details of interest include a targeted company point of contact, status and scope of infection,\n        estimated loss, operational impact, transaction IDs, date of infection, date detected, initial attack vector,\n        and host- and network-based indicators.\n        The authoring agencies do not encourage paying ransom as payment does not guarantee victim files will\n        be recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n        encourage other criminal actors to engage in the distribution of ransomware, and/or fund illicit activities.\n        Regardless of whether you or your organization have decided to pay the ransom, the FBI and CISA urge you"
+ },
+ {
+  "id": "p161",
+  "text": "to promptly report ransomware incidents to the FBI’s Internet Crime Complaint Center (IC3), a local FBI\n        field office, a local USSS Field Office, or CISA via the agency’s Incident Reporting System or its 24/7\n        Operations Center (contact@cisa.dhs.gov) or by calling 1-844-Say-CISA (1-844-729-2472).\n        In the U.K., report incidents of a cybercrime or fraud at the UK’s Home for Reporting Cyber Crime & Fraud\n        or 0300-123-2040, your local police force, or use the non-emergency number 101."
+ },
+ {
+  "id": "p162",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. CISA and the\n        FBI/USSS do not endorse any commercial entity, product, company, or service, including any entities,\n        products, or services linked within this document. Any reference to specific commercial entities, products,\n        processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n        imply endorsement, recommendation, or favoring by the FBI, CISA, or USSS.\n        The authoring agencies recognize that infrastructure used for malicious activity may be hosted on cloud or\n        virtualized platforms where IP addresses can be dynamically or temporarily assigned. As a result, an\n        address associated with malicious activity at one point in time may later be reassigned to benign services.\n        Accordingly, these indicators should be interpreted as historically observed infrastructure within the activity\n        window and should be corroborated with current network telemetry or additional intelligence sources when\n        used for defensive or investigative purposes."
+ },
+ {
+  "id": "p163",
+  "text": "Version History\n        October 20, 2026: Initial version."
+ }
+]

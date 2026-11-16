@@ -1,0 +1,142 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "servers targeted by Hive actors exploiting CVE-2020-12812 to bypass multifactor authentication",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 FortiOS 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "servers targeted by Hive actors exploiting Microsoft Exchange Server vulnerabilities",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Microsoft Exchange Server 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h3",
+   "role": "hosts infected and encrypted by Hive ransomware, running Microsoft Windows OS",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "Remote Desktop Protocol (RDP)",
+     "port": 3389,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 Remote Desktop Protocol (RDP)、Virtual Private Networks (VPNs)、Windows Defender 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h4",
+   "role": "hosts infected by Hive ransomware variants for Linux",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h5",
+   "role": "hosts infected by Hive ransomware variants for VMware ESXi",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "h6",
+   "role": "hosts infected by Hive ransomware variants for FreeBSD",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h3",
+   "reason": "Scenario action(s) a1, a3, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 require access to Remote Desktop Protocol (RDP).",
+   "port": 3389,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h3",
+   "action": "allow",
+   "port": 3389
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h3 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1, a2, a3); the source does not state its network placement. Confirm or correct it.",
+  "Host h2 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1, a2, a3); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service FortiOS (s4); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Microsoft Exchange Server (s3); it remains unreachable by default.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "No port is known for service Virtual Private Networks (VPNs) (s2); it remains unreachable by default.",
+  "No port is known for service Windows Defender (s5); it remains unreachable by default.",
+  "Host h3 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h4 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h5 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h6 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

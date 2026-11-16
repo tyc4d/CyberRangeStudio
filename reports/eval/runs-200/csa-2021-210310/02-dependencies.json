@@ -1,0 +1,2332 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2021-210310",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "2ad2876948778804623f6c04e028cf5eada0c174148d44266b8b38c09ccfdef4",
+  "source_name": "csa-2021-210310"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit Public-Facing Application",
+   "source": "llm",
+   "description": "The FBI and CISA have reports of malicious cyber actors using zero-day exploits CVE-2021-26855, CVE-2021-26857, CVE-2021-26858, and CVE-2021-27065 to gain access to on-premises Microsoft Exchange servers of U.S. entities as early as January 2021.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a2",
+   "name": "Write webshells to disk for initial persistence",
+   "source": "llm",
+   "description": "The actor(s) frequently appeared to be writing webshells to disk for initial persistence on victim Exchange Servers.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1505.003",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Dump LSASS process memory",
+   "source": "llm",
+   "description": "The actor(s) used Procdump to dump LSASS process memory to gain credentialed access.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003.001",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "Add or delete user accounts as needed",
+   "source": "llm",
+   "description": "The actor(s) added and deleted user accounts to maintain access and facilitate lateral movement.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1136",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "Steal copies of Active Directory database (NTDS.dit)",
+   "source": "llm",
+   "description": "The actor(s) stole copies of the Active Directory database (NTDS.dit) to obtain credentials.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1003.003",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "Move laterally using added accounts and PSExec",
+   "source": "llm",
+   "description": "Lateral movement in the network was achieved through added accounts and the use of PSExec to execute commands on remote systems.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1021.002",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "Use PowerShell for tool import and system/network enumeration",
+   "source": "llm",
+   "description": "PowerShell was used to import tools and conduct system and network enumeration such as Remote System Discovery, System Information Discovery, System Service Discovery, Network Service Scanning, and File and Directory Discovery.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1059.001",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "Collect, compress, and exfiltrate mailbox data",
+   "source": "llm",
+   "description": "The actor(s) collected, compressed mailbox data using 7Zip or WinRAR, and exfiltrated victim emails.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1114",
+   "evidence_refs": [
+    "evidence-10",
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "source_certainty": "hedged",
+   "epistemic_reason": "原文以不確定語氣陳述（如 may have／appears to／we believe），不是已確認的事實。",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "Use multiple C2 nodes for different intrusion stages",
+   "source": "llm",
+   "description": "Multiple command and control (C2) nodes are used for different stages of the intrusion activity.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1104",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "webshells are deployed on servers after exploiting vulnerabilities to establish persistence",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "credential dumping is conducted after establishing persistence with webshells",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "adding/deleting user accounts is done after gaining credentialed access by dumping LSASS memory",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "lateral movement is achieved through added accounts and PSExec",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a3",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "stealing copies of Active Directory database is done after gaining credentialed access by dumping LSASS memory",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "collection, compression, and exfiltration of mailbox data occurs after tool import and enumeration",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a9",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "multiple C2 nodes are used for different stages including data exfiltration",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "on-premises Microsoft Exchange Servers",
+   "source": "llm",
+   "name": "Microsoft Exchange Servers",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s3",
+    "s4",
+    "s5",
+    "s6",
+    "s7"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "hosts of Active Directory database (NTDS.dit)",
+   "source": "llm",
+   "name": "Active Directory Domain Controllers",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-21",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s2",
+    "svc-unsupported-ad-ds-h2"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Microsoft Exchange Server",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Active Directory database (NTDS.dit)",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "PowerShell",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-23",
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "PSExec",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s5",
+   "name": "7Zip",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-26",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s6",
+   "name": "WinRAR",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-26",
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s7",
+   "name": "Procdump",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "svc-unsupported-ad-ds-h2",
+   "name": "Active Directory",
+   "cve": [],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h2"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6",
+   "s7"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "webshells (ASPX and PHP)",
+   "type": "malware",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "added user accounts",
+   "type": "account",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-29",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "NTDS.dit",
+   "type": "file",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "LSASS process memory dump (lsass.dmp)",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PowerShell Snap-Ins",
+   "type": "tool",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "PSExec",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2021-26855",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33",
+    "evidence-34",
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2021-26857",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37",
+    "evidence-38",
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "cve",
+   "value": "CVE-2021-26858",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40",
+    "evidence-41",
+    "evidence-42",
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "cve",
+   "value": "CVE-2021-27065",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44",
+    "evidence-45",
+    "evidence-46",
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "lgnbotl.gif",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "Set-OabVirtualDirectory.ExternalUrl",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "_.AuthenticatedUser",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "duckduckgo.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "duckduckbot.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "www.facebook.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "domain",
+   "value": "externalhit_uatext.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "domain",
+   "value": "www.baidu.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56",
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "domain",
+   "value": "www.bing.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "domain",
+   "value": "bingbot.htm",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "domain",
+   "value": "www.google.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "domain",
+   "value": "bot.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61",
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "domain",
+   "value": "help.yahoo.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "yandex.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "www.googlebot.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "893cd3583b49cb706b3e55ecb2ed0757b977a21f5c72e041392d1256f31166e2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "406b680edc9a1bb0e2c7c451c56904857848b5f15570401450b73b232ff38928",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "2fa06333188795110bba14a482020699a96f76fb1ceb80cbfa2df9d3008b5b0a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell [T1059.001] is used in this intrusion activity in import tools [T1105] as well as conduct system/network enumeration like Remote System Discovery [T1018], System Information Discovery [T1082], System Service Discovery [T1007], Network Service Scanning [T1046], File and Directory Discovery [T1083]. The actor(s) collect [T1114] and compress [T1560.001] the mailbox data with 7Zip or WinRAR before exfiltrating victim emails. Multiple C2 nodes are being used for different stages of the intrusion activity [T1104]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The FBI and CISA have reports of malicious cyber actors using zero-day exploits CVE-2021-26855, CVE-2021-26857, CVE-2021-26858, and CVE-2021-27065 to gain access to on-premises Microsoft Exchange servers of U.S. entities as early as January 2021.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have reports of malicious cyber actors using zero day exploits CVE 2021 26855, CVE 2021 26857, CVE 2021 26858, and CVE 2021 27065 to gain acces"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "the actor(s) frequently appeared to be writing webshells to disk for initial persistence",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the actor(s) frequently appeared to be writing webshells to disk for initial persistence"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "adding/deleting user accounts as needed",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "adding/deleting user accounts as needed"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "adding/deleting user accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "adding/deleting user accounts"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "stealing copies of the Active Directory database (NTDS.dit)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "stealing copies of the Active Directory database (NTDS.dit)"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "stealing copies of Active Directory (NTDS.dit)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "stealing copies of Active Directory (NTDS.dit)"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Lateral movement in the network can be achieved though these accounts and the use of PSExec [S0029] to execute commands on remote systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Lateral movement in the network can be achieved though these accounts and the use of PSExec [S0029] to execute commands on remote systems."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration like Remote System Discovery, System Information Discovery, System Service Discovery, Network Service Scanning, File and Directory Discovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration like Remote System Discovery, System Information Dis"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The actors appear to be collecting, compressing, and exfiltrating mailbox data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors appear to be collecting, compressing, and exfiltrating mailbox data."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The actor(s) collect and compress the mailbox data with 7Zip or WinRAR before exfiltrating victim emails.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor(s) collect and compress the mailbox data with 7Zip or WinRAR before exfiltrating victim emails."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Multiple C2 nodes are being used for different stages of the intrusion activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Multiple C2 nodes are being used for different stages of the intrusion activity."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The actor(s) gain initial access to on-premises Microsoft Exchange Servers. Web shells are being deployed on servers of targets to establish persistence in the victim’s Exchange Servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " gain initial access to on premises Microsoft Exchange Servers. Web shells are being deployed on servers of targets to establish persistence in the victim’s Exc"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Web shells are being deployed on servers of targets to establish persistence in the victim’s Exchange Servers. The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Web shells are being deployed on servers of targets to establish persistence in the victim’s Exchange Servers. The actor(s) gain credentialed access by using Pr"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,, adding/deleting user accounts",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,, adding/deleting user accounts"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,, adding/deleting user accounts, and stealing copies of Active Directory (NTDS.dit).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actor(s) gain credentialed access by using Procdump to dump LSASS process memory,, adding/deleting user accounts, and stealing copies of Active Directory (N"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration ... The actor(s) collect and compress the mailbox data with 7Zip or WinRAR before exfiltrating victim emails.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration … The actor(s) collect and compress the mailbox data"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The FBI and CISA have reports of malicious cyber actors using zero-day exploits CVE-2021-26855, CVE-2021-26857, CVE-2021-26858, and CVE-2021-27065 to gain access to on-premises Microsoft Exchange servers of U.S. entities as early as January 2021.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have reports of malicious cyber actors using zero day exploits CVE 2021 26855, CVE 2021 26857, CVE 2021 26858, and CVE 2021 27065 to gain acces"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "The actor(s) frequently appeared to be writing webshells to disk for initial persistence on victim Exchange Servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a2"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-20",
+   "quote": "The actor(s) exploit vulnerabilities CVE-2021-26855, CVE-2021-26857, CVE-2021-26858, and CVE-2021-27065 to target and gain initial access to on-premises Microsoft Exchange Servers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9832,
+   "matched_text": " actor(s) exploit vulnerabilities CVE 2021 26855, CVE 2021 26857, CVE 2021 26858, and CVE 2021 27065 to target and gain initial access to on premises Microsoft "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The actor(s) stole copies of the Active Directory database (NTDS.dit) to obtain credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The FBI and CISA have reports of malicious cyber actors using zero-day exploits CVE-2021-26855, CVE-2021-26857, CVE-2021-26858, and CVE-2021-27065 to gain access to on-premises Microsoft Exchange servers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI and CISA have reports of malicious cyber actors using zero day exploits CVE 2021 26855, CVE 2021 26857, CVE 2021 26858, and CVE 2021 27065 to gain acces"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "PowerShell was used to import tools and conduct system and network enumeration such as Remote System Discovery, System Information Discovery, System Service Discovery, Network Service Scanning, and File and Directory Discovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-24",
+   "quote": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Lateral movement in the network was achieved through added accounts and the use of PSExec to execute commands on remote systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a6"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-26",
+   "quote": "The actor(s) collected, compressed mailbox data using 7Zip or WinRAR, and exfiltrated victim emails.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-27",
+   "quote": "The actor(s) used Procdump to dump LSASS process memory to gain credentialed access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a3"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Web shells are being deployed on servers of targets to establish persistence in the victim’s Exchange Servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Web shells are being deployed on servers of targets to establish persistence in the victim’s Exchange Servers."
+  },
+  {
+   "id": "evidence-29",
+   "quote": "The actor(s) added and deleted user accounts to maintain access and facilitate lateral movement.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-30",
+   "quote": "rundll32 C:\\windows\\system32\\comsvcs.dll MiniDump lsass.dmp",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "rundll32 C:\\windows\\system32\\comsvcs.dll MiniDump lsass.dmp"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Adding and using PowerShell Snap-Ins (Add-PSSnapin) to export mailboxes (Get-MailboxExportRequest)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Adding and using PowerShell Snap Ins (Add PSSnapin) to export mailboxes (Get MailboxExportRequest)"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "use of PSExec [S0029] to execute commands on remote systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "use of PSExec [S0029] to execute commands on remote systems"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "CVE-2021-26855",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26855"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "CVE-2021-26855",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26855"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "CVE-2021-26855",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26855"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "CVE-2021-26857",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26857"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "CVE-2021-26857",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26857"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "CVE-2021-26857",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26857"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "CVE-2021-26857",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26857"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "CVE-2021-26858",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26858"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "CVE-2021-26858",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26858"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "CVE-2021-26858",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26858"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "CVE-2021-\n       26858",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 26858"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "CVE-2021-27065",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 27065"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "CVE-2021-27065",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 27065"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "CVE-2021-27065",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 27065"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "CVE-2021-27065",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 27065"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "lgnbotl.gif",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "lgnbotl.gif"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "Set-OabVirtualDirectory.ExternalUrl",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Set OabVirtualDirectory.ExternalUrl"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "_.AuthenticatedUser",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "_.AuthenticatedUser"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "duckduckgo.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "duckduckgo.com"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "duckduckbot.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "duckduckbot.html"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "www.facebook.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.facebook.com"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "externalhit_uatext.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "externalhit_uatext.php"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "www.baidu.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.baidu.com"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "www.baidu.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.baidu.com"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "www.bing.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.bing.com"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "bingbot.htm",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bingbot.htm"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "www.google.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.google.com"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "bot.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bot.html"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "bot.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "bot.html"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "help.yahoo.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "help.yahoo.com"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "yandex.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "yandex.com"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "www.googlebot.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.googlebot.com"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "893cd3583b49cb706b3e55ecb2ed0757b977a21f5c72e041392d1256f31166e2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "893cd3583b49cb706b3e55ecb2ed0757b977a21f5c72e041392d1256f31166e2"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "406b680edc9a1bb0e2c7c451c56904857848b5f15570401450b73b232ff38928",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "34"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "406b680edc9a1bb0e2c7c451c56904857848b5f15570401450b73b232ff38928"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "2fa06333188795110bba14a482020699a96f76fb1ceb80cbfa2df9d3008b5b0a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "2fa06333188795110bba14a482020699a96f76fb1ceb80cbfa2df9d3008b5b0a"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration like Remote System Discovery, System Information Discovery, System Service Discovery, Network Service Scanning, File and Directory Discovery. The actor(s) collect and compress the mailbox data with 7Zip or WinRAR before exfiltrating victim emails. Multiple C2 nodes are being used for different stages of the intrusion activity",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell is used in this intrusion activity in import tools as well as conduct system/network enumeration like Remote System Discovery, System Information Dis"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Microsoft Exchange Servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange Servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Microsoft Exchange Servers",
+    "action:a1 — Exploit Public-Facing Application",
+    "action:a2 — Write webshells to disk for initial persistence",
+    "action:a3 — Dump LSASS process memory",
+    "action:a4 — Add or delete user accounts as needed",
+    "action:a6 — Move laterally using added accounts and PSExec",
+    "action:a7 — Use PowerShell for tool import and system/network enumeration",
+    "action:a8 — Collect, compress, and exfiltrate mailbox data"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange Servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Microsoft Exchange Servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange Servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Microsoft Exchange Servers",
+    "action:a1 — Exploit Public-Facing Application",
+    "action:a2 — Write webshells to disk for initial persistence",
+    "action:a3 — Dump LSASS process memory",
+    "action:a4 — Add or delete user accounts as needed",
+    "action:a6 — Move laterally using added accounts and PSExec",
+    "action:a7 — Use PowerShell for tool import and system/network enumeration",
+    "action:a8 — Collect, compress, and exfiltrate mailbox data"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange Servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Microsoft Exchange Servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Microsoft Exchange Servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Microsoft Exchange Servers",
+    "action:a1 — Exploit Public-Facing Application",
+    "action:a2 — Write webshells to disk for initial persistence",
+    "action:a3 — Dump LSASS process memory",
+    "action:a4 — Add or delete user accounts as needed",
+    "action:a6 — Move laterally using added accounts and PSExec",
+    "action:a7 — Use PowerShell for tool import and system/network enumeration",
+    "action:a8 — Collect, compress, and exfiltrate mailbox data"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Microsoft Exchange Servers",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Active Directory Domain Controllers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Domain Controllers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Active Directory Domain Controllers",
+    "action:a5 — Steal copies of Active Directory database (NTDS.dit)"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-6",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h2.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Active Directory Domain Controllers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Domain Controllers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Active Directory Domain Controllers",
+    "action:a5 — Steal copies of Active Directory database (NTDS.dit)"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Active Directory Domain Controllers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Active Directory Domain Controllers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Active Directory Domain Controllers",
+    "action:a5 — Steal copies of Active Directory database (NTDS.dit)"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Active Directory Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-psexec-version",
+   "field": "PsExec version",
+   "category": "software",
+   "reason": "IR 指出 PsExec 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a6 提到 PsExec，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "service:s4 — PSExec",
+    "action:a6 — Move laterally using added accounts and PSExec"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "PsExec",
+     "source_ref": "services:s4",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Move laterally using added accounts and PSExec",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Microsoft Exchange Server — 版本",
+   "category": "version",
+   "reason": "IR 指出 Microsoft Exchange Server，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Microsoft Exchange Server 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Microsoft Exchange Server",
+    "action:a1 — Exploit Public-Facing Application"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Microsoft Exchange Server",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s4-configuration",
+   "field": "PSExec — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a6 使用 PSExec，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a6 依賴 PSExec。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s4 — PSExec",
+    "action:a6 — Move laterally using added accounts and PSExec"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "PSExec",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-25",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Move laterally using added accounts and PSExec",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s5-configuration",
+   "field": "7Zip — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a8 使用 7Zip，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8 依賴 7Zip。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s5 — 7Zip",
+    "action:a8 — Collect, compress, and exfiltrate mailbox data"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "7Zip",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Collect, compress, and exfiltrate mailbox data",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s6-configuration",
+   "field": "WinRAR — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a8 使用 WinRAR，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8 依賴 WinRAR。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s6 — WinRAR",
+    "action:a8 — Collect, compress, and exfiltrate mailbox data"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "WinRAR",
+     "source_ref": "services:s6.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-26",
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Collect, compress, and exfiltrate mailbox data",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10",
+      "evidence-11"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s6",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s7-configuration",
+   "field": "Procdump — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a3 使用 Procdump，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3 依賴 Procdump。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s7 — Procdump",
+    "action:a3 — Dump LSASS process memory"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Procdump",
+     "source_ref": "services:s7.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-27",
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Dump LSASS process memory",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s7",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 涉及 Active Directory（h2 (Active Directory Domain Controllers)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h2 — Active Directory Domain Controllers",
+    "action:a5 — Steal copies of Active Directory database (NTDS.dit)"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "Active Directory Domain Controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Steal copies of Active Directory database (NTDS.dit)",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a9 — Use multiple C2 nodes for different intrusion stages"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Use multiple C2 nodes for different intrusion stages",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-microsoft-exchange-server",
+   "field": "software dependency: Microsoft Exchange Server",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Microsoft Exchange Server 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-active-directory-database-n",
+   "field": "software dependency: Active Directory database (NTDS.dit)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Active Directory database (NTDS.dit) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "PostgreSQL（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-powershell",
+   "field": "software dependency: PowerShell",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "PowerShell 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-psexec",
+   "field": "software dependency: PSExec",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "PSExec 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-7zip",
+   "field": "software dependency: 7Zip",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s5",
+   "question": "7Zip 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-winrar",
+   "field": "software dependency: WinRAR",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s6",
+   "question": "WinRAR 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-procdump",
+   "field": "software dependency: Procdump",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s7",
+   "question": "Procdump 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-h2",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2021-26855",
+   "field": "affected software for CVE-2021-26855",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2021-26857",
+   "field": "affected software for CVE-2021-26857",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2021-26858",
+   "field": "affected software for CVE-2021-26858",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2021-27065",
+   "field": "affected software for CVE-2021-27065",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8841,
+  "unsupported_claim_count": 14,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 1,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

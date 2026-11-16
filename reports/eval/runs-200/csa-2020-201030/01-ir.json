@@ -1,0 +1,593 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-201030",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "a90a79ed8f18e711b0fa2d336872eea5d26e48833841a4b9b740d7bc533a2529",
+  "source_name": "csa-2020-201030"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "conduct operations aimed at influencing and interfering in the 2020 US Presidential Election",
+   "source": "llm",
+   "description": "A threat group, assessed to be located in Iran, conducted operations aimed at influencing and interfering in the 2020 US Presidential Election.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "use IP addresses as part of an Iran-based campaign to conduct operations aimed at impacting the 2020 US Presidential Election",
+   "source": "llm",
+   "description": "The Iranian group used identified IP addresses as part of a campaign to conduct operations aimed at impacting the 2020 US Presidential Election, including voter intimidation emails and dissemination of US election-related propaganda.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "disseminate a propaganda video concerning voter fraud and hacking of US voter information",
+   "source": "llm",
+   "description": "The group disseminated a propaganda video concerning voter fraud and hacking of US voter information intended to make US voter information and the voting process appear insecure and susceptible to fraud.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "use the SQLmap tool in the propaganda video",
+   "source": "llm",
+   "description": "The video shows actors using the SQLmap tool, indicating familiarity with traditional TTPs such as SQL injection and other exploitation methods.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a5",
+   "name": "use VPN services including NordVPN and others for operations",
+   "source": "llm",
+   "description": "The group likely used IP addresses corresponding to VPN services such as NordVPN, CDN77, HQSERV, and M247 to conduct their operations.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "use IP addresses as part of an Iran-based campaign to conduct operations aimed at impacting the 2020 US Presidential Election",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a1",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "disseminate a propaganda video concerning voter fraud and hacking of US voter information",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "use the SQLmap tool in the propaganda video",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "use VPN services including NordVPN and others for operations",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "target of SQL injection and other exploitation methods",
+   "source": "llm",
+   "name": "US election infrastructure",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "SQLmap tool",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "SQLmap",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "VPN services including NordVPN, CDN77, HQSERV, and M247",
+   "type": "service",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.fbi.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-13"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The FBI is now providing a list of indicators of compromise (IOCs) pertaining to a threat group, assessed to be located in Iran, conducting operations aimed at influencing and interfering in the 2020 US Presidential Election.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI is now providing a list of indicators of compromise (IOCs) pertaining to\n                                     a threat group, assessed to be located in "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The FBI is providing the below list of identified IP addresses previously used as part of an Iran-based campaign to conduct operations aimed at impacting the 2020 US Presidential Election, to include voter intimidation emails and dissemination of US election-related propaganda.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The FBI is providing the below list of identified IP addresses previously used as part of an Iran based campaign to conduct operations aimed at impacting the 20"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "This group has been linked to efforts to disseminate a propaganda video concerning voter fraud and hacking of US voter information. The FBI advises this video is almost certainly intended to make US voter information and the voting process appear insecure and susceptible to fraud.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This group has been linked to efforts to disseminate a propaganda video concerning voter fraud and hacking of US voter information. The FBI advises this video i"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "The video shows actors using the SQLmap tool. While the video alone does not necessarily validate whether the actors successfully conducted a SQL injection against US election infrastructure and/or obtained voter information, it should be assumed that this group is familiar with traditional TTPs such as SQL injection and other exploitation methods referenced in AA20-296B.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The video shows actors using the SQLmap tool. While the video alone does not necessarily validate whether the actors successfully conducted a SQL injection agai"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Many VPN service IPs linked to the group are from the NordVPN service, and these IPs may not necessarily correspond to VPN services via IP address lookup services. The VPN service IPs may correspond to providers such as: Provider name variants including “CDN77”, Provider name variants including “HQSERV”, Provider name variants including “M247”",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6154,
+   "matched_text": "Many VPN service IPs linked to the group are from the NordVPN service, and these IPs may not necessarily correspond to VPN services via IP address lookup servic"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "This group has been linked to efforts to disseminate a propaganda video concerning voter fraud and hacking of US voter information.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This group has been linked to efforts to disseminate a propaganda video concerning voter fraud and hacking of US voter information."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The video shows actors using the SQLmap tool.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The video shows actors using the SQLmap tool."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Many VPN service IPs linked to the group are from the NordVPN service, and these IPs may not necessarily correspond to VPN services via IP address lookup services.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Many VPN service IPs linked to the group are from the NordVPN service, and these IPs may not necessarily correspond to VPN services via IP address lookup servic"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "the actors using the SQLmap tool. While the video alone does not necessarily validate whether the actors successfully conducted a SQL injection against US election infrastructure and/or obtained voter information",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9858,
+   "matched_text": " actors using the SQLmap tool. While the video alone does not necessarily validate whether the actors successfully conducted a SQL injection against US election"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The video shows actors using the SQLmap tool",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The video shows actors using the SQLmap tool"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The group likely used IP addresses corresponding to VPN services such as NordVPN, CDN77, HQSERV, and M247 to conduct their operations.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " to VPN services "
+  },
+  {
+   "id": "evidence-12",
+   "quote": "www.fbi.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fbi.gov"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "US election infrastructure — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "US election infrastructure 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — US election infrastructure",
+    "action:a1 — conduct operations aimed at influencing and interfering in the 2020 US Presidential Election",
+    "action:a3 — disseminate a propaganda video concerning voter fraud and hacking of US voter information",
+    "action:a4 — use the SQLmap tool in the propaganda video"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US election infrastructure",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "US election infrastructure — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "US election infrastructure 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — US election infrastructure",
+    "action:a1 — conduct operations aimed at influencing and interfering in the 2020 US Presidential Election",
+    "action:a3 — disseminate a propaganda video concerning voter fraud and hacking of US voter information",
+    "action:a4 — use the SQLmap tool in the propaganda video"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US election infrastructure",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "US election infrastructure — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "US election infrastructure 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — US election infrastructure",
+    "action:a1 — conduct operations aimed at influencing and interfering in the 2020 US Presidential Election",
+    "action:a3 — disseminate a propaganda video concerning voter fraud and hacking of US voter information",
+    "action:a4 — use the SQLmap tool in the propaganda video"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US election infrastructure",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "inferred",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "SQLmap tool — 版本",
+   "category": "version",
+   "reason": "IR 指出 SQLmap tool，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 SQLmap tool 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — SQLmap tool",
+    "action:a4 — use the SQLmap tool in the propaganda video"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "SQLmap tool",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：SQLmap tool。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a4 — use the SQLmap tool in the propaganda video",
+    "host:h1 — US election infrastructure"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "use the SQLmap tool in the propaganda video",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-database-product",
+   "field": "資料庫產品、版本與所在主機",
+   "category": "software",
+   "reason": "步驟查詢或存取了資料庫，但 IR 沒有資料庫產品、版本，也沒有它位於哪台主機。",
+   "severity": "major",
+   "status": "open",
+   "question": "被查詢的資料庫是哪個產品、哪個版本、放在哪台主機上？來源沒寫的話請選擇教學用的替代資料庫並標記為替代。",
+   "affects": [
+    "action:a4 — use the SQLmap tool in the propaganda video",
+    "host:h1 — US election infrastructure"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的資料庫產品與版本",
+    "選用靶場可取得的替代資料庫並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "use the SQLmap tool in the propaganda video",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8462,
+  "unsupported_claim_count": 2,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

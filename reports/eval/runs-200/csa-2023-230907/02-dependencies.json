@@ -1,0 +1,4738 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-230907",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "03221462cb4e3ea2df0b7e5e18600bd29a08edd33c230272f528d0b32417db94",
+  "source_name": "csa-2023-230907"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit CVE-2022-47966 for initial access",
+   "source": "llm",
+   "description": "APT actors exploited CVE-2022-47966 to access the organization’s web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated Windows AD DC/member VM fixture and native health checks; this deployment environment has no VM backend/image configured."
+  },
+  {
+   "id": "a2",
+   "name": "Create local user account 'Azure' with administrative privileges",
+   "source": "llm",
+   "description": "APT actors created a local user account named Azure with administrative privileges on the web server hosting ServiceDesk Plus.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1136.001",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a3",
+   "name": "Dump LSASS credentials using Azure user account",
+   "source": "llm",
+   "description": "The Azure user account accessed and dumped credentials stored in the process memory of LSASS for the Active Directory domain.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003.001",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a4",
+   "name": "Download mimikatz.exe via ConnectWise ScreenConnect",
+   "source": "llm",
+   "description": "APT actors used the legitimate ConnectWise ScreenConnect client to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1219",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a5",
+   "name": "Download bitmap.exe malware to connect to C2 IP",
+   "source": "llm",
+   "description": "Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1027.009",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "Create Mimikatz credential dump files",
+   "source": "llm",
+   "description": "Two files were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a7",
+   "name": "Download nmap.exe and npcap.exe for network and credential information gathering",
+   "source": "llm",
+   "description": "Azure user account downloaded nmap.exe and npcap.exe to continue network and credential information gathering efforts.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1018",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a8",
+   "name": "Download ssh2.zip and extract SSH tools",
+   "source": "llm",
+   "description": "APT actors downloaded ssh2.zip via the Azure user account, which contained legitimate files including ssh.exe used to establish persistence via SSH.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1133",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a9",
+   "name": "Create scheduled task 'license validf' to execute ssh.exe for persistence",
+   "source": "llm",
+   "description": "Scheduled task 'license validf' was created to execute ssh.exe on a recurring basis on the ServiceDesk system, establishing persistence via SSH reverse tunnel.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1053.005",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a10",
+   "name": "Execute PsExec on ServiceDesk system",
+   "source": "llm",
+   "description": "APT actors executed PsExec on the ServiceDesk system to create a scheduled task and force-store administrative credentials.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a11",
+   "name": "Create ProcDump utility on ServiceDesk system",
+   "source": "llm",
+   "description": "ProcDump was created on the ServiceDesk system as a method for enumerating running processes and dumping LSASS credentials.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1057",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a12",
+   "name": "Attempt Apache Log4j exploit on ServiceDesk system",
+   "source": "llm",
+   "description": "APT actors attempted to exploit Apache Log4j vulnerability CVE-2021-44228 on the ServiceDesk system but were unsuccessful.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "failed",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated Windows AD DC/member VM fixture and native health checks; this deployment environment has no VM backend/image configured."
+  },
+  {
+   "id": "a13",
+   "name": "Beacon to C2 server via HTTP-GET requests",
+   "source": "llm",
+   "description": "The server hosting ServiceDesk was observed beaconing/sending HTTP-GET requests to a suspected APT-controlled C2 server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a14",
+   "name": "Drop ASPX web shell on OWA server",
+   "source": "llm",
+   "description": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system and dropped an ASPX web shell designed to execute remote JavaScript code.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1059.007",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a15",
+   "name": "Install Metasploit service on domain controller",
+   "source": "llm",
+   "description": "APT actors installed Metasploit service on the organization’s domain controller using PowerShell.",
+   "target_host_ref": "h4",
+   "attack_technique": "T1059.001",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a16",
+   "name": "Drop ConfigLogin.aspx web shell on web server",
+   "source": "llm",
+   "description": "APT actors dropped an additional ASPX web shell on a web server at c:\\inetpub\\wwwrot\\uninet\\css\\font-awesome\\css\\ConfigLogin.aspx.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1505.003",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a17",
+   "name": "Create and use wkHPd.exe Metasploit variant",
+   "source": "llm",
+   "description": "APT actors created and used a variant of Metasploit (Meterpreter) named wkHPd.exe on the ServiceDesk system.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1587.001",
+   "attack_tactic": "resource-development",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a18",
+   "name": "Upload PHP files via HTTP-POST to ServiceDesk system",
+   "source": "llm",
+   "description": "APT actors uploaded multiple PHP files to the ServiceDesk system via HTTP-POST requests from malicious IP 193.142.146[.]226.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a19",
+   "name": "Execute DNS scanning and callback to Interact.sh domain",
+   "source": "llm",
+   "description": "APT actors executed DNS scanning at an additional server and directed callback to the Interact.sh domain.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1046",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  },
+  {
+   "id": "a20",
+   "name": "Exploit CVE-2022-42475 on firewall device",
+   "source": "llm",
+   "description": "APT actors exploited CVE-2022-42475 on the organization’s firewall device, indicated by multiple successful VPN connections from known-malicious IPs.",
+   "target_host_ref": "h3",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a21",
+   "name": "Use disabled legitimate administrative account credentials on firewall",
+   "source": "llm",
+   "description": "APT actors compromised and used disabled, legitimate administrative account credentials from a previously hired contractor on the firewall device.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1078.003",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a22",
+   "name": "Initiate multiple TLS-encrypted sessions on TCP port 10443 from firewall",
+   "source": "llm",
+   "description": "APT actors initiated multiple TLS-encrypted sessions on TCP port 10443 indicating successful data transfer from the firewall device.",
+   "target_host_ref": "h3",
+   "attack_technique": "T1573.002",
+   "attack_tactic": "command-and-control",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a23",
+   "name": "Move laterally from firewall to web server using legitimate credentials",
+   "source": "llm",
+   "description": "APT actors leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded.",
+   "target_host_ref": "h1",
+   "attack_tactic": "lateral-movement",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h3",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a24",
+   "name": "Load multiple web shells on various servers",
+   "source": "llm",
+   "description": "APT actors loaded multiple web shells on the web server and other locations such as the OWA server in various directories.",
+   "target_host_ref": "h1",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a25",
+   "name": "Use ConnectWise ScreenConnect for remote access",
+   "source": "llm",
+   "description": "APT actors used the legitimate ConnectWise ScreenConnect client to connect to the ServiceDesk system for malicious purposes.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1219",
+   "attack_tactic": "command-and-control",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a26",
+   "name": "Use Ngrok to establish RDP connection for persistence",
+   "source": "llm",
+   "description": "Ngrok was used to establish a Remote Desktop Protocol (RDP) connection as a method of maintaining persistence on the ServiceDesk system.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1021.001",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a27",
+   "name": "Download and use AnyDesk remote desktop application",
+   "source": "llm",
+   "description": "APT actors compromised one host and moved laterally to install anydesk.exe on two additional hosts.",
+   "target_host_ref": "h6",
+   "attack_technique": "T1570",
+   "attack_tactic": "lateral-movement",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a28",
+   "name": "Use quser.exe to gather information about user sessions",
+   "source": "llm",
+   "description": "APT actors used quser.exe to acquire information about user sessions on a Remote Desktop Session Host server.",
+   "target_host_ref": "h5",
+   "attack_technique": "T1049",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires Windows VM; Windows release and validated image are missing. Supply the release and lawful image reference; no version is assumed."
+  },
+  {
+   "id": "a29",
+   "name": "Execute xpack.exe malware from hidden directory",
+   "source": "llm",
+   "description": "APT actors executed xpack.exe malware from a hidden directory to execute system commands, drop additional malware and tools, and stage data for exfiltration.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1074",
+   "attack_tactic": "collection",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "Catalogue has no exact component/version and safe validation mapping for this action; provide the target software, version, and expected evidence."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Through exploitation of CVE-2022-47966, APT actors achieved root level access on the web server and created a local user account named Azure with administrative privileges.",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The Azure user successfully accessed and dumped credentials stored in the process memory of LSASS.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Mimikatz created credential dump files as a method to dump/write credentials to disk on the ServiceDesk system.",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Azure user account downloaded bitmap.exe malware to the ServiceDesk system.",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r5",
+   "from_action": "a2",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Azure user account downloaded nmap.exe and npcap.exe for network and credential information gathering.",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r6",
+   "from_action": "a2",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "APT actors downloaded ssh2.zip via the Azure user account and extracted SSH tools.",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "The scheduled task 'license validf' was created to execute ssh.exe for persistence.",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r8",
+   "from_action": "a8",
+   "to_action": "a26",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r9",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "ConnectWise ScreenConnect was utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads.",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r10",
+   "from_action": "a4",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Mimikatz credential dump files were created after mimikatz.exe was downloaded.",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r11",
+   "from_action": "a4",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Mimikatz was used to dump LSASS credentials using the Azure user account.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r12",
+   "from_action": "a2",
+   "to_action": "a10",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "APT actors utilized PsExec on the ServiceDesk system after gaining access via the Azure user account.",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r13",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r14",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "APT actors logged into the OWA server from the ServiceDesk system after beaconing to C2.",
+   "evidence_refs": [
+    "evidence-36"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r15",
+   "from_action": "a14",
+   "to_action": "a24",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Multiple web shells were loaded on various servers including the OWA server.",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r16",
+   "from_action": "a14",
+   "to_action": "a16",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "APT actors dropped an additional ASPX web shell on a web server after dropping the OWA web shell.",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r17",
+   "from_action": "a14",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "APT actors installed Metasploit service on domain controller after establishing presence on ServiceDesk system.",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r18",
+   "from_action": "a15",
+   "to_action": "a17",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "APT actors created and used a variant of Metasploit (wkHPd.exe) on the ServiceDesk system.",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r19",
+   "from_action": "a18",
+   "to_action": "a24",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "PHP files uploaded via HTTP-POST to ServiceDesk system are part of web shells and malicious files loaded on servers.",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r20",
+   "from_action": "a20",
+   "to_action": "a21",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "APT actors exploited CVE-2022-42475 on firewall device and used disabled legitimate administrative account credentials.",
+   "evidence_refs": [
+    "evidence-38"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r21",
+   "from_action": "a21",
+   "to_action": "a22",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "APT actors used compromised credentials to initiate multiple TLS-encrypted sessions on firewall.",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r22",
+   "from_action": "a22",
+   "to_action": "a23",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "APT actors leveraged legitimate credentials to move laterally from firewall to web server.",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r23",
+   "from_action": "a23",
+   "to_action": "a24",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Multiple web shells were loaded on various servers after lateral movement.",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r24",
+   "from_action": "a25",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "ConnectWise ScreenConnect was downloaded for malicious use prior to mimikatz.exe download.",
+   "evidence_refs": [
+    "evidence-39"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r25",
+   "from_action": "a27",
+   "to_action": "a23",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "anydesk.exe was installed after lateral movement to additional hosts.",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r26",
+   "from_action": "a28",
+   "to_action": "a29",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "quser.exe used for session info gathering before executing xpack.exe malware.",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus",
+   "source": "llm",
+   "name": "web server hosting Zoho ManageEngine ServiceDesk Plus",
+   "os": "Windows",
+   "network_placement": "public-facing application",
+   "evidence_refs": [
+    "evidence-40",
+    "evidence-2",
+    "evidence-4",
+    "evidence-41",
+    "evidence-42",
+    "evidence-43",
+    "evidence-44",
+    "evidence-45",
+    "evidence-34",
+    "evidence-46",
+    "evidence-47",
+    "evidence-48",
+    "evidence-49",
+    "evidence-50",
+    "evidence-51",
+    "evidence-52",
+    "evidence-53",
+    "evidence-16",
+    "evidence-54",
+    "evidence-55",
+    "evidence-56"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "svc-unsupported-log4j-unspecified-h1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "Outlook Web Application (OWA) server",
+   "source": "llm",
+   "name": "Outlook Web Application (OWA) server",
+   "evidence_refs": [
+    "evidence-57",
+    "evidence-58",
+    "evidence-59"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s6"
+   ]
+  },
+  {
+   "id": "h3",
+   "role": "firewall device",
+   "source": "llm",
+   "name": "organization’s firewall device",
+   "network_placement": "edge network infrastructure",
+   "evidence_refs": [
+    "evidence-23",
+    "evidence-60",
+    "evidence-61",
+    "evidence-62",
+    "evidence-63",
+    "evidence-64"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s7"
+   ]
+  },
+  {
+   "id": "h4",
+   "role": "domain controller",
+   "source": "llm",
+   "name": "organization’s domain controller",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-65",
+    "evidence-66"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "svc-unsupported-ad-ds-h4"
+   ]
+  },
+  {
+   "id": "h5",
+   "role": "Remote Desktop Session Host server",
+   "source": "llm",
+   "name": "Remote Desktop Session Host server",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-67",
+    "evidence-68"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  },
+  {
+   "id": "h6",
+   "role": "hosts compromised for lateral movement",
+   "source": "llm",
+   "name": "other hosts where anydesk.exe was installed",
+   "evidence_refs": [
+    "evidence-69",
+    "evidence-70"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": []
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Zoho ManageEngine ServiceDesk Plus",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "Active Directory domain",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "ConnectWise ScreenConnect client",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s4",
+   "name": "SSH",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s5",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s6",
+   "name": "Outlook Web Application (OWA)",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s7",
+   "name": "VPN",
+   "source": "llm",
+   "host_ref": "h3",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "svc-unsupported-ad-ds-h4",
+   "name": "Active Directory",
+   "cve": [],
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h4"
+  },
+  {
+   "id": "svc-unsupported-log4j-unspecified-h1",
+   "name": "Log4j application",
+   "matched_text": "CVE-2021-44228",
+   "cve": [
+    "CVE-2021-44228"
+   ],
+   "catalogue_component": "unsupported-log4j-unspecified",
+   "is_substitute": false,
+   "epistemic_status": "inferred",
+   "source": "program",
+   "host_ref": "h1"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "h6"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6",
+   "s7"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Azure",
+   "type": "account",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-56",
+    "evidence-4"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "mimikatz.exe",
+   "type": "tool",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-71",
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "bitmap.exe",
+   "type": "malware",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-72",
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "wo_view_bg.zip, wo_view_bg1.gif, wo_view_bg2.gif",
+   "type": "file",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-73"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "fuu.txt, jojo.txt",
+   "type": "file",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-44"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "nmap.exe",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-74",
+    "evidence-75"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "npcap.exe",
+   "type": "tool",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-76",
+    "evidence-77"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ssh2.zip",
+   "type": "file",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-78",
+    "evidence-34"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "license validf",
+   "type": "scheduled task",
+   "id": "art9",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-79",
+    "evidence-48"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PsExec",
+   "type": "tool",
+   "id": "art10",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-80",
+    "evidence-49"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ProcDump",
+   "type": "tool",
+   "id": "art11",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-81",
+    "evidence-50"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "ASPX web shells (e.g., resource.aspx, ConfigLogin.aspx)",
+   "type": "file",
+   "id": "art12",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-57",
+    "evidence-82",
+    "evidence-83"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "wkHPd.exe",
+   "type": "malware",
+   "id": "art13",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-84",
+    "evidence-52"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "PHP files uploaded via HTTP-POST",
+   "type": "file",
+   "id": "art14",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-85",
+    "evidence-53"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Ngrok",
+   "type": "tool",
+   "id": "art15",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-54",
+    "evidence-46"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "anydesk.exe",
+   "type": "tool",
+   "id": "art16",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-69",
+    "evidence-70"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "quser.exe",
+   "type": "tool",
+   "id": "art17",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-67",
+    "evidence-68"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "xpack.exe",
+   "type": "malware",
+   "id": "art18",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-86",
+    "evidence-87"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2022-47966",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88",
+    "evidence-89",
+    "evidence-90",
+    "evidence-91",
+    "evidence-92",
+    "evidence-93",
+    "evidence-94",
+    "evidence-95",
+    "evidence-96",
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "cve",
+   "value": "CVE-2022-42475",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98",
+    "evidence-99",
+    "evidence-100",
+    "evidence-101",
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "192.142.226[.]153",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "144.202.2[.]71",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "207.246.105[.]240",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "45.77.121[.]232",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "47.90.240[.]218",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "approveinfo.aspx",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "45.90.123[.]194",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "ip",
+   "value": "154.6.91[.]26",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "ip",
+   "value": "154.6.93[.]22",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "ip",
+   "value": "154.6.93[.]5",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "154.6.93[.]12",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "154.6.93[.]32",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "154.6.93[.]24",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "184.170.241[.]27",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "191.96.106[.]40",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "ip",
+   "value": "102.129.145[.]232",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "ip",
+   "value": "92.118.39[.]82",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-119"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "downloadFlile[.]cgi",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "ngrok.yml",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "ip",
+   "value": "80.85.241[.]15",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "ip",
+   "value": "68.177.56[.]38",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "domain",
+   "value": "main.cloudfronts[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "cve",
+   "value": "CVE-2021-44228",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125",
+    "evidence-126"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "ip",
+   "value": "103.105.49[.]108",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "domain",
+   "value": "Interact.sh",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128",
+    "evidence-129"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "domain",
+   "value": "xpack.github[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-130"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "domain",
+   "value": "xpack.disqus[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-131"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "domain",
+   "value": "cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-132"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "powershell New-ItemProperty -Path \"HKLM:\\System\\CurrentControlSet\\Control\\Lsa\" -Name \"DisableRestrictedAdmin\" -Value \"0\" - PropertyType DWORD -Force Note: PsExec, a command line utility from Microsoft's Sysinternals Suite, is known to be used for lateral",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-133"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "powershell",
+   "command": "powershell.exe -nop -w hidden -noni -c &quot;if([IntPtr]::Size -eq 4) [T1564.003]",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-134"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "As early as January 2023, APT actors exploited CVE-2022-47966 for initial access to the organization’s web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "As early as January 2023, APT actors exploited CVE 2022 47966 for initial access to the organization’s web server hosting the public facing application, Zoho Ma"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Successful web server (Zoho ManageEngine ServiceDesk Plus) exploitation via CVE-2022-47966.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " ServiceDesk Plus) exploitation via CVE 2022 47966."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Through exploitation of CVE-2022-47966, APT actors achieved root level access on the web server and created a local user account named Azure with administrative privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Through exploitation of CVE 2022 47966, APT actors achieved root level access on the web server and created a local user account named Azure with administrative"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "A local user account with administrative permissions, named Azure, was created on the server hosting ServiceDesk Plus.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "A local user account with administrative permissions, "
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The Azure user successfully accessed and dumped credentials stored in the process memory of LSASS for the Active Directory (AD) domain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " credentials stored in the process memory of LSASS for the Active Directory (AD) domain."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "One file (c:\\ManageEngine\\ServiceDesk\\bin\\1.txt) was created as a method for Mimikatz to dump/write credentials to disk on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "42"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " was created as a method for Mimikatz to dump/write credentials to disk on the ServiceDesk system."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "The legitimate ConnectWise ScreenConnect client was utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials,.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials,."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server. This malware is identified as a variant of Metasploit (Meterpreter).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " embedded malicious payload from its C2 server. This malware is identified as a variant of Metasploit (Meterpreter)."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Two files (c:\\windows\\system32\\fuu.txt, c:\\windows\\system32\\jojo.txt) were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\windows\\system32\\jojo.txt) were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Azure user account downloaded nmap.exe and npcap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " npcap.exe to continue network and credential "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "APT actors downloaded the file ssh2.zip via the Azure user account, which contained legitimate files that could have been leveraged for malicious purposes. When unzipped, the following files were extracted: ... ssh.exe ... ssh.exe was downloaded to establish persistence on the ServiceDesk system via SSH.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " user account, which contained legitimate files that could have been leveraged for malicious purposes. When unzipped, the following files were extracted: "
+  },
+  {
+   "id": "evidence-12",
+   "quote": "license validf scheduled task was created to execute ssh.exe on a recurring basis on the ServiceDesk system: ... ssh.exe was used to establish a SSH reverse tunnel to the APT actors’ C2 with dynamic port forwarding.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " ssh.exe was used to establish a SSH reverse tunnel to the APT actors’ C2 with dynamic port forwarding."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Analysis identified evidence and execution of two files (PsExec.exe and psexec.exe) on the ServiceDesk system. ... APT actors utilized PsExec to create a scheduled task and force-store administrative credentials to the local machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ". APT actors utilized PsExec to create a scheduled task and force store administrative credentials to the local machine."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "ProcDump was created within the c:\\windows\\system32\\prc64.exe directory. This was later identified as a method for enumerating running processes/applications and dumping LSASS credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\windows\\system32\\prc64.exe directory. This was later identified as a method for enumerating running processes/applications and dumping LSASS credentials."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "APT actors attempted to exploit a known Apache Log4j vulnerability (CVE-2021-44228) in the ServiceDesk system but were unsuccessful.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " vulnerability (CVE 2021 44228) in the ServiceDesk system but were unsuccessful."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The server hosting ServiceDesk was observed beaconing/sending HTTP-GET requests to a suspected APT-controlled C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " beaconing/sending HTTP GET requests to a suspected APT controlled C2 server"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell ... designed to execute remote JavaScript code on the OWA server: c:\\Program Files\\Microsoft Office Web Apps\\RootWebSite\\en-us\\resource.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "APT actors installed Metasploit with the following attributes on the organization’s domain controller: Service Name: QrrCvbrvnxasKTSb ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " attributes on the organization’s domain controller: "
+  },
+  {
+   "id": "evidence-19",
+   "quote": "APT actors dropped an additional ASPX web shell on a web server in the following file system location: c:\\inetpub\\wwwrot\\uninet\\css\\font-awesome\\css\\ConfigLogin.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\inetpub\\wwwrot\\uninet\\css\\font awesome\\css\\ConfigLogin.aspx"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "APT actors created and used a variant of Metasploit (Meterpreter) on the ServiceDesk system, listed as wkHPd.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "APT actors created and used a variant of Metasploit "
+  },
+  {
+   "id": "evidence-21",
+   "quote": "PHP files were uploaded to the ServiceDesk system via HTTP-POST request. APT actors were observed writing 16 instances of the following files to disk: ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "50"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "PHP files were uploaded to the ServiceDesk system via "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "APT actors executed Domain Name System (DNS) scanning at an additional server (not the ServiceDesk system) and directed callback to the Interact.sh domain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " scanning at an additional server (not the ServiceDesk system) and directed callback to the Interact.sh domain"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Additional APT actors exploited CVE-2022-42475 on the organization’s firewall device, which was indicated by multiple successful VPN connections from known-malicious IPs between February 1-16, 2023.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Additional APT actors exploited CVE 2022 42475 on the organization’s firewall device, which was indicated by multiple successful VPN connections from known mali"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "It was identified that APT actors compromised and used disabled, legitimate administrative account credentials from a previously hired contractor—of which the organization confirmed the user had been disabled prior to the observed activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "It was identified that APT actors compromised and used disabled, legitimate administrative account credentials from a previously hired contractor of which the o"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "APT actors initiated multiple Transport Layer Security (TLS)-encrypted sessions on Transmission Control Protocol (TCP) port 10443, indicating successful exchanges of data transfer from the firewall device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors initiated multiple Transport Layer Security (TLS) encrypted sessions on Transmission Control Protocol (TCP) port 10443, indicating successful exchang"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "APT actors further leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9925,
+   "matched_text": "APT actors further leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Multiple web shells were loaded—among other locations, such as the OWA server—into the following directories: ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "ultiple web shells were loaded among other locations, such as the OWA server into the following directories"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "ConnectWise ScreenConnect was observed in multiple locations within the organization’s environment, but the organization confirmed that it was not authorized software. Analysis assessed APT actors downloaded the legitimate software for malicious, illegitimate use prior to the download of mimikatz.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ConnectWise ScreenConnect was observed in multiple locations within the organization’s environment, but the organization confirmed that it was not authorized so"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Ngrok was used to establish an RDP connection—another method of maintaining persistence on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Ngrok was used to establish an RDP connection "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Between early-February and mid-March 2023, anydesk.exe was observed on three hosts with different certificate issuers and hashes—none of which were the certified issuer. APT actors compromised one host and moved laterally to install the executable on the remaining two.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " issuer. APT actors compromised one host and moved laterally to install the executable on the remaining two"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "APT actors were observed using this tool as early as March 2023 across four locations with the same name but different hashes ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "APT actors were observed using this tool as "
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Actors executed xpack.exe malware from a hidden directory. This malware was predominantly used to execute system commands, drop additional malware and tools, and stage data for exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9,
+   "matched_text": " This malware was predominantly used to execute system commands, drop additional malware and tools, and stage data for exfiltration."
+  },
+  {
+   "id": "evidence-33",
+   "quote": "Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Azure user account downloaded bitmap.exe to the "
+  },
+  {
+   "id": "evidence-34",
+   "quote": "APT actors downloaded the file ssh2.zip via the Azure user account, which contained legitimate files that could have been leveraged for malicious purposes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " user account, which contained legitimate files that could have been leveraged for malicious purposes."
+  },
+  {
+   "id": "evidence-35",
+   "quote": "APT actors utilized PsExec to create a scheduled task and force-store administrative credentials to the local machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors utilized PsExec to create a scheduled task and force store administrative credentials to the local machine."
+  },
+  {
+   "id": "evidence-36",
+   "quote": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9817,
+   "matched_text": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "APT actors further leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded—among other locations, such as the OWA server—into the following directories.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors further leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded among other locations, such"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "Additional APT actors exploited CVE-2022-42475 on the organization’s firewall device, which was indicated by multiple successful VPN connections from known-malicious IPs between February 1-16, 2023. It was identified that APT actors compromised and used disabled, legitimate administrative account credentials ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9904,
+   "matched_text": "Additional APT actors exploited CVE 2022 42475 on the organization’s firewall device, which was indicated by multiple successful VPN connections from known mali"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "Analysis assessed APT actors downloaded the legitimate software for malicious, illegitimate use prior to the download of mimikatz.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Analysis assessed APT actors downloaded the legitimate software for malicious, illegitimate use prior to the download of mimikatz.exe."
+  },
+  {
+   "id": "evidence-40",
+   "quote": "APT actors exploited CVE-2022-47966 to access the organization’s web server hosting the public-facing application, Zoho ManageEngine ServiceDesk Plus.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors exploited CVE 2022 47966 to access the organization’s web server hosting the public facing application, Zoho ManageEngine ServiceDesk Plus."
+  },
+  {
+   "id": "evidence-41",
+   "quote": "The Azure user successfully accessed and dumped credentials stored in the process memory of LSASS for the Active Directory (AD) domain.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " credentials stored in the process memory of LSASS for the Active Directory (AD) domain."
+  },
+  {
+   "id": "evidence-42",
+   "quote": "The legitimate ConnectWise ScreenConnect client was utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " utilized to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Azure user account downloaded bitmap.exe to the "
+  },
+  {
+   "id": "evidence-44",
+   "quote": "Two files (c:\\windows\\system32\\fuu.txt, c:\\windows\\system32\\jojo.txt) were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\windows\\system32\\jojo.txt) were created as means for Mimikatz to dump/write credentials to disk on the ServiceDesk system."
+  },
+  {
+   "id": "evidence-45",
+   "quote": "Azure user account downloaded nmap.exe and npcap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " npcap.exe to continue network and credential "
+  },
+  {
+   "id": "evidence-46",
+   "quote": "Ngrok was used to establish an RDP connection—another method of maintaining persistence on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Ngrok was used to establish an RDP connection "
+  },
+  {
+   "id": "evidence-47",
+   "quote": "Three identified executables, which provide a command line interface with the compromised system, were observed in the following file system locations: c:\\windows\\system32\\ssh-shellhost.exe, c:\\windows\\system32\\ssh-agent.exe, c:\\windows\\system32\\ssh-add.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "35"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " line interface with the compromised system, were observed in the following file system locations: "
+  },
+  {
+   "id": "evidence-48",
+   "quote": "license validf scheduled task was created to execute ssh.exe on a recurring basis on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "36"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " created to execute ssh.exe on a recurring basis on the "
+  },
+  {
+   "id": "evidence-49",
+   "quote": "Analysis identified evidence and execution of two files (PsExec.exe and psexec.exe) on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Analysis identified evidence and execution of two files "
+  },
+  {
+   "id": "evidence-50",
+   "quote": "ProcDump was created within the c:\\windows\\system32\\prc64.exe directory on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\windows\\system32\\prc64.exe directory"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "APT actors dropped an additional ASPX web shell on a web server in the following file system location: c:\\inetpub\\wwwrot\\uninet\\css\\font-awesome\\css\\ConfigLogin.aspx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "48"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " c:\\inetpub\\wwwrot\\uninet\\css\\font awesome\\css\\ConfigLogin.aspx"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "APT actors created and used a variant of Metasploit (Meterpreter) on the ServiceDesk system, listed as wkHPd.exe.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "49"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "APT actors created and used a variant of Metasploit "
+  },
+  {
+   "id": "evidence-53",
+   "quote": "PHP files were uploaded to the ServiceDesk system via HTTP-POST request from malicious IP 193.142.146[.]226.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "50"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "PHP files were uploaded to the ServiceDesk system via "
+  },
+  {
+   "id": "evidence-54",
+   "quote": "Ngrok was used to establish a Remote Desktop Protocol (RDP) connection as a method of maintaining persistence on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a26"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-55",
+   "quote": "APT actors used the legitimate ConnectWise ScreenConnect client to connect to the ServiceDesk system for malicious purposes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a25"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-56",
+   "quote": "APT actors created a local user account named Azure with administrative privileges on the web server hosting ServiceDesk Plus.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a2"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-57",
+   "quote": "APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system and dropped an ASPX web shell designed to execute remote JavaScript code.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a14"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-58",
+   "quote": "Using additionally compromised, legitimate administrative credentials, APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell in the following file system location, which was designed to execute remote JavaScript code: c:\\Program Files\\Microsoft Office Web Apps\\RootWebSite\\en-us\\resource.aspx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " administrative credentials, APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pa"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "APT actors loaded multiple web shells on the web server and other locations such as the OWA server in various directories.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a24"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-60",
+   "quote": "APT actors compromised and used disabled, legitimate administrative account credentials from a previously hired contractor on the firewall device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a21"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-61",
+   "quote": "APT actors initiated multiple TLS-encrypted sessions on TCP port 10443 indicating successful data transfer from the firewall device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a22"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-62",
+   "quote": "APT actors exploited CVE-2022-42475 on firewall device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a20"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-63",
+   "quote": "APT actors initiated multiple Transport Layer Security (TLS)-encrypted sessions on Transmission Control Protocol (TCP) port 10443, indicating successful exchanges of data transfer from the firewall device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "APT actors initiated multiple Transport Layer Security (TLS) encrypted sessions on Transmission Control Protocol (TCP) port 10443, indicating successful exchang"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "APT actors leveraged legitimate credentials to move from the firewall to a web server, where multiple web shells were loaded.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a23"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-65",
+   "quote": "APT actors installed Metasploit service on the organization’s domain controller using PowerShell.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a15"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-66",
+   "quote": "APT actors installed Metasploit with the following attributes on the organization’s domain controller.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "APT actors installed Metasploit with the following "
+  },
+  {
+   "id": "evidence-67",
+   "quote": "APT actors used quser.exe to acquire information about user sessions on a Remote Desktop Session Host server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a28"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-68",
+   "quote": "Quser.exe was executed to acquire information about user sessions on a Remote Desktop Session Host server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "64"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8462,
+   "matched_text": " a Remote Desktop Session Host server"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "APT actors compromised one host and moved laterally to install anydesk.exe on two additional hosts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a27"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-70",
+   "quote": "Between early-February and mid-March 2023, anydesk.exe was observed on three hosts with different certificate issuers and hashes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " hosts with different certificate issuers and "
+  },
+  {
+   "id": "evidence-71",
+   "quote": "APT actors used the legitimate ConnectWise ScreenConnect client to connect to the ServiceDesk system, download mimikatz.exe, and execute malicious payloads to steal credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-72",
+   "quote": "Azure user account downloaded bitmap.exe to the ServiceDesk system to execute an obfuscated, embedded malicious payload from its C2 server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-73",
+   "quote": "APT actors attempted to export three files, which were analyzed and identified as Local Security Authority Subsystem Service (LSASS) dump files. These files were renamed with .zip and .gif extensions to evade detection.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Security Authority Subsystem Service (LSASS) dump files. These files were renamed with .zip and .gif extensions to evade detection."
+  },
+  {
+   "id": "evidence-74",
+   "quote": "Azure user account downloaded nmap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-75",
+   "quote": "Azure user account downloaded nmap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "ap.exe to continue network and credential "
+  },
+  {
+   "id": "evidence-76",
+   "quote": "Azure user account downloaded npcap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a7"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-77",
+   "quote": "Azure user account downloaded npcap.exe to continue network and credential information gathering efforts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " npcap.exe to continue network and credential "
+  },
+  {
+   "id": "evidence-78",
+   "quote": "APT actors downloaded ssh2.zip via the Azure user account, which contained legitimate files including ssh.exe used to establish persistence via SSH.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-79",
+   "quote": "Scheduled task 'license validf' was created to execute ssh.exe on a recurring basis on the ServiceDesk system, establishing persistence via SSH reverse tunnel.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a9"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-80",
+   "quote": "APT actors executed PsExec on the ServiceDesk system to create a scheduled task and force-store administrative credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-81",
+   "quote": "ProcDump was created on the ServiceDesk system as a method for enumerating running processes and dumping LSASS credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-82",
+   "quote": "APT actors dropped an additional ASPX web shell on a web server in the following file system location: c:\\inetpub\\wwwrot\\uninet\\css\\font-awesome\\css\\ConfigLogin.aspx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a16"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-83",
+   "quote": "Using additionally compromised, legitimate administrative credentials, APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pages Extended (ASPX) web shell in the following file system location: c:\\Program Files\\Microsoft Office Web Apps\\RootWebSite\\en-us\\resource.aspx.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " administrative credentials, APT actors logged into the Outlook Web Application (OWA) server from the ServiceDesk system. The actors dropped an Active Server Pa"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "APT actors created and used a variant of Metasploit (Meterpreter) named wkHPd.exe on the ServiceDesk system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a17"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-85",
+   "quote": "APT actors uploaded multiple PHP files to the ServiceDesk system via HTTP-POST requests from malicious IP 193.142.146[.]226.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a18"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-86",
+   "quote": "APT actors executed xpack.exe malware from a hidden directory to execute system commands, drop additional malware and tools, and stage data for exfiltration.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a29"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-87",
+   "quote": "Xpack.exe indicators were present on multiple organization hosts, with an unverified user account observed executing the xpack.exe file from a hidden directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " multiple organization hosts, with an unverified user account observed "
+  },
+  {
+   "id": "evidence-88",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "CVE-2022-\n        47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "73"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "85"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "110"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "CVE-2022-47966",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 47966"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "192.142.226[.]153",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "192.142.226[.]153"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "144.202.2[.]71",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "144.202.2[.]71"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "207.246.105[.]240",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "207.246.105[.]240"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "45.77.121[.]232",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.77.121[.]232"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "47.90.240[.]218",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "47.90.240[.]218"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "approveinfo.aspx",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "approveinfo.aspx"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "45.90.123[.]194",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.90.123[.]194"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "154.6.91[.]26",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.91[.]26"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "154.6.93[.]22",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.93[.]22"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "154.6.93[.]5",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.93[.]5"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "154.6.93[.]12",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.93[.]12"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "154.6.93[.]32",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.93[.]32"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "154.6.93[.]24",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.6.93[.]24"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "184.170.241[.]27",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "184.170.241[.]27"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "191.96.106[.]40",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.106[.]40"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "102.129.145[.]232",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "102.129.145[.]232"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "92.118.39[.]82",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92.118.39[.]82"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "downloadFlile[.]cgi",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "downloadFlile[.]cgi"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "ngrok.yml",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ngrok.yml"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "80.85.241[.]15",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "80.85.241[.]15"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "68.177.56[.]38",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "68.177.56[.]38"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "main.cloudfronts[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "main.cloudfronts[.]net"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "41"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "CVE-2021-44228",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "73"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 44228"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "103.105.49[.]108",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "103.105.49[.]108"
+  },
+  {
+   "id": "evidence-128",
+   "quote": "Interact.sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "53"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Interact.sh"
+  },
+  {
+   "id": "evidence-129",
+   "quote": "Interact.sh",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "96"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Interact.sh"
+  },
+  {
+   "id": "evidence-130",
+   "quote": "xpack.github[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xpack.github[.]io"
+  },
+  {
+   "id": "evidence-131",
+   "quote": "xpack.disqus[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "66"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "xpack.disqus[.]com"
+  },
+  {
+   "id": "evidence-132",
+   "quote": "cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "116"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cisa.gov"
+  },
+  {
+   "id": "evidence-133",
+   "quote": "powershell New-ItemProperty -Path \"HKLM:\\System\\CurrentControlSet\\Control\\Lsa\" -Name \"DisableRestrictedAdmin\" -Value \"0\" - PropertyType DWORD -Force Note: PsExec, a command line utility from Microsoft's Sysinternals Suite, is known to be used for lateral",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "37"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell New ItemProperty Path \"HKLM:\\System\\CurrentControlSet\\Control\\Lsa\" Name \"DisableRestrictedAdmin\" Value \"0\" PropertyType DWORD Force Note: PsExec, a c"
+  },
+  {
+   "id": "evidence-134",
+   "quote": "powershell.exe -nop -w hidden -noni -c &amp;quot;if([IntPtr]::Size -eq 4)",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell.exe nop w hidden noni c &amp;quot;if([IntPtr]::Size eq 4)"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "web server hosting Zoho ManageEngine ServiceDesk Plus — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "web server hosting Zoho ManageEngine ServiceDesk Plus 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — web server hosting Zoho ManageEngine ServiceDesk Plus",
+    "action:a1 — Exploit CVE-2022-47966 for initial access",
+    "action:a2 — Create local user account 'Azure' with administrative privileges",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a4 — Download mimikatz.exe via ConnectWise ScreenConnect",
+    "action:a5 — Download bitmap.exe malware to connect to C2 IP",
+    "action:a6 — Create Mimikatz credential dump files",
+    "action:a7 — Download nmap.exe and npcap.exe for network and credential information gathering",
+    "action:a8 — Download ssh2.zip and extract SSH tools",
+    "action:a9 — Create scheduled task 'license validf' to execute ssh.exe for persistence",
+    "action:a10 — Execute PsExec on ServiceDesk system",
+    "action:a11 — Create ProcDump utility on ServiceDesk system",
+    "action:a12 — Attempt Apache Log4j exploit on ServiceDesk system",
+    "action:a13 — Beacon to C2 server via HTTP-GET requests",
+    "action:a16 — Drop ConfigLogin.aspx web shell on web server",
+    "action:a17 — Create and use wkHPd.exe Metasploit variant",
+    "action:a18 — Upload PHP files via HTTP-POST to ServiceDesk system",
+    "action:a23 — Move laterally from firewall to web server using legitimate credentials",
+    "action:a24 — Load multiple web shells on various servers",
+    "action:a25 — Use ConnectWise ScreenConnect for remote access",
+    "action:a26 — Use Ngrok to establish RDP connection for persistence"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "web server hosting Zoho ManageEngine ServiceDesk Plus",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-2",
+      "evidence-4",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-34",
+      "evidence-46",
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-16",
+      "evidence-54",
+      "evidence-55",
+      "evidence-56",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-2",
+      "evidence-4",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-34",
+      "evidence-46",
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-16",
+      "evidence-54",
+      "evidence-55",
+      "evidence-56",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "web server hosting Zoho ManageEngine ServiceDesk Plus — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "web server hosting Zoho ManageEngine ServiceDesk Plus 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — web server hosting Zoho ManageEngine ServiceDesk Plus",
+    "action:a1 — Exploit CVE-2022-47966 for initial access",
+    "action:a2 — Create local user account 'Azure' with administrative privileges",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a4 — Download mimikatz.exe via ConnectWise ScreenConnect",
+    "action:a5 — Download bitmap.exe malware to connect to C2 IP",
+    "action:a6 — Create Mimikatz credential dump files",
+    "action:a7 — Download nmap.exe and npcap.exe for network and credential information gathering",
+    "action:a8 — Download ssh2.zip and extract SSH tools",
+    "action:a9 — Create scheduled task 'license validf' to execute ssh.exe for persistence",
+    "action:a10 — Execute PsExec on ServiceDesk system",
+    "action:a11 — Create ProcDump utility on ServiceDesk system",
+    "action:a12 — Attempt Apache Log4j exploit on ServiceDesk system",
+    "action:a13 — Beacon to C2 server via HTTP-GET requests",
+    "action:a16 — Drop ConfigLogin.aspx web shell on web server",
+    "action:a17 — Create and use wkHPd.exe Metasploit variant",
+    "action:a18 — Upload PHP files via HTTP-POST to ServiceDesk system",
+    "action:a23 — Move laterally from firewall to web server using legitimate credentials",
+    "action:a24 — Load multiple web shells on various servers",
+    "action:a25 — Use ConnectWise ScreenConnect for remote access",
+    "action:a26 — Use Ngrok to establish RDP connection for persistence"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "web server hosting Zoho ManageEngine ServiceDesk Plus",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-2",
+      "evidence-4",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-34",
+      "evidence-46",
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-16",
+      "evidence-54",
+      "evidence-55",
+      "evidence-56",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "web server hosting Zoho ManageEngine ServiceDesk Plus — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "web server hosting Zoho ManageEngine ServiceDesk Plus 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — web server hosting Zoho ManageEngine ServiceDesk Plus",
+    "action:a1 — Exploit CVE-2022-47966 for initial access",
+    "action:a2 — Create local user account 'Azure' with administrative privileges",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a4 — Download mimikatz.exe via ConnectWise ScreenConnect",
+    "action:a5 — Download bitmap.exe malware to connect to C2 IP",
+    "action:a6 — Create Mimikatz credential dump files",
+    "action:a7 — Download nmap.exe and npcap.exe for network and credential information gathering",
+    "action:a8 — Download ssh2.zip and extract SSH tools",
+    "action:a9 — Create scheduled task 'license validf' to execute ssh.exe for persistence",
+    "action:a10 — Execute PsExec on ServiceDesk system",
+    "action:a11 — Create ProcDump utility on ServiceDesk system",
+    "action:a12 — Attempt Apache Log4j exploit on ServiceDesk system",
+    "action:a13 — Beacon to C2 server via HTTP-GET requests",
+    "action:a16 — Drop ConfigLogin.aspx web shell on web server",
+    "action:a17 — Create and use wkHPd.exe Metasploit variant",
+    "action:a18 — Upload PHP files via HTTP-POST to ServiceDesk system",
+    "action:a23 — Move laterally from firewall to web server using legitimate credentials",
+    "action:a24 — Load multiple web shells on various servers",
+    "action:a25 — Use ConnectWise ScreenConnect for remote access",
+    "action:a26 — Use Ngrok to establish RDP connection for persistence"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "web server hosting Zoho ManageEngine ServiceDesk Plus",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-2",
+      "evidence-4",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-34",
+      "evidence-46",
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-16",
+      "evidence-54",
+      "evidence-55",
+      "evidence-56",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "public-facing application",
+     "source_ref": "hosts:h1.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40",
+      "evidence-2",
+      "evidence-4",
+      "evidence-41",
+      "evidence-42",
+      "evidence-43",
+      "evidence-44",
+      "evidence-45",
+      "evidence-34",
+      "evidence-46",
+      "evidence-47",
+      "evidence-48",
+      "evidence-49",
+      "evidence-50",
+      "evidence-51",
+      "evidence-52",
+      "evidence-53",
+      "evidence-16",
+      "evidence-54",
+      "evidence-55",
+      "evidence-56",
+      "evidence-1",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Outlook Web Application (OWA) server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Outlook Web Application (OWA) server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Outlook Web Application (OWA) server",
+    "action:a14 — Drop ASPX web shell on OWA server"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Outlook Web Application (OWA) server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Outlook Web Application (OWA) server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Outlook Web Application (OWA) server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Outlook Web Application (OWA) server",
+    "action:a14 — Drop ASPX web shell on OWA server"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Outlook Web Application (OWA) server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Outlook Web Application (OWA) server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Outlook Web Application (OWA) server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Outlook Web Application (OWA) server",
+    "action:a14 — Drop ASPX web shell on OWA server"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Outlook Web Application (OWA) server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-57",
+      "evidence-58",
+      "evidence-59",
+      "evidence-17"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "organization’s firewall device — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s firewall device 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — organization’s firewall device",
+    "action:a20 — Exploit CVE-2022-42475 on firewall device",
+    "action:a21 — Use disabled legitimate administrative account credentials on firewall",
+    "action:a22 — Initiate multiple TLS-encrypted sessions on TCP port 10443 from firewall"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s firewall device",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-63",
+      "evidence-64",
+      "evidence-24",
+      "evidence-25"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "organization’s firewall device — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s firewall device 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — organization’s firewall device",
+    "action:a20 — Exploit CVE-2022-42475 on firewall device",
+    "action:a21 — Use disabled legitimate administrative account credentials on firewall",
+    "action:a22 — Initiate multiple TLS-encrypted sessions on TCP port 10443 from firewall"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s firewall device",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-63",
+      "evidence-64",
+      "evidence-24",
+      "evidence-25"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "organization’s firewall device — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s firewall device 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — organization’s firewall device",
+    "action:a20 — Exploit CVE-2022-42475 on firewall device",
+    "action:a21 — Use disabled legitimate administrative account credentials on firewall",
+    "action:a22 — Initiate multiple TLS-encrypted sessions on TCP port 10443 from firewall"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s firewall device",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-63",
+      "evidence-64",
+      "evidence-24",
+      "evidence-25"
+     ]
+    },
+    {
+     "field": "網段/網路位置",
+     "value": "edge network infrastructure",
+     "source_ref": "hosts:h3.network_placement",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-60",
+      "evidence-61",
+      "evidence-62",
+      "evidence-63",
+      "evidence-64",
+      "evidence-24",
+      "evidence-25"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "organization’s domain controller — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s domain controller 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — organization’s domain controller",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a15 — Install Metasploit service on domain controller"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-65",
+      "evidence-66",
+      "evidence-5",
+      "evidence-6",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h4.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-65",
+      "evidence-66",
+      "evidence-5",
+      "evidence-6",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "organization’s domain controller — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s domain controller 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — organization’s domain controller",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a15 — Install Metasploit service on domain controller"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-65",
+      "evidence-66",
+      "evidence-5",
+      "evidence-6",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "organization’s domain controller — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "organization’s domain controller 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — organization’s domain controller",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a15 — Install Metasploit service on domain controller"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "organization’s domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-65",
+      "evidence-66",
+      "evidence-5",
+      "evidence-6",
+      "evidence-18"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "Remote Desktop Session Host server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Remote Desktop Session Host server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — Remote Desktop Session Host server",
+    "action:a28 — Use quser.exe to gather information about user sessions"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Remote Desktop Session Host server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-67",
+      "evidence-68",
+      "evidence-31"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h5.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-67",
+      "evidence-68",
+      "evidence-31"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "Remote Desktop Session Host server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Remote Desktop Session Host server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — Remote Desktop Session Host server",
+    "action:a28 — Use quser.exe to gather information about user sessions"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Remote Desktop Session Host server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-67",
+      "evidence-68",
+      "evidence-31"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "Remote Desktop Session Host server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Remote Desktop Session Host server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — Remote Desktop Session Host server",
+    "action:a28 — Use quser.exe to gather information about user sessions"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Remote Desktop Session Host server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-67",
+      "evidence-68",
+      "evidence-31"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os",
+   "field": "other hosts where anydesk.exe was installed — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "other hosts where anydesk.exe was installed 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h6 — other hosts where anydesk.exe was installed",
+    "action:a27 — Download and use AnyDesk remote desktop application"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "other hosts where anydesk.exe was installed",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-69",
+      "evidence-70",
+      "evidence-30"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os-version",
+   "field": "other hosts where anydesk.exe was installed — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "other hosts where anydesk.exe was installed 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h6 — other hosts where anydesk.exe was installed",
+    "action:a27 — Download and use AnyDesk remote desktop application"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "other hosts where anydesk.exe was installed",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-69",
+      "evidence-70",
+      "evidence-30"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-network",
+   "field": "other hosts where anydesk.exe was installed — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "other hosts where anydesk.exe was installed 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h6 — other hosts where anydesk.exe was installed",
+    "action:a27 — Download and use AnyDesk remote desktop application"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "other hosts where anydesk.exe was installed",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-69",
+      "evidence-70",
+      "evidence-30"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-apache-log4j-version",
+   "field": "Log4j version used by the Log4Shell step",
+   "category": "version",
+   "reason": "IR 指出 Apache Log4j 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "Log4Shell 步驟 已知是 Log4Shell 初始入侵；不必再問如何取得立足點。為重建漏洞條件，該 VMware Horizon 主機上與此漏洞相關的 Apache Log4j 確切版本是什麼？",
+   "affects": [
+    "service:svc-unsupported-log4j-unspecified-h1 — Log4j application",
+    "action:a12 — Attempt Apache Log4j exploit on ServiceDesk system"
+   ],
+   "suggestions": [
+    "Apache Log4j 2.x（確切版號請由 JAR/SBOM 核對）",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Log4Shell (Apache Log4j)",
+     "source_ref": "services:svc-unsupported-log4j-unspecified-h1",
+     "epistemic_status": "inferred"
+    },
+    {
+     "field": "相關步驟",
+     "value": "Attempt Apache Log4j exploit on ServiceDesk system",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-product-psexec-version",
+   "field": "PsExec version",
+   "category": "software",
+   "reason": "IR 指出 PsExec 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a10 提到 PsExec，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a10 — Execute PsExec on ServiceDesk system"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Execute PsExec on ServiceDesk system",
+     "source_ref": "actions:a10.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-product-mimikatz-version",
+   "field": "Mimikatz version",
+   "category": "software",
+   "reason": "IR 指出 Mimikatz 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a4, a6 提到 Mimikatz，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a4 — Download mimikatz.exe via ConnectWise ScreenConnect",
+    "action:a6 — Create Mimikatz credential dump files"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Download mimikatz.exe via ConnectWise ScreenConnect",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Create Mimikatz credential dump files",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-product-ngrok-version",
+   "field": "Ngrok version",
+   "category": "software",
+   "reason": "IR 指出 Ngrok 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a26 提到 Ngrok，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a26 — Use Ngrok to establish RDP connection for persistence"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Use Ngrok to establish RDP connection for persistence",
+     "source_ref": "actions:a26.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Zoho ManageEngine ServiceDesk Plus — 版本",
+   "category": "version",
+   "reason": "IR 指出 Zoho ManageEngine ServiceDesk Plus，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Zoho ManageEngine ServiceDesk Plus 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Zoho ManageEngine ServiceDesk Plus",
+    "action:a1 — Exploit CVE-2022-47966 for initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Zoho ManageEngine ServiceDesk Plus",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s7-version",
+   "field": "VPN — 版本",
+   "category": "version",
+   "reason": "IR 指出 VPN，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 VPN 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s7 — VPN",
+    "action:a20 — Exploit CVE-2022-42475 on firewall device"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "VPN",
+     "source_ref": "services:s7.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s7",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s5-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a26 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a26 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s5 — Remote Desktop Protocol (RDP)",
+    "action:a26 — Use Ngrok to establish RDP connection for persistence"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient"
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Use Ngrok to establish RDP connection for persistence",
+     "source_ref": "actions:a26.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3, a15 涉及 Active Directory（h4 (organization’s domain controller)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h4 — organization’s domain controller",
+    "action:a3 — Dump LSASS credentials using Azure user account",
+    "action:a15 — Install Metasploit service on domain controller"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "organization’s domain controller",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-65",
+      "evidence-66"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Dump LSASS credentials using Azure user account",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Install Metasploit service on domain controller",
+     "source_ref": "actions:a15.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a4, a5, a7, a8, a18, a26, a27 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a4 — Download mimikatz.exe via ConnectWise ScreenConnect",
+    "action:a5 — Download bitmap.exe malware to connect to C2 IP",
+    "action:a7 — Download nmap.exe and npcap.exe for network and credential information gathering",
+    "action:a8 — Download ssh2.zip and extract SSH tools",
+    "action:a18 — Upload PHP files via HTTP-POST to ServiceDesk system",
+    "action:a26 — Use Ngrok to establish RDP connection for persistence",
+    "action:a27 — Download and use AnyDesk remote desktop application"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "Download mimikatz.exe via ConnectWise ScreenConnect",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download bitmap.exe malware to connect to C2 IP",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download nmap.exe and npcap.exe for network and credential information gathering",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download ssh2.zip and extract SSH tools",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Upload PHP files via HTTP-POST to ServiceDesk system",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-21"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Use Ngrok to establish RDP connection for persistence",
+     "source_ref": "actions:a26.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "Download and use AnyDesk remote desktop application",
+     "source_ref": "actions:a27.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-30"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-zoho-manageengine-servicede",
+   "field": "software dependency: Zoho ManageEngine ServiceDesk Plus",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Zoho ManageEngine ServiceDesk Plus 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-active-directory-domain",
+   "field": "software dependency: Active Directory domain",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "Active Directory domain 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-connectwise-screenconnect-c",
+   "field": "software dependency: ConnectWise ScreenConnect client",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s3",
+   "question": "ConnectWise ScreenConnect client 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-ssh",
+   "field": "software dependency: SSH",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s4",
+   "question": "SSH 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-remote-desktop-protocol-rdp",
+   "field": "software dependency: Remote Desktop Protocol (RDP)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s5",
+   "question": "Remote Desktop Protocol (RDP) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-outlook-web-application-owa",
+   "field": "software dependency: Outlook Web Application (OWA)",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s6",
+   "question": "Outlook Web Application (OWA) 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "NGINX（替代品，不等於原軟體）",
+    "Apache HTTP Server（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-vpn",
+   "field": "software dependency: VPN",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s7",
+   "question": "VPN 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-h4",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_version-cve-2021-44228-h1",
+   "field": "version for Log4j application",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2022-47966",
+   "field": "affected software for CVE-2022-47966",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  },
+  {
+   "id": "planner_dep_cve-cve-2022-42475",
+   "field": "affected software for CVE-2022-42475",
+   "category": "software",
+   "reason": "The action names a vulnerability but does not identify a software dependency that can be mapped reliably.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.4552,
+  "unsupported_claim_count": 73,
+  "inferred_count": 10,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a10",
+    "technique": "T1570"
+   },
+   {
+    "action": "a13",
+    "technique": "T1071.001"
+   },
+   {
+    "action": "a18",
+    "technique": "T1074"
+   }
+  ]
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

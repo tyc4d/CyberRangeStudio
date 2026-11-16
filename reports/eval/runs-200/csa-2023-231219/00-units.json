@@ -1,0 +1,366 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: ALPHV Blackcat"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-353A\n> - Date: 2023-12-19\n> - URL: https://www.ic3.gov/CSA/2023/231219.pdf\n> - PDF SHA-256: de84bfa9eab44925d14e6713e1bcda2d91618bea07c71bc1f70163ec7efc33b9 (`source.pdf`, 10 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (19 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR            Product ID: AA23-353A\n                                                                                                                December 19, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: ALPHV Blackcat\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of an             Actions to take today to mitigate\n        ongoing #StopRansomware effort to publish advisories for                against the threat of ransomware:\n        network defenders that detail various ransomware variants\n        and ransomware threat actors. These #StopRansomware                      Routinely take inventory of assets\n        advisories include recently and historically observed tactics,            and data to identify authorized\n        techniques, and procedures (TTPs) and indicators of                       and unauthorized devices and\n        compromise (IOCs) to help organizations protect against                   software.\n        ransomware. Visit stopransomware.gov to see all                          Prioritize remediation of known\n        #StopRansomware advisories and to learn more about                        exploited vulnerabilities.\n        other ransomware threats and no-cost resources.                          Enable and enforce multifactor\n                                                                                  authentication with strong\n        The Federal Bureau of Investigation (FBI), the                            passwords.\n        Cybersecurity and Infrastructure Security Agency (CISA),                 Close unused ports and remove\n        and the Department of Health and Human Services (HHS)                     applications not deemed\n        are releasing this joint CSA to disseminate known IOCs and                necessary for day-to-day\n        TTPs associated with the ALPHV Blackcat ransomware as                     operations.\n        a service (RaaS) identified through FBI investigations as\n        recently as February 2024.\n        This advisory provides updates to the FBI FLASH BlackCat/ALPHV Ransomware Indicators of\n        Compromise released April 19, 2022, and to this advisory released December 19, 2023. ALPHV\n        Blackcat actors have since employed improvised communication methods by creating victim-specific\n        emails to notify of the initial compromise. Since mid-December 2023, of the nearly 70 leaked victims,\n        the healthcare sector has been the most commonly victimized. This is likely in response to the\n        ALPHV Blackcat administrator’s post encouraging its affiliates to target hospitals after operational\n        action against the group and its infrastructure in early December 2023."
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact\n        your local FBI field office at fbi.gov/contact-us/field-offices. When available, please include the following\n        information regarding the incident: date, time, and location of the incident; type of activity; number of people\n        affected; type of equipment used for the activity; the name of the submitting company or organization; and a\n        designated point of contact. To request incident response resources or technical assistance related to these\n        threats, contact CISA at report@cisa.dhs.gov.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "TLP:CLEAR                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p7",
+  "text": "FBI, CISA, and HHS encourage critical infrastructure organizations to implement the\n       recommendations in the Mitigations section of this CSA to reduce the likelihood and impact of ALPHV\n       Blackcat ransomware and data extortion incidents.\n       In February 2023, ALPHV Blackcat administrators announced the ALPHV Blackcat Ransomware 2.0\n       Sphynx update, which was rewritten to provide additional features to affiliates, such as better defense\n       evasion and additional tooling. This ALPHV Blackcat update has the capability to encrypt both\n       Windows and Linux devices, and VMWare instances. ALPHV Blackcat affiliates have extensive\n       networks and experience with ransomware and data extortion operations.\n       For a downloadable copy of IOCs, see:\n           •    AA23-353A (STIX XML, 47KB)\n           •    AA23-353A (STIX JSON, 33KB)"
+ },
+ {
+  "id": "p8",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 14. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK tactics and techniques. For assistance with mapping malicious cyber activity to the MITRE\n       ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping\n       and CISA’s Decider Tool.\n       ALPHV Blackcat affiliates use advanced social engineering techniques and open source research on\n       a company to gain initial access. Actors pose as company IT and/or helpdesk staff and use phone\n       calls or SMS messages [T1598] to obtain credentials from employees to access the target network\n       [T1586]. ALPHV Blackcat affiliates use uniform resource locators (URLs) to live-chat with victims to\n       convey demands and initiate processes to restore the victims’ encrypted files.\n       After gaining access to a victim network, ALPHV Blackcat affiliates deploy remote access software\n       such as AnyDesk, Mega sync, and Splashtop in preparation of data exfiltration. ALPHV Blackcat\n       affiliates create a user account, “aadmin,” and use Kerberos token generation for domain access\n       [T1558]. After gaining access to networks, they use legitimate remote access and tunneling tools,\n       such as Plink and Ngrok [S0508]. ALPHV Blackcat affiliates claim to use Brute Ratel C4 [S1063] and\n       Cobalt Strike [S1054] as beacons to command and control servers. ALPHV Blackcat affiliates use the\n       open source adversary-in-the-middle attack [T1557] framework Evilginx2, which allows them to obtain\n       multifactor authentication (MFA) credentials, login credentials, and session cookies. The actors also\n       obtain passwords from the domain controller, local network, and deleted backup servers to move\n       laterally throughout the network [T1555].\n       To evade detection, affiliates employ allowlisted applications such as Metasploit. Once installed on\n       the domain controller, the logs are cleared on the exchange server. Then Mega.nz or Dropbox are\n       used to move, exfiltrate, and/or download victim data. The ransomware is then deployed, and the\n       ransom note is embedded as a file.txt. According to public reporting, affiliates have additionally used\n       POORTRY and STONESTOP to terminate security processes.\n       Some ALPHV Blackcat affiliates exfiltrate data after gaining access and extort victims without\n       deploying ransomware. After exfiltrating and/or encrypting data, ALPHV Blackcat affiliates"
+ },
+ {
+  "id": "p9",
+  "text": "TLP:CLEAR                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p10",
+  "text": "communicate with victims via TOR [S0183], Tox, email, or encrypted applications. The threat actors\n       then delete victim data from the victim’s system."
+ },
+ {
+  "id": "p11",
+  "text": "ALPHV Blackcat affiliates offer to provide unsolicited cyber remediation advice as an incentive for\n       payment, offering to provide victims with “vulnerability reports” and “security recommendations”\n       detailing how they penetrated the system and how to prevent future re-victimization upon receipt of\n       ransom payment. The ALPHV Blackcat encryptor results in a file with the following naming\n       convention: RECOVER-(seven-digit extension) FILES.txt."
+ },
+ {
+  "id": "p12",
+  "text": "Figure 1: Ransom Note Instruction"
+ },
+ {
+  "id": "p13",
+  "text": "INDICATORS OF COMPROMISE (IOCs)\n                                                   Table 1: MD5 Hashes"
+ },
+ {
+  "id": "p14",
+  "text": "MD5                        Description           File Name"
+ },
+ {
+  "id": "p15",
+  "text": "ALPHV\n        944153fb9692634d6c70899b83676575                            Windows\n                                                                    Encryptor"
+ },
+ {
+  "id": "p16",
+  "text": "Anti Virus\n        341d43d4d5c2e526cadd88ae8da70c1c                                                 363.sys\n                                                                   Tools Killer"
+ },
+ {
+  "id": "p17",
+  "text": "TLP:CLEAR                                                                                               FBI | CISA"
+ },
+ {
+  "id": "p18",
+  "text": "MD5                     Description             File Name"
+ },
+ {
+  "id": "p19",
+  "text": "CobaltStrike\n        34aac5719824e5f13b80d6fe23cbfa07                                              LMtool.exe\n                                                                BEACON"
+ },
+ {
+  "id": "p20",
+  "text": "CobaltStrike\n        eea9ab1f36394769d65909f6ae81834b                                               Info.exe\n                                                                BEACON"
+ },
+ {
+  "id": "p21",
+  "text": "ALPHV Linux\n        379bf8c60b091974f856f08475a03b04                                                  him\n                                                               Encryptor"
+ },
+ {
+  "id": "p22",
+  "text": "SimpleHelp\n                                                                Remote\n        ebca4398e949286cb7f7f6c68c28e838                                               first.exe\n                                                              Management\n                                                                 tool"
+ },
+ {
+  "id": "p23",
+  "text": "c04c386b945ccc04627d1a885b500edf                      Tunneler Tool           conhost.exe"
+ },
+ {
+  "id": "p24",
+  "text": "Anti Virus\n        824d0e31fd08220a25c06baee1044818                                            ibmModule.dll\n                                                               Tools Killer"
+ },
+ {
+  "id": "p25",
+  "text": "eea9ab1f36394769d65909f6ae81834b                       CobaltStrike\n                                                                                ConnectivityDiagnos.exe\n                                                                BEACON"
+ },
+ {
+  "id": "p26",
+  "text": "ALPHV\n        944153fb9692634d6c70899b83676575\n                                                                Windows           7O3cCX9YcHMV2.exe\n                                                                Encryptor"
+ },
+ {
+  "id": "p27",
+  "text": "61804a029e9b1753d58a6bf0274c25a6                      MeshCentral\n                                                                                   WPEHOSTSVC64.exe\n                                                                Agent"
+ },
+ {
+  "id": "p28",
+  "text": "ScreenConnect\n        83deea3b61b6a734e7e4a566dbb6bffa\n                                                             & attacker tools     deployService.exe\n                                                                 installer"
+ },
+ {
+  "id": "p29",
+  "text": "8738b8637a20fa65c6e64d84d1cfe570                       Suspected\n                                                                                      socks32.exe\n                                                               Proxy Tool"
+ },
+ {
+  "id": "p30",
+  "text": "Table 2: SHA256 Hashes"
+ },
+ {
+  "id": "p31",
+  "text": "SHA256                                       Description"
+ },
+ {
+  "id": "p32",
+  "text": "ALPHV Windows\n        c64300cf8bacc4e42e74715edf3f8c3287a780c9c0a38b0d9675d01e7e231f16\n                                                                                           Encryptor"
+ },
+ {
+  "id": "p33",
+  "text": "TLP:CLEAR                                                                                        FBI | CISA"
+ },
+ {
+  "id": "p34",
+  "text": "SHA256                                     Description"
+ },
+ {
+  "id": "p35",
+  "text": "Anti Virus Tools\n        1f5e4e2c78451623cfbf32cf517a92253b7abfe0243297c5ddf7dd1448e460d5\n                                                                                      Killer"
+ },
+ {
+  "id": "p36",
+  "text": "CobaltStrike\n        3670dd4663adca40f168f3450fa9e7e84bc1a612d78830004020b73bd40fcd71\n                                                                                   BEACON"
+ },
+ {
+  "id": "p37",
+  "text": "CobaltStrike\n        af28b78c64a9effe3de0e5ccc778527428953837948d913d64dbd0fa45942021\n                                                                                   BEACON"
+ },
+ {
+  "id": "p38",
+  "text": "ALPHV Linux\n        bbfe7289de6ab1f374d0bcbeecf31cad2333b0928ea883ca13b9e733b58e27b1\n                                                                                   Encryptor"
+ },
+ {
+  "id": "p39",
+  "text": "SimpleHelp\n        5d1df950b238825a36fa6204d1a2935a5fbcfe2a5991a7fc69c74f476df67905           Remote\n                                                                               Management tool"
+ },
+ {
+  "id": "p40",
+  "text": "bd9edc3bf3d45e3cdf5236e8f8cd57a95ca3b41f61e4cd5c6c0404a83519058e         Tunneler Tool"
+ },
+ {
+  "id": "p41",
+  "text": "Anti Virus Tools\n        732e24cb5d7ab558effc6dc88854f756016352c923ff5155dcb2eece35c19bc0\n                                                                                      Killer"
+ },
+ {
+  "id": "p42",
+  "text": "Table 3: SHA1 Hashes"
+ },
+ {
+  "id": "p43",
+  "text": "SHA1                                    Description"
+ },
+ {
+  "id": "p44",
+  "text": "ALPHV Windows\n        3dd0f674526f30729bced4271e6b7eb0bb890c52\n                                                                                Encryptor"
+ },
+ {
+  "id": "p45",
+  "text": "d6d442e8b3b0aef856ac86391e4a57bcb93c19ad                           Anti Virus Tools Killer"
+ },
+ {
+  "id": "p46",
+  "text": "6b52543e4097f7c39cc913d55c0044fcf673f6fc                           CobaltStrike BEACON"
+ },
+ {
+  "id": "p47",
+  "text": "004ba0454feb2c4033ff0bdb2ff67388af0c41b6                           CobaltStrike BEACON"
+ },
+ {
+  "id": "p48",
+  "text": "SimpleHelp Remote\n        430bd437162d4c60227288fa6a82cde8a5f87100\n                                                                            Management tool"
+ },
+ {
+  "id": "p49",
+  "text": "1376ac8b5a126bb163423948bd1c7f861b4bfe32                               Tunneler Tool"
+ },
+ {
+  "id": "p50",
+  "text": "380f941f8047904607210add4c6da2da8f8cd398                           Anti Virus Tools Killer"
+ },
+ {
+  "id": "p51",
+  "text": "TLP:CLEAR                                                                                                        FBI | CISA"
+ },
+ {
+  "id": "p52",
+  "text": "Table 4: Network Indicators"
+ },
+ {
+  "id": "p53",
+  "text": "Indicator Type               Network Indicator                            Description"
+ },
+ {
+  "id": "p54",
+  "text": "Domain              resources.docusong[.]com                   Command and Control Server"
+ },
+ {
+  "id": "p55",
+  "text": "Domain             Fisa99.screenconnect[.]com                 ScreenConnect Remote Access"
+ },
+ {
+  "id": "p56",
+  "text": "IP Address                   5.199.168.24                        Command and Control Server"
+ },
+ {
+  "id": "p57",
+  "text": "IP Address                   91.92.254.193                        SimpleHelp Remote Access"
+ },
+ {
+  "id": "p58",
+  "text": "Domain                    pcrendal[.]com                       Command and Control Server"
+ },
+ {
+  "id": "p59",
+  "text": "Domain                  instance-qqemas-\n                                                                            ScreenConnect Remote Access\n                                 relay[.]screenconnect[.]com"
+ },
+ {
+  "id": "p60",
+  "text": "Domain                   instance-rbjvws-\n                                                                            ScreenConnect Remote Access\n                                  relay.screenconnect[.]com"
+ },
+ {
+  "id": "p61",
+  "text": "IP Address                  5.199.168[.]233                    IP Address used by Threat Actor"
+ },
+ {
+  "id": "p62",
+  "text": "IP Address                   92.223.89[.]55                    IP Address used by Threat Actor"
+ },
+ {
+  "id": "p63",
+  "text": "IP Address                 185.195.59[.]218                    IP Address used by Threat Actor"
+ },
+ {
+  "id": "p64",
+  "text": "IP Address                 51.159.103[.]112                    IP Address used by Threat Actor"
+ },
+ {
+  "id": "p65",
+  "text": "IP Address                  45.32.141[.]168                      Command and Control Server"
+ },
+ {
+  "id": "p66",
+  "text": "IP Address                    45.77.0[.]92                       Command and Control Server"
+ },
+ {
+  "id": "p67",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Table 5 through Table 7 for all referenced threat actor tactics and techniques in this advisory.\n                       Table 5: ALPHV Blackcat/ALPHV Threat Actors ATT&CK Techniques - Reconnaissance"
+ },
+ {
+  "id": "p68",
+  "text": "Technique Title                    ID                                      Use"
+ },
+ {
+  "id": "p69",
+  "text": "Phishing for                                            ALPHV Blackcat affiliates pose as company IT\n                                             T1598\n        Information                                             and/or helpdesk staff using phone calls or SMS"
+ },
+ {
+  "id": "p70",
+  "text": "TLP:CLEAR                                                                                                     FBI | CISA"
+ },
+ {
+  "id": "p71",
+  "text": "Technique Title                   ID                                      Use"
+ },
+ {
+  "id": "p72",
+  "text": "messages to obtain credentials from employees to\n                                                             access the target network."
+ },
+ {
+  "id": "p73",
+  "text": "Table 6: ALPHV Blackcat/ALPHV Threat Actors ATT&CK Techniques – Resource Development"
+ },
+ {
+  "id": "p74",
+  "text": "Technique Title                   ID                                      Use"
+ },
+ {
+  "id": "p75",
+  "text": "ALPHV Blackcat affiliates use compromised\n        Compromise Accounts                 T1586\n                                                             accounts to gain access to victims’ networks."
+ },
+ {
+  "id": "p76",
+  "text": "Table 7: ALPHV Blackcat/ALPHV Threat Actors ATT&CK Techniques – Credential Access"
+ },
+ {
+  "id": "p77",
+  "text": "Technique Title                   ID                                      Use"
+ },
+ {
+  "id": "p78",
+  "text": "Obtain Credentials                                   ALPHV Blackcat affiliates obtain passwords from\n        from Passwords                                       local networks, deleted servers, and domain\n                                            T1555\n        Stores                                               controllers."
+ },
+ {
+  "id": "p79",
+  "text": "Steal or Force                                       ALPHV Blackcat/ALPHV affiliates use Kerberos\n        Kerberos Tickets                    T1558            token generation for domain access."
+ },
+ {
+  "id": "p80",
+  "text": "ALPHV Blackcat/ALPHV affiliates use the open-\n        Adversary-in-the-                                    source framework Evilginx2 to obtain MFA\n                                            T1557\n        Middle                                               credentials, login credentials, and session cookies\n                                                             for targeted networks."
+ },
+ {
+  "id": "p81",
+  "text": "INCIDENT RESPONSE\n       If compromise is detected, organizations should:\n           1. Quarantine or take offline potentially affected hosts.\n           2. Reimage compromised hosts.\n           3. Provision new account credentials.\n           4. Collect and review artifacts such as running processes/services, unusual authentications, and\n              recent network connections.\n           5. Report the compromise or phishing incident to CISA via CISA’s 24/7 Operations Center\n              (report@cisa.gov or 888-282-0870). State, local, tribal, or territorial government entities can\n              also report to MS-ISAC (SOC@cisecurity.org or 866-787-4722).\n           6. To report spoofing or phishing attempts (or to report that you’ve been a victim), file a complaint\n              with the FBI’s Internet Crime Complaint Center (IC3), or contact your local FBI Field Office to\n              report an incident."
+ },
+ {
+  "id": "p82",
+  "text": "TLP:CLEAR                                                                                                 FBI | CISA"
+ },
+ {
+  "id": "p83",
+  "text": "MITIGATIONS\n       FBI, CISA, and HHS recommend organizations\n                                                            These mitigations apply to all critical\n       implement the mitigations below to improve your\n                                                            infrastructure organizations and network\n       organization’s cybersecurity posture based on\n                                                            defenders. FBI, CISA, and HHS recommend\n       threat actor activity and to reduce the risk of\n                                                            that software manufactures incorporate secure\n       compromise by ALPHV Blackcat threat actors.\n                                                            by design principles and tactics into their\n       These mitigations align with the Cross-Sector\n                                                            software development practices limiting the\n       Cybersecurity Performance Goals (CPGs)\n                                                            impact of ransomware techniques, thus,\n       developed by CISA and the National Institute of\n                                                            strengthening the security posture for their\n       Standards and Technology (NIST). The CPGs\n                                                            customers.\n       provide a minimum set of practices and\n       protections that CISA and NIST recommend all         For more information on secure by design, see\n       organizations implement. CISA and NIST based         CISA’s Secure by Design webpage and joint\n       the CPGs on existing cybersecurity frameworks        guide.\n       and guidance to protect against the most\n       common and impactful threats, tactics, techniques, and procedures. Visit CISA’s Cross-Sector\n       Cybersecurity Performance Goals for more information on the CPGs, including additional\n       recommended baseline protections. Due to the threat ALPHV Blackcat’s poses in the healthcare\n       sector, healthcare organizations can look to the Healthcare and Public Health (HPH) Sector\n       Cybersecurity Performance Goals to implement cybersecurity protections against the most common\n       threats. tactics, techniques, and procedures used against this sector.\n           •    Secure remote access tools by:\n                o Implementing application controls to manage and control execution of software,\n                    including allowlisting remote access programs. Application controls should prevent\n                    installation and execution of portable versions of unauthorized remote access and other\n                    software. A properly configured application allowlisting solution will block any unlisted\n                    application execution. Allowlisting is important because antivirus solutions may fail to\n                    detect the execution of malicious portable executables when the files use any combination\n                    of compression, encryption, or obfuscation.\n                o Applying recommendations in CISA's joint Guide to Securing Remote Access Software.\n           •    Implementing FIDO/WebAuthn authentication or Public key Infrastructure (PKI)-based\n                MFA [CPG 2.H][HPH CPG – Multifactor Authentication]. These MFA implementations are\n                resistant to phishing and not susceptible to push bombing or SIM swap attacks, which are\n                techniques known be used by ALPHV Blackcat affiliates. See CISA’s Fact Sheet\n                Implementing Phishing-Resistant MFA for more information.\n           •    Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting ransomware,\n                implement a tool that logs and reports all network traffic [CPG 5.1][HPH CPG – Detect and\n                Respond to Relevant Threats and Tactics, Techniques and Procedures], including lateral\n                movement activity on a network. Endpoint detection and response (EDR) tools are useful for"
+ },
+ {
+  "id": "p84",
+  "text": "TLP:CLEAR                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p85",
+  "text": "detecting lateral connections as they have insight into common and uncommon network\n                connections for each host.\n           •    Implement user training on social engineering and phishing attacks [CPG 2.I][HPH CPG\n                – Basic Cybersecurity Training]. Regularly educate users on identifying suspicious emails and\n                links, not interacting with those suspicious items, and the importance of reporting instances of\n                opening suspicious emails, links, attachments, or other potential lures.\n           •    Implement internal mail and messaging monitoring. Monitoring internal mail and\n                messaging traffic to identify suspicious activity is essential as users may be phished from\n                outside the targeted network or without the knowledge of the organizational security team.\n                Establish a baseline of normal network traffic and scrutinize any deviations.\n           •    Implement free security tools to prevent cyber threat actors from redirecting users to\n                malicious websites to steal their credentials. For more information see, CISA’s Free\n                Cybersecurity Services and Tools webpage.\n           •    Install and maintain antivirus software. Antivirus software recognizes malware and protects\n                your computer against it. Installing antivirus software from a reputable vendor is an important\n                step in preventing and detecting infections. Always visit vendor sites directly rather than\n                clicking on advertisements or email links. Because attackers are continually creating new\n                viruses and other forms of malicious code, it is important to keep your antivirus software up to\n                date."
+ },
+ {
+  "id": "p86",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, CISA recommends exercising, testing, and validating your\n       organization’s security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. CISA recommends testing your existing security controls\n       inventory to assess how they perform against the ATT&CK techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Tables 1-3).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       CISA and FBI recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p87",
+  "text": "RESOURCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts."
+ },
+ {
+  "id": "p88",
+  "text": "TLP:CLEAR                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p89",
+  "text": "•    Resource to reduce the risk of a ransomware attack: #StopRansomware Guide.\n           •    No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment.\n           •    Health and Human Services HPH Cybersecurity Gateway hosts the HPH CPGs and links to\n                HHS cybersecurity resources."
+ },
+ {
+  "id": "p90",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI, CISA, and\n       HHS do not endorse any commercial entity, product, company, or service, including any entities,\n       products, or services linked within this document. Any reference to specific commercial entities,\n       products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not\n       constitute or imply endorsement, recommendation, or favoring by FBI, CISA, and HHS."
+ },
+ {
+  "id": "p91",
+  "text": "VERSION HISTORY\n       December 19, 2023: Initial version.\n       February 27, 2024: Update."
+ }
+]

@@ -1,0 +1,1080 @@
+{
+ "schema_version": "1.0",
+ "name": "equifax-2017-struts-db",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "0119dc898c10b1183b13aa5aa99aa67a1286a2e4023b30b8754fdf25aea7f35a",
+  "source_name": "equifax-2017-struts-db"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+   "source": "llm",
+   "description": "Unidentified individuals scanned Equifax’s systems on March 10, 2017 to check for a vulnerability in Apache Struts Web Framework.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component vuln-struts2-s2-045 provides the software this step acts on, so a step-specific check can be run against it; this does not mean the step was executed. The deployed release is assumed, not stated by the source."
+  },
+  {
+   "id": "a2",
+   "name": "discovered a server housing Equifax’s online dispute portal running vulnerable software",
+   "source": "llm",
+   "description": "Unidentified individuals discovered a server running a vulnerable version of Apache Struts on the online dispute portal.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component vuln-struts2-s2-045 provides the software this step acts on, so a step-specific check can be run against it; this does not mean the step was executed. The deployed release is assumed, not stated by the source."
+  },
+  {
+   "id": "a3",
+   "name": "gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+   "source": "llm",
+   "description": "Using software designed to exploit the vulnerability, attackers gained unauthorized access and confirmed command execution capability on the online dispute portal.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "reproducible",
+   "reproducibility_reason": "Pinned catalogue component vuln-struts2-s2-045 provides the software this step acts on, so a step-specific check can be run against it; this does not mean the step was executed. The deployed release is assumed, not stated by the source."
+  },
+  {
+   "id": "a4",
+   "name": "gained access to the online dispute portal and used techniques to disguise activity",
+   "source": "llm",
+   "description": "Beginning May 13, 2017, attackers accessed the online dispute portal and used encrypted communication channels to disguise queries and commands.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The environment can be built (Apache Struts 2.3.30 showcase (CVE-2017-5638 / S2-045 exercise target)), but this step is not about that software and has no step-specific reproduction or validation; it remains untested."
+  },
+  {
+   "id": "a5",
+   "name": "issued queries to other databases to search for sensitive data",
+   "source": "llm",
+   "description": "After gaining command ability on the portal, attackers queried other databases to find PII and unencrypted credentials.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a6",
+   "name": "leveraged unencrypted credentials to expand access to additional databases",
+   "source": "llm",
+   "description": "Attackers used unencrypted usernames and passwords found in one database to access 48 additional unrelated databases.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a7",
+   "name": "ran approximately 9,000 queries to extract PII from databases",
+   "source": "llm",
+   "description": "Attackers ran about 9,000 queries, some successfully returning PII, while disguising their presence on the network.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "partial",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a8",
+   "name": "removed extracted PII in small increments using encrypted web protocols",
+   "source": "llm",
+   "description": "Attackers exfiltrated stolen data over encrypted connections to disguise the data removal as normal traffic.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The environment can be built (Apache Struts 2.3.30 showcase (CVE-2017-5638 / S2-045 exercise target)), but this step is not about that software and has no step-specific reproduction or validation; it remains untested."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source states that the discovery followed the scanning",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the later action uses software designed to exploit the vulnerability found on the server discovered",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the source states the second access was in a separate incident following the initial unauthorized access",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the attackers issued queries after gaining ability to issue system-level commands on the portal originally compromised",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the attackers leveraged credentials found during queries to expand access",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "the attackers ran queries after expanding access",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "the attackers removed data after extracting it using encrypted protocols",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "server housing Equifax’s online dispute portal",
+   "source": "llm",
+   "name": "Equifax’s online dispute portal",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "databases containing PII and credentials",
+   "source": "llm",
+   "name": "Equifax databases",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s2"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Apache Struts Web Framework",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "catalogue_component": "vuln-struts2-s2-045",
+   "is_substitute": false,
+   "version_basis": "assumed",
+   "deployed_version": "2.3.30"
+  },
+  {
+   "id": "s2",
+   "name": "databases",
+   "source": "llm",
+   "cve": [],
+   "host_ref": "h2",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Apache Struts Web Framework",
+   "type": "software",
+   "id": "artifact-1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "software designed to exploit the vulnerability",
+   "type": "tool",
+   "id": "artifact-2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "unencrypted usernames and passwords",
+   "type": "artifact",
+   "id": "artifact-3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "expired digital certificate",
+   "type": "artifact",
+   "id": "artifact-4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "on March 10, 2017, unidentified individuals scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability that the United States Computer Emergency Readiness Team 23 had publicly identified just 2 days earlier.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "on March 10, 2017, unidentified individuals scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability that the Unit"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "the unidentified individuals discovered a server housing Equifax’s online dispute portal that was running a version of the software that contained the vulnerability.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "the unidentified individuals discovered a server housing Equifax’s online dispute portal"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Using software they obtained from an unknown source and that was designed to exploit the vulnerability, the unidentified individuals subsequently gained unauthorized access to the Equifax portal and confirmed that they could run commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using software they obtained from an unknown source and that was designed to exploit the vulnerability, the unidentified individuals subsequently gained unautho"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "beginning on May 13, 2017, in a separate incident following the initial unauthorized access, attackers gained access to the online dispute portal and used a number of techniques to disguise their activity.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "beginning on May 13, 2017, in a separate incident following the initial unauthorized access, attackers gained access to the online dispute portal and used a num"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "after gaining the ability to issue system-level commands on the online dispute portal that was originally compromised, the attackers issued queries to other databases to search for sensitive data.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "after gaining the ability to issue system level commands on the online dispute portal that was originally compromised, the attackers issued queries to other dat"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "the attackers were able to leverage these credentials to expand their access beyond the 3 databases associated with the online dispute portal, to include an additional 48 unrelated databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attackers were able to leverage these credentials to expand their access beyond the 3 databases associated with the online dispute portal, to include an add"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "the attackers ran approximately 9,000 queries, a portion of which successfully returned data containing PII.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attackers ran approximately 9,000 queries, a portion of which successfully returned data containing PII."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "the attackers removed the data in small increments, using standard encrypted web protocols to disguise the exchanges as normal network traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attackers removed the data in small increments, using standard encrypted web protocols to disguise the exchanges as normal network traffic."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "as a result of this scanning, the unidentified individuals discovered a server housing Equifax’s online dispute portal that was running a version of the software that contained the vulnerability.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "as a result of this scanning, the unidentified individuals discovered a server housing Equifax’s online dispute portal"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "the attackers then ran a series of queries in an effort to try to extract PII from the databases they had located. Altogether, the attackers ran approximately 9,000 queries, a portion of which successfully returned data containing PII.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attackers then ran a series of queries in an effort to try to extract PII from the databases they had located. Altogether, the attackers ran approximately 9"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "After successfully extracting PII from Equifax databases, the attackers removed the data in small increments, using standard encrypted web protocols to disguise the exchanges as normal network traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After successfully extracting PII from Equifax databases, the attackers removed the data in small increments, using standard encrypted web protocols to disguise"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "discovered a server housing Equifax’s online dispute portal25 that was running a version of the software that contained the vulnerability",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "discovered a server housing Equifax’s online dispute portal25 that was running a version of the software that contained the vulnerability"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Equifax’s online dispute portal is a web-based application that allows an individual to upload documents to research and dispute an inaccuracy in their Equifax credit report.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Equifax’s online dispute portal is a web based application that allows an individual to upload documents to research and dispute an inaccuracy in their Equifax "
+  },
+  {
+   "id": "evidence-14",
+   "quote": "attackers issued queries to other databases to search for sensitive data. This search led to a data repository containing PII, as well as unencrypted usernames and passwords",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "attackers issued queries to other databases to search for sensitive data. This search led to a data repository containing PII, as well as unencrypted usernames "
+  },
+  {
+   "id": "evidence-15",
+   "quote": "the attackers were able to leverage these credentials to expand their access beyond the 3 databases associated with the online dispute portal, to include an additional 48 unrelated databases",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the attackers were able to leverage these credentials to expand their access beyond the 3 databases associated with the online dispute portal, to include an add"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "The vulnerability involved the Apache Struts Web Framework and would allow an attacker to execute commands on affected systems.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "6"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The vulnerability involved the Apache Struts Web Framework and would allow an attacker to execute commands on affected systems."
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Using software they obtained from an unknown source and that was designed to exploit the vulnerability",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using software they obtained from an unknown source and that was designed to exploit the vulnerability"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "a data repository containing PII, as well as unencrypted usernames and passwords that could provide the attackers access to several other Equifax databases.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "a data repository containing PII, as well as unencrypted usernames and passwords that could provide the attackers access to several other Equifax databases."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "the misconfiguration was the result of an expired digital certificate that had not been replaced with a new certificate.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "the misconfiguration was the result of an expired digital certificate that had not been replaced with a new certificate."
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Equifax’s online dispute portal — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax’s online dispute portal 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Equifax’s online dispute portal",
+    "action:a1 — scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+    "action:a2 — discovered a server housing Equifax’s online dispute portal running vulnerable software",
+    "action:a3 — gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+    "action:a4 — gained access to the online dispute portal and used techniques to disguise activity",
+    "action:a8 — removed extracted PII in small increments using encrypted web protocols"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax’s online dispute portal",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Equifax’s online dispute portal — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax’s online dispute portal 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Equifax’s online dispute portal",
+    "action:a1 — scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+    "action:a2 — discovered a server housing Equifax’s online dispute portal running vulnerable software",
+    "action:a3 — gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+    "action:a4 — gained access to the online dispute portal and used techniques to disguise activity",
+    "action:a8 — removed extracted PII in small increments using encrypted web protocols"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax’s online dispute portal",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Equifax’s online dispute portal — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax’s online dispute portal 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Equifax’s online dispute portal",
+    "action:a1 — scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+    "action:a2 — discovered a server housing Equifax’s online dispute portal running vulnerable software",
+    "action:a3 — gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+    "action:a4 — gained access to the online dispute portal and used techniques to disguise activity",
+    "action:a8 — removed extracted PII in small increments using encrypted web protocols"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax’s online dispute portal",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-12",
+      "evidence-13",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Equifax databases — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax databases 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Equifax databases",
+    "action:a5 — issued queries to other databases to search for sensitive data",
+    "action:a6 — leveraged unencrypted credentials to expand access to additional databases",
+    "action:a7 — ran approximately 9,000 queries to extract PII from databases"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Equifax databases — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax databases 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Equifax databases",
+    "action:a5 — issued queries to other databases to search for sensitive data",
+    "action:a6 — leveraged unencrypted credentials to expand access to additional databases",
+    "action:a7 — ran approximately 9,000 queries to extract PII from databases"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Equifax databases — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Equifax databases 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Equifax databases",
+    "action:a5 — issued queries to other databases to search for sensitive data",
+    "action:a6 — leveraged unencrypted credentials to expand access to additional databases",
+    "action:a7 — ran approximately 9,000 queries to extract PII from databases"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Equifax databases",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-14",
+      "evidence-15",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Apache Struts Web Framework — 版本",
+   "category": "version",
+   "reason": "IR 指出 Apache Struts Web Framework，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Apache Struts Web Framework 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Apache Struts Web Framework",
+    "action:a1 — scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Apache Struts Web Framework",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：Apache Struts Web Framework, databases。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a1 — scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+    "action:a2 — discovered a server housing Equifax’s online dispute portal running vulnerable software",
+    "action:a3 — gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+    "host:h1 — Equifax’s online dispute portal"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "scanned the company’s systems to determine if the systems were susceptible to a specific vulnerability",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "discovered a server housing Equifax’s online dispute portal running vulnerable software",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-unnamed-tools",
+   "field": "未指名的工具",
+   "category": "software",
+   "reason": "來源只以概括用語提到工具（「software designed to exploit the vulnerability」），沒有說是哪些工具。",
+   "severity": "major",
+   "status": "open",
+   "question": "「software designed to exploit the vulnerability」 實際是哪些工具？靶場要用哪些工具來表示這些步驟？來源沒寫的話請選擇替代工具並標記，或保留未知。",
+   "affects": [
+    "action:a3 — gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+    "host:h1 — Equifax’s online dispute portal"
+   ],
+   "suggestions": [
+    "填入來源記載的工具名稱",
+    "選用靶場核准的替代工具並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "gained unauthorized access to the Equifax portal and confirmed ability to run commands",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a5 — issued queries to other databases to search for sensitive data",
+    "action:a6 — leveraged unencrypted credentials to expand access to additional databases",
+    "host:h2 — Equifax databases"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "issued queries to other databases to search for sensitive data",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "leveraged unencrypted credentials to expand access to additional databases",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a8 — removed extracted PII in small increments using encrypted web protocols",
+    "host:h1 — Equifax’s online dispute portal"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "removed extracted PII in small increments using encrypted web protocols",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-databases",
+   "field": "software dependency: databases",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "databases 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "PostgreSQL（替代品，不等於原軟體）",
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_deployed-version-s1",
+   "field": "deployed version of Apache Struts Web Framework",
+   "category": "version",
+   "reason": "The source does not state a version; the catalogue provides 2.3.30.",
+   "severity": "major",
+   "status": "substitute_chosen",
+   "resolution": "Deploying Apache Struts 2.3.30 showcase (CVE-2017-5638 / S2-045 exercise target) 2.3.30. This release is an assumption, not a fact from the source; results do not show that the original system ran it."
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8947,
+  "unsupported_claim_count": 4,
+  "inferred_count": 0,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [
+   {
+    "id": "a9",
+    "name": "detected the intrusion on the online dispute portal during routine checks",
+    "actor": "defender"
+   },
+   {
+    "id": "a10",
+    "name": "corrected misconfiguration by updating expired digital certificate",
+    "actor": "defender"
+   },
+   {
+    "id": "a11",
+    "name": "blocked several Internet addresses to try to stop the attack",
+    "actor": "defender"
+   },
+   {
+    "id": "a12",
+    "name": "took the online dispute portal offline",
+    "actor": "defender"
+   },
+   {
+    "id": "a13",
+    "name": "informed the Chief Executive Officer of the attack",
+    "actor": "defender"
+   },
+   {
+    "id": "a14",
+    "name": "initiated an investigation to identify exploited vulnerabilities and assess breach scope",
+    "actor": "defender"
+   },
+   {
+    "id": "a15",
+    "name": "notified the Federal Bureau of Investigation of the breach",
+    "actor": "defender"
+   }
+  ],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

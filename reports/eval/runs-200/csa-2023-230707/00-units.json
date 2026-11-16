@@ -1,0 +1,1030 @@
+[
+ {
+  "id": "p1",
+  "text": "# Increased Truebot Activity Infects U.S. and Canada Based Networks"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-187A\n> - Date: 2023-07-07\n> - URL: https://www.ic3.gov/CSA/2023/230707.pdf\n> - PDF SHA-256: 69b36d5d98916347b98951fe1106cf2eb650af9fb25f472966cdce70708223b9 (`source.pdf`, 26 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (55 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Authored by:                                                                                                   Product ID: AA23-187A\n                                                                                                                        July 6, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "Increased Truebot Activity Infects U.S. and\n        Canada Based Networks\n        SUMMARY\n        The Cybersecurity and Infrastructure Security Agency (CISA), the Federal Bureau of Investigation\n        (FBI), the Multi-State Information Sharing and Analysis Center (MS-ISAC), and the Canadian Centre\n        for Cyber Security (CCCS) are releasing this joint Cybersecurity Advisory (CSA) in response to cyber\n        threat actors leveraging newly identified Truebot malware variants against organizations in the United\n        States and Canada. As recently as May 31, 2023, the authoring organizations have observed an\n        increase in cyber threat actors using new malware variants of Truebot (also known as\n        Silence.Downloader). Truebot is a botnet that has been used by malicious cyber groups like CL0P\n        Ransomware Gang to collect and exfiltrate information from its target victims."
+ },
+ {
+  "id": "p5",
+  "text": "Previous Truebot malware variants were primarily delivered by cyber threat actors via malicious\n        phishing email attachments; however, newer versions allow cyber threat actors to also gain initial\n        access through exploiting CVE-2022-31199—(a remote code execution vulnerability in the Netwrix\n        Auditor application), enabling deployment of the malware at scale within the compromised\n        environment. Based on confirmation from open-source reporting and analytical findings of Truebot\n        variants, the authoring organizations assess cyber threat actors are leveraging both phishing\n        campaigns with malicious redirect hyperlinks and CVE-2022-31199 to deliver new Truebot malware\n        variants."
+ },
+ {
+  "id": "p6",
+  "text": "The authoring organizations recommend hunting for the malicious activity using the guidance outlined\n        in this CSA, as well as applying vendor patches to Netwrix Auditor (version 10.5—see Mitigations\n        section below).[1] Any organization identifying indicators of compromise (IOCs) within their\n        environment should urgently apply the incident responses and mitigation measures detailed in this\n        CSA and report the intrusion to CISA or the FBI."
+ },
+ {
+  "id": "p7",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n        your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n        available, please include the following information regarding the incident: date, time, and location of the incident;\n        type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n        company or organization; and a designated point of contact. SLTT organizations should report incidents to MS-\n        ISAC (866-787-4722 or SOC@cisecurity.org)."
+ },
+ {
+  "id": "p8",
+  "text": "This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p9",
+  "text": "TLP:CLEAR                                                                                        CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p10",
+  "text": "Read the associated Malware Analysis Report: MAR-10445155-1.v1 Truebot Activity Infects U.S. and\n       Canada Based Networks"
+ },
+ {
+  "id": "p11",
+  "text": "For a downloadable copy of IOCs in .xml and .json format, see:\n           •    AA23-187A.STIX.XML\n           •    AA23-187A.STIX.JSON"
+ },
+ {
+  "id": "p12",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 13. See the MITRE\n       ATT&CK Tactics and Techniques section below for cyber threat actors’ activity mapped to MITRE\n       ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p13",
+  "text": "Initial Access and Execution\n       In recent months, open source reporting has detailed an increase in Truebot malware infections,\n       particularly cyber threat actors using new tactics, techniques, and procedures (TTPs), and delivery\n       methods.[2] Based on the nature of observed Truebot operations, the primary objective of a Truebot\n       infection is to exfiltrate sensitive data from the compromised host(s) for financial gain [TA0010]."
+ },
+ {
+  "id": "p14",
+  "text": "•    Phishing:\n                o Cyber threat actors have historically used malicious phishing emails as the primary\n                   delivery method of Truebot malware, which tricks recipients into clicking a hyperlink to\n                   execute malware. Cyber threat actors have further been observed concealing email\n                   attachments (executables) as software update notifications [T1189] that appear to be\n                   legitimate [T1204.002][T1566.002]. Following interaction with the executable, users will be\n                   redirected to a malicious web domain where script files are then executed. Note: Truebot\n                   malware can be hidden within various, legitimate file formats that are used for malicious\n                   purposes [T1036.008].[3]\n           •    Exploitation of CVE-2022-31199:\n                o Though phishing remains a prominent delivery method, cyber threat actors have shifted\n                   tactics, exploiting, in observable manner, a remote code execution vulnerability (CVE-\n                   2022-31199) in Netwrix Auditor [T1190]—software used for on-premises and cloud-based\n                   IT system auditing. Through exploitation of this CVE, cyber threat actors gain initial\n                   access, as well as the ability to move laterally within the compromised network [T1210]."
+ },
+ {
+  "id": "p15",
+  "text": "Figure 1: CVE-2022-3199 Delivery Method for\n                                                         Truebot"
+ },
+ {
+  "id": "p16",
+  "text": "TLP:CLEAR                                                                                         CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p17",
+  "text": "Following the successful download of the malicious file, Truebot renames itself and then loads\n       FlawedGrace onto the host. Please see the FlawedGrace section below for more information on how\n       this remote access tool (RAT) is used in Truebot operations.\n       After deployment by Truebot, FlawedGrace is able to modify registry [T1112] and print spooler\n       programs [T1547.012] that control the order that documents are loaded to a print queue.\n       FlawedGrace manipulates these features to both escalate privilege and establish persistence.\n       During FlawedGrace’s execution phase, the RAT stores encrypted payloads [T1027.009] within the\n       registry. The tool can create scheduled tasks and inject payloads into msiexec[.]exe and\n       svchost[.]exe, which are command processes that enable FlawedGrace to establish a command\n       and control (C2) connection to 92.118.36[.]199, for example, as well as load dynamic link libraries\n       (DLLs) [T1055.001] to accomplish privilege escalation.\n       Several hours post initial access, Truebot has been observed injecting Cobalt Strike beacons into\n       memory [T1055] in a dormant mode for the first few hours prior to initiating additional operations.\n       Please see the Cobalt Strike section below for more information on how this remote access tool\n       (RAT) is used in Truebot operations."
+ },
+ {
+  "id": "p18",
+  "text": "Discovery and Defense Evasion\n       During the first stage of Truebot’s execution process, it checks the current version of the operating\n       system (OS) with RtlGetVersion and processor architecture using GetNativeSystemInfo\n       [T1082].[4] Note: This variant of Truebot malware is designed with over one gigabyte (GB) of junk\n       code which functions to hinder detection and analysis efforts [T1027.001].\n       Following the initial checks for system information, Truebot has the capability to enumerate all running\n       processes [T1057], collect sensitive local host data [T1005], and send this data to an encoded data\n       string described below for second-stage execution. Based on IOCs in table 1, Truebot also has the\n       ability to discover software security protocols and system time metrics, which aids in defense evasion,\n       as well as enables synchronization with the compromised system’s internal clock to facilitate\n       scheduling tasks [T1518.001][T1124].\n       Next, it uses a .JSONIP extension, (e.g., IgtyXEQuCEvAM.JSONIP), to create a thirteen character\n       globally unique identifier (GUID)—a 128-bit text string that Truebot uses to label and organize the\n       data it collects [T1036].\n       After creating the GUID, Truebot compiles and enumerates running process data into either a base64\n       or unique hexadecimal encoded string [T1027.001]. Truebot’s main goal is identifying the presence of\n       security debugger tools. However, the presence of identified debugger tools does not change\n       Truebot’s execution process—the data is compiled into a base64 encoded string for tracking and\n       defense evasion purposes [T1082][T1622]."
+ },
+ {
+  "id": "p19",
+  "text": "Data Collection and Exfiltration\n       Following Truebot’s enumeration of running processes and tools, the affected system’s computer and\n       domain name [T1082], [T1016], along with the newly generated GUID, are sent to a hard-coded URL\n       in a POST request (as observed in the user-agent string). Note: A user-agent string is a customized"
+ },
+ {
+  "id": "p20",
+  "text": "TLP:CLEAR                                                                                        CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p21",
+  "text": "HTTP request that includes specific device information required for interaction with web content. In\n       this instance, cyber threat actors can redirect victims to malicious domains and further establish a C2\n       connection.\n       The POST request functions as means for establishing a C2 connection for bi-lateral communication.\n       With this established connection, Truebot uses a second obfuscated domain to receive additional\n       payloads [T1105], self-replicate across the environment [T1570], and/or delete files used in its\n       operations [T1070.004]. Truebot malware has the capability to download additional malicious\n       modules [T1105], load shell code [T1620], and deploy various tools to stealthily navigate an infected\n       network."
+ },
+ {
+  "id": "p22",
+  "text": "TLP:CLEAR                                                                                        CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p23",
+  "text": "Associated Delivery Vectors and Tools\n       Truebot has been observed in association with the following delivery vectors and tools:"
+ },
+ {
+  "id": "p24",
+  "text": "Raspberry Robin (Malware)\n       Raspberry Robin is a wormable malware with links to other malware families and various infection\n       methods, including installation via USB drive [T1091].[5] Raspberry Robin has evolved into one of the\n       largest malware distribution platforms and has been observed deploying Truebot, as well as other\n       post-compromise payloads such as IcedID and Bumblebee malware.[6] With the recent shift in\n       Truebot delivery methods from malicious emails to the exploitation of CVE-2022-31199, a large\n       number of Raspberry Robin infections have leveraged this exploitable CVE.[2]\n       Flawed Grace (Malware)\n       FlawedGrace is a remote access tool (RAT) that can receive incoming commands [T1059] from a C2\n       server sent over a custom binary protocol [T1095] using port 443 to deploy additional tools [T1105].[7]\n       Truebot malware has been observed leveraging (and dropping) FlawedGrace via phishing campaigns\n       as an additional payload [T1566.002].[8] Note: FlawedGrace is typically deployed minutes after\n       Truebot malware is executed.\n       Cobalt Strike (Tool)\n       Cobalt Strike is a popular remote access tool (RAT) that cyber threat actors have leveraged—in an\n       observable manner—for a variety of post-exploitation means. Typically a few hours after Truebot’s\n       execution phase, cyber threat actors have been observed deploying additional payloads containing\n       Cobalt Strike beacons for persistence and data exfiltration purposes [T1059].[2] Cyber threat actors\n       use Cobalt Strike to move laterally via remote service session hijacking [T1563.001][T1563.002],\n       collecting valid credentials through LSASS memory credential dumping, or creating local admin\n       accounts to achieve pass the hash alternate authentication [T1003.001][T1550.002].\n       Teleport (Tool)\n       Cyber threat actors have been observed using a custom data exfiltration tool, which Talos has named\n       “Teleport.”[2] Teleport is known to evade detection during data exfiltration by using an encryption key\n       hardcoded in the binary and a custom communication protocol [T1095] that encrypts data using\n       advanced encryption standard (AES) and a hardcoded key [T1048][T1573.002]. Furthermore, to\n       maintain its stealth, Teleport limits the data it collects and syncs with outbound organizational\n       data/network traffic [T1029][T1030]."
+ },
+ {
+  "id": "p25",
+  "text": "TLP:CLEAR                                                                                         CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p26",
+  "text": "Truebot Malware Indicators of Compromise (IOCs)\n       Truebot IOCs from May 31, 2023, contain IOCs from cyber threat actors conducting Truebot malspam\n       campaigns. Information is derived from a trusted third party, they observed cyber threat actors from\n       193.3.19[.]173 (Russia) using a compromised local account to conduct phishing campaigns on\n       May 23, 2023 and spread malware through: https[:]//snowboardspecs[.]com/nae9v, which then\n       promptly redirects the user to: https://www.meditimespharma[.]com/gfghthq/, which a trusted\n       third party has linked to other trending Truebot activity.\n       After redirecting to https://www.meditimespharma[.]com/gfghthq/, trusted third parties have\n       observed, the cyber threat actors using Truebot to pivot to\n       https://corporacionhardsoft[.]com/images/2/Document_16654.exe, which is a domain\n       associated with snowboardspecs[.]com. This malicious domain has been linked to UNC4509, a\n       threat cluster that has been known to use traffic distribution systems (TDS) to redirect users to either\n       a benign or malicious website to facilitate their malicious phishing campaigns in May 2023.\n       According to trusted third parties, the MD5 Hash: 6164e9d297d29aa8682971259da06848 is\n       downloaded from https://corporacionhardsoft.com/images/2/Document_16654[.]exe and\n       has been flagged by numerous security vendors, as well as is linked to UNC4509 Truebot campaigns.\n       Note: These IOCs are associated with Truebot campaigns used by Graceful Spider to deliver\n       FlawedGrace and LummaStealer payloads in May of 2023.\n       After Truebot is downloaded, the malware copies itself to C:\\Intel\\RuntimeBroker.exe and—\n       based on trusted third party analysis—is linked to https://essadonio.com/538332[.]php (which is\n       linked to 45.182.189[.]71 (Panama) and is associated with other trending Truebot malware\n       campaigns from May 2023).\n       Please reference table 1 for IOCs described in the paragraph above."
+ },
+ {
+  "id": "p27",
+  "text": "TLP:CLEAR                                                                                         CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p28",
+  "text": "Table 1: Truebot IOCs from May of 2023"
+ },
+ {
+  "id": "p29",
+  "text": "Indicator Type                                    Indicator                               Source"
+ },
+ {
+  "id": "p30",
+  "text": "Registrant                  GKG[.]NET Domain Proxy Service Administrator             Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p31",
+  "text": "Compromised                                     2022-04-10                             Trusted Third\n            Account                                                                                  Party\n            Created:"
+ },
+ {
+  "id": "p32",
+  "text": "Malicious                                     1999-11-09                             Trusted Third\n         account created                                                                             Party"
+ },
+ {
+  "id": "p33",
+  "text": "IP                                  193.3.19[.]173 (Russia)                      Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p34",
+  "text": "URL                            https://snowboardspecs[.]com/nae9v                 Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p35",
+  "text": "Domain              https://corporacionhardsoft[.]com/images/2/Document_16654.exe   Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p36",
+  "text": "File                                 Document_16654[.]exe                         Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p37",
+  "text": "MD5 Hash                        6164e9d297d29aa8682971259da06848                     Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p38",
+  "text": "File                             Document_may_24_16654[.]exe                      Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p39",
+  "text": "File                               C:\\Intel\\RuntimeBroker[.]exe                   Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p40",
+  "text": "URL                            https://essadonio.com/538332[.]php                 Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p41",
+  "text": "IP                                 45.182.189[.]71 (Panama)                      Trusted Third\n                                                                                                     Party"
+ },
+ {
+  "id": "p42",
+  "text": "Account                                      2023-05-18                             Trusted Third\n             Created                                                                                 Party"
+ },
+ {
+  "id": "p43",
+  "text": "TLP:CLEAR                                                                                             CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p44",
+  "text": "Table 2: Truebot malware IOCs from May of 2023"
+ },
+ {
+  "id": "p45",
+  "text": "Indicator Type                          Indicator                                Source"
+ },
+ {
+  "id": "p46",
+  "text": "File Name                        Secretsdump[.]py              https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p47",
+  "text": "Domain                         Imsagentes[.]pe               https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p48",
+  "text": "URL                     https://imsagentes[.]pe/dgrjfj/     https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p49",
+  "text": "URL                     https://imsagentes[.]pe/dgrjfj      https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p50",
+  "text": "URL                      https://hrcbishtek[.]com/{5        https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p51",
+  "text": "URL            https://ecorfan.org/base/sj/document_may_    https://thedfirreport.com/2023/06/12/a-\n                                             24_16654[.]exe                         truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p52",
+  "text": "Domain                         Hrcbishtek[.]com              https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p53",
+  "text": "MD5 Hash          F33734DFBBFF29F68BCDE052E523C287             https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p54",
+  "text": "MD5 Hash          F176BA63B4D68E576B5BA345BEC2C7B7             https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p55",
+  "text": "MD5 Hash          F14F2862EE2DF5D0F63A88B60C8EEE56             https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p56",
+  "text": "Domain                         Essadonio[.]com               https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p57",
+  "text": "Domain                           Ecorfan[.]org               https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p58",
+  "text": "SHA256 Hash         C92C158D7C37FEA795114FA6491FE5F1             https://thedfirreport.com/2023/06/12/a-\n                              45AD2F8C08776B18AE79DB811E8E36A3                      truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p59",
+  "text": "File Name                           Atexec[.]py                https://thedfirreport.com/2023/06/12/a-\n                                                                                    truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p60",
+  "text": "TLP:CLEAR                                                                                    CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p61",
+  "text": "MD5 Hash           A0E9F5D64349FB13191BC781F81F42E1   https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p62",
+  "text": "IPv4                      92.118.36[.]199          https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p63",
+  "text": "IPv4                      81.19.135[.]30           https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p64",
+  "text": "MD5 Hash           72A589DA586844D7F0818CE684948EEA   https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p65",
+  "text": "SHA256 Hash         717BEEDCD2431785A0F59D194E47970E    https://thedfirreport.com/2023/06/12/a-\n                              9544FBF398D462A305F6AD9A1B1100CB             truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p66",
+  "text": "IPv4                       5.188.86[.]18           https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p67",
+  "text": "IPv4                      5.188.206[.]78           https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p68",
+  "text": "IPv4                      45.182.189[.]71          https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p69",
+  "text": "IPv4                     139.60.160[.]166          https://thedfirreport.com/2023/06/12/a-\n                                                                           truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p70",
+  "text": "SHA256 Hash         121A1F64FFF22C4BFCEF3F11A23956ED    https://thedfirreport.com/2023/06/12/a-\n                              403CDEB9BDB803F9C42763087BD6D94E             truly-graceful-wipe-out/"
+ },
+ {
+  "id": "p71",
+  "text": "TLP:CLEAR                                                                                        CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p72",
+  "text": "Table 3: Truebot IOCs from May 2023 (Malicious Domains, and Associated IP addresses and URLs)"
+ },
+ {
+  "id": "p73",
+  "text": "Malicious Domain            Associated IP(s)                  Beacon URL"
+ },
+ {
+  "id": "p74",
+  "text": "nitutdra[.]com           46.161.40[.]128"
+ },
+ {
+  "id": "p75",
+  "text": "romidonionhhgtt[.]com         46.161.40.128"
+ },
+ {
+  "id": "p76",
+  "text": "midnigthwaall[.]com         46.161.40[.]128"
+ },
+ {
+  "id": "p77",
+  "text": "dragonetzone[.]com          46.161.40[.]128    hxxps://dragonetzone[.]com/gate_info[.]php"
+ },
+ {
+  "id": "p78",
+  "text": "rprotecruuio[.]com         45.182.189[.]71"
+ },
+ {
+  "id": "p79",
+  "text": "essadonio[.]com           45.182.189[.]71    hxxps://nomoresense[.]com/checkinfo[.]php"
+ },
+ {
+  "id": "p80",
+  "text": "nomoresense[.]com           45.182.189[.]91    hxxps://nomoresense[.]com/checkinfo[.]php"
+ },
+ {
+  "id": "p81",
+  "text": "ronoliffuion[.]com        45.182.189[.]120       hxxps://ronoliffuion[.]com/dns[.]php"
+ },
+ {
+  "id": "p82",
+  "text": "bluespiredice[.]com         45.182.189[.]119"
+ },
+ {
+  "id": "p83",
+  "text": "dremmfyttrred[.]com         45.182.189[.]103     hxxps://dremmfyttrred[.]com/dns[.]php"
+ },
+ {
+  "id": "p84",
+  "text": "ms-online-store[.]com        45.227.253[.]102"
+ },
+ {
+  "id": "p85",
+  "text": "ber6vjyb[.]com           92.118.36[.]252         hxxps://ber6vjyb[.]com/dns[.]php"
+ },
+ {
+  "id": "p86",
+  "text": "jirostrogud[.]com         88.214.27[.]101         hxxps://ber6vjyb[.]com/dns[.]php"
+ },
+ {
+  "id": "p87",
+  "text": "fuanshizmo[.]com           45.182.189[.]229"
+ },
+ {
+  "id": "p88",
+  "text": "qweastradoc[.]com          92.118.36[.]213        hxxp://nefosferta[.]com/gate[.]php"
+ },
+ {
+  "id": "p89",
+  "text": "qweastradoc[.]com          92.118.36[.]213        hxxp://nefosferta[.]com/gate[.]php"
+ },
+ {
+  "id": "p90",
+  "text": "qweastradoc[.]com          92.118.36[.]213        hxxp://nefosferta[.]com/gate[.]php"
+ },
+ {
+  "id": "p91",
+  "text": "hiperfdhaus[.]com          88.214.27[.]100        hxxp://nefosferta[.]com/gate[.]php"
+ },
+ {
+  "id": "p92",
+  "text": "guerdofest[.]com          45.182.189[.]228      hxxp://qweastradoc[.]com/gate[.]php"
+ },
+ {
+  "id": "p93",
+  "text": "nefosferta[.]com          179.60.150[.]139       hxxp://nefosferta[.]com/gate[.]php"
+ },
+ {
+  "id": "p94",
+  "text": "TLP:CLEAR                                                                                     CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p95",
+  "text": "Table 4: Truebot IOCs from May 2023 Continued (Malicious Domains and Associated Hashes)"
+ },
+ {
+  "id": "p96",
+  "text": "Malicious              MD5                  SHA1                           SHA256\n          Domain"
+ },
+ {
+  "id": "p97",
+  "text": "nitutdra[.]co\n              m"
+ },
+ {
+  "id": "p98",
+  "text": "romidonion\n         hhgtt[.]com"
+ },
+ {
+  "id": "p99",
+  "text": "midnigthwa\n          all[.]com"
+ },
+ {
+  "id": "p100",
+  "text": "dragonetzo      64b27d2a6a5576850    c69f080180430ebf15f984   e0178ab0893a4f25c68ded11e74ad90403\n          ne[.]com       6a5658a31c045de      be14fb4c76471cd476       443e413413501d138e0b08a910471e"
+ },
+ {
+  "id": "p101",
+  "text": "rprotecruui\n           o[.]com"
+ },
+ {
+  "id": "p102",
+  "text": "essadonio[.     9a3bad7d851621669    a89c097138e5aab1f35b9    4862618fcf15ba4ad15df35a8dcb0bdb796\n            ]com         5887acc9668cda1      a03900600057d907690      47b455fea6c6937c7d050815494b0"
+ },
+ {
+  "id": "p103",
+  "text": "essadonio[.     6164e9d297d29aa86    96b95edc1a917912a3181    717beedcd2431785a0f59d194e47970e95\n            ]com         82971259da06848      d5105fd5bfad1344de0      44fbf398d462a305f6ad9a1b1100cb"
+ },
+ {
+  "id": "p104",
+  "text": "nomoresen       8f924f3cbe5d8fe3ec   516051b4cab1be74d32a6    6b646641c823414c2ee30ae8b91be3421\n          se[.]com       b7293478901f1a       c446eabac7fc354904f      e4f13fa98e2d99272956e61eecfc5a1"
+ },
+ {
+  "id": "p105",
+  "text": "nomoresen       ac6a2f1eafaae9f659   1c637c2ded5d3a13fd9b5    f9f649cb5de27f720d58aa44aec6d0419e3\n          se[.]com       8390d1017dd76c       6c35acf4443f308be52      e89f453730e155067506ad3ece638"
+ },
+ {
+  "id": "p106",
+  "text": "ronoliffuion[   881485ac77859cf5a    51be660a3bdaab6843676    36d89f0455c95f9b00a8cea843003d0b53\n            .]com        aa8e0d64fbafc5f      e9d3b2af8444e88bbda      c4e33431fe57b5e6ec14a6c2e00e99"
+ },
+ {
+  "id": "p107",
+  "text": "bluespiredi\n          ce[.]com"
+ },
+ {
+  "id": "p108",
+  "text": "dremmfyttrr     e4a42cbda39a20134    afda13d5365b290f7cdea7   47f962063b42de277cd8d22550ae47b178\n          ed[.]com       d6edcf9f03c44ed      01d00d05b0c60916f8       7a39aa6f537c5408a59b5b76ed0464"
+ },
+ {
+  "id": "p109",
+  "text": "dremmfyttrr     aa949d1a7ebe5f878    06057d773ad04fda177f6b   594ade1fb42e93e64afc96f13824b3dbd94\n          ed[.]com       023c6cfb446e29b      0f6698ddaa47f7168a       2a2cdbc877a7006c248a38425bbc1"
+ },
+ {
+  "id": "p110",
+  "text": "dremmfyttrr     338476c2b0de4ee2f    03916123864aa034f7ca3    a67df0a8b32bdc5f9d224db118b3153f665\n          ed[.]com       3e402f3495d0578      b9d45b2e39b5c91c502      18737e702314873b673c914b2bb5c"
+ },
+ {
+  "id": "p111",
+  "text": "TLP:CLEAR                                                                                     CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p112",
+  "text": "ms-online-\n         store[.]com"
+ },
+ {
+  "id": "p113",
+  "text": "ber6vjyb[.]c   46fe07c07fd0f45ba4   b918f97c7c6ebc9594de3    c0f8aeeb2d11c6e751ee87c40ee609aceb\n             om         5240ef9aae2a44       c8f2d9d75ecc292d02b      1c1036706a5af0d3d78738b6cc4125"
+ },
+ {
+  "id": "p114",
+  "text": "jirostrogud[.   89c8afc5bbd34f160d   16ecf30ff8c7887037a17a   5cc8c9f2c9cee543ebac306951e30e63eff\n            ]com        8a2b7218b9ca4a       3eaffcb17145b69160       3ee103c62dadcd2ce43ef68bc7487"
+ },
+ {
+  "id": "p115",
+  "text": "jirostrogud[.   5da364a8efab6370a    792623e143ddd49c36f68    80b9c5ec798e7bbd71bbdfffab11653f36a\n            ]com        174736705645a52      68e948febb0c9e19cd3      7a30e51de3a72c5213eafe65965d9"
+ },
+ {
+  "id": "p116",
+  "text": "fuanshizmo\n            [.]com"
+ },
+ {
+  "id": "p117",
+  "text": "qweastrado     ee1ccb6a0e38bf95e    62f5a16d1ef20064dd78f5   0e3a14638456f4451fe8d76fdc04e591fba\n           c[.]com      44b73c3c46268c5      d934c84d474aca8bbe       942c2f16da31857ca66293a58a4c3"
+ },
+ {
+  "id": "p118",
+  "text": "qweastrado     82d4025b84cf569ec    bb32c940f9ca06e7e8533    c042ad2947caf4449295a51f9d640d722b\n           c[.]com      82d21918d641540      b1d315545c3294ee1a0      5a6ec6957523ebf68cddb87ef3545c"
+ },
+ {
+  "id": "p119",
+  "text": "qweastrado     dbecfe9d5421d3195    9e7a2464f53ce74d840eb    c9b874d54c18e895face055eeb6faa2da7\n           c[.]com      34e0bfa5a6ac162      84077472bc29fd1ba05      965a336d70303d0bd6047bec27a29d"
+ },
+ {
+  "id": "p120",
+  "text": "qweastrado     b7fed593e8eb3646f8   44090a7858eceb28bc111    ff8c8c8bfba5f2ba2f8003255949678df209\n           c[.]com      76367b56725e6c       e1edd2f0dc98047afb2      dbff95e16f2f3c338cfa0fd1b885"
+ },
+ {
+  "id": "p121",
+  "text": "hiperfdhaus     8e2b823aac6c9e11f    77ad34334a370d85ca5e7    a30e1f87b78d1cd529fbe2afdd679c8241d\n           [.]com       cabecb1d8c19adf      7436ed99f18b185eee3      3baab175b2f083740263911a85304"
+ },
+ {
+  "id": "p122",
+  "text": "hiperfdhaus     8a94163ddf956abd0    abc96032071adeb6217f0    b95a764820e918f42b664f3c9a96141e2d\n           [.]com       ea92d89db0034e5      a5ba1aff55dc11f5438      7d7d228da0edf151617fabdd9166cf"
+ },
+ {
+  "id": "p123",
+  "text": "guerdofest[    65fb9572171b903aa    d8bd44b7a8f136e29b312    d5bbcaa0c3eeea17f12a5cc3dbcaffff423d\n           .]com        31a325f550d8778      26f4edf566a4223266c      00562acb694561841bcfe984a3b7"
+ },
+ {
+  "id": "p124",
+  "text": "nefosferta[.   d9d85bdb6a3ac60a8    78e38e522b1765efb15d0    092910024190a2521f21658be849c4ac9a\n            ]com        ba6776c661dbace      585e13c1f1301e90788      e6fa4d5f2ecd44c9055cc353a26875"
+ },
+ {
+  "id": "p125",
+  "text": "nefosferta[.   20643549f19bed9a6    c8227dcc1cd6ecc684de8    1ef8cdbd3773bd82e5be25d4ba61e5e593\n            ]com        853810262622755      c5ea9b16e3b35f613f1      71c6331726842107c0f1eb7d4d1f49"
+ },
+ {
+  "id": "p126",
+  "text": "nefosferta[.   e9299fc9b7daa0742    77360abc473dc65c8bdd7    22e3f4602a258e92a0b8deb5a2bd69c67f\n            ]com        c28bfc4b03b7b25      3b6459b9ea8fddb6f1d      4ac3ca67362a745178848a9da7a3cc"
+ },
+ {
+  "id": "p127",
+  "text": "nefosferta[.   775fb391db27e299af   eaaa5e68956a3a3f6113e    2d50b03a92445ba53ae147d0b97c49485\n            ]com        08933917a3acda       965199f479e10ae9956      8c86a56fe037c44bc0edabb902420f7"
+ },
+ {
+  "id": "p128",
+  "text": "TLP:CLEAR                                                                                     CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p129",
+  "text": "nefosferta[.   f4045710c99d347fe6   b7bffdbbaf817d149bbd06   32ae88cddeeeec255d6d9c827f6bffc7a95\n            ]com        dfa2c0fcadde29       1070a2d171449afbfc       e9ea7b83a84a79ff793735a4b4ed7"
+ },
+ {
+  "id": "p130",
+  "text": "nefosferta[.   587acecdb9491e089    a9eb1ac4b85d17da3a2ba    55d1480cd023b74f10692c689b56e7fd6cc\n            ]com        7d1067eb02e7c8d      e5835c7e862d481c189      8139fb6322762181daead55a62b9e"
+ },
+ {
+  "id": "p131",
+  "text": "nefosferta[.   0bae65245e5423147    f24232330e6f428bfbb6b9   6210a9f5a5e1dc27e68ecd61c092d26676\n            ]com        fce079de29b6136      d8154db1c4046c2fc2       09e318a95b5dade3c28f5634a89727"
+ },
+ {
+  "id": "p132",
+  "text": "nefosferta[.   5022a85b39a75ebe2    a9040ac0e9f482454e040    68a86858b4638b43d63e8e2aaec15a9eb\n            ]com        bc0411d7b058b2e      e2a7d874ddc50e6f6ce      d8fc14d460dd74463db42e59c4c6f89"
+ },
+ {
+  "id": "p133",
+  "text": "nefosferta[.   6a2f114a8995dbeb9    edac3cf9533b6f7102f632   72813522a065e106ac10aa96e835c47aa\n            ]com        1f766ac2390086e      4fadb437a0814cc680       9f34e981db20fa46a8f36c4543bb85d"
+ },
+ {
+  "id": "p134",
+  "text": "nefosferta[.   e9115cc3280c16f90    dad01b0c745649c6c8b87    7a64bc69b60e3cd3fd00d4424b41139446\n            ]com        19e0054e059f4b8      dbeb7ab549ed039515d      5640f499e56563447fe70579ccdd00"
+ },
+ {
+  "id": "p135",
+  "text": "nefosferta[.   b54cc9a3dd88e478e    318fdfec4575d1530a41c8   7c607eca4005ba6415e09135ef38033bb0\n            ]com        a601dfd5b36805e      0274aa8caae7b7f631       b0e0ff3e46d60253fc420af7519347"
+ },
+ {
+  "id": "p136",
+  "text": "nefosferta[.   f129c12b1bda7426f6   5bb804153029c97fe2351    7c79ec3f5c1a280ffdf19d0000b4bfe458a3\n            ]com        b31682b42ee4b0       7ae5428a591c3c63f28      b9380c152c1e130a89de3fe04b63"
+ },
+ {
+  "id": "p137",
+  "text": "nefosferta[.   f68aa4c92dd30bd54    aa56f43e39d114235a6b1    7e39dcd15307e7de862b9b42bf556f2836\n            ]com        18f136aaf6c07d6      d5f66b593cc80325fa4      bf7916faab0604a052c82c19e306ca"
+ },
+ {
+  "id": "p138",
+  "text": "nefosferta[.   acac995cee8a6a75f    971a00a392b99f64a3886f   97bae3587f1d2fd35f24eb214b9dd6eed95\n            ]com        a79eb41bdffa53f      40b6ef991e62f0fe2f       744bed62468d998c7ef55ff8726d4"
+ },
+ {
+  "id": "p139",
+  "text": "nefosferta[.   36057710279d9f0d0    e4dd1f8fc4e44c8fd0e252   97d0844ce9928e32b11706e06bf2c44262\n            ]com        23cb5613aa76d5e      42d994c4b59eed6939       04d998cb39964dd3c3de6c5223fff0"
+ },
+ {
+  "id": "p140",
+  "text": "nefosferta[.   37e6904d84153d143    1dcd85f7364ea06cd595a    bf3c7f0ba324c96c9a9bff6cf21650a4b78e\n            ]com        5407f4669135134      86e3e9be48995d596e9      dbc0076c68a9a125ebcba0e523c9"
+ },
+ {
+  "id": "p141",
+  "text": "nefosferta[.   4f3916e7714f2a3240   87a692e3592f7b997c7d9    c3743a8c944f5c9b17528418bf49b153b9\n            ]com        2c9d0b328a2c91       62919e243b665f2be36      78946838f56e5fca0a3f6914bee887"
+ },
+ {
+  "id": "p142",
+  "text": "nefosferta[.   d9daaa0df32b0bb01    f9cb839adba612db5884e    c3b3640ddf53b26f4ebd4eedf929540edb4\n            ]com        a09e500fc7f5881      1378474996b4436c0cd      52c413ca54d0d21cc405c7263f490"
+ },
+ {
+  "id": "p143",
+  "text": "nefosferta[.   c87fb9b9f6c343670b   f05cf0b026b2716927dac8   c6c4f690f0d15b96034b4258bdfaf797432\n            ]com        ed605420583418       bcd26a2719ea328964       a3ec4f73fbc920384d27903143cb0"
+ },
+ {
+  "id": "p144",
+  "text": "nefosferta[.   2be64efd0fa7739123   318fdfec4575d1530a41c8   ed38c454575879c2546e5fccace0b16a70\n            ]com        b26e4b70e53c5c       0274aa8caae7b7f631       1c403dfe3c3833730d23b32e41f2fe"
+ },
+ {
+  "id": "p145",
+  "text": "TLP:CLEAR                                                                                       CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p146",
+  "text": "Table 5: Truebot IOCs Connected to Russia, and Panama Locations"
+ },
+ {
+  "id": "p147",
+  "text": "Malicious          IP Addresses             Files                           SHA256\n            Domain"
+ },
+ {
+  "id": "p148",
+  "text": "Dremmfyttrred[\n            .]com"
+ },
+ {
+  "id": "p149",
+  "text": "45.182.189[.]1"
+ },
+ {
+  "id": "p150",
+  "text": "94.142.138[.]6"
+ },
+ {
+  "id": "p151",
+  "text": "172.64.155[.]1"
+ },
+ {
+  "id": "p152",
+  "text": "104.18.32[.]68"
+ },
+ {
+  "id": "p153",
+  "text": "Update[.]exe"
+ },
+ {
+  "id": "p154",
+  "text": "Document_26_apr_24438\n                                              07[.]exe"
+ },
+ {
+  "id": "p155",
+  "text": "3ujwy2rz7v[.]exe"
+ },
+ {
+  "id": "p156",
+  "text": "fe746402c74ac329231ae1b5dffa8229b5\n                                                                          09f4c15a0f5085617f14f0c1579040"
+ },
+ {
+  "id": "p157",
+  "text": "droogggdhfhf[.]c                          3LXJyA6Gf[.]exe        7d75244449fb5c25d8f196a43a6eb9e45\n               om                                                         3652b2185392376e7d44c21bd8431e7"
+ },
+ {
+  "id": "p158",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Tables 6-16 for all referenced cyber threat actor tactics and techniques for enterprise\n       environments in this advisory. For assistance with mapping malicious cyber activity to the MITRE\n       ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping\n       and CISA’s Decider Tool."
+ },
+ {
+  "id": "p159",
+  "text": "TLP:CLEAR                                                                                          CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p160",
+  "text": "Table 6: Initial Access"
+ },
+ {
+  "id": "p161",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p162",
+  "text": "Replication Through              T1091            Cyber threat actors use removable media drives to\n        Removable Media                                   deploy Raspberry Robin malware."
+ },
+ {
+  "id": "p163",
+  "text": "Drive-by Compromise              T1189            Cyber threat actors embed malicious links or\n                                                          attachments within web domains to gain initial\n                                                          access."
+ },
+ {
+  "id": "p164",
+  "text": "Exploit Public-Facing            T1190            Cyber threat actors are exploiting Netwrix\n        Application                                       vulnerability CVE-2022-31199 for initial access\n                                                          with follow-on capabilities of lateral movement\n                                                          through remote code execution."
+ },
+ {
+  "id": "p165",
+  "text": "Phishing                        T1566.002         Truebot actors can send spear phishing links to\n                                                          gain initial access."
+ },
+ {
+  "id": "p166",
+  "text": "Table 7: Execution"
+ },
+ {
+  "id": "p167",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p168",
+  "text": "Command and                      T1059            Cyber threat actors have been observed dropping\n        Scripting Interpreter                             cobalt strike beacons as a reverse shell proxy to\n                                                          create persistence within the compromised\n                                                          network.\n                                                          Cyber threat actors use FlawedGrace to receive\n                                                          PowerShell commands over a C2 channel to\n                                                          deploy additional tools."
+ },
+ {
+  "id": "p169",
+  "text": "Shared Modules                   T1129            Cyber threat actors can deploy malicious payloads\n                                                          through obfuscated share modules."
+ },
+ {
+  "id": "p170",
+  "text": "User Execution:                 T1204.001         Cyber threat actors trick users into clicking a link\n        Malicious Link                                    by making them believe they need to perform a\n                                                          Google Chrome software update."
+ },
+ {
+  "id": "p171",
+  "text": "TLP:CLEAR                                                                                           CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p172",
+  "text": "Table 8: Persistence"
+ },
+ {
+  "id": "p173",
+  "text": "Technique Title                ID                                      Use"
+ },
+ {
+  "id": "p174",
+  "text": "Hijack Execution Flow:          1574.002         Cyber threat actors use Raspberry Robin, among\n        DLL Side-Loading                                 other toolsets to side-load DLLs to maintain\n                                                         persistence."
+ },
+ {
+  "id": "p175",
+  "text": "Table 9: Privilege Escalation"
+ },
+ {
+  "id": "p176",
+  "text": "Technique Title                ID                                      Use"
+ },
+ {
+  "id": "p177",
+  "text": "Boot or Logon                   T1547.012        FlawedGrace malware manipulates print spooler\n        Autostart Execution:                             functions to achieve privilege escalation.\n        Print Processors"
+ },
+ {
+  "id": "p178",
+  "text": "Table 10: Defense Evasion"
+ },
+ {
+  "id": "p179",
+  "text": "Technique Title                ID                                      Use"
+ },
+ {
+  "id": "p180",
+  "text": "Obfuscated Files or              T1027           Truebot uses a .JSONIP extension (e.g.,\n        Information                                      IgtyXEQuCEvAM.JSONIP), to create a GUID."
+ },
+ {
+  "id": "p181",
+  "text": "Obfuscated Files or             T1027.001        Cyber threat actors embed around one gigabyte of\n        Information: Binary                              junk code within the malware string to evade\n        Padding                                          detection protocols."
+ },
+ {
+  "id": "p182",
+  "text": "Masquerading:                   T1036.008        Cyber threat actors hide Truebot malware as\n        Masquerade File Type                             legitimate appearing file formats."
+ },
+ {
+  "id": "p183",
+  "text": "Process Injection                T1055           Truebot malware has the ability to load shell code\n                                                         after establishing a C2 connection."
+ },
+ {
+  "id": "p184",
+  "text": "Indicator Removal:              T1070.004        Truebot malware implements self-deletion TTPs\n        File Deletion                                    throughout its attack cycle to evade detection.\n                                                         Teleport exfiltration tool deletes itself after it has\n                                                         completed exfiltrating data to the C2 station."
+ },
+ {
+  "id": "p185",
+  "text": "TLP:CLEAR                                                                                       CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p186",
+  "text": "Modify Registry                  T1112           FlawedGrace is able to modify registry programs\n                                                         that control the order that documents are loaded\n                                                         to a print que."
+ },
+ {
+  "id": "p187",
+  "text": "Reflective Code                  T1620           Truebot malware has the capability to load shell\n        Loading                                          code and deploy various tools to stealthily\n                                                         navigate an infected network."
+ },
+ {
+  "id": "p188",
+  "text": "Table 11: Credential Access"
+ },
+ {
+  "id": "p189",
+  "text": "Technique Title                ID                                    Use"
+ },
+ {
+  "id": "p190",
+  "text": "OS Credential                   T1003.001        Cyber threat actors use cobalt strike to gain valid\n        Dumping: LSASS                                   credentials through LSASS memory dumping.\n        Memory"
+ },
+ {
+  "id": "p191",
+  "text": "Table 12: Discovery"
+ },
+ {
+  "id": "p192",
+  "text": "Technique Title                ID                                    Use"
+ },
+ {
+  "id": "p193",
+  "text": "System Network                   T1016           Truebot malware scans and enumerates the\n        Configuration                                    affected system’s domain names.\n        Discovery"
+ },
+ {
+  "id": "p194",
+  "text": "Process Discovery                T1057           Truebot malware enumerates all running\n                                                         processes on the local host."
+ },
+ {
+  "id": "p195",
+  "text": "System Information               T1082           Truebot malware scans and enumerates the OS\n        Discovery                                        version information, and processor architecture.\n                                                         Truebot malware enumerates the affected\n                                                         system’s computer names."
+ },
+ {
+  "id": "p196",
+  "text": "System Time                      T1124           Truebot has the ability to discover system time\n        Discovery                                        metrics, which aids in enables synchronization\n                                                         with the compromised system’s internal clock to\n                                                         facilitate scheduling tasks."
+ },
+ {
+  "id": "p197",
+  "text": "TLP:CLEAR                                                                                        CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p198",
+  "text": "Software Discovery:             T1518.001         Truebot has the ability to discover software\n        Security Software                                 security protocols, which aids in defense evasion.\n        Discovery"
+ },
+ {
+  "id": "p199",
+  "text": "Debugger Evasion                 T1622            Truebot malware scans the compromised\n                                                          environment for debugger tools and enumerates\n                                                          them in effort to evade network defenses."
+ },
+ {
+  "id": "p200",
+  "text": "Table 13: Lateral Movement"
+ },
+ {
+  "id": "p201",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p202",
+  "text": "Exploitation of Remote           T1210            Cyber threat actors exploit CVE-2022-31199\n        Services                                          Netwrix Auditor vulnerability and use its\n                                                          capabilities to move laterally within a\n                                                          compromised network."
+ },
+ {
+  "id": "p203",
+  "text": "Use Alternate                   T1550.002         Cyber threat actors use cobalt strike to\n        Authentication                                    authenticate valid accounts\n        Material: Pass the\n        Hash"
+ },
+ {
+  "id": "p204",
+  "text": "Remote Service                  T1563.001         Cyber threat actors use cobalt strike to hijack\n        Session Hijacking                                 remote sessions using SSH and RDP hijacking\n                                                          methods."
+ },
+ {
+  "id": "p205",
+  "text": "Remote Service                  T1563.002         Cyber threat actors use cobalt strike to hijack\n        Session Hijacking:                                remote sessions using SSH and RDP hijacking\n        RDP Hijacking                                     methods."
+ },
+ {
+  "id": "p206",
+  "text": "Lateral Tool Transfer            T1570            Cyber threat actors deploy additional payloads to\n                                                          transfer toolsets and move laterally."
+ },
+ {
+  "id": "p207",
+  "text": "Table 14: Collection"
+ },
+ {
+  "id": "p208",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p209",
+  "text": "Data from Local                  T1005            Truebot malware checks the current version of the\n        System                                            OS and the processor architecture and compiles\n                                                          the information it receives."
+ },
+ {
+  "id": "p210",
+  "text": "TLP:CLEAR                                                                                          CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p211",
+  "text": "Truebot gathers and compiles compromised\n                                                          system’s host and domain names."
+ },
+ {
+  "id": "p212",
+  "text": "Screen Capture                   T1113            Truebot malware takes snapshots of local host\n                                                          data, specifically processor architecture data, and\n                                                          sends that to a phase 2 encoded data string."
+ },
+ {
+  "id": "p213",
+  "text": "Table 15: Command and Control"
+ },
+ {
+  "id": "p214",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p215",
+  "text": "Application Layer                T1071            Cyber threat actors use teleport exfiltration tool to\n        Protocol                                          blend exfiltrated data with network traffic."
+ },
+ {
+  "id": "p216",
+  "text": "Non-Application                  T1095            Cyber threat actors use Teleport and\n        Protocol                                          FlawedGrace to send data over custom\n                                                          communication protocol."
+ },
+ {
+  "id": "p217",
+  "text": "Ingress Transfer Tool            T1105            Cyber threat actors deploy various ingress transfer\n                                                          tool payloads to move laterally and establish C2\n                                                          connections."
+ },
+ {
+  "id": "p218",
+  "text": "Encrypted Channel:              T1573.002         Cyber threat actors use Teleport to create an\n        Asymmetric                                        encrypted channel using AES.\n        Cryptography"
+ },
+ {
+  "id": "p219",
+  "text": "Table 16: Exfiltration"
+ },
+ {
+  "id": "p220",
+  "text": "Technique Title                ID                                     Use"
+ },
+ {
+  "id": "p221",
+  "text": "Scheduled Transfer               T1029            Teleport limits the data it collects and syncs with\n                                                          outbound organizational data/network traffic."
+ },
+ {
+  "id": "p222",
+  "text": "Data Transfer Size               T1030            Teleport limits the data it collects and syncs with\n        Limits                                            outbound organizational data/network traffic."
+ },
+ {
+  "id": "p223",
+  "text": "Exfiltration Over C2             T1048            Cyber threat actors blend exfiltrated data with\n        Channel                                           network traffic to evade detection."
+ },
+ {
+  "id": "p224",
+  "text": "TLP:CLEAR                                                                                              CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p225",
+  "text": "Cyber threat actors use the Teleport tool to\n                                                                exfiltrate data over a C2 protocol."
+ },
+ {
+  "id": "p226",
+  "text": "DETECTION METHODS\n       CISA and authoring organizations recommend that organizations review and implement the following\n       detection signatures, along with: Win/malicious_confidence100% (W),\n       Trojan:Win32/Tnega!MSR, and Trojan.Agent.Truebot.Gen, as well as YARA rules below to help\n       detect Truebot malware."
+ },
+ {
+  "id": "p227",
+  "text": "Detection Signatures\n                                        Figure 2: Snort Signature to Detect Truebot Malware"
+ },
+ {
+  "id": "p228",
+  "text": "alert tcp any any -> any any (msg:”TRUEBOT: Client HTTP Header”; sid:x; rev:1;\n        flow:established,to_server; content:”Mozilla/112.0 (compatible|3b 20 4d 53 49 45\n        20 31 31 2e 30 3b 20 57 69 6e 64 6f 77 73 20 4e 54 20 31 30 2e 30 30 29|”;\n        http_header; nocase; classtype:http-header; metadata:service http;)"
+ },
+ {
+  "id": "p229",
+  "text": "YARA Rules\n       CISA developed the following YARA to aid in detecting the presence of Truebot Malware.\n                                        Figure 3: YARA Rule for Detecting Truebot Malware"
+ },
+ {
+  "id": "p230",
+  "text": "rule CISA_10445155_01 : TRUEBOT downloader\n        {\n        meta:\n        Author = \"CISA Code & Media Analysis\"\n        Incident = \"10445155\"\n        Date = \"2023-05-17\"\n        Last_Modified = \"20230523_1500\"\n        Actor = \"n/a\"\n        Family = \"TRUEBOT\"\n        Capabilities = \"n/a\"\n        Malware_Type = \"downloader\"\n        Tool_Type = \"n/a\""
+ },
+ {
+  "id": "p231",
+  "text": "TLP:CLEAR                                                                                          CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p232",
+  "text": "Description = \"Detects TRUEBOT downloader samples\"\n        SHA256 = \"7d75244449fb5c25d8f196a43a6eb9e453652b2185392376e7d44c21bd8431e7\"\n        strings:\n        $s1 = { 64 72 65 6d 6d 66 79 74 74 72 72 65 64 2e 63 6f 6d }\n        $s2 = { 4e 73 75 32 4f 64 69 77 6f 64 4f 73 32 }\n        $s3 = { 59 69 50 75 6d 79 62 6f 73 61 57 69 57 65 78 79 }\n        $s4 = { 72 65 70 6f 74 73 5f 65 72 72 6f 72 2e 74 78 74 }\n        $s5 = { 4c 6b 6a 64 73 6c 66 6a 33 32 6f 69 6a 72 66 65 77 67 77 2e 6d 70 34 }\n        $s6 = { 54 00 72 00 69 00 67 00 67 00 65 00 72 00 31 00 32 }\n        $s7 = { 54 00 55 00 72 00 66 00 57 00 65 00 73 00 54 00 69 00 66 00 73 00 66 }\n        condition:\n        5 of them\n        }"
+ },
+ {
+  "id": "p233",
+  "text": "•   Additional YARA rules for detecting Truebot malware can be referenced from GitHub.[9]"
+ },
+ {
+  "id": "p234",
+  "text": "INCIDENT RESPONSE\n       The following steps are recommended if organizations detect a Truebot malware infection and\n       compromise:\n            1. Quarantine or take offline potentially affected hosts.\n            2. Collect and review artifacts such as running processes/services, unusual authentications, and\n               recent network connections.\n            3. Provision new account credentials.\n            4. Reimage compromised host.\n            5. Report the compromise to CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-\n               282-0870) or contact your local FBI field office. State, local, tribal, or territorial government\n               entities can also report to MS-ISAC (SOC@cisecurity.org or 866-787-4722)."
+ },
+ {
+  "id": "p235",
+  "text": "MITIGATIONS\n       CISA and the authoring organizations recommend organizations implement the below mitigations,\n       including mandating phishing-resistant multifactor authentication (MFA) for all staff and services.\n       For additional best practices, see CISA’s Cross-Sector Cybersecurity Performance Goals (CPGs).\n       The CPGs, developed by CISA and the National Institute of Standards and Technology (NIST), are a\n       prioritized subset of IT and OT security practices that can meaningfully reduce the likelihood and\n       impact of known cyber risks and common TTPs. Because the CPGs are a subset of best practices,\n       CISA and co-sealers recommend software manufacturers implement a comprehensive information"
+ },
+ {
+  "id": "p236",
+  "text": "TLP:CLEAR                                                                                             CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p237",
+  "text": "security program based on a recognized framework, such as the NIST Cybersecurity Framework\n       (CSF).\n           •    Apply patches to CVE-2022-31199\n           •    Update Netwrix Auditor to version 10.5"
+ },
+ {
+  "id": "p238",
+  "text": "Netwrix recommends using their Auditor application only on internally facing networks. System\n       owners that don't follow this recommendation, and use the application in externally facing instances,\n       are at increased risk to having CVE-2022-31199 exploited on their systems."
+ },
+ {
+  "id": "p239",
+  "text": "Reduce threat of malicious actors using remote access tools by:"
+ },
+ {
+  "id": "p240",
+  "text": "•    Implementing application controls to manage and control execution of software,\n                including allowlisting remote access programs.\n                o Application controls should prevent installation and execution of portable versions of\n                    unauthorized remote access and other software. A properly configured application\n                    allowlisting solution will block any unlisted application execution. Allowlisting is important\n                    because antivirus solutions may fail to detect the execution of malicious portable\n                    executables when the files use any combination of compression, encryption, or\n                    obfuscation."
+ },
+ {
+  "id": "p241",
+  "text": "See the National Security Agency’s Cybersecurity Information sheet, Enforce Signed Software\n       Execution Policies, and additional guidance below:"
+ },
+ {
+  "id": "p242",
+  "text": "•    Strictly limit the use of RDP and other remote desktop services. If RDP is necessary,\n                rigorously apply best practices, for example [CPG 2.W]:\n                o Audit the network for systems using RDP.\n                o Close unused RDP ports.\n                o Enforce account lockouts after a specified number of attempts.\n                o Apply phishing-resistant multifactor authentication (MFA).\n                o Log RDP login attempts.\n           •    Disable command-line and scripting activities and permissions [CPG 2.N].\n           •    Restrict the use of PowerShell by using Group Policy, and only grant to specific users on a\n                case-by-case basis. Typically, only those users or administrators who manage the network or\n                Windows operating systems (OSs) should be permitted to use PowerShell [CPG 2.E].\n           •    Update Windows PowerShell or PowerShell Core to the latest version and uninstall all\n                earlier PowerShell versions. Logs from Windows PowerShell prior to version 5.0 are either\n                non-existent or do not record enough detail to aid in enterprise monitoring and incident\n                response activities [CPG 1.E, 2.S, 2.T].\n           •    Enable enhanced PowerShell logging [CPG 2.T, 2.U].\n                o PowerShell logs contain valuable data, including historical OS and registry interaction and\n                    possible IOCs of a cyber threat actor’s PowerShell use.\n                o Ensure PowerShell instances, using the latest version, have module, script block, and\n                    transcription logging enabled (enhanced logging)."
+ },
+ {
+  "id": "p243",
+  "text": "TLP:CLEAR                                                                                       CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p244",
+  "text": "o   The two logs that record PowerShell activity are the PowerShell Windows Event Log and\n                    the PowerShell Operational Log. The authoring organizations recommend turning on these\n                    two Windows Event Logs with a retention period of at least 180 days. These logs should\n                    be checked on a regular basis to confirm whether the log data has been deleted or logging\n                    has been turned off. Set the storage size permitted for both logs to as large as possible.\n           •    Configure the Windows Registry to require User Account Control (UAC) approval for\n                any PsExec operations requiring administrator privileges to reduce the risk of lateral\n                movement by PsExec.\n           •    Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts [CPG 4.C].\n           •    Audit user accounts with administrative privileges and configure access controls according\n                to the principle of least privilege (PoLP) [CPG 2.E].\n           •    Reduce the threat of credential compromise via the following:\n                o Place domain admin accounts in the protected users’ group to prevent caching of\n                    password hashes locally.\n                o Implement Credential Guard for Windows 10 and Server 2016 (Refer to Microsoft:\n                    Manage Windows Defender Credential Guard for more information). For Windows Server\n                    2012R2, enable Protected Process Light for Local Security Authority (LSA).\n                o Refrain from storing plaintext credentials in scripts.\n           •    Implement time-based access for accounts set at the admin level and higher [CPG 2.A,\n                2.E]. For example, the Just-in-Time (JIT) access method provisions privileged access when\n                needed and can support enforcement of the principle of least privilege (as well as the Zero\n                Trust model). This is a process where a network-wide policy is set in place to automatically\n                disable admin accounts at the Active Directory (AD) level when the account is not in direct\n                need. Individual users may submit their requests through an automated process that grants\n                them access to a specified system for a set timeframe when they need to support the\n                completion of a certain task."
+ },
+ {
+  "id": "p245",
+  "text": "In addition, CISA, FBI, MS-ISAC, and CCCS recommend network defenders apply the following\n       mitigations to limit potential adversarial use of common system and network discovery techniques and\n       to reduce the impact and risk of compromise by ransomware or data extortion actors:"
+ },
+ {
+  "id": "p246",
+  "text": "•    Disable File and Printer sharing services. If these services are required, use strong\n                passwords or Active Directory authentication.\n           •    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers in a physically separate, segmented, and secure location (e.g., hard drive,\n                storage device, or the cloud).\n           •    Maintain offline backups of data and regularly maintain backup and restoration (daily or\n                weekly at minimum). By instituting this practice, an organization minimizes the impact of\n                disruption to business practices as they can retrieve their data [CPG 2.R].\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with National Institute for Standards and Technology\n                (NIST) standards for developing and managing password policies."
+ },
+ {
+  "id": "p247",
+  "text": "TLP:CLEAR                                                                                           CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p248",
+  "text": "o   Use longer passwords consisting of at least 15 characters [CPG 2.B].\n                o   Store passwords in hashed format using industry-recognized password managers.\n                o   Add password user “salts” to shared login credentials.\n                o   Avoid reusing passwords [CPG 2.C].\n                o   Implement multiple failed login attempt account lockouts [CPG 2.G].\n                o   Disable password “hints.”\n                o   Refrain from requiring password changes more frequently than once per year.\n                    Note: NIST guidance suggests favoring longer passwords instead of requiring regular and\n                    frequent password resets. Frequent password resets are more likely to result in users\n                    developing password “patterns” cyber criminals can easily decipher.\n                o Require administrator credentials to install software.\n           •    Require phishing-resistant multifactor authentication for all services to the extent\n                possible, particularly for webmail, virtual private networks, and accounts that access critical\n                systems [CPG 2.H].\n           •    Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats. Organizations should patch vulnerable software and hardware systems\n                within 24 to 48 hours of vulnerability disclosure. Prioritize patching known exploited\n                vulnerabilities in internet-facing systems [CPG 1.E].\n           •    Segment networks to prevent the spread of ransomware. Network segmentation can help\n                prevent the spread of ransomware by controlling traffic flows between—and access to various\n                subnetworks, restricting further lateral movement [CPG 2.F].\n           •    Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting ransomware,\n                implement a tool that logs and reports all network traffic, including lateral movement activity on\n                a network. Endpoint detection and response (EDR) tools are particularly useful for detecting\n                lateral connections, as they have insight into common and uncommon network connections for\n                each host [CPG 3.A].\n           •    Install, regularly update, and enable real time detection for antivirus software on all\n                hosts.\n           •    Disable unused ports [CPG 2.V].\n           •    Consider adding an email banner to emails received from outside your organization [CPG\n                2.M].\n           •    Ensure all backup data is encrypted, immutable (i.e., cannot be altered or deleted), and\n                covers the entire organization’s data infrastructure [CPG 2.K, 2.L, 2.R]."
+ },
+ {
+  "id": "p249",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, CISA recommends exercising, testing, and validating your\n       organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. CISA recommends testing your existing security controls\n       inventory to assess how they perform against the ATT&CK techniques described in this advisory.\n       To get started:"
+ },
+ {
+  "id": "p250",
+  "text": "TLP:CLEAR                                                                                     CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p251",
+  "text": "1. Select an ATT&CK technique described in this advisory (see Tables 5-13).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       CISA recommends continually testing your security program, at scale, in a production environment to\n       ensure optimal performance against the MITRE ATT&CK techniques identified in this advisory."
+ },
+ {
+  "id": "p252",
+  "text": "RESOURCES\n           •    NIST: NVD - CVE-2022-31199\n           •    Stopransomware.gov (A whole-of-government approach with one central location for U.S.\n                ransomware resources and alerts.)\n           •    #StopRansomware Guide\n           •    CISA: Implement Phishing-Resistant MFA\n           •    CISA: Guide to Securing Remote Access Software\n           •    CISA and MS-ISAC: Joint Ransomware Guide\n           •    CISA: Cross-Sector Cybersecurity Performance Goals\n           •    CL0P Ransomware Uses Truebot Malware for Access to Networks\n           •    Field Offices – FBI\n           •    NSA – Zero Trust Security Model"
+ },
+ {
+  "id": "p253",
+  "text": "REFERENCES\n       [1] Bishop Fox: Netwrix Auditor Advisory\n       [2] Talos Intelligence: Breaking the Silence - Recent Truebot Activity\n       [3] The DFIR Report: Truebot Deploys Cobalt Strike and FlawedGrace\n       [4] MAR-10445155-1.v1 .CLEAR Truebot Activity Infects U.S. and Canada Based Networks\n       [5] Red Canary: Raspberry Robin Delivery Vector\n       [6] Microsoft: Raspberry Robin Worm Part of a Larger Ecosystem Pre-Ransomware Activity\n       [7] Telsy: FlawedGrace RAT\n       [8] VMware Security Blog: Carbon Black’s Truebot Detection\n       [9] GitHub: DFIR Report - Truebot Malware YARA Rule"
+ },
+ {
+  "id": "p254",
+  "text": "TLP:CLEAR                                                                                    CISA | FBI | MS-ISAC| CCCS"
+ },
+ {
+  "id": "p255",
+  "text": "Additional Sources\n       Alarming Surge in TrueBot Activity Revealed with New Delivery Vectors (thehackernews.com)\n       Truebot Analysis Part 1\n       Truebot Analysis Part 2\n       Truebot Analysis Part 3\n       Truebot Exploits Netwrix Vulnerability\n       TrueBot malware delivery evolves, now infects businesses in the US and elsewhere\n       Malpedia-Silence Downloader\n       Printer spooling: what is it and how to fix it? | PaperCut"
+ },
+ {
+  "id": "p256",
+  "text": "ACKNOWLEDGEMENTS\n       VMware Carbon Black and Mandiant contributed to this CSA."
+ },
+ {
+  "id": "p257",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA and\n       authoring agencies do not endorse any commercial product or service, including any subjects of\n       analysis. Any reference to specific commercial products, processes, or services by service mark,\n       trademark, manufacturer, or otherwise, does not constitute or imply endorsement, recommendation,\n       or favoring by CISA, and co-sealers."
+ }
+]

@@ -1,0 +1,310 @@
+[
+ {
+  "id": "p1",
+  "text": "# Iranian Government-Sponsored APT Actors Compromise Federal Network, Deploy Crypto Miner, Credential Harvester"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA22-320A\n> - Date: 2022-11-21\n> - URL: https://www.ic3.gov/CSA/2022/221121.pdf\n> - PDF SHA-256: 1cac15d2e8cd1a04040eeb206882fd70c9337c85d47e88f1c7a7890053506a81 (`source.pdf`, 14 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (39 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                   TLP:CLEAR               Product ID: AA22-320A\n                                                                                                                             November 16, 2022"
+ },
+ {
+  "id": "p4",
+  "text": "Iranian Government-Sponsored APT Actors\n        Compromise Federal Network, Deploy Crypto\n        Miner, Credential Harvester\n        SUMMARY\n        From mid-June through mid-July 2022, CISA conducted an incident response engagement at a\n        Federal Civilian Executive Branch (FCEB) organization where CISA observed suspected advanced\n        persistent threat (APT) activity. In the course of incident response activities, CISA determined that\n        cyber threat actors exploited the Log4Shell vulnerability in an unpatched VMware Horizon server,\n        installed XMRig crypto mining software, moved laterally to the domain controller (DC), compromised\n        credentials, and then implanted Ngrok reverse proxies on several hosts to maintain persistence. CISA\n        and the Federal Bureau of Investigation (FBI) assess that the FCEB network was compromised by\n        Iranian government-sponsored APT actors.\n        CISA and FBI are releasing this Cybersecurity Advisory (CSA) providing the suspected Iranian\n        government-sponsored actors’ tactics, techniques, and procedures (TTPs) and indicators of\n        compromise (IOCs) to help network defenders detect and protect against related compromises.\n        CISA and FBI encourage all organizations with affected VMware systems that did not immediately\n        apply available patches or workarounds to assume compromise and initiate threat hunting activities. If\n        suspected initial access or compromise is detected based on IOCs or TTPs described in this CSA,\n        CISA and FBI encourage organizations to assume lateral movement by threat actors, investigate\n        connected systems (including the DC), and audit privileged accounts. All organizations, regardless of\n        identified evidence of compromise, should apply the recommendations in the Mitigations section of\n        this CSA to protect against similar malicious cyber activity.\n        For more information on Iranian government-sponsored Iranian malicious cyber activity, see CISA’s\n        Iran Cyber Threat Overview and Advisories webpage and FBI’s Iran Threats webpage.\n        For a downloadable copy of IOCs, see: AA22-320A.stix, 155 mb."
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this Joint Cybersecurity Advisory, contact your local\n        FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282- 0870. When available, please include\n        the following information regarding the incident: date, time, and location of the incident; type of activity; number of people\n        affected; type of equipment used for the activity; the name of the submitting company or organization; and a designated\n        point of contact.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\n        minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\n        standard copyright rules, TLP:CLEAR information may be distributed without restriction.\n        For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p6",
+  "text": "TLP:CLEAR                                                                                                    CISA | FBI\n       TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK for Enterprise framework, version 12. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK® tactics and techniques with corresponding mitigation and/or detection recommendations."
+ },
+ {
+  "id": "p7",
+  "text": "Overview\n       In April 2022, CISA conducted retrospective analysis using EINSTEIN—an FCEB-wide intrusion\n       detection system (IDS) operated and monitored by CISA—and identified suspected APT activity on\n       an FCEB organization’s network. CISA observed bi-directional traffic between the network and a\n       known malicious IP address associated with exploitation of the Log4Shell vulnerability (CVE-2021-\n       44228) in VMware Horizon servers. In coordination with the FCEB organization, CISA initiated threat\n       hunting incident response activities; however, prior to deploying an incident response team, CISA\n       observed additional suspected APT activity. Specifically, CISA observed HTTPS activity from IP\n       address 51.89.181[.]64 to the organization’s VMware server. Based on trusted third-party\n       reporting, 51.89.181[.]64 is a Lightweight Directory Access Protocol (LDAP) server associated with\n       threat actors exploiting Log4Shell. Following HTTPS activity, CISA observed a suspected LDAP\n       callback on port 443 to this IP address. CISA also observed a DNS query for us‐nation‐ny[.]cf\n       that resolved back to 51.89.181[.]64 when the victim server was returning this Log4Shell LDAP\n       callback to the actors’ server.\n       CISA assessed that this traffic indicated a confirmed compromise based on the successful callback to\n       the indicator and informed the organization of these findings; the organization investigated the activity\n       and found signs of compromise. As trusted-third party reporting associated Log4Shell activity from\n       51.89.181[.]64 with lateral movement and targeting of DCs, CISA suspected the threat actors had\n       moved laterally and compromised the organization’s DC.\n       From mid-June through mid-July 2022, CISA conducted an onsite incident response engagement and\n       determined that the organization was compromised as early as February 2022, by likely Iranian\n       government-sponsored APT actors who installed XMRig crypto mining software. The threat actors\n       also moved laterally to the domain controller, compromised credentials, and implanted Ngrok reverse\n       proxies."
+ },
+ {
+  "id": "p8",
+  "text": "Threat Actor Activity\n       In February 2022, the threat actors exploited Log4Shell [T1190] for initial access [TA0001] to the\n       organization’s unpatched VMware Horizon server. As part of their initial exploitation, CISA observed a\n       connection to known malicious IP address 182.54.217[.]2 lasting 17.6 seconds.\n       The actors’ exploit payload ran the following PowerShell command [T1059.001] that added an\n       exclusion rule to Windows Defender [T1562.001]:\n                powershell try{Add-MpPreference -ExclusionPath 'C:\\'; Write-Host 'added-\n                exclusion'} catch {Write-Host 'adding-exclusion-failed' }; powershell -enc\n                \"$BASE64 encoded payload to download next stage and execute it\""
+ },
+ {
+  "id": "p9",
+  "text": "TLP:CLEAR                                                                                                    CISA | FBI\n       The exclusion rule allowlisted the entire c:\\drive, enabling threat actors to download tools to the\n       c:\\drive without virus scans. The exploit payload then downloaded mdeploy.text from\n       182.54.217[.]2/mdepoy.txt to C:\\users\\public\\mde.ps1 [T1105]. When executed, mde.ps1\n       downloaded file.zip from 182.54.217[.]2 and removed mde.ps1 from the disk [T1070.004].\n       file.zip contained XMRig cryptocurrency mining software and associated configuration files.\n           ●    WinRing0x64.sys – XMRig Miner driver"
+ },
+ {
+  "id": "p10",
+  "text": "●    wuacltservice.exe – XMRig Miner"
+ },
+ {
+  "id": "p11",
+  "text": "●    config.json – XMRig miner configuration"
+ },
+ {
+  "id": "p12",
+  "text": "●    RuntimeBroker.exe – Associated file. This file can create a local user account [T1136.001]\n                and tests for internet connectivity by pinging 8.8.8.8 [T1016.001]. The exploit payload\n                created a Scheduled Task [T1053.005] that executed RuntimeBroker.exe daily as SYSTEM.\n                Note: By exploiting Log4Shell, the actors gained access to a VMware service account with\n                administrator and system level access. The Scheduled Task was named\n                RuntimeBrokerService.exe to masquerade as a legitimate Windows task."
+ },
+ {
+  "id": "p13",
+  "text": "See MAR 10387061-1.v1 for additional information, including IOCs, on these four files.\n       After obtaining initial access and installing XMRig on the VMWare Horizon server, the actors used\n       RDP [T1021.001] and the built-in Windows user account DefaultAccount [T1078.001] to move\n       laterally [TA0008] to a VMware VDI-KMS host. Once the threat actor established themselves on the\n       VDI-KMS host, CISA observed the actors download around 30 megabytes of files from\n       transfer[.]sh server associated with 144.76.136[.]153. The actors downloaded the following\n       tools:\n           •    PsExec – a Microsoft signed tool for system administrators.\n           •    Mimikatz – a credential theft tool.\n           •    Ngrok – a reverse proxy tool for proxying an internal service out onto an Ngrok domain, which\n                the user can then access at a randomly generated subdomain at *.ngrok[.]io. CISA has\n                observed this tool in use by some commercial products for benign purposes; however, this\n                process bypasses typical firewall controls and may be a potentially unwanted application in\n                production environments. Ngrok is known to be used for malicious purposes.[1]"
+ },
+ {
+  "id": "p14",
+  "text": "The threat actors then executed Mimikatz on VDI-KMS to harvest credentials and created a rogue\n       domain administrator account [T1136.002]. Using the newly created account, the actors leveraged\n       RDP to propagate to several hosts within the network. Upon logging into each host, the actors\n       manually disabled Windows Defender via the Graphical User Interface (GUI) and implanted Ngrok\n       executables and configuration files. The threat actors were able to implant Ngrok on multiple hosts to\n       ensure Ngrok’s persistence should they lose access to a machine during a routine reboot. The actors\n       were able to proxy [T1090] RDP sessions, which were only observable on the local network as\n       outgoing HTTPS port 443 connections to tunnel.us.ngrok[.]com and korgn.su.lennut[.]com"
+ },
+ {
+  "id": "p15",
+  "text": "TLP:CLEAR                                                                                                    CISA | FBI\n       (the prior domain in reverse). It is possible, but was not observed, that the threat actors configured a\n       custom domain, or used other Ngrok tunnel domains, wildcarded here as *.ngrok[.]com,\n       *.ngrok[.]io, ngrok.*.tunnel[.]com, or korgn.*.lennut[.]com.\n       Once the threat actors established a deep foothold in the network and moved laterally to the domain\n       controller, they executed the following PowerShell command on the Active Directory to obtain a list of\n       all machines attached to the domain [T1018]:\n                Powershell.exe get-adcomputer -filter * -properties * | select\n                name,operatingsystem,ipv4address &gt;\n       The threat actors also changed the password for the local administrator account [T1098] on several\n       hosts as a backup should the rogue domain administrator account get detected and terminated.\n       Additionally, the threat actor was observed attempting to dump the Local Security Authority\n       Subsystem Service (LSASS) process [T1003.001] with task manager but this was stopped by\n       additional anti-virus the FCEB organization had installed."
+ },
+ {
+  "id": "p16",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See table 1 for all referenced threat actor tactics and techniques in this advisory, as well as\n       corresponding detection and/or mitigation recommendations. For additional mitigations, see the\n       Mitigations section.\n                                Table 1: Cyber Threat Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p17",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p18",
+  "text": "Technique Title                ID               Use                     Recommendations"
+ },
+ {
+  "id": "p19",
+  "text": "Exploit Public-                T1190     The actors exploited      Mitigation/Detection: Use a firewall\n        Facing Application                       Log4Shell for initial     or web-application firewall and\n                                                 access to the             enable logging to prevent and detect\n                                                 organization’s VMware     potential Log4Shell exploitation\n                                                 Horizon server.           attempts [M1050].\n                                                                           Mitigation: Perform regular\n                                                                           vulnerability scanning to detect\n                                                                           Log4J vulnerabilities and update\n                                                                           Log4J software using vendor\n                                                                           provided patches [M1016],[M1051]."
+ },
+ {
+  "id": "p20",
+  "text": "TLP:CLEAR                                                                                                       CISA | FBI\n                                                           Execution"
+ },
+ {
+  "id": "p21",
+  "text": "Technique Title                ID                 Use                     Recommendation"
+ },
+ {
+  "id": "p22",
+  "text": "Command and                    T1059.001    The actors ran          Mitigation: Disable or remove\n        Scripting Interpreter:                      PowerShell commands     PowerShell for non-administrative\n        PowerShell                                  that added an           users [M1042],[M1026] or enable\n                                                    exclusion rule to       code-signing to execute only signed\n                                                    Windows Defender.       scripts [M1045].\n                                                    The actors executed     Mitigation: Employ anti-malware to\n                                                    PowerShell on the AD    automatically detect and quarantine\n                                                    to obtain a list of     malicious scripts [M1049].\n                                                    machines on the\n                                                    domain."
+ },
+ {
+  "id": "p23",
+  "text": "Persistence"
+ },
+ {
+  "id": "p24",
+  "text": "Technique Title                ID                 Use                    Recommendations"
+ },
+ {
+  "id": "p25",
+  "text": "Account                        T1098        The actors changed      Mitigation: Use multifactor\n        Manipulation                                the password for the    authentication for user and\n                                                    local administrator     privileged accounts [M1032].\n                                                    account on several\n                                                                            Detection: Monitor events for\n                                                    hosts.\n                                                                            changes to account objects and/or\n                                                                            permissions on systems and the\n                                                                            domain, such as event IDs 4738,\n                                                                            4728, and 4670. Monitor for\n                                                                            modification of accounts in\n                                                                            correlation with other suspicious\n                                                                            activity [DS0002]."
+ },
+ {
+  "id": "p26",
+  "text": "Create Account:                T1136.001    The actors’ malware     Mitigation: Configure access\n        Local Account                               can create local user   controls and firewalls to limit access\n                                                    accounts.               to domain controllers and systems\n                                                                            used to create and manage\n                                                                            accounts.\n                                                                            Detection: Monitor executed\n                                                                            commands and arguments for\n                                                                            actions that are associated with\n                                                                            local account creation, such as net"
+ },
+ {
+  "id": "p27",
+  "text": "TLP:CLEAR                                                                                                           CISA | FBI\n                                                                               user /add , useradd, and dscl -\n                                                                               create [DS0017].\n                                                                               Detection: Enable logging for new\n                                                                               user creation [DS0002]."
+ },
+ {
+  "id": "p28",
+  "text": "Create Account:                T1136.002    The actors used            Mitigation: Configure access\n        Domain Account                              Mimikatz to create a       controls and firewalls to limit access\n                                                    rogue domain               to domain controllers and systems\n                                                    administrator account.     used to create and manage\n                                                                               accounts.\n                                                                               Detection: Enable logging for new\n                                                                               user creation, especially domain\n                                                                               administrator accounts [DS0002]."
+ },
+ {
+  "id": "p29",
+  "text": "Scheduled                      T1053.005    The actors’ exploit        Mitigation: Configure settings for\n        Task/Job:                                   payload created            scheduled tasks to force tasks to\n        Scheduled Task                              Scheduled Task             run under the context of the\n                                                    RuntimeBrokerServic        authenticated account instead of\n                                                    e.exe, which executed      allowing them to run as SYSTEM\n                                                    RuntimeBroker.exe          [M1028].\n                                                    daily as SYSTEM.           Detection: Monitor for newly\n                                                                               constructed processes and/or\n                                                                               command-lines that execute from\n                                                                               the svchost.exe in Windows 10\n                                                                               and the Windows Task Scheduler\n                                                                               taskeng.exe for older versions of\n                                                                               Windows [DS0009]\n                                                                               Detection: Monitor for newly\n                                                                               constructed scheduled jobs by\n                                                                               enabling the Microsoft-Windows-\n                                                                               TaskScheduler/Operational\n                                                                               setting within the event logging\n                                                                               service [DS0003]."
+ },
+ {
+  "id": "p30",
+  "text": "Valid Accounts:                T1078.001    The actors used built-in   Mitigation: Change default\n        Default Accounts                            Windows user account       usernames and passwords\n                                                    DefaultAccount.            immediately after the installation\n                                                                               and before deployment to a\n                                                                               production environment [M1027]."
+ },
+ {
+  "id": "p31",
+  "text": "TLP:CLEAR                                                                                                          CISA | FBI\n                                                                               Detection: Develop rules to monitor\n                                                                               logon behavior across default\n                                                                               accounts that have been activated\n                                                                               or logged into [DS0028]."
+ },
+ {
+  "id": "p32",
+  "text": "Defense Evasion"
+ },
+ {
+  "id": "p33",
+  "text": "Technique Title                ID                  Use                      Recommendations"
+ },
+ {
+  "id": "p34",
+  "text": "Impair Defenses:               T1562.001    The actors added an        Mitigation: Ensure proper user\n        Disable or Modify                           exclusion rule to          permissions are in place to prevent\n        Tools                                       Windows Defender.          adversaries from disabling or\n                                                    The tool allowlisted the   interfering with security services.\n                                                    entire c:\\drive,           [M1018].\n                                                    enabling the actors to\n                                                                               Detection: Monitor for changes\n                                                    bypass virus scans for     made to Windows Registry keys\n                                                    tools they downloaded\n                                                                               and/or values related to services\n                                                    to the c:\\drive.           and startup programs that\n                                                    The actors manually        correspond to security tools such as\n                                                    disabled Windows           HKLM:\\SOFTWARE\\Policies\\Micro\n                                                    Defender via the GUI.      soft\\Windows Defender [DS0024].\n                                                                               Detection: Monitor for telemetry\n                                                                               that provides context for\n                                                                               modification or deletion of\n                                                                               information related to security\n                                                                               software processes or services such\n                                                                               as Windows Defender definition files\n                                                                               in Windows and System log files in\n                                                                               Linux [DS0013].\n                                                                               Detection: Monitor processes for\n                                                                               unexpected termination related to\n                                                                               security tools/services [DS0009]."
+ },
+ {
+  "id": "p35",
+  "text": "Indicator Removal              T1070.004    The actors removed         Detection: Monitor executed\n        on Host: File                               malicious file mde.ps1     commands and arguments for\n        Deletion                                    from the dis.              actions that could be utilized to\n                                                                               unlink, rename, or delete files\n                                                                               [DS0017]."
+ },
+ {
+  "id": "p36",
+  "text": "TLP:CLEAR                                                                                                     CISA | FBI\n                                                                            Detection: Monitor for unexpected\n                                                                            deletion of files from the system\n                                                                            [DS0022]."
+ },
+ {
+  "id": "p37",
+  "text": "Credential Access"
+ },
+ {
+  "id": "p38",
+  "text": "Technique Title                ID                    Use                    Recommendations"
+ },
+ {
+  "id": "p39",
+  "text": "OS Credential                  T1003.001    The actors were         Mitigation: With Windows 10,\n        Dumping: LSASS                              observed trying to      Microsoft implemented new\n        Memory                                      dump LSASS process.     protections called Credential Guard\n                                                                            to protect the LSA secrets that can\n                                                                            be used to obtain credentials\n                                                                            through forms of credential dumping\n                                                                            [M1043]\n                                                                            Mitigation: On Windows 10, enable\n                                                                            Attack Surface Reduction (ASR)\n                                                                            rules to secure LSASS and prevent\n                                                                            credential stealing [M1040].\n                                                                            Mitigation: Ensure that local\n                                                                            administrator accounts have\n                                                                            complex, unique passwords across\n                                                                            all systems on the network [M1027].\n                                                                            Detection: Monitor for unexpected\n                                                                            processes interacting with\n                                                                            LSASS.exe. Common credential\n                                                                            dumpers such as Mimikatz access\n                                                                            LSASS.exe by opening the process,\n                                                                            locating the LSA secrets key, and\n                                                                            decrypting the sections in memory\n                                                                            where credential details are stored.\n                                                                            [DS0009].\n                                                                            Detection: Monitor executed\n                                                                            commands and arguments that may\n                                                                            attempt to access credential\n                                                                            material stored in the process\n                                                                            memory of the LSASS [DS0017]."
+ },
+ {
+  "id": "p40",
+  "text": "TLP:CLEAR                                                                                                    CISA | FBI\n        Credentials from               T1555    The actors used           Mitigation: Organizations may\n        Password Stores                         Mimikatz to harvest       consider weighing the risk of storing\n                                                credentials.              credentials in password stores and\n                                                                          web browsers. If system, software,\n                                                                          or web browser credential\n                                                                          disclosure is a significant concern,\n                                                                          technical controls, policy, and user\n                                                                          training may be used to prevent\n                                                                          storage of credentials in improper\n                                                                          locations [M1027].\n                                                                          Detection: Monitor for processes\n                                                                          being accessed that may search for\n                                                                          common password storage\n                                                                          locations to obtain user credentials\n                                                                          [DS0009].\n                                                                          Detection: Monitor executed\n                                                                          commands and arguments that may\n                                                                          search for common password\n                                                                          storage locations to obtain user\n                                                                          credentials [DS0017]."
+ },
+ {
+  "id": "p41",
+  "text": "Discovery"
+ },
+ {
+  "id": "p42",
+  "text": "Technique Title                ID             Use                      Recommendations"
+ },
+ {
+  "id": "p43",
+  "text": "Remote System                  T1018    The actors executed a     Detection: Monitor executed\n        Discovery                               PowerShell command        commands and arguments that may\n                                                on the AD to obtain a     attempt to get a listing of other\n                                                list of all machines      systems by IP address, hostname,\n                                                attached to the domain.   or other logical identifier on a\n                                                                          network that may be used for lateral\n                                                                          movement [DS0017].\n                                                                          Detection: Monitor for newly\n                                                                          constructed network connections\n                                                                          associated with pings/scans that\n                                                                          may attempt to get a listing of other\n                                                                          systems by IP address, hostname,\n                                                                          or other logical identifier on a\n                                                                          network that may be used for lateral\n                                                                          movement [DS0029]."
+ },
+ {
+  "id": "p44",
+  "text": "TLP:CLEAR                                                                                                        CISA | FBI\n                                                                           Detection: Monitor for newly\n                                                                           executed processes that can be\n                                                                           used to discover remote systems,\n                                                                           such as ping.exe and tracert.exe,\n                                                                           especially when executed in quick\n                                                                           succession [DS0009]."
+ },
+ {
+  "id": "p45",
+  "text": "System Network              T1016.001    The actors’ malware       Mitigation: Monitor executed\n        Configuration                            tests for internet        commands, arguments [DS0017]\n        Discovery: Internet                      connectivity by pinging   and executed processes (e.g.,\n        Connection                               8.8.8.8.\n                                                                           tracert or ping) [DS0009] that\n        Discovery\n                                                                           may check for internet connectivity\n                                                                           on compromised systems."
+ },
+ {
+  "id": "p46",
+  "text": "Lateral Movement"
+ },
+ {
+  "id": "p47",
+  "text": "Technique Title              ID                Use                      Recommendations"
+ },
+ {
+  "id": "p48",
+  "text": "Remote Services:            T1021.001    The actors used RDP       Mitigation: Use MFA for remote\n        Remote Desktop                           to move laterally to      logins [M1032].\n        Protocol                                 multiple hosts on the\n                                                                           Mitigation: Disable the RDP service\n                                                 network.\n                                                                           if it is unnecessary [M1042].\n                                                                           Mitigation: Do not leave RDP\n                                                                           accessible from the internet. Enable\n                                                                           firewall rules to block RDP traffic\n                                                                           between network security zones\n                                                                           within a network [M1030].\n                                                                           Mitigation: Consider removing the\n                                                                           local Administrators group from the\n                                                                           list of groups allowed to log in\n                                                                           through RDP [M1026].\n                                                                           Detection: Monitor for user\n                                                                           accounts logged into systems\n                                                                           associated with RDP (ex: Windows\n                                                                           EID 4624 Logon Type 10). Other\n                                                                           factors, such as access patterns\n                                                                           (ex: multiple systems over a\n                                                                           relatively short period of time) and\n                                                                           activity that occurs after a remote\n                                                                           login, may indicate suspicious or"
+ },
+ {
+  "id": "p49",
+  "text": "TLP:CLEAR                                                                                                  CISA | FBI\n                                                                        malicious behavior with RDP\n                                                                        [DS0028]."
+ },
+ {
+  "id": "p50",
+  "text": "Command and Control"
+ },
+ {
+  "id": "p51",
+  "text": "Technique Title              ID               Use                    Recommendations"
+ },
+ {
+  "id": "p52",
+  "text": "Proxy                       T1090     The actors used Ngrok     Mitigation: Traffic to known\n                                              to proxy RDP              anonymity networks and C2\n                                              connections and to        infrastructure can be blocked\n                                              perform command and       through the use of network allow\n                                              control.                  and block lists [M1037].\n                                                                        Detection: Monitor and analyze\n                                                                        traffic patterns and packet\n                                                                        inspection associated to protocol(s)\n                                                                        that do not follow the expected\n                                                                        protocol standards and traffic flows\n                                                                        (e.g., extraneous packets that do\n                                                                        not belong to established flows,\n                                                                        gratuitous or anomalous traffic\n                                                                        patterns, anomalous syntax, or\n                                                                        structure) [DS0029]."
+ },
+ {
+  "id": "p53",
+  "text": "Ingress Tool                T1105     The actors downloaded     Mitigation: Employ anti-malware to\n        Transfer                              malware and multiple      automatically detect and quarantine\n                                              tools to the network,     malicious scripts [M1049].\n                                              including PsExec,\n                                              Mimikatz, and Ngrok."
+ },
+ {
+  "id": "p54",
+  "text": "INCIDENT RESPONSE\n       If suspected initial access or compromise is detected based on IOCs or TTPs in this CSA, CISA\n       encourages organizations to assume lateral movement by threat actors and investigate connected\n       systems and the DC.\n       CISA recommends organizations apply the following steps before applying any mitigations, including\n       patching.\n           1. Immediately isolate affected systems.\n           2. Collect and review relevant logs, data, and artifacts. Take a memory capture of the device(s)\n              and a forensic image capture for detailed analysis."
+ },
+ {
+  "id": "p55",
+  "text": "TLP:CLEAR                                                                                                     CISA | FBI\n           3. Consider soliciting support from a third-party incident response organization that can provide\n              subject matter expertise to ensure the actor is eradicated from the network and to avoid\n              residual issues that could enable follow-on exploitation.\n           4. Report incidents to CISA via CISA’s 24/7 Operations Center (report@cisa.gov or 888-282-\n              0870) or your local FBI field office."
+ },
+ {
+  "id": "p56",
+  "text": "MITIGATIONS\n       CISA and FBI recommend implementing the mitigations below and in table 1 to improve your\n       organization's cybersecurity posture on the basis of threat actor behaviors.\n           •    Install updated builds to ensure affected VMware Horizon and UAG systems are\n                updated to the latest version.\n                    o If updates or workarounds were not promptly applied following VMware’s release of\n                        updates for Log4Shell in December 2021, treat those VMware Horizon systems as\n                        compromised. Follow the pro-active incident response procedures outlined above prior\n                        to applying updates. If no compromise is detected, apply these updates as soon as\n                        possible.\n                            ▪ See VMware Security Advisory VMSA-2021-0028.13 and VMware Knowledge\n                                Base (KB) 87073 to determine which VMware Horizon components are\n                                vulnerable.\n                            ▪ Note: Until the update is fully implemented, consider removing vulnerable\n                                components from the internet to limit the scope of traffic. While installing the\n                                updates, ensure network perimeter access controls are as restrictive as\n                                possible.\n                            ▪ If upgrading is not immediately feasible, see KB87073 and KB87092 for\n                                vendor-provided temporary workarounds. Implement temporary solutions using\n                                an account with administrative privileges. Note that these temporary solutions\n                                should not be treated as permanent fixes; vulnerable components should be\n                                upgraded to the latest build as soon as possible.\n                            ▪ Prior to implementing any temporary solution, ensure appropriate backups\n                                have been completed.\n                            ▪ Verify successful implementation of mitigations by executing the vendor\n                                supplied script Horizon_Windows_Log4j_Mitigations.zip without\n                                parameters to ensure that no vulnerabilities remain. See KB87073 for details.\n           •    Keep all software up to date and prioritize patching known exploited vulnerabilities (KEVs).\n           •    Minimize the internet-facing attack surface by hosting essential services on a segregated\n                DMZ, ensuring strict network perimeter access controls, and not hosting internet-facing\n                services that are not essential to business operations. Where possible, implement regularly\n                updated web application firewalls (WAF) in front of public-facing services. WAFs can protect\n                against web-based exploitation using signatures and heuristics that are likely to block or alert\n                on malicious traffic.\n           •    Use best practices for identity and access management (IAM) by implementing phishing\n                resistant MFA, enforcing use of strong passwords, regularly auditing administrator accounts"
+ },
+ {
+  "id": "p57",
+  "text": "TLP:CLEAR                                                                                                  CISA | FBI\n                and permissions, and limiting user access through the principle of least privilege. Disable\n                inactive accounts uniformly across the AD, MFA systems, etc.\n                    o If using Windows 10 version 1607 or Windows Server 2016 or later, monitor or disable\n                        Windows DefaultAccount, also known as the Default System Managed Account\n                        (DSMA).\n           •    Audit domain controllers to log successful Kerberos Ticket Granting Service (TGS)\n                requests and ensure the events are monitored for anomalous activity.\n                   o Secure accounts.\n                   o Enforce the principle of least privilege. Administrator accounts should have the\n                       minimum permission necessary to complete their tasks.\n                   o Ensure there are unique and distinct administrative accounts for each set of\n                       administrative tasks.\n                   o Create non-privileged accounts for privileged users and ensure they use the non-\n                       privileged accounts for all non-privileged access (e.g., web browsing, email access).\n           •    Create a deny list of known compromised credentials and prevent users from using\n                known-compromised passwords.\n           •    Secure credentials by restricting where accounts and credentials can be used and by\n                using local device credential protection features.\n                    o Use virtualizing solutions on modern hardware and software to ensure credentials are\n                        securely stored.\n                    o Ensure storage of clear text passwords in LSASS memory is disabled. Note: For\n                        Windows 8, this is enabled by default. For more information see Microsoft Security\n                        Advisory Update to Improve Credentials Protection and Management.\n                    o Consider disabling or limiting NTLM and WDigest Authentication.\n                    o Implement Credential Guard for Windows 10 and Server 2016 (refer to Microsoft:\n                        Manage Windows Defender Credential Guard for more information). For Windows\n                        Server 2012R2, enable Protected Process Light for Local Security Authority (LSA).\n                    o Minimize the AD attack surface to reduce malicious ticket-granting activity. Malicious\n                        activity such as “Kerberoasting” takes advantage of Kerberos’ TGS and can be used to\n                        obtain hashed credentials that threat actors attempt to crack."
+ },
+ {
+  "id": "p58",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, CISA and FBI recommend exercising, testing, and validating your\n       organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. CISA and FBI recommend testing your existing security\n       controls inventory to assess how they perform against the ATT&CK techniques described in this\n       advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see table 1).\n           2. Align your security technologies against the technique."
+ },
+ {
+  "id": "p59",
+  "text": "TLP:CLEAR                                                                                               CISA | FBI\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process."
+ },
+ {
+  "id": "p60",
+  "text": "CISA and FBI recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p61",
+  "text": "REFERENCES\n       [1] MITRE ATT&CK Version 12: Software – Ngrok"
+ },
+ {
+  "id": "p62",
+  "text": "Exploit Public-Facing Application (T1190): The actors exploited Log4Shell for initial access to the organization’s VMware Horizon server."
+ },
+ {
+  "id": "p63",
+  "text": "Command and Scripting Interpreter: PowerShell (T1059.001): The actors ran PowerShell commands that added an exclusion rule to Windows Defender. The actors executed PowerShell on the AD to obtain a list of machines on the domain."
+ },
+ {
+  "id": "p64",
+  "text": "Account Manipulation (T1098): The actors changed the password for the local administrator account on several hosts."
+ },
+ {
+  "id": "p65",
+  "text": "Create Account: Local Account (T1136.001): The actors’ malware can create local user accounts."
+ },
+ {
+  "id": "p66",
+  "text": "Create Account: Domain Account (T1136.002): The actors used Mimikatz to create a rogue domain administrator account."
+ },
+ {
+  "id": "p67",
+  "text": "Scheduled Task/Job: Scheduled Task (T1053.005): The actors’ exploit payload created Scheduled Task RuntimeBrokerServic e.exe, which executed RuntimeBroker.exe daily as SYSTEM."
+ },
+ {
+  "id": "p68",
+  "text": "Valid Accounts: Default Accounts (T1078.001): The actors used built-in Windows user account DefaultAccount."
+ },
+ {
+  "id": "p69",
+  "text": "Impair Defenses: Disable or Modify Tools (T1562.001): The actors added an exclusion rule to Windows Defender. The tool allowlisted the entire c:\\drive, enabling the actors to bypass virus scans for tools they downloaded to the c:\\drive. The actors manually disabled Windows Defender via the GUI."
+ },
+ {
+  "id": "p70",
+  "text": "Indicator Removal on Host: File Deletion (T1070.004): The actors removed malicious file mde.ps1 from the dis."
+ },
+ {
+  "id": "p71",
+  "text": "OS Credential Dumping: LSASS Memory (T1003.001): The actors were observed trying to dump LSASS process."
+ },
+ {
+  "id": "p72",
+  "text": "Credentials from Password Stores (T1555): The actors used Mimikatz to harvest credentials."
+ },
+ {
+  "id": "p73",
+  "text": "Remote System Discovery (T1018): The actors executed a PowerShell command on the AD to obtain a list of all machines attached to the domain."
+ },
+ {
+  "id": "p74",
+  "text": "System Network Configuration Discovery: Internet Connection Discovery (T1016.001): The actors’ malware tests for internet connectivity by pinging 8.8.8.8."
+ },
+ {
+  "id": "p75",
+  "text": "Remote Services: Remote Desktop Protocol (T1021.001): The actors used RDP to move laterally to multiple hosts on the network."
+ },
+ {
+  "id": "p76",
+  "text": "Proxy (T1090): The actors used Ngrok to proxy RDP connections and to perform command and control."
+ },
+ {
+  "id": "p77",
+  "text": "Ingress Tool Transfer (T1105): The actors downloaded malware and multiple tools to the network, including PsExec, Mimikatz, and Ngrok."
+ }
+]

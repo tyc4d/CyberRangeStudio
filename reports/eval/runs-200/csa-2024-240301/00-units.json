@@ -1,0 +1,362 @@
+[
+ {
+  "id": "p1",
+  "text": "# Threat Actors Exploit Multiple Vulnerabilities in Ivanti Connect Secure and Policy Secure Gateways"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-060B\n> - Date: 2024-03-01\n> - URL: https://www.ic3.gov/CSA/2024/240301.pdf\n> - PDF SHA-256: 2a6748ca59a10fd254298f52350892979c6a584276e3b0c2847b21ce5ecddf5e (`source.pdf`, 29 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (86 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                          Product ID: AA24-060B\n                                                                                                                             February 29, 2024\n                                                                                                                             February 27, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "Threat Actors Exploit Multiple Vulnerabilities in\n        Ivanti Connect Secure and Policy Secure Gateways\n        SUMMARY\n        The Cybersecurity and Infrastructure Security Agency                         Actions to take today to mitigate cyber\n        (CISA) and the following partners (hereafter referred to as                  threats against Ivanti appliances:\n        the authoring organizations) are releasing this joint\n        Cybersecurity Advisory to warn that cyber threat actors                      •    Limit outbound internet connections\n        are exploiting previously identified vulnerabilities in Ivanti                    from SSL VPN appliances to restrict\n        Connect Secure and Ivanti Policy Secure gateways. CISA                            access to required services.\n        and authoring organizations appreciate the cooperation of                    •    Keep all operating systems and\n        Volexity, Ivanti, Mandiant and other industry partners in                         firmware up to date.\n        the development of this advisory and ongoing incident                        •    Limit SSL VPN connections to\n        response activities. Authoring organizations:                                     unprivileged accounts."
+ },
+ {
+  "id": "p5",
+  "text": "•     Federal Bureau of Investigation (FBI)\n            •     Multi-State Information Sharing & Analysis Center (MS-ISAC)\n            •     Australian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC)\n            •     United Kingdom National Cyber Security Centre (NCSC-UK)\n            •     Canadian Centre for Cyber Security (Cyber Centre), a part of the Communications Security\n                  Establishment\n            •     New Zealand National Cyber Security Centre (NCSC-NZ)\n            •     CERT-New Zealand (CERT NZ)\n        Of particular concern, the authoring organizations and industry partners have determined that cyber\n        threat actors are able to deceive Ivanti’s internal and external Integrity Checker Tool (ICT), resulting in\n        a failure to detect compromise."
+ },
+ {
+  "id": "p6",
+  "text": "U.S. organizations: To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory,\n        contact your local FBI field office or CISA’s 24/7 Operations Center at report@cisa.gov or (888) 282-0870. When available,\n        please include the following information regarding the incident: date, time, and location of the incident; type of activity;\n        number of people affected; type of equipment used for the activity; the name of the submitting company or organization; and\n        a designated point of contact. SLTT organizations should report incidents to MS-ISAC (866-787-4722 or\n        SOC@cisecurity.org).\n        This document is marked TLP:CLEAR. Recipients may share this information without restriction. Information is subject to\n        standard copyright rules. For more information on the Traffic Light Protocol, see cisa.gov/tlp/."
+ },
+ {
+  "id": "p7",
+  "text": "Cyber threat actors are actively exploiting multiple previously identified vulnerabilities—CVE-2023-\n       46805, CVE-2024-21887, and CVE-2024-21893—affecting Ivanti Connect Secure and Ivanti Policy\n       Secure gateways. The vulnerabilities impact all supported versions (9.x and 22.x) and can be used in\n       a chain of exploits to enable malicious cyber threat actors to bypass authentication, craft malicious\n       requests, and execute arbitrary commands with elevated privileges.\n       During multiple incident response engagements associated with this activity, CISA identified that\n       Ivanti’s internal and previous external ICT failed to detect compromise. In addition, CISA has\n       conducted independent research in a lab environment validating that the Ivanti ICT is not sufficient to\n       detect compromise and that a cyber threat actor may be able to gain root-level persistence despite\n       issuing factory resets.\n       The authoring organizations encourage network defenders to (1) assume that user and service\n       account credentials stored within the affected Ivanti VPN appliances are likely compromised, (2) hunt\n       for malicious activity on their networks using the detection methods and indicators of compromise\n       (IOCs) within this advisory, (3) run Ivanti’s most recent external ICT, and (4) apply available patching\n       guidance provided by Ivanti as version updates become available. If a potential compromise is\n       detected, organizations should collect and analyze logs and artifacts for malicious activity and apply\n       the incident response recommendations within this advisory.\n       Based upon the authoring organizations’ observations during incident response activities and\n       available industry reporting, as supplemented by CISA’s research findings, the authoring\n       organizations recommend that the safest course of action for network defenders is to assume a\n       sophisticated threat actor may deploy rootkit level persistence on a device that has been reset and lay\n       dormant for an arbitrary amount of time. For example, as outlined in PRC State-Sponsored Actors\n       Compromise and Maintain Persistent Access to U.S. Critical Infrastructure, sophisticated actors may\n       remain silent on compromised networks for long periods. The authoring organizations strongly urge\n       all organizations to consider the significant risk of adversary access to, and persistence on, Ivanti\n       Connect Secure and Ivanti Policy Secure gateways when determining whether to continue\n       operating these devices in an enterprise environment.\n       Note: On February 9, 2024, CISA issued Emergency Directive (ED) 24-01: Mitigate Ivanti Connect\n       Secure and Ivanti Policy Secure Vulnerabilities, which requires emergency action from Federal\n       Civilian Executive Branch (FCEB) agencies to perform specific actions on affected products.\n       The Canadian Centre for Cyber Security also issued an alert, Ivanti Connect Secure and Ivanti Policy\n       Secure gateways zero-day vulnerabilities, which provides periodic updates for IT professionals and\n       managers affected by the Ivanti vulnerabilities.\n       For a downloadable copy of IOCs, see:\n           •    AA24-060B (STIX XML, 71KB)\n           •    AA24-060B (STIX JSON, 54KB)"
+ },
+ {
+  "id": "p8",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 14. See the MITRE\n       ATT&CK Tactics and Techniques in Appendix C for a table of the threat actors’ activity mapped to\n       MITRE ATT&CK tactics and techniques. For assistance with mapping malicious cyber activity to the\n       MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK\n       Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p9",
+  "text": "Overview\n       On January 10, 2024, Volexity reported on two vulnerabilities in Ivanti Connect Secure and Ivanti\n       Policy Secure gateways observed being chained to achieve unauthenticated remote code execution\n       (RCE):[1]\n           •    CVE 2023-46805\n           •    CVE-2024-21887\n       Volexity first identified active exploitation in early December 2023, when they detected suspicious\n       lateral movement [TA0008] on the network of one of their network security monitoring service\n       customers. Volexity identified that threat actors exploited the vulnerabilities to implant web shells,\n       including GLASSTOKEN and GIFTEDVISITOR, on internal and external-facing web servers\n       [T1505.003]. Once successfully deployed, these web shells are used to execute commands on\n       compromised devices.[1]\n       After Ivanti provided initial mitigation guidance in early January, threat actors developed a way to\n       bypass those mitigations to deploy BUSHWALK, LIGHTWIRE, and CHAINLINE web shell variants.[2]\n       Following the actors’ developments, Ivanti disclosed three additional vulnerabilities:\n           •    CVE-2024-21893 is a server-side request forgery vulnerability in the SAML component of\n                Ivanti Connect Secure (9.x, 22.x) Ivanti Policy Secure (9.x, 22.x), and Ivanti Neurons for ZTA\n                that allows an attacker to access restricted resources without authentication.\n           •    CVE-2024-22024 is an XML vulnerability in the SAML component of Ivanti Connect Secure\n                (9.x, 22.x), Ivanti Policy Secure (9.x, 22.x), and ZTA gateways that allows an attacker to\n                access restricted resources without authentication.\n           •    CVE-2024-21888 is a privilege escalation vulnerability found in the web component of Ivanti\n                Connect Secure and Ivanti Policy Secure. This vulnerability allows threat actors to gain\n                elevated privileges to that of an administrator."
+ },
+ {
+  "id": "p10",
+  "text": "Observed Threat Actor Activity\n       CISA has responded to multiple incidents related to the above vulnerabilities in Ivanti Connect Secure\n       and Policy Secure Gateways. In these incidents, actors exploited these CVEs for initial access to\n       implant web shells and to harvest credentials stored on the devices. Post-compromise, the actors\n       moved laterally into domain environments and have been observed leveraging tools that are native to\n       the Ivanti appliances—such as freerdp, ssh, telnet, and nmap libraries—to expand their access to\n       the domain environment. The result, in some cases, was a full domain compromise."
+ },
+ {
+  "id": "p11",
+  "text": "During incident response investigations, CISA identified that Ivanti’s internal and external ICT failed to\n       detect compromise. The organizations leveraged the integrity checker to identify file mismatches in\n       Ivanti devices; however, CISA incident response analysis confirmed that both the internal and\n       external versions of the ICT were not reliable due to the existence of web shells found on systems\n       that had no file mismatches according to the ICTs. Additionally, forensic analysis showed evidence\n       the actors were able to clean up their efforts by overwriting files, time-stomping files, and re-mounting\n       the runtime partition to return the appliance to a “clean state.” This reinforces that ICT scans are not\n       reliable to indicate previous compromise and can result in a false sense of security that the device is\n       free of compromise.\n       As detailed in Appendix A, CISA conducted independent research in a lab environment validating that\n       the ICT is likely insufficient for detecting compromise and that a cyber threat actor may be able to\n       maintain root level persistence despite issuing factory resets and appliance upgrades."
+ },
+ {
+  "id": "p12",
+  "text": "INDICATORS OF COMPROMISE\n       See Tables 1 – 4 in Appendix B for IOCs related to cyber actors exploiting multiple CVEs related to\n       Ivanti appliances.\n       For additional indicators of compromise, see:\n           •    Volexity: Active Exploitation of Two Zero-Day Vulnerabilities in Ivanti Connect Secure VPN\n           •    Mandiant: Cutting Edge: Suspected APT Targets Ivanti Connect Secure VPN in New Zero-\n                Day Exploitation\n           •    Mandiant: Cutting Edge, Part 2: Investigating Ivanti Connect Secure VPN Zero-Day\n                Exploitation\n           •    Mandiant: Cutting Edge, Part 3: Investigating Ivanti Connect Secure VPN Exploitation and\n                Persistence Attempts\n       Memory and disk forensics were used during forensic analysis, combined with the Integrity Checker\n       Tool, to identify malicious files on the compromised Ivanti Connect Secure VPN appliance. This\n       advisory provides a list of combined authoring organization IOCs and open source files identified by\n       Volexity via network analysis.\n       Disclaimer: Some IP addresses in this advisory may be associated with legitimate activity.\n       Organizations are encouraged to investigate the activity around these IP addresses prior to taking\n       action such as blocking. Activity should not be attributed as malicious without analytical evidence to\n       support it is used at the direction of, or controlled by, threat actors."
+ },
+ {
+  "id": "p13",
+  "text": "DETECTION METHODS\n       YARA Rules\n       See Appendix D for additional open source YARA rules, provided by Volexity, that may aid network\n       defenders in detecting malicious activity within Ivanti Connect Secure VPN appliances. For more\n       information on detection methods, visit Mandiant’s blog post Cutting Edge, Part 2: Investigating Ivanti\n       Connect Secure VPN Zero-Day Exploitation or the Volexity GitHub page."
+ },
+ {
+  "id": "p14",
+  "text": "INCIDENT RESPONSE\n       The authoring organizations encourage you to assess your organization’s user interface (UI) software\n       and systems for evidence of compromise and to hunt for malicious activity using signatures outlined\n       within this advisory. If compromise is suspected or detected, organizations should assume that threat\n       actors hold full administrative access and can perform all tasks associated with the Ivanti Connect\n       Secure VPN appliance as well as executing arbitrary code and installing malicious payloads.\n       Note: These are vendor-managed appliances and systems may be encrypted with limited access.\n       Thus, collecting artifacts may be limited on some versions of appliances. The authoring organizations\n       recommend investigating associated devices on the network to identify lateral movement in the\n       absence of access to the Secure Connect appliance.\n       If a potential compromise is detected, organizations should:\n           1. Quarantine or take offline potentially affected hosts.\n           2. Reimage compromised hosts.\n           3. Reset all credentials that may have been exposed during the compromise, including user and\n              service accounts.\n           4. Identify Ivanti hosts with Active Directory (AD) access, threat actors can trivially export active\n              domain administrator credentials during initial compromise. Until there is evidence to the\n              contrary, it is assumed that AD access on compromised systems is connected to external\n              authentication systems such as Lightweight Directory Access Protocol (LDAP) and AD.\n           5. Collect and review artifacts such as running processes/services, unusual authentications, and\n              recent network connections.\n              ▪ Note: Removing malicious administrator accounts may not fully mitigate risk considering\n                   threat actors may have established additional persistence mechanisms.\n           6. Report the compromise to FBI Internet Crime Complaint Center (IC3) at IC3.gov, local FBI\n              field Office, or CISA via the agency’s Incident Reporting System or its 24/7 Operations Center\n              (report@cisa.gov or 888-282-0870). State, local, tribal, or territorial government entities can\n              also report to MS-ISAC (SOC@cisecurity.org or 866-787-4722). Organizations outside of the\n              United States should contact their national cyber center. (See the Reporting section.)"
+ },
+ {
+  "id": "p15",
+  "text": "MITIGATIONS\n       The authoring organizations recommend organizations            These mitigations apply to all critical\n       implement the mitigations below to improve your                infrastructure organizations and network\n       cybersecurity posture based on threat actor activity and       defenders using Ivanti Connect Secure\n       to reduce the risk of compromise associated with Ivanti        VPN and Ivanti Policy Secure. The\n       vulnerabilities. These mitigations align with the cross-       authoring organizations recommend that\n       sector Cybersecurity Performance Goals (CPGs)                  software manufacturers incorporate Secure\n       developed by CISA and the National Institute of                by Design principles and tactics into their\n       Standards and Technology (NIST). The CPGs provide a            software development practices. These\n       minimum set of practices and protections that CISA and         principles and tactics can limit the impact of\n       NIST recommend all organizations implement. CISA and           exploitation—such as threat actors\n       NIST based the CPGs on existing cybersecurity                  leveraging newly discovered, unpatched\n       frameworks and guidance to protect against the most            vulnerabilities within Ivanti appliances—\n       common and impactful threats, tactics, techniques, and         thus, strengthening the secure posture for\n       procedures. Visit CISA’s Cross-Sector Cybersecurity            their customers.\n       Performance Goals for more information on the CPGs,\n       including additional recommended baseline protections.         For more information on secure by design,\n                                                                      see CISA’s Secure by Design webpage and\n           •    As organizations make risk decisions in               joint guide.\n                choosing a VPN, to include decisions\n                regarding continued operation of Ivanti Connect Secure and Policy Secure gateways,\n                avoid VPN solutions that use proprietary protocols or non-standard features. VPNs as a class\n                of devices carry some specific risks that a non-expert implementer may trigger (e.g.,\n                authentication integration and patching). When choosing a VPN, organizations should\n                consider vendors who:\n                o Provide a Software Bill of Materials (SBOM) to proactively identify, and enable remediation\n                    of, embedded software vulnerabilities, such as deprecated operating systems.\n                o Allow a restore from trusted media to establish a root of trust. If the software validation\n                    tooling can be modified by the software itself, there is no way to establish a root of trust\n                    other than returning the device to the manufacturer (return material authorization [RMA]).\n                o Are a CVE Numbering Authority (CNA) so that CVEs are assigned to emerging\n                    vulnerabilities in a timely manner.\n                o Have a public Vulnerability Disclosure Policy (VDP) to enable security researchers to\n                    proactively share and disclose vulnerabilities through coordinated vulnerability disclosure\n                    (CVD).\n                o Have in place a clear end-of-life policy (EoL) to prepare customers for updating to\n                    supported product versions.\n           •    Limit outbound internet connections from SSL VPN appliances to restrict access to\n                required services. This will limit the ability of an actor to download tools or malware onto the\n                device or establish outbound connections to command and control (C2) servers.\n           •    Ensure SSL VPN appliances configured with Active Directory or LDAP authentication use\n                low privilege accounts for the LDAP bind."
+ },
+ {
+  "id": "p16",
+  "text": "•    Limit SSL VPN connections to unprivileged accounts only to help limit the exposure of\n                privileged account credentials.\n           •    Keep all operating systems, software, and firmware up to date. Timely patching is one of\n                the most efficient and cost-effective steps an organization can take to minimize its exposure to\n                cybersecurity threats. Organizations should patch vulnerable software and hardware systems\n                within 24 to 48 hours of vulnerability disclosure. Prioritize patching known exploited\n                vulnerabilities in internet-facing systems [CPG 1.E].\n           •    Secure remote access tools.\n                o Implement application controls to manage and control execution of software, including\n                    allowlisting remote access programs. Application controls should prevent installation and\n                    execution of portable versions of unauthorized remote access and other software. A\n                    properly configured application allowlisting solution will block any unlisted application\n                    execution. Allowlisting is important because antivirus solutions may fail to detect the\n                    execution of malicious portable executables when the files use any combination of\n                    compression, encryption, or obfuscation.\n           •    Strictly limit the use of Remote Desktop Protocols (RDP) and other remote desktop\n                services. If RDP is necessary, rigorously apply best practices, for example [CPG 2.W]:\n                o Audit the network for systems using RDP.\n                o Close unused RDP ports.\n                o Enforce account lockouts after a specified number of attempts.\n                o Apply phishing-resistant multifactor authentication (MFA).\n                o Log RDP login attempts.\n           •    Configure the Windows Registry to require User Account Control (UAC) approval for\n                any PsExec operations requiring administrator privileges to reduce the risk of lateral\n                movement by PsExec.\n           •    Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n                data and servers in a physically separate, segmented, and secure location (e.g., hard drive,\n                storage device, or the cloud).\n           •    Require all accounts with password logins (e.g., service account, admin accounts, and\n                domain admin accounts) to comply with NIST's standards for developing and managing\n                password policies.\n                o Use longer passwords consisting of at least 15 characters [CPG 2.B].\n                o Store passwords in hashed format using industry-recognized password managers.\n                o Add password user “salts” to shared login credentials.\n                o Avoid reusing passwords [CPG 2.C].\n                o Implement multiple failed login attempt account lockouts [CPG 2.G].\n                o Disable password “hints.”\n                o Require administrator credentials to install software.\n           •    Review the CISA and NSA joint guidance for Selecting and Hardening Remote Access VPN\n                Solutions."
+ },
+ {
+  "id": "p17",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, the authoring organizations recommend exercising, testing, and\n       validating your organization's security program against the threat behaviors mapped to the MITRE\n       ATT&CK for Enterprise framework in this advisory. The authoring organizations recommend testing\n       your existing security controls inventory to assess how the controls perform against the ATT&CK\n       techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (Appendix C).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       The authoring organizations recommend continually testing your security program, at scale, in a\n       production environment to ensure optimal performance against the MITRE ATT&CK techniques\n       identified in this advisory."
+ },
+ {
+  "id": "p18",
+  "text": "REPORTING\n       U.S. organizations should report every potential cyber incident to the U.S. government. When\n       available, each report submitted should include the date, time, location, type of activity, number of\n       people, and type of equipment used for the activity, the name of the submitting company or\n       organization, and a designated point of contact. Reports can be submitted to the FBI’s Internet Crime\n       Complaint Center (IC3), local FBI Field Office, or CISA via the agency’s Incident Reporting System or\n       its 24/7 Operations Center at report@cisa.gov or (888) 282-0870.\n       The FBI encourages organizations to report information concerning suspicious or criminal activity to\n       their local FBI Field Office.\n       Australian organizations that have been impacted or require assistance regarding Ivanti compromise,\n       contact ASD’s ACSC via 1300 CYBER1 (1300 292 371), or by submitting a report to cyber.gov.au.\n       UK organizations that have been impacted by Ivanti compromise, should report the incident to the\n       National Cyber Security Centre.\n       Organizations outside of the United States or Australia should contact their national cyber center."
+ },
+ {
+  "id": "p19",
+  "text": "REFERENCES\n           [1] Active Exploitation of Two Zero-Day Vulnerabilities in Ivanti Connect Secure VPN | Volexity\n           [2] Ivanti Connect Secure VPN Exploitation Goes Global | Volexity\n           [3] KB CVE-2023-46805 (Authentication Bypass) & CVE-2024-21887 (Command Injection) for\n               Ivanti Connect Secure and Ivanti Policy Secure Gateways"
+ },
+ {
+  "id": "p20",
+  "text": "[4] Cutting Edge, Part 2: Investigating Ivanti Connect Secure VPN Zero-Day Exploitation |\n               Mandiant"
+ },
+ {
+  "id": "p21",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. CISA and\n       authoring organizations do not endorse any commercial entity, product, company, or service,\n       including any entities, products, or services linked within this document. Any reference to specific\n       commercial entities, products, processes, or services by service mark, trademark, manufacturer, or\n       otherwise, does not constitute or imply endorsement, recommendation, or favoring by CISA and\n       authoring organizations."
+ },
+ {
+  "id": "p22",
+  "text": "ACKNOWLEDGEMENTS\n       Volexity, Mandiant, and Ivanti contributed to this advisory."
+ },
+ {
+  "id": "p23",
+  "text": "VERSION HISTORY\n       February 29, 2024: Initial version."
+ },
+ {
+  "id": "p24",
+  "text": "APPENDIX A: CISA’S PRODUCT EVALUATION FINDINGS\n       Research Approach\n       As part of ongoing efforts to effectively serve the cybersecurity community with actionable insights\n       and guidance, CISA conducted research by using a free and downloadable version of the Ivanti\n       Connect Secure virtual appliance to assess potential attack paths and adversary persistence\n       mechanisms. The virtual appliances were not connected to the internet, and were deployed in a\n       closed virtualized network, with a non-internet connected Active Directory. This research included a\n       variety of tests on version 22.3R1 Build 1647, connected to Active Directory credentials, to\n       leverage the access obtained through CVE-2023-46805, CVE-2024-21887 and CVE-2024-21893. Put\n       simply, CISA’s research team wanted to answer the question: “How far could an attacker go if they\n       set were to exploit these CVEs remotely?”"
+ },
+ {
+  "id": "p25",
+  "text": "Persistent Post-Reset and -Upgrade Access\n       Leveraging these vulnerabilities, CISA researchers were able to exfiltrate domain administrator\n       cleartext credentials [TA0006], gain root-level persistence [TA0003], and bypass integrity checks\n       used by the Integrity Checker application. CISA’s Incident Response team observed these specific\n       techniques leveraged during the agency’s incident response engagements, along with the native tools\n       and libraries to conduct internal reconnaissance and compromise domains behind the Ivanti\n       appliances. CISA researchers assess that threat actors are able to use the credentials to move\n       deeper into the environment.\n       The ability to exfiltrate domain administrator cleartext credentials, if saved when adding an “Active\n       Directory Authentication server” during setup, was accomplished by using the root-level access\n       obtained from the vulnerabilities to interface directly with the internal server and retrieve the cached\n       credentials as shown in Figure 4, APPENDIX A. Users who currently have active sessions to the\n       appliance could have their base64 encoded active directory cleartext passwords, in addition to the\n       New Technology LAN Manager (NTLM) password hashes, retrieved with the same access, as shown\n       in Figure 10, APPENDIX A. In addition to users with active sessions, users previously authenticated\n       can have base64 encoded active directory plaintext passwords and NTLM hashes harvested from the\n       backups of the data.mdb database files stored on the appliance, as shown in Figure 15 and 16,\n       APPENDIX A.\n       The root-level access allows adversaries to maintain persistence despite issuing factory resets and\n       appliance upgrades while deceiving the provided integrity checkers, creating the illusion of a clean\n       installation. Due to the persistence mechanism being stored on the encrypted partition of the drive\n       and inaccurate integrity check results, it is untenable for network administrators to validate their\n       application has not been compromised without also decrypting the partition and validating against a\n       clean installation of the appliance, which are actions not easily accomplished at present. Without\n       major alterations of the integrity checking process, it is conceivable that new vulnerabilities that afford\n       root-level access to the appliance could also result in root-kit level persistence to the appliance."
+ },
+ {
+  "id": "p26",
+  "text": "Below is proof of concept being released by CISA, which demonstrates the capacity of and\n       opportunity for a threat actor to exfiltrate Domain Administrator credentials that were used during\n       appliance configuration:"
+ },
+ {
+  "id": "p27",
+  "text": "Figure 1: Ivanti Domain Join Configuration with “Save Credentials”"
+ },
+ {
+  "id": "p28",
+  "text": "Figure 2: CVE-2023-46805 Exploitation for Reverse Netcat Connection"
+ },
+ {
+  "id": "p29",
+  "text": "Figure 3: Upgrade Netcat Connection to Sliver Implant"
+ },
+ {
+  "id": "p30",
+  "text": "Figure 4: Leverage Sliver Implant to Run Perl Script for Retrieval of Cached Domain Administrator Credentials"
+ },
+ {
+  "id": "p31",
+  "text": "Below is a demonstration of the capacity for post exploitation exfiltration of base64 encoded cleartext\n       credentials for active directory users and their associated NTLM password hashes:"
+ },
+ {
+  "id": "p32",
+  "text": "Figure 5: Configuration of User Realm"
+ },
+ {
+  "id": "p33",
+  "text": "Figure 6: User Realm Configuration to Domain"
+ },
+ {
+  "id": "p34",
+  "text": "Figure 7: Configuration of User Realm Mapping"
+ },
+ {
+  "id": "p35",
+  "text": "Figure 8: Login as “vpnuser1” to Establish an Active Session"
+ },
+ {
+  "id": "p36",
+  "text": "Figure 9: Using Sliver Implant as Shown in Figure 3, Execute Perl Script to Retrieve base64 Encoded Cleartext\n                                    Password and NTLM Password Hash for Authenticated User"
+ },
+ {
+  "id": "p37",
+  "text": "Figure 10: Decode base64 Encoded Blob to Display User’s Plaintext Credentials"
+ },
+ {
+  "id": "p38",
+  "text": "Figure 11: Using Mimikatz Validate NTLM Password Hash Obtained in Figure 10 Matches Active Directory User\n                                                      Credential Hash"
+ },
+ {
+  "id": "p39",
+  "text": "Figure 12: Inactive Sessions for “vpnuser2” and “vpnuser3” Appear in Server Logs"
+ },
+ {
+  "id": "p40",
+  "text": "Figure 13: Exfiltrate “lmdb/data” and “lmdb-backup/data” data.mb Database Files Containing Credentials for Active\n                                                     and Inactive Sessions"
+ },
+ {
+  "id": "p41",
+  "text": "Figure 14: Parse Database Files to Disclose base64 Encoded Plaintext Credentials from LMDB Database Files"
+ },
+ {
+  "id": "p42",
+  "text": "Figure 15: Parse Database Files to Disclose NTLM Hashes from LMDB Database Files"
+ },
+ {
+  "id": "p43",
+  "text": "Figure 16: Parse Backup Database Files to Disclose Additional base64 Encoded Plaintext Credentials from LMDB-\n                                                    Backup Database Files"
+ },
+ {
+  "id": "p44",
+  "text": "Figure 17: Decode Credentials from LMDB-Backup Database Files"
+ },
+ {
+  "id": "p45",
+  "text": "Figure 18: Parse Database Files to Disclose NTLM Hashes for Additional Users from LMDB-Backup Database Files"
+ },
+ {
+  "id": "p46",
+  "text": "APPENDIX B: INDICATORS OF COMPROMISE\n                                   Table 1: Ivanti Connect Secure VPN Indicators of Compromise"
+ },
+ {
+  "id": "p47",
+  "text": "Filename                                        Description                 Purpose\n                                                                                    Designed to execute\n        /home/perl/DSLogConfig.pm                       Modified Perl module.\n                                                                                    sessionserver.pl.\n                                                        gcore.in core dump\n        /usr/bin/a.sh\n                                                        script.\n        /bin/netmon                                     Sliver binary.\n                                                        Python package\n        /home/venv3/lib/python3.6/site-\n                                                        containing WIREFIRE\n        packages/*.egg\n                                                        among other files.\n                                                        Perl script to remount      Make sessionserver.sh\n        /home/etc/sql/dsserver/sessionserver.pl         the filesystem with         executable, execute it, then\n                                                        read/write access.          restore original mount settings.\n                                                                                    Uses regular expressions to\n                                                                                    modify compcheckresult.cgi\n                                                                                    to insert a web shell into it;\n                                                        Script executed by          also creates a series of entries\n        /home/etc/sql/dsserver/sessionserver.sh\n                                                        sessionserver.pl.           into files associated with the\n                                                                                    In-build Integrity Checker Tool\n                                                                                    to evade detection when\n                                                                                    periodic scans are run.\n                                                        Modified legitimate\n                                                        component of the ICS\n                                                        VPN appliance, with         Allows remote code execution\n        /home/webserver/htdocs/dana-                    new Perl module             over the Internet if the attacker\n        na/auth/compcheckresult.cgi                     imports added and a         can craft a request with the\n                                                        one-liner to execute        correct parameters.\n                                                        commands based on\n                                                        request parameters.\n                                                        Modified legitimate\n                                                        JavaScript component        Modified to harvest entered\n        /home/webserver/htdocs/dana-                    loaded by user login        credentials and send them to a\n        na/auth/lastauthserverused.js                   page of the Web SSL         remote URL on an attacker-\n                                                        VPN component of            controlled domain.\n                                                        Ivanti Connect Secure."
+ },
+ {
+  "id": "p48",
+  "text": "Table 2: Ivanti Connect Secure VPN Indicators of Compromise"
+ },
+ {
+  "id": "p49",
+  "text": "Value                                  Type                                 Description\n        88.119.169[.]227                       IP Address\n        103.13.28[.]40                         IP Address\n        46.8.68[.]100                          IPv4\n                                                                                    DigitalOcean IP address tied to\n        206.189.208[.]156                      IP Address\n                                                                                    UTA0178.\n                                                                                    Suspected UTA0178 domain\n        gpoaccess[.]com                        Hostname                             discovered via domain\n                                                                                    registration patterns.\n                                                                                    Suspected UTA0178 domain\n        webb-institute[.]com                   Hostname                             discovered via domain\n                                                                                    registration patterns.\n                                                                                    UTA0178 domain used to\n        symantke[.]com                         Hostname                             collect credentials from\n                                                                                    compromised devices.\n                                                                                    UTA0178 IP address observed\n        75.145.243[.]85                        IP Address                           interacting with compromised\n                                                                                    device.\n                                                                                    UTA0178 IP address observed\n                                                                                    interacting with compromised\n        47.207.9[.]89                          IP Address\n                                                                                    device tied to Cyberoam proxy\n                                                                                    network.\n                                                                                    UTA0178 IP address observed\n                                                                                    interacting with compromised\n        98.160.48[.]170                        IP Address\n                                                                                    device tied to Cyberoam proxy\n                                                                                    network.\n                                                                                    UTA0178 IP address observed\n                                                                                    interacting with compromised\n        173.220.106[.]166                      IP Address\n                                                                                    device tied to Cyberoam proxy\n                                                                                    network.\n                                                                                    UTA0178 IP address observed\n                                                                                    interacting with compromised\n        73.128.178[.]221                       IP Address\n                                                                                    device tied to Cyberoam proxy\n                                                                                    network."
+ },
+ {
+  "id": "p50",
+  "text": "Value                                  Type                                  Description\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        50.243.177[.]161                       IP Address\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        50.213.208[.]89                        IP Address\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        64.24.179[.]210                        IP Address\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        75.145.224[.]109                       IP Address\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        50.215.39[.]49                         IP Address\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        71.127.149[.]194\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network.\n                                                                                     UTA0178 IP address observed\n                                                                                     interacting with compromised\n        173.53.43[.]7\n                                                                                     device tied to Cyberoam proxy\n                                                                                     network."
+ },
+ {
+  "id": "p51",
+  "text": "Table 3: Host-Based Indicators (HBIs) Indicators of Compromise"
+ },
+ {
+  "id": "p52",
+  "text": "Filename                   Hash Value                                                        Description\n                                   ed4b855941d6d7e07aacf016a2402c4c870876a050a4a547af                WIREFIRE\n        Cav-0.1-py3.6.egg\n                                   194f5a9b47945f                                                    web shell\n                                                                                                     CHAINLINE\n        Health.py                  3045f5b3d355a9ab26ab6f44cc831a83\n                                                                                                     web shell"
+ },
+ {
+  "id": "p53",
+  "text": "Filename                   Hash Value                         Description\n        compcheckresult.c                                             CHAINLINE\n                                   3d97f55a03ceb4f71671aa2ecf5b24e9\n        gi                                                            web shell\n        lastauthserverused.                                           LIGHTWIRE\n                                   2ec505088b942c234f39a37188e80d7a\n        js                                                            web shell\n                                                                      WARPWIRE\n        lastauthserverused.                                           credential\n                                   8eb042da6ba683ef1bae460af103cc44\n        js                                                            harvester\n                                                                      variant\n                                                                      WARPWIRE\n        lastauthserverused.                                           credential\n                                   a739bd4c2b9f3679f43579711448786f\n        js                                                            harvester\n                                                                      variant\n                                                                      WARPWIRE\n        lastauthserverused.                                           credential\n                                   a81813f70151a022ea1065b7f4d6b5ab\n        js                                                            harvester\n                                                                      variant\n                                                                      WARPWIRE\n        lastauthserverused.                                           credential\n                                   d0c7a334a4d9dcd3c6335ae13bee59ea\n        js                                                            harvester\n                                                                      variant\n                                                                      WARPWIRE\n        lastauthserverused.                                           credential\n                                   e8489983d73ed30a4240a14b1f161254\n        js                                                            harvester\n                                                                      variant\n                                                                      Configuration\n                                                                      and cache\n                                                                      dump or CAV\n        logo.gif                   N/A — varies\n                                                                      web server\n                                                                      log\n                                                                      exfiltration\n                                                                      Configuration\n        login.gif                  N/A — varies                       and cache\n                                                                      dump\n                                                                      Configuration\n        [a-fA-f0-9]{10\\.css        N/A — varies                       and cache\n                                                                      dump"
+ },
+ {
+  "id": "p54",
+  "text": "Filename                   Hash Value                                                           Description\n                                                                                                        WIREFIRE\n        visits.py                  N/A — varies\n                                                                                                        web shell"
+ },
+ {
+  "id": "p55",
+  "text": "Table 4: Host-Based Indicators (HBIs) Indicators of Compromise"
+ },
+ {
+  "id": "p56",
+  "text": "Network Indicator                      Type                                  Description\n        symantke[.]com                         Domain                                WARPWIRE C2 server\n        miltonhouse[.]nl                       Domain                                WARPWIRE variant C2 server\n        entraide-internationale[.]fr           Domain                                WARPWIRE variant C2 server\n        api.d-n-s[.]name                       Domain                                WARPWIRE variant C2 server\n        cpanel.netbar[.]org                    Domain                                WARPWIRE variant C2 server\n        clickcom[.]click                       Domain                                WARPWIRE variant C2 server\n        clicko[.]click                         Domain                                WARPWIRE variant C2 server\n        duorhytm[.]fun                         Domain                                WARPWIRE variant C2 server\n        line-api[.]com                         Domain                                WARPWIRE variant C2 server\n        areekaweb[.]com                        Domain                                WARPWIRE variant C2 server\n        ehangmun[.]com                         Domain                                WARPWIRE variant C2 server\n        secure-cama[.]com                      Domain                                WARPWIRE variant C2 server\n        146.0.228[.]66                         IPv4                                  WARPWIRE variant C2 server\n        159.65.130[.]146                       IPv4                                  WARPWIRE variant C2 server\n        8.137.112[.]245                        IPv4                                  WARPWIRE variant C2 server\n        91.92.254[.]14                         IPv4                                  WARPWIRE variant C2 server\n        186.179.39[.]235                       IPv4                                  Mass exploitation activity\n        50.215.39[.]49                         IPv4                                  Post-exploitation activity\n        45.61.136[.]14                         IPv4                                  Post-exploitation activity\n        173.220.106[.]166                      IPv4                                  Post-exploitation activity"
+ },
+ {
+  "id": "p57",
+  "text": "APPENDIX C: MITRE ATT&CK TACTICS AND TECHNIQUES\n                                        Table 5: Cyber Actors ATT&CK Techniques for Enterprise"
+ },
+ {
+  "id": "p58",
+  "text": "Initial Access"
+ },
+ {
+  "id": "p59",
+  "text": "Technique Title                       ID                                       Use"
+ },
+ {
+  "id": "p60",
+  "text": "Cyber actors will use custom web shells planted\n        Exploit Public-Facing\n                                                T1190             on public facing applications which allows\n        Applications\n                                                                  persistence in victims’ environment."
+ },
+ {
+  "id": "p61",
+  "text": "Persistence"
+ },
+ {
+  "id": "p62",
+  "text": "Technique Title                       ID                                       Use"
+ },
+ {
+  "id": "p63",
+  "text": "Cyber actors leverage compromised accounts to\n        Valid Accounts                          T1078             laterally move within internal systems via RDP,\n                                                                  SBD, and SSH."
+ },
+ {
+  "id": "p64",
+  "text": "Server Software                                           Cyber actors may use web shells on internal- and\n        Component: Web                       T1505.003            external-facing web servers to establish persistent\n        Shell                                                     access to systems."
+ },
+ {
+  "id": "p65",
+  "text": "Execution"
+ },
+ {
+  "id": "p66",
+  "text": "Technique Title                       ID                                       Use"
+ },
+ {
+  "id": "p67",
+  "text": "Cyber actors leverage code execution from\n        Command and                                               request parameters that are decoded from hex to\n        Scripting Interpreter:               T1059.001            base64 decoded, then passed to\n        PowerShell                                                Assembly.Load(), which is used to execute\n                                                                  arbitrary PowerShell commands."
+ },
+ {
+  "id": "p68",
+  "text": "Exploitation for Client                                   Cyber actors will exploit software vulnerabilities\n        Execution                               T1203             such as command-injection and achieve\n                                                                  unauthenticated remote code execution (RCE)."
+ },
+ {
+  "id": "p69",
+  "text": "APPENDIX D: DETECTION METHODS"
+ },
+ {
+  "id": "p70",
+  "text": "rule apt_webshell_pl_complyshell: UTA0178\n        {\n            meta:\n              author = \"threatintel@volexity.com\"\n              date = \"2023-12-13\"\n              description = \"Detection for the COMPLYSHELL webshell.\"\n              hash1 = \"8bc8f4da98ee05c9d403d2cb76097818de0b524d90bea8ed846615e42cb031d2\"\n              os = \"linux\"\n              os_arch = \"all\"\n              report = \"TIB-20231215\"\n              scan_context = \"file,memory\"\n              last_modified = \"2024-01-09T10:05Z\"\n              license = \"See license at https://github.com/volexity/threat-intel/blob/main/LICENSE.txt\"\n              rule_id = 9995\n              version = 4"
+ },
+ {
+  "id": "p71",
+  "text": "strings:\n              $s = \"eval{my $c=Crypt::RC4->new(\""
+ },
+ {
+  "id": "p72",
+  "text": "condition:\n              $s\n        }"
+ },
+ {
+  "id": "p73",
+  "text": "rule apt_webshell_aspx_glasstoken: UTA0178\n        {\n            meta:\n              author = \"threatintel@volexity.com\"\n              date = \"2023-12-12\""
+ },
+ {
+  "id": "p74",
+  "text": "description = \"Detection for a custom webshell seen on external facing server. The webshell\n        contains two functions, the first is to act as a Tunnel, using code borrowed from reGeorg, the\n        second is custom code to execute arbitrary .NET code.\"\n              hash1 = \"26cbb54b1feb75fe008e36285334d747428f80aacdb57badf294e597f3e9430d\"\n              os = \"win\"\n              os_arch = \"all\"\n              report = \"TIB-20231215\"\n              scan_context = \"file,memory\"\n              last_modified = \"2024-01-09T10:08Z\"\n              license = \"See license at https://github.com/volexity/threat-intel/blob/main/LICENSE.txt\"\n              rule_id = 9994\n              version = 5"
+ },
+ {
+  "id": "p75",
+  "text": "strings:\n              $s1 = \"=Convert.FromBase64String(System.Text.Encoding.Default.GetString(\" ascii\n              $re = /Assembly\\.Load\\(errors\\)\\.CreateInstance\\(\"[a-z0-9A-Z]{4,12}\"\\).GetHashCode\\(\\);/"
+ },
+ {
+  "id": "p76",
+  "text": "condition:\n              for any i in (0..#s1):\n                 (\n                       $re in (@s1[i]..@s1[i]+512)\n                 )\n        }"
+ },
+ {
+  "id": "p77",
+  "text": "rule webshell_aspx_regeorg\n        {\n            meta:\n              author = \"threatintel@volexity.com\"\n              date = \"2018-08-29\"\n             description = \"Detects the reGeorg webshell based on common strings in the webshell. May\n        also detect other webshells which borrow code from ReGeorg.\""
+ },
+ {
+  "id": "p78",
+  "text": "hash = \"9d901f1a494ffa98d967ee6ee30a46402c12a807ce425d5f51252eb69941d988\"\n              os = \"win\"\n              os_arch = \"all\"\n              reference = \"https://github.com/L-codes/Neo-reGeorg/blob/master/templates/tunnel.aspx\"\n              report = \"TIB-20231215\"\n              scan_context = \"file,memory\"\n              last_modified = \"2024-01-09T10:04Z\"\n              license = \"See license at https://github.com/volexity/threat-intel/blob/main/LICENSE.txt\"\n              rule_id = 410\n              version = 7"
+ },
+ {
+  "id": "p79",
+  "text": "strings:\n              $a1 = \"every office needs a tool like Georg\" ascii\n              $a2 = \"cmd = Request.QueryString.Get(\\\"cmd\\\")\" ascii\n              $a3 = \"exKak.Message\" ascii"
+ },
+ {
+  "id": "p80",
+  "text": "$proxy1 = \"if (rkey != \\\"Content-Length\\\" && rkey != \\\"Transfer-Encoding\\\")\""
+ },
+ {
+  "id": "p81",
+  "text": "$proxy_b1 = \"StreamReader repBody = new StreamReader(response.GetResponseStream(),\n        Encoding.GetEncoding(\\\"UTF-8\\\"));\" ascii\n              $proxy_b2 = \"string rbody = repBody.ReadToEnd();\" ascii\n              $proxy_b3 = \"Response.AddHeader(\\\"Content-Length\\\", rbody.Length.ToString());\" ascii"
+ },
+ {
+  "id": "p82",
+  "text": "condition:\n              any of ($a*) or\n              $proxy1 or\n              all of ($proxy_b*)\n        }"
+ },
+ {
+  "id": "p83",
+  "text": "rule hacktool_py_pysoxy"
+ },
+ {
+  "id": "p84",
+  "text": "{\n            meta:\n              author = \"threatintel@volexity.com\"\n              date = \"2024-01-09\"\n              description = \"SOCKS5 proxy tool used to relay connections.\"\n              hash1 = \"e192932d834292478c9b1032543c53edfc2b252fdf7e27e4c438f4b249544eeb\"\n              os = \"all\"\n              os_arch = \"all\"\n              reference = \"https://github.com/MisterDaneel/pysoxy/blob/master/pysoxy.py\"\n              report = \"TIB-20240109\"\n              scan_context = \"file,memory\"\n              last_modified = \"2024-01-09T13:45Z\"\n              license = \"See license at https://github.com/volexity/threat-intel/blob/main/LICENSE.txt\"\n              rule_id = 10065\n              version = 3"
+ },
+ {
+  "id": "p85",
+  "text": "strings:\n              $s1 = \"proxy_loop\" ascii\n              $s2 = \"connect_to_dst\" ascii\n              $s3 = \"request_client\" ascii\n              $s4 = \"subnegotiation_client\" ascii\n              $s5 = \"bind_port\" ascii"
+ },
+ {
+  "id": "p86",
+  "text": "condition:\n              all of them\n        }"
+ },
+ {
+  "id": "p87",
+  "text": "rule apt_webshell_py_categorical: UTA0178\n        {\n            meta:"
+ },
+ {
+  "id": "p88",
+  "text": "author = \"threatintel@volexity.com\"\n              date = \"2024-01-18\"\n              description = \"Detection for the CATEGORICAL webshell.\"\n              os = \"linux\"\n              os_arch = \"all\"\n              scan_context = \"file,memory\"\n              severity = \"critical\""
+ },
+ {
+  "id": "p89",
+  "text": "strings:\n              $s1 = \"exec(zlib.decompress(aes.decrypt(base64.b64decode\" ascii\n              $s2 = \"globals()[dskey].pop('result',None)\" ascii\n              $s3 = \"dsid=request.cookies.get('DSID'\" ascii"
+ },
+ {
+  "id": "p90",
+  "text": "condition:\n              any of ($s*)\n        }"
+ }
+]

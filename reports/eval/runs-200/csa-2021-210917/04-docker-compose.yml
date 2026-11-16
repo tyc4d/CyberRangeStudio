@@ -1,0 +1,146 @@
+# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
+name: cr-demo-evidence
+x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
+services:
+  h1:
+    container_name: cr-demo-evidence-h1
+    networks:
+    - scenario-internal
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    - /usr/local/apache2/logs:rw,noexec,nosuid,size=16m,uid=1,gid=1,mode=0755
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: httpd:2.4.71@sha256:32e9403360ab2f1047523e72f256527fb9aee68b342abf6ad03f0d629157f3d9
+    user: '1:1'
+    cap_add:
+    - NET_BIND_SERVICE
+    healthcheck:
+      test:
+      - CMD
+      - httpd
+      - -t
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+  attacker:
+    container_name: cr-demo-evidence-attacker
+    networks:
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+    user: 65532:65532
+    command:
+    - sh
+    - -c
+    - sleep 2147483647
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+  cr-gateway:
+    container_name: cr-demo-evidence-cr-gateway
+    image: python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+    command:
+    - python
+    - -c
+    - "import asyncio,ipaddress,socket,struct,sys\ndef routes():\n edge=None; lab=[]\n\
+      \ for line in open('/proc/net/route').read().splitlines()[1:]:\n  f=line.split()\n\
+      \  if f[1]=='00000000' and f[7]=='00000000': edge=f[0]\n for line in open('/proc/net/route').read().splitlines()[1:]:\n\
+      \  f=line.split()\n  if f[0]!=edge and f[2]=='00000000':\n   net=socket.inet_ntoa(struct.pack('<L',int(f[1],16)));\
+      \ mask=socket.inet_ntoa(struct.pack('<L',int(f[7],16)))\n   lab.append(ipaddress.ip_network(net+'/'+mask))\n\
+      \ return edge,lab\nEDGE,LAB=routes()\nif EDGE is None: sys.exit('no edge interface:\
+      \ refusing to listen')\ns=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.connect(('192.0.2.1',9));\
+      \ BIND=s.getsockname()[0]; s.close()\nif sys.argv[1]=='--check':\n socket.create_connection((BIND,int(sys.argv[2])),2).close();\
+      \ sys.exit(0)\nasync def pipe(r,w):\n try:\n  while True:\n   d=await r.read(65536)\n\
+      \   if not d: break\n   w.write(d); await w.drain()\n except Exception: pass\n\
+      \ finally:\n  try: w.close()\n  except Exception: pass\nasync def serve(lp,h,p):\n\
+      \ async def handle(r,w):\n  peer=ipaddress.ip_address(w.get_extra_info('peername')[0])\n\
+      \  if any(peer in n for n in LAB):\n   w.close(); return\n  try: r2,w2=await\
+      \ asyncio.wait_for(asyncio.open_connection(h,p),5)\n  except Exception:\n  \
+      \ w.close(); return\n  await asyncio.gather(pipe(r,w2),pipe(r2,w))\n s=await\
+      \ asyncio.start_server(handle,BIND,lp)\n await s.serve_forever()\nasync def\
+      \ main():\n rules=[a.split('=',1) for a in sys.argv[1:]]\n await asyncio.gather(*[serve(int(lp),t.rsplit(':',1)[0],int(t.rsplit(':',1)[1]))\
+      \ for lp,t in rules])\nasyncio.run(main())\n"
+    - 20000=h1:80
+    networks:
+    - edge
+    - scenario-internal
+    ports:
+    - target: 20000
+      published: ${CR_HOSTPORT_0:-42000}
+      host_ip: ${CR_BIND_IP:-127.0.0.1}
+      protocol: tcp
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    user: 65532:65532
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - "import asyncio,ipaddress,socket,struct,sys\ndef routes():\n edge=None; lab=[]\n\
+        \ for line in open('/proc/net/route').read().splitlines()[1:]:\n  f=line.split()\n\
+        \  if f[1]=='00000000' and f[7]=='00000000': edge=f[0]\n for line in open('/proc/net/route').read().splitlines()[1:]:\n\
+        \  f=line.split()\n  if f[0]!=edge and f[2]=='00000000':\n   net=socket.inet_ntoa(struct.pack('<L',int(f[1],16)));\
+        \ mask=socket.inet_ntoa(struct.pack('<L',int(f[7],16)))\n   lab.append(ipaddress.ip_network(net+'/'+mask))\n\
+        \ return edge,lab\nEDGE,LAB=routes()\nif EDGE is None: sys.exit('no edge interface:\
+        \ refusing to listen')\ns=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);\
+        \ s.connect(('192.0.2.1',9)); BIND=s.getsockname()[0]; s.close()\nif sys.argv[1]=='--check':\n\
+        \ socket.create_connection((BIND,int(sys.argv[2])),2).close(); sys.exit(0)\n\
+        async def pipe(r,w):\n try:\n  while True:\n   d=await r.read(65536)\n   if\
+        \ not d: break\n   w.write(d); await w.drain()\n except Exception: pass\n\
+        \ finally:\n  try: w.close()\n  except Exception: pass\nasync def serve(lp,h,p):\n\
+        \ async def handle(r,w):\n  peer=ipaddress.ip_address(w.get_extra_info('peername')[0])\n\
+        \  if any(peer in n for n in LAB):\n   w.close(); return\n  try: r2,w2=await\
+        \ asyncio.wait_for(asyncio.open_connection(h,p),5)\n  except Exception:\n\
+        \   w.close(); return\n  await asyncio.gather(pipe(r,w2),pipe(r2,w))\n s=await\
+        \ asyncio.start_server(handle,BIND,lp)\n await s.serve_forever()\nasync def\
+        \ main():\n rules=[a.split('=',1) for a in sys.argv[1:]]\n await asyncio.gather(*[serve(int(lp),t.rsplit(':',1)[0],int(t.rsplit(':',1)[1]))\
+        \ for lp,t in rules])\nasyncio.run(main())\n"
+      - --check
+      - '20000'
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+networks:
+  external:
+    name: cr-demo-evidence-external
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  scenario-internal:
+    name: cr-demo-evidence-scenario-internal
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  edge:
+    name: cr-demo-evidence-edge
+    internal: false
+    driver_opts:
+      com.docker.network.bridge.enable_icc: 'false'
+      com.docker.network.bridge.enable_ip_masquerade: 'false'

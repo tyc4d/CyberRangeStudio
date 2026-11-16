@@ -1,0 +1,1410 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2022-220316",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "dcce262fe782455d28823381c0d031441f30b50546c98ea1633cfb035ecb4ea1",
+  "source_name": "csa-2022-220316"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+   "source": "llm",
+   "description": "Russian state-sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization’s Duo MFA.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1078",
+   "attack_tactic": "initial-access",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "Obtain credentials via brute-force password guessing attack",
+   "source": "llm",
+   "description": "The actors gained the credentials via brute-force password guessing attack, allowing them access to a victim account with a simple, predictable password.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1110.001",
+   "attack_tactic": "credential-access",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Enroll a new device for a dormant account due to default Duo MFA configuration",
+   "source": "llm",
+   "description": "The victim account had been un-enrolled from Duo due to inactivity but was not disabled in Active Directory. Duo’s default configuration allows re-enrollment of a new device for dormant accounts, enabling the actors to enroll a new device and complete authentication.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1556",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Exploit PrintNightmare vulnerability for privilege escalation",
+   "source": "llm",
+   "description": "Russian state-sponsored cyber actors performed privilege escalation via exploitation of the PrintNightmare vulnerability (CVE-2021-34527) to obtain administrator privileges.",
+   "target_host_ref": "h1",
+   "attack_technique": "T1068",
+   "attack_tactic": "privilege-escalation",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Modify hosts file to redirect Duo MFA calls to localhost",
+   "source": "llm",
+   "description": "Actors modified the domain controller file c:\\windows\\system32\\drivers\\etc\\hosts to redirect Duo MFA calls to localhost instead of the Duo server, effectively disabling MFA for active domain accounts due to Duo's 'fail open' default policy.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1556",
+   "attack_tactic": "defense-evasion",
+   "evidence_refs": [
+    "evidence-5",
+    "evidence-6",
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Authenticate to VPN and make RDP connections to domain controllers without MFA",
+   "source": "llm",
+   "description": "After disabling MFA, actors successfully authenticated to the victim’s VPN as non-administrator users and made RDP connections to Windows domain controllers.",
+   "target_host_ref": "h2",
+   "attack_technique": "T1133",
+   "attack_tactic": "persistence",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  },
+  {
+   "id": "a7",
+   "name": "Obtain credentials for additional domain accounts and bypass MFA for them",
+   "source": "llm",
+   "description": "Actors ran commands to obtain credentials for additional domain accounts and changed the MFA configuration file to bypass MFA for these newly compromised accounts.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Move laterally to cloud storage and email accounts",
+   "source": "llm",
+   "description": "Using compromised accounts without MFA enforced, actors moved laterally to the victim’s cloud storage and email accounts and accessed desired content.",
+   "target_host_ref": "h3",
+   "attack_tactic": "lateral-movement",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "source_host_ref": "h1"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a3 uses the dormant account credentials obtained by a2 to enroll a new device",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a3",
+   "to_action": "a1",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a1 depends on enrolling a new device for the dormant account as described in a3",
+   "evidence_refs": [
+    "evidence-12"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a4 uses the compromised account obtained in a1 to perform privilege escalation",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a5 occurs after privilege escalation in a4 as described by 'also modified' following the escalation",
+   "evidence_refs": [
+    "evidence-13"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a6 uses the effectively disabled MFA from a5 to authenticate to VPN and make RDP connections without MFA",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "a7 follows a6 as actors obtained credentials for additional accounts and then bypassed MFA using the method described previously",
+   "evidence_refs": [
+    "evidence-14"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "a8 uses the compromised accounts without MFA enforced obtained in a7 to move laterally",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "victim organization",
+   "source": "llm",
+   "name": "non-governmental organization (NGO)",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-15",
+    "evidence-16",
+    "evidence-17",
+    "evidence-18",
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "Windows domain controllers",
+   "source": "llm",
+   "name": "domain controllers",
+   "os": "Windows",
+   "evidence_refs": [
+    "evidence-18",
+    "evidence-20"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "cloud storage and email accounts",
+   "source": "llm",
+   "name": "victim’s cloud storage and email accounts",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Cisco’s Duo MFA",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-18"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Active Directory",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-23"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s3",
+   "name": "VPN",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "s4",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "PrintNightmare vulnerability (CVE-2021-34527)",
+   "type": "vulnerability",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25",
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "c:\\windows\\system32\\drivers\\etc\\hosts",
+   "type": "file",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-26"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2021-34527",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27",
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "45.32.137[.]94",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "191.96.121[.]162",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "173.239.198[.]46",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "157.230.81[.]39",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "docs.microsoft.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-33"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Russian state-sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization’s Duo MFA.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "The actors gained the credentials via brute-force password guessing attack, allowing them access to a victim account with a simple, predictable password.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors gained the credentials via brute force password guessing attack, allowing them access to a victim account with a simple, predictable password."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "As Duo’s default configuration settings allow for the re-enrollment of a new device for dormant accounts, the actors were able to enroll a new device for this account, complete the authentication requirements, and obtain access to the victim network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "As Duo’s default configuration settings allow for the re enrollment of a new device for dormant accounts, the actors were able to enroll a new device for this a"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Using the compromised account, Russian state-sponsored cyber actors performed privilege escalation via exploitation of the “PrintNightmare” vulnerability (CVE-2021-34527) to obtain administrator privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using the compromised account, Russian state sponsored cyber actors performed privilege escalation via exploitation of the “PrintNightmare” vulnerability (CVE 2"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The actors also modified a domain controller file, c:\\windows\\system32\\drivers\\etc\\hosts, redirecting Duo MFA calls to localhost instead of the Duo server. This change prevented the MFA service from contacting its server to validate MFA login—this effectively disabled MFA for active domain accounts because the default policy of Duo for Windows is to “fail open” if the MFA server is unreachable.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also modified a domain controller file, c:\\windows\\system32\\drivers\\etc\\hosts, redirecting Duo MFA calls to localhost instead of the Duo server. This"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Actors modified the c:\\windows\\system32\\drivers\\etc\\hosts file to prevent communication with the Duo MFA server:",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Actors modified the c:\\windows\\system32\\drivers\\etc\\hosts file to prevent communication with\n       the Duo MFA server:"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "127.0.0.1 api-<redacted>.duosecurity.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "127.0.0.1 api <redacted>.duosecurity.com"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "After effectively disabling MFA, Russian state-sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as non-administrator users and make Remote Desktop Protocol (RDP) connections to Windows domain controllers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After effectively disabling MFA, Russian state sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as no"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "The actors ran commands to obtain credentials for additional domain accounts; then, using the method described in the previous paragraph, changed the MFA configuration file and bypassed MFA for these newly compromised accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "The actors ran commands to obtain credentials for additional domain accounts; then, using the method described in the previous paragraph, changed the MFA config"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Using these compromised accounts without MFA enforced, Russian state-sponsored cyber actors were able to move laterally to the victim’s cloud storage and email accounts and access desired content.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using these compromised accounts without MFA enforced, Russian state sponsored cyber actors were able to move laterally to the victim’s cloud storage and email "
+  },
+  {
+   "id": "evidence-11",
+   "quote": "The actors gained the credentials via brute-force password guessing attack, allowing them access to a victim account with a simple, predictable password. The victim account had been un-enrolled from Duo due to a long period of inactivity but was not disabled in the Active Directory. As Duo’s default configuration settings allow for the re-enrollment of a new device for dormant accounts, the actors were able to enroll a new device for this account, complete the authentication requirements, and obtain access to the victim network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors gained the credentials via brute force password guessing attack, allowing them access to a victim account with a simple, predictable password. The vi"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Russian state-sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization’s Duo MFA. The victim account had been un-enrolled from Duo due to a long period of inactivity but was not disabled in the Active Directory. As Duo’s default configuration settings allow for the re-enrollment of a new device for dormant accounts, the actors were able to enroll a new device for this account, complete the authentication requirements, and obtain access to the victim network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-13",
+   "quote": "The actors also modified a domain controller file, c:\\windows\\system32\\drivers\\etc\\hosts, redirecting Duo MFA calls to localhost instead of the Duo server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The actors also modified a domain controller file, c:\\windows\\system32\\drivers\\etc\\hosts, redirecting Duo MFA calls to localhost instead of the Duo server."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "The actors ran commands to obtain credentials for additional domain accounts; then, using the method described in the previous paragraph, changed the MFA configuration file and bypassed MFA for these newly compromised accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:empty"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Russian state-sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization’s Duo MFA.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored cyber actors gained initial access to the victim organization via compromised credentials and enrolling a new device in the organization"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Russian state-sponsored cyber actors successfully exploited the vulnerability while targeting an NGO using Cisco’s Duo MFA",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored cyber actors successfully exploited the vulnerability while targeting an NGO using Cisco’s Duo MFA"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Russian state-sponsored cyber actors gain access to an NGO, exploit a flaw in default MFA protocols, and move laterally to the NGO’s cloud environment.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Russian state sponsored cyber actors gain access to an NGO, exploit a flaw in default MFA protocols, and move laterally to the NGO’s cloud environment."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Actors modified the domain controller file c:\\windows\\system32\\drivers\\etc\\hosts to redirect Duo MFA calls to localhost instead of the Duo server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9474,
+   "matched_text": " Duo MFA calls to localhost instead of the Duo server"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "After effectively disabling MFA, Russian state-sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as non-administrator users and make Remote Desktop Protocol (RDP) connections to Windows domain controllers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After effectively disabling MFA, Russian state sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as no"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "make Remote Desktop Protocol (RDP) connections to Windows domain controllers",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "make Remote Desktop Protocol (RDP) connections to Windows domain controllers"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Using these compromised accounts without MFA enforced, Russian state-sponsored cyber actors were able to move laterally to the victim’s cloud storage and email accounts and access desired content.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Using these compromised accounts without MFA enforced, Russian state sponsored cyber actors were able to move laterally to the victim’s cloud storage and email "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "The victim account had been un-enrolled from Duo due to a long period of inactivity but was not disabled in the Active Directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The victim account had been un enrolled from Duo due to a long period of inactivity but was not disabled in the Active Directory."
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Ensure inactive accounts are disabled uniformly across the Active Directory and MFA systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ensure inactive accounts are disabled uniformly across the Active Directory and MFA systems"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "After effectively disabling MFA, Russian state-sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as non-administrator users",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After effectively disabling MFA, Russian state sponsored cyber actors were able to successfully authenticate to the victim’s virtual private network (VPN) as no"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Russian state-sponsored cyber actors performed privilege escalation via exploitation of the PrintNightmare vulnerability (CVE-2021-34527) to obtain administrator privileges.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a4"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Actors modified the domain controller file c:\\windows\\system32\\drivers\\etc\\hosts to redirect Duo MFA calls to localhost instead of the Duo server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "unresolved:a5"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": ""
+  },
+  {
+   "id": "evidence-27",
+   "quote": "CVE-2021-34527",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34527"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "CVE-2021-34527",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2021 34527"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "45.32.137[.]94",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.32.137[.]94"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "191.96.121[.]162",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "191.96.121[.]162"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "173.239.198[.]46",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "173.239.198[.]46"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "157.230.81[.]39",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "157.230.81[.]39"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "docs.microsoft.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "19"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "docs.microsoft.com"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "non-governmental organization (NGO) — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "non-governmental organization (NGO) 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — non-governmental organization (NGO)",
+    "action:a1 — Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+    "action:a2 — Obtain credentials via brute-force password guessing attack",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a4 — Exploit PrintNightmare vulnerability for privilege escalation",
+    "action:a7 — Obtain credentials for additional domain accounts and bypass MFA for them"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "non-governmental organization (NGO)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-9"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "non-governmental organization (NGO) — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "non-governmental organization (NGO) 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — non-governmental organization (NGO)",
+    "action:a1 — Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+    "action:a2 — Obtain credentials via brute-force password guessing attack",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a4 — Exploit PrintNightmare vulnerability for privilege escalation",
+    "action:a7 — Obtain credentials for additional domain accounts and bypass MFA for them"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "non-governmental organization (NGO)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "non-governmental organization (NGO) — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "non-governmental organization (NGO) 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — non-governmental organization (NGO)",
+    "action:a1 — Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+    "action:a2 — Obtain credentials via brute-force password guessing attack",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a4 — Exploit PrintNightmare vulnerability for privilege escalation",
+    "action:a7 — Obtain credentials for additional domain accounts and bypass MFA for them"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "non-governmental organization (NGO)",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "domain controllers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controllers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — domain controllers",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a5 — Modify hosts file to redirect Duo MFA calls to localhost",
+    "action:a6 — Authenticate to VPN and make RDP connections to domain controllers without MFA"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-20",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h2.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-20",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "domain controllers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controllers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — domain controllers",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a5 — Modify hosts file to redirect Duo MFA calls to localhost",
+    "action:a6 — Authenticate to VPN and make RDP connections to domain controllers without MFA"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-20",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "domain controllers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controllers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — domain controllers",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a5 — Modify hosts file to redirect Duo MFA calls to localhost",
+    "action:a6 — Authenticate to VPN and make RDP connections to domain controllers without MFA"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-20",
+      "evidence-3",
+      "evidence-5",
+      "evidence-6",
+      "evidence-7",
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "victim’s cloud storage and email accounts — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim’s cloud storage and email accounts 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — victim’s cloud storage and email accounts",
+    "action:a8 — Move laterally to cloud storage and email accounts"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim’s cloud storage and email accounts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "victim’s cloud storage and email accounts — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim’s cloud storage and email accounts 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — victim’s cloud storage and email accounts",
+    "action:a8 — Move laterally to cloud storage and email accounts"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim’s cloud storage and email accounts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "victim’s cloud storage and email accounts — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim’s cloud storage and email accounts 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — victim’s cloud storage and email accounts",
+    "action:a8 — Move laterally to cloud storage and email accounts"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim’s cloud storage and email accounts",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s4-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a6 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a6 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s4 — Remote Desktop Protocol (RDP)",
+    "action:a6 — Authenticate to VPN and make RDP connections to domain controllers without MFA"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Authenticate to VPN and make RDP connections to domain controllers without MFA",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a3, a5, a6 涉及 Active Directory（h2 (domain controllers)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h2 — domain controllers",
+    "action:a3 — Enroll a new device for a dormant account due to default Duo MFA configuration",
+    "action:a5 — Modify hosts file to redirect Duo MFA calls to localhost",
+    "action:a6 — Authenticate to VPN and make RDP connections to domain controllers without MFA"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "domain controllers",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-18",
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Enroll a new device for a dormant account due to default Duo MFA configuration",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Modify hosts file to redirect Duo MFA calls to localhost",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5",
+      "evidence-6",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "Authenticate to VPN and make RDP connections to domain controllers without MFA",
+     "source_ref": "actions:a6.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a1 — Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+    "action:a2 — Obtain credentials via brute-force password guessing attack",
+    "action:a7 — Obtain credentials for additional domain accounts and bypass MFA for them",
+    "host:h1 — non-governmental organization (NGO)"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Gain initial access via compromised credentials and enrolling a new device in Duo MFA",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Obtain credentials via brute-force password guessing attack",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Obtain credentials for additional domain accounts and bypass MFA for them",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-9"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8182,
+  "unsupported_claim_count": 8,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": [
+   {
+    "action": "a7",
+    "technique": "T1003.003"
+   }
+  ]
+ },
+ "id": "scn_evidence"
+}

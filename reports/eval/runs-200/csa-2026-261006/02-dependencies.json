@@ -1,0 +1,1298 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2026-261006",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "91979d3404ec4e92ae1919a676c3d2658c99b0068fcac2abed0225ac57142a71",
+  "source_name": "csa-2026-261006"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "scanned the internet for exposed FortiGate SSL VPN portals",
+   "source": "llm",
+   "description": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals, using automated scripts to identify reachable devices and harvestable authentication surfaces.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying",
+   "source": "llm",
+   "description": "They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak dumps and infostealer logs.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "exfiltrated password hashes obtained via credential dumping",
+   "source": "llm",
+   "description": "Exfiltrated password hashes obtained via credential dumping were funneled into a GPU-accelerated cracking cluster to perform offline password cracking.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "insufficient",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "created new administrative accounts on the firewall to maintain persistence",
+   "source": "llm",
+   "description": "New administrative accounts were created on the firewall to maintain persistence.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1136.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a5",
+   "name": "moved into victim environments with verified credentials",
+   "source": "llm",
+   "description": "With verified credentials in hand, attackers moved into victim environments, conducting Active Directory enumeration and password spraying to expand access and identify privileged accounts.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "source_host_ref": "h1",
+   "reproducibility": "needs_vm",
+   "reproducibility_reason": "Requires an isolated, versioned Windows AD DC/member fixture; OS/AD versions and topology are missing. No version is assumed."
+  },
+  {
+   "id": "a6",
+   "name": "deleted or changed passwords for original accounts on the system causing lockouts",
+   "source": "llm",
+   "description": "Threat actors either deleted or changed the password for original accounts on the system, potentially locking out legitimate administrators.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1531",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a7",
+   "name": "created multiple new accounts to maintain persistence within the network",
+   "source": "llm",
+   "description": "Threat actors created multiple new accounts on the system to maintain persistence within the network.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states the order of scanning followed by credential collection using linking words.",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Credential dumping and exfiltration follows credential collection as described in the source.",
+   "evidence_refs": [
+    "evidence-9"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r3",
+   "from_action": "a3",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "New administrative accounts were created after cracked credentials were validated, implying use of those credentials.",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Attackers moved into victim environments with verified credentials, which were obtained or created in the previous step.",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a4",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Creation of multiple new accounts to maintain persistence within the network follows initial creation of new administrative accounts on the firewall.",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r6",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Lockouts caused by deleting or changing passwords for original accounts occur after attackers moved into victim environments.",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "internet-facing Fortinet FortiGate firewalls and secure socket layer (SSL) virtual private network (VPN) gateways",
+   "source": "llm",
+   "name": "Fortinet FortiGate firewall",
+   "os": "FortiOS",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13",
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "service_refs": [
+    "s1",
+    "s2"
+   ]
+  },
+  {
+   "id": "h2",
+   "role": "victim environments where attackers moved into with verified credentials, conducting Active Directory enumeration and password spraying",
+   "source": "llm",
+   "name": "victim environments",
+   "evidence_refs": [
+    "evidence-16",
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s3"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Fortinet FortiGate firewall",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s2",
+   "name": "SSL VPN portals",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  },
+  {
+   "id": "s3",
+   "name": "Active Directory",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-17"
+   ],
+   "epistemic_status": "supported",
+   "catalogue_component": "unsupported-ad-ds",
+   "is_substitute": false,
+   "cve": []
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "Hashtopolis",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-20",
+    "evidence-21"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "GPU-accelerated cracking cluster",
+   "type": "tool",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-22",
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "new administrative accounts",
+   "type": "account",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-24"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "multiple new accounts",
+   "type": "account",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-25"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "ip",
+   "value": "45.154.12.132",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "ip",
+   "value": "154.202.59.169",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-27"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "ip",
+   "value": "103.27.186.156",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-28"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "ip",
+   "value": "45.155.250.158",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-29"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "socradar.io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-30",
+    "evidence-31"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "www.cloudsek.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-32",
+    "evidence-33"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "www.fortinet.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-34"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "community.fortinet.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "docs.fortinet.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals, using automated scripts to identify reachable devices and harvestable authentication surfaces.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals, using automated scripts to identify reachable devices and harvestable authentica"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak dumps and infostealer logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak du"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Exfiltrated password hashes obtained via credential dumping were funneled into a GPU-accelerated cracking cluster to perform offline password cracking,where Hashcat and Hashtopolis1 orchestrated distributed jobs to convert stolen data into usable plaintext credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7037,
+   "matched_text": "Exfiltrated password hashes obtained via credential dumping were funneled into a GPU accelerated cracking cluster to perform offline password cracking,where"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "New administrative accounts were created on the firewall to maintain persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "New administrative accounts were created on the firewall to maintain persistence."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "With verified credentials in hand, attackers moved into victim environments, conducting Active Directory enumeration and password spraying to expand access and identify privileged accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With verified credentials in hand, attackers moved into victim environments, conducting Active Directory enumeration and password spraying to expand access and "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Based on initial responses, some victims may get locked out of their Fortinet devices if the threat actor either deletes or changes the password for original accounts on the system.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Based on initial responses, some victims may get locked out of their Fortinet devices if the threat actor either deletes or changes the password for original ac"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Initial investigations revealed the creation of multiple new accounts to maintain persistence within the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Initial investigations revealed the creation of multiple new accounts to maintain persistence within the network."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals, using automated scripts to identify reachable devices and harvestable authentication surfaces. They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak dumps and infostealer logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak d"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak dumps and infostealer logs. Exfiltrated password hashes obtained via credential dumping were funneled into a GPU-accelerated cracking cluster to perform offline password cracking,where Hashcat and Hashtopolis1 orchestrated distributed jobs to convert stolen data into usable plaintext credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8261,
+   "matched_text": "They collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying attacks based on prior Fortinet leak du"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Cracked credentials were enriched, sorted, and validated, with scripts filtering out honeypots, mapping organizations, and prioritizing high-value targets based on revenue and network structure. New administrative accounts were created on the firewall to maintain persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cracked credentials were enriched, sorted, and validated, with scripts filtering out honeypots, mapping organizations, and prioritizing high value targets based"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "FortiBleed is an active, global credential-compromise campaign targeting internet-facing Fortinet FortiGate firewalls and secure socket layer (SSL) virtual private network (VPN) gateways",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "FortiBleed is an active, global credential compromise campaign targeting internet facing Fortinet FortiGate firewalls and secure socket layer (SSL) virtual priv"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "New administrative accounts were created on the firewall to maintain persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "New administrative accounts were created on the firewall to maintain persistence."
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Threat actors either deleted or changed the password for original accounts on the system",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7778,
+   "matched_text": " the password for original accounts on the system"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Reset all Fortinet VPN and administrative passwords, especially on internet-facing systems",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Reset all Fortinet VPN and administrative passwords, especially on internet facing systems"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Adversaries extracted FortiOS user databases and session tokens from compromised devices to obtain additional credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "52"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Adversaries extracted FortiOS user databases and session tokens from compromised devices to obtain additional credentials."
+  },
+  {
+   "id": "evidence-16",
+   "quote": "With verified credentials in hand, attackers moved into victim environments, conducting Active Directory enumeration and password spraying to expand access and identify privileged accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "With verified credentials in hand, attackers moved into victim environments, conducting Active Directory enumeration and password spraying to expand access and "
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Active Directory account enumeration was reported to identify users and privileges for further lateral movement.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Active Directory account enumeration was reported to identify users and privileges for further lateral movement."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Attackers began by scanning the internet for exposed FortiGate SSL VPN portals"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "conducting Active Directory enumeration and password spraying to expand access and identify privileged accounts.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "conducting Active Directory enumeration and password spraying to expand access and identify privileged accounts."
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Hashcat and Hashtopolis orchestrated distributed jobs to convert stolen data into usable plaintext credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9091,
+   "matched_text": " orchestrated distributed jobs to convert stolen data into usable plaintext credentials."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "IP address 85.11.187.8 being used for the Hashtopolis tool.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "IP address 85.11.187.8 being used for the Hashtopolis tool."
+  },
+  {
+   "id": "evidence-22",
+   "quote": "Exfiltrated password hashes obtained via credential dumping were funneled into a GPU-accelerated cracking cluster to perform offline password cracking.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9934,
+   "matched_text": "Exfiltrated password hashes obtained via credential dumping were funneled into a GPU accelerated cracking cluster to perform offline password cracking"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Adversaries rented GPU infrastructure to support large-scale cracking of stolen password hashes.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Adversaries rented GPU infrastructure to support "
+  },
+  {
+   "id": "evidence-24",
+   "quote": "Adversaries created new administrative accounts on FortiGate devices to maintain persistent access.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "55"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Adversaries created new administrative accounts on "
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Threat actors created multiple new accounts on the system to maintain persistence within the network.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "14"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9091,
+   "matched_text": " to maintain persistence "
+  },
+  {
+   "id": "evidence-26",
+   "quote": "45.154.12.132",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.154.12.132"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "154.202.59.169",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "154.202.59.169"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "103.27.186.156",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "103.27.186.156"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "45.155.250.158",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45.155.250.158"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "socradar.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "75"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "socradar.io"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "socradar.io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "76"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "socradar.io"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "www.cloudsek.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "77"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cloudsek.com"
+  },
+  {
+   "id": "evidence-33",
+   "quote": "www.cloudsek.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "78"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cloudsek.com"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "www.fortinet.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "79"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fortinet.com"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "community.fortinet.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "80"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "community.fortinet.com"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "docs.fortinet.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "81"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "docs.fortinet.com"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Fortinet FortiGate firewall — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Fortinet FortiGate firewall 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Fortinet FortiGate firewall",
+    "action:a1 — scanned the internet for exposed FortiGate SSL VPN portals",
+    "action:a2 — collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying",
+    "action:a3 — exfiltrated password hashes obtained via credential dumping",
+    "action:a4 — created new administrative accounts on the firewall to maintain persistence",
+    "action:a6 — deleted or changed passwords for original accounts on the system causing lockouts",
+    "action:a7 — created multiple new accounts to maintain persistence within the network"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Fortinet FortiGate firewall",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "FortiOS",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Fortinet FortiGate firewall — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Fortinet FortiGate firewall 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Fortinet FortiGate firewall",
+    "action:a1 — scanned the internet for exposed FortiGate SSL VPN portals",
+    "action:a2 — collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying",
+    "action:a3 — exfiltrated password hashes obtained via credential dumping",
+    "action:a4 — created new administrative accounts on the firewall to maintain persistence",
+    "action:a6 — deleted or changed passwords for original accounts on the system causing lockouts",
+    "action:a7 — created multiple new accounts to maintain persistence within the network"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Fortinet FortiGate firewall",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Fortinet FortiGate firewall — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Fortinet FortiGate firewall 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Fortinet FortiGate firewall",
+    "action:a1 — scanned the internet for exposed FortiGate SSL VPN portals",
+    "action:a2 — collected large volumes of credentials and authentication artifacts using credential stuffing and password spraying",
+    "action:a3 — exfiltrated password hashes obtained via credential dumping",
+    "action:a4 — created new administrative accounts on the firewall to maintain persistence",
+    "action:a6 — deleted or changed passwords for original accounts on the system causing lockouts",
+    "action:a7 — created multiple new accounts to maintain persistence within the network"
+   ],
+   "suggestions": [
+    "對外 DMZ／公開服務區（候選；請確認實際曝露方式）",
+    "隔離測試網段模擬對外入口",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Fortinet FortiGate firewall",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-1",
+      "evidence-2",
+      "evidence-3",
+      "evidence-4",
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "victim environments — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim environments 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — victim environments",
+    "action:a5 — moved into victim environments with verified credentials"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim environments",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "victim environments — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim environments 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — victim environments",
+    "action:a5 — moved into victim environments with verified credentials"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim environments",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "victim environments — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim environments 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — victim environments",
+    "action:a5 — moved into victim environments with verified credentials"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim environments",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 涉及 Active Directory（h2 (victim environments)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h2 — victim environments",
+    "action:a5 — moved into victim environments with verified credentials"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "victim environments",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-16",
+      "evidence-17"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "moved into victim environments with verified credentials",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-action-a1-start-condition",
+   "field": "scanned the internet for exposed FortiGate SSL VPN portals — 執行前置條件",
+   "category": "precondition",
+   "reason": "IR 沒有說明這個情境的起始存取狀態；不假設攻擊者已經有立足點。",
+   "severity": "major",
+   "status": "open",
+   "question": "情境從「scanned the internet for exposed FortiGate SSL VPN portals」開始。執行這一步前需要哪個已知帳號、服務或其他狀態？若來源沒有說明，請選擇直接從此步驟開始或保留未知。",
+   "affects": [
+    "action:a1 — scanned the internet for exposed FortiGate SSL VPN portals"
+   ],
+   "suggestions": [
+    "直接從這一步開始重現（前置條件不重建）",
+    "補上來源明確記載的前置條件",
+    "保留未知"
+   ],
+   "known": [
+    {
+     "field": "IR 起始步驟",
+     "value": "scanned the internet for exposed FortiGate SSL VPN portals",
+     "source_ref": "actions:a1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-1"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exfiltration-path",
+   "field": "資料外傳的通道與靶場接收端",
+   "category": "network",
+   "reason": "步驟把資料帶出環境，但 IR 沒有外傳的協定、目的地與資料種類，靶場也沒有受控的接收端。",
+   "severity": "major",
+   "status": "open",
+   "question": "資料是用什麼協定、傳到哪裡、傳了哪一類資料？靶場要用哪個受控的接收端（不得連到外部網路）？",
+   "affects": [
+    "action:a3 — exfiltrated password hashes obtained via credential dumping",
+    "host:h1 — Fortinet FortiGate firewall"
+   ],
+   "suggestions": [
+    "只傳到隔離靶場內的模擬接收端",
+    "封鎖外連並將此步驟標記未重現",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "exfiltrated password hashes obtained via credential dumping",
+     "source_ref": "actions:a3.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-fortinet-fortigate-firewall",
+   "field": "software dependency: Fortinet FortiGate firewall",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Fortinet FortiGate firewall 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_software-ssl-vpn-portals",
+   "field": "software dependency: SSL VPN portals",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s2",
+   "question": "SSL VPN portals 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  },
+  {
+   "id": "planner_dep_version-active-directory-h2",
+   "field": "version for Active Directory",
+   "category": "version",
+   "reason": "A software dependency was identified, but its version was not stated in the actions or target context.",
+   "severity": "major",
+   "status": "open"
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.7778,
+  "unsupported_claim_count": 8,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

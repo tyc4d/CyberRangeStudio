@@ -1,0 +1,2250 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2024-240207",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "1d5a352251f34c5f93d36feaab8c5052684cf8c062112ec8687c7b442aaa3038",
+  "source_name": "csa-2024-240207"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "conduct extensive pre-compromise reconnaissance",
+   "source": "llm",
+   "description": "Volt Typhoon conducts extensive pre-compromise reconnaissance to learn about the target organization’s network architecture, operational protocols, network topologies, security measures, typical user behaviors, and key network and IT staff.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a2",
+   "name": "gain initial access by exploiting vulnerabilities in public-facing network appliances",
+   "source": "llm",
+   "description": "Volt Typhoon typically gains initial access to the IT network by exploiting known or zero-day vulnerabilities in public-facing network appliances such as routers, VPNs, and firewalls.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-3",
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "connect to victim network via VPN for follow-on activities",
+   "source": "llm",
+   "description": "After initial access, Volt Typhoon actors connect to the victim’s network via VPN sessions to securely and discreetly conduct follow-on intrusion activities.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1133",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "obtain administrator credentials within the network",
+   "source": "llm",
+   "description": "Volt Typhoon aims to obtain administrator credentials within the network, often by exploiting privilege escalation vulnerabilities in the operating system or network services, or by obtaining credentials insecurely stored on public-facing network appliances.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-8",
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1552",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "move laterally to domain controller and other devices via RDP using valid administrator credentials",
+   "source": "llm",
+   "description": "Volt Typhoon uses valid administrator credentials to move laterally to the domain controller and other devices via remote access services such as Remote Desktop Protocol (RDP).",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "conduct discovery using LOTL binaries and PowerShell",
+   "source": "llm",
+   "description": "Volt Typhoon conducts discovery in the victim’s network, leveraging living off the land (LOTL) binaries for stealth, including using PowerShell to perform targeted queries on Windows event logs to extract security event logs into .dat files.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15",
+    "evidence-16"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a7",
+   "name": "extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service",
+   "source": "llm",
+   "description": "Volt Typhoon achieves full domain compromise by extracting the Active Directory database (NTDS.dit) from the domain controller, frequently employing the Volume Shadow Copy Service (VSS) using command-line utilities such as vssadmin to create a shadow copy and then copying NTDS.dit and SYSTEM registry hive from the volume shadow copy.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-18"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+   "source": "llm",
+   "description": "Volt Typhoon exfiltrates the extracted NTDS.dit and SYSTEM registry hive to perform offline password cracking to obtain plaintext passwords.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-19",
+    "evidence-20"
+   ],
+   "epistemic_status": "supported",
+   "attack_technique": "T1110.002",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "use elevated credentials for strategic network infiltration and additional discovery",
+   "source": "llm",
+   "description": "Volt Typhoon uses elevated credentials obtained from NTDS.dit extraction to infiltrate the network further and conduct additional discovery, including testing access to OT assets using default OT vendor credentials and accessing OT systems.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+   "source": "llm",
+   "description": "Volt Typhoon actors downloaded an outdated version of comsvcs.dll to a non-standard folder and used it with MiniDump and the process ID of LSASS to dump LSASS process memory and obtain credentials.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "use legitimate non-native network admin and forensic tools for credential harvesting",
+   "source": "llm",
+   "description": "Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) to capture physical memory and likely analyze in-memory data for sensitive information such as credentials.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-23"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a12",
+   "name": "use Mimikatz and Impacket for credential dumping and network protocol manipulation",
+   "source": "llm",
+   "description": "Volt Typhoon actors have been observed leveraging Mimikatz to harvest credentials and Impacket for Kerberos manipulation, credential dumping, packet sniffing, relay attacks, and remote service execution.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-25",
+    "evidence-26"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a13",
+   "name": "exfiltrate sensitive information including OT equipment diagrams and documentation",
+   "source": "llm",
+   "description": "Volt Typhoon collected sensitive information from a file server in multiple zipped files and likely exfiltrated the files via SMB. The information included diagrams and documentation related to OT equipment such as SCADA systems, relays, and switchgear.",
+   "target_host_ref": "h2",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a14",
+   "name": "implant and execute Fast Reverse Proxy (FRP) clients for command and control",
+   "source": "llm",
+   "description": "Volt Typhoon actors implanted FRP clients (BrightmetricAgent.exe and SMSvcService.exe) on victim servers and executed them via PowerShell to open reverse proxies between compromised systems and Volt Typhoon C2 servers, enabling covert communications.",
+   "target_host_ref": "h4",
+   "evidence_refs": [
+    "evidence-28"
+   ],
+   "epistemic_status": "insufficient",
+   "attack_technique": "T1059.001",
+   "field_sources": {
+    "attack_technique": "source_quote"
+   },
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a15",
+   "name": "use netsh command to create PortProxy registry modification on PRTG server for C2 traffic proxying",
+   "source": "llm",
+   "description": "Volt Typhoon actors used the netsh command to create a PortProxy registry modification on a Paessler Router Traffic Grapher (PRTG) server, redirecting specific port traffic to Volt Typhoon’s proxy infrastructure and converting the PRTG server into a proxy for their C2 traffic.",
+   "target_host_ref": "h3",
+   "evidence_refs": [
+    "evidence-29"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "The source states the typical sequence starting with reconnaissance followed by initial access.",
+   "evidence_refs": [
+    "evidence-30"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "VPN connection is established after initial access using the foothold gained.",
+   "evidence_refs": [
+    "evidence-31"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Obtaining administrator credentials depends on initial access to the network.",
+   "evidence_refs": [
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r4",
+   "from_action": "a4",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Lateral movement uses valid administrator credentials obtained earlier.",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a5",
+   "to_action": "a7",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Extraction of NTDS.dit requires lateral movement to the domain controller.",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Exfiltration of NTDS.dit and SYSTEM registry hive is done to enable offline password cracking.",
+   "evidence_refs": [
+    "evidence-34"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Use of elevated credentials for strategic infiltration depends on successful password cracking.",
+   "evidence_refs": [
+    "evidence-35"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r8",
+   "from_action": "a10",
+   "to_action": "a11",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Use of legitimate non-native network admin and forensic tools follows dumping credentials from LSASS using comsvcs.dll and MiniDump.",
+   "evidence_refs": [
+    "evidence-36"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r9",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Use of Mimikatz and Impacket for credential dumping and network protocol manipulation follows use of other credential harvesting tools.",
+   "evidence_refs": [
+    "evidence-24"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r10",
+   "from_action": "a5",
+   "to_action": "a6",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Discovery using LOTL binaries and PowerShell occurs after lateral movement to domain controller and other devices.",
+   "evidence_refs": [
+    "evidence-37"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r11",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Extraction of NTDS.dit follows discovery activities.",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r12",
+   "from_action": "a13",
+   "to_action": "a14",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only: Implant and execute FRP clients for command and control is described after exfiltration of sensitive information.",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r13",
+   "from_action": "a14",
+   "to_action": "a15",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Use of netsh command to create PortProxy registry modification depends on implanting and executing FRP clients for C2 traffic proxying.",
+   "evidence_refs": [
+    "evidence-38"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "domain controller",
+   "source": "llm",
+   "name": "domain controller",
+   "os": "Windows",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h2",
+   "role": "file server",
+   "source": "llm",
+   "name": "file server",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h3",
+   "role": "Paessler Router Traffic Grapher (PRTG) server",
+   "source": "llm",
+   "name": "PRTG server",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h4",
+   "role": "victim servers",
+   "source": "llm",
+   "name": "victim servers",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h5",
+   "role": "vCenter server",
+   "source": "llm",
+   "name": "VMware vCenter server",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "h6",
+   "role": "workstation",
+   "source": "llm",
+   "name": "user’s workstation",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Active Directory database (NTDS.dit)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Volume Shadow Copy Service (VSS)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Server Message Block (SMB)",
+   "source": "llm",
+   "host_ref": "h2",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s5",
+   "name": "VPN",
+   "source": "llm",
+   "evidence_refs": [],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1",
+   "h2",
+   "h3",
+   "h4",
+   "h5",
+   "h6"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "comsvcs.dll",
+   "type": "file",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-39"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Magnet RAM Capture (MRC)",
+   "type": "tool",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-40"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Mimikatz",
+   "type": "tool",
+   "id": "a3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-41"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "Impacket",
+   "type": "tool",
+   "id": "a4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-42"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "BrightmetricAgent.exe",
+   "type": "file",
+   "id": "a5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "SMSvcService.exe",
+   "type": "file",
+   "id": "a6",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-43"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2022-42475",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44",
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "NTDS.dit",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "powershell",
+   "command": "PowerShell [T1059.001], open reverse proxies",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Volt Typhoon conducts extensive pre-compromise reconnaissance to learn about the target organization’s network architecture and operational protocols. This reconnaissance includes identifying network topologies, security measures, typical user behaviors, and key network and IT staff.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon conducts extensive pre compromise reconnaissance to learn about the target organization’s network architecture and operational protocols. This reco"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Volt Typhoon actors conduct extensive pre-compromise reconnaissance to learn about the target organization, its network, and its staff. This includes web searches—including victim-owned sites—for victim host, identity, and network information, especially for information on key network and IT administrators.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors conduct extensive pre compromise reconnaissance to learn about the target organization, its network, and its staff. This includes web search"
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Volt Typhoon typically gains initial access to the IT network by exploiting known or zero-day vulnerabilities in public-facing network appliances (e.g., routers, virtual private networks [VPNs], and firewalls) and then connects to the victim’s network via VPN for follow-on activities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon typically gains initial access to the IT network by exploiting known or zero day vulnerabilities in public facing network appliances (e.g., routers"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "Volt Typhoon actors commonly exploit vulnerabilities in networking appliances such as those from Fortinet, Ivanti Connect Secure (formerly Pulse Secure), NETGEAR, Citrix, and Cisco. They often use publicly available exploit code for known vulnerabilities but are also adept at discovering and exploiting zero-day vulnerabilities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors commonly exploit vulnerabilities in networking appliances such as those from Fortinet, Ivanti Connect Secure (formerly Pulse Secure), NETGEA"
+  },
+  {
+   "id": "evidence-5",
+   "quote": "In one confirmed compromise, Volt Typhoon actors likely obtained initial access by exploiting CVE-2022-42475 in a network perimeter FortiGate 300D firewall that was not patched. There is evidence of a buffer overflow attack identified within the Secure Sockets Layer (SSL)-VPN crash logs.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one confirmed compromise, Volt Typhoon actors likely obtained initial access by exploiting CVE 2022 42475 in a network perimeter FortiGate 300D firewall that"
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Volt Typhoon actors often use VPN sessions to securely connect to victim environments, enabling discreet follow-on intrusion activities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " often use VPN sessions to securely connect to victim environments, enabling discreet follow on intrusion activities."
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Once initial access is achieved, Volt Typhoon actors typically shift to establishing persistent access. They often use VPN sessions to securely connect to victim environments, enabling discreet follow-on intrusion activities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once initial access is achieved, Volt Typhoon actors typically shift to establishing persistent access. They often use VPN sessions to securely connect to victi"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Volt Typhoon aims to obtain administrator credentials within the network, often by exploiting privilege escalation vulnerabilities in the operating system or network services. In some cases, Volt Typhoon has obtained credentials insecurely stored on a public-facing network appliance.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon aims to obtain administrator credentials within the network, often by exploiting privilege escalation vulnerabilities in the operating system or ne"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Volt Typhoon first obtains credentials from public-facing appliances after gaining initial access by exploiting privilege escalation vulnerabilities in the operating system or network services. In some cases, they have obtained credentials insecurely stored on the appliance.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7407,
+   "matched_text": " credentials from public facing appliances after gaining initial access by exploiting privilege escalation vulnerabilities in the operating system or network se"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "In one instance, where Volt Typhoon likely exploited CVE-2022-42475 in an unpatched Fortinet device, Volt Typhoon actors compromised a domain admin account stored inappropriately on the device.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In one instance, where Volt Typhoon likely exploited CVE 2022 42475 in an unpatched Fortinet device, Volt Typhoon actors compromised a domain admin account stor"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Volt Typhoon uses valid administrator credentials to move laterally to the domain controller (DC) and other devices via remote access services such as Remote Desktop Protocol (RDP).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon uses valid administrator credentials to move laterally to the domain controller (DC) and other devices via remote access services such as Remote De"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "Volt Typhoon has moved laterally to the domain controller via an interactive RDP session using a compromised account with domain administrator privileges;",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9375,
+   "matched_text": " laterally to the domain controller via an interactive RDP session using a compromised account with domain administrator privileges;"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "For lateral movement, Volt Typhoon actors have been observed predominantly employing RDP with compromised valid administrator credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "For lateral movement, Volt Typhoon actors have been observed predominantly employing RDP with compromised valid administrator credentials."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "Volt Typhoon conducts discovery in the victim’s network, leveraging LOTL binaries for stealth. A key tactic includes using PowerShell to perform targeted queries on Windows event logs, focusing on specific users and periods. These queries facilitate the discreet extraction of security event logs into .dat files, allowing Volt Typhoon actors to gather critical information while minimizing detection.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon conducts discovery in the victim’s network, leveraging LOTL binaries for stealth. A key tactic includes using PowerShell to perform targeted querie"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Volt Typhoon actors conduct extensive pre-compromise reconnaissance to learn about the target organization, its network, and its staff. ... Volt Typhoon actors have been observed using commercial tools, LOTL utilities, and appliances already present on the system for system information, network service, group and user discovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6765,
+   "matched_text": "Volt Typhoon actors conduct extensive pre compromise reconnaissance to learn about the target organization, its network, and its staff. "
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Specifically, in one incident, analysis of the PowerShell console history of a domain controller indicated that security event logs were directed to a file named user.dat, as evidenced by the executed command Get-EventLog security -instanceid 4624 -after [year-month-date] | fl * | Out-File 'C:\\users\\public\\documents\\user.dat'.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Specifically, in one incident, analysis of the PowerShell console history of a domain controller indicated that security event logs were directed to a file name"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "Volt Typhoon achieves full domain compromise by extracting the Active Directory database (NTDS.dit) from the DC. Volt Typhoon frequently employs the Volume Shadow Copy Service (VSS) using command-line utilities such as vssadmin to access NTDS.dit.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon achieves full domain compromise by extracting the Active Directory database (NTDS.dit) from the DC. Volt Typhoon frequently employs the Volume Shad"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "To obtain NTDS.dit, the U.S. authoring agencies have observed Volt Typhoon: 1. Move laterally to the domain controller via an interactive RDP session using a compromised account with domain administrator privileges; 2. Execute the Windows-native vssadmin command to create a volume shadow copy; 3. Use Windows Management Instrumentation Console (WMIC) commands to execute ntdsutil (a LOTL utility) to copy NTDS.dit and SYSTEM registry hive from the volume shadow copy; and 4. Exfiltrate NTDS.dit and SYSTEM registry hive to crack passwords offline).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "To obtain NTDS.dit, the U.S. authoring agencies have observed Volt Typhoon: 1. Move laterally to the domain controller via an interactive RDP session using a co"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Volt Typhoon likely uses offline password cracking techniques to decipher these hashes. This process involves extracting the hashes from the NTDS.dit file and then applying various password cracking methods, such as brute force attacks, dictionary attacks, or more sophisticated techniques like rainbow tables to uncover the plaintext passwords.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon likely uses offline password cracking techniques to decipher these hashes. This process involves extracting the hashes from the NTDS.dit file and t"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Exfiltrate NTDS.dit and SYSTEM registry hive to crack passwords offline).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Exfiltrate NTDS.dit and SYSTEM registry hive to crack passwords offline)."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "Volt Typhoon uses elevated credentials for strategic network infiltration and additional discovery, often focusing on gaining capabilities to access OT assets. Volt Typhoon actors have been observed testing access to domain-joint OT assets using default OT vendor credentials, and in certain instances, they have possessed the capability to access OT systems whose credentials were compromised via NTDS.dit theft.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon uses elevated credentials for strategic network infiltration and additional discovery, often focusing on gaining capabilities to access OT assets. "
+  },
+  {
+   "id": "evidence-22",
+   "quote": "In one confirmed compromise, actors downloaded an outdated version of comsvcs.dll on the DC in a non-standard folder. The actors used this DLL with MiniDump and the process ID of the Local Security Authority Subsystem Service (LSASS) to dump the LSASS process memory and obtain credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " folder. The actors used this DLL with MiniDump and the process ID of the Local Security Authority Subsystem Service (LSASS) to dump the LSASS process memory an"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain controllers. MRC is a free imaging tool that captures the physical memory of a computer, and Volt Typhoon actors likely used it to analyze in-memory data for sensitive information (such as credentials) and in-transit data not typically accessible on disk.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain controllers. MRC is a free imaging tool that captures the physical "
+  },
+  {
+   "id": "evidence-24",
+   "quote": "The U.S. authoring agencies have observed Volt Typhoon actors leveraging Mimikatz to harvest credentials, and industry partners have observed Volt Typhoon leveraging Impacket.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The U.S. authoring agencies have observed Volt Typhoon actors leveraging Mimikatz to harvest credentials, and industry partners have observed Volt Typhoon lever"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "Mimikatz is a credential dumping tool and Volt Typhoon actors use it to obtain credentials. In one confirmed compromise, the Volt Typhoon used RDP to connect to a server and run Mimikatz after leveraging a compromised administrator account to deploy it.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Mimikatz is a credential dumping tool and Volt Typhoon actors use it to obtain credentials. In one confirmed compromise, the Volt Typhoon used RDP to connect to"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Impacket is an open source Python toolkit for programmatically constructing and manipulating network protocols. It contains tools for Kerberos manipulation, Windows credential dumping, packet sniffing, and relay attacks—as well as remote service execution.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Impacket is an open source Python toolkit for programmatically constructing and manipulating network protocols. It contains tools for Kerberos manipulation, Win"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "In one confirmed compromise, they collected sensitive information obtained from a file server in multiple zipped files and likely exfiltrated the files via Server Message Block (SMB). Collected information included diagrams and documentation related to OT equipment, including supervisory control and data acquisition (SCADA) systems, relays, and switchgear.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.6216,
+   "matched_text": "n one confirmed compromise, they collected sensitive information obtained from a file server in multiple zipped files and likely exfiltrated the files via Serve"
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Volt Typhoon actors implanted the FRP client with filename SMSvcService.exe on a Shortel Enterprise Contact Center (ECC) server and a second FRP client with filename Brightmetricagent.exe on another server. These clients, when executed via PowerShell, open reverse proxies between the compromised system and Volt Typhoon C2 servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.9459,
+   "matched_text": "Volt Typhoon actors implanted the FRP client with filename SMSvcService.exe on a Shortel Enterprise Contact Center (ECC) server and a second FRP client with fil"
+  },
+  {
+   "id": "evidence-29",
+   "quote": "In the same compromise, Volt Typhoon actors exploited a Paessler Router Traffic Grapher (PRTG) server as an intermediary for their FRP operations. To facilitate this, they used the netsh command, a legitimate Windows command, to create a PortProxy registry modification on the PRTG server. This key alteration redirected specific port traffic to Volt Typhoon’s proxy infrastructure, effectively converting the PRTG’s server into a proxy for their C2 traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9978,
+   "matched_text": "In the same compromise, Volt Typhoon actors exploited a Paessler Router Traffic Grapher (PRTG) server as an intermediary for their FRP operations. To facilitate"
+  },
+  {
+   "id": "evidence-30",
+   "quote": "1. Volt Typhoon conducts extensive pre-compromise reconnaissance to learn about the target organization’s network architecture and operational protocols. ... 2. Volt Typhoon typically gains initial access to the IT network by exploiting known or zero-day vulnerabilities in public-facing network appliances ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "1. Volt Typhoon conducts extensive pre compromise reconnaissance to learn about the target organization’s network architecture and operational protocols. … 2. V"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "Volt Typhoon typically gains initial access to the IT network by exploiting known or zero-day vulnerabilities in public-facing network appliances ... and then connects to the victim’s network via VPN for follow-on activities.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon typically gains initial access to the IT network by exploiting known or zero day vulnerabilities in public facing network appliances … and then con"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Volt Typhoon first obtains credentials from public-facing appliances after gaining initial access by exploiting privilege escalation vulnerabilities ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Volt Typhoon "
+  },
+  {
+   "id": "evidence-33",
+   "quote": "To obtain NTDS.dit, the U.S. authoring agencies have observed Volt Typhoon: 1. Move laterally to the domain controller via an interactive RDP session using a compromised account with domain administrator privileges; 2. Execute the Windows-native vssadmin command to create a volume shadow copy; ...",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9899,
+   "matched_text": "To obtain NTDS.dit, the U.S. authoring agencies have observed Volt Typhoon: 1. Move laterally to the domain controller via an interactive RDP session using a co"
+  },
+  {
+   "id": "evidence-34",
+   "quote": "Exfiltrate NTDS.dit and SYSTEM registry hive to crack passwords offline.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9861,
+   "matched_text": "Exfiltrate NTDS.dit and SYSTEM registry hive to crack passwords offline"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "Volt Typhoon actors have been observed testing access to domain-joint OT assets using default OT vendor credentials, and in certain instances, they have possessed the capability to access OT systems whose credentials were compromised via NTDS.dit theft.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors have been observed testing access to domain joint OT assets using default OT vendor credentials, and in certain instances, they have possess"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "In one confirmed compromise, actors downloaded an outdated version of comsvcs.dll on the DC in a non-standard folder. The actors used this DLL with MiniDump and the process ID of the Local Security Authority Subsystem Service (LSASS) to dump the LSASS process memory and obtain credentials. ... Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain controllers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " folder. The actors used this DLL with MiniDump and the process ID of the Local Security Authority Subsystem Service (LSASS) to dump the LSASS process memory an"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "Volt Typhoon conducts discovery in the victim’s network, leveraging LOTL binaries for stealth. ... Volt Typhoon actors have been observed using commercial tools, LOTL utilities, and appliances already present on the system for system information, network service, group and user discovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.8,
+   "matched_text": "Volt Typhoon conducts discovery in the victim’s network, leveraging LOTL binaries for stealth. "
+  },
+  {
+   "id": "evidence-38",
+   "quote": "In the same compromise, Volt Typhoon actors exploited a Paessler Router Traffic Grapher (PRTG) server as an intermediary for their FRP operations. To facilitate this, they used the netsh command, a legitimate Windows command, to create a PortProxy registry modification on the PRTG server. This key alteration redirected specific port traffic to Volt Typhoon’s proxy infrastructure, effectively converting the PRTG’s server into a proxy for their C2 traffic.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "strong",
+   "match_score": 0.9978,
+   "matched_text": "In the same compromise, Volt Typhoon actors exploited a Paessler Router Traffic Grapher (PRTG) server as an intermediary for their FRP operations. To facilitate"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "Volt Typhoon actors downloaded an outdated version of comsvcs.dll on the DC in a non-standard folder.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " actors downloaded an outdated version of comsvcs.dll on the DC in a non standard folder."
+  },
+  {
+   "id": "evidence-40",
+   "quote": "Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain controllers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors have been observed using Magnet RAM Capture (MRC) version 1.20 on domain controllers."
+  },
+  {
+   "id": "evidence-41",
+   "quote": "Volt Typhoon actors have been observed leveraging Mimikatz to harvest credentials.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " leveraging Mimikatz to harvest credentials"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "Volt Typhoon actors have been observed leveraging Impacket for Kerberos manipulation, credential dumping, packet sniffing, relay attacks, and remote service execution.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Volt Typhoon actors have been observed "
+  },
+  {
+   "id": "evidence-43",
+   "quote": "Volt Typhoon actors implanted FRP clients (BrightmetricAgent.exe and SMSvcService.exe) on victim servers and executed them via PowerShell to open reverse proxies between compromised systems and Volt Typhoon C2 servers.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.88,
+   "matched_text": "Volt Typhoon actors implanted "
+  },
+  {
+   "id": "evidence-44",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "CVE-2022-42475",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2022 42475"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "NTDS.dit",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "NTDS.dit"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "PowerShell, open reverse proxies",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "29"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "PowerShell, open reverse proxies"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "domain controller — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — domain controller",
+    "action:a4 — obtain administrator credentials within the network",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials",
+    "action:a6 — conduct discovery using LOTL binaries and PowerShell",
+    "action:a7 — extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service",
+    "action:a8 — exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+    "action:a10 — dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+    "action:a11 — use legitimate non-native network admin and forensic tools for credential harvesting",
+    "action:a12 — use Mimikatz and Impacket for credential dumping and network protocol manipulation"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "domain controller — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — domain controller",
+    "action:a4 — obtain administrator credentials within the network",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials",
+    "action:a6 — conduct discovery using LOTL binaries and PowerShell",
+    "action:a7 — extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service",
+    "action:a8 — exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+    "action:a10 — dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+    "action:a11 — use legitimate non-native network admin and forensic tools for credential harvesting",
+    "action:a12 — use Mimikatz and Impacket for credential dumping and network protocol manipulation"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "domain controller — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "domain controller 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — domain controller",
+    "action:a4 — obtain administrator credentials within the network",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials",
+    "action:a6 — conduct discovery using LOTL binaries and PowerShell",
+    "action:a7 — extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service",
+    "action:a8 — exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+    "action:a10 — dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+    "action:a11 — use legitimate non-native network admin and forensic tools for credential harvesting",
+    "action:a12 — use Mimikatz and Impacket for credential dumping and network protocol manipulation"
+   ],
+   "suggestions": [
+    "內部／管理網段（候選；請確認允許來源）",
+    "隔離測試網段（只連必要主機）",
+    "其他網段（請描述區域與可達路徑）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "domain controller",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10",
+      "evidence-11",
+      "evidence-12",
+      "evidence-13",
+      "evidence-14",
+      "evidence-15",
+      "evidence-16",
+      "evidence-17",
+      "evidence-18",
+      "evidence-19",
+      "evidence-20",
+      "evidence-22",
+      "evidence-23",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os",
+   "field": "file server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "file server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h2 — file server",
+    "action:a13 — exfiltrate sensitive information including OT equipment diagrams and documentation"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "file server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-os-version",
+   "field": "file server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "file server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h2 — file server",
+    "action:a13 — exfiltrate sensitive information including OT equipment diagrams and documentation"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "file server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h2-network",
+   "field": "file server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "file server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h2 — file server",
+    "action:a13 — exfiltrate sensitive information including OT equipment diagrams and documentation"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "file server",
+     "source_ref": "hosts:h2.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-27"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h2",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os",
+   "field": "PRTG server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PRTG server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h3 — PRTG server",
+    "action:a15 — use netsh command to create PortProxy registry modification on PRTG server for C2 traffic proxying"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PRTG server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-os-version",
+   "field": "PRTG server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "PRTG server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h3 — PRTG server",
+    "action:a15 — use netsh command to create PortProxy registry modification on PRTG server for C2 traffic proxying"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PRTG server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h3-network",
+   "field": "PRTG server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "PRTG server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h3 — PRTG server",
+    "action:a15 — use netsh command to create PortProxy registry modification on PRTG server for C2 traffic proxying"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "PRTG server",
+     "source_ref": "hosts:h3.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-29"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h3",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os",
+   "field": "victim servers — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim servers 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h4 — victim servers",
+    "action:a14 — implant and execute Fast Reverse Proxy (FRP) clients for command and control"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-os-version",
+   "field": "victim servers — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim servers 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h4 — victim servers",
+    "action:a14 — implant and execute Fast Reverse Proxy (FRP) clients for command and control"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h4-network",
+   "field": "victim servers — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim servers 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h4 — victim servers",
+    "action:a14 — implant and execute Fast Reverse Proxy (FRP) clients for command and control"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim servers",
+     "source_ref": "hosts:h4.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h4",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os",
+   "field": "VMware vCenter server — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware vCenter server 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h5 — VMware vCenter server"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware vCenter server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-os-version",
+   "field": "VMware vCenter server — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware vCenter server 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h5 — VMware vCenter server"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware vCenter server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h5-network",
+   "field": "VMware vCenter server — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "VMware vCenter server 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h5 — VMware vCenter server"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "VMware vCenter server",
+     "source_ref": "hosts:h5.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h5",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os",
+   "field": "user’s workstation — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "user’s workstation 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h6 — user’s workstation"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "user’s workstation",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-os-version",
+   "field": "user’s workstation — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "user’s workstation 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h6 — user’s workstation"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "user’s workstation",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h6-network",
+   "field": "user’s workstation — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "user’s workstation 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h6 — user’s workstation"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "user’s workstation",
+     "source_ref": "hosts:h6.role",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h6",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-product-mimikatz-version",
+   "field": "Mimikatz version",
+   "category": "software",
+   "reason": "IR 指出 Mimikatz 相關步驟，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "a12 提到 Mimikatz，但沒有提供可重現的版號。若靶場需要固定版本，請從來源或資產清單核對；否則選擇隔離靶場替代並標記。",
+   "affects": [
+    "action:a12 — use Mimikatz and Impacket for credential dumping and network protocol manipulation"
+   ],
+   "suggestions": [
+    "請依來源或靶場設定補上具體值",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "use Mimikatz and Impacket for credential dumping and network protocol manipulation",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-service-s5-version",
+   "field": "VPN — 版本",
+   "category": "version",
+   "reason": "IR 指出 VPN，但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 VPN 的哪個版本？原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s5 — VPN",
+    "action:a2 — gain initial access by exploiting vulnerabilities in public-facing network appliances",
+    "action:a3 — connect to victim network via VPN for follow-on activities"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "VPN",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient"
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-service-s4-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a5 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s4 — Remote Desktop Protocol (RDP)",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient"
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "move laterally to domain controller and other devices via RDP using valid administrator credentials",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a5, a7 涉及 Active Directory（h1 (domain controller)），但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "host:h1 — domain controller",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials",
+    "action:a7 — extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "主機角色",
+     "value": "domain controller",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient"
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "move laterally to domain controller and other devices via RDP using valid administrator credentials",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    },
+    {
+     "field": "AD 相關步驟",
+     "value": "extract Active Directory database (NTDS.dit) from domain controller using Volume Shadow Copy Service",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-17",
+      "evidence-18"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a10, a14 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a10 — dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+    "action:a14 — implant and execute Fast Reverse Proxy (FRP) clients for command and control"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+     "source_ref": "actions:a10.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "需要外連的步驟",
+     "value": "implant and execute Fast Reverse Proxy (FRP) clients for command and control",
+     "source_ref": "actions:a14.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-28"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-exploited-weakness",
+   "field": "被利用的弱點（CVE／弱點類型）",
+   "category": "software",
+   "reason": "步驟描述了弱點利用，但 IR 沒有弱點編號或弱點類型；沒有它就無法選定可重現的版本與驗證方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些步驟利用的是哪個產品的哪個弱點？目前已知目標軟體：Active Directory database (NTDS.dit), Volume Shadow Copy Service (VSS), Server Message Block (SMB), Remote Desktop Protocol (RDP), VPN。請提供 CVE 編號或弱點類型；若來源沒有寫，請明確選擇教學用的替代弱點並標記為假設。",
+   "affects": [
+    "action:a2 — gain initial access by exploiting vulnerabilities in public-facing network appliances",
+    "action:a4 — obtain administrator credentials within the network",
+    "host:h1 — domain controller"
+   ],
+   "suggestions": [
+    "填入來源或其他公開資料記載的 CVE（請註明出處）",
+    "選用靶場已有的漏洞練習標的並標記為假設",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "gain initial access by exploiting vulnerabilities in public-facing network appliances",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "obtain administrator credentials within the network",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a4 — obtain administrator credentials within the network",
+    "action:a5 — move laterally to domain controller and other devices via RDP using valid administrator credentials",
+    "action:a8 — exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+    "action:a9 — use elevated credentials for strategic network infiltration and additional discovery",
+    "action:a10 — dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+    "action:a11 — use legitimate non-native network admin and forensic tools for credential harvesting",
+    "action:a12 — use Mimikatz and Impacket for credential dumping and network protocol manipulation",
+    "host:h1 — domain controller"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "obtain administrator credentials within the network",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-8",
+      "evidence-9",
+      "evidence-10"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "move laterally to domain controller and other devices via RDP using valid administrator credentials",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-11",
+      "evidence-12",
+      "evidence-13"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "exfiltrate NTDS.dit and SYSTEM registry hive for offline password cracking",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-19",
+      "evidence-20"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "use elevated credentials for strategic network infiltration and additional discovery",
+     "source_ref": "actions:a9.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-21"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "dump credentials from LSASS process memory using comsvcs.dll and MiniDump",
+     "source_ref": "actions:a10.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-22"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "use legitimate non-native network admin and forensic tools for credential harvesting",
+     "source_ref": "actions:a11.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-23"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "use Mimikatz and Impacket for credential dumping and network protocol manipulation",
+     "source_ref": "actions:a12.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-24",
+      "evidence-25",
+      "evidence-26"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.7021,
+  "unsupported_claim_count": 27,
+  "inferred_count": 4,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

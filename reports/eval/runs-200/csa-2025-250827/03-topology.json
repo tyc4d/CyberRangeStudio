@@ -1,0 +1,110 @@
+{
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "targeted network devices",
+   "networks": [
+    "scenario-internal",
+    "external"
+   ],
+   "services": [
+    {
+     "name": "SSH",
+     "port": 22,
+     "protocol": "tcp"
+    },
+    {
+     "name": "HTTP/HTTPS management servers",
+     "port": 80,
+     "protocol": "tcp"
+    }
+   ],
+   "exposure_basis": "inferred_entry_point",
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "服務 SSH、SFTP、HTTP/HTTPS management servers、SNMP、TACACS+、RADIUS、Embedded Packet Capture (native router functionality) 在元件目錄中沒有可部署的對應；選定替代元件後這台主機才會納入部署。"
+  },
+  {
+   "id": "h2",
+   "role": "compromised network infrastructure devices used for staging tools, processing data locally, and lateral movement",
+   "networks": [
+    "scenario-internal"
+   ],
+   "services": [],
+   "runtime": "container",
+   "deployable": false,
+   "not_deployed_reason": "來源只描述了這台主機（或它存放的資料），沒有描述可部署的服務；補上服務後才會納入部署。"
+  },
+  {
+   "id": "attacker",
+   "role": "attacker",
+   "networks": [
+    "external"
+   ],
+   "services": [],
+   "image_hint": "oss-attacker",
+   "component_mode": "real"
+  }
+ ],
+ "networks": [
+  {
+   "id": "scenario-internal",
+   "segment": "scenario",
+   "internal": true
+  },
+  {
+   "id": "external",
+   "segment": "external",
+   "internal": false
+  }
+ ],
+ "connections": [
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13, a14 require access to SSH.",
+   "port": 22,
+   "protocol": "tcp"
+  },
+  {
+   "from_host": "attacker",
+   "to_host": "h1",
+   "reason": "Scenario action(s) a1, a2, a3, a4, a5, a6, a8, a9, a10, a11, a12, a13, a14 require access to HTTP/HTTPS management servers.",
+   "port": 80,
+   "protocol": "tcp"
+  }
+ ],
+ "access_rules": [
+  {
+   "from": "*",
+   "to": "*",
+   "action": "deny"
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 22
+  },
+  {
+   "from": "attacker",
+   "to": "h1",
+   "action": "allow",
+   "port": 80
+  }
+ ],
+ "approval": {
+  "approved": false
+ },
+ "notes": [
+  "An attacker host was added as a lab scaffold because the IR did not define one.",
+  "Host h1 was placed on the external network as the inferred entry point (basis: initial-access action(s) a1); the source does not state its network placement. Confirm or correct it.",
+  "No port is known for service SFTP (s2); it remains unreachable by default.",
+  "No port is known for service SNMP (s4); it remains unreachable by default.",
+  "No port is known for service TACACS+ (s5); it remains unreachable by default.",
+  "No port is known for service RADIUS (s6); it remains unreachable by default.",
+  "No port is known for service Embedded Packet Capture (native router functionality) (s7); it remains unreachable by default.",
+  "Host h1 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced.",
+  "Host h2 is not deployed: no deployable service is known for it. Steps that act on it are not reproduced."
+ ]
+}

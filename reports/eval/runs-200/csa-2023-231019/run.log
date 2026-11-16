@@ -1,0 +1,32 @@
+$ CR_DATA_DIR=.data-eval200/csa-2023-231019 ~/cr-project/.venv/bin/python reports/overnight/evidence/scenario-eng/run_real.py fixtures/cti-corpus/csa-2023-231019/report.md markdown single_pass reports/eval/runs-200/csa-2023-231019 csa-2023-231019
+exit=1
+--- stdout
+
+--- stderr
+Traceback (most recent call last):
+  File "~/cr-project/.worktrees/eval-200/apps/api/app/cti/analysis.py", line 616, in _call_json
+    result = json.loads(text)
+             ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 1155 column 19 (char 54779)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "~/cr-project/.worktrees/eval-200/reports/overnight/evidence/scenario-eng/run_real.py", line 31, in <module>
+    ir = analyze_source(input_kind=kind, content=content, source_name=name, units=units, parsed_source=parsed, method=method, name=name)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/cr-project/.worktrees/eval-200/apps/api/app/cti/analysis.py", line 452, in analyze_source
+    result = _call_json(
+             ^^^^^^^^^^^
+  File "~/cr-project/.worktrees/eval-200/apps/api/app/cti/analysis.py", line 619, in _call_json
+    raise AnalysisError(f"LLM returned invalid JSON; response was retained for diagnosis: {excerpt!r}.") from exc
+app.cti.analysis.AnalysisError: LLM returned invalid JSON; response was retained for diagnosis: '{\n  "actions": [\n    {\n      "id": "a1",\n      "name": "Maintain offline, encrypted backups of critical data",\n      "description": "Maintain offline, encrypted backups of critical data, and regularly test the availability and integrity of backups in a disaster recovery scenario.",\n      "actor": "d'.

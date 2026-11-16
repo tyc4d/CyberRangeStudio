@@ -1,0 +1,44 @@
+# FBI/CISA AA24-016A — Known Indicators of Compromise Associated with Androxgh0st Malware
+
+> - Publisher: FBI and CISA, Joint Cybersecurity Advisory, Product ID AA24-016A, January 16, 2024 (TLP:CLEAR)
+> - Download URL (FBI IC3 copy of the joint advisory): https://www.ic3.gov/CSA/2024/240116.pdf
+> - CISA web page (not fetched; returns 403 from the retrieval host): https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-016a
+> - PDF SHA-256: 878931028d9e8f6338dd5a26d27ee776b520cde8b3b733c3b92983fecf5cbcce (`source.pdf`, 13 pages)
+> - License: U.S. Government work, TLP:CLEAR
+> - Scope of this file: SUMMARY (p.1, main column; the "Actions to take today" sidebar is omitted) and TECHNICAL DETAILS → Overview, Targeting the PHPUnit, Laravel Framework Targeting, Apache Web Server Targeting (pp.1–3), verbatim. The IOC URI lists, ATT&CK table and mitigations (pp.3–13) are in `source.pdf.txt`.
+> - Retrieved: 2026-11-16
+> - Wording: the source's own wording; only page furniture, the sidebar, line wrapping and line-break hyphenation were removed. Source typos (for example "Andoxgh0st", "cross-site forgery request") are kept.
+
+## SUMMARY
+
+The Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency (CISA) are releasing this joint Cybersecurity Advisory (CSA) to disseminate known indicators of compromise (IOCs) and tactics, techniques, and procedures (TTPs) associated with threat actors deploying Androxgh0st malware. Multiple, ongoing investigations and trusted third party reporting yielded the IOCs and TTPs, and provided information on Androxgh0st malware’s ability to establish a botnet that can further identify and compromise vulnerable networks.
+
+The FBI and CISA encourage organizations to implement the recommendations in the Mitigations section of this CSA to reduce the likelihood and impact of cybersecurity incidents caused by Androxgh0st infections.
+
+## TECHNICAL DETAILS
+
+Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 14. See the MITRE ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE ATT&CK tactics and techniques with corresponding mitigation and/or detection recommendations. For assistance with mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool.
+
+### Overview
+
+Androxgh0st malware has been observed establishing a botnet [T1583.005] for victim identification and exploitation in target networks. According to open source reporting[1], Androxgh0st is a Python-scripted malware [T1059.006] primarily used to target .env files that contain confidential information, such as credentials [T1552.001] for various high profile applications (i.e., Amazon Web Services [AWS], Microsoft Office 365, SendGrid, and Twilio from the Laravel web application framework). Androxgh0st malware also supports numerous functions capable of abusing the Simple Mail Transfer Protocol (SMTP), such as scanning [T1046] and exploiting exposed credentials [T1078] and application programming interfaces (APIs) [T1114], and web shell deployment [T1505.003].
+
+### Targeting the PHPUnit
+
+Androxgh0st malware TTPs commonly involves the use of scripts, conducting scanning [T1595] and searching for websites with specific vulnerabilities. In particular, threat actors deploying Androxgh0st have been observed exploiting CVE-2017-9841 to remotely run hypertext preprocessor (PHP) code on fallible websites via PHPUnit [T1190]. Websites using the PHPUnit module that have internet-accessible (exposed) /vendor folders are subject to malicious HTTP POST requests to the /vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php uniform resource identifier (URI). This PHP page runs PHP code submitted through a POST request, which allows the threat actors to remotely execute code.
+
+Malicious actors likely use Androxgh0st to download malicious files [T1105] to the system hosting the website. Threat actors are further able to set up a fake (illegitimate) page accessible via the URI to provide backdoor access to the website. This allows threat actors to download additional malicious files for their operations and access databases.
+
+### Laravel Framework Targeting
+
+Androxgh0st malware establishes a botnet to scan for websites using the Laravel web application framework. After identifying websites using the Laravel web application, threat actors attempt to determine if the domain’s root-level .env file is exposed and contains credentials for accessing additional services. Note: .env files commonly store credentials and tokens. Threat actors often target .env files to steal these credentials within the environment variables.
+
+If the .env file is exposed, threat actors will issue a GET request to the /.env URI to attempt to access the data on the page. Alternatively, Androxgh0st may issue a POST request to the same URI with a POST variable named 0x[] containing certain data sent to the web server. This data is frequently used as an identifier for the threat actor. This method appears to be used for websites in debug mode (i.e., when non-production websites are exposed to the internet). A successful response from either of these methods allows the threat actors to look for usernames, passwords, and/or other credentials pertaining to services such as email (via SMTP) and AWS accounts.
+
+Androxgh0st malware can also access the application key [TA0006] for the Laravel application on the website. If the threat actors successfully identify the Laravel application key, they will attempt exploitation by using the key to encrypt PHP code [T1027.010]. The encrypted code is then passed to the website as a value in the cross-site forgery request (XSRF) token cookie, XSRF-TOKEN, and included in a future GET request to the website. The vulnerability defined in CVE-2018-15133 indicates that on Laravel applications, XSRF token values are subject to an un-serialized call, which can allow for remote code execution. In doing so, the threat actors can upload files to the website via remote access.
+
+### Apache Web Server Targeting
+
+In correlation with CVE-2021-41773, Androxgh0st actors have been observed scanning vulnerable web servers [T1595.002] running Apache HTTP Server versions 2.4.49 or 2.4.50. Threat actors can identify uniform resource locators (URLs) for files outside root directory through a path traversal attack [T1083]. If these files are not protected by the “request all denied” configuration and Common Gateway Interface (CGI) scripts are enabled, this may allow for remote code execution.
+
+If threat actors obtain credentials for any services using the above methods, they may use these credentials to access sensitive data or use these services to conduct additional malicious operations. For example, when threat actors successfully identify and compromise AWS credentials from a vulnerable website, they have been observed attempting to create new users and user policies [T1136]. Additionally, Andoxgh0st actors have been observed creating new AWS instances to use for conducting additional scanning activity [T1583.006].

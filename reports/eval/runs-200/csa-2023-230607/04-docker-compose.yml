@@ -1,0 +1,73 @@
+# CR_TEST_APPROVAL_REQUIRED: explicit local PoC approval is required before deployment.
+name: cr-demo-evidence
+x-cr-test-approval-required: 'POST /api/deploy/{id}/up with {"test_approved": true}'
+services:
+  h2:
+    container_name: cr-demo-evidence-h2
+    networks:
+    - scenario-internal
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    - /var/lib/mysql:rw,noexec,nosuid,size=768m,uid=999,gid=999,mode=0700
+    - /var/run/mysqld:rw,noexec,nosuid,size=8m,uid=999,gid=999,mode=0755
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    user: 999:999
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}
+      MYSQL_PASSWORD: ${CR_DB_PASSWORD:?set at deploy time}
+      MYSQL_DATABASE: app
+      MYSQL_USER: app
+    healthcheck:
+      test:
+      - CMD
+      - mysqladmin
+      - ping
+      - -h
+      - 127.0.0.1
+      - --protocol=tcp
+      - --silent
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 20s
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 256
+  attacker:
+    container_name: cr-demo-evidence-attacker
+    networks:
+    - external
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    restart: 'no'
+    image: alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f
+    user: 65532:65532
+    command:
+    - sh
+    - -c
+    - sleep 2147483647
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+networks:
+  external:
+    name: cr-demo-evidence-external
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+  scenario-internal:
+    name: cr-demo-evidence-scenario-internal
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated

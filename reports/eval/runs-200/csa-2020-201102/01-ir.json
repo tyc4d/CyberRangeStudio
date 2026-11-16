@@ -1,0 +1,3239 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2020-201102",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "b246d2b91a1c44208d9f9a1e0290ad9e72645bb3456aedef4aa1d532329484de",
+  "source_name": "csa-2020-201102"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "Disseminated TrickBot and BazarLoader via phishing campaigns",
+   "source": "llm",
+   "description": "Cybercriminals disseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious websites that host the malware or attachments with the malware.",
+   "target_host_ref": "unknown",
+   "attack_tactic": "TA0001",
+   "evidence_refs": [
+    "evidence-1"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "a2",
+   "name": "Executed TrickBot malware on victim machine",
+   "source": "llm",
+   "description": "After successful execution of the malware, TrickBot copies itself as an executable file with a 12-character (includes .exe), randomly generated file name and places this file in one of the following directories: C:\\Windows\\, C:\\Windows\\SysWOW64\\, or C:\\Users\\[Username]\\AppData\\Roaming\\.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-2"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a3",
+   "name": "Established persistence via scheduled tasks",
+   "source": "llm",
+   "description": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine. The scheduled task typically uses the naming convention: [random_folder_name_in_%APPDATA%_excluding_Microsoft] autoupdate#[5_random_numbers] (e.g., Task autoupdate#16876).",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a4",
+   "name": "Deployed malicious batch scripts using PowerShell commands",
+   "source": "llm",
+   "description": "After successful execution, anchor_dns further deploys malicious batch scripts (.bat) using PowerShell commands.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a5",
+   "name": "Executed self-deletion commands",
+   "source": "llm",
+   "description": "The malware deploys self-deletion techniques by executing commands such as 'cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample]' and 'cmd.exe /C PowerShell \"Start-Sleep 3; Remove-Item C:\\Users\\[username]\\[malware_sample_location]\\\"'.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a6",
+   "name": "Delivered BazarLoader malware via phishing emails",
+   "source": "llm",
+   "description": "Deployment of the BazarLoader malware typically comes from phishing email delivered by commercial mass email delivery services containing links to actor-controlled Google Drive documents or other free online filehosting solutions, typically purporting to be a PDF file, which then link to malware payloads.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "a7",
+   "name": "Mapped network and enumerated environment using native tools",
+   "source": "llm",
+   "description": "Ryuk actors map the network to enumerate the environment using native tools such as net view, net computers, and ping to locate mapped network shares, domain controllers, and active directory.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a8",
+   "name": "Moved laterally using native and third-party tools",
+   "source": "llm",
+   "description": "Ryuk actors move laterally throughout the network using native tools such as PowerShell, Windows Management Instrumentation (WMI), Windows Remote Management, and Remote Desktop Protocol (RDP), as well as third-party tools like Bloodhound.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-8"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a9",
+   "name": "Encrypted files using Ryuk ransomware",
+   "source": "llm",
+   "description": "Ryuk uses AES-256 to encrypt files and an RSA public key to encrypt the AES key. Files have been encrypted with their own AES key and given a file extension of .RYK. Encrypted directories have had a ransom note of RyukReadMe.txt written to the directory.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1486",
+   "evidence_refs": [
+    "evidence-9",
+    "evidence-10"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a10",
+   "name": "Deleted volume shadow copies and backups",
+   "source": "llm",
+   "description": "Ryuk uses commands such as vssadmin Delete Shadows /all /quiet and vssadmin resize shadowstorage to delete volume shadow copies and backups to inhibit system recovery.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1490",
+   "evidence_refs": [
+    "evidence-11"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded"
+  },
+  {
+   "id": "a11",
+   "name": "Stopped or disabled security services",
+   "source": "llm",
+   "description": "Ryuk attackers attempt to shut down or uninstall security applications on victim systems that might prevent ransomware execution, normally via scripts but also manually if needed.",
+   "target_host_ref": "unknown",
+   "evidence_refs": [
+    "evidence-12",
+    "evidence-13"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "partial"
+  },
+  {
+   "id": "a12",
+   "name": "Established persistence via scheduled tasks and registry run keys",
+   "source": "llm",
+   "description": "Ryuk actors have been known to use scheduled tasks and create Registry entries under HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run to maintain persistence.",
+   "target_host_ref": "unknown",
+   "attack_technique": "T1547.001",
+   "evidence_refs": [
+    "evidence-14",
+    "evidence-15"
+   ],
+   "epistemic_status": "insufficient",
+   "outcome": "succeeded"
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Execution of TrickBot malware follows dissemination via phishing",
+   "evidence_refs": [
+    "evidence-16"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a2",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Persistence via scheduled tasks uses the running TrickBot executable",
+   "evidence_refs": [
+    "evidence-17"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a2",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Deployment of malicious batch scripts occurs after successful execution of TrickBot",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r4",
+   "from_action": "a2",
+   "to_action": "a5",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Self-deletion commands are executed by the malware after execution",
+   "evidence_refs": [
+    "evidence-18"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r5",
+   "from_action": "a6",
+   "to_action": "a7",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  },
+  {
+   "id": "r6",
+   "from_action": "a7",
+   "to_action": "a8",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Lateral movement follows network mapping and enumeration",
+   "evidence_refs": [
+    "evidence-19"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "r7",
+   "from_action": "a8",
+   "to_action": "a9",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "File encryption occurs once Ryuk is dropped after lateral movement",
+   "evidence_refs": [
+    "evidence-20"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句只陳述先後順序，沒有陳述後一步使用前一步的結果；相依屬推論，需人工確認。"
+  },
+  {
+   "id": "r8",
+   "from_action": "a9",
+   "to_action": "a10",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Deletion of volume shadow copies and backups is done by a .bat file dropped by Ryuk",
+   "evidence_refs": [
+    "evidence-21"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r9",
+   "from_action": "a9",
+   "to_action": "a11",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "Stopping or disabling security services is done to allow Ryuk to execute",
+   "evidence_refs": [
+    "evidence-22"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r10",
+   "from_action": "a11",
+   "to_action": "a12",
+   "kind": "temporal",
+   "source": "llm",
+   "rationale": "Narrative order only",
+   "evidence_refs": [],
+   "epistemic_status": "inferred"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "infected host",
+   "source": "llm",
+   "name": "victim machine",
+   "os": "Windows",
+   "os_version": "Windows Vista or higher",
+   "network_placement": "unknown",
+   "evidence_refs": [
+    "evidence-23",
+    "evidence-17",
+    "evidence-24",
+    "evidence-25",
+    "evidence-26",
+    "evidence-27",
+    "evidence-28",
+    "evidence-29",
+    "evidence-30",
+    "evidence-31"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Scheduled Tasks",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-17",
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s2",
+   "name": "Registry Run Keys",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-27"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s3",
+   "name": "Windows Command Shell (cmd.exe)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-24",
+    "evidence-32"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s4",
+   "name": "PowerShell",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s5",
+   "name": "Remote Desktop Protocol (RDP)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s6",
+   "name": "Windows Management Instrumentation (WMI)",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "id": "s7",
+   "name": "Windows Remote Management",
+   "source": "llm",
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-33"
+   ],
+   "epistemic_status": "insufficient"
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5",
+   "s6",
+   "s7"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "TrickBot",
+   "type": "malware",
+   "id": "art1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-23"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "BazarLoader",
+   "type": "malware",
+   "id": "art2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-6"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "anchor_dns",
+   "type": "tool",
+   "id": "art3",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-34",
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Ryuk",
+   "type": "malware",
+   "id": "art4",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-28",
+    "evidence-30"
+   ],
+   "epistemic_status": "insufficient"
+  },
+  {
+   "name": "malicious batch scripts (.bat)",
+   "type": "file",
+   "id": "art5",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "domain",
+   "value": "www.us-cert.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-35"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "kostunivo[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-36"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "chishir[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-37"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "mangoclone[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-38"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "domain",
+   "value": "onixcellent[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-39"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "domain",
+   "value": "ipecho[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-40"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "domain",
+   "value": "api[.]ipify[.]org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-41"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "domain",
+   "value": "checkip[.]amazonaws[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-42"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "domain",
+   "value": "ip[.]anysrc[.]net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-43"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "wtfismyip[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-44"
+   ]
+  },
+  {
+   "id": "indicator-11",
+   "type": "domain",
+   "value": "ipinfo[.]io",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-45"
+   ]
+  },
+  {
+   "id": "indicator-12",
+   "type": "url",
+   "value": "https://feodotracker.abuse.ch/browse/trickbot/",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-46"
+   ]
+  },
+  {
+   "id": "indicator-13",
+   "type": "ip",
+   "value": "23[.]95[.]97[.]59",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-47"
+   ]
+  },
+  {
+   "id": "indicator-14",
+   "type": "ip",
+   "value": "51[.]254[.]25[.]115",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-48"
+   ]
+  },
+  {
+   "id": "indicator-15",
+   "type": "ip",
+   "value": "193[.]183[.]98[.]66",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-49"
+   ]
+  },
+  {
+   "id": "indicator-16",
+   "type": "ip",
+   "value": "91[.]217[.]137[.]37",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-50"
+   ]
+  },
+  {
+   "id": "indicator-17",
+   "type": "ip",
+   "value": "87[.]98[.]175[.]85",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-51"
+   ]
+  },
+  {
+   "id": "indicator-18",
+   "type": "domain",
+   "value": "icanhazip[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-52"
+   ]
+  },
+  {
+   "id": "indicator-19",
+   "type": "domain",
+   "value": "myexternalip[.]com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-53"
+   ]
+  },
+  {
+   "id": "indicator-20",
+   "type": "domain",
+   "value": "ident[.]me",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-54"
+   ]
+  },
+  {
+   "id": "indicator-21",
+   "type": "domain",
+   "value": "feodotracker.abuse.ch",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-55"
+   ]
+  },
+  {
+   "id": "indicator-22",
+   "type": "hash",
+   "value": "fc0efd612ad528795472e99cae5944b68b8e26dc",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-56"
+   ]
+  },
+  {
+   "id": "indicator-23",
+   "type": "hash",
+   "value": "794eb3a9ce8b7e5092bb1b93341a54097f5b78a9",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-57"
+   ]
+  },
+  {
+   "id": "indicator-24",
+   "type": "hash",
+   "value": "9dfce70fded4f3bc2aa50ca772b0f9094b7b1fb2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-58"
+   ]
+  },
+  {
+   "id": "indicator-25",
+   "type": "hash",
+   "value": "24d4bbc982a6a561f0426a683b9617de1a96a74a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-59"
+   ]
+  },
+  {
+   "id": "indicator-26",
+   "type": "hash",
+   "value": "056f326d9ab960ed02356b34a6dcd72d7180fc83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-60",
+    "evidence-61",
+    "evidence-62",
+    "evidence-63"
+   ]
+  },
+  {
+   "id": "indicator-27",
+   "type": "hash",
+   "value": "d0278ec015e10ada000915a1943ddbb3a0b6b3db",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-64"
+   ]
+  },
+  {
+   "id": "indicator-28",
+   "type": "hash",
+   "value": "fa98074dc18ad7e2d357b5d168c00a91256d87d1",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-65"
+   ]
+  },
+  {
+   "id": "indicator-29",
+   "type": "hash",
+   "value": "78f0737d2b1e605aad62af252b246ef390521f02",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-66"
+   ]
+  },
+  {
+   "id": "indicator-30",
+   "type": "hash",
+   "value": "ff8237252d53200c132dd742edc77a6c67565eee",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-67"
+   ]
+  },
+  {
+   "id": "indicator-31",
+   "type": "hash",
+   "value": "c8299aadf886da55cb47e5cbafe8c5a482b47fc8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-68"
+   ]
+  },
+  {
+   "id": "indicator-32",
+   "type": "hash",
+   "value": "14e9d68bba7a184863667c680a8d5a757149aa36",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-69",
+    "evidence-70"
+   ]
+  },
+  {
+   "id": "indicator-33",
+   "type": "hash",
+   "value": "f0e575475f33600aede6a1b9a5c14f671cb93b7b",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-71"
+   ]
+  },
+  {
+   "id": "indicator-34",
+   "type": "hash",
+   "value": "1304372bd4cdd877778621aea715f45face93d68",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-72"
+   ]
+  },
+  {
+   "id": "indicator-35",
+   "type": "hash",
+   "value": "e5dc7c8bfa285b61dda1618f0ade9c256be75d1a",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-73"
+   ]
+  },
+  {
+   "id": "indicator-36",
+   "type": "hash",
+   "value": "f96613ac6687f5dbbed13c727fa5d427e94d6128",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-74"
+   ]
+  },
+  {
+   "id": "indicator-37",
+   "type": "hash",
+   "value": "46750d34a3a11dd16727dc622d127717beda4fa2",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-75"
+   ]
+  },
+  {
+   "id": "indicator-38",
+   "type": "url",
+   "value": "https://www.fireeye.com/blog/threat-research/2020/10/kegtap-and-singlemalt-with-a-ransomware-",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-76"
+   ]
+  },
+  {
+   "id": "indicator-39",
+   "type": "domain",
+   "value": "adobe.lnk",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-77"
+   ]
+  },
+  {
+   "id": "indicator-40",
+   "type": "domain",
+   "value": "www.fireeye.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-78"
+   ]
+  },
+  {
+   "id": "indicator-41",
+   "type": "domain",
+   "value": "chaser.html",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-79"
+   ]
+  },
+  {
+   "id": "indicator-42",
+   "type": "ip",
+   "value": "45[.]148[.]10[.]92",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-80"
+   ]
+  },
+  {
+   "id": "indicator-43",
+   "type": "ip",
+   "value": "170[.]238[.]117[.]187",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-81"
+   ]
+  },
+  {
+   "id": "indicator-44",
+   "type": "ip",
+   "value": "177[.]74[.]232[.]124",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-82"
+   ]
+  },
+  {
+   "id": "indicator-45",
+   "type": "ip",
+   "value": "185[.]68[.]93[.]17",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-83"
+   ]
+  },
+  {
+   "id": "indicator-46",
+   "type": "ip",
+   "value": "203[.]176[.]135[.]102",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-84"
+   ]
+  },
+  {
+   "id": "indicator-47",
+   "type": "ip",
+   "value": "96[.]9[.]73[.]73",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-85"
+   ]
+  },
+  {
+   "id": "indicator-48",
+   "type": "ip",
+   "value": "96[.]9[.]77[.]142",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-86"
+   ]
+  },
+  {
+   "id": "indicator-49",
+   "type": "ip",
+   "value": "37[.]187[.]3[.]176",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-87"
+   ]
+  },
+  {
+   "id": "indicator-50",
+   "type": "ip",
+   "value": "45[.]89[.]127[.]92",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-88"
+   ]
+  },
+  {
+   "id": "indicator-51",
+   "type": "ip",
+   "value": "62[.]108[.]35[.]103",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-89"
+   ]
+  },
+  {
+   "id": "indicator-52",
+   "type": "ip",
+   "value": "91[.]200[.]103[.]242",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-90"
+   ]
+  },
+  {
+   "id": "indicator-53",
+   "type": "ip",
+   "value": "103[.]84[.]238[.]3",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-91"
+   ]
+  },
+  {
+   "id": "indicator-54",
+   "type": "ip",
+   "value": "36[.]89[.]106[.]69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-92"
+   ]
+  },
+  {
+   "id": "indicator-55",
+   "type": "ip",
+   "value": "103[.]76[.]169[.]213",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-93"
+   ]
+  },
+  {
+   "id": "indicator-56",
+   "type": "ip",
+   "value": "36[.]91[.]87[.]227",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-94"
+   ]
+  },
+  {
+   "id": "indicator-57",
+   "type": "ip",
+   "value": "105[.]163[.]17[.]83",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-95"
+   ]
+  },
+  {
+   "id": "indicator-58",
+   "type": "ip",
+   "value": "185[.]117[.]73[.]163",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-96"
+   ]
+  },
+  {
+   "id": "indicator-59",
+   "type": "ip",
+   "value": "5[.]2[.]78[.]118",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-97"
+   ]
+  },
+  {
+   "id": "indicator-60",
+   "type": "ip",
+   "value": "185[.]90[.]61[.]69",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-98"
+   ]
+  },
+  {
+   "id": "indicator-61",
+   "type": "ip",
+   "value": "185[.]90[.]61[.]62",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-99"
+   ]
+  },
+  {
+   "id": "indicator-62",
+   "type": "ip",
+   "value": "86[.]104[.]194[.]30",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-100"
+   ]
+  },
+  {
+   "id": "indicator-63",
+   "type": "ip",
+   "value": "31[.]131[.]21[.]184",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-101"
+   ]
+  },
+  {
+   "id": "indicator-64",
+   "type": "ip",
+   "value": "46[.]28[.]64[.]8",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-102"
+   ]
+  },
+  {
+   "id": "indicator-65",
+   "type": "ip",
+   "value": "104[.]161[.]32[.]111",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-103"
+   ]
+  },
+  {
+   "id": "indicator-66",
+   "type": "ip",
+   "value": "107[.]172[.]140[.]171",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-104"
+   ]
+  },
+  {
+   "id": "indicator-67",
+   "type": "ip",
+   "value": "131[.]153[.]22[.]148",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-105"
+   ]
+  },
+  {
+   "id": "indicator-68",
+   "type": "ip",
+   "value": "195[.]123[.]240[.]219",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-106"
+   ]
+  },
+  {
+   "id": "indicator-69",
+   "type": "ip",
+   "value": "195[.]123[.]242[.]119",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-107"
+   ]
+  },
+  {
+   "id": "indicator-70",
+   "type": "ip",
+   "value": "195[.]123[.]242[.]120",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-108"
+   ]
+  },
+  {
+   "id": "indicator-71",
+   "type": "ip",
+   "value": "51[.]81[.]113[.]25",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-109"
+   ]
+  },
+  {
+   "id": "indicator-72",
+   "type": "ip",
+   "value": "74[.]222[.]14[.]27",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-110"
+   ]
+  },
+  {
+   "id": "indicator-73",
+   "type": "domain",
+   "value": "gist.github.com",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-111"
+   ]
+  },
+  {
+   "id": "indicator-74",
+   "type": "hash",
+   "value": "6aa7f61246f53a8dd4befea86e832456",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-112"
+   ]
+  },
+  {
+   "id": "indicator-75",
+   "type": "domain",
+   "value": "www.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-113",
+    "evidence-114"
+   ]
+  },
+  {
+   "id": "indicator-76",
+   "type": "domain",
+   "value": "www.nationalisacs.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-115"
+   ]
+  },
+  {
+   "id": "indicator-77",
+   "type": "domain",
+   "value": "www.isao.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-116"
+   ]
+  },
+  {
+   "id": "indicator-78",
+   "type": "domain",
+   "value": "us-cert.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-117"
+   ]
+  },
+  {
+   "id": "indicator-79",
+   "type": "domain",
+   "value": "www.hhs.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-118",
+    "evidence-119",
+    "evidence-120"
+   ]
+  },
+  {
+   "id": "indicator-80",
+   "type": "domain",
+   "value": "www.mitre.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-121"
+   ]
+  },
+  {
+   "id": "indicator-81",
+   "type": "domain",
+   "value": "www.fda.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-122"
+   ]
+  },
+  {
+   "id": "indicator-82",
+   "type": "domain",
+   "value": "www.us-cert.cisa.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-123"
+   ]
+  },
+  {
+   "id": "indicator-83",
+   "type": "domain",
+   "value": "www.cisecurity.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-124"
+   ]
+  },
+  {
+   "id": "indicator-84",
+   "type": "domain",
+   "value": "csrc.nist.gov",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-125"
+   ]
+  },
+  {
+   "id": "indicator-85",
+   "type": "domain",
+   "value": "www.malware",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-126"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "id": "command-1",
+   "interpreter": "cmd",
+   "command": "cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample] ",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-127"
+   ]
+  },
+  {
+   "id": "command-2",
+   "interpreter": "cmd",
+   "command": "cmd.exe /C PowerShell \\\"Start-Sleep 3; Remove-Item C:\\Users\\[username]\\[malware_sample_location]\\\"",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-128"
+   ]
+  }
+ ],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Cybercriminals disseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious websites that host the malware or attachments with the malware.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cybercriminals disseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious websites that host the malware or attachments "
+  },
+  {
+   "id": "evidence-2",
+   "quote": "After successful execution of the malware, TrickBot copies itself as an executable file with a 12-character (includes .exe), randomly generated file name (e.g. mfjdieks.exe) and places this file in one of the following directories. C:\\Windows\\, C:\\Windows\\SysWOW64\\, C:\\Users\\[Username]\\AppData\\Roaming\\",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "After successful execution of the malware, TrickBot copies itself as an executable file with a 12 character (includes .exe), randomly generated file name (e.g. "
+  },
+  {
+   "id": "evidence-3",
+   "quote": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine. The scheduled task typically uses the following naming convention. [random_folder_name_in_%APPDATA%_excluding_Microsoft] autoupdate#[5_random_numbers] (e.g., Task autoupdate#16876).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine. The scheduled task typically uses the following naming c"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "After successful execution, anchor_dns further deploys malicious batch scripts (.bat) using PowerShell commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "After successful execution, anchor_dns further deploys malicious batch scripts (.bat) using PowerShell commands."
+  },
+  {
+   "id": "evidence-5",
+   "quote": "The malware deploys self-deletion techniques by executing the following commands. cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample] cmd.exe /C PowerShell \\\"Start-Sleep 3; Remove-Item C:\\Users\\[username]\\[malware_sample_location]\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " the following "
+  },
+  {
+   "id": "evidence-6",
+   "quote": "Deployment of the BazarLoader malware typically comes from phishing email and contains the following: Phishing emails are typically delivered by commercial mass email delivery services. Email received by a victim will contain a link to an actor-controlled Google Drive document or other free online filehosting solutions, typically purporting to be a PDF file.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": " Phishing emails are typically delivered by commercial mass email delivery services. Email received by a victim will contain a link to an actor controlled Googl"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "Ryuk actors will quickly map the network in order to enumerate the environment to understand the scope of the infection. In order to limit suspicious activity and possible detection, the actors choose to live off the land and, if possible, use native tools—such as net view, net computers, and ping—to locate mapped network shares, domain controllers, and active directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ryuk actors will quickly map the network in order to enumerate the environment to understand the scope of the infection. In order to limit suspicious activity a"
+  },
+  {
+   "id": "evidence-8",
+   "quote": "In order to move laterally throughout the network, the group relies on native tools, such as PowerShell, Windows Management Instrumentation (WMI), Windows Remote Management , and Remote Desktop Protocol (RDP). The group also uses third-party tools, such as Bloodhound.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In order to move laterally throughout the network, the group relies on native tools, such as PowerShell, Windows Management Instrumentation (WMI), Windows Remot"
+  },
+  {
+   "id": "evidence-9",
+   "quote": "Once dropped, Ryuk uses AES-256 to encrypt files and an RSA public key to encrypt the AES key. The Ryuk dropper drops a .bat file that attempts to delete all backup files and Volume Shadow Copies (automatic backup snapshots made by Windows), preventing the victim from recovering encrypted files without the decryption program.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once dropped, Ryuk uses AES 256 to encrypt files and an RSA public key to encrypt the AES key. The Ryuk dropper drops a .bat file that attempts to delete all ba"
+  },
+  {
+   "id": "evidence-10",
+   "quote": "Ryuk has used a combination of symmetric and asymmetric encryption to encrypt files. Files have been encrypted with their own AES key and given a file extension of .RYK. Encrypted directories have had a ransom note of RyukReadMe.txt written to the directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "43"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ryuk has used a combination of symmetric and asymmetric encryption to encrypt files. Files have been encrypted with their own AES key and given a file extension"
+  },
+  {
+   "id": "evidence-11",
+   "quote": "Ryuk has used vssadmin Delete Shadows /all /quiet to delete volume shadow copies and vssadmin resize shadowstorage to force deletion of shadow copies created by third-party applications.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ryuk has used vssadmin Delete Shadows /all /quiet to delete volume shadow copies and vssadmin resize shadowstorage to force deletion of shadow copies created by"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "In addition, the attackers will attempt to shut down or uninstall security applications on the victim systems that might prevent the ransomware from executing. Normally this is done via a script, but if that fails, the attackers are capable of manually removing the applications that could stop the attack.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In addition, the attackers will attempt to shut down or uninstall security applications on the victim systems that might prevent the ransomware from executing. "
+  },
+  {
+   "id": "evidence-13",
+   "quote": "Ryuk has stopped services related to anti-virus.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "46"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Ryuk has stopped services related to anti virus."
+  },
+  {
+   "id": "evidence-14",
+   "quote": "In order to maintain persistence in the victim environment, Ryuk actors have been known to use scheduled tasks and service creation.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In order to maintain persistence in the victim environment, Ryuk actors have been known to use scheduled tasks and service creation."
+  },
+  {
+   "id": "evidence-15",
+   "quote": "Ryuk has used the Windows command line to create a Registry entry to establish persistence under HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run to establish persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "45"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Ryuk has used the Windows command line to create a Registry "
+  },
+  {
+   "id": "evidence-16",
+   "quote": "Cybercriminals disseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious websites that host the malware or attachments with the malware. Loaders start the infection chain by distributing the payload; they deploy and execute the backdoor from the C2 server and install it on the victim’s machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Cybercriminals disseminate TrickBot and BazarLoader via phishing campaigns that contain either links to malicious websites that host the malware or attachments "
+  },
+  {
+   "id": "evidence-17",
+   "quote": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine."
+  },
+  {
+   "id": "evidence-18",
+   "quote": "The malware deploys self-deletion techniques by executing the following commands.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The malware deploys self deletion techniques by executing the following commands."
+  },
+  {
+   "id": "evidence-19",
+   "quote": "Ryuk actors will quickly map the network in order to enumerate the environment to understand the scope of the infection. In order to move laterally throughout the network, the group relies on native tools, such as PowerShell, Windows Management Instrumentation (WMI), Windows Remote Management , and Remote Desktop Protocol (RDP).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": ". In order to move laterally throughout the network, the group relies on native tools, such as PowerShell, Windows Management Instrumentation (WMI), Windows Rem"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "Once dropped, Ryuk uses AES-256 to encrypt files and an RSA public key to encrypt the AES key.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Once dropped, Ryuk uses AES 256 to encrypt files and an RSA public key to encrypt the AES key."
+  },
+  {
+   "id": "evidence-21",
+   "quote": "The Ryuk dropper drops a .bat file that attempts to delete all backup files and Volume Shadow Copies (automatic backup snapshots made by Windows), preventing the victim from recovering encrypted files without the decryption program.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "The Ryuk dropper drops a .bat file that attempts to delete all backup files and Volume Shadow Copies (automatic backup snapshots made by Windows), preventing th"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "In addition, the attackers will attempt to shut down or uninstall security applications on the victim systems that might prevent the ransomware from executing.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In addition, the attackers will attempt to shut down or uninstall security applications on the victim systems that might prevent the ransomware from executing."
+  },
+  {
+   "id": "evidence-23",
+   "quote": "After successful execution of the malware, TrickBot copies itself as an executable file with a 12-character (includes .exe), randomly generated file name and places this file in one of the following directories: C:\\Windows\\, C:\\Windows\\SysWOW64\\, or C:\\Users\\[Username]\\AppData\\Roaming\\.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "After successful execution of the malware, TrickBot copies itself as an executable file with a 12 character (includes .exe), randomly generated file name "
+  },
+  {
+   "id": "evidence-24",
+   "quote": "The malware deploys self-deletion techniques by executing commands such as 'cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample]' and 'cmd.exe /C PowerShell \"Start-Sleep 3; Remove-Item C:\\Users\\[username]\\[malware_sample_location]\\\"'.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " C:\\Users\\["
+  },
+  {
+   "id": "evidence-25",
+   "quote": "TrickBot copies itself as an executable file with a 12-character (includes .exe), randomly generated file name (e.g. mfjdieks.exe) and places this file in one of the following directories.\n           C:\\Windows\\\n           C:\\Windows\\SysWOW64\\\n           C:\\Users\\[Username]\\AppData\\Roaming\\",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "TrickBot copies itself as an executable file with a 12 character (includes .exe), randomly generated file name (e.g. mfjdieks.exe) and places this file in one o"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "Bazar activity can be identified by searching the system startup folders and Userinit values under the HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon registry key:\n    %APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\adobe.lnk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Bazar activity can be identified by searching the system startup folders and Userinit values under the HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogo"
+  },
+  {
+   "id": "evidence-27",
+   "quote": "Ryuk actors have been known to use scheduled tasks and create Registry entries under HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run to maintain persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "Ryuk actors have been known to use scheduled tasks and "
+  },
+  {
+   "id": "evidence-28",
+   "quote": "Ryuk uses AES-256 to encrypt files and an RSA public key to encrypt the AES key. Files have been encrypted with their own AES key and given a file extension of .RYK. Encrypted directories have had a ransom note of RyukReadMe.txt written to the directory.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "31"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 0.7241,
+   "matched_text": "Ryuk uses AES 256 to encrypt files and an RSA public key to encrypt the AES key. "
+  },
+  {
+   "id": "evidence-29",
+   "quote": "Ryuk uses commands such as vssadmin Delete Shadows /all /quiet and vssadmin resize shadowstorage to delete volume shadow copies and backups to inhibit system recovery.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": "es and "
+  },
+  {
+   "id": "evidence-30",
+   "quote": "Ryuk attackers attempt to shut down or uninstall security applications on victim systems that might prevent ransomware execution, normally via scripts but also manually if needed.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " applica"
+  },
+  {
+   "id": "evidence-31",
+   "quote": "The malware uses scheduled tasks that run every 15 minutes to ensure persistence on the victim machine. The scheduled task typically uses the naming convention: [random_folder_name_in_%APPDATA%_excluding_Microsoft] autoupdate#[5_random_numbers] (e.g., Task autoupdate#16876).",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " victim machine"
+  },
+  {
+   "id": "evidence-32",
+   "quote": "Ryuk has used cmd.exe to create a Registry entry to establish persistence.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "39"
+   },
+   "quote_verified": false,
+   "quote_match": "partial",
+   "match_score": 1.0,
+   "matched_text": "Ryuk has used cmd.exe to create a Registry entry to establish "
+  },
+  {
+   "id": "evidence-33",
+   "quote": "Ryuk actors move laterally throughout the network using native tools such as PowerShell, Windows Management Instrumentation (WMI), Windows Remote Management, and Remote Desktop Protocol (RDP), as well as third-party tools like Bloodhound.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "8"
+   },
+   "quote_verified": false,
+   "quote_match": "none",
+   "match_score": 0.0,
+   "matched_text": " actors "
+  },
+  {
+   "id": "evidence-34",
+   "quote": "In early 2019, FBI began to observe new TrickBot modules named Anchor, which cyber actors typically used in attacks targeting high-profile victims—such as large corporations. These attacks often involved data exfiltration from networks and point-of-sale devices. As part of the new Anchor toolset, TrickBot developers created anchor_dns, a tool for sending and receiving data from victim machines using Domain Name System (DNS) tunneling.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "11"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "In early 2019, FBI began to observe new TrickBot modules named Anchor, which cyber actors typically used in attacks targeting high profile victims such as large"
+  },
+  {
+   "id": "evidence-35",
+   "quote": "www.us-cert.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.gov"
+  },
+  {
+   "id": "evidence-36",
+   "quote": "kostunivo[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "kostunivo[.]com"
+  },
+  {
+   "id": "evidence-37",
+   "quote": "chishir[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "chishir[.]com"
+  },
+  {
+   "id": "evidence-38",
+   "quote": "mangoclone[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "mangoclone[.]com"
+  },
+  {
+   "id": "evidence-39",
+   "quote": "onixcellent[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "onixcellent[.]com"
+  },
+  {
+   "id": "evidence-40",
+   "quote": "ipecho[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ipecho[.]net"
+  },
+  {
+   "id": "evidence-41",
+   "quote": "api[.]ipify[.]org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "api[.]ipify[.]org"
+  },
+  {
+   "id": "evidence-42",
+   "quote": "checkip[.]amazonaws[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "checkip[.]amazonaws[.]com"
+  },
+  {
+   "id": "evidence-43",
+   "quote": "ip[.]anysrc[.]net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ip[.]anysrc[.]net"
+  },
+  {
+   "id": "evidence-44",
+   "quote": "wtfismyip[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "wtfismyip[.]com"
+  },
+  {
+   "id": "evidence-45",
+   "quote": "ipinfo[.]io",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ipinfo[.]io"
+  },
+  {
+   "id": "evidence-46",
+   "quote": "https://feodotracker.abuse.ch/browse/trickbot/",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://feodotracker.abuse.ch/browse/trickbot/"
+  },
+  {
+   "id": "evidence-47",
+   "quote": "23[.]95[.]97[.]59",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "23[.]95[.]97[.]59"
+  },
+  {
+   "id": "evidence-48",
+   "quote": "51[.]254[.]25[.]115",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51[.]254[.]25[.]115"
+  },
+  {
+   "id": "evidence-49",
+   "quote": "193[.]183[.]98[.]66",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "193[.]183[.]98[.]66"
+  },
+  {
+   "id": "evidence-50",
+   "quote": "91[.]217[.]137[.]37",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91[.]217[.]137[.]37"
+  },
+  {
+   "id": "evidence-51",
+   "quote": "87[.]98[.]175[.]85",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "87[.]98[.]175[.]85"
+  },
+  {
+   "id": "evidence-52",
+   "quote": "icanhazip[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "icanhazip[.]com"
+  },
+  {
+   "id": "evidence-53",
+   "quote": "myexternalip[.]com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "myexternalip[.]com"
+  },
+  {
+   "id": "evidence-54",
+   "quote": "ident[.]me",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ident[.]me"
+  },
+  {
+   "id": "evidence-55",
+   "quote": "feodotracker.abuse.ch",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "feodotracker.abuse.ch"
+  },
+  {
+   "id": "evidence-56",
+   "quote": "fc0efd612ad528795472e99cae5944b68b8e26dc",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fc0efd612ad528795472e99cae5944b68b8e26dc"
+  },
+  {
+   "id": "evidence-57",
+   "quote": "794eb3a9ce8b7e5092bb1b93341a54097f5b78a9",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "794eb3a9ce8b7e5092bb1b93341a54097f5b78a9"
+  },
+  {
+   "id": "evidence-58",
+   "quote": "9dfce70fded4f3bc2aa50ca772b0f9094b7b1fb2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "9dfce70fded4f3bc2aa50ca772b0f9094b7b1fb2"
+  },
+  {
+   "id": "evidence-59",
+   "quote": "24d4bbc982a6a561f0426a683b9617de1a96a74a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "13"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "24d4bbc982a6a561f0426a683b9617de1a96a74a"
+  },
+  {
+   "id": "evidence-60",
+   "quote": "056f326d9ab960ed02356b34a6dcd72d7180fc83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "15"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "056f326d9ab960ed02356b34a6dcd72d7180fc83"
+  },
+  {
+   "id": "evidence-61",
+   "quote": "056f326d9ab960ed02356b34a6dcd72d7180fc83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "056f326d9ab960ed02356b34a6dcd72d7180fc83"
+  },
+  {
+   "id": "evidence-62",
+   "quote": "056f326d9ab960ed02356b34a6dcd72d7180fc83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "056f326d9ab960ed02356b34a6dcd72d7180fc83"
+  },
+  {
+   "id": "evidence-63",
+   "quote": "056f326d9ab960ed02356b34a6dcd72d7180fc83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "056f326d9ab960ed02356b34a6dcd72d7180fc83"
+  },
+  {
+   "id": "evidence-64",
+   "quote": "d0278ec015e10ada000915a1943ddbb3a0b6b3db",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "17"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "d0278ec015e10ada000915a1943ddbb3a0b6b3db"
+  },
+  {
+   "id": "evidence-65",
+   "quote": "fa98074dc18ad7e2d357b5d168c00a91256d87d1",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "fa98074dc18ad7e2d357b5d168c00a91256d87d1"
+  },
+  {
+   "id": "evidence-66",
+   "quote": "78f0737d2b1e605aad62af252b246ef390521f02",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "78f0737d2b1e605aad62af252b246ef390521f02"
+  },
+  {
+   "id": "evidence-67",
+   "quote": "ff8237252d53200c132dd742edc77a6c67565eee",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "ff8237252d53200c132dd742edc77a6c67565eee"
+  },
+  {
+   "id": "evidence-68",
+   "quote": "c8299aadf886da55cb47e5cbafe8c5a482b47fc8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "20"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "c8299aadf886da55cb47e5cbafe8c5a482b47fc8"
+  },
+  {
+   "id": "evidence-69",
+   "quote": "14e9d68bba7a184863667c680a8d5a757149aa36",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "14e9d68bba7a184863667c680a8d5a757149aa36"
+  },
+  {
+   "id": "evidence-70",
+   "quote": "14e9d68bba7a184863667c680a8d5a757149aa36",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "24"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "14e9d68bba7a184863667c680a8d5a757149aa36"
+  },
+  {
+   "id": "evidence-71",
+   "quote": "f0e575475f33600aede6a1b9a5c14f671cb93b7b",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f0e575475f33600aede6a1b9a5c14f671cb93b7b"
+  },
+  {
+   "id": "evidence-72",
+   "quote": "1304372bd4cdd877778621aea715f45face93d68",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "1304372bd4cdd877778621aea715f45face93d68"
+  },
+  {
+   "id": "evidence-73",
+   "quote": "e5dc7c8bfa285b61dda1618f0ade9c256be75d1a",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "e5dc7c8bfa285b61dda1618f0ade9c256be75d1a"
+  },
+  {
+   "id": "evidence-74",
+   "quote": "f96613ac6687f5dbbed13c727fa5d427e94d6128",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "f96613ac6687f5dbbed13c727fa5d427e94d6128"
+  },
+  {
+   "id": "evidence-75",
+   "quote": "46750d34a3a11dd16727dc622d127717beda4fa2",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "25"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46750d34a3a11dd16727dc622d127717beda4fa2"
+  },
+  {
+   "id": "evidence-76",
+   "quote": "https://www.fireeye.com/blog/threat-research/2020/10/kegtap-and-singlemalt-with-a-ransomware-",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "https://www.fireeye.com/blog/threat research/2020/10/kegtap and singlemalt with a ransomware"
+  },
+  {
+   "id": "evidence-77",
+   "quote": "adobe.lnk",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "adobe.lnk"
+  },
+  {
+   "id": "evidence-78",
+   "quote": "www.fireeye.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fireeye.com"
+  },
+  {
+   "id": "evidence-79",
+   "quote": "chaser.html",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "27"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "chaser.html"
+  },
+  {
+   "id": "evidence-80",
+   "quote": "45[.]148[.]10[.]92",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45[.]148[.]10[.]92"
+  },
+  {
+   "id": "evidence-81",
+   "quote": "170[.]238[.]117[.]187",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "170[.]238[.]117[.]187"
+  },
+  {
+   "id": "evidence-82",
+   "quote": "177[.]74[.]232[.]124",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "177[.]74[.]232[.]124"
+  },
+  {
+   "id": "evidence-83",
+   "quote": "185[.]68[.]93[.]17",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185[.]68[.]93[.]17"
+  },
+  {
+   "id": "evidence-84",
+   "quote": "203[.]176[.]135[.]102",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "203[.]176[.]135[.]102"
+  },
+  {
+   "id": "evidence-85",
+   "quote": "96[.]9[.]73[.]73",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "96[.]9[.]73[.]73"
+  },
+  {
+   "id": "evidence-86",
+   "quote": "96[.]9[.]77[.]142",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "96[.]9[.]77[.]142"
+  },
+  {
+   "id": "evidence-87",
+   "quote": "37[.]187[.]3[.]176",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "37[.]187[.]3[.]176"
+  },
+  {
+   "id": "evidence-88",
+   "quote": "45[.]89[.]127[.]92",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "45[.]89[.]127[.]92"
+  },
+  {
+   "id": "evidence-89",
+   "quote": "62[.]108[.]35[.]103",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "62[.]108[.]35[.]103"
+  },
+  {
+   "id": "evidence-90",
+   "quote": "91[.]200[.]103[.]242",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "91[.]200[.]103[.]242"
+  },
+  {
+   "id": "evidence-91",
+   "quote": "103[.]84[.]238[.]3",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "103[.]84[.]238[.]3"
+  },
+  {
+   "id": "evidence-92",
+   "quote": "36[.]89[.]106[.]69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "36[.]89[.]106[.]69"
+  },
+  {
+   "id": "evidence-93",
+   "quote": "103[.]76[.]169[.]213",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "103[.]76[.]169[.]213"
+  },
+  {
+   "id": "evidence-94",
+   "quote": "36[.]91[.]87[.]227",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "36[.]91[.]87[.]227"
+  },
+  {
+   "id": "evidence-95",
+   "quote": "105[.]163[.]17[.]83",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "105[.]163[.]17[.]83"
+  },
+  {
+   "id": "evidence-96",
+   "quote": "185[.]117[.]73[.]163",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185[.]117[.]73[.]163"
+  },
+  {
+   "id": "evidence-97",
+   "quote": "5[.]2[.]78[.]118",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "5[.]2[.]78[.]118"
+  },
+  {
+   "id": "evidence-98",
+   "quote": "185[.]90[.]61[.]69",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185[.]90[.]61[.]69"
+  },
+  {
+   "id": "evidence-99",
+   "quote": "185[.]90[.]61[.]62",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "185[.]90[.]61[.]62"
+  },
+  {
+   "id": "evidence-100",
+   "quote": "86[.]104[.]194[.]30",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "86[.]104[.]194[.]30"
+  },
+  {
+   "id": "evidence-101",
+   "quote": "31[.]131[.]21[.]184",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "31[.]131[.]21[.]184"
+  },
+  {
+   "id": "evidence-102",
+   "quote": "46[.]28[.]64[.]8",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "46[.]28[.]64[.]8"
+  },
+  {
+   "id": "evidence-103",
+   "quote": "104[.]161[.]32[.]111",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "104[.]161[.]32[.]111"
+  },
+  {
+   "id": "evidence-104",
+   "quote": "107[.]172[.]140[.]171",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "107[.]172[.]140[.]171"
+  },
+  {
+   "id": "evidence-105",
+   "quote": "131[.]153[.]22[.]148",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "131[.]153[.]22[.]148"
+  },
+  {
+   "id": "evidence-106",
+   "quote": "195[.]123[.]240[.]219",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "195[.]123[.]240[.]219"
+  },
+  {
+   "id": "evidence-107",
+   "quote": "195[.]123[.]242[.]119",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "195[.]123[.]242[.]119"
+  },
+  {
+   "id": "evidence-108",
+   "quote": "195[.]123[.]242[.]120",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "195[.]123[.]242[.]120"
+  },
+  {
+   "id": "evidence-109",
+   "quote": "51[.]81[.]113[.]25",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "28"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "51[.]81[.]113[.]25"
+  },
+  {
+   "id": "evidence-110",
+   "quote": "74[.]222[.]14[.]27",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "30"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "74[.]222[.]14[.]27"
+  },
+  {
+   "id": "evidence-111",
+   "quote": "gist.github.com",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "gist.github.com"
+  },
+  {
+   "id": "evidence-112",
+   "quote": "6aa7f61246f53a8dd4befea86e832456",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "47"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "6aa7f61246f53a8dd4befea86e832456"
+  },
+  {
+   "id": "evidence-113",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-114",
+   "quote": "www.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "60"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisa.gov"
+  },
+  {
+   "id": "evidence-115",
+   "quote": "www.nationalisacs.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.nationalisacs.org"
+  },
+  {
+   "id": "evidence-116",
+   "quote": "www.isao.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.isao.org"
+  },
+  {
+   "id": "evidence-117",
+   "quote": "us-cert.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "us cert.cisa.gov"
+  },
+  {
+   "id": "evidence-118",
+   "quote": "www.hhs.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "54"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.hhs.gov"
+  },
+  {
+   "id": "evidence-119",
+   "quote": "www.hhs.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "57"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.hhs.gov"
+  },
+  {
+   "id": "evidence-120",
+   "quote": "www.hhs.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.hhs.gov"
+  },
+  {
+   "id": "evidence-121",
+   "quote": "www.mitre.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "56"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.mitre.org"
+  },
+  {
+   "id": "evidence-122",
+   "quote": "www.fda.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "58"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.fda.gov"
+  },
+  {
+   "id": "evidence-123",
+   "quote": "www.us-cert.cisa.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.us cert.cisa.gov"
+  },
+  {
+   "id": "evidence-124",
+   "quote": "www.cisecurity.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.cisecurity.org"
+  },
+  {
+   "id": "evidence-125",
+   "quote": "csrc.nist.gov",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "61"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "csrc.nist.gov"
+  },
+  {
+   "id": "evidence-126",
+   "quote": "www.malware",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "63"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "www.malware"
+  },
+  {
+   "id": "evidence-127",
+   "quote": "cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample] ",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /c timeout 3 && del C:\\Users\\[username]\\[malware_sample] "
+  },
+  {
+   "id": "evidence-128",
+   "quote": "cmd.exe /C PowerShell \\\"Start-Sleep 3; Remove-Item C:\\Users\\[username]\\[malware_sample_location]\\\"",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "12"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "cmd.exe /C PowerShell \\\"Start Sleep 3; Remove Item C:\\Users\\[username]\\[malware_sample_location]\\\""
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "victim machine — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a2 — Executed TrickBot malware on victim machine",
+    "action:a3 — Established persistence via scheduled tasks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）",
+    "其他 Windows 版本（請填確切版本）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-17",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-2",
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "作業系統",
+     "value": "Windows",
+     "source_ref": "hosts:h1.os",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-17",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server 2019（候選；請核對原文或資產清單）",
+    "Windows Server 2016（候選；請核對原文或資產清單）",
+    "Windows Server 2022（候選；請核對原文或資產清單）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "victim machine — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a2 — Executed TrickBot malware on victim machine",
+    "action:a3 — Established persistence via scheduled tasks"
+   ],
+   "suggestions": [
+    "Windows Server 2019（確切 build 待確認）",
+    "Windows Server 2016（確切 build 待確認）",
+    "Windows Server 2022（確切 build 待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-17",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-2",
+      "evidence-3"
+     ]
+    },
+    {
+     "field": "作業系統版本",
+     "value": "Windows Vista or higher",
+     "source_ref": "hosts:h1.os_version",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-17",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "victim machine — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "victim machine 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — victim machine",
+    "action:a2 — Executed TrickBot malware on victim machine",
+    "action:a3 — Established persistence via scheduled tasks"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "victim machine",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-23",
+      "evidence-17",
+      "evidence-24",
+      "evidence-25",
+      "evidence-26",
+      "evidence-27",
+      "evidence-28",
+      "evidence-29",
+      "evidence-30",
+      "evidence-31",
+      "evidence-2",
+      "evidence-3"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s4-configuration",
+   "field": "PowerShell — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a4 使用 PowerShell，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a4 依賴 PowerShell。靶場中部署端點、連接埠、啟用狀態與允許來源要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s4 — PowerShell",
+    "action:a4 — Deployed malicious batch scripts using PowerShell commands"
+   ],
+   "suggestions": [
+    "只在隔離網段開放必要連接埠",
+    "以來源明確記載的設定為準",
+    "保留未知並不部署此服務"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "PowerShell",
+     "source_ref": "services:s4.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-4",
+      "evidence-33"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Deployed malicious batch scripts using PowerShell commands",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-4"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s4",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-service-s5-configuration",
+   "field": "Remote Desktop Protocol (RDP) — 靶場部署/連線設定",
+   "category": "dependency",
+   "reason": "a8 使用 Remote Desktop Protocol (RDP)，但 IR 沒有提供重建所需的服務設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "a8 依賴 Remote Desktop Protocol (RDP)。靶場中RDP 是否啟用、靶場連接埠、允許來源與驗證方式要如何設定？請只提供隔離靶場資訊。",
+   "affects": [
+    "service:s5 — Remote Desktop Protocol (RDP)",
+    "action:a8 — Moved laterally using native and third-party tools"
+   ],
+   "suggestions": [
+    "TCP 3389（常見預設；請核對靶場設定）",
+    "隔離測試網段內的替代連接埠",
+    "不啟用 RDP，將此步驟標記未重現"
+   ],
+   "known": [
+    {
+     "field": "IR 服務線索",
+     "value": "Remote Desktop Protocol (RDP)",
+     "source_ref": "services:s5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-33"
+     ]
+    },
+    {
+     "field": "依賴此服務的步驟",
+     "value": "Moved laterally using native and third-party tools",
+     "source_ref": "actions:a8.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-8"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s5",
+    "field": "configuration"
+   }
+  },
+  {
+   "id": "missing-ad-domain-name",
+   "field": "Active Directory 網域名稱",
+   "category": "dependency",
+   "reason": "IR 提到 AD/domain controller，但沒有網域名稱或隔離靶場對應方式。",
+   "severity": "major",
+   "status": "open",
+   "question": "a7 涉及 Active Directory，但 IR 沒有網域名稱。靶場要使用哪個網域名稱？可提供 lab 專用名稱（例如 lab.test），不要提供密碼或真實帳密。",
+   "affects": [
+    "action:a7 — Mapped network and enumerated environment using native tools"
+   ],
+   "suggestions": [
+    "隔離靶場專用網域（例如 lab.test）",
+    "從原文/資產清單填實際網域",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "AD 相關步驟",
+     "value": "Mapped network and enumerated environment using native tools",
+     "source_ref": "actions:a7.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "目錄服務線索",
+     "value": "Active Directory / domain controller",
+     "source_ref": "ir:actions+hosts",
+     "epistemic_status": "supported"
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a2 — Executed TrickBot malware on victim machine",
+    "action:a5 — Executed self-deletion commands",
+    "host:h1 — victim machine"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "Executed TrickBot malware on victim machine",
+     "source_ref": "actions:a2.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-2"
+     ]
+    },
+    {
+     "field": "相關步驟",
+     "value": "Executed self-deletion commands",
+     "source_ref": "actions:a5.name",
+     "epistemic_status": "insufficient",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 0.8906,
+  "unsupported_claim_count": 18,
+  "inferred_count": 7,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence"
+}

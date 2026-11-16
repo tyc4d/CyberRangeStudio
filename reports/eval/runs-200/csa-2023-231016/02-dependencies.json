@@ -1,0 +1,877 @@
+{
+ "schema_version": "1.0",
+ "name": "csa-2023-231016",
+ "provenance": {
+  "input_kind": "markdown",
+  "input_sha256": "c373a870f0fd816832663c98d9015ef691c8b3179ee44d0d4f71fdeeb7e75996",
+  "source_name": "csa-2023-231016"
+ },
+ "actions": [
+  {
+   "id": "a1",
+   "name": "exploit CVE-2023-22515 to create unauthorized Confluence administrator accounts",
+   "source": "llm",
+   "description": "Unauthenticated remote threat actors exploited CVE-2023-22515 to create unauthorized Confluence administrator accounts by changing the Confluence server’s configuration to indicate the setup is not complete and using the /setup/setupadministrator.action endpoint to create a new administrator user, triggered via a request on the unauthenticated /server-info.action endpoint.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-1",
+    "evidence-2"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a2",
+   "name": "exfiltrate data using cURL",
+   "source": "llm",
+   "description": "Threat actors exfiltrated data post-exploitation using cURL, a command line tool used to transfer data to or from a server.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a3",
+   "name": "exfiltrate data using Rclone",
+   "source": "llm",
+   "description": "Threat actors exfiltrated data post-exploitation using Rclone, a command line tool used to sync data to cloud and file hosting services such as Amazon Web Services and China-based UCloud Information Technology Limited.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  },
+  {
+   "id": "a4",
+   "name": "upload Rclone configuration file or enter cloud storage credentials via command line",
+   "source": "llm",
+   "description": "Threat actors used Rclone to either upload a configuration file to victim infrastructure or enter cloud storage credentials via the command line.",
+   "target_host_ref": "h1",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported",
+   "outcome": "succeeded",
+   "reproducibility": "not_reproducible",
+   "reproducibility_reason": "The target host has no deployable service, so it is left out of deployment; this step is not reproduced until a service or substitute is supplied for that host."
+  }
+ ],
+ "relations": [
+  {
+   "id": "r1",
+   "from_action": "a1",
+   "to_action": "a4",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "upload Rclone configuration file or enter cloud storage credentials via command line depends on having access from created admin accounts",
+   "evidence_refs": [
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "id": "r2",
+   "from_action": "a4",
+   "to_action": "a3",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "exfiltrate data using Rclone depends on uploading configuration or entering credentials",
+   "evidence_refs": [
+    "evidence-4"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  },
+  {
+   "id": "r3",
+   "from_action": "a1",
+   "to_action": "a2",
+   "kind": "dependency",
+   "source": "llm",
+   "rationale": "exfiltrate data using cURL depends on having access from created admin accounts",
+   "evidence_refs": [
+    "evidence-3"
+   ],
+   "epistemic_status": "inferred",
+   "epistemic_reason": "引句存在於原文，但沒有陳述先後或相依的字眼；此關係是依敘事順序推論，需人工確認。"
+  }
+ ],
+ "hosts": [
+  {
+   "id": "h1",
+   "role": "Atlassian Confluence Data Center and Server",
+   "source": "llm",
+   "name": "Confluence instances",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-2",
+    "evidence-7",
+    "evidence-8",
+    "evidence-9"
+   ],
+   "epistemic_status": "supported",
+   "service_refs": [
+    "s1"
+   ]
+  }
+ ],
+ "services": [
+  {
+   "id": "s1",
+   "name": "Atlassian Confluence Data Center and Server",
+   "source": "llm",
+   "cve": [
+    "CVE-2023-22515"
+   ],
+   "host_ref": "h1",
+   "evidence_refs": [
+    "evidence-6",
+    "evidence-7"
+   ],
+   "epistemic_status": "supported",
+   "no_component": true,
+   "is_substitute": false
+  }
+ ],
+ "target_context": {
+  "host_refs": [
+   "h1"
+  ],
+  "service_refs": [
+   "s1"
+  ]
+ },
+ "artifacts": [
+  {
+   "name": "cURL",
+   "type": "tool",
+   "id": "a1",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-10"
+   ],
+   "epistemic_status": "supported"
+  },
+  {
+   "name": "Rclone",
+   "type": "tool",
+   "id": "a2",
+   "source": "llm",
+   "evidence_refs": [
+    "evidence-4",
+    "evidence-5"
+   ],
+   "epistemic_status": "supported"
+  }
+ ],
+ "indicators": [
+  {
+   "id": "indicator-1",
+   "type": "cve",
+   "value": "CVE-2023-22515",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-11",
+    "evidence-12",
+    "evidence-13",
+    "evidence-14",
+    "evidence-15",
+    "evidence-16",
+    "evidence-17"
+   ]
+  },
+  {
+   "id": "indicator-2",
+   "type": "domain",
+   "value": "atlassian.net",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-18"
+   ]
+  },
+  {
+   "id": "indicator-3",
+   "type": "domain",
+   "value": "setupadministrator.action",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-19"
+   ]
+  },
+  {
+   "id": "indicator-4",
+   "type": "domain",
+   "value": "server-info.action",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-20"
+   ]
+  },
+  {
+   "id": "indicator-5",
+   "type": "ip",
+   "value": "170.106.106[.]16",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-21"
+   ]
+  },
+  {
+   "id": "indicator-6",
+   "type": "ip",
+   "value": "43.130.1[.]222",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-22"
+   ]
+  },
+  {
+   "id": "indicator-7",
+   "type": "ip",
+   "value": "152.32.207[.]23",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-23"
+   ]
+  },
+  {
+   "id": "indicator-8",
+   "type": "ip",
+   "value": "199.19.110[.]14",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-24"
+   ]
+  },
+  {
+   "id": "indicator-9",
+   "type": "ip",
+   "value": "95.217.6[.]16",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-25"
+   ]
+  },
+  {
+   "id": "indicator-10",
+   "type": "domain",
+   "value": "rclone.org",
+   "source": "program",
+   "epistemic_status": "supported",
+   "evidence_refs": [
+    "evidence-26"
+   ]
+  }
+ ],
+ "commands": [],
+ "evidence": [
+  {
+   "id": "evidence-1",
+   "quote": "Unauthenticated remote threat actors can exploit this vulnerability to create unauthorized Confluence administrator accounts and access Confluence instances. More specifically, threat actors can change the Confluence server’s configuration to indicate the setup is not complete and use the /setup/setupadministrator.action endpoint to create a new administrator user. The vulnerability is triggered via a request on the unauthenticated /server-info.action endpoint.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Unauthenticated remote threat actors can exploit this vulnerability to create unauthorized Confluence administrator accounts and access Confluence instances. Mo"
+  },
+  {
+   "id": "evidence-2",
+   "quote": "Threat actors exploited CVE-2023-22515 as a zero-day to obtain access to victim systems and continue active exploitation post-patch.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors exploited CVE 2023 22515 as a zero day to obtain access to victim systems and continue active exploitation post patch."
+  },
+  {
+   "id": "evidence-3",
+   "quote": "Post-exploitation exfiltration of data can be executed through of a variety of techniques. A predominant method observed involves the use of cURL—a command line tool used to transfer data to or from a server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Post exploitation exfiltration of data can be executed through of a variety of techniques. A predominant method observed involves the use of cURL a command line"
+  },
+  {
+   "id": "evidence-4",
+   "quote": "An additional data exfiltration technique observed includes use of Rclone [S1040]—a command line tool used to sync data to cloud and file hosting services such as Amazon Web Services and China-based UCloud Information Technology Limited.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "An additional data exfiltration technique observed includes use of Rclone [S1040] a command line tool used to sync data to cloud and file hosting services such "
+  },
+  {
+   "id": "evidence-5",
+   "quote": "Threat actors were observed using Rclone to either upload a configuration file to victim infrastructure or enter cloud storage credentials via the command line.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Threat actors were observed using Rclone to either upload a configuration file to victim infrastructure or enter cloud storage credentials via the command line."
+  },
+  {
+   "id": "evidence-6",
+   "quote": "This recently disclosed vulnerability affects certain versions of Atlassian Confluence Data Center and Server",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "This recently disclosed vulnerability affects certain versions of Atlassian Confluence Data Center and Server"
+  },
+  {
+   "id": "evidence-7",
+   "quote": "CVE-2023-22515 is a critical Broken Access Control vulnerability affecting the following versions of Atlassian Confluence Data Center and Server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515 is a critical Broken Access Control vulnerability affecting the following versions of Atlassian Confluence Data Center and Server."
+  },
+  {
+   "id": "evidence-8",
+   "quote": "Unauthenticated remote threat actors can exploit this vulnerability to create unauthorized Confluence administrator accounts and access Confluence instances.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "Unauthenticated remote threat actors can exploit this vulnerability to create unauthorized Confluence administrator accounts and access Confluence instances."
+  },
+  {
+   "id": "evidence-9",
+   "quote": "CISA, FBI, and MS-ISAC expect to see widespread exploitation of unpatched Confluence instances in government and private networks.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CISA, FBI, and MS ISAC expect to see widespread exploitation of unpatched Confluence instances in government and private networks."
+  },
+  {
+   "id": "evidence-10",
+   "quote": "A predominant method observed involves the use of cURL—a command line tool used to transfer data to or from a server.",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "10"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "A predominant method observed involves the use of cURL a command line tool used to transfer data to or from a server."
+  },
+  {
+   "id": "evidence-11",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "1"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-12",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "4"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-13",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "5"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-14",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-15",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "22"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-16",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "23"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-17",
+   "quote": "CVE-2023-22515",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "26"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "CVE 2023 22515"
+  },
+  {
+   "id": "evidence-18",
+   "quote": "atlassian.net",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "7"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "atlassian.net"
+  },
+  {
+   "id": "evidence-19",
+   "quote": "setupadministrator.action",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "setupadministrator.action"
+  },
+  {
+   "id": "evidence-20",
+   "quote": "server-info.action",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "9"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "server info.action"
+  },
+  {
+   "id": "evidence-21",
+   "quote": "170.106.106[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "170.106.106[.]16"
+  },
+  {
+   "id": "evidence-22",
+   "quote": "43.130.1[.]222",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "16"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "43.130.1[.]222"
+  },
+  {
+   "id": "evidence-23",
+   "quote": "152.32.207[.]23",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "152.32.207[.]23"
+  },
+  {
+   "id": "evidence-24",
+   "quote": "199.19.110[.]14",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "199.19.110[.]14"
+  },
+  {
+   "id": "evidence-25",
+   "quote": "95.217.6[.]16",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "95.217.6[.]16"
+  },
+  {
+   "id": "evidence-26",
+   "quote": "rclone.org",
+   "locator": {
+    "kind": "paragraph",
+    "ref": "18"
+   },
+   "quote_verified": true,
+   "quote_match": "exact",
+   "match_score": 1.0,
+   "matched_text": "rclone.org"
+  }
+ ],
+ "missing_items": [
+  {
+   "id": "missing-hosts-h1-os",
+   "field": "Confluence instances — 作業系統",
+   "category": "host",
+   "reason": "來源未提供這台主機/資產的作業系統；不能由產品或角色直接推定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Confluence instances 實際使用哪個作業系統？原文只提供主機/資產線索，請填實際系統或標記未知。",
+   "affects": [
+    "hosts:h1 — Confluence instances",
+    "action:a1 — exploit CVE-2023-22515 to create unauthorized Confluence administrator accounts",
+    "action:a2 — exfiltrate data using cURL",
+    "action:a3 — exfiltrate data using Rclone",
+    "action:a4 — upload Rclone configuration file or enter cloud storage credentials via command line"
+   ],
+   "suggestions": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Confluence instances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-2",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "examples": [
+    "Windows Server（候選；需確認）",
+    "Linux Server（候選；需確認）",
+    "其他作業系統（請填確切名稱）"
+   ],
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-os-version",
+   "field": "Confluence instances — 作業系統版本",
+   "category": "version",
+   "reason": "來源未提供這台主機/資產的確切 OS 版本或 build。",
+   "severity": "major",
+   "status": "open",
+   "question": "Confluence instances 的作業系統確切版本/build 是什麼？若無法確認，請明確保留未知。",
+   "affects": [
+    "hosts:h1 — Confluence instances",
+    "action:a1 — exploit CVE-2023-22515 to create unauthorized Confluence administrator accounts",
+    "action:a2 — exfiltrate data using cURL",
+    "action:a3 — exfiltrate data using Rclone",
+    "action:a4 — upload Rclone configuration file or enter cloud storage credentials via command line"
+   ],
+   "suggestions": [
+    "請填原文或資產清單中的確切作業系統版本",
+    "Windows Server（build 待確認）",
+    "Linux 發行版（版本待確認）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Confluence instances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-2",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "os_version"
+   }
+  },
+  {
+   "id": "missing-hosts-h1-network",
+   "field": "Confluence instances — 網段/網路位置",
+   "category": "network",
+   "reason": "IR 有主機或資產線索，但沒有可部署的網段與可達性設定。",
+   "severity": "major",
+   "status": "open",
+   "question": "Confluence instances 要放在哪個網段？請指出隔離/內網/DMZ 等位置，以及哪些來源可以連到它。",
+   "affects": [
+    "hosts:h1 — Confluence instances",
+    "action:a1 — exploit CVE-2023-22515 to create unauthorized Confluence administrator accounts",
+    "action:a2 — exfiltrate data using cURL",
+    "action:a3 — exfiltrate data using Rclone",
+    "action:a4 — upload Rclone configuration file or enter cloud storage credentials via command line"
+   ],
+   "suggestions": [
+    "隔離測試網段（只連必要主機）",
+    "內部網段（請描述允許來源）",
+    "對外 DMZ（只有原文/拓樸確認時才選）"
+   ],
+   "known": [
+    {
+     "field": "host role or asset",
+     "value": "Confluence instances",
+     "source_ref": "hosts:h1.role",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-2",
+      "evidence-7",
+      "evidence-8",
+      "evidence-9",
+      "evidence-1",
+      "evidence-3",
+      "evidence-4",
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "hosts",
+    "id": "h1",
+    "field": "network_placement"
+   }
+  },
+  {
+   "id": "missing-service-s1-version",
+   "field": "Atlassian Confluence Data Center and Server — 版本",
+   "category": "version",
+   "reason": "IR 指出 Atlassian Confluence Data Center and Server（CVE-2023-22515），但沒有可重現所需的確切版本。",
+   "severity": "major",
+   "status": "open",
+   "question": "靶場要重建 Atlassian Confluence Data Center and Server 的哪個版本？請選受 CVE-2023-22515 影響的版本；原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+   "affects": [
+    "service:s1 — Atlassian Confluence Data Center and Server"
+   ],
+   "suggestions": [
+    "填入來源或資產清單記載的確切版本",
+    "選用隔離靶場可取得的替代版本並標記為替代",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "受害軟體/服務",
+     "value": "Atlassian Confluence Data Center and Server",
+     "source_ref": "services:s1.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7"
+     ]
+    },
+    {
+     "field": "相關漏洞",
+     "value": "CVE-2023-22515",
+     "source_ref": "services:s1.cve",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-6",
+      "evidence-7"
+     ]
+    }
+   ],
+   "needs_user_decision": true,
+   "target": {
+    "collection": "services",
+    "id": "s1",
+    "field": "version"
+   }
+  },
+  {
+   "id": "missing-network-outbound-policy",
+   "field": "下載/C2 步驟的對外連線政策",
+   "category": "network",
+   "reason": "多個具名步驟需要下載檔案或建立 Ngrok/C2 連線，但 IR 沒有說明靶場允許哪些外連。",
+   "severity": "major",
+   "status": "open",
+   "question": "a4 涉及下載、上傳或 Ngrok/C2。靶場是否完全封鎖外連、只接 sinkhole/模擬服務，或僅允許原文列出的目的地？請指定封鎖/允許規則；不要直接開放任意網際網路。",
+   "affects": [
+    "action:a4 — upload Rclone configuration file or enter cloud storage credentials via command line"
+   ],
+   "suggestions": [
+    "封鎖對外連線（隔離預設）",
+    "只允許連到指定 sinkhole/模擬服務",
+    "只允許報告列出的目的地（需確認隔離規則）"
+   ],
+   "known": [
+    {
+     "field": "需要外連的步驟",
+     "value": "upload Rclone configuration file or enter cloud storage credentials via command line",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "missing-gap-credential-material",
+   "field": "憑證的存放位置與靶場測試帳號",
+   "category": "account",
+   "reason": "步驟取得或使用了憑證，但 IR 沒有憑證存放的位置／格式，也沒有可安全使用的靶場帳號。",
+   "severity": "major",
+   "status": "open",
+   "question": "這些憑證原本存放在哪裡（檔案、資料庫、記憶體）、是什麼格式？靶場要用哪組專用測試帳號代表？請勿提供任何真實密碼。",
+   "affects": [
+    "action:a4 — upload Rclone configuration file or enter cloud storage credentials via command line",
+    "host:h1 — Confluence instances"
+   ],
+   "suggestions": [
+    "使用專用測試帳號（不提供真實密碼）",
+    "填入來源記載的存放位置並指定安全替身",
+    "無法確認；保留為未知"
+   ],
+   "known": [
+    {
+     "field": "相關步驟",
+     "value": "upload Rclone configuration file or enter cloud storage credentials via command line",
+     "source_ref": "actions:a4.name",
+     "epistemic_status": "supported",
+     "evidence_refs": [
+      "evidence-5"
+     ]
+    }
+   ],
+   "needs_user_decision": true
+  },
+  {
+   "id": "planner_dep_software-atlassian-confluence-data-c",
+   "field": "software dependency: Atlassian Confluence Data Center and Server",
+   "category": "software",
+   "reason": "The dependency was identified in the actions or target context, but no compatible open-source catalogue component is available.",
+   "severity": "major",
+   "status": "open",
+   "service_ref": "s1",
+   "question": "Atlassian Confluence Data Center and Server 在元件目錄中沒有可部署的對應。要用哪個目錄元件當教學替代？請回答一個元件名稱（例如下列建議），或選擇不部署並保留為未知。",
+   "suggestions": [
+    "不部署；此軟體相關步驟標記為未重現"
+   ]
+  }
+ ],
+ "quality": {
+  "quote_verified_rate": 1.0,
+  "unsupported_claim_count": 0,
+  "inferred_count": 2,
+  "absent_count": 0,
+  "method": "single_pass",
+  "provisional": true,
+  "dropped_placeholder_hosts": 0,
+  "excluded_non_attacker_actions": [],
+  "hedged_action_count": 0,
+  "capability_action_count": 0,
+  "dropped_non_software_services": [],
+  "dropped_misplaced_techniques": []
+ },
+ "id": "scn_evidence",
+ "fidelity": "not_reproducible"
+}

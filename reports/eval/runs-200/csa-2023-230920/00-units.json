@@ -1,0 +1,662 @@
+[
+ {
+  "id": "p1",
+  "text": "# #StopRansomware: Snatch Ransomware"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA23-263A\n> - Date: 2023-09-20\n> - URL: https://www.ic3.gov/CSA/2023/230920.pdf\n> - PDF SHA-256: 301a44d8b62b6710b8cf3b5fa847f4c202444be9b7032b8c01be58ad5d1244ac (`source.pdf`, 16 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (31 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                           TLP:CLEAR            Product ID: AA23-263A\n                                                                                                                 September 20, 2023"
+ },
+ {
+  "id": "p4",
+  "text": "#StopRansomware: Snatch Ransomware\n        SUMMARY\n        Note: This joint Cybersecurity Advisory (CSA) is part of             Actions to take today to mitigate\n        an ongoing #StopRansomware effort to publish                         malicious cyber activity:\n        advisories for network defenders that detail various                 •   Secure and closely monitor Remote\n        ransomware variants and ransomware threat actors.                        Desktop Protocol (RDP).\n        These #StopRansomware advisories include recently\n                                                                             •   Maintain offline backups of data.\n        and historically observed tactics, techniques, and\n                                                                             •   Enable and enforce phishing-\n        procedures (TTPs) and indicators of compromise (IOCs)\n                                                                                 resistant multifactor authentication\n        to help organizations protect against ransomware. Visit\n                                                                                 (MFA).\n        stopransomware.gov to see all #StopRansomware\n        advisories and to learn more about other ransomware\n        threats and no-cost resources.\n        The Federal Bureau of Investigation (FBI) and the Cybersecurity and Infrastructure Security Agency\n        (CISA) are releasing this joint CSA to disseminate known ransomware IOCs and TTPs associated\n        with the Snatch ransomware variant identified through FBI investigations as recently as June 1, 2023.\n        Since mid-2021, Snatch threat actors have consistently evolved their tactics to take advantage of\n        current trends in the cybercriminal space and leveraged successes of other ransomware variants’\n        operations. Snatch threat actors have targeted a wide range of critical infrastructure sectors including\n        the Defense Industrial Base (DIB), Food and Agriculture, and Information Technology sectors. Snatch\n        threat actors conduct ransomware operations involving data exfiltration and double extortion. After\n        data exfiltration often involving direct communications with victims demanding ransom, Snatch threat\n        actors may threaten victims with double extortion, where the victims’ data will be posted on Snatch’s\n        extortion blog if the ransom goes unpaid.\n        FBI and CISA encourage organizations to implement the recommendations in the Mitigations section\n        of this CSA to reduce the likelihood and impact of ransomware incidents.\n        For a downloadable copy of IOCs, see:\n           • AA23-263A STIX XML (80 KB)\n           • AA23-263A STIX JSON (56 KB)\n        To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n        your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n        available, please include the following information regarding the incident: date, time, and location of the incident;\n        type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n        company or organization; and a designated point of contact.\n        This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n        carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n        release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n        more information on the Traffic Light Protocol, see cisa.gov/tlp."
+ },
+ {
+  "id": "p5",
+  "text": "TLP:CLEAR                                                                                                    FBI | CISA"
+ },
+ {
+  "id": "p6",
+  "text": "TECHNICAL DETAILS\n       Note: This advisory uses the MITRE ATT&CK for Enterprise framework, version 13. See the MITRE\n       ATT&CK Tactics and Techniques section for a table of the threat actors’ activity mapped to MITRE\n       ATT&CK® tactics and techniques. For assistance with mapping malicious cyber activity to the MITRE\n       ATT&CK framework, see CISA and MITRE ATT&CK’s Best Practices for MITRE ATT&CK Mapping\n       and CISA’s Decider Tool.\n       First appearing in 2018, Snatch operates a ransomware-as-a-service (RaaS) model and claimed their\n       first U.S.-based victim in 2019. Originally, the group was referred to as Team Truniger, based on the\n       nickname of a key group member, Truniger, who previously operated as a GandCrab affiliate. Snatch\n       threat actors use a customized ransomware variant notable for rebooting devices into Safe Mode\n       [T1562.009], enabling the ransomware to circumvent detection by antivirus or endpoint protection,\n       and then encrypting files when few services are running.\n       Snatch threat actors have been observed purchasing previously stolen data from other ransomware\n       variants in an attempt to further exploit victims into paying a ransom to avoid having their data\n       released on Snatch’s extortion blog. Note: Since November 2021, an extortion site operating under\n       the name Snatch served as a clearinghouse for data exfiltrated or stolen from victim companies on\n       Clearnet and TOR hosted by a bulletproof hosting service. In August 2023, individuals claiming to be\n       associated with the blog gave a media interview claiming the blog was not associated with Snatch\n       ransomware and “none of our targets has been attacked by Ransomware Snatch…”, despite multiple\n       confirmed Snatch victims’ data appearing on the blog alongside victims associated with other\n       ransomware groups, notably Nokoyawa and Conti.[1]"
+ },
+ {
+  "id": "p7",
+  "text": "Initial Access and Persistence\n       Snatch threat actors employ several different methods to gain access to and maintain persistence on\n       a victim’s network. Snatch affiliates primarily rely on exploiting weaknesses in Remote Desktop\n       Protocol (RDP) [T1133] for brute-forcing and gaining administrator credentials to victims’ networks\n       [T1110.001]. In some instances, Snatch affiliates have sought out compromised credentials from\n       criminal forums/marketplaces [T1078].\n       Snatch threat actors gain persistence on a victim’s network by compromising an administrator\n       account [T1078.002] and establishing connections over port 443 [T1071.001] to a command and\n       control (C2) server located on a Russian bulletproof hosting service [T1583.003]. Per IP traffic from\n       event logs provided by recent victims, Snatch threat actors initiated RDP connections from a Russian\n       bulletproof hosting service and through other virtual private network (VPN) services [T1133]."
+ },
+ {
+  "id": "p8",
+  "text": "Data Discovery and Lateral Movement\n       Snatch threat actors were observed using different TTPs to discover data, move laterally, and search\n       for data to exfiltrate. Snatch threat actors use sc.exe to configure, query, stop, start, delete, and add\n       system services using the Windows Command line. In addition to sc.exe, Snatch threat actors also\n       use tools such as Metasploit and Cobalt Strike [S0154].\n       Prior to deploying the ransomware, Snatch threat actors were observed spending up to three months\n       on a victim’s system. Within this timeframe, Snatch threat actors exploited the victim’s network"
+ },
+ {
+  "id": "p9",
+  "text": "TLP:CLEAR                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p10",
+  "text": "[T1590], moving laterally across the victim’s network with RDP [T1021.001] for the largest possible\n       deployment of ransomware and searching for files and folders [T1005] for data exfiltration [TA0010]\n       followed by file encryption [T1486]."
+ },
+ {
+  "id": "p11",
+  "text": "Defense Evasion and Execution\n       During the early stages of ransomware deployment, Snatch threat actors attempt to disable antivirus\n       software [T1562.001] and run an executable as a file named safe.exe or some variation thereof. In\n       recent victims, the ransomware executable’s name consisted of a string of hexadecimal characters\n       which match the SHA-256 hash of the file in an effort to defeat rule-based detection [T1036]. Upon\n       initiation, the Snatch ransomware payload queries and modifies registry keys [T1012][T1112], uses\n       various native Windows tools to enumerate the system [T1569.002], finds processes [T1057], and\n       creates benign processes to execute Windows batch (.bat) files [T1059.003]. In some instances, the\n       program attempts to remove all the volume shadow copies from a system [T1490]. After the execution\n       of the batch files, the executable removes the batch files from the victim’s filesystem [T1070.004].\n       The Snatch ransomware executable appends a series of hexadecimal characters to each file and\n       folder name it encrypts—unique to each infection—and leaves behind a text file titled HOW TO\n       RESTORE YOUR FILES.TXT in each folder. Snatch threat actors communicate with their victims\n       through email and the Tox communication platform based on identifiers left in ransom notes or\n       through their extortion blog. Since November 2021, some victims reported receiving a spoofed call\n       from an unknown female who claimed association with Snatch and directed them to the group’s\n       extortion site. In some instances, Snatch victims had a different ransomware variant deployed on their\n       systems, but received a ransom note from Snatch threat actors. As a result, the victims’ data is\n       posted on the ransomware blog involving the different ransomware variant and on the Snatch threat\n       actors’ extortion blog."
+ },
+ {
+  "id": "p12",
+  "text": "Indicators of Compromise (IOCs)\n       The Snatch IOCs detailed in this section were obtained through FBI investigations from September\n       2022 through June 2023.\n       Email Domains and Addresses\n       Since 2019, Snatch threat actors have used numerous email addresses to email victims. Email\n       addresses used by Snatch threat actors are random but usually originate from one of the following\n       domains listed in Tables 1 and 2:\n                         Table 1: Malicious Email Domains Observed in Use by Snatch Threat Actors"
+ },
+ {
+  "id": "p13",
+  "text": "Email Domains"
+ },
+ {
+  "id": "p14",
+  "text": "sezname[.]cz"
+ },
+ {
+  "id": "p15",
+  "text": "cock[.]li"
+ },
+ {
+  "id": "p16",
+  "text": "airmail[.]cc"
+ },
+ {
+  "id": "p17",
+  "text": "TLP:CLEAR                                                                                                     FBI | CISA"
+ },
+ {
+  "id": "p18",
+  "text": "Table 2 shows a list of legitimate email domains offering encrypted email services that have been\n       used by Snatch threat actors. These email domains are all publicly available and legal. The use of\n       these email domains by a threat actor should not be attributed to the email domains, absent specific\n       articulable facts tending to show they are used at the direction or under the control of a threat actor.\n                        Table 2: Legitimate Email Domains Observed in Use by Snatch Threat Actors"
+ },
+ {
+  "id": "p19",
+  "text": "Email Domains"
+ },
+ {
+  "id": "p20",
+  "text": "tutanota[.]com / tutamail[.]com / tuta[.]io"
+ },
+ {
+  "id": "p21",
+  "text": "mail[.]fr"
+ },
+ {
+  "id": "p22",
+  "text": "keemail[.]me"
+ },
+ {
+  "id": "p23",
+  "text": "protonmail[.]com / proton[.]me"
+ },
+ {
+  "id": "p24",
+  "text": "swisscows[.]email"
+ },
+ {
+  "id": "p25",
+  "text": "The email addresses listed in Table 3 were reported by recent victims.\n                                Table 3: Snatch’s Email Addresses Reported by Recent Victims"
+ },
+ {
+  "id": "p26",
+  "text": "Email Addresses"
+ },
+ {
+  "id": "p27",
+  "text": "sn.tchnews.top@protonmail[.]me"
+ },
+ {
+  "id": "p28",
+  "text": "funny385@swisscows[.]email"
+ },
+ {
+  "id": "p29",
+  "text": "funny385@proton[.]me"
+ },
+ {
+  "id": "p30",
+  "text": "russellrspeck@seznam[.]cz"
+ },
+ {
+  "id": "p31",
+  "text": "russellrspeck@protonmail[.]com"
+ },
+ {
+  "id": "p32",
+  "text": "Mailz13MoraleS@proton[.]me"
+ },
+ {
+  "id": "p33",
+  "text": "datasto100@tutanota[.]com"
+ },
+ {
+  "id": "p34",
+  "text": "snatch.vip@protonmail[.]com"
+ },
+ {
+  "id": "p35",
+  "text": "TLP:CLEAR                                                                                                          FBI | CISA"
+ },
+ {
+  "id": "p36",
+  "text": "TOX Messaging IDs\n        TOX Messaging IDs"
+ },
+ {
+  "id": "p37",
+  "text": "CAB3D74D1DADE95B52928E4D9DFC003FF5ADB2E082F59377D049A91952E8BB3B419DB2FA9D3F"
+ },
+ {
+  "id": "p38",
+  "text": "7229828E766B9058D329B2B4BC0EDDD11612CBCCFA4811532CABC76ACF703074E0D1501F8418"
+ },
+ {
+  "id": "p39",
+  "text": "83E6E3CFEC0E4C8E7F7B6E01F6E86CF70AE8D4E75A59126A2C52FE9F568B4072CA78EF2B3C97"
+ },
+ {
+  "id": "p40",
+  "text": "0FF26770BFAEAD95194506E6970CC1C395B04159038D785DE316F05CE6DE67324C6038727A58"
+ },
+ {
+  "id": "p41",
+  "text": "NOTE: According to ransom notes, this is a “Customer service” TOX to reach out to if the original TOX ID\n        does not respond."
+ },
+ {
+  "id": "p42",
+  "text": "Folder Creation\n        Folder Creation"
+ },
+ {
+  "id": "p43",
+  "text": "C:\\$SysReset"
+ },
+ {
+  "id": "p44",
+  "text": "Filenames with Associated SHA-256 Hashes\n        Filenames                                 SHA-256"
+ },
+ {
+  "id": "p45",
+  "text": "qesbdksdvnotrjnexutx.bat                  0965cb8ee38adedd9ba06bdad9220a35890c2df0e4c78d055\n                                                  9cd6da653bf740f"
+ },
+ {
+  "id": "p46",
+  "text": "eqbglqcngblqnl.bat                        1fbdb97893d09d59575c3ef95df3c929fe6b6ddf1b273283e4\n                                                  efadf94cdc802d"
+ },
+ {
+  "id": "p47",
+  "text": "safe.exe                                  5950b4e27554585123d7fca44e83169375c6001201e3bf26e\n                                                  57d079437e70bcd"
+ },
+ {
+  "id": "p48",
+  "text": "safe.exe                                  7018240d67fd11847c7f9737eaaae45794b37a5c27ffd02bea\n                                                  acaf6ae13352b3"
+ },
+ {
+  "id": "p49",
+  "text": "safe.exe                                  28e82f28d0b9eb6a53d22983e21a9505ada925ebb61382fab\n                                                  ebd76b8c4acff7c"
+ },
+ {
+  "id": "p50",
+  "text": "safe.exe                                  fc31043b5f079ce88385883668eeebba76a62f77954a960fb0\n                                                  3bf46f47dbb066"
+ },
+ {
+  "id": "p51",
+  "text": "TLP:CLEAR                                                                                FBI | CISA"
+ },
+ {
+  "id": "p52",
+  "text": "Filenames                      SHA-256"
+ },
+ {
+  "id": "p53",
+  "text": "DefenderControl.exe            a201f7f81277e28c0bdd680427b979aee70e42e8a98c67f11\n                                       e7c83d02f8fe7ae"
+ },
+ {
+  "id": "p54",
+  "text": "PRETTYOCEANApplicationdrs.bi   6992aaad3c47b938309fc1e6f37179eb51f028536f8afc02e49\n                                       86312e29220c0"
+ },
+ {
+  "id": "p55",
+  "text": "Setup.exe                      510e9fa38a08d446189c34fe6125295f410b36f00aceb65e7b\n                                       4508e9d7c4e1d1"
+ },
+ {
+  "id": "p56",
+  "text": "WRSA.exe                       ed0fd61bf82660a69f5bfe0e66457cfe56d66dd2b310e9e976\n                                       57c37779aef65d"
+ },
+ {
+  "id": "p57",
+  "text": "ghnhfglwaplf.bat               2155a029a024a2ffa4eff9108ac15c7db527ca1c8f89ccfd94cc\n                                       3a70b77cfc57"
+ },
+ {
+  "id": "p58",
+  "text": "nllraq.bat                     251427c578eaa814f07037fbe6e388b3bc86ed3800d7887c9\n                                       d24e7b94176e30d"
+ },
+ {
+  "id": "p59",
+  "text": "ygariiwfenmqteiwcr.bat         3295f5029f9c9549a584fa13bc6c25520b4ff9a4b2feb1d9e93\n                                       5cc9e4e0f0924"
+ },
+ {
+  "id": "p60",
+  "text": "bsfyqgqeauegwyfvtp.bat         6c9d8c577dddf9cc480f330617e263a6ee4461651b4dec1f72\n                                       15bda77df911e7"
+ },
+ {
+  "id": "p61",
+  "text": "rgibdcghzwpk.bat               84e1476c6b21531de62bbac67e52ab2ac14aa7a30f504ecf3\n                                       3e6b62aa33d1fe5"
+ },
+ {
+  "id": "p62",
+  "text": "pxyicmajjlqrtgcnhi.bat         a80c7fe1f88cf24ad4c55910a9f2189f1eedad25d7d0fd53dbfe\n                                       6bdd68912a84"
+ },
+ {
+  "id": "p63",
+  "text": "evhgpp.bat                     b998a8c15cc19c8c31c89b30f692a40b14d7a6c09233eb976\n                                       c07f19a84eccb40"
+ },
+ {
+  "id": "p64",
+  "text": "eqbglqcngblqnl.bat             1fbdb97893d09d59575c3ef95df3c929fe6b6ddf1b273283e4\n                                       efadf94cdc802d"
+ },
+ {
+  "id": "p65",
+  "text": "qesbdksdvnotrjnexutx.bat       0965cb8ee38adedd9ba06bdad9220a35890c2df0e4c78d055\n                                       9cd6da653bf740f"
+ },
+ {
+  "id": "p66",
+  "text": "HOW TO RESTORE YOUR\n        FILES.TXT"
+ },
+ {
+  "id": "p67",
+  "text": "TLP:CLEAR                                                                                                FBI | CISA"
+ },
+ {
+  "id": "p68",
+  "text": "Filenames with Associated SHA-1 Hashes\n        Filenames                              SHA-1"
+ },
+ {
+  "id": "p69",
+  "text": "safe.exe                               c8a0060290715f266c89a21480fed08133ea2614"
+ },
+ {
+  "id": "p70",
+  "text": "Commands Used by Snatch Threat Actors\n        Commands"
+ },
+ {
+  "id": "p71",
+  "text": "wmiadap.exe /F /T /R"
+ },
+ {
+  "id": "p72",
+  "text": "%windir%\\System32\\svchost.eve –k WerSvcGroup"
+ },
+ {
+  "id": "p73",
+  "text": "conhost.exe 0xFFFFFFFF -ForceV1"
+ },
+ {
+  "id": "p74",
+  "text": "vssadmin delete shadows /all /quiet"
+ },
+ {
+  "id": "p75",
+  "text": "bcdedit.exe /set {current} safeboot minimal"
+ },
+ {
+  "id": "p76",
+  "text": "REG ADD HKLM\\SYSTEM\\CurrentControlSet\\Control\\SafeBoot\\Minimal\\VSS /VE /T REG_SZ /F\n        /D Service"
+ },
+ {
+  "id": "p77",
+  "text": "REG ADD HKLM\\SYSTEM\\CurrentControlSet\\Control\\SafeBoot\\Minimal\\mXoRpcSsx /VE /T\n        REG_SZ /F /D Service"
+ },
+ {
+  "id": "p78",
+  "text": "REG QUERY HKLM\\SYSTEM\\CurrentControlSet\\Control /v SystemStartOptions"
+ },
+ {
+  "id": "p79",
+  "text": "%CONHOST% \"1088015358-1778111623-\n        1306428145949291561678876491840500802412316031-33820320"
+ },
+ {
+  "id": "p80",
+  "text": "\"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe\" --flag-switches-begin --flag-\n        switches-end --no-startup-window /prefetch:5"
+ },
+ {
+  "id": "p81",
+  "text": "cmd /d /c cmd /d /c cmd /d /c start \" \"\n        C:\\Users\\grade1\\AppData\\Local\\PRETTYOCEANluvApplication\\PRETTYOCEANApplicationidf.bi."
+ },
+ {
+  "id": "p82",
+  "text": "TLP:CLEAR                                                                                             FBI | CISA"
+ },
+ {
+  "id": "p83",
+  "text": "Registry Keys\n        Registry Keys"
+ },
+ {
+  "id": "p84",
+  "text": "HKLM\\SOFTWARE\\Microsoft\\Windows Media Player NSS\\3.0\\Servers\\D8B548F0-E306-4B2B-\n        BD82-25DAC3208786\\FriendlyName"
+ },
+ {
+  "id": "p85",
+  "text": "HKU\\S-1-5-21-4270068108-2931534202-3907561125-\n        1001\\Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Cached\\{ED50FC29-B964-\n        48A9-AFB3-15EBB9B97F36} {ADD8BA80-002B-11D0-8F0F-00C04FD7D062} 0xFFFF"
+ },
+ {
+  "id": "p86",
+  "text": "System Log Changes\n                                 Source                                  Message"
+ },
+ {
+  "id": "p87",
+  "text": "TerminalServices-RemoteConnectionManager     Remote session from client name exceeded the\n                                                     maximum allowed failed logon attempts. The\n                                                     session was forcibly terminated."
+ },
+ {
+  "id": "p88",
+  "text": "Microsoft-Windows-Windows Firewall With      A rule was added (Event 2004) or modified\n        Advanced Security%4Firewall                  (Event 2005) in the Windows Defender Firewall\n                                                     exception list. All rules included action “Allow”\n                                                     and rule name included “File and Printer\n                                                     Sharing”"
+ },
+ {
+  "id": "p89",
+  "text": "Microsoft-Windows-Windows Firewall With      A Windows Defender Firewall setting was\n        Advanced Security%4Firewall                  changed in private, public, and domain profile\n                                                     with type “Enable Windows Defender Firewall”\n                                                     and value of “no”."
+ },
+ {
+  "id": "p90",
+  "text": "Microsoft-Windows-                           Instance of process C:\\Windows\\svchost.exe.\n        TaskScheduler%4Operational                   (Incorrect file location, should be\n                                                     C:\\Windows\\System32\\svchost.exe)"
+ },
+ {
+  "id": "p91",
+  "text": "Mutexes Created\n        Mutexes Created"
+ },
+ {
+  "id": "p92",
+  "text": "\\Sessions\\1\\BaseNamedObjects\\gcc-shmem-tdm2-fc_key"
+ },
+ {
+  "id": "p93",
+  "text": "\\Sessions\\1\\BaseNamedObjects\\gcc-shmem-tdm2-sjlj_once"
+ },
+ {
+  "id": "p94",
+  "text": "\\Sessions\\1\\BaseNamedObjects\\gcc-shmem-tdm2-use_fc_key"
+ },
+ {
+  "id": "p95",
+  "text": "TLP:CLEAR                                                                                                     FBI | CISA"
+ },
+ {
+  "id": "p96",
+  "text": "Mutexes Created"
+ },
+ {
+  "id": "p97",
+  "text": "gcc-shmem-tdm2-fc_key"
+ },
+ {
+  "id": "p98",
+  "text": "gcc-hmem-tdm2-sjlj_once"
+ },
+ {
+  "id": "p99",
+  "text": "gcc-shmem-tdm2-use_fc_key"
+ },
+ {
+  "id": "p100",
+  "text": "MITRE ATT&CK TACTICS AND TECHNIQUES\n       See Tables 4-16 for all referenced threat actor tactics and techniques in this advisory.\n                   Table 4: Snatch Threat Actors ATT&CK Techniques for Enterprise – Reconnaissance"
+ },
+ {
+  "id": "p101",
+  "text": "Technique Title                  ID                              Use"
+ },
+ {
+  "id": "p102",
+  "text": "Gather Victim Network                    T1590       Snatch threat actors may gather information\n        Information                                          about the victim's networks that can be used\n                                                             during targeting."
+ },
+ {
+  "id": "p103",
+  "text": "Table 5: Snatch Threat Actors ATT&CK Techniques for Enterprise – Resource Development"
+ },
+ {
+  "id": "p104",
+  "text": "Technique Title                  ID                              Use"
+ },
+ {
+  "id": "p105",
+  "text": "Acquire Infrastructure: Virtual        T1583.003     Snatch threat actors may rent Virtual Private\n        Private Server                                       Servers (VPSs) that can be used during\n                                                             targeting. Snatch threat actors acquire\n                                                             infrastructure from VPS service providers that\n                                                             are known for renting VPSs with minimal\n                                                             registration information, allowing for more\n                                                             anonymous acquisitions of infrastructure."
+ },
+ {
+  "id": "p106",
+  "text": "Table 6: Snatch Threat Actors ATT&CK Techniques for Enterprise – Initial Access"
+ },
+ {
+  "id": "p107",
+  "text": "Technique Title                  ID                              Use"
+ },
+ {
+  "id": "p108",
+  "text": "Valid Accounts                           T1078       Snatch threat actors use compromised user\n                                                             credentials from criminal forums/marketplaces\n                                                             to gain access and maintain persistence on a\n                                                             victim’s network."
+ },
+ {
+  "id": "p109",
+  "text": "TLP:CLEAR                                                                                                        FBI | CISA"
+ },
+ {
+  "id": "p110",
+  "text": "Technique Title                  ID                               Use"
+ },
+ {
+  "id": "p111",
+  "text": "External Remote Services                 T1133       Snatch threat actors exploit weaknesses in\n                                                             RDP to perform brute forcing and gain\n                                                             administrator credentials for a victim’s network."
+ },
+ {
+  "id": "p112",
+  "text": "Snatch threat actors use VPN services to\n                                                             connect to a victim’s network."
+ },
+ {
+  "id": "p113",
+  "text": "Table 7: Snatch Threat Actors ATT&CK Techniques for Enterprise – Execution"
+ },
+ {
+  "id": "p114",
+  "text": "Technique Title                  ID                               Use"
+ },
+ {
+  "id": "p115",
+  "text": "Command and Scripting                  T1059.003     Snatch threat actors may use batch files (.bat)\n        Interpreter: Windows Command                         during ransomware execution and data\n        Shell                                                discovery."
+ },
+ {
+  "id": "p116",
+  "text": "System Services: Service               T1569.002     Snatch threat actors may leverage various\n        Execution                                            Windows tools to enumerate systems on the\n                                                             victim’s network. Snatch ransomware used\n                                                             sc.exe."
+ },
+ {
+  "id": "p117",
+  "text": "Table 8: Snatch Threat Actors ATT&CK Techniques for Enterprise – Persistence"
+ },
+ {
+  "id": "p118",
+  "text": "Technique Title                  ID                               Use"
+ },
+ {
+  "id": "p119",
+  "text": "Valid Accounts: Domain                 T1078.002     Snatch threat actors compromise domain\n        Accounts                                             accounts to maintain persistence on a victim’s\n                                                             network."
+ },
+ {
+  "id": "p120",
+  "text": "Table 9: Snatch Threat Actors ATT&CK Techniques for Enterprise – Defense Evasion"
+ },
+ {
+  "id": "p121",
+  "text": "Technique Title                  ID                               Use"
+ },
+ {
+  "id": "p122",
+  "text": "Masquerading                             T1036       Snatch threat actors have the ransomware\n                                                             executable match the SHA-256 hash of a\n                                                             legitimate file to avoid rule-based detection."
+ },
+ {
+  "id": "p123",
+  "text": "Indicator Removal: File Deletion       T1070.004     Snatch threat actors delete batch files from a\n                                                             victim’s filesystem once execution is complete."
+ },
+ {
+  "id": "p124",
+  "text": "TLP:CLEAR                                                                                                       FBI | CISA"
+ },
+ {
+  "id": "p125",
+  "text": "Modify Registry                         T1112       Snatch threat actors modify Windows Registry\n                                                            keys to aid in persistence and execution."
+ },
+ {
+  "id": "p126",
+  "text": "Impair Defenses: Disable or           T1562.001     Snatch threat actors have attempted to disable\n        Modify Tools                                        a system’s antivirus program to enable\n                                                            persistence and ransomware execution."
+ },
+ {
+  "id": "p127",
+  "text": "Impair Defenses: Safe Mode            T1562.009     Snatch threat actors abuse Windows Safe\n        Boot                                                Mode to circumvent detection by antivirus or\n                                                            endpoint protection and encrypt files when few\n                                                            services are running."
+ },
+ {
+  "id": "p128",
+  "text": "Table 10: Snatch Threat Actors ATT&CK Techniques for Enterprise – Credential Access"
+ },
+ {
+  "id": "p129",
+  "text": "Technique Title                 ID                              Use"
+ },
+ {
+  "id": "p130",
+  "text": "Brute Force: Password                 T1110.001     Snatch threat actors use brute force to obtain\n        Guessing                                            administrator credentials for a victim’s network."
+ },
+ {
+  "id": "p131",
+  "text": "Table 11: Snatch Threat Actors ATT&CK Techniques for Enterprise – Discovery"
+ },
+ {
+  "id": "p132",
+  "text": "Technique Title                 ID                              Use"
+ },
+ {
+  "id": "p133",
+  "text": "Query Registry                          T1012       Snatch threat actors may interact with the\n                                                            Windows Registry to gather information about\n                                                            the system, configuration, and installed\n                                                            software."
+ },
+ {
+  "id": "p134",
+  "text": "Process Discovery                       T1057       Snatch threat actors search for information\n                                                            about running processes on a system."
+ },
+ {
+  "id": "p135",
+  "text": "Table 12: Snatch Threat Actors ATT&CK Techniques for Enterprise – Lateral Movement"
+ },
+ {
+  "id": "p136",
+  "text": "Technique Title                 ID                              Use"
+ },
+ {
+  "id": "p137",
+  "text": "Remote Services: Remote               T1021.001     Snatch threat actors may use Valid Accounts to\n        Desktop Protocol                                    log into a computer using the Remote Desktop\n                                                            Protocol."
+ },
+ {
+  "id": "p138",
+  "text": "TLP:CLEAR                                                                                                            FBI | CISA"
+ },
+ {
+  "id": "p139",
+  "text": "Table 13: Snatch Threat Actors ATT&CK Techniques for Enterprise – Collection"
+ },
+ {
+  "id": "p140",
+  "text": "Technique Title                   ID                                Use"
+ },
+ {
+  "id": "p141",
+  "text": "Data from Local System                    T1005       Snatch threat actors search systems to find\n                                                              files and folders of interest prior to exfiltration."
+ },
+ {
+  "id": "p142",
+  "text": "Table 14: Snatch Threat Actors ATT&CK Techniques for Enterprise – Command and Control"
+ },
+ {
+  "id": "p143",
+  "text": "Technique Title                   ID                                Use"
+ },
+ {
+  "id": "p144",
+  "text": "Application Layer Protocols:           T1071.001      Snatch threat actors establish connections over\n        Web Protocols                                         port 443 to blend C2 traffic in with other web\n                                                              traffic."
+ },
+ {
+  "id": "p145",
+  "text": "Table 15: Snatch Threat Actors ATT&CK Techniques for Enterprise – Exfiltration"
+ },
+ {
+  "id": "p146",
+  "text": "Technique Title                   ID                                Use"
+ },
+ {
+  "id": "p147",
+  "text": "Exfiltration                             TA0010       Snatch threat actors use exfiltration techniques\n                                                              to steal data from a victim’s network."
+ },
+ {
+  "id": "p148",
+  "text": "Table 16: Snatch Threat Actors ATT&CK Techniques for Enterprise – Impact"
+ },
+ {
+  "id": "p149",
+  "text": "Technique Title                   ID                                Use"
+ },
+ {
+  "id": "p150",
+  "text": "Data Encrypted for Impact                 T1486       Snatch threat actors encrypt data on target\n                                                              systems or on large numbers of systems in a\n                                                              network to interrupt availability to system and\n                                                              network resources."
+ },
+ {
+  "id": "p151",
+  "text": "Inhibit System Recovery                   T1490       Snatch threat actors delete all volume shadow\n                                                              copies from a victim’s filesystem to inhibit\n                                                              system recovery."
+ },
+ {
+  "id": "p152",
+  "text": "TLP:CLEAR                                                                                                      FBI | CISA"
+ },
+ {
+  "id": "p153",
+  "text": "MITIGATIONS\n       The FBI and CISA recommend organizations implement\n                                                                     These mitigations apply to all stakeholders. The\n       the mitigations below to improve your organization’s\n                                                                     authoring agencies recommend that software\n       cybersecurity posture on the basis of the Snatch threat\n                                                                     manufactures incorporate secure-by-design and\n       actor’s activity. These mitigations align with the Cross-\n                                                                     -default principles and tactics into their software\n       Sector Cybersecurity Performance Goals (CPGs)\n                                                                     development practices for hardening software\n       developed by CISA and the National Institute of\n                                                                     against ransomware attacks (e.g., to prevent\n       Standards and Technology (NIST). The CPGs provide a\n                                                                     threat actors from using Safe Mode to evade\n       minimum set of practices and protections that CISA and\n                                                                     detection and file encryption), thus\n       NIST recommend all organizations implement. CISA\n                                                                     strengthening the secure posture for their\n       and NIST based the CPGs on existing cybersecurity\n                                                                     customers.\n       frameworks and guidance to protect against the most\n       common and impactful threats, tactics, techniques, and        For more information on secure by design, see\n       procedures. Visit CISA’s Cross-Sector Cybersecurity           CISA’s Secure by Design and Default webpage\n       Performance Goals for more information on the CPGs,           and joint guide.\n       including additional recommended baseline protections."
+ },
+ {
+  "id": "p154",
+  "text": "•    Reduce threat of malicious actors using remote access tools by:\n                o Auditing remote access tools on your network to identify currently used and/or\n                    authorized software.\n                o Reviewing logs for execution of remote access software to detect abnormal use of\n                    programs running as a portable executable [CPG 2.T].\n                o Using security software to detect instances of remote access software being loaded only\n                    in memory.\n                o Requiring authorized remote access solutions to be used only from within your network\n                    over approved remote access solutions, such as virtual private networks (VPNs) or virtual\n                    desktop interfaces (VDIs).\n                o Blocking both inbound and outbound connections on common remote access\n                    software ports and protocols at the network perimeter.\n           •    Implement application controls to manage and control execution of software, including\n                allowlisting remote access programs.\n                o Application controls should prevent installation and execution of portable versions of\n                    unauthorized remote access and other software. A properly configured application\n                    allowlisting solution will block any unlisted application execution. Allowlisting is important\n                    because antivirus solutions may fail to detect the execution of malicious portable\n                    executables when the files use any combination of compression, encryption, or\n                    obfuscation.\n           •    Strictly limit the use of RDP and other remote desktop services. If RDP is necessary,\n                rigorously apply best practices, for example [CPG 2.W]:\n                o Audit the network for systems using RDP.\n                o Close unused RDP ports.\n                o Enforce account lockouts after a specified number of attempts."
+ },
+ {
+  "id": "p155",
+  "text": "TLP:CLEAR                                                                                                     FBI | CISA"
+ },
+ {
+  "id": "p156",
+  "text": "o Apply phishing-resistant multifactor authentication (MFA).\n                o Log RDP login attempts.\n           •    Disable command-line and scripting activities and permissions [CPG 2.N].\n           •    Review domain controllers, servers, workstations, and active directories for new and/or\n                unrecognized accounts [CPG 4.C].\n           •    Audit user accounts with administrative privileges and configure access controls\n                according to the principle of least privilege (PoLP) [CPG 2.E].\n           •    Reduce the threat of credential compromise via the following:\n                o Place domain admin accounts in the protected users’ group to prevent caching of\n                   password hashes locally.\n                o Refrain from storing plaintext credentials in scripts.\n           •    Implement time-based access for accounts set at the admin level and higher [CPG 2.A,\n                2.E].\n       In addition, the authoring authorities of this CSA recommend network defenders apply the following\n       mitigations to limit potential adversarial use of common system and network discovery techniques,\n       and to reduce the impact and risk of compromise by ransomware or data extortion actors:\n           • Implement a recovery plan to maintain and retain multiple copies of sensitive or proprietary\n               data and servers in a physically separate, segmented, and secure location (i.e., hard drive,\n               storage device, the cloud).\n           • Maintain offline backups of data and regularly maintain backup and restoration (daily or\n               weekly at minimum). By instituting this practice, an organization limits the severity of disruption\n               to its business practices [CPG 2.R].\n           • Require all accounts with password logins (e.g., service account, admin accounts, and\n               domain admin accounts) to comply with NIST's standards for developing and managing\n               password policies.\n               o Use longer passwords consisting of at least eight characters and no more than 64\n                    characters in length [CPG 2.B].\n               o Store passwords in hashed format using industry-recognized password managers.\n               o Add password user “salts” to shared login credentials.\n               o Avoid reusing passwords [CPG 2.C].\n               o Implement multiple failed login attempt account lockouts [CPG 2.G].\n               o Disable password “hints.”\n               o Refrain from requiring password changes more frequently than once per year.\n                    Note: NIST guidance suggests favoring longer passwords instead of requiring regular and\n                    frequent password resets. Frequent password resets are more likely to result in users\n                    developing password “patterns” cyber criminals can easily decipher.\n               o Require administrator credentials to install software.\n           • Require phishing-resistant multifactor authentication (MFA) for all services to the extent\n               possible, particularly for webmail, virtual private networks (VPNs), and accounts that access\n               critical systems [CPG 2.H].\n           • Keep all operating systems, software, and firmware up to date. Timely patching is one of\n               the most efficient and cost-effective steps an organization can take to minimize its exposure to"
+ },
+ {
+  "id": "p157",
+  "text": "TLP:CLEAR                                                                                                  FBI | CISA"
+ },
+ {
+  "id": "p158",
+  "text": "cybersecurity threats. Prioritize patching known exploited vulnerabilities in internet-facing\n                systems [CPG 1.E].\n           •    Segment networks to prevent the spread of ransomware. Network segmentation can help\n                prevent the spread of ransomware by controlling traffic flows between—and access to—\n                various subnetworks and by restricting adversary lateral movement [CPG 2.F].\n           •    Identify, detect, and investigate abnormal activity and potential traversal of the\n                indicated ransomware with a networking monitoring tool. To aid in detecting the\n                ransomware, implement a tool that logs and reports all network traffic and activity, including\n                lateral movement, on a network. Endpoint detection and response (EDR) tools are particularly\n                useful for detecting lateral connections as they have insight into common and uncommon\n                network connections for each host [CPG 3.A].\n           •    Install, regularly update, and enable real time detection for antivirus software on all\n                hosts.\n           •    Disable unused ports and protocols [CPG 2.V].\n           •    Consider adding an email banner to emails received from outside your organization [CPG\n                2.M].\n           •    Disable hyperlinks in received emails.\n           •    Ensure all backup data is encrypted, immutable (i.e., ensure backup data cannot be\n                altered or deleted), and covers the entire organization’s data infrastructure [CPG 2.K, 2.L,\n                2.R]."
+ },
+ {
+  "id": "p159",
+  "text": "VALIDATE SECURITY CONTROLS\n       In addition to applying mitigations, FBI and CISA recommend exercising, testing, and validating your\n       organization's security program against the threat behaviors mapped to the MITRE ATT&CK for\n       Enterprise framework in this advisory. FBI and CISA recommend testing your existing security\n       controls inventory to assess how they perform against the ATT&CK techniques described in this\n       advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Tables 4-16).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the\n              data generated by this process.\n       FBI and CISA recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p160",
+  "text": "TLP:CLEAR                                                                                                   FBI | CISA"
+ },
+ {
+  "id": "p161",
+  "text": "RESOURCES\n           •    Stopransomware.gov is a whole-of-government approach that gives one central location for\n                ransomware resources and alerts.\n           •    Resource to mitigate a ransomware attack: #StopRansomware Guide.\n           •    No-cost cyber hygiene services: Cyber Hygiene Services and Ransomware Readiness\n                Assessment."
+ },
+ {
+  "id": "p162",
+  "text": "REPORTING\n       The FBI is seeking any information that can be shared, to include boundary logs showing\n       communication to and from IP addresses, a sample ransom note, communications with Snatch threat\n       actors, Bitcoin wallet information, decryptor files, and/or a benign sample of an encrypted file. The FBI\n       and CISA strongly discourage paying ransom as payment does not guarantee victim files will be\n       recovered. Furthermore, payment may also embolden adversaries to target additional organizations,\n       encourage other criminal actors to engage in the distribution of ransomware, and/or fund illicit\n       activities. Regardless of whether you or your organization have decided to pay the ransom, the FBI\n       and CISA urge you to promptly report ransomware incidents to the FBI Internet Crime Complaint\n       Center (IC3) at ic3.gov, a local FBI Field Office, or to CISA at report@cisa.gov or (888) 282-0870."
+ },
+ {
+  "id": "p163",
+  "text": "REFERENCES\n       [1] DataBreaches.net"
+ },
+ {
+  "id": "p164",
+  "text": "DISCLAIMER\n       The information in this report is being provided “as is” for informational purposes only. FBI and CISA\n       do not endorse any commercial entity, product, or service, including any subjects of analysis. Any\n       reference to specific commercial products, processes, or services by service mark, trademark,\n       manufacturer, or otherwise, does not constitute or imply endorsement, recommendation, or favoring\n       by FBI or CISA."
+ },
+ {
+  "id": "p165",
+  "text": "VERSION HISTORY\n       September 20, 2023: Initial version."
+ }
+]

@@ -1,0 +1,666 @@
+[
+ {
+  "id": "p1",
+  "text": "# Iranian Cyber Actors' Brute Force and Credential Access Activity Compromises Critical Infrastructure Organizations"
+ },
+ {
+  "id": "p2",
+  "text": "> - Publisher: FBI Internet Crime Complaint Center (IC3), CSA listing — advisory id AA24-290A\n> - Date: 2024-10-16\n> - URL: https://www.ic3.gov/CSA/2024/241016.pdf\n> - PDF SHA-256: 45a286b1f7ed9a8df77a0f295f67507575c35f4d2f370cb7cfc8feaf4594f78d (`source.pdf`, 15 pages)\n> - License: U.S. Government work (public domain)\n> - Text: `pdftotext -layout` output; only page furniture removed by `reports/eval/build_corpus.py` (58 lines). No other edits."
+ },
+ {
+  "id": "p3",
+  "text": "Co-Authored by:                                                                          TLP:CLEAR            Product ID: AA24-290A\n                                                                                                                  October 16, 2024"
+ },
+ {
+  "id": "p4",
+  "text": "Iranian Cyber Actors’ Brute Force and\n       Credential Access Activity Compromises\n       Critical Infrastructure Organizations\n       Summary\n       The Federal Bureau of Investigation (FBI), the Cybersecurity and Infrastructure Security Agency (CISA), the\n       National Security Agency (NSA), the Communications Security Establishment Canada (CSE), the Australian\n       Federal Police (AFP), and Australian Signals Directorate’s Australian Cyber Security Centre (ASD’s ACSC)\n       are releasing this joint Cybersecurity Advisory to warn network defenders of Iranian cyber actors’ use of\n       brute force and other techniques to compromise organizations across multiple critical infrastructure\n       sectors, including the healthcare and public health (HPH), government, information technology,\n       engineering, and energy sectors. The actors likely aim to obtain credentials and information describing the\n       victim’s network that can then be sold to enable access to cybercriminals.\n       Since October 2023, Iranian actors have used brute force, such as password spraying, and multi-factor\n       authentication (MFA) ‘push bombing’ to compromise user accounts and obtain access to organizations.\n       The actors frequently modified MFA registrations, enabling persistent access. The actors performed\n       discovery on the compromised networks to obtain additional credentials and identify other information that\n       could be used to gain additional points of access. The authoring agencies assess the Iranian actors sell\n       this information on cybercriminal forums to actors who may use the information to conduct additional\n       malicious activity.\n       To report suspicious or criminal activity related to information found in this joint Cybersecurity Advisory, contact\n       your local FBI field office or CISA’s 24/7 Operations Center at Report@cisa.gov or (888) 282-0870. When\n       available, please include the following information regarding the incident: date, time, and location of the incident;\n       type of activity; number of people affected; type of equipment used for the activity; the name of the submitting\n       company or organization; and a designated point of contact. For NSA client requirements or general cybersecurity\n       inquiries, contact Cybersecurity_Requests@nsa.gov.\n       This document is marked TLP:CLEAR. Disclosure is not limited. Sources may use TLP:CLEAR when information\n       carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public\n       release. Subject to standard copyright rules, TLP:CLEAR information may be distributed without restriction. For\n       more information on the Traffic Light Protocol, see http://www.cisa.gov/tlp."
+ },
+ {
+  "id": "p5",
+  "text": "This advisory provides the actors’ tactics, techniques, and procedures (TTPs) and indicators of compromise\n       (IOCs). The information is derived from FBI engagements with entities impacted by this malicious activity.\n       The authoring agencies recommend critical infrastructure organizations follow the guidance provided in the\n       Mitigations section. At a minimum, organizations should ensure all accounts use strong passwords and\n       register a second form of authentication."
+ },
+ {
+  "id": "p6",
+  "text": "Technical Details\n       Note: This advisory uses the MITRE ATT&CK® for Enterprise framework, version 15. See the MITRE ATT&CK\n       Tactics and Techniques section in Appendix A for a table of the actors’ activity mapped to MITRE ATT&CK\n       tactics and techniques."
+ },
+ {
+  "id": "p7",
+  "text": "Overview of Activity\n       The actors likely conduct reconnaissance operations to gather victim identity [T1589] information. Once\n       obtained, the actors gain persistent access to victim networks frequently via brute force [T1110]. After\n       gaining access, the actors use a variety of techniques to further gather credentials, escalate privileges, and\n       gain information about the entity’s systems and network. The actors also move laterally and download\n       information that could assist other actors with access and exploitation."
+ },
+ {
+  "id": "p8",
+  "text": "Initial Access and Persistence\n       The actors use valid user and group email accounts [T1078], frequently obtained via brute force such as\n       password spraying [T1110.003] although other times via unknown methods, to obtain initial access to\n       Microsoft 365, Azure [T1078.004], and Citrix systems [T1133]. In some cases where push notification-\n       based MFA was enabled, the actors send MFA requests to legitimate users seeking acceptance of the\n       request. This technique—bombarding users with mobile phone push notifications until the user either\n       approves the request by accident or stops the notifications— is known as “MFA fatigue” or “push bombing”\n       [T1621].\n       Once the threat actors gain access to an account, they frequently register their devices with MFA to protect\n       their access to the environment via the valid account:\n            •   In two confirmed compromises, the actors leveraged a compromised user’s open registration for\n                MFA [T1556.006] to register the actor’s own device [T1098.005] to access the environment.\n            •   In another confirmed compromise, the actors used a self-service password reset (SSPR) tool\n                associated with a public facing Active Directory Federation Service (ADFS) to reset the accounts\n                with expired passwords [T1484.002] and then registered MFA through Okta for compromised\n                accounts without MFA already enabled [T1556] [T1556.006].\n       The actors frequently conduct their activity using a virtual private network (VPN) service [T1572]. Several of\n       the IP addresses in the actors’ malicious activity originate from exit nodes tied to the Private Internet\n       Access VPN service."
+ },
+ {
+  "id": "p9",
+  "text": "Lateral Movement\n       The actors use Remote Desktop Protocol (RDP) for lateral movement [T1021.001]. In one instance, the\n       actors used Microsoft Word to open PowerShell to launch the RDP binary mstsc.exe [T1202]."
+ },
+ {
+  "id": "p10",
+  "text": "Credential Access\n       The actors likely use open-source tools and methodologies to gather more credentials. The actors\n       performed Kerberos Service Principal Name (SPN) enumeration of several service accounts and received\n       Kerberos tickets [T1558.003]. In one instance, the actors used the Active Directory (AD) Microsoft Graph\n       Application Program Interface (API) PowerShell application likely to perform a directory dump of all AD\n       accounts. Also, the actors imported the tool [T1105] DomainPasswordSpray.ps1, which is openly\n       available on GitHub [T1588.002], likely to conduct password spraying. The actors also used the command\n       Cmdkey /list, likely to display usernames and credentials [T1555]."
+ },
+ {
+  "id": "p11",
+  "text": "Privilege Escalation\n       In one instance, the actors attempted impersonation of the domain controller, likely by exploiting\n       Microsoft’s Netlogon (also known as “Zerologon”) privilege escalation vulnerability (CVE-2020-1472)\n       [T1068]."
+ },
+ {
+  "id": "p12",
+  "text": "Discovery\n       The actors leverage living off the land (LOTL) to gain knowledge about the target systems and internal\n       networks. The actors used the following Windows command-line tools to gather information about domain\n       controllers [T1018], trusted domains [T1482], lists of domain administrators, and enterprise\n       administrators [T1087.002] [T1069.002] [T1069.003]:\n           •    Nltest /dclist\n           •    Nltest /domain_trusts\n           •    Nltest /domain_trusts/all_trusts\n           •    Net group “Enterprise admins” /domain\n           •    Net group “Domain admins” /domain\n       Next, the actors used the following Lightweight Directory Access Protocol (LDAP) query in PowerShell\n       [T1059.001] to search the AD for computer display names, operating systems, descriptions, and\n       distinguished names [T1082].\n                        $i=0\n                        $D=\n                        [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()\n                        $L='LDAP://' . $D\n                        $D = [ADSI]$L\n                        $Date = $((Get-Date).AddDays(-90).ToFileTime())\n                        $str =\n                        '(&(objectcategory=computer)(operatingSystem=*serv*)(|(lastlogon>='+$D\n                        ate+')(lastlogontimestamp>='+$Date+')))'"
+ },
+ {
+  "id": "p13",
+  "text": "$s = [adsisearcher]$str\n                        $s.searchRoot = $L.$D.distinguishedName\n                        $s.PropertiesToLoad.Add('cn') > $Null\n                        $s.PropertiesToLoad.Add('operatingsystem') > $Null\n                        $s.PropertiesToLoad.Add('description') > $Null\n                        $s.PropertiesToLoad.Add('distinguishedName') > $Null\n                        Foreach ($CA in $s.FindAll()) {\n                              Write-Host $CA.Properties.Item('cn')\n                              $CA.Properties.Item('operatingsystem')\n                              $CA. Properties.Item('description')\n                              $CA.Properties.Item('distinguishedName')\n                              $i++\n                        }\n                        Write-host Total servers: $i\n       Command and Control\n       On one occasion, using msedge.exe, the actors likely made outbound connections to Cobalt Strike\n       Beacon command and control (C2) infrastructure [T1071.001]."
+ },
+ {
+  "id": "p14",
+  "text": "Exfiltration and Collection\n       In a couple instances, while logged in to victim accounts, the actors downloaded files related to gaining\n       remote access to the organization and to the organization’s inventory [T1005], likely exfiltrating the files to\n       further persist in the victim network or to sell the information online."
+ },
+ {
+  "id": "p15",
+  "text": "Detection\n       To detect brute force activity, the authoring agencies recommend reviewing authentication logs for system\n       and application login failures of valid accounts and looking for multiple, failed authentication attempts\n       across all accounts.\n       To detect the use of compromised credentials in combination with virtual infrastructure, the authoring\n       agencies recommend the following steps:\n           ▪    Look for “impossible logins,” such as suspicious logins with changing usernames, user agent\n                strings, and IP address combinations or logins where IP addresses do not align to the user’s\n                expected geographic location.\n           ▪    Look for one IP used for multiple accounts, excluding expected logins.\n           ▪    Look for “impossible travel.” Impossible travel occurs when a user logs in from multiple IP\n                addresses with significant geographic distance (i.e., a person could not realistically travel between\n                the geographic locations of the two IP addresses during the period between the logins). Note:\n                Implementing this detection opportunity can result in false positives if legitimate users apply VPN\n                solutions before connecting into networks.\n           ▪    Look for MFA registrations with MFA in unexpected locales or from unfamiliar devices.\n           ▪    Look for processes and program execution command-line arguments that may indicate credential\n                dumping, especially attempts to access or copy the ntds.dit file from a domain controller."
+ },
+ {
+  "id": "p16",
+  "text": "▪    Look for suspicious privileged account use after resetting passwords or applying user account\n                mitigations.\n           ▪    Look for unusual activity in typically dormant accounts.\n           ▪    Look for unusual user agent strings, such as strings not typically associated with normal user\n                activity, which may indicate bot activity."
+ },
+ {
+  "id": "p17",
+  "text": "Mitigations\n       The authoring agencies recommend organizations implement the mitigations below to improve\n       organizations’ cybersecurity posture based on the actors’ TTPs described in this advisory. These\n       mitigations align with the Cross-Sector Cybersecurity Performance Goals (CPGs) developed by CISA. The\n       CPGs, which are organized to align to the National Institute of Standards and Technology (NIST)\n       Cybersecurity Framework, are a subset of cybersecurity practices, aimed at meaningfully reducing risks to\n       both critical infrastructure operations and the American people. These voluntary CPGs strive to help small-\n       and medium-sized organizations kick-start their cybersecurity efforts by prioritizing investment in a limited\n       number of essential actions with high-impact security outcomes. Visit CISA’s Cross-Sector Cybersecurity\n       Performance Goals for more information on the CPGs, including additional recommended baseline\n       protections.\n           ▪    Review IT helpdesk password management related to initial passwords, password resets for user\n                lockouts, and shared accounts. IT helpdesk password procedures may not align to company policy\n                for user verification or password strength, creating a security gap. Avoid common passwords (e.g.\n                “Spring2024” or “Password123!”).\n           ▪    Disable user accounts and access to organizational resources for departing staff [CPG 2.D].\n                Disabling accounts can minimize system exposure, removing options actors can leverage for entry\n                into the system. Similarly, create new user accounts as close as possible to an employee’s start\n                date.\n           ▪    Implement phishing-resistant MFA [CPG 2.H]. See CISA’s resources Phishing-Resistant Multifactor\n                Authentication and More than a Password for additional information on strengthening user\n                credentials.\n           ▪    Continuously review MFA settings to ensure coverage over all active, internet-facing protocols to\n                ensure no exploitable services are exposed [CPG 2.W].\n           ▪    Provide basic cybersecurity training to users [CPG 2.I] covering concepts such as:\n                o   Detecting unsuccessful login attempts [CPG 2.G].\n                o   Having users deny MFA requests they have not generated.\n                o   Ensuring users with MFA-enabled accounts have MFA set up appropriately.\n           ▪    Ensure password policies align with the latest NIST Digital Identity Guidelines.\n                o   Meeting the minimum password strength [CPG 2.B] by creating a password using 8-64\n                    nonstandard characters and long passphrases, when possible.\n           ▪    Disable the use of RC4 for Kerberos authentication."
+ },
+ {
+  "id": "p18",
+  "text": "These mitigations apply to critical infrastructure entities across sectors.\n       The authoring agencies also recommend software manufacturers incorporate secure by design principles\n       and tactics into their software development practices to protect their customers against actors using\n       compromised credentials, thereby strengthening the security posture of their customers. For more\n       information on secure by design, see CISA’s Secure by Design webpage and joint guide."
+ },
+ {
+  "id": "p19",
+  "text": "Validate Security Controls\n       In addition to applying mitigations, the authoring agencies recommend exercising, testing, and validating\n       organization security programs against the threat behaviors mapped to the MITRE ATT&CK for Enterprise\n       framework in this advisory. The authoring agencies recommend testing your existing security controls\n       inventory to assess how they perform against the ATT&CK techniques described in this advisory.\n       To get started:\n           1. Select an ATT&CK technique described in this advisory (see Table 1 to Table 12).\n           2. Align your security technologies against the technique.\n           3. Test your technologies against the technique.\n           4. Analyze your detection and prevention technologies’ performance.\n           5. Repeat the process for all security technologies to obtain a set of comprehensive performance\n              data.\n           6. Tune your security program, including people, processes, and technologies, based on the data\n              generated by this process.\n       The authoring agencies recommend continually testing your security program, at scale, in a production\n       environment to ensure optimal performance against the MITRE ATT&CK techniques identified in this\n       advisory."
+ },
+ {
+  "id": "p20",
+  "text": "Contact Information\n       Organizations are encouraged to report suspicious or criminal activity related to information in this advisory\n       to:\n           ▪    CISA via CISA’s 24/7 Operations Center [report@cisa.gov or 1-844-Say-CISA (1-844-729-2472)] or\n                your local FBI field office. When available, please include the following information regarding the\n                incident: date, time, and location of the incident; type of activity; number of people affected; type of\n                equipment used for the activity; the name of the submitting company or organization; and a\n                designated point of contact.\n           ▪    For NSA cybersecurity guidance inquiries, contact CybersecurityReports@nsa.gov."
+ },
+ {
+  "id": "p21",
+  "text": "Disclaimer\n       The information in this report is being provided “as is” for informational purposes only. The authoring\n       agencies do not endorse any commercial entity, product, company, or service, including any entities,"
+ },
+ {
+  "id": "p22",
+  "text": "products, or services linked within this document. Any reference to specific commercial entities, products,\n       processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or\n       imply endorsement, recommendation, or favoring by the authoring agencies.\n       Intrusion events connected to this Iranian group may also include a different set of cyber actors–likely the\n       third-party actors who purchased access from the Iranian group via cybercriminal forums or other\n       channels. As a result, some TTPs and IOCs noted in this advisory may be tied to these third-party actors,\n       not the Iranian actors. The TTPs and IOCs are in the advisory to provide recipients the most complete\n       picture of malicious activity that may be observed on compromised networks. However, exercise caution if\n       formulating attribution assessments based solely on matching TTPs and IOCs."
+ },
+ {
+  "id": "p23",
+  "text": "Version History\n       October 16, 2024: Initial version."
+ },
+ {
+  "id": "p24",
+  "text": "Appendix 1: MITRE ATT&CK Tactics and Techniques\n       See Tables 1–12 for all referenced actors’ tactics and techniques in this advisory. For assistance with\n       mapping malicious cyber activity to the MITRE ATT&CK framework, see CISA and MITRE ATT&CK’s Best\n       Practices for MITRE ATT&CK Mapping and CISA’s Decider Tool."
+ },
+ {
+  "id": "p25",
+  "text": "Table 1: Reconnaissance"
+ },
+ {
+  "id": "p26",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p27",
+  "text": "Gather Victim Identity\n                                         T1589        The actors likely gathered victim information.\n        Information"
+ },
+ {
+  "id": "p28",
+  "text": "Table 2: Resource Development"
+ },
+ {
+  "id": "p29",
+  "text": "Technique Title                ID                                         Use"
+ },
+ {
+  "id": "p30",
+  "text": "Obtain Capabilities:                          The actors obtained a password spray tool through an open-source\n                                       T1588.002\n        Tool                                          repository."
+ },
+ {
+  "id": "p31",
+  "text": "Table 3: Initial Access"
+ },
+ {
+  "id": "p32",
+  "text": "Technique Title               ID                                          Use"
+ },
+ {
+  "id": "p33",
+  "text": "The actors used password spraying to obtain valid user and group\n        Valid Accounts                  T1078\n                                                     email account credentials, allowing them access to the network."
+ },
+ {
+  "id": "p34",
+  "text": "Valid Accounts: Cloud                        The actors used accounts hosted on Microsoft 365, Azure, and Okta\n                                       T1078.004\n        Accounts                                     cloud environments as additional methods for initial access."
+ },
+ {
+  "id": "p35",
+  "text": "External Remote                              The actors exploited Citrix systems’ external-facing remote services\n                                        T1133\n        Services                                     as another method for gaining initial access to the system."
+ },
+ {
+  "id": "p36",
+  "text": "Table 4: Execution"
+ },
+ {
+  "id": "p37",
+  "text": "Technique Title               ID                                          Use"
+ },
+ {
+  "id": "p38",
+  "text": "Command and\n                                                     The actors used PowerShell commands to maintain and expand\n        Scripting Interpreter:         T1059.001\n                                                     access.\n        PowerShell"
+ },
+ {
+  "id": "p39",
+  "text": "Table 5: Persistence"
+ },
+ {
+  "id": "p40",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p41",
+  "text": "Account Manipulation:                      The actors used PowerShell commands to maintain and expand\n                                       T1098.005\n        Device Registration                        access."
+ },
+ {
+  "id": "p42",
+  "text": "Modify Authentication                      The actors used a public facing Active Directory Federation Service\n                                        T1556\n        Process                                    (ADFS) domain to reset the passwords of expired accounts."
+ },
+ {
+  "id": "p43",
+  "text": "Modify Authentication                      The actors used an MFA bypass method, such as Multi-Factor\n        Process: Multi-Factor          T1556.006   Authentication Request Generation, providing the ability to modify or\n        Authentication                             completely disable MFA defenses."
+ },
+ {
+  "id": "p44",
+  "text": "Table 6: Privilege Escalation"
+ },
+ {
+  "id": "p45",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p46",
+  "text": "The actors attempted impersonation of the domain controller likely\n        Exploitation for\n                                        T1068      by exploiting CVE-2020-1472, Microsoft’s Netlogon Privilege\n        Privilege Escalation\n                                                   Escalation vulnerability."
+ },
+ {
+  "id": "p47",
+  "text": "The actors leveraged a public-facing ADFS password reset tool to\n        Domain or Tenant\n                                                   reactivate inactive accounts, allowing the actor to authenticate and\n        Policy Modification:           T1484.002\n                                                   enroll their devices as any user in the AD managed by the victim\n        Trust Modification\n                                                   tenant."
+ },
+ {
+  "id": "p48",
+  "text": "Table 7: Defense Evasion"
+ },
+ {
+  "id": "p49",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p50",
+  "text": "The actors attempted impersonation of the Domain Controller likely\n        Indirect Command\n                                        T1202      by exploiting CVE-2020-1472, Microsoft’s Netlogon Privilege\n        Execution\n                                                   Escalation vulnerability."
+ },
+ {
+  "id": "p51",
+  "text": "Table 8: Credential Access"
+ },
+ {
+  "id": "p52",
+  "text": "Technique Title               ID                                        Use"
+ },
+ {
+  "id": "p53",
+  "text": "The actors targeted applications, including Single Sign-on (SSO)\n        Brute Force: Password\n                                       T1110.003   Microsoft Office 365, using brute force password sprays and\n        Spraying\n                                                   imported the tool DomainPasswordSpray.ps1."
+ },
+ {
+  "id": "p54",
+  "text": "Credentials from                           The actors used the command Cmdkey /list likely to display\n                                        T1555\n        Password Stores                            usernames and credentials."
+ },
+ {
+  "id": "p55",
+  "text": "Technique Title              ID                                     Use"
+ },
+ {
+  "id": "p56",
+  "text": "Steal or Forge                          The actors performed Kerberos Service Principal Name (SPN)\n        Kerberos Tickets:           T1558.003   enumeration of several service accounts and received Rivest Cipher\n        Kerberoasting                           4 (RC4) tickets."
+ },
+ {
+  "id": "p57",
+  "text": "Multi-Factor\n        Authentication                  T1621   The actors sent MFA requests to legitimate users.\n        Request Generation"
+ },
+ {
+  "id": "p58",
+  "text": "Table 9: Discovery"
+ },
+ {
+  "id": "p59",
+  "text": "Technique Title              ID                                     Use"
+ },
+ {
+  "id": "p60",
+  "text": "Remote System                           The actors used LOTL to return information about domain\n                                        T1018\n        Discovery                               controllers."
+ },
+ {
+  "id": "p61",
+  "text": "Permission Groups\n                                                The actors used LOTL to return lists of domain administrators and\n        Discovery: Domain           T1069.002\n                                                enterprise administrators.\n        Groups"
+ },
+ {
+  "id": "p62",
+  "text": "Permission Groups\n                                                The actors used LOTL to return lists of domain administrators and\n        Discovery: Cloud            T1069.003\n                                                enterprise administrators.\n        Groups"
+ },
+ {
+  "id": "p63",
+  "text": "The actors were able to query the AD to discover display names,\n        System Information\n                                        T1082   operating systems, descriptions, and distinguished names from the\n        Discovery\n                                                computer."
+ },
+ {
+  "id": "p64",
+  "text": "Account Discovery:                      The actors used LOTL to return lists of domain administrators and\n                                    T1087.002\n        Domain Account                          enterprise administrators."
+ },
+ {
+  "id": "p65",
+  "text": "Domain Trust\n                                        T1482   The actors used LOTL to return information about trusted domains.\n        Discovery"
+ },
+ {
+  "id": "p66",
+  "text": "Table 10: Lateral Movement"
+ },
+ {
+  "id": "p67",
+  "text": "Technique Title              ID                                     Use"
+ },
+ {
+  "id": "p68",
+  "text": "Remote Services:\n                                                The actors used Microsoft Word to open PowerShell to launch RDP\n        Remote Desktop              T1021.001\n                                                binary mstsc.exe.\n        Protocol"
+ },
+ {
+  "id": "p69",
+  "text": "Table 11: Collection"
+ },
+ {
+  "id": "p70",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p71",
+  "text": "Data from Local                           The actors downloaded files related to remote access methods and\n                                        T1005\n        System                                    the organization’s inventory."
+ },
+ {
+  "id": "p72",
+  "text": "Table 12: Command and Control"
+ },
+ {
+  "id": "p73",
+  "text": "Technique Title               ID                                       Use"
+ },
+ {
+  "id": "p74",
+  "text": "Application Layer\n                                                  The actors used msedge.exe to make outbound connections likely\n        Protocol: Web               T1071.001\n                                                  to Cobalt Strike Beacon C2 infrastructure.\n        Protocols"
+ },
+ {
+  "id": "p75",
+  "text": "The actors imported a tool from GitHub and used it to conduct\n        Ingress Tool Transfer           T1105\n                                                  password spraying."
+ },
+ {
+  "id": "p76",
+  "text": "The actors frequently conduct targeting using a virtual private\n        Protocol Tunneling              T1572\n                                                  network (VPN)."
+ },
+ {
+  "id": "p77",
+  "text": "Appendix 2: Indicators of Compromise\n       See Tables 13 to 15 for IOCs obtained from FBI investigations."
+ },
+ {
+  "id": "p78",
+  "text": "Table 13: Malicious Files Associated with Iranian Cyber Actors"
+ },
+ {
+  "id": "p79",
+  "text": "Hash                                                  Description"
+ },
+ {
+  "id": "p80",
+  "text": "1F96D15B26416B2C7043EE7172357AF3AFBB002A                            Associated with malicious activity."
+ },
+ {
+  "id": "p81",
+  "text": "3D3CDF7CFC881678FEBCAFB26AE423FE5AA4EFEC                            Associated with malicious activity."
+ },
+ {
+  "id": "p82",
+  "text": "Table 14: Network Indicators\n       Disclaimer: The authoring organizations recommend network defenders investigate or vet IP addresses\n       prior to taking action, such as blocking, as many cyber actors are known to change IP addresses,\n       sometimes daily, and some IP addresses may host valid domains. Many of the IP addresses provided\n       below are assessed VPN nodes and as such are not exclusive to the Iranian actors’ use. The authoring\n       organizations do not recommend blocking these IP addresses based solely on their inclusion in this JCSA.\n       The authoring organizations recommend using the below IP addresses to search for previous activity the\n       actors may have conducted against networks. If positive hits for these IP addresses are identified, the\n       authoring organizations recommend making an independent determination if the observed activity aligns\n       with the TTPs outlined in the JCSA. The timeframes included in the table reflect the timeframe the actors\n       likely used the IPs."
+ },
+ {
+  "id": "p83",
+  "text": "IP Address            Date Range"
+ },
+ {
+  "id": "p84",
+  "text": "95.181.234[.]12    01/30/2024 to 02/07/2024"
+ },
+ {
+  "id": "p85",
+  "text": "95.181.234[.]25    01/30/2024 to 02/07/2024"
+ },
+ {
+  "id": "p86",
+  "text": "173.239.232[.]20   10/06/2023 to 12/19/2023"
+ },
+ {
+  "id": "p87",
+  "text": "172.98.71[.]191    10/15/2023 to 11/27/2023"
+ },
+ {
+  "id": "p88",
+  "text": "102.129.235[.]127   10/21/2023 to 10/22/2023"
+ },
+ {
+  "id": "p89",
+  "text": "188.126.94[.]60    10/22/2023 to 01/12/2024"
+ },
+ {
+  "id": "p90",
+  "text": "149.40.50[.]45          10/26/2023"
+ },
+ {
+  "id": "p91",
+  "text": "181.214.166[.]59         10/26/2023"
+ },
+ {
+  "id": "p92",
+  "text": "212.102.39[.]212         10/26/2023"
+ },
+ {
+  "id": "p93",
+  "text": "149.57.16[.]134    10/26/2023 to 10/27/2023"
+ },
+ {
+  "id": "p94",
+  "text": "149.57.16[.]137    10/26/2023 to 10/27/2023"
+ },
+ {
+  "id": "p95",
+  "text": "102.129.235[.]186   10/29/2023 to 11/08/2023"
+ },
+ {
+  "id": "p96",
+  "text": "46.246.8[.]138    10/31/2023 to 01/26/2024"
+ },
+ {
+  "id": "p97",
+  "text": "149.57.16[.]160          11/08/2023"
+ },
+ {
+  "id": "p98",
+  "text": "149.57.16[.]37          11/08/2023"
+ },
+ {
+  "id": "p99",
+  "text": "46.246.8[.]137    11/17/2023 to 01/25/2024"
+ },
+ {
+  "id": "p100",
+  "text": "212.102.57[.]29    11/19/2023 to 01/17/2024"
+ },
+ {
+  "id": "p101",
+  "text": "46.246.8[.]82    11/22/2023 to 01/28/2024"
+ },
+ {
+  "id": "p102",
+  "text": "95.181.234[.]15    11/26/2023 to 02/07/2024"
+ },
+ {
+  "id": "p103",
+  "text": "45.88.97[.]225    11/27/2023 to 02/11/2024"
+ },
+ {
+  "id": "p104",
+  "text": "84.239.45[.]17    12/04/2023 to 12/07/2023"
+ },
+ {
+  "id": "p105",
+  "text": "IP Address            Date Range"
+ },
+ {
+  "id": "p106",
+  "text": "178.131.168[.]242          12/6/2023"
+ },
+ {
+  "id": "p107",
+  "text": "46.246.8[.]62           12/6/2023"
+ },
+ {
+  "id": "p108",
+  "text": "212.102.57[.]214          12/6/2023"
+ },
+ {
+  "id": "p109",
+  "text": "179.61.228[.]35           12/6/2023"
+ },
+ {
+  "id": "p110",
+  "text": "46.246.41[.]165           12/6/2023"
+ },
+ {
+  "id": "p111",
+  "text": "154.16.192[.]104          12/6/2023"
+ },
+ {
+  "id": "p112",
+  "text": "46.246.8[.]104    12/07/2023 to 02/07/2024"
+ },
+ {
+  "id": "p113",
+  "text": "37.46.113[.]206          12/07/2023"
+ },
+ {
+  "id": "p114",
+  "text": "46.246.3[.]186    12/07/2023 to 12/09/2023"
+ },
+ {
+  "id": "p115",
+  "text": "46.246.8[.]141    12/07/2023 to 02/10/2024"
+ },
+ {
+  "id": "p116",
+  "text": "46.246.8[.]17    12/09/2023 to 01/09/2024"
+ },
+ {
+  "id": "p117",
+  "text": "37.19.197[.]182          12/15/2023"
+ },
+ {
+  "id": "p118",
+  "text": "154.16.192[.]38    12/25/2023 to 01/24/2024"
+ },
+ {
+  "id": "p119",
+  "text": "102.165.16[.]127   12/27/2023 to 01/28/2024"
+ },
+ {
+  "id": "p120",
+  "text": "46.246.8[.]47    12/29/2023 to 01/29/2024"
+ },
+ {
+  "id": "p121",
+  "text": "46.246.3[.]225    12/30/2023 to 02/06/2024"
+ },
+ {
+  "id": "p122",
+  "text": "46.246.3[.]226    12/31/2023 to 02/03/2024"
+ },
+ {
+  "id": "p123",
+  "text": "46.246.3[.]240    12/31/2023 to 02/06/2024"
+ },
+ {
+  "id": "p124",
+  "text": "191.101.217[.]10         01/05/2024"
+ },
+ {
+  "id": "p125",
+  "text": "102.129.153[.]182         01/08/2024"
+ },
+ {
+  "id": "p126",
+  "text": "46.246.3[.]196          01/08/2024"
+ },
+ {
+  "id": "p127",
+  "text": "IP Address            Date Range"
+ },
+ {
+  "id": "p128",
+  "text": "102.129.152[.]60         01/09/2024"
+ },
+ {
+  "id": "p129",
+  "text": "156.146.60[.]74          01/10/2024"
+ },
+ {
+  "id": "p130",
+  "text": "191.96.227[.]113         01/10/2024"
+ },
+ {
+  "id": "p131",
+  "text": "191.96.227[.]122         01/10/2024"
+ },
+ {
+  "id": "p132",
+  "text": "181.214.166[.]132         01/11/2024"
+ },
+ {
+  "id": "p133",
+  "text": "188.126.94[.]57    01/11/2024 to 01/13/2024"
+ },
+ {
+  "id": "p134",
+  "text": "154.6.13[.]144    01/13/2024 to 01/24/2024"
+ },
+ {
+  "id": "p135",
+  "text": "154.6.13[.]151    01/13/2024 to 01/28/2024"
+ },
+ {
+  "id": "p136",
+  "text": "188.126.94[.]166         01/15/2024"
+ },
+ {
+  "id": "p137",
+  "text": "89.149.38[.]204          01/18/2024"
+ },
+ {
+  "id": "p138",
+  "text": "46.246.8[.]67          01/20/2024"
+ },
+ {
+  "id": "p139",
+  "text": "46.246.8[.]53          01/22/2024"
+ },
+ {
+  "id": "p140",
+  "text": "154.16.192[.]37          01/24/2024"
+ },
+ {
+  "id": "p141",
+  "text": "191.96.150[.]14          01/24/2024"
+ },
+ {
+  "id": "p142",
+  "text": "191.96.150[.]96          01/24/2024"
+ },
+ {
+  "id": "p143",
+  "text": "46.246.8[.]10          01/24/2024"
+ },
+ {
+  "id": "p144",
+  "text": "84.239.25[.]13          01/24/2024"
+ },
+ {
+  "id": "p145",
+  "text": "154.6.13[.]139          01/26/2024"
+ },
+ {
+  "id": "p146",
+  "text": "191.96.106[.]33          01/26/2024"
+ },
+ {
+  "id": "p147",
+  "text": "191.96.227[.]159         01/26/2024"
+ },
+ {
+  "id": "p148",
+  "text": "149.57.16[.]150          01/27/2024"
+ },
+ {
+  "id": "p149",
+  "text": "191.96.150[.]21          01/27/2024"
+ },
+ {
+  "id": "p150",
+  "text": "IP Address                                   Date Range"
+ },
+ {
+  "id": "p151",
+  "text": "46.246.8[.]84                                 01/27/2024"
+ },
+ {
+  "id": "p152",
+  "text": "95.181.235[.]8                                 01/27/2024"
+ },
+ {
+  "id": "p153",
+  "text": "191.96.227[.]102                          01/27/2024 to 01/28/2024"
+ },
+ {
+  "id": "p154",
+  "text": "46.246.122[.]185                                01/28/2024"
+ },
+ {
+  "id": "p155",
+  "text": "146.70.102[.]3                           01/29/2024 to 01/30/2024"
+ },
+ {
+  "id": "p156",
+  "text": "46.246.3[.]233                           01/30/2024 to 02/15/2024"
+ },
+ {
+  "id": "p157",
+  "text": "46.246.3[.]239                           01/30/2024 to 02/15/2024"
+ },
+ {
+  "id": "p158",
+  "text": "188.126.89[.]35                                 02/03/2024"
+ },
+ {
+  "id": "p159",
+  "text": "46.246.3[.]223                                 02/03/2024"
+ },
+ {
+  "id": "p160",
+  "text": "46.246.3[.]245                           02/05/2024 to 02/06/2024"
+ },
+ {
+  "id": "p161",
+  "text": "191.96.150[.]50                                 02/09/2024"
+ },
+ {
+  "id": "p162",
+  "text": "Table 15: Devices"
+ },
+ {
+  "id": "p163",
+  "text": "Device Type                                   Description"
+ },
+ {
+  "id": "p164",
+  "text": "Samsung Galaxy A71 (SM-A715F)                         Registered with MFA"
+ },
+ {
+  "id": "p165",
+  "text": "Samsung SM-G998B                               Registered with MFA"
+ },
+ {
+  "id": "p166",
+  "text": "Samsung SM-M205F                               Registered with MFA"
+ }
+]
