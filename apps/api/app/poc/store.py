@@ -84,8 +84,8 @@ def _conn() -> sqlite3.Connection:
             ts REAL
         )"""
     )
-    # Job tracking for long synchronous runs: state machine the GUI polls.
-    # state in {pending, running, done, error, cancelled}; cancel is a cooperative flag.
+    # Job tracking for long synchronous runs: state machine and live operation ID
+    # the GUI and cross-worker cancellation endpoint use to reconcile cleanup.
     c.execute(
         """CREATE TABLE IF NOT EXISTS poc_jobs (
             id TEXT PRIMARY KEY,
@@ -94,11 +94,24 @@ def _conn() -> sqlite3.Connection:
             state TEXT NOT NULL,
             cancel INTEGER NOT NULL DEFAULT 0,
             timeout_s REAL,
+            operation_id TEXT,
+            operation_service_id TEXT,
+            operation_action_id TEXT,
             detail TEXT,
             created_at REAL,
             updated_at REAL
         )"""
     )
+    job_columns = {row[1] for row in c.execute("PRAGMA table_info(poc_jobs)").fetchall()}
+    for name in ("operation_id", "operation_service_id", "operation_action_id"):
+        if name not in job_columns:
+            try:
+                c.execute(f"ALTER TABLE poc_jobs ADD COLUMN {name} TEXT")
+            except sqlite3.OperationalError as exc:
+                # Concurrent API workers may both observe the old schema before
+                # one of them applies this additive migration.
+                if "duplicate column name" not in str(exc).lower():
+                    raise
     return c
 
 
@@ -344,3 +357,76 @@ def get_job(job_id: str) -> Optional[dict[str, Any]]:
 def is_cancelled(job_id: str) -> bool:
     job = get_job(job_id)
     return bool(job and job["cancel"])
+
+
+def register_job_operation(job_id: str, operation_id: str, service_id: str, action_id: str) -> bool:
+    """Atomically attach an operation only while its job is active and uncancelled."""
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            cursor = c.execute(
+                "UPDATE poc_jobs SET operation_id=?, operation_service_id=?, operation_action_id=?, updated_at=? "
+                "WHERE id=? AND state IN ('pending','running') AND cancel=0 AND operation_id IS NULL",
+                (operation_id, service_id, action_id, time.time(), job_id),
+            )
+            c.commit()
+            return cursor.rowcount == 1
+        finally:
+            c.close()
+
+
+def clear_job_operation(job_id: str, operation_id: str) -> None:
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute(
+                "UPDATE poc_jobs SET operation_id=NULL, operation_service_id=NULL, "
+                "operation_action_id=NULL, updated_at=? WHERE id=? AND operation_id=?",
+                (time.time(), job_id, operation_id),
+            )
+            c.commit()
+        finally:
+            c.close()
+
+
+def get_job_operation(job_id: str) -> dict[str, Any] | None:
+    with _LOCK:
+        c = _conn()
+        try:
+            row = c.execute(
+                "SELECT id, scenario_id, state, cancel, operation_id, operation_service_id, operation_action_id "
+                "FROM poc_jobs WHERE id=?", (job_id,),
+            ).fetchone()
+        finally:
+            c.close()
+    if row is None or not row[4]:
+        return None
+    return {"job_id": row[0], "scenario_id": row[1], "state": row[2], "cancel": bool(row[3]),
+            "operation_id": row[4], "service_id": row[5], "action_id": row[6]}
+
+
+def request_cancel_operations(scenario_id: str) -> tuple[bool, list[dict[str, Any]]]:
+    """Persist job cancellation and snapshot every operation that needs transport cleanup."""
+    now = time.time()
+    with _LOCK:
+        c = _conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            updated = c.execute(
+                "UPDATE poc_jobs SET cancel=1, updated_at=? "
+                "WHERE scenario_id=? AND kind='execute' AND state IN ('pending','running')",
+                (now, scenario_id),
+            )
+            rows = c.execute(
+                "SELECT id, scenario_id, operation_id, operation_service_id "
+                "FROM poc_jobs WHERE scenario_id=? AND kind='execute' "
+                "AND state IN ('pending','running') AND operation_id IS NOT NULL",
+                (scenario_id,),
+            ).fetchall()
+            c.commit()
+            operations = [{"job_id": row[0], "scenario_id": row[1],
+                           "operation_id": row[2], "service_id": row[3]} for row in rows]
+            return updated.rowcount > 0, operations
+        finally:
+            c.close()

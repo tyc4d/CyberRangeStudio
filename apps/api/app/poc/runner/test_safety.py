@@ -4,7 +4,6 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
-from datetime import datetime, timezone
 from unittest.mock import Mock
 from urllib.error import HTTPError
 
@@ -37,23 +36,72 @@ def isolated(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("backend", ["local-docker", "proxmox"])
 @pytest.mark.parametrize("cancelled", [False, True])
-def test_unavailable_cancellable_transport_never_starts_a_helper(monkeypatch, backend, cancelled):
+def test_poc_transport_uses_pve_supervisor_and_keeps_local_d6_block(monkeypatch, backend, cancelled):
     monkeypatch.setattr(runner.manager, "deploy_backend", lambda: backend)
-    start = Mock(side_effect=AssertionError("unsafe synchronous transport invoked"))
+    start = Mock(return_value={"state": "running", "resource_absent": False})
+    wait = Mock(return_value={"state": "completed", "resource_absent": True,
+                              "exitcode": 0, "stdout": payloads.STRUTS_S2045_MARKER, "stderr": ""})
+    monkeypatch.setattr(runner.manager, "start_probe_operation", start)
+    monkeypatch.setattr(runner.manager, "wait_probe_operation", wait)
     monkeypatch.setattr(runner.manager, "probe_in_service", start)
     cancellation = threading.Event()
     if cancelled:
         cancellation.set()
-    before = set(threading.enumerate())
     req = request(cancel=cancellation)
     result, _ = runner._probe_with_cancel(req, req.payload, 2)
-    assert result["returncode"] in {125, 127}
-    start.assert_not_called()
-    assert set(threading.enumerate()) == before
     if backend == "local-docker":
+        assert result["returncode"] == 127
         assert "D6" in result["stderr"]
-    elif not cancelled:
-        assert "guaranteed-cancel" in result["stderr"]
+        start.assert_not_called()
+    elif cancelled:
+        assert result["returncode"] == 125
+        start.assert_not_called()
+    else:
+        assert result["returncode"] == 0
+        start.assert_called_once()
+        wait.assert_called_once()
+
+
+def test_cancel_during_wait_stops_and_joins_the_registered_operation(monkeypatch):
+    monkeypatch.setattr(runner.manager, "deploy_backend", lambda: "proxmox")
+    cancellation = threading.Event()
+    monkeypatch.setattr(runner.manager, "start_probe_operation", Mock(return_value={
+        "state": "running", "resource_absent": False}))
+
+    def wait(*args, **kwargs):
+        cancellation.set()
+        return {"state": "running", "resource_absent": False}
+
+    cancel = Mock(return_value={"state": "cancelled", "resource_absent": True})
+    monkeypatch.setattr(runner.manager, "wait_probe_operation", wait)
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation", cancel)
+    monkeypatch.setattr(runner.manager, "join_probe_operation",
+                        Mock(side_effect=AssertionError("terminal cancel result is already joined")))
+
+    result, note = runner._probe_with_cancel(request(cancel=cancellation), request().payload, 10)
+
+    assert result["returncode"] == 125
+    assert "helper is absent" in note
+    cancel.assert_called_once()
+
+
+def test_uncertain_transport_keeps_operation_id_for_later_reconciliation(monkeypatch):
+    job_id = "uncertain-runner-job"
+    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    runner.poc_store.set_job_state(job_id, "running")
+    monkeypatch.setattr(runner.manager, "deploy_backend", lambda: "proxmox")
+    uncertain = {"state": "uncertain", "resource_absent": False}
+    monkeypatch.setattr(runner.manager, "start_probe_operation", Mock(return_value=uncertain))
+    monkeypatch.setattr(runner.manager, "wait_probe_operation", Mock(return_value=uncertain))
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation", Mock(return_value=uncertain))
+    monkeypatch.setattr(runner.manager, "join_probe_operation", Mock(return_value=uncertain))
+
+    result, note = runner._probe_with_cancel(request(job_id=job_id), request().payload, 10)
+
+    assert result["state"] == "uncertain"
+    assert "down and reuse remain blocked" in note
+    operation = runner.poc_store.get_job_operation(job_id)
+    assert operation and len(operation["operation_id"]) == 32
 
 
 @pytest.mark.parametrize("stdout,stderr,code", [
@@ -196,29 +244,53 @@ def test_all_isolated_declared_networks_are_accepted(monkeypatch):
     assert guard.assert_target_owned(sid, "web")["networks"] == names
 
 
-def test_cleanup_removes_all_verified_same_action_helpers(monkeypatch):
-    req = request()
-    target, one, two, unrelated = (char * 64 for char in "abcd")
-    removed = []
-    def command(scenario_id, args, timeout):
-        if args[:2] == ["inspect", "-f"]:
-            return {"returncode": 0, "stdout": target}
-        if args[0] == "ps":
-            return {"returncode": 0, "stdout": "\n".join([one, two, unrelated])}
-        if args[0] == "inspect":
-            info = {"Id": args[1], "Created": datetime.now(timezone.utc).isoformat(),
-                    "Config": {"Image": runner._HELPER_IMAGE, "User": "65532:65532",
-                               "Cmd": ["python", "-c", req.payload]},
-                    "HostConfig": {"ReadonlyRootfs": True, "CapDrop": ["ALL"],
-                                   "NetworkMode": f"container:{target}"}}
-            if args[1] == unrelated:
-                info["HostConfig"]["NetworkMode"] = "container:someone-else"
-            return {"returncode": 0, "stdout": json.dumps([info])}
-        if args[:2] == ["rm", "-f"]:
-            removed.append(args[2])
-            return {"returncode": 0}
-        raise AssertionError(args)
-    monkeypatch.setattr(runner, "_command_result", command)
-    note = runner._cleanup_probe(req.scenario_id, req.service_ref, req.payload, 0)
-    assert removed == [one, two]
-    assert "removed" in note
+def test_pve_supervisor_result_requires_absence_for_terminal_state():
+    assert runner._operation_result({"state": "completed", "resource_absent": False,
+                                     "exitcode": 0}) is None
+    assert runner._operation_result({"state": "completed", "resource_absent": True,
+                                     "exitcode": 0})["returncode"] == 0
+
+
+def test_cancel_endpoint_cancels_and_joins_persisted_guest_operation(monkeypatch):
+    job_id, operation_id = "cancel-job-1", "d" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    runner.poc_store.set_job_state(job_id, "running")
+    assert runner.poc_store.register_job_operation(job_id, operation_id, "web", "a1")
+    cancel = Mock(return_value={"state": "cancelled", "resource_absent": True})
+    join = Mock(return_value={"state": "cancelled", "resource_absent": True})
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation", cancel)
+    monkeypatch.setattr(runner.manager, "join_probe_operation", join)
+
+    response = runner.cancel_execution("runner-safety")
+
+    assert response == {"cancelled": True, "joined": True, "uncertain": False, "operations": 1}
+    cancel.assert_called_once_with("runner-safety", operation_id, "web")
+    join.assert_not_called()
+    assert runner.poc_store.get_job_operation(job_id) is None
+    assert runner.poc_store.get_job(job_id)["state"] == "cancelled"
+
+
+def test_uncertain_cancel_keeps_job_operation_registered_and_active(monkeypatch):
+    job_id, operation_id = "cancel-job-uncertain", "e" * 32
+    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    runner.poc_store.set_job_state(job_id, "running")
+    assert runner.poc_store.register_job_operation(job_id, operation_id, "web", "a1")
+    uncertain = {"state": "uncertain", "resource_absent": False}
+    monkeypatch.setattr(runner.manager, "cancel_probe_operation", Mock(return_value=uncertain))
+    monkeypatch.setattr(runner.manager, "join_probe_operation", Mock(return_value=uncertain))
+
+    response = runner.cancel_execution("runner-safety")
+
+    assert response == {"cancelled": True, "joined": False, "uncertain": True, "operations": 1}
+    assert runner.poc_store.get_job_operation(job_id)["operation_id"] == operation_id
+    assert runner.poc_store.get_job(job_id)["state"] == "running"
+
+
+def test_job_cancel_flag_prevents_late_operation_registration():
+    job_id = "cancel-before-register"
+    runner.poc_store.create_job(job_id, "runner-safety", "execute")
+    runner.poc_store.set_job_state(job_id, "running")
+    runner.poc_store.request_cancel(job_id)
+
+    assert not runner.poc_store.register_job_operation(job_id, "f" * 32, "web", "a1")
+    assert runner.poc_store.get_job_operation(job_id) is None

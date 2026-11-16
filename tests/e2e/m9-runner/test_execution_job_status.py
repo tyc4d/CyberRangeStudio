@@ -27,8 +27,9 @@ def test_status_and_cancel_use_latest_scenario_execution_job(tmp_path: Path) -> 
         assert "logs_tail" in status
 
         cancelled = cancel_execution(sid)
-        assert cancelled == {"cancelled": True}
+        assert cancelled == {"cancelled": True, "joined": True,
+                             "uncertain": False, "operations": 0}
         assert poc_store.is_cancelled(job_id) is True
 
         poc_store.set_job_state(job_id, "done")
-        assert cancel_execution(sid) == {"cancelled": False}
+        assert cancel_execution(sid)["cancelled"] is False

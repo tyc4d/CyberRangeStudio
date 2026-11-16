@@ -393,6 +393,85 @@ def probe_in_service(scenario_id: str, service_id: str, python_script: str, time
     return _pve_guest_exec(scenario_id, command, timeout, require_isolation=True)
 
 
+def _probe_operation_backend(scenario_id: str) -> tuple[Any | None, dict[str, Any] | None, dict[str, Any] | None]:
+    """Resolve the selected PVE worker without providing a local-Docker fallback."""
+    scenario_id = validate_id(scenario_id)
+    selected = deploy_backend()
+    conflict = _backend_conflict(scenario_id, selected)
+    if conflict:
+        return None, None, {"state": "blocked", "resource_absent": False, "error": conflict}
+    if selected == "local-docker":
+        return None, None, {"state": "blocked", "resource_absent": False,
+                            "error": "D6: local Docker is restricted to non-attack QA; PoC payload execution is forbidden"}
+    if selected != "proxmox":
+        return None, None, {"state": "blocked", "resource_absent": False,
+                            "error": "no approved cancellable probe transport is selected"}
+    deployment = _active_proxmox_deployment(scenario_id)
+    if deployment is None or deployment.get("orphan"):
+        return None, None, {"state": "uncertain", "resource_absent": False,
+                            "error": "matching active owned Proxmox worker is unavailable"}
+    try:
+        return _proxmox_backend(), deployment, None
+    except Exception as exc:
+        return None, deployment, {"state": "uncertain", "resource_absent": False,
+                                  "error": f"Proxmox probe transport unavailable ({type(exc).__name__})"}
+
+
+def start_probe_operation(scenario_id: str, service_id: str, operation_id: str,
+                          script: str, timeout: int) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id)
+    if error:
+        return error
+    try:
+        return backend.start_probe_operation(
+            scenario_id, vmid=deployment["vmid"], host_id=deployment["host_id"],
+            operation_id=operation_id, service_id=service_id, script=script, timeout=timeout)
+    except Exception as exc:
+        return {"state": "uncertain", "resource_absent": False,
+                "error": f"probe launch outcome is uncertain ({type(exc).__name__})"}
+
+
+def wait_probe_operation(scenario_id: str, operation_id: str, timeout: int = 10) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id)
+    if error:
+        return error
+    try:
+        return backend.wait_probe_operation(
+            scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
+            host_id=deployment["host_id"], timeout=timeout)
+    except Exception as exc:
+        return {"state": "uncertain", "resource_absent": False,
+                "error": f"probe wait outcome is uncertain ({type(exc).__name__})"}
+
+
+def cancel_probe_operation(scenario_id: str, operation_id: str,
+                           service_id: str) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id)
+    if error:
+        return error
+    try:
+        return backend.cancel_probe_operation(
+            scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
+            host_id=deployment["host_id"], service_id=service_id)
+    except Exception as exc:
+        return {"state": "uncertain", "resource_absent": False,
+                "error": f"probe cancellation is unconfirmed ({type(exc).__name__})"}
+
+
+def join_probe_operation(scenario_id: str, operation_id: str, service_id: str,
+                         timeout: int = 30) -> dict[str, Any]:
+    backend, deployment, error = _probe_operation_backend(scenario_id)
+    if error:
+        return error
+    try:
+        return backend.join_probe_operation(
+            scenario_id, operation_id=operation_id, vmid=deployment["vmid"],
+            host_id=deployment["host_id"], service_id=service_id, timeout=timeout)
+    except Exception as exc:
+        return {"state": "uncertain", "resource_absent": False,
+                "error": f"probe join is unconfirmed ({type(exc).__name__})"}
+
+
 def container_ipv4_addresses(scenario_id: str, service_id: str) -> list[dict[str, str]]:
     scenario_id, service_id = validate_id(scenario_id), validate_id(service_id)
     selected = deploy_backend()

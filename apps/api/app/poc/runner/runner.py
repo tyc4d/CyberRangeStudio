@@ -24,7 +24,6 @@ from .models import AdapterInput, ExecutionRequest
 from .payloads import KNOWN_POC_PROOFS, verifies_effect
 
 _MAX_TIMEOUT = 300
-_HELPER_IMAGE = "python@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704"
 _SECRET_RE = re.compile(r"(?i)(authorization\s*[:=]\s*|password\s*[:=]\s*|token\s*[:=]\s*)([^\s,;]+)")
 _NON_EFFECT_MARKER = re.compile(
     r"(?i)^(?:\d{3}|http[_ -]?status\s*[:= ]\s*\d{3}|status\s*200|ok|up|healthy|ready|success|pass)$"
@@ -115,75 +114,113 @@ def _emit_progress(request: ExecutionRequest, stages: ExecStages) -> None:
             pass
 
 
-def _command_result(scenario_id: str, argv: list[str], timeout: int = 10) -> dict[str, Any]:
-    """Run a fixed Docker inspection/cleanup command in the selected runtime."""
-    if manager.deploy_backend() == "proxmox":
-        return manager._pve_guest_exec(scenario_id, ["/usr/bin/docker", *argv], timeout,
-                                       require_isolation=True)
-    docker, error = manager._docker_context_preflight()
-    if error or not docker:
-        return {"returncode": 127, "stdout": "", "stderr": error or "Docker unavailable"}
-    return manager._run([docker, *argv], timeout=timeout)
+def _operation_result(operation: dict[str, Any]) -> dict[str, Any] | None:
+    state = operation.get("state")
+    if state not in {"cancelled", "completed", "failed"} or operation.get("resource_absent") is not True:
+        return None
+    if state == "cancelled":
+        return {"returncode": 125, "stdout": "", "stderr": "cancelled and helper absence confirmed"}
+    if state == "failed":
+        return {"returncode": 127, "stdout": operation.get("stdout", ""),
+                "stderr": operation.get("stderr", "probe helper failed before completing")}
+    return {"returncode": int(operation.get("exitcode", 127)),
+            "stdout": str(operation.get("stdout", "")),
+            "stderr": str(operation.get("stderr", ""))}
 
 
-def _cleanup_probe(scenario_id: str, service: str, payload: str, started_epoch: float) -> str:
-    """Emergency cleanup of every helper whose owned identity is verified.
-
-    This scan is not a launch fence and cannot authorize attack execution.
-    """
-    target_name = f"cr-demo-{scenario_id}-{service}"
-    target_inspect = _command_result(scenario_id, ["inspect", "-f", "{{.Id}}", target_name], 10)
-    target_id = target_inspect.get("stdout", "").strip()
-    if target_inspect.get("returncode") != 0 or not re.fullmatch(r"[0-9a-f]{12,64}", target_id):
-        return "cleanup could not verify the owned target container"
-    listed = _command_result(scenario_id, ["ps", "-q", "--filter", f"ancestor={_HELPER_IMAGE}"], 10)
-    if listed.get("returncode") != 0:
-        return "cleanup could not list sandbox helpers"
-    ids = [line.strip() for line in listed.get("stdout", "").splitlines() if re.fullmatch(r"[0-9a-f]{12,64}", line.strip())]
-    matching: list[str] = []
-    for container_id in ids[:100]:
-        inspected = _command_result(scenario_id, ["inspect", container_id], 10)
-        try:
-            info = json.loads(inspected.get("stdout", ""))[0]
-        except (json.JSONDecodeError, IndexError, TypeError):
-            continue
-        cfg, host = info.get("Config") or {}, info.get("HostConfig") or {}
-        created_text = str(info.get("Created", ""))
-        try:
-            created = datetime.fromisoformat(created_text.replace("Z", "+00:00")).timestamp()
-        except ValueError:
-            continue
-        network_mode = str(host.get("NetworkMode", ""))
-        command = cfg.get("Cmd") or []
-        if (cfg.get("Image") == _HELPER_IMAGE and cfg.get("User") == "65532:65532"
-                and host.get("ReadonlyRootfs") is True and "ALL" in (host.get("CapDrop") or [])
-                and network_mode in {f"container:{target_name}", f"container:{target_id}"}
-                and created >= started_epoch - 2 and "-c" in command and payload in command):
-            matching.append(str(info.get("Id") or container_id))
-    if not matching:
-        return "cleanup did not find a helper with verified ownership"
-    failed = False
-    for helper in matching:
-        removed = _command_result(scenario_id, ["rm", "-f", helper], 10)
-        failed = failed or removed.get("returncode") != 0
-    return "best-effort helper removal failed" if failed else "verified sandbox helpers removed"
+def _cancel_and_join(request: ExecutionRequest, operation_id: str) -> tuple[dict[str, Any], str | None]:
+    try:
+        cancellation = manager.cancel_probe_operation(
+            request.scenario_id, operation_id, request.service_ref)
+        joined = (cancellation if _operation_result(cancellation) is not None else
+                  manager.join_probe_operation(
+                      request.scenario_id, operation_id, request.service_ref, timeout=30))
+    except Exception as exc:
+        return {"state": "uncertain", "resource_absent": False}, (
+            f"probe cancellation/join was not confirmed ({type(exc).__name__})")
+    result = _operation_result(joined)
+    if result is not None:
+        return result, "guest supervisor confirmed the helper is absent"
+    detail = joined.get("error") or cancellation.get("error") or joined.get("state", "unknown")
+    return {"state": "uncertain", "resource_absent": False}, (
+        f"probe cancellation/join is unconfirmed; worker down and reuse remain blocked: {detail}")
 
 
 def _probe_with_cancel(request: ExecutionRequest, script: str, timeout: int) -> tuple[dict[str, Any], str | None]:
-    """Refuse attacks until the transport can guarantee cancellation and cleanup.
-
-    The existing synchronous manager API exposes neither its pending launch nor
-    the QGA process handle. A thread around it cannot stop a delayed launch, and a
-    one-time Docker scan is insufficient. Do not invoke it, including on PVE.
-    """
-    if manager.deploy_backend() == "local-docker":
-        reason = "D6: local Docker is restricted to non-attack QA; PoC payload execution is forbidden"
-    elif _cancelled(request.cancel):
+    """Run a pinned payload through a PVE guest supervisor with durable start/cancel fencing."""
+    selected = manager.deploy_backend()
+    if selected == "local-docker":
+        return {"returncode": 127, "stdout": "", "stderr":
+                "D6: local Docker is restricted to non-attack QA; PoC payload execution is forbidden"}, None
+    if selected != "proxmox":
+        return {"returncode": 127, "stdout": "", "stderr":
+                "no approved cancellable probe transport is selected"}, None
+    if _cancelled(request.cancel):
         return {"returncode": 125, "stdout": "", "stderr": "cancelled before payload delivery"}, None
-    else:
-        reason = ("attack execution requires a guaranteed-cancel transport handle with a launch fence, "
-                  "finally-kill and join; no helper was started")
-    return {"returncode": 127, "stdout": "", "stderr": reason}, None
+
+    operation_id = uuid.uuid4().hex
+    if request.job_id and not poc_store.register_job_operation(
+            request.job_id, operation_id, request.service_ref, request.action_id):
+        return {"returncode": 125, "stdout": "", "stderr": "cancelled before operation registration"}, None
+
+    try:
+        started = manager.start_probe_operation(
+            request.scenario_id, request.service_ref, operation_id, script,
+            max(1, min(int(timeout), _MAX_TIMEOUT)))
+    except Exception as exc:
+        started = {"state": "uncertain", "resource_absent": False,
+                   "error": f"probe start request outcome is uncertain ({type(exc).__name__})"}
+    operation_result = _operation_result(started)
+    if operation_result is not None:
+        if request.job_id:
+            poc_store.clear_job_operation(request.job_id, operation_id)
+        note = ("guest supervisor confirmed the helper is absent"
+                if operation_result["returncode"] in {124, 125} else None)
+        return operation_result, note
+    if started.get("state") == "blocked":
+        if request.job_id:
+            poc_store.clear_job_operation(request.job_id, operation_id)
+        return {"returncode": 127, "stdout": "", "stderr": started.get("error", "probe transport is blocked")}, None
+
+    deadline = time.monotonic() + max(1, min(int(timeout), _MAX_TIMEOUT))
+    while True:
+        if _cancelled(request.cancel):
+            result, note = _cancel_and_join(request, operation_id)
+            if request.job_id and "returncode" in result:
+                poc_store.clear_job_operation(request.job_id, operation_id)
+            return result, note
+        if time.monotonic() >= deadline:
+            result, note = _cancel_and_join(request, operation_id)
+            if result.get("returncode") in {125, 0, 1}:
+                # The runtime deadline is authoritative even if the helper raced to completion.
+                result = {"returncode": 124, "stdout": "", "stderr": "probe timed out after helper cleanup"}
+            if request.job_id and "returncode" in result:
+                poc_store.clear_job_operation(request.job_id, operation_id)
+            return result, note
+        try:
+            current = manager.wait_probe_operation(request.scenario_id, operation_id, timeout=10)
+        except Exception as exc:
+            current = {"state": "uncertain", "resource_absent": False,
+                       "error": f"probe wait failed ({type(exc).__name__})"}
+        operation_result = _operation_result(current)
+        if operation_result is not None:
+            if request.job_id:
+                poc_store.clear_job_operation(request.job_id, operation_id)
+            note = ("guest supervisor confirmed the helper is absent"
+                    if operation_result["returncode"] in {124, 125} else None)
+            return operation_result, note
+        if current.get("state") == "uncertain":
+            # Attempt fenced cancellation, but retain the job operation if absence stays unknown.
+            result, note = _cancel_and_join(request, operation_id)
+            if request.job_id and "returncode" in result:
+                poc_store.clear_job_operation(request.job_id, operation_id)
+            return result, note or "probe transport was uncertain; the helper cleanup was confirmed"
+        if current.get("state") not in {"starting", "running"}:
+            result, note = _cancel_and_join(request, operation_id)
+            if request.job_id and "returncode" in result:
+                poc_store.clear_job_operation(request.job_id, operation_id)
+            return result, note or "probe transport state was not recognized; helper absence was confirmed"
+        time.sleep(0.25)
 
 
 class SandboxRunner:
@@ -266,8 +303,7 @@ class SandboxRunner:
                         _emit_progress(request, stages)
                         if exit_code == 124:
                             status, reason = "BLOCKED", f"sandbox timed out after {timeout}s"
-                            cleanup_note = cleanup_note or _cleanup_probe(
-                                request.scenario_id, request.service_ref, prepared.payload, time.time() - timeout)
+                            cleanup_note = cleanup_note or "probe helper cleanup could not be confirmed"
                         elif exit_code == 125:
                             status, reason = "BLOCKED", "execution cancelled; sandbox cleanup was attempted"
                         elif _cancelled(request.cancel):
@@ -374,7 +410,14 @@ def run_job(scenario_id: str, requests: list[ExecutionRequest], timeout_s: float
             statuses[request.action_id] = result.status
             if deadline and time.monotonic() >= deadline:
                 poc_store.request_cancel(job_id)
-        if cancellation.is_set() or (deadline and time.monotonic() >= deadline):
+        unresolved_operation = poc_store.get_job_operation(job_id)
+        if unresolved_operation:
+            # Keep this job cancellable so a later request can retry guest-side
+            # reconciliation. PVE down/up/reset also remain blocked by its ledger.
+            poc_store.set_job_state(job_id, "running", json.dumps({
+                "completed_actions": len(results), "operation_id": unresolved_operation["operation_id"],
+                "cleanup": "unconfirmed; worker lifecycle is blocked"}))
+        elif cancellation.is_set() or (deadline and time.monotonic() >= deadline):
             poc_store.set_job_state(job_id, "cancelled", json.dumps({"completed_actions": len(results)}))
         else:
             poc_store.set_job_state(job_id, "done", json.dumps({"completed_actions": len(results)}))
@@ -448,17 +491,28 @@ def execution_status(scenario_id: str) -> dict[str, Any]:
             "jobs": jobs, "active_jobs": active_jobs, "per_action": per_action, "logs_tail": logs_tail}
 
 
-def cancel_execution(scenario_id: str) -> dict[str, bool]:
-    """Atomically flag every active execution job belonging to this scenario."""
-    db = poc_store._conn()
-    try:
-        updated = db.execute(
-            "UPDATE poc_jobs SET cancel=1, updated_at=? "
-            "WHERE scenario_id=? AND kind='execute' AND state IN ('pending','running')",
-            (time.time(), scenario_id),
-        )
-        flagged = updated.rowcount > 0
-        db.commit()
-    finally:
-        db.close()
-    return {"cancelled": flagged}
+def cancel_execution(scenario_id: str) -> dict[str, Any]:
+    """Flag active jobs, then cancel and join each registered guest operation."""
+    flagged, operations = poc_store.request_cancel_operations(scenario_id)
+    joined_all = True
+    uncertain = False
+    for operation in operations:
+        try:
+            cancelled = manager.cancel_probe_operation(
+                scenario_id, operation["operation_id"], operation["service_id"])
+            joined = (cancelled if _operation_result(cancelled) is not None else
+                      manager.join_probe_operation(
+                          scenario_id, operation["operation_id"], operation["service_id"], timeout=30))
+        except Exception as exc:
+            joined = {"state": "uncertain", "resource_absent": False,
+                      "error": f"cancel operation failed ({type(exc).__name__})"}
+        terminal = joined.get("state") in {"cancelled", "completed", "failed"}
+        if terminal and joined.get("resource_absent") is True:
+            poc_store.clear_job_operation(operation["job_id"], operation["operation_id"])
+            poc_store.set_job_state(operation["job_id"], "cancelled", json.dumps({
+                "operation_id": operation["operation_id"], "cleanup": "confirmed", "joined": True}))
+        else:
+            joined_all = False
+            uncertain = True
+    return {"cancelled": flagged, "joined": joined_all, "uncertain": uncertain,
+            "operations": len(operations)}

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import base64
 import json
 import re
 import secrets
@@ -16,6 +17,7 @@ from urllib.parse import quote
 import yaml
 
 from app.deploy.pve_client import PveClient, PveError, PveSettings, PROTECTED_VMIDS, redact
+from app.deploy.backends.probe_supervisor import PROBE_SUPERVISOR_PATH, PROBE_SUPERVISOR_SCRIPT
 
 WORKER_MEMORY_MIB = 4096
 WORKER_VCPUS = 2
@@ -31,6 +33,8 @@ _ISOLATED_BRIDGE_OPTIONS = {_ISOLATED_BRIDGE_OPT: "isolated"}
 _DEMO_APP_SOURCE = Path(__file__).resolve().parents[5] / "infra" / "templates" / "demo-app"
 _DEMO_APP_GUEST = "/opt/cr-runtime/demo-app"
 _COMPOSE_ENV_GUEST = "/opt/cr-runtime/compose.env"
+_PROBE_ACTIVE_STATES = ("starting", "running", "cancel_requested", "uncertain")
+_PROBE_TERMINAL_STATES = ("cancelled", "completed", "failed")
 
 
 class ProxmoxBackendError(RuntimeError):
@@ -84,6 +88,18 @@ def _placement_lock(database_path: str):
             "vmid INTEGER PRIMARY KEY CHECK(vmid BETWEEN 900100 AND 900999), "
             "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, state TEXT NOT NULL, "
             "updated_at TEXT NOT NULL, UNIQUE(scenario_id, host_id))"
+        )
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS pve_probe_operations ("
+            "operation_id TEXT PRIMARY KEY CHECK(length(operation_id)=32), "
+            "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, vmid INTEGER NOT NULL, "
+            "service_id TEXT NOT NULL, target_name TEXT NOT NULL, state TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL, exitcode INTEGER, stdout_b64 TEXT, stderr_b64 TEXT)"
+        )
+        connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS pve_one_active_probe_per_worker "
+            "ON pve_probe_operations(vmid) WHERE state IN "
+            "('starting','running','cancel_requested','uncertain')"
         )
         _migrate_singleton_reservation(connection)
         yield connection
@@ -150,6 +166,58 @@ def _clear_reservation(connection: sqlite3.Connection, *, scenario_id: str,
         raise ProxmoxBackendError("durable worker reservation identity changed; manual reconciliation required")
     connection.commit()
     connection.execute("BEGIN EXCLUSIVE")
+
+
+def _probe_operation(connection: sqlite3.Connection, operation_id: str) -> dict[str, Any] | None:
+    row = connection.execute(
+        "SELECT operation_id, scenario_id, host_id, vmid, service_id, target_name, state, "
+        "exitcode, stdout_b64, stderr_b64 FROM pve_probe_operations WHERE operation_id=?",
+        (operation_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return {"operation_id": row[0], "scenario_id": row[1], "host_id": row[2], "vmid": int(row[3]),
+            "service_id": row[4], "target_name": row[5], "state": row[6], "exitcode": row[7],
+            "stdout_b64": row[8], "stderr_b64": row[9]}
+
+
+def _create_probe_operation(connection: sqlite3.Connection, *, operation_id: str,
+                            scenario_id: str, host_id: str, vmid: int, service_id: str,
+                            target_name: str, state: str) -> None:
+    try:
+        connection.execute(
+            "INSERT INTO pve_probe_operations(operation_id,scenario_id,host_id,vmid,service_id,"
+            "target_name,state,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+            (operation_id, scenario_id, host_id, vmid, service_id, target_name, state,
+             datetime.now(timezone.utc).isoformat()),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise ProxmoxBackendError("probe operation is already registered or another operation is unresolved") from exc
+    connection.commit()
+    connection.execute("BEGIN EXCLUSIVE")
+
+
+def _update_probe_operation(connection: sqlite3.Connection, operation_id: str, *, state: str,
+                            exitcode: int | None = None, stdout_b64: str | None = None,
+                            stderr_b64: str | None = None) -> None:
+    cursor = connection.execute(
+        "UPDATE pve_probe_operations SET state=?, updated_at=?, exitcode=?, stdout_b64=?, stderr_b64=? "
+        "WHERE operation_id=?",
+        (state, datetime.now(timezone.utc).isoformat(), exitcode, stdout_b64, stderr_b64, operation_id),
+    )
+    if cursor.rowcount != 1:
+        raise ProxmoxBackendError("durable probe operation identity changed; manual reconciliation required")
+    connection.commit()
+    connection.execute("BEGIN EXCLUSIVE")
+
+
+def _active_probe_for_worker(connection: sqlite3.Connection, vmid: int) -> dict[str, Any] | None:
+    placeholders = ",".join("?" for _ in _PROBE_ACTIVE_STATES)
+    row = connection.execute(
+        f"SELECT operation_id,state FROM pve_probe_operations WHERE vmid=? AND state IN ({placeholders}) LIMIT 1",
+        (vmid, *_PROBE_ACTIVE_STATES),
+    ).fetchone()
+    return {"operation_id": row[0], "state": row[1]} if row else None
 
 
 def _normalize_compose(document: str, scenario_id: str) -> tuple[str, dict[str, Any]]:
@@ -444,7 +512,8 @@ class ProxmoxBackend:
                     {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/agent/file-write", "purpose": "write compose and ephemeral environment into guest"},
                     {"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/{candidate}/agent/exec", "purpose": "docker compose up --wait inside guest"},
                 ] + ([{"method": "POST", "path": f"/nodes/{self.settings.node}/qemu/<candidate>/agent/file-write",
-                       "guest_file": path} for path in sorted({*demo_files, _COMPOSE_ENV_GUEST})]),
+                       "guest_file": path} for path in sorted({*demo_files, _COMPOSE_ENV_GUEST,
+                                                                PROBE_SUPERVISOR_PATH})]),
                 "attach_lab_network": False, "writes_sent": False}
 
     def up(self, scenario_id: str, compose_yaml: str, *, host_id: str = "worker",
@@ -536,6 +605,13 @@ class ProxmoxBackend:
                 raise ProxmoxBackendError("could not restrict permissions on the worker Compose environment file")
             for guest_path, content in demo_files.items():
                 self._guest_write(vmid, guest_path, content, scenario_id, host_id)
+            self._guest_write(vmid, PROBE_SUPERVISOR_PATH, PROBE_SUPERVISOR_SCRIPT,
+                              scenario_id, host_id)
+            supervisor_permissions = self._guest_exec(
+                vmid, ["/usr/bin/chmod", "0700", PROBE_SUPERVISOR_PATH],
+                scenario_id=scenario_id, host_id=host_id, timeout=20)
+            if int(supervisor_permissions.get("exitcode", 1)) != 0:
+                raise ProxmoxBackendError("could not restrict permissions on the probe supervisor")
             command = _compose_command(scenario_id, "up", "--detach", "--pull", "never",
                                        "--wait", "--wait-timeout", "240")
             exec_result = self._guest_exec(vmid, command, scenario_id=scenario_id, host_id=host_id, timeout=900)
@@ -671,6 +747,11 @@ class ProxmoxBackend:
             if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
                     or held["vmid"] != vmid or held["state"] != "active"):
                 raise ProxmoxBackendError("matching active durable worker reservation is required for reset")
+            active_probe = _active_probe_for_worker(reservation_db, vmid)
+            if active_probe:
+                raise ProxmoxBackendError(
+                    f"worker reset is blocked by {active_probe['state']} probe operation {active_probe['operation_id']}"
+                )
             config = self._assert_owned(vmid, scenario_id, host_id)
             if any(re.fullmatch(r"net\d+", str(key)) and value for key, value in config.items()):
                 raise ProxmoxBackendError("refusing reset because the worker is not zero-NIC")
@@ -863,6 +944,11 @@ class ProxmoxBackend:
                 or held["vmid"] != vmid
                 or held["state"] not in {"active", "creating", "reconcile", "deleting"}):
             raise ProxmoxBackendError("matching durable worker reservation is required for down")
+        active_probe = _active_probe_for_worker(reservation_db, vmid)
+        if active_probe:
+            raise ProxmoxBackendError(
+                f"worker down is blocked by {active_probe['state']} probe operation {active_probe['operation_id']}"
+            )
         # Reservation state alone is never authority to delete. Prove this is the exact
         # owned worker before advancing even a stale/partial lifecycle row to deleting.
         self._assert_owned(vmid, scenario_id, host_id)
@@ -880,6 +966,8 @@ class ProxmoxBackend:
             compose_cleanup = {"exitcode": 127, "stdout": "", "stderr": str(redact(str(exc))),
                                "cleanup_error": "guest Compose cleanup failed; continuing with owned VM shutdown"}
         self._shutdown_and_destroy_owned(vmid, scenario_id, host_id)
+        # Keep terminal operation IDs as durable tombstones so a late duplicate
+        # start cannot reuse one after this worker is destroyed and recreated.
         _clear_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id, vmid=vmid)
         return {"backend": "proxmox", "scenario_id": scenario_id, "vmid": vmid, "state": "removed", "ok": True,
                 "compose_cleanup": compose_cleanup}
@@ -965,6 +1053,266 @@ class ProxmoxBackend:
             return self._guest_exec(vmid, command, scenario_id=scenario_id,
                                     host_id=host_id, timeout=timeout)
 
+    @staticmethod
+    def _probe_operation_id(operation_id: str) -> str:
+        if not isinstance(operation_id, str) or not re.fullmatch(r"[a-f0-9]{32}", operation_id):
+            raise ProxmoxBackendError("probe operation id must be 32 lowercase hexadecimal characters")
+        return operation_id
+
+    @staticmethod
+    def _parse_supervisor_result(result: Mapping[str, Any]) -> dict[str, Any]:
+        output = str(result.get("stdout", ""))
+        fields: dict[str, str] = {}
+        for line in output.splitlines():
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key in fields:
+                raise ProxmoxBackendError("probe supervisor returned duplicate fields")
+            fields[key] = value
+        state = fields.get("state")
+        if state not in {"starting", "running", "cancel_requested", "uncertain", *_PROBE_TERMINAL_STATES}:
+            raise ProxmoxBackendError("probe supervisor returned an invalid operation state")
+        absent_text = fields.get("resource_absent")
+        if absent_text not in {"true", "false"}:
+            raise ProxmoxBackendError("probe supervisor did not confirm resource state")
+        parsed: dict[str, Any] = {"state": state, "resource_absent": absent_text == "true"}
+        if "exitcode" in fields:
+            if not re.fullmatch(r"-?\d{1,4}", fields["exitcode"]):
+                raise ProxmoxBackendError("probe supervisor returned an invalid exit code")
+            parsed["exitcode"] = int(fields["exitcode"])
+        for encoded, target in (("stdout_b64", "stdout"), ("stderr_b64", "stderr")):
+            value = fields.get(encoded, "")
+            if len(value) > 24_000 or (value and not re.fullmatch(r"[A-Za-z0-9+/]*={0,2}", value)):
+                raise ProxmoxBackendError("probe supervisor output exceeds the bounded format")
+            try:
+                parsed[target] = base64.b64decode(value, validate=True).decode("utf-8", errors="replace") if value else ""
+            except (ValueError, base64.binascii.Error):
+                raise ProxmoxBackendError("probe supervisor output is not valid base64") from None
+        if state in _PROBE_TERMINAL_STATES and not parsed["resource_absent"]:
+            raise ProxmoxBackendError("probe supervisor reported terminal state before resource disappearance")
+        return parsed
+
+    def _call_probe_supervisor(self, scenario_id: str, *, vmid: int, host_id: str,
+                               operation_id: str, service_id: str, target_name: str,
+                               action: str, timeout: int, payload: str | None = None,
+                               require_isolation: bool) -> dict[str, Any]:
+        service_id = _safe_id(service_id, "service id")
+        if target_name != f"{_project_name(scenario_id)}-{service_id}":
+            raise ProxmoxBackendError("probe supervisor target does not match its service identity")
+        self._assert_owned(vmid, scenario_id, host_id)
+        if require_isolation:
+            isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
+            if not isolation.get("checked") or not isolation.get("isolated"):
+                raise ProxmoxBackendError("probe start requires verified worker isolation")
+        encoded = base64.b64encode(payload.encode("utf-8")).decode("ascii") if payload is not None else ""
+        command = ["/bin/sh", PROBE_SUPERVISOR_PATH, action, operation_id,
+                   scenario_id, target_name, str(timeout), encoded]
+        raw = self._guest_exec(vmid, command, scenario_id=scenario_id,
+                               host_id=host_id, timeout=30)
+        parsed = self._parse_supervisor_result(raw)
+        parsed["qga_exitcode"] = raw.get("exitcode", 1)
+        if raw.get("exitcode") not in {0, None} and parsed["state"] != "uncertain":
+            raise ProxmoxBackendError("probe supervisor command failed before confirming operation state")
+        return parsed
+
+    def _install_probe_supervisor(self, vmid: int, scenario_id: str, host_id: str) -> None:
+        self._guest_write(vmid, PROBE_SUPERVISOR_PATH, PROBE_SUPERVISOR_SCRIPT,
+                          scenario_id, host_id)
+        permissions = self._guest_exec(
+            vmid, ["/usr/bin/chmod", "0700", PROBE_SUPERVISOR_PATH],
+            scenario_id=scenario_id, host_id=host_id, timeout=20)
+        if int(permissions.get("exitcode", 1)) != 0:
+            raise ProxmoxBackendError("could not restrict permissions on the probe supervisor")
+
+    def start_probe_operation(self, scenario_id: str, *, vmid: int, host_id: str,
+                              operation_id: str, service_id: str, script: str,
+                              timeout: int) -> dict[str, Any]:
+        """Fence and start a bounded helper; only its unique operation ID may own it."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        service_id = _safe_id(service_id, "service id")
+        operation_id = self._probe_operation_id(operation_id)
+        if not isinstance(script, str) or not script or "\x00" in script or len(script.encode("utf-8")) > 20_000:
+            raise ProxmoxBackendError("probe script is empty or exceeds the strict bound")
+        if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 300:
+            raise ProxmoxBackendError("probe timeout exceeds the approved bound")
+        if self.settings.mode != "live":
+            return {"state": "blocked", "resource_absent": True,
+                    "error": "live Proxmox mode is required to start a probe operation"}
+        wrapped_script = ("import signal,sys" + chr(10)
+                          + "signal.signal(signal.SIGALRM, lambda *_: sys.exit(124))" + chr(10)
+                          + "signal.alarm(" + str(timeout) + ")" + chr(10)
+                          + "exec(compile(" + repr(script) + ", '<cr-poc>', 'exec'))")
+        target_name = f"{_project_name(scenario_id)}-{service_id}"
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            held = _reservation(reservation_db, vmid)
+            if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
+                    or held["state"] != "active"):
+                raise ProxmoxBackendError("probe start requires its matching active worker reservation")
+            existing = _probe_operation(reservation_db, operation_id)
+            if existing:
+                if (existing["scenario_id"], existing["host_id"], existing["vmid"],
+                        existing["service_id"], existing["target_name"]) != (
+                        scenario_id, host_id, vmid, service_id, target_name):
+                    raise ProxmoxBackendError("probe operation id is already bound to another target")
+                if existing["state"] in {"cancel_requested", "cancelled"}:
+                    return {"state": existing["state"],
+                            "resource_absent": existing["state"] == "cancelled"}
+                if existing["state"] in {"uncertain", "starting", "running"}:
+                    return {"state": existing["state"], "resource_absent": False}
+                return {"state": existing["state"], "resource_absent": True,
+                        "exitcode": existing["exitcode"], "stdout": "", "stderr": ""}
+            active_probe = _active_probe_for_worker(reservation_db, vmid)
+            if active_probe:
+                _create_probe_operation(reservation_db, operation_id=operation_id,
+                                        scenario_id=scenario_id, host_id=host_id, vmid=vmid,
+                                        service_id=service_id, target_name=target_name, state="failed")
+                _update_probe_operation(reservation_db, operation_id, state="failed", exitcode=127)
+                return {"state": "failed", "resource_absent": True, "exitcode": 127,
+                        "stdout": "", "stderr": "another probe operation already owns this worker"}
+            isolation = self.isolation_report(scenario_id, vmid=vmid, host_id=host_id)
+            if not isolation.get("checked") or not isolation.get("isolated"):
+                raise ProxmoxBackendError("probe start requires verified worker isolation")
+            self._install_probe_supervisor(vmid, scenario_id, host_id)
+            _create_probe_operation(reservation_db, operation_id=operation_id,
+                                    scenario_id=scenario_id, host_id=host_id, vmid=vmid,
+                                    service_id=service_id, target_name=target_name, state="starting")
+            try:
+                result = self._call_probe_supervisor(
+                    scenario_id, vmid=vmid, host_id=host_id, operation_id=operation_id,
+                    service_id=service_id, target_name=target_name, action="start",
+                    timeout=timeout, payload=wrapped_script, require_isolation=True)
+            except Exception as exc:
+                _update_probe_operation(reservation_db, operation_id, state="uncertain")
+                return {"state": "uncertain", "resource_absent": False,
+                        "error": f"probe launch outcome is uncertain ({type(exc).__name__})"}
+            state = result["state"]
+            _update_probe_operation(
+                reservation_db, operation_id,
+                state="running" if state == "running" else state,
+                exitcode=result.get("exitcode"), stdout_b64=base64.b64encode(
+                    result.get("stdout", "").encode("utf-8")).decode("ascii"),
+                stderr_b64=base64.b64encode(result.get("stderr", "").encode("utf-8")).decode("ascii"),
+            )
+            return result
+
+    def wait_probe_operation(self, scenario_id: str, *, operation_id: str,
+                             vmid: int, host_id: str, timeout: int = 30) -> dict[str, Any]:
+        """Read and persist one supervisor state without holding the placement lock while waiting."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        operation_id = self._probe_operation_id(operation_id)
+        if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 300:
+            raise ProxmoxBackendError("probe wait timeout exceeds the approved bound")
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            held = _reservation(reservation_db, vmid)
+            operation = _probe_operation(reservation_db, operation_id)
+            if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
+                    or held["state"] != "active" or operation is None
+                    or (operation["scenario_id"], operation["host_id"], operation["vmid"]) != (
+                        scenario_id, host_id, vmid)):
+                raise ProxmoxBackendError("probe wait requires its matching active operation and reservation")
+            if operation["state"] in _PROBE_TERMINAL_STATES:
+                return {"state": operation["state"], "resource_absent": True,
+                        "exitcode": operation["exitcode"],
+                        "stdout": base64.b64decode(operation["stdout_b64"] or "").decode("utf-8", "replace"),
+                        "stderr": base64.b64decode(operation["stderr_b64"] or "").decode("utf-8", "replace")}
+            try:
+                result = self._call_probe_supervisor(
+                    scenario_id, vmid=vmid, host_id=host_id, operation_id=operation_id,
+                    service_id=operation["service_id"], target_name=operation["target_name"],
+                    action="wait", timeout=timeout, require_isolation=False)
+            except Exception as exc:
+                _update_probe_operation(reservation_db, operation_id, state="uncertain")
+                return {"state": "uncertain", "resource_absent": False,
+                        "error": f"probe wait outcome is uncertain ({type(exc).__name__})"}
+            state = result["state"]
+            _update_probe_operation(
+                reservation_db, operation_id,
+                state="running" if state == "running" else state,
+                exitcode=result.get("exitcode"),
+                stdout_b64=base64.b64encode(result.get("stdout", "").encode("utf-8")).decode("ascii"),
+                stderr_b64=base64.b64encode(result.get("stderr", "").encode("utf-8")).decode("ascii"),
+            )
+            return result
+
+    def cancel_probe_operation(self, scenario_id: str, *, operation_id: str,
+                               vmid: int, host_id: str, service_id: str) -> dict[str, Any]:
+        """Persist a cancel fence before asking the guest to stop and prove absence."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        service_id = _safe_id(service_id, "service id")
+        operation_id = self._probe_operation_id(operation_id)
+        target_name = f"{_project_name(scenario_id)}-{service_id}"
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            held = _reservation(reservation_db, vmid)
+            if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
+                    or held["state"] != "active"):
+                raise ProxmoxBackendError("probe cancellation requires its matching active worker reservation")
+            operation = _probe_operation(reservation_db, operation_id)
+            if operation is None:
+                _create_probe_operation(reservation_db, operation_id=operation_id,
+                                        scenario_id=scenario_id, host_id=host_id, vmid=vmid,
+                                        service_id=service_id, target_name=target_name,
+                                        state="cancel_requested")
+                operation = _probe_operation(reservation_db, operation_id)
+            elif (operation["scenario_id"], operation["host_id"], operation["vmid"],
+                  operation["service_id"], operation["target_name"]) != (
+                    scenario_id, host_id, vmid, service_id, target_name):
+                raise ProxmoxBackendError("probe cancellation identity does not match its durable operation")
+            if operation["state"] in _PROBE_TERMINAL_STATES:
+                return {"state": operation["state"], "resource_absent": True}
+            _update_probe_operation(reservation_db, operation_id, state="cancel_requested")
+            try:
+                self._install_probe_supervisor(vmid, scenario_id, host_id)
+                result = self._call_probe_supervisor(
+                    scenario_id, vmid=vmid, host_id=host_id, operation_id=operation_id,
+                    service_id=service_id, target_name=target_name, action="cancel",
+                    timeout=30, require_isolation=False)
+            except Exception as exc:
+                _update_probe_operation(reservation_db, operation_id, state="uncertain")
+                return {"state": "uncertain", "resource_absent": False,
+                        "error": f"probe cancellation is unconfirmed ({type(exc).__name__})"}
+            state = result["state"]
+            _update_probe_operation(
+                reservation_db, operation_id, state=state,
+                exitcode=result.get("exitcode"),
+                stdout_b64=base64.b64encode(result.get("stdout", "").encode("utf-8")).decode("ascii"),
+                stderr_b64=base64.b64encode(result.get("stderr", "").encode("utf-8")).decode("ascii"),
+            )
+            return result
+
+    def join_probe_operation(self, scenario_id: str, *, operation_id: str,
+                             vmid: int, host_id: str, service_id: str,
+                             timeout: int = 30) -> dict[str, Any]:
+        """Poll until the helper is terminal and absent, or mark the operation uncertain."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        service_id = _safe_id(service_id, "service id")
+        operation_id = self._probe_operation_id(operation_id)
+        if isinstance(timeout, bool) or not isinstance(timeout, int) or not 1 <= timeout <= 300:
+            raise ProxmoxBackendError("probe join timeout exceeds the approved bound")
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            operation = _probe_operation(reservation_db, operation_id)
+            if (operation is None or (operation["scenario_id"], operation["host_id"],
+                                      operation["vmid"], operation["service_id"]) != (
+                    scenario_id, host_id, vmid, service_id)):
+                raise ProxmoxBackendError("probe join identity does not match its durable operation")
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            result = self.wait_probe_operation(scenario_id, operation_id=operation_id,
+                                               vmid=vmid, host_id=host_id,
+                                               timeout=min(30, max(1, int(deadline - time.monotonic()))))
+            if result.get("state") in _PROBE_TERMINAL_STATES and result.get("resource_absent") is True:
+                return result
+            if result.get("state") == "uncertain":
+                return result
+            time.sleep(min(self.settings.task_poll_interval, max(0, deadline - time.monotonic())))
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            operation = _probe_operation(reservation_db, operation_id)
+            if operation and (operation["scenario_id"], operation["host_id"], operation["vmid"]) == (
+                    scenario_id, host_id, vmid) and operation["state"] not in _PROBE_TERMINAL_STATES:
+                _update_probe_operation(reservation_db, operation_id, state="uncertain")
+        return {"state": "uncertain", "resource_absent": False,
+                "error": "probe helper did not reach a confirmed terminal state before join timeout"}
+
     def _guest_exec(self, vmid: int, command: list[str], *, scenario_id: str,
                     host_id: str, timeout: int = 60) -> dict[str, Any]:
         if not 900100 <= vmid <= 900999 or vmid in PROTECTED_VMIDS:
@@ -994,7 +1342,8 @@ class ProxmoxBackend:
 
     def _guest_write(self, vmid: int, path: str, content: str, scenario_id: str, host_id: str) -> None:
         allowed_paths = {"/opt/cr-runtime/docker-compose.yml", _COMPOSE_ENV_GUEST,
-                         f"{_DEMO_APP_GUEST}/Dockerfile", f"{_DEMO_APP_GUEST}/server.py"}
+                         f"{_DEMO_APP_GUEST}/Dockerfile", f"{_DEMO_APP_GUEST}/server.py",
+                         PROBE_SUPERVISOR_PATH}
         if path not in allowed_paths or len(content.encode()) > 60_000:
             raise ProxmoxBackendError("guest file path or size is not allowed")
         self._assert_owned(vmid, scenario_id, host_id)

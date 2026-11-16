@@ -278,6 +278,7 @@ class PveClient:
                 "/opt/cr-runtime/compose.env",
                 "/opt/cr-runtime/demo-app/Dockerfile",
                 "/opt/cr-runtime/demo-app/server.py",
+                "/opt/cr-runtime/probe-supervisor.sh",
             }
             if (data.get("file") not in allowed_guest_files
                     or not isinstance(data.get("content"), str)
