@@ -1009,31 +1009,30 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
 
-    # A report-level vulnerability may be named by its nickname rather than the affected
-    # product's spelling (for example Log4Shell while the service is named Log4j).
-    # Attach only CVEs present in the cited source sentence, never inferred identifiers.
-    sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
-    report_cves = list(dict.fromkeys(re.sub(r"\s+", "", match).upper()
-                                     for unit in units for match in _CVE_RE.findall(unit.text)))
+    # Propagate only CVEs found in evidence cited by this service. A CVE elsewhere in
+    # the report, or a catalogue mapping, is not evidence that this product is affected.
+    evidence_by_id = {str(item.get("id")): item for item in evidence if isinstance(item, dict)}
+    unit_by_id = {(unit.get("id") if isinstance(unit, dict) else unit.id):
+                  (unit.get("text", "") if isinstance(unit, dict) else unit.text) for unit in units}
     for service in services:
-        service_name = str(service.get("name") or "").casefold().strip()
-        if len(service_name) < 4:
-            continue
-        found = []
-        for sentence in sentences:
-            cited_cves = [re.sub(r"\s+", "", match).upper() for match in _CVE_RE.findall(sentence)]
-            if not cited_cves:
-                continue
-            if service_name in sentence.casefold() or resolve_inventory(service_name, cves=cited_cves).get("component_id"):
-                found.extend(cited_cves)
-        if not found:
-            # Some reports name the affected product in one passage and its CVE elsewhere.
-            # Cross-reference only a unique CVE-to-component mapping, and only when the
-            # inventory identifies this service as that component's product.
-            for cve in report_cves:
-                resolution = resolve_inventory(service_name, cves=[cve])
-                if resolution.get("component_id") and not resolution.get("is_substitute"):
-                    found.append(cve)
+        cited_quotes = [str(evidence_by_id[str(ref)].get("quote") or "")
+                        for ref in service.get("evidence_refs", []) or []
+                        if str(ref) in evidence_by_id]
+        cited_locators = {str(evidence_by_id[str(ref)].get("locator") or "")
+                          for ref in service.get("evidence_refs", []) or []
+                          if str(ref) in evidence_by_id}
+        service_name = str(service.get("name") or "").casefold()
+        cited_locator_keys = {json.dumps(evidence_by_id[str(ref)].get("locator"), sort_keys=True)
+                              for ref in service.get("evidence_refs", []) or [] if str(ref) in evidence_by_id}
+        relevant_text = list(cited_quotes)
+        relevant_text.extend(sentence for unit in units
+                              if json.dumps(unit.get("locator") if isinstance(unit, dict) else unit.locator,
+                                            sort_keys=True) in cited_locator_keys
+                              for sentence in re.split(r"(?<=[.!?])\s+|\n+",
+                                                        unit.get("text", "") if isinstance(unit, dict) else unit.text)
+                              if service_name and service_name in sentence.casefold())
+        found = [re.sub(r"\s+", "", match).upper()
+                 for quote in relevant_text for match in _CVE_RE.findall(quote)]
         merged = list(dict.fromkeys([*service.get("cve", []), *found]))
         if merged != service.get("cve", []):
             service["cve"] = merged
