@@ -32,6 +32,12 @@ _HOSTPORT_RE = re.compile(r"^\$\{(CR_HOSTPORT_\d+):-(\d+)\}$")
 _ALLOWED_CAP_ADD = {"NET_BIND_SERVICE", "CHOWN", "SETUID", "SETGID", "DAC_OVERRIDE", "FOWNER"}
 _DEFAULT_LIMITS = {"mem_limit": "512m", "cpus": 1.0, "pids_limit": 256}
 _DEMO_LIMITS = {"mem_limit": "128m", "cpus": 0.5, "pids_limit": 64}
+_GENERIC_FUNCTION_SUBSTITUTE_COMPONENTS = {
+    "web service": frozenset({"oss-nginx", "oss-httpd"}),
+    "web server": frozenset({"oss-nginx", "oss-httpd"}),
+    "database service": frozenset({"oss-postgres"}),
+    "database": frozenset({"oss-postgres"}),
+}
 # The edge bridge exists only so a host port can be published. Containers on it must
 # not talk to each other through it and must not get working outbound NAT.
 _EDGE_DRIVER_OPTS = {"com.docker.network.bridge.enable_icc": "false",
@@ -201,7 +207,18 @@ def unconfirmed_inventory_substitutes(ir: Any) -> list[dict[str, str]]:
     for service in ir.get("services", []) or []:
         if not isinstance(service, dict):
             continue
-        if service.get("is_substitute") is not True and not str(service.get("substitute_of") or "").strip():
+        substitute_of = str(service.get("substitute_of") or "").strip()
+        if service.get("is_substitute") is not True and not substitute_of:
+            continue
+        # A generic role is a function default only when the selected image matches that
+        # function's safe, non-vulnerable mapping. A generic name must never approve an
+        # arbitrary product image or a vulnerable exercise image.
+        service_name = str(service.get("name") or "").strip()
+        normalized_name = service_name.casefold()
+        function_label = normalized_name.removesuffix(" (substitute)")
+        selected = str(service.get("catalogue_component") or "")
+        if (not substitute_of
+                and selected in _GENERIC_FUNCTION_SUBSTITUTE_COMPONENTS.get(function_label, frozenset())):
             continue
         override = service.get("inventory_override")
         override_decision = isinstance(override, dict) and override.get("action") in {"accept", "replace"}
@@ -209,8 +226,8 @@ def unconfirmed_inventory_substitutes(ir: Any) -> list[dict[str, str]]:
         supplement_choice = service.get("substitute_basis") == "user_chosen"
         if override_decision or user_catalogue_choice or supplement_choice:
             continue
-        name = str(service.get("name") or service.get("id") or "unnamed service")
-        selected = str(service.get("catalogue_component") or "selected substitute")
+        name = service_name or str(service.get("id") or "unnamed service")
+        selected = selected or "selected substitute"
         blocked.append({
             "service_id": str(service.get("id") or ""),
             "name": name,

@@ -493,7 +493,7 @@ class StatedPortsForGenericServices(unittest.TestCase):
         self.assertEqual([(b["from_host"], b["to_host"], b["port"]) for b in plan["verify_blocked"]], [("attacker", "h2", 5432)])
 
     def test_function_only_services_get_labelled_substitutes_and_a_deployable_plan(self):
-        from app.iac.generator import inspect_plan
+        from app.iac.generator import inspect_plan, inventory_plan_blockers
         planned = plan_dependencies(self.ir())
         services = {service["id"]: service for service in planned["services"]}
         self.assertEqual({sid: (s["catalogue_component"], s["is_substitute"], s["source"]) for sid, s in services.items()},
@@ -501,8 +501,15 @@ class StatedPortsForGenericServices(unittest.TestCase):
         notices = [item for item in planned["missing_items"] if item["id"].startswith("planner_dep_role-substitute")]
         self.assertEqual([item["status"] for item in notices], ["substitute_chosen", "substitute_chosen"])
         plan = build_environment_plan(planned)
+        planned["environment_plan"] = plan
         self.assertEqual({h["id"]: h.get("image_hint") for h in plan["hosts"]},
                          {"h1": "oss-nginx", "h2": "oss-postgres", "attacker": "oss-attacker"})
+        self.assertEqual(inventory_plan_blockers(planned), [])
+        wrong_image = copy.deepcopy(planned)
+        next(service for service in wrong_image["services"] if service["id"] == "s1")["catalogue_component"] = "vuln-log4shell-solr"
+        next(host for host in wrong_image["environment_plan"]["hosts"] if host["id"] == "h1")["image_hint"] = "vuln-log4shell-solr"
+        self.assertTrue(any(item["code"] == "inventory_confirmation_required"
+                            for item in inventory_plan_blockers(wrong_image)))
         _, report = inspect_plan(plan, "scn_t")
         self.assertEqual(report.get("errors"), [], report.get("errors"))
 
@@ -770,6 +777,8 @@ class CVEAffectedProductIsNotInstalled(unittest.TestCase):
             "Apache Struts runs the portal, and CVE-2024-12345 affects Apache HTTP Server.",
             "Apache Struts runs the portal, while CVE-2024-12345 affects Apache HTTP Server.",
             "CVE-2024-12345 affects Apache HTTP Server, while Apache Struts runs the portal.",
+            "CVE-2024-12345 affects Apache HTTP Server;Apache Struts runs the portal.",
+            "CVE-2024-12345 影響 Apache HTTP Server。Apache Struts runs the portal.",
         )
         for text in statements:
             with self.subTest(text=text):
@@ -784,6 +793,76 @@ class CVEAffectedProductIsNotInstalled(unittest.TestCase):
                 self.assertNotIn("CVE-2024-12345", struts.get("cve", []))
                 self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
                                     for item in planned["missing_items"]))
+
+    def test_semicolon_affected_product_list_does_not_create_services(self):
+        statements = (
+            "CVE-2024-12345 affects Apache Struts;Apache HTTP Server.",
+            "CVE-2024-12345 影響 Apache Struts；Apache HTTP Server。",
+        )
+        for text in statements:
+            with self.subTest(text=text):
+                planned = plan_dependencies(base_ir(
+                    actions=[action("a1", text, "h1", attack_technique="T1190")],
+                    hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+                ))
+                names = [service["name"] for service in planned["services"]]
+                self.assertEqual(names, [])
+                self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                                    for item in planned["missing_items"]))
+
+    def test_long_semicolon_affected_product_list_does_not_create_late_services(self):
+        text = ("CVE-2024-12345 affects Apache Struts;Apache Tomcat;Oracle Database;"
+                "Microsoft Exchange Server;Apache HTTP Server;MariaDB.")
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertFalse(any("MariaDB" in name or "HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_semicolon_after_affected_product_keeps_explicit_deployment_evidence(self):
+        text = "CVE-2024-12345 affects Apache HTTP Server;Apache Struts runs the portal."
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
+
+    def test_semicolon_affected_product_with_explicit_installation_is_deployed(self):
+        text = "CVE-2024-12345 affects Apache Struts;Apache HTTP Server runs the portal."
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("HTTP Server" in name for name in names), names)
+        self.assertFalse(any("Struts" in name for name in names), names)
+
+    def test_semicolon_affected_product_with_exploit_evidence_is_deployed(self):
+        text = "CVE-2024-12345 affects Apache HTTP Server; Apache Struts was exploited."
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        names = [service["name"] for service in planned["services"]]
+        self.assertTrue(any("Struts" in name for name in names), names)
+        self.assertFalse(any("HTTP Server" in name for name in names), names)
+
+    def test_published_exploit_code_is_not_deployment_evidence(self):
+        text = "CVE-2024-12345 affects Apache HTTP Server; Apache Struts exploit code was published."
+        planned = plan_dependencies(base_ir(
+            actions=[action("a1", text, "h1", attack_technique="T1190")],
+            hosts=[{"id": "h1", "role": "target", "epistemic_status": "supported", "source": "llm"}],
+        ))
+        self.assertEqual(planned["services"], [])
+        self.assertTrue(any(item.get("field") == "affected software for CVE-2024-12345"
+                            for item in planned["missing_items"]))
 
     def test_but_boundary_does_not_turn_affected_http_server_into_deployed_service(self):
         text = "CVE-2024-12345 affects Apache HTTP Server, but Apache Struts runs the portal."

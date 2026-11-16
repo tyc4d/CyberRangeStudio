@@ -182,11 +182,16 @@ _GENERIC_AFTER_PRODUCT = frozenset({
     "software", "component", "components", "daemon", "process", "port", "tcp", "udp", "on", "in", "at", "to", "and", "or", "the", "a",
 })
 
-_CVE_AFFECTS_RE = re.compile(r"\b(?:affect(?:s|ed)?|impact(?:s|ed)?|appl(?:y|ies|ied)\s+to)\b", re.IGNORECASE)
+_CVE_AFFECTS_RE = re.compile(
+    r"\b(?:affect(?:s|ed)?|impact(?:s|ed)?|appl(?:y|ies|ied)\s+to)\b|影響", re.IGNORECASE,
+)
 _CVE_AFFECTED_BY_RE = re.compile(r"\b(?:affected|impacted|vulnerable)\b.{0,24}\bby\b", re.IGNORECASE)
+_SOURCE_SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+|(?<=[。！？])\s*|\n+")
+_SOURCE_CLAUSE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+|(?<=;)\s*|(?<=[。；！？])\s*|\n+")
 _DEPLOYMENT_EVIDENCE_RE = re.compile(
     r"\b(?:run(?:s|ning)?|install(?:ed|s)?|deploy(?:ed|s)?|operat(?:e|es|ed|ing)|"
-    r"us(?:e|es|ed|ing)|serv(?:e|es|ed|ing)|host(?:s|ed|ing)?|listen(?:s|ed|ing)?)\b",
+    r"us(?:e|es|ed|ing)|serv(?:e|es|ed|ing)|host(?:s|ed|ing)?|listen(?:s|ed|ing)?|"
+    r"exploit(?:s|ed|ing))\b",
     re.IGNORECASE,
 )
 _NEGATED_DEPLOYMENT_SUFFIX_RE = re.compile(
@@ -222,20 +227,41 @@ def _has_positive_deployment_evidence(context: str) -> bool:
     return False
 
 
+def _segment_bounds(text: str, start: int, end: int, boundary_re: re.Pattern[str]) -> tuple[int, int]:
+    left, right = 0, len(text)
+    for boundary in boundary_re.finditer(text):
+        if boundary.end() <= start:
+            left = boundary.end()
+        elif boundary.start() >= end:
+            right = boundary.start()
+            break
+    return left, right
+
+
 def _is_affected_only_mention(text: str, start: int, end: int) -> bool:
     """A CVE's affected-product clause is not evidence that the product is deployed."""
-    cves = list(_CVE_RE.finditer(text))
+    # A semicolon can continue an affected-product list. Keep the CVE relationship
+    # sentence-wide, then inspect deployment evidence only in the product's own clause.
+    sentence_left, sentence_right = _segment_bounds(text, start, end, _SOURCE_SENTENCE_BOUNDARY_RE)
+    sentence = text[sentence_left:sentence_right]
+    sentence_start, sentence_end = start - sentence_left, end - sentence_left
+    clause_left, clause_right = _segment_bounds(
+        sentence, sentence_start, sentence_end, _SOURCE_CLAUSE_BOUNDARY_RE,
+    )
+    clause = sentence[clause_left:clause_right]
+    local_start, local_end = sentence_start - clause_left, sentence_end - clause_left
+    cves = list(_CVE_RE.finditer(sentence))
     if not cves:
         return False
 
     affected_relation = False
     for cve in cves:
-        if cve.end() <= start:
-            between = text[cve.end():start]
-            if len(between) <= 100 and _CVE_AFFECTS_RE.search(between):
+        if cve.end() <= sentence_start:
+            between = sentence[cve.end():sentence_start]
+            if _CVE_AFFECTS_RE.search(between):
                 affected_relation = True
-        elif cve.start() >= end:
-            between = text[end:cve.start()]
+        elif cve.start() >= sentence_end:
+            between = sentence[sentence_end:cve.start()]
             if len(between) <= 100 and _CVE_AFFECTED_BY_RE.search(between):
                 affected_relation = True
     if not affected_relation:
@@ -244,8 +270,8 @@ def _is_affected_only_mention(text: str, start: int, end: int) -> bool:
     # An explicit runtime/deployment statement attached to this mention is stronger evidence
     # than the affected-product relationship alone. Stop at a coordinator so a neighbouring
     # product's verb cannot turn this affected-only mention into an installed service.
-    before = text[max(0, start - 100):start]
-    after = text[end:min(len(text), end + 100)]
+    before = clause[max(0, local_start - 100):local_start]
+    after = clause[local_end:min(len(clause), local_end + 100)]
     contrast_boundary = r"\b(?:and|while|but|whereas|however|although|though|yet)\b"
     before = re.split(contrast_boundary, before, flags=re.IGNORECASE)[-1]
     after = re.split(contrast_boundary, after, flags=re.IGNORECASE)[0]
@@ -327,12 +353,40 @@ def _collect_hosts(target_context: Any, actions: list[dict[str, Any]]) -> dict[s
     return hosts
 
 
-_CLAUSE_SPLIT_RE = re.compile(r"(?<=[.;!?])\s+|\n+")
+_CLAUSE_SPLIT_RE = _SOURCE_CLAUSE_BOUNDARY_RE
 # A coordinated CVE clause must not inherit the deployed-product context on its left.
 _MENTION_CLAUSE_SPLIT_RE = re.compile(
-    r"(?<=[.;!?])\s+|\n+|(?:,\s*|\s+)\b(?:and|while|but|whereas|however|although|though|yet)\b\s+(?=CVE-\d{4}-\d{4,}\b)",
+    r"(?<=[.!?])\s+|(?<=[。！？])\s*|\n+|"
+    r"(?:,\s*|\s+)\b(?:and|while|but|whereas|however|although|though|yet)\b\s+(?=CVE-\d{4}-\d{4,}\b)",
     re.IGNORECASE,
 )
+_SEMICOLON_SPLIT_RE = re.compile(r"(?<=;)[ \t]*|(?<=；)[ \t]*")
+
+
+def _mention_clauses(text: str) -> list[str]:
+    """Split prose for host binding without detaching CVE affected-product lists.
+
+    A semicolon can separate independent statements, but it can also continue a list
+    introduced by "CVE-x affects ...". Keep that sentence together for CVE analysis;
+    _is_affected_only_mention still checks deployment evidence in the product's own clause.
+    """
+    clauses: list[str] = []
+    for sentence in _MENTION_CLAUSE_SPLIT_RE.split(text):
+        current = ""
+        for piece in _SEMICOLON_SPLIT_RE.split(sentence):
+            if not piece.strip():
+                continue
+            if current and not any(
+                _CVE_AFFECTS_RE.search(current[max(0, match.start() - 8):])
+                for match in _CVE_RE.finditer(current)
+            ):
+                clauses.append(current)
+                current = piece
+            else:
+                current = f"{current}; {piece}" if current else piece
+        if current:
+            clauses.append(current)
+    return clauses
 _PORT_RE = re.compile(r"\b(?:tcp|udp|port)\s*[/ ]?\s*(\d{1,5})\b", re.IGNORECASE)
 
 
@@ -359,7 +413,7 @@ def _mentions_bound_to_hosts(text: str, hosts: dict[str, dict[str, Any]], fallba
     only host the clause names; otherwise the single host whose role fits the component;
     and only then the host the whole text is about (``fallback_host``).
     """
-    for clause in _MENTION_CLAUSE_SPLIT_RE.split(text):
+    for clause in _mention_clauses(text):
         if not clause.strip():
             continue
         spans = _host_name_spans(clause, hosts)

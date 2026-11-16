@@ -498,7 +498,7 @@ class InventoryOverrideApiTests(unittest.TestCase):
 
             rejected = client.post(f"/api/deploy/{SCENARIO_ID}/up", json={"test_approved": True})
             self.assertEqual(rejected.status_code, 409, rejected.text)
-            self.assertEqual(rejected.json()["detail"]["code"], "inventory_plan_mismatch")
+            self.assertEqual(rejected.json()["detail"]["code"], "approval_stale")
             do_up.assert_not_called()
             with patch.object(manager, "deploy_backend") as select_backend:
                 with self.assertRaises(PlanError):
