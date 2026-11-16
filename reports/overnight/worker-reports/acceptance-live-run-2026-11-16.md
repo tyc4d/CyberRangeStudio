@@ -58,7 +58,7 @@ The owner then explicitly authorized clearing all scenario workers. Read-only re
 
 ### Secret-pattern scan
 
-Scanned 91 deployment records for the two acceptance scenarios and the five persisted PVE acceptance artifacts/reports. The scan found zero PVE API-token, Authorization, generated database-password, or credential-like key/value patterns; values were not printed. No persistent API log file exists under `apps/api/data`; prior interactive terminal sessions were not part of this scan, so the broader console-log scan remains open.
+Scanned 91 deployment records for the two acceptance scenarios and the five persisted PVE acceptance artifacts/reports. The scan found zero PVE API-token, Authorization, generated database-password, or credential-like key/value patterns; values were not printed. A follow-up scan read all seven available Herdr terminal histories named `acceptance-*` (`t5k`, `t5m`, `t5n`, `t5q`, `t5r`, `t5x`, `t5y`); it found zero PVE token assignments, Authorization credentials, private-key blocks, or database-password assignments. No persistent API log file exists under `apps/api/data`. Scan counts only are preserved in `evidence/pve-acceptance-terminal-secret-scan-20261116.json`; no secret values were stored. This covers the available acceptance terminal histories, not arbitrary logs outside Herdr or processes that did not persist terminal output.
 
 ## Limits and remaining acceptance gates
 
@@ -79,6 +79,7 @@ Scanned 91 deployment records for the two acceptance scenarios and the five pers
 - Post-cutover live API up/reset/down evidence: `evidence/pve-cap5-live-api-cycle-20261116.json`.
 - Owner-requested cleanup of all scenario workers: `evidence/pve-scenario-worker-cleanup-20261116.json`.
 - P4 V1 lifecycle evidence: `evidence/pve-v1-lifecycle-20261116.json`.
+- P4 acceptance terminal secret scan: `evidence/pve-acceptance-terminal-secret-scan-20261116.json`.
 - Real down-cleanup failure-injection evidence: `evidence/pve-failure-down-cleanup-20261116.json`.
 - Owner-approved cap-5 and current capacity evidence: `evidence/pve-worker-cap-5-readiness-20261116.json`.
 - Local API cutover evidence: `evidence/pve-cap5-api-cutover-20261116.json`.
