@@ -196,7 +196,7 @@ const smallTargets = (page: Page) => page.evaluate(() => {
     // A checkbox is operated through its label row.
     const target = el.matches("input[type=checkbox]") ? el.closest("label") ?? el : el;
     const b = target.getBoundingClientRect();
-    if (b.height < 44 || (b.width < 44 && !target.matches("a, summary, label"))) out.push(`${el.tagName.toLowerCase()}.${[...el.classList].join(".")} ${Math.round(b.width)}x${Math.round(b.height)} "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 16)}"`);
+    if (b.height < 44 || (b.width < 44 && !target.matches("a, summary, label"))) out.push(`${el.tagName.toLowerCase()}.${[...el.classList].join(".")} ${b.width.toFixed(6)}x${b.height.toFixed(6)} "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 16)}"`);
   }
   return out;
 });
