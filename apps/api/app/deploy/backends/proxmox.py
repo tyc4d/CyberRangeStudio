@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 import yaml
 
-from app.deploy.pve_client import PveClient, PveError, PveSettings, PROTECTED_VMIDS, redact
+from app.deploy.pve_client import PveClient, PveError, PveSettings, PROTECTED_VMIDS, redact, redact_output
 from app.deploy.backends.probe_supervisor import PROBE_SUPERVISOR_PATH, PROBE_SUPERVISOR_SCRIPT
 
 WORKER_MEMORY_MIB = 4096
@@ -1856,7 +1856,7 @@ class ProxmoxBackend:
             if result.get("exited"):
                 stdout = str(result.get("out-data", "") or "")[:65536]
                 stderr = str(result.get("err-data", "") or "")[:16384]
-                return {"exitcode": result.get("exitcode", 1), "stdout": str(redact(stdout)), "stderr": str(redact(stderr))}
+                return {"exitcode": result.get("exitcode", 1), "stdout": redact_output(stdout), "stderr": redact_output(stderr, 16384)}
             time.sleep(min(self.settings.task_poll_interval, max(0, deadline - time.monotonic())))
         raise ProxmoxBackendError("guest process exceeded timeout")
 

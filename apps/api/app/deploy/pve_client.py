@@ -42,6 +42,11 @@ def redact(value: Any) -> Any:
     return value
 
 
+def redact_output(value: Any, limit: int = 65536) -> str:
+    """Redact secret-looking text in command output without the short journaling cap."""
+    return _SECRET_TEXT.sub("[REDACTED]", str(value))[:max(0, limit)]
+
+
 def _request_summary(method: str, path: str, params: Mapping[str, Any],
                      data: Mapping[str, Any], purpose: str) -> dict[str, Any]:
     """Journal request intent without retaining commands, Compose, or secret values."""
