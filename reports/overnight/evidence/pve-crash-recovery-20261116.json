@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-11-16",
+  "candidate_commit": "a58cca2",
+  "scenario_id": "scn_2acb1b9c902c",
+  "test_type": "real PVE API-process crash recovery; non-vulnerable synthetic scenario",
+  "crash_point": "after the real clone task completed and its UPID was committed, before clone_complete state or successful lifecycle record",
+  "api_process": {
+    "port": 8077,
+    "termination": "SIGKILL after _clone_worker returned",
+    "up_response": "connection ended with empty response"
+  },
+  "reservation_at_crash": {
+    "vmid": 900100,
+    "state": "cloning",
+    "clone_upid_saved": true,
+    "delete_upid_saved": false,
+    "delete_intent": "not_requested"
+  },
+  "recovery": {
+    "api_port": 8283,
+    "endpoint": "POST /api/deploy/scn_2acb1b9c902c/down",
+    "http_status": 200,
+    "state": "stopped",
+    "recovered_provisional": true,
+    "deployment_record_id": 146
+  },
+  "final_read_only_check": {
+    "scenario_state": "not_created",
+    "worker_count": 0,
+    "pool_members": [900000],
+    "reservation_present": false,
+    "capacity": "ready"
+  },
+  "attack_probe_run": false,
+  "vulnerable_image_deployed": false,
+  "limitations": [
+    "Does not test a crash after PVE accepts clone but before the clone UPID is saved; that window intentionally requires manual reconciliation.",
+    "Does not simulate a lost DELETE response against live PVE; unit regressions verify that no-UPID delete intent remains manual and is not retried."
+  ]
+}
