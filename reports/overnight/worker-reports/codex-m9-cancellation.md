@@ -30,3 +30,5 @@ Validation before the live follow-up:
 - An earlier interrupted local monitor hit SQLite's exclusive placement lock and exited while the probe was `starting`. The operation was recovered through the normal cancellation path; the later live API test passed. This did not leave a worker or helper behind.
 
 Limits: this verifies successful cancellation and cleanup while QGA was available. Cancellation under QGA loss, network failure, and API-worker restart during an active helper still needs fault-injection coverage. No vulnerable image or exploit probe was used in this follow-up; this is not the P5 attack-probe acceptance.
+
+Independent review of `b160e1f`: **APPROVE, no blocking findings**. The reviewer noted a non-blocking hardening opportunity to require the missing-object error text to name the requested container reference; no reproducible false-positive path was found.
