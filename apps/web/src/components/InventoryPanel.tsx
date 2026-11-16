@@ -59,6 +59,10 @@ const MESSAGE = {
   editing: "inv.editing",
   close: "inv.close",
   why: "inv.why",
+  questionVersion: "inv.question.version",
+  questionVersionOptions: "inv.question.versionOptions",
+  questionOther: "inv.question.other",
+  optionSeparator: "inv.options.separator",
   optAccept: "inv.option.accept",
   optAcceptHint: "inv.option.acceptHint",
   optReplace: "inv.option.replace",
@@ -127,6 +131,17 @@ function entryLabel(e: InventoryEntry): string {
 function suggestionVersion(label: string, entries: InventoryEntry[]): string {
   const e = entries.find((x) => entryLabel(x) === label);
   return e?.version ? String(e.version) : label;
+}
+
+/** Render a backend question from its structured field and choices; never expose the backend's fixed-language text. */
+function questionPrompt(question: NonNullable<InventoryResolution["question"]>, s: S): string {
+  const versionField = /^version for (.+)$/i.exec(String(question.field ?? "").trim());
+  if (!versionField) return s("questionOther");
+  const name = versionField[1].trim();
+  const suggestions = Array.isArray(question.suggestions) ? question.suggestions.filter(Boolean) : [];
+  return suggestions.length
+    ? s("questionVersionOptions", { name, options: suggestions.join(s("optionSeparator")) })
+    : s("questionVersion", { name });
 }
 
 type Mode = "accept" | "replace" | "version";
@@ -257,7 +272,7 @@ function Row({ item, open, onToggle, s }: { item: InventoryItem; open: boolean; 
           <details style={{ marginTop: 4, fontSize: 14 }}>
             <summary className="muted">{s("why")}</summary>
             <div className="muted" lang="en" style={{ overflowWrap: "anywhere" }}>{r.reason}</div>
-            {r.question?.text && <div style={{ marginTop: 2 }}>{r.question.text}</div>}
+            {r.question && <div data-testid="inv-question-prompt" style={{ marginTop: 2 }}>{questionPrompt(r.question, s)}</div>}
           </details>
         )}
       </td>

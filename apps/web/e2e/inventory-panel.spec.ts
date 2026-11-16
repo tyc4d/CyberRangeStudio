@@ -109,6 +109,50 @@ test("English strings follow cr.locale", async ({ page }) => {
   await expect(panel.getByTestId("inv-row-svc_horizon")).toContainText("Stands in for VMware Horizon");
 });
 
+test("version questions use the selected locale, not backend display text", async ({ browser }) => {
+  for (const locale of ["en", "zh-TW"] as const) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const page = await context.newPage();
+    await mockApi(page, locale);
+    await page.goto("/deps");
+    const row = page.getByTestId("inv-row-host_dc");
+    await row.locator("details > summary").click();
+    const prompt = row.getByTestId("inv-question-prompt");
+    if (locale === "en") {
+      await expect(prompt).toHaveText("Choose a version of Windows Server: Windows Server 2016 Evaluation, Windows Server 2019 Evaluation, Windows Server 2022 Evaluation.");
+      expect(await prompt.innerText()).not.toMatch(/[\u3400-\u9fff]/);
+    } else {
+      await expect(prompt).toHaveText("請選擇 Windows Server 的版本：Windows Server 2016 Evaluation、Windows Server 2019 Evaluation、Windows Server 2022 Evaluation。");
+      expect(await prompt.innerText()).not.toContain("Choose a version");
+    }
+    await context.close();
+  }
+});
+
+test("phone inventory editor labels and question summary have 44px hit areas", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await mockApi(page, "en");
+  await page.goto("/deps");
+  const panel = page.getByTestId("inventory-panel");
+  const row = panel.getByTestId("inv-row-svc_horizon");
+  await row.getByTestId("inv-edit-svc_horizon").click();
+  const radioLabels = page.locator("[data-testid='inv-editor-svc_horizon'] [role='radiogroup'] > label");
+  await expect(radioLabels).toHaveCount(3);
+  for (const label of await radioLabels.all()) {
+    const box = await label.boundingBox();
+    expect(box, "radio label is visible").not.toBeNull();
+    expect(box!.height, `radio label height ${box!.height}`).toBeGreaterThanOrEqual(44);
+    expect(box!.width, `radio label width ${box!.width}`).toBeGreaterThanOrEqual(44);
+  }
+  const summary = panel.getByTestId("inv-row-host_dc").locator("details > summary");
+  const summaryBox = await summary.boundingBox();
+  expect(summaryBox, "reason summary is visible").not.toBeNull();
+  expect(summaryBox!.height, `summary height ${summaryBox!.height}`).toBeGreaterThanOrEqual(44);
+  expect(summaryBox!.width, `summary width ${summaryBox!.width}`).toBeGreaterThanOrEqual(44);
+  await context.close();
+});
+
 test("phone width: the panel itself never overflows its card", async ({ page }) => {
   // This base (main) has no phone layout yet, so the app shell itself is wider than a phone; that is not measured here.
   // What the panel owns: its card fits its container and only the table wrapper scrolls sideways (stacked on the RWD line).
