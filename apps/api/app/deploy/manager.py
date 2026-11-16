@@ -1283,24 +1283,34 @@ def do_down(scenario_id: str) -> dict[str, Any]:
                 "command_result": {"returncode": 2, "stdout": "", "stderr": conflict}}
     if selected == "proxmox":
         existing = _active_proxmox_deployment(scenario_id)
-        if existing is None:
+        orphan_record = existing is not None and existing.get("orphan") is True
+        host_id = existing.get("host_id", "worker") if existing is not None else "worker"
+        try:
+            backend = _proxmox_backend()
+            recovery = backend.recover_down(scenario_id, host_id=host_id)
+        except Exception as exc:
+            recovery = {"found": True, "ok": False, "state": "uncertain",
+                        "error": f"Proxmox reservation recovery failed: {type(exc).__name__}"}
+        if existing is None and recovery.get("found") is False and recovery.get("ok") is True:
             audit = record(scenario_id, "down", "stopped", {"backend": "proxmox", "already_stopped": True})
             return {"scenario_id": scenario_id, "project_name": project_name(scenario_id),
                     "backend": "proxmox", "state": "stopped", "ok": True,
                     "command_result": {"returncode": 0, "stdout": "", "stderr": "no active Proxmox worker"},
                     "deployment_record": audit}
-        try:
-            outcome = _proxmox_backend().down(scenario_id, vmid=existing["vmid"], host_id=existing["host_id"])
-        except Exception as exc:
-            outcome = {"ok": False, "state": "failed", "error": f"Proxmox cleanup failed: {type(exc).__name__}"}
-        success = outcome.get("ok") is True
-        audit = record(scenario_id, "down", "stopped" if success else "failed",
-                       {"backend": "proxmox", "vmid": existing["vmid"], "host_id": existing["host_id"],
-                        "result": outcome})
+        if existing is not None and recovery.get("found") is False:
+            recovery = {"found": True, "ok": False, "state": "uncertain",
+                        "vmid": existing.get("vmid"),
+                        "error": "deployment record has no matching durable PVE reservation; manual reconciliation required"}
+        recovered = recovery.get("ok") is True and recovery.get("found") is True
+        audit = record(scenario_id, "down", "stopped" if recovered else "failed",
+                       {"backend": "proxmox", "vmid": recovery.get("vmid") or (existing or {}).get("vmid"),
+                        "host_id": host_id, "recovered_reservation": True,
+                        "lifecycle_record_present": existing is not None,
+                        "failed_up_orphan_record": orphan_record, "result": recovery})
+        error = "" if recovered else str(recovery.get("error") or "reserved worker recovery is uncertain; reservation retained")
         return {"scenario_id": scenario_id, "project_name": project_name(scenario_id), "backend": "proxmox",
-                "state": "stopped" if success else "failed", "ok": success,
-                "command_result": {"returncode": 0 if success else 2, "stdout": "",
-                                   "stderr": "" if success else str(outcome.get("error", "Proxmox cleanup failed"))},
+                "state": "stopped" if recovered else "failed", "ok": recovered,
+                "command_result": {"returncode": 0 if recovered else 2, "stdout": "", "stderr": error},
                 "deployment_record": audit}
     result = _compose_command(scenario_id, "down", ["-v", "--remove-orphans"], timeout=180)
     state = "stopped" if result["returncode"] == 0 else "failed"

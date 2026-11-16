@@ -87,12 +87,18 @@ def _placement_lock(database_path: str):
             "CREATE TABLE IF NOT EXISTS pve_worker_reservations ("
             "vmid INTEGER PRIMARY KEY CHECK(vmid BETWEEN 900100 AND 900999), "
             "scenario_id TEXT NOT NULL, host_id TEXT NOT NULL, state TEXT NOT NULL, "
-            "updated_at TEXT NOT NULL, generation_id TEXT, UNIQUE(scenario_id, host_id))"
+            "updated_at TEXT NOT NULL, generation_id TEXT, provisional_name TEXT, clone_upid TEXT, "
+            "source_metadata_json TEXT, recovery_identity_json TEXT, delete_upid TEXT, delete_intent TEXT, "
+            "UNIQUE(scenario_id, host_id))"
         )
         reservation_columns = {str(row[1]) for row in connection.execute(
             "PRAGMA table_info(pve_worker_reservations)").fetchall()}
-        if "generation_id" not in reservation_columns:
-            connection.execute("ALTER TABLE pve_worker_reservations ADD COLUMN generation_id TEXT")
+        for column, definition in (("generation_id", "TEXT"), ("provisional_name", "TEXT"),
+                                   ("clone_upid", "TEXT"), ("source_metadata_json", "TEXT"),
+                                   ("recovery_identity_json", "TEXT"), ("delete_upid", "TEXT"),
+                                   ("delete_intent", "TEXT")):
+            if column not in reservation_columns:
+                connection.execute(f"ALTER TABLE pve_worker_reservations ADD COLUMN {column} {definition}")
         for (vmid,) in connection.execute(
                 "SELECT vmid FROM pve_worker_reservations WHERE generation_id IS NULL OR generation_id=''"
         ).fetchall():
@@ -162,10 +168,14 @@ def _migrate_singleton_reservation(connection: sqlite3.Connection) -> None:
 
 def _reservations(connection: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = connection.execute(
-        "SELECT scenario_id, host_id, vmid, state, generation_id FROM pve_worker_reservations ORDER BY vmid"
+        "SELECT scenario_id, host_id, vmid, state, generation_id, provisional_name, clone_upid, "
+        "source_metadata_json, recovery_identity_json, delete_upid, delete_intent "
+        "FROM pve_worker_reservations ORDER BY vmid"
     ).fetchall()
     return [{"scenario_id": row[0], "host_id": row[1], "vmid": int(row[2]), "state": row[3],
-             "generation_id": row[4]}
+             "generation_id": row[4], "provisional_name": row[5], "clone_upid": row[6],
+             "source_metadata_json": row[7], "recovery_identity_json": row[8],
+             "delete_upid": row[9], "delete_intent": row[10]}
             for row in rows]
 
 
@@ -174,18 +184,71 @@ def _reservation(connection: sqlite3.Connection, vmid: int) -> dict[str, Any] | 
 
 
 def _persist_reservation(connection: sqlite3.Connection, *, scenario_id: str,
-                         host_id: str, vmid: int, state: str) -> None:
+                         host_id: str, vmid: int, state: str, provisional_name: str | None = None,
+                         clone_upid: str | None = None,
+                         source_metadata: Mapping[str, Any] | None = None,
+                         recovery_identity: Mapping[str, Any] | None = None,
+                         delete_upid: str | None = None,
+                         delete_intent: str | None = None) -> None:
+    if delete_intent not in {None, "not_requested", "pending"}:
+        raise ProxmoxBackendError("invalid durable delete intent")
+    source_metadata_json = (json.dumps(dict(source_metadata), sort_keys=True, separators=(",", ":"))
+                            if source_metadata is not None else None)
+    recovery_identity_json = (json.dumps(dict(recovery_identity), sort_keys=True, separators=(",", ":"))
+                              if recovery_identity is not None else None)
     cursor = connection.execute(
-        "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at,generation_id) "
-        "VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(vmid) DO UPDATE SET "
-        "state=excluded.state, updated_at=excluded.updated_at "
+        "INSERT INTO pve_worker_reservations(vmid, scenario_id, host_id, state, updated_at,generation_id,"
+        "provisional_name,clone_upid,source_metadata_json,recovery_identity_json,delete_upid,delete_intent) "
+        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(vmid) DO UPDATE SET "
+        "state=excluded.state, updated_at=excluded.updated_at, "
+        "provisional_name=COALESCE(excluded.provisional_name,pve_worker_reservations.provisional_name), "
+        "clone_upid=COALESCE(excluded.clone_upid,pve_worker_reservations.clone_upid), "
+        "source_metadata_json=COALESCE(excluded.source_metadata_json,pve_worker_reservations.source_metadata_json), "
+        "recovery_identity_json=COALESCE(excluded.recovery_identity_json,pve_worker_reservations.recovery_identity_json), "
+        "delete_upid=COALESCE(excluded.delete_upid,pve_worker_reservations.delete_upid), "
+        "delete_intent=COALESCE(excluded.delete_intent,pve_worker_reservations.delete_intent) "
         "WHERE scenario_id=excluded.scenario_id AND host_id=excluded.host_id",
-        (vmid, scenario_id, host_id, state, datetime.now(timezone.utc).isoformat(), secrets.token_hex(16)),
+        (vmid, scenario_id, host_id, state, datetime.now(timezone.utc).isoformat(), secrets.token_hex(16),
+         provisional_name, clone_upid, source_metadata_json, recovery_identity_json, delete_upid,
+         delete_intent),
     )
     if cursor.rowcount != 1:
         raise ProxmoxBackendError("durable worker reservation identity changed; manual reconciliation required")
     connection.commit()
     connection.execute("BEGIN EXCLUSIVE")
+
+
+def _recovery_identity(scenario_id: str, host_id: str, creation_nonce: str) -> dict[str, Any]:
+    return {"scenario_id": scenario_id, "host_id": host_id, "template_vmid": 900000,
+            "backend_instance": _BACKEND_INSTANCE, "creation_nonce": creation_nonce}
+
+
+def _reservation_recovery_identity(held: Mapping[str, Any], scenario_id: str,
+                                   host_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    raw_identity = held.get("recovery_identity_json")
+    raw_source = held.get("source_metadata_json")
+    pending_name = held.get("provisional_name")
+    try:
+        identity = json.loads(raw_identity) if isinstance(raw_identity, str) else None
+        source_metadata = json.loads(raw_source) if isinstance(raw_source, str) else None
+    except (TypeError, ValueError, json.JSONDecodeError):
+        identity, source_metadata = None, None
+    nonce = identity.get("creation_nonce") if isinstance(identity, dict) else None
+    expected_name = (re.fullmatch(
+        rf"cr-pending-{re.escape(_pve_vm_name_id(scenario_id[:16]))}-([a-f0-9]{{12}})", pending_name)
+        if isinstance(pending_name, str) else None)
+    if (not isinstance(identity, dict) or not isinstance(source_metadata, dict)
+            or not isinstance(nonce, str) or not re.fullmatch(r"[a-f0-9]{12}", nonce)
+            or not expected_name or expected_name.group(1) != nonce
+            or identity != _recovery_identity(scenario_id, host_id, nonce)
+            or not re.fullmatch(r"[a-fA-F0-9]{64}", str(source_metadata.get("source_sha256", "")))
+            or not isinstance(source_metadata.get("source_commit"), str)
+            or not source_metadata.get("source_commit")
+            or not isinstance(source_metadata.get("host_id"), str)
+            or not source_metadata.get("host_id")):
+        raise ProxmoxBackendError(
+            "reservation lacks matching scenario, host, template, backend, nonce, or source identity")
+    return identity, source_metadata
 
 
 def _clear_reservation(connection: sqlite3.Connection, *, scenario_id: str,
@@ -394,18 +457,22 @@ class ProxmoxBackend:
         self._await_operation(result)
         return result
 
-    def _clone_worker(self, vmid: int, pending_name: str) -> None:
+    def _clone_worker(self, vmid: int, pending_name: str,
+                      on_task: Any | None = None) -> str | None:
         path = f"/api2/json/nodes/pve4-bbf/qemu/900000/clone"
         result = self.client.request("POST", path,
                                      data={"newid": vmid, "name": pending_name, "pool": "cr-range", "full": 0},
                                      purpose="clone approved Linux worker template")
         if self.settings.mode == "dry-run":
-            return
+            return None
         payload = _data(result)
         upid = payload.get("upid") if isinstance(payload, Mapping) else payload
         if not isinstance(upid, str) or not upid.startswith("UPID:"):
             raise PveError("clone response did not contain a valid asynchronous task UPID")
+        if on_task is not None:
+            on_task(upid)
         self.client.wait_task(upid)
+        return upid
 
     def _owned_write(self, method: str, path: str, data: Mapping[str, Any] | None,
                      scenario_id: str, host_id: str, purpose: str) -> Any:
@@ -638,14 +705,18 @@ class ProxmoxBackend:
                     "error": f"V1 isolated bridge check failed immediately before deployment: {detail}",
                     "bridge_v1": {"before": bridge_v1_before}}
         reservation_written = self.settings.mode == "live"
-        generation_id = None
-        if reservation_written:
-            _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
-                                 vmid=vmid, state="creating")
-            generation_id = _reservation(reservation_db, vmid)["generation_id"]
         nonce = secrets.token_hex(6)
         pending_name = f"cr-pending-{_pve_vm_name_id(scenario_id[:16])}-{nonce}"
         source_metadata = ready["checks"].get("template_source", {})
+        generation_id = None
+        if reservation_written:
+            # Commit exact provisional identity before sending the asynchronous clone POST.
+            _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                 vmid=vmid, state="clone_requested", provisional_name=pending_name,
+                                 source_metadata=source_metadata,
+                                 recovery_identity=_recovery_identity(scenario_id, host_id, nonce),
+                                 delete_intent="not_requested")
+            generation_id = _reservation(reservation_db, vmid)["generation_id"]
         description = json.dumps({"created_by": OWNER, "scenario_id": scenario_id, "host_id": host_id,
                                   "created_at": datetime.now(timezone.utc).isoformat(), "template": 900000,
                                   "compose_sha256": digest, "backend_instance": _BACKEND_INSTANCE, "role": "worker",
@@ -657,10 +728,26 @@ class ProxmoxBackend:
         ownership_configured = False
         clone_completed = False
         try:
-            self._clone_worker(vmid, pending_name)
+            def record_clone_task(upid: str) -> None:
+                if not reservation_written:
+                    return
+                try:
+                    _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                         vmid=vmid, state="cloning", provisional_name=pending_name,
+                                         clone_upid=upid, source_metadata=source_metadata)
+                except (sqlite3.Error, ProxmoxBackendError):
+                    raise ProxmoxBackendError(
+                        "PVE clone task identity could not be persisted; reservation retained for manual reconciliation"
+                    ) from None
+
+            self._clone_worker(vmid, pending_name, on_task=record_clone_task)
             clone_completed = True
+            if reservation_written:
+                _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                     vmid=vmid, state="clone_complete")
             self.client.configure_creating_clone(vmid, pending_name=pending_name,
                                                  source_metadata=source_metadata,
+                                                 creation_nonce=nonce,
                                                  data={"name": vmname, "cores": WORKER_VCPUS, "memory": WORKER_MEMORY_MIB,
                                                        "tags": f"cyberrange;cr-scn-{_pve_vm_name_id(scenario_id[:20])};cr-role-worker;cr-inst-{_BACKEND_INSTANCE}",
                                                        "description": description})
@@ -747,7 +834,26 @@ class ProxmoxBackend:
             # Clean only if all three live ownership checks still pass.
             try:
                 if ownership_configured:
-                    self._shutdown_and_destroy_owned(vmid, scenario_id, host_id)
+                    if reservation_written:
+                        _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                             host_id=host_id, vmid=vmid, state="deleting")
+
+                    def record_owned_delete_task(upid: str) -> None:
+                        if reservation_written:
+                            _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                                 host_id=host_id, vmid=vmid, state="deleting",
+                                                 delete_upid=upid)
+
+                    def record_owned_delete_intent() -> None:
+                        if reservation_written:
+                            _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                                 host_id=host_id, vmid=vmid, state="deleting",
+                                                 delete_intent="pending")
+
+                    self._shutdown_and_destroy_owned(vmid, scenario_id, host_id,
+                                                     creation_nonce=nonce,
+                                                     on_delete_intent=record_owned_delete_intent,
+                                                     on_delete_task=record_owned_delete_task)
                     result["cleanup"] = "removed newly created owned VM"
                     if reservation_written:
                         _clear_reservation(reservation_db, scenario_id=scenario_id,
@@ -762,21 +868,48 @@ class ProxmoxBackend:
                                                host_id=host_id, vmid=vmid)
                     else:
                         clone_rejected = bool(clone_record and clone_record.get("http_status") == 400)
-                        cleanup = self.client.delete_creating_clone(vmid, pending_name=pending_name,
-                                                                    source_metadata=source_metadata)
-                        if cleanup.get("absent"):
-                            result["cleanup"] = "no provisional clone found"
-                            if reservation_written and (clone_completed or clone_rejected):
+                        if clone_rejected:
+                            result["cleanup"] = "PVE rejected clone before creating a task"
+                            if reservation_written:
                                 _clear_reservation(reservation_db, scenario_id=scenario_id,
                                                    host_id=host_id, vmid=vmid)
-                            if not clone_completed and not clone_rejected:
-                                result["clone_result_uncertain"] = True
-                                if reservation_written:
+                        elif not clone_completed:
+                            # A timeout, missing/uncaptured UPID, or nonterminal task is
+                            # ambiguous. Do not infer ownership from a pending VM name and
+                            # do not issue DELETE until recovery can prove the exact task.
+                            result["cleanup"] = "clone outcome is uncertain; reservation retained for manual reconciliation"
+                            result["clone_result_uncertain"] = True
+                            if reservation_written:
+                                try:
                                     _persist_reservation(reservation_db, scenario_id=scenario_id,
                                                          host_id=host_id, vmid=vmid, state="reconcile")
+                                except sqlite3.Error:
+                                    pass
+                            result["recoverable_orphan"] = {
+                                "vmid": vmid, "scenario_id": scenario_id, "host_id": host_id,
+                                "pending_name": pending_name, "state": "requires_manual_reconciliation",
+                            }
                         else:
-                            self._await_operation(cleanup)
-                            result["cleanup"] = "removed exact provisional clone"
+                            if reservation_written:
+                                _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                                     host_id=host_id, vmid=vmid, state="deleting",
+                                                     delete_intent="pending")
+                            cleanup = self.client.delete_creating_clone(vmid, pending_name=pending_name,
+                                                                        source_metadata=source_metadata,
+                                                                        creation_nonce=nonce)
+                            if isinstance(cleanup, Mapping) and cleanup.get("absent"):
+                                raise ProxmoxBackendError(
+                                    "completed clone is not proven in cr-range; reservation retained for reconciliation")
+
+                            def record_provisional_delete_task(upid: str) -> None:
+                                if reservation_written:
+                                    _persist_reservation(reservation_db, scenario_id=scenario_id,
+                                                         host_id=host_id, vmid=vmid, state="deleting",
+                                                 delete_upid=upid, delete_intent="pending")
+
+                            self._await_delete_task(cleanup, vmid,
+                                                    on_upid=record_provisional_delete_task)
+                            result["cleanup"] = "removed exact provisional clone after completed task"
                             if reservation_written:
                                 _clear_reservation(reservation_db, scenario_id=scenario_id,
                                                    host_id=host_id, vmid=vmid)
@@ -1015,25 +1148,179 @@ class ProxmoxBackend:
             return self._down_locked(scenario_id, vmid=vmid, host_id=host_id,
                                      reservation_db=reservation_db)
 
+    def recover_down(self, scenario_id: str, *, host_id: str = "worker") -> dict[str, Any]:
+        """Recover only a scenario reservation whose exact clone task and VM identity are provable."""
+        scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
+        with _placement_lock(self.settings.reservation_db) as reservation_db:
+            scenario_rows = [held for held in _reservations(reservation_db)
+                             if held["scenario_id"] == scenario_id]
+            matches = [held for held in scenario_rows if held["host_id"] == host_id]
+            if not matches:
+                if scenario_rows:
+                    return {"found": True, "ok": False, "state": "uncertain",
+                            "error": "scenario reservation belongs to a different host; reservation retained"}
+                return {"found": False, "ok": True, "state": "not_found"}
+            if len(matches) != 1:
+                return {"found": True, "ok": False, "state": "uncertain",
+                        "error": "multiple matching PVE reservations require manual reconciliation"}
+            held = matches[0]
+            vmid = held["vmid"]
+            if not 900100 <= vmid <= 900999 or vmid in PROTECTED_VMIDS:
+                return {"found": True, "ok": False, "state": "uncertain",
+                        "error": "reserved VMID is outside the owned worker range; reservation retained"}
+            # Once a destroy UPID is durable, it is the authoritative lifecycle
+            # identity regardless of a later crash-state rewrite (for example,
+            # cleanup exception handling changing `deleting` to `reconcile`).
+            # Always resume this exact task before considering any clone cleanup;
+            # otherwise recovery could submit a second DELETE while qmdestroy runs.
+            delete_upid = held.get("delete_upid")
+            if delete_upid is not None:
+                if not isinstance(delete_upid, str) or not delete_upid:
+                    return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                            "error": "delete task identity is invalid; reservation retained for manual reconciliation"}
+                try:
+                    self._wait_exact_delete_upid(delete_upid, vmid)
+                    _clear_reservation(reservation_db, scenario_id=scenario_id,
+                                       host_id=host_id, vmid=vmid)
+                    return {"found": True, "ok": True, "state": "removed", "vmid": vmid,
+                            "recovered_deleted": True, "delete_upid": delete_upid}
+                except (PveError, ProxmoxBackendError, sqlite3.Error, TypeError, ValueError) as exc:
+                    return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                            "error": f"deleting reservation is not proven absent ({type(exc).__name__}); reservation retained"}
+            delete_intent = held.get("delete_intent")
+            if delete_intent == "pending" or (
+                    delete_intent is None and held.get("state") in {"deleting", "reconcile"}):
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "a delete may have been sent without a durable UPID; reservation retained for manual reconciliation"}
+            if delete_intent not in {None, "not_requested"}:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "reservation delete intent is invalid; reservation retained for manual reconciliation"}
+            if held.get("state") not in {"active", "clone_requested", "cloning", "clone_complete",
+                                          "creating", "reconcile", "deleting"}:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "reservation lifecycle state is not recoverable; reservation retained"}
+            active_probe = _active_probe_for_worker(reservation_db, vmid)
+            if active_probe:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "worker has an unresolved probe operation; reservation retained"}
+            try:
+                identity, source_metadata = _reservation_recovery_identity(held, scenario_id, host_id)
+            except ProxmoxBackendError as exc:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": f"{exc}; reservation retained for manual reconciliation"}
+            nonce = identity["creation_nonce"]
+            pending_name = held["provisional_name"]
+            upid = held.get("clone_upid")
+            if not isinstance(upid, str) or not upid:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "clone task identity was not durably recorded; reservation retained for manual reconciliation"}
+            try:
+                task = self.client.task_status(upid)
+            except (PveError, ProxmoxBackendError, TypeError, ValueError) as exc:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": f"clone task or template identity could not be verified ({type(exc).__name__}); reservation retained"}
+            if (not isinstance(task, Mapping) or task.get("status") != "stopped"
+                    or not isinstance(task.get("exitstatus"), str) or not task.get("exitstatus")):
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "clone task is still running or has no terminal proof; reservation retained"}
+            if task.get("task") != "qmclone" or task.get("id") != "900000" or task.get("node") != self.settings.node:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "persisted task is not the expected clone from template 900000; reservation retained"}
+
+            try:
+                pool = _data(self.client.request("GET", "/api2/json/pools/cr-range",
+                                                 purpose="reconcile reserved worker pool membership"))
+                if not isinstance(pool, Mapping) or vmid not in _pool_vmids(pool.get("members", [])):
+                    return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                            "error": "reserved VM is not proven as a cr-range member; reservation retained"}
+                config = self._get(f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/config")
+            except (PveError, ProxmoxBackendError) as exc:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": f"reserved VM identity could not be read ({type(exc).__name__}); reservation retained"}
+
+            # Once task completion and reservation identity are proven, prefer the normal
+            # owned-worker cleanup path. It rechecks pool, tags, description, and probe state.
+            try:
+                self._assert_owned(vmid, scenario_id, host_id)
+            except (PveError, ProxmoxBackendError):
+                expected_source = all(source_metadata.get(key) for key in
+                                      ("source_sha256", "source_commit", "host_id"))
+                if config.get("name") != pending_name or not expected_source:
+                    return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                            "error": "reserved VM is neither the exact provisional clone nor an owned worker; reservation retained"}
+                try:
+                    _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                         vmid=vmid, state="deleting", delete_intent="pending")
+                    deleted = self.client.delete_creating_clone(vmid, pending_name=pending_name,
+                                                                 source_metadata=source_metadata,
+                                                                 creation_nonce=nonce)
+                    if isinstance(deleted, Mapping) and deleted.get("absent") is True:
+                        return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                                "error": "provisional clone disappeared before verified deletion; reservation retained"}
+                    payload = _data(deleted)
+                    if not (isinstance(payload, str) and payload.startswith("UPID:")):
+                        return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                                "error": "PVE did not confirm provisional clone deletion; reservation retained"}
+
+                    def record_delete_task(upid: str) -> None:
+                        _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                             vmid=vmid, state="deleting", delete_upid=upid,
+                                             delete_intent="pending")
+
+                    self._await_delete_task(deleted, vmid, on_upid=record_delete_task)
+                    _clear_reservation(reservation_db, scenario_id=scenario_id,
+                                       host_id=host_id, vmid=vmid)
+                    return {"found": True, "ok": True, "state": "removed", "vmid": vmid,
+                            "recovered_provisional": True}
+                except (PveError, ProxmoxBackendError, sqlite3.Error) as exc:
+                    return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                            "error": f"provisional cleanup was not confirmed ({type(exc).__name__}); reservation retained"}
+
+            # A fully configured owned worker could only follow a successful clone task.
+            if task.get("exitstatus") != "OK":
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "owned VM has a non-success clone task result; reservation retained"}
+            description = _description(config.get("description", ""))
+            if description.get("creation_nonce") != nonce:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": "owned worker creation nonce does not match reservation; reservation retained"}
+            try:
+                result = self._down_locked(scenario_id, vmid=vmid, host_id=host_id,
+                                           reservation_db=reservation_db, creation_nonce=nonce)
+            except (PveError, ProxmoxBackendError, sqlite3.Error) as exc:
+                return {"found": True, "ok": False, "state": "uncertain", "vmid": vmid,
+                        "error": f"owned worker cleanup was not confirmed ({type(exc).__name__}); reservation retained"}
+            return {"found": True, **result, "recovered_owned": True}
+
     def _down_locked(self, scenario_id: str, *, vmid: int, host_id: str,
-                     reservation_db: sqlite3.Connection) -> dict[str, Any]:
+                     reservation_db: sqlite3.Connection,
+                     creation_nonce: str | None = None) -> dict[str, Any]:
         scenario_id, host_id = _safe_id(scenario_id, "scenario id"), _safe_id(host_id, "host id")
         held = _reservation(reservation_db, vmid)
         if (held is None or held["scenario_id"] != scenario_id or held["host_id"] != host_id
                 or held["vmid"] != vmid
-                or held["state"] not in {"active", "creating", "reconcile", "deleting"}):
+                or held["state"] not in {"active", "clone_requested", "cloning", "clone_complete",
+                                         "creating", "reconcile", "deleting"}):
             raise ProxmoxBackendError("matching durable worker reservation is required for down")
         active_probe = _active_probe_for_worker(reservation_db, vmid)
         if active_probe:
             raise ProxmoxBackendError(
                 f"worker down is blocked by {active_probe['state']} probe operation {active_probe['operation_id']}"
             )
+        identity, _ = _reservation_recovery_identity(held, scenario_id, host_id)
+        expected_nonce = identity["creation_nonce"]
+        if creation_nonce is not None and creation_nonce != expected_nonce:
+            raise ProxmoxBackendError("worker creation nonce does not match the durable reservation")
         # Reservation state alone is never authority to delete. Prove this is the exact
         # owned worker before advancing even a stale/partial lifecycle row to deleting.
-        self._assert_owned(vmid, scenario_id, host_id)
+        config = self._assert_owned(vmid, scenario_id, host_id)
+        if _description(config.get("description", "")).get("creation_nonce") != expected_nonce:
+            raise ProxmoxBackendError("worker creation nonce does not match the durable reservation")
         _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
                              vmid=vmid, state="deleting")
-        self._assert_owned(vmid, scenario_id, host_id)
+        config = self._assert_owned(vmid, scenario_id, host_id)
+        if _description(config.get("description", "")).get("creation_nonce") != expected_nonce:
+            raise ProxmoxBackendError("worker creation nonce changed before shutdown")
         compose_cleanup: dict[str, Any]
         try:
             compose_cleanup = self._guest_exec(
@@ -1044,7 +1331,20 @@ class ProxmoxBackend:
         except (PveError, ProxmoxBackendError) as exc:
             compose_cleanup = {"exitcode": 127, "stdout": "", "stderr": str(redact(str(exc))),
                                "cleanup_error": "guest Compose cleanup failed; continuing with owned VM shutdown"}
-        self._shutdown_and_destroy_owned(vmid, scenario_id, host_id)
+
+        def record_delete_task(upid: str) -> None:
+            _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                 vmid=vmid, state="deleting", delete_upid=upid,
+                                 delete_intent="pending")
+
+        def record_delete_intent() -> None:
+            _persist_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id,
+                                 vmid=vmid, state="deleting", delete_intent="pending")
+
+        self._shutdown_and_destroy_owned(vmid, scenario_id, host_id,
+                                         creation_nonce=expected_nonce,
+                                         on_delete_intent=record_delete_intent,
+                                         on_delete_task=record_delete_task)
         # Keep terminal operation IDs as durable tombstones so a late duplicate
         # start cannot reuse one after this worker is destroyed and recreated.
         _clear_reservation(reservation_db, scenario_id=scenario_id, host_id=host_id, vmid=vmid)
@@ -1083,17 +1383,67 @@ class ProxmoxBackend:
             raise ProxmoxBackendError("VM ownership description does not match backend identity")
         return config
 
-    def _destroy_owned(self, vmid: int, scenario_id: str, host_id: str) -> None:
-        self._assert_owned(vmid, scenario_id, host_id)
+    def _await_delete_task(self, response: Any, vmid: int,
+                           *, on_upid: Any | None = None) -> None:
+        payload = _data(response)
+        upid = payload if isinstance(payload, str) else payload.get("upid") if isinstance(payload, Mapping) else None
+        if not isinstance(upid, str) or not upid.startswith("UPID:"):
+            raise ProxmoxBackendError("PVE delete response has no task UPID; reservation retained")
+        if on_upid is not None:
+            on_upid(upid)
+        self._wait_exact_delete_upid(upid, vmid)
+
+    def _wait_exact_delete_upid(self, upid: str, vmid: int) -> None:
+        wait_exact = getattr(self.client, "wait_task_exact", None)
+        if not callable(wait_exact):
+            raise ProxmoxBackendError("PVE client cannot verify exact delete task; reservation retained")
+        terminal = _data(wait_exact(upid, task="qmdestroy", task_id=str(vmid)))
+        if (not isinstance(terminal, Mapping) or terminal.get("status") != "stopped"
+                or terminal.get("exitstatus") != "OK"):
+            raise ProxmoxBackendError("PVE delete task has no successful terminal proof; reservation retained")
+        self._verify_worker_absent(vmid)
+
+    def _verify_worker_absent(self, vmid: int) -> None:
+        pool = self._get("/api2/json/pools/cr-range")
+        if not isinstance(pool, Mapping) or vmid in _pool_vmids(pool.get("members", [])):
+            raise ProxmoxBackendError("worker is still in cr-range or pool absence is unknown")
+        try:
+            available = self._get("/api2/json/cluster/nextid", params={"vmid": vmid})
+        except (PveError, ProxmoxBackendError, TypeError, ValueError):
+            raise ProxmoxBackendError("PVE could not confirm the worker VMID is free") from None
+        if isinstance(available, int) and not isinstance(available, bool):
+            available_vmid = available
+        elif isinstance(available, str) and re.fullmatch(r"900[1-9]\d{2}", available):
+            available_vmid = int(available)
+        else:
+            raise ProxmoxBackendError("PVE returned an invalid free-VMID result")
+        if available_vmid != vmid:
+            raise ProxmoxBackendError("PVE does not confirm the worker VMID is free")
+
+    def _destroy_owned(self, vmid: int, scenario_id: str, host_id: str,
+                       *, creation_nonce: str,
+                       on_delete_intent: Any | None = None,
+                       on_delete_task: Any | None = None) -> None:
+        config = self._assert_owned(vmid, scenario_id, host_id)
+        if _description(config.get("description", "")).get("creation_nonce") != creation_nonce:
+            raise ProxmoxBackendError("worker creation nonce does not match the durable reservation")
         status = self._get(f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/current")
         if status.get("status") != "stopped":
             raise ProxmoxBackendError("refusing worker deletion until the owned VM is stopped")
+        if on_delete_intent is not None:
+            on_delete_intent()
         response = self.client.delete_owned_vmid(vmid, scenario_id=scenario_id, host_id=host_id,
-                                                 backend_instance=_BACKEND_INSTANCE)
-        self._await_operation(response)
+                                                 backend_instance=_BACKEND_INSTANCE,
+                                                 creation_nonce=creation_nonce)
+        self._await_delete_task(response, vmid, on_upid=on_delete_task)
 
-    def _shutdown_and_destroy_owned(self, vmid: int, scenario_id: str, host_id: str) -> None:
-        self._assert_owned(vmid, scenario_id, host_id)
+    def _shutdown_and_destroy_owned(self, vmid: int, scenario_id: str, host_id: str,
+                                    *, creation_nonce: str,
+                                    on_delete_intent: Any | None = None,
+                                    on_delete_task: Any | None = None) -> None:
+        config = self._assert_owned(vmid, scenario_id, host_id)
+        if _description(config.get("description", "")).get("creation_nonce") != creation_nonce:
+            raise ProxmoxBackendError("worker creation nonce does not match the durable reservation")
         status = self._get(f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/current")
         if status.get("status") == "running":
             self._owned_write("POST", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}/status/shutdown", {},
@@ -1101,7 +1451,9 @@ class ProxmoxBackend:
             self._wait_stopped(vmid)
         elif status.get("status") != "stopped":
             raise ProxmoxBackendError("worker state is not safe for deletion")
-        self._destroy_owned(vmid, scenario_id, host_id)
+        self._destroy_owned(vmid, scenario_id, host_id, creation_nonce=creation_nonce,
+                            on_delete_intent=on_delete_intent,
+                            on_delete_task=on_delete_task)
 
     def _wait_qga(self, vmid: int, scenario_id: str, host_id: str) -> None:
         deadline = time.monotonic() + self.settings.task_timeout

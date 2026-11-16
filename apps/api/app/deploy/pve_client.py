@@ -229,8 +229,14 @@ class PveClient:
         vmid, suffix = int(vm_match.group(1)), vm_match.group(2) or ""
         if vmid in PROTECTED_VMIDS or not _worker_vmid(vmid):
             raise PveError("write VMID is protected or outside the worker range")
-        if method == "DELETE" and not suffix and getattr(self, "_delete_proof", None) != vmid:
-            raise PveError("VM deletion requires fresh client-side ownership proof")
+        if method == "DELETE" and not suffix:
+            delete_proof = getattr(self, "_delete_proof", None)
+            owned_proof = (isinstance(delete_proof, tuple) and len(delete_proof) == 2
+                           and delete_proof[0] == vmid
+                           and isinstance(delete_proof[1], str)
+                           and re.fullmatch(r"[a-f0-9]{12}", delete_proof[1]))
+            if not owned_proof:
+                raise PveError("VM deletion requires fresh client-side ownership proof")
         if suffix == "config" and getattr(self, "_config_proof", None) != vmid:
             raise PveError("worker configuration requires fresh provisional-clone ownership proof")
         if suffix in {"status/start", "status/shutdown", "agent/exec", "agent/file-write", "snapshot", "snapshot/deployed/rollback"} and getattr(self, "_owner_proof", None) != vmid:
@@ -333,10 +339,12 @@ class PveClient:
         return result
 
     def delete_owned_vmid(self, vmid: int, *, scenario_id: str, host_id: str,
-                          backend_instance: str) -> Any:
+                          backend_instance: str, creation_nonce: str) -> Any:
         """Fresh pool, range, tag, and description proof immediately before delete."""
         if not _worker_vmid(vmid):
             raise PveError("delete VMID is outside the worker range")
+        if not isinstance(creation_nonce, str) or not re.fullmatch(r"[a-f0-9]{12}", creation_nonce):
+            raise PveError("delete requires the expected 12-character creation nonce")
         pool = self.request("GET", "/api2/json/pools/cr-range")
         members = _response_data(pool).get("members", [])
         if vmid not in _pool_vmids(members):
@@ -350,9 +358,10 @@ class PveClient:
         if (description.get("created_by") != "cyberrange" or description.get("scenario_id") != scenario_id
                 or description.get("host_id") != host_id or description.get("role") != "worker"
                 or description.get("template") != 900000
-                or description.get("backend_instance") != backend_instance):
+                or description.get("backend_instance") != backend_instance
+                or description.get("creation_nonce") != creation_nonce):
             raise PveError("delete refused: worker ownership description does not match")
-        self._delete_proof = vmid
+        self._delete_proof = (vmid, creation_nonce)
         try:
             return self.request("DELETE", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}", purpose="delete freshly verified owned worker")
         finally:
@@ -374,10 +383,12 @@ class PveClient:
             self._owner_proof = None
 
     def configure_creating_clone(self, vmid: int, *, pending_name: str,
-                                 source_metadata: Mapping[str, Any], data: Mapping[str, Any]) -> Any:
+                                 source_metadata: Mapping[str, Any], creation_nonce: str,
+                                 data: Mapping[str, Any]) -> Any:
         """Configure only the exact freshly cloned provisional VM."""
         if self.settings.mode == "live":
-            self._verify_provisional_clone(vmid, pending_name, source_metadata, absent_ok=False)
+            self._verify_provisional_clone(vmid, pending_name, source_metadata,
+                                           creation_nonce=creation_nonce, absent_ok=False)
         elif not _worker_vmid(vmid) or not re.fullmatch(r"cr-pending-[a-z0-9_-]{1,52}", pending_name):
             raise PveError("provisional clone identity is invalid")
         self._config_proof = vmid
@@ -388,19 +399,26 @@ class PveClient:
             self._config_proof = None
 
     def delete_creating_clone(self, vmid: int, *, pending_name: str,
-                              source_metadata: Mapping[str, Any]) -> Any:
+                              source_metadata: Mapping[str, Any], creation_nonce: str) -> Any:
         """Clean only the exact provisional clone whose inherited template metadata matches."""
-        if not self._verify_provisional_clone(vmid, pending_name, source_metadata, absent_ok=True):
+        if not self._verify_provisional_clone(vmid, pending_name, source_metadata,
+                                              creation_nonce=creation_nonce, absent_ok=True):
             return {"absent": True, "deleted": False}
-        self._delete_proof = vmid
+        self._delete_proof = (vmid, creation_nonce)
         try:
             return self.request("DELETE", f"/api2/json/nodes/pve4-bbf/qemu/{vmid}", purpose="cleanup exact provisional clone")
         finally:
             self._delete_proof = None
 
     def _verify_provisional_clone(self, vmid: int, pending_name: str,
-                                  source_metadata: Mapping[str, Any], *, absent_ok: bool) -> bool:
-        if not _worker_vmid(vmid) or not re.fullmatch(r"cr-pending-[a-z0-9_-]{1,52}", pending_name):
+                                  source_metadata: Mapping[str, Any], *, creation_nonce: str,
+                                  absent_ok: bool) -> bool:
+        pending_match = (re.fullmatch(r"cr-pending-[a-z0-9_-]{1,52}-([a-f0-9]{12})", pending_name)
+                         if isinstance(pending_name, str) else None)
+        if (not _worker_vmid(vmid) or not pending_match
+                or not isinstance(creation_nonce, str)
+                or not re.fullmatch(r"[a-f0-9]{12}", creation_nonce)
+                or pending_match.group(1) != creation_nonce):
             raise PveError("provisional clone identity is invalid")
         pool = self.request("GET", "/api2/json/pools/cr-range")
         if vmid not in _pool_vmids(_response_data(pool).get("members", [])):
@@ -453,6 +471,50 @@ class PveClient:
                 break
             time.sleep(min(self.settings.task_poll_interval, max(0.0, deadline - time.monotonic())))
         raise PveError("PVE asynchronous task exceeded configured bounds")
+
+    def wait_task_exact(self, upid: str, *, task: str, task_id: str) -> dict[str, Any]:
+        """Wait only for one exact PVE task and require an explicit successful terminal result."""
+        match = _UPID_RE.fullmatch(upid) if isinstance(upid, str) else None
+        if (not match or match.group("node") != self.settings.node
+                or match.group("task") != task or match.group("id") != task_id):
+            raise PveError("PVE task UPID does not match the expected node, operation, and VMID")
+        task_segment = urllib.parse.quote(upid, safe="")
+        task_path = f"/api2/json/nodes/{self.settings.node}/tasks/{task_segment}/status"
+        deadline = time.monotonic() + self.settings.task_timeout
+        for attempt in range(self.settings.max_task_polls):
+            result = self.request("GET", task_path, purpose="verify exact destructive task completion")
+            data = _response_data(result)
+            if not isinstance(data, Mapping):
+                raise PveError("PVE task response is not an object")
+            status = data.get("status")
+            if status == "stopped":
+                if data.get("exitstatus") != "OK":
+                    raise PveError("PVE destructive task lacks an explicit successful terminal status")
+                return result
+            if status != "running":
+                raise PveError("PVE destructive task status is unknown")
+            if attempt + 1 >= self.settings.max_task_polls or time.monotonic() >= deadline:
+                break
+            time.sleep(min(self.settings.task_poll_interval, max(0.0, deadline - time.monotonic())))
+        raise PveError("PVE asynchronous task exceeded configured bounds")
+
+    def task_status(self, upid: str) -> dict[str, str | None]:
+        """Read one exact task status for crash recovery; never infer a missing task succeeded."""
+        match = _UPID_RE.fullmatch(upid) if isinstance(upid, str) else None
+        if not match or match.group("node") != self.settings.node:
+            raise PveError("invalid PVE task identifier")
+        task_segment = urllib.parse.quote(upid, safe="")
+        task_path = f"/api2/json/nodes/{self.settings.node}/tasks/{task_segment}/status"
+        result = self.request("GET", task_path, purpose="verify persisted clone task before recovery")
+        data = _response_data(result)
+        if not isinstance(data, Mapping) or data.get("status") not in {"running", "stopped"}:
+            raise PveError("PVE clone task status is unknown")
+        status = str(data["status"])
+        exitstatus = data.get("exitstatus")
+        if status == "stopped" and not isinstance(exitstatus, str):
+            raise PveError("stopped PVE clone task has no terminal exit status")
+        return {"status": status, "exitstatus": exitstatus if isinstance(exitstatus, str) else None,
+                "task": match.group("task"), "id": match.group("id"), "node": match.group("node")}
 
 
 def _worker_vmid(value: Any) -> bool:
