@@ -45,7 +45,7 @@ Round 3 的 ImportPage、手機導覽與部署核准狀態 findings 已在候選
 | Instructor PDF 成功提示未翻譯 | PDF 擷取提示保存翻譯鍵與參數；真實 extract endpoint + Chromium 確認切換英文後同一提示更新為英文。 | 只執行 PDF extract，沒有分析。 |
 | Admin 英文部署狀態殘留中文 | Deploy 核准狀態改按固定後端 code 翻譯；未知訊息保留原文。stale 409 需 status 或 preflight 後續成功確認可部署，且沒有任一目前拒絕，才解除按鈕與隱藏錯誤。獨立只讀複審 APPROVE。 | 未呼叫部署 API；核准恢復只做純狀態檢查。 |
 
-修正報告：`reports/overnight/worker-reports/ui-import-draft-r3.md`、`reports/overnight/worker-reports/ui-nav-status-r3.md`。整合後候選的 `typecheck`、`i18n:check` 與 production build 通過；i18n 檢查為 1411 keys、0 hard-coded strings，另列 3 個既有無 literal reference 的 keys。Vite build 有一個大於 500 kB 的 chunk 警告。ImportPage 有真實瀏覽器局部檢查；Deploy gate 沒有呼叫 API，並經純狀態檢查及獨立只讀複審。這些結果只完成 UI findings 的聚焦驗證；完整 QA 仍須等分析服務憑證恢復。
+修正報告：`reports/overnight/worker-reports/ui-import-draft-r3.md`、`reports/overnight/worker-reports/ui-nav-status-r3.md`。整合後候選的 `typecheck`、`i18n:check` 與 production build 通過；i18n 檢查為 1411 keys、0 hard-coded strings，另列 3 個既有無 literal reference 的 keys。Vite build 有一個大於 500 kB 的 chunk 警告。ImportPage 有真實瀏覽器局部檢查；Deploy gate 沒有呼叫 API，並經純狀態檢查及獨立只讀複審。最新候選後端／單元回歸為 538 passed、2 warnings、160 subtests；未包含 local Compose integration 或 full E2E。這些結果只完成 UI findings 的聚焦驗證與程式回歸；完整 QA 仍須等分析服務憑證恢復。
 
 ## UI 專項：講師部署與連線資訊（Round 3c candidate；獨立於整體 QA）
 
