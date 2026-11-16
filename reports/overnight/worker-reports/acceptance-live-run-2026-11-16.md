@@ -117,3 +117,7 @@ Scanned 91 deployment records for the two acceptance scenarios and the five pers
 ### Candidate backend regression after Round 3 UI integration
 
 On candidate `agent/acceptance-lead` at `e338336`, reran `PYTHONPATH=apps/api /home/tyc4d/cr-project/.venv/bin/python -m pytest apps/api tests/unit -q --ignore=apps/api/app/deploy/test_local_compose_integration.py`. Result: **538 passed, 2 warnings, 160 subtests passed in 7.93s**. The two warnings are the existing `jsonschema.RefResolver` deprecation. This covers the API and unit regression set, not full browser E2E, live PVE acceptance, exploit probes, or Round 3 scoring. The local Compose integration module was excluded.
+
+### V2 address-source follow-up
+
+After the earlier PVE inventory, I checked the repo-root `.env` at the product owner's direction, outputting only the non-secret PVE URL/node/storage/bridge/pool settings. It contains the already-known management URL `https://192.168.16.214:8006` and no separate node-address list. No token, token secret, or API key values were printed or checked; no PVE request or address scan was made. V2 remains incomplete pending an authoritative complete address source. Details are in `worker-reports/acceptance-v2-env-address-followup.md`.
