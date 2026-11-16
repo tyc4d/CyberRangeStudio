@@ -1,54 +1,88 @@
 # CyberRange
 
-基於生成式 AI 的紅隊場景自動建置與驗證系統。一份情資報告 →（LLM）分析攻擊行為與引用 → 補齊缺失 → 編輯/確認攻擊流程 → 軟體依賴與拓樸規劃 →（人工核准）→ 生成 Docker Compose → 本機/區網隔離部署 → 無害驗證 → 三層忠實度報告。
+CyberRange builds and validates red-team training scenarios from threat intelligence with generative AI.
 
-誠實優先:區分「明文事實/推論/未知」(`epistemic_status`)、temporal 與 dependency 分開、三個驗證層級(env_build / behavior_repro / full_chain)不混淆、替身一定標明、**不跑真實 exploit**。
+The pipeline runs in these steps:
 
-## 架構
+1. Read one threat report.
+2. The LLM extracts the attack actions and the source quote for each action.
+3. The system fills missing facts.
+4. A person edits and approves the attack flow.
+5. The system plans the software dependencies and the network topology.
+6. A person approves the topology.
+7. The system generates a Docker Compose file.
+8. The system deploys the lab in isolation (local host or LAN segment).
+9. The system runs benign validation.
+10. The system writes a three-level fidelity report.
 
-- 後端 Python + FastAPI + SQLite(`apps/api`)。前端 React + TS + Vite(`apps/web`,RTSS studio 風)。
-- 共用契約 `packages/contracts/schemas`,中央結構 **Scenario IR** 串連八個模組。
-- 所有 OpenAI 呼叫經 `apps/api/app/llm` 預算管控(硬上限 $50,估到 $45 停新任務)。
-- 架構決策:`docs/decisions/0001-architecture.md`。本輪變更見 `docs/round2-report.md`。
+## Honesty rules
 
-## 啟動
+The system keeps these rules. They are the point of the project.
+
+- It separates stated fact, inference, and unknown in `epistemic_status`.
+- It keeps temporal order and dependency order as separate relations.
+- It keeps the three validation levels separate: `env_build`, `behavior_repro`, and `full_chain`.
+- It marks every substitute component.
+- It does not run a real exploit. Validation is benign only.
+
+## Architecture
+
+- The backend is Python, FastAPI, and SQLite, in `apps/api`.
+- The frontend is React, TypeScript, and Vite, in `apps/web`.
+- The shared contracts are in `packages/contracts/schemas`. The central structure is the Scenario IR. It links the eight modules.
+- Every OpenAI call goes through the budget manager in `apps/api/app/llm`. The hard cap is 50 US dollars. The manager stops new tasks at 45 US dollars.
+- The architecture decision is in `docs/decisions/0001-architecture.md`.
+
+## Inventory resolution
+
+Before the system asks a person for a version, it examines what it can deploy or obtain.
+
+- A named vulnerability maps to a deployable image when the catalogue has one. The pinned image is the vulnerable version, so the system does not ask for a version.
+- When the exact product has no image, the system proposes a substitute that reproduces the same CVE or technique. It marks the substitute and does not present it as the original product.
+- When the product is not reproducible and has no substitute, the system marks it not reproducible. It does not ask for a version it cannot use.
+- When a deployable product has a real version choice that changes the lab, the system still asks.
+
+## Start
 
 ```bash
-bash scripts/setup.sh                                   # 一次性:建 venv、裝依賴
-source .venv/bin/activate && set -a && . ./.env && set +a   # 需 .env 內 OPENAI_API_KEY
+bash scripts/setup.sh                                   # once: create the venv, install dependencies
+source .venv/bin/activate && set -a && . ./.env && set +a   # .env must hold OPENAI_API_KEY
 cd apps/api && CR_DATA_DIR=$PWD/data uvicorn app.main:app --host 127.0.0.1 --port 8077
-# 前端(另一個終端):
-cd apps/web && export PATH=$HOME/.nvm/versions/node/v22.23.3/bin:$PATH && npm install && npm run dev  # → :5174
+# frontend, in a second terminal:
+cd apps/web && export PATH=$HOME/.nvm/versions/node/v22.23.3/bin:$PATH && npm install && npm run dev  # -> :5174
 ```
-8000/8080 被其他專案占用,後端用 8077;前端 5173 被占用時自動退到 5174。
 
-## 示範(需 Docker)
+Other projects use ports 8000 and 8080, so the backend uses 8077. When port 5173 is in use, the frontend moves to 5174.
+
+## Demo (needs Docker)
 
 ```bash
-# 內建情資(會真的部署 nginx + postgres + alpine 三容器,再驗證、清理):
+# built-in intelligence (this really deploys three containers: nginx, postgres, alpine; then validates and cleans up):
 API=http://localhost:8077 bash scripts/e2e_demo.sh
-# 換成真實公開報告(CISA AA22-320A):
+# a real public report (CISA AA22-320A):
 REPORT=$PWD/fixtures/sample-scenarios/cisa-aa22-320a.md OUT=$PWD/docs/e2e-evidence-cisa \
   API=http://localhost:8077 bash scripts/e2e_demo.sh
 ```
-證據分別存在 `docs/e2e-evidence/` 與 `docs/e2e-evidence-cisa/`。
 
-### 部署暴露範圍(`POST /api/deploy/{id}/up`)
-- 預設 `{"test_approved":true}`:只綁 `127.0.0.1`,PostgreSQL 用 trust(純內網無密碼)。
-- 區網模式 `{"test_approved":true,"expose":"lan"}`:web 與 DB 對同網段開;回應給 `lan_host` 與一次性 `db_password`(scram-sha-256,不入 compose/git)。偵測不到 IP 時加 `"lan_host":"192.168.x.x"`。埠在 `report.host_port_mappings`(42000-42999)。
-- 兩種模式都需先通過**拓樸人工核准**(`POST /api/planning/{id}/topology/approve`)。
+The evidence goes to `docs/e2e-evidence/` and `docs/e2e-evidence-cisa/`.
 
-## 測試
+### Deployment exposure (`POST /api/deploy/{id}/up`)
+
+- The default is `{"test_approved":true}`. The system binds to `127.0.0.1` only. PostgreSQL uses trust (internal network, no password).
+- LAN mode is `{"test_approved":true,"expose":"lan"}`. The system opens the web service and the database to the same network segment. The response gives `lan_host` and a one-time `db_password` (scram-sha-256). The password does not go into the compose file or git. When the system cannot detect the IP, add `"lan_host":"192.168.x.x"`. The ports are in `report.host_port_mappings` (42000 to 42999).
+- Both modes need topology approval first (`POST /api/planning/{id}/topology/approve`).
+
+## Test
 
 ```bash
-source .venv/bin/activate && PYTHONPATH=apps/api python -m pytest apps/api tests -q   # 後端 39 passed
-cd apps/web && npm run e2e                                                            # 瀏覽器全流程 Playwright
+source .venv/bin/activate && PYTHONPATH=apps/api python -m pytest apps/api tests -q   # backend
+cd apps/web && npm run e2e                                                            # full flow in a browser (Playwright)
 ```
 
-## 八個模組與驗收
+## Eight modules and acceptance
 
-見 [`docs/progress.md`](docs/progress.md) 的狀態表與 [`docs/round2-report.md`](docs/round2-report.md) 的本輪驗收(真實服務、網路分段、驗證判定、真實報告、可重跑測試)。
+See the status table in [`docs/progress.md`](docs/progress.md). See the acceptance results in [`docs/round2-report.md`](docs/round2-report.md): real services, network segmentation, validation verdicts, real reports, and repeatable tests.
 
-## 團隊規則
+## Team rules
 
-人與 Agent 的分工見 [`AGENTS.md`](AGENTS.md)。`~/cr-research-m1`、`~/text2redteamscenario` 僅供唯讀參考,不視為正確結論。
+The work split for people and agents is in [`AGENTS.md`](AGENTS.md). Treat `~/cr-research-m1` and `~/text2redteamscenario` as read-only reference. They are not correct conclusions.

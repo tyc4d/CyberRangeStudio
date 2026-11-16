@@ -75,8 +75,17 @@ def test_missing_software_version_is_recorded_explicitly():
     del ir["target_context"]["hosts"][0]["services"][0]["version"]
     result = plan_dependencies(ir)
 
-    assert any(item.get("category") == "version" and item.get("field") == "version for nginx"
-               for item in result["missing_items"])
+    # Inventory feature: nginx resolves to a catalogue component with a pinned version, so the
+    # missing version is RECORDED (disclosed) but NOT raised as a blocking question to the user —
+    # the catalogue version is used and the basis is disclosed as assumed.
+    version_items = [item for item in result["missing_items"]
+                     if item.get("category") == "version" and "nginx" in str(item.get("field", "")).lower()]
+    assert version_items, "the missing nginx version must still be recorded explicitly"
+    # Catalogue-resolvable: never block the user with a question, and disclose the version used.
+    assert all(item.get("question") is None for item in version_items), \
+        "a catalogue-resolvable version must not block with a user question"
+    assert any("1.31.8" in str(item.get("reason", "")) for item in version_items), \
+        "the disclosure must state the catalogue version used"
 
 
 def test_user_service_is_mapped_without_losing_its_source_or_host_link():

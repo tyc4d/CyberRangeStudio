@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from typing import Any, Iterable
 
+from app.planner.inventory import resolve as resolve_inventory
+
 
 _UNKNOWN = {"unknown", "unspecified", "absent", "n/a", "none", "null"}
 _SUPPORTED_STATUSES = {"supported", "user_supplied"}
@@ -427,6 +429,23 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
         if not (matched_actions or related_hosts or matched_services or matched_assets):
             continue
 
+        # Inventory is authoritative for whether a version is a real, actionable
+        # ambiguity. A pinned CVE reproducer or a product with no deployable match
+        # makes a source-version question moot.
+        resolution_cves = list(dict.fromkeys(
+            str(cve) for subject in matched_services + linked_actions
+            for cve in (subject.get("cve") or []) if _present(cve)
+        ))
+        resolution_version = next((str(subject.get("version")) for subject in matched_services
+                                   if _present(subject.get("version"))), None)
+        resolution = resolve_inventory(product, resolution_version, resolution_cves)
+        # The product-specific legacy questions are also used for entities that
+        # have not yet passed through Module 2; resolve them directly so known
+        # unavailable products (for example Horizon) do not get moot questions.
+        if resolution.get("component_id") or resolution.get("tier") == "unavailable":
+            continue
+        inventory_question = resolution.get("question") if resolution.get("needs_question") else None
+
         related_subjects = related_hosts + matched_services + matched_assets
         matched_host_ids = {str(subject.get("id")) for subject in related_hosts}
         matched_service_ids = {str(subject.get("id")) for subject in matched_services}
@@ -469,7 +488,11 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
         if any(_supported(subject) and version_pattern.search(_text(subject)) for subject in related_subjects + linked_actions):
             continue
 
-        if product == "VMware Horizon":
+        if inventory_question:
+            question = str(inventory_question.get("text") or f"請確認 {product} 的可部署版本。")
+            suggestions = list(inventory_question.get("suggestions") or [])
+            anchor_terms = [product]
+        elif product == "VMware Horizon":
             question = "原文指出 VMware Horizon server，但未提供產品版號。靶場要重建哪個 Horizon 版本？請核對版本，不要由產品名稱猜測。"
             anchor_terms = ["VMware Horizon", "Horizon server"]
         elif product == "Apache Log4j":
@@ -493,7 +516,8 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
             question=question,
             affects=affects or [f"action:{action.get('id')} — {_name(action)}" for action in matched_actions],
             known=known,
-            suggestions=_suggestions_for(code, product + " " + " ".join(_text(x) for x in related_subjects + linked_actions), all_text),
+            suggestions=(suggestions if inventory_question else
+                         _suggestions_for(code, product + " " + " ".join(_text(x) for x in related_subjects + linked_actions), all_text)),
             evidence_refs=refs,
             anchor_terms=anchor_terms,
         )
@@ -531,6 +555,16 @@ def _generic_service_version_questions(ir: dict[str, Any], services: list[dict[s
                        if action.get("id") and name_key in _text(action).casefold() and str(action.get("id")) not in linked_ids]
         linked = [action for action in actions if str(action.get("id")) in linked_ids]
         cves = [str(cve) for cve in (service.get("cve") or [])]
+        resolution = resolve_inventory(name, service.get("version"), cves)
+        # Module 1 runs before dependency planning, so raw IR services have no
+        # inventory metadata yet. Resolve them directly: only ask when inventory
+        # identifies a real deployable version choice. An unavailable product's
+        # version is moot, whether or not a later module has annotated the service.
+        if resolution.get("component_id") or (
+                not resolution.get("needs_question")
+                and not (resolution.get("tier") == "unavailable" and cves)):
+            continue
+        inventory_question = resolution.get("question") if resolution.get("needs_question") else None
         # The release matters when the service is what gets exploited. A service that is merely
         # logged in to or switched off (RDP, an antivirus) is covered by its configuration question.
         exploited = any(
@@ -555,11 +589,13 @@ def _generic_service_version_questions(ir: dict[str, Any], services: list[dict[s
             field=f"{name} — 版本",
             category="version",
             reason=f"IR 指出 {name}{because}，但沒有可重現所需的確切版本。",
-            question=f"靶場要重建 {name} 的哪個版本？{'請選受 ' + ', '.join(cves) + ' 影響的版本；' if cves else ''}"
-                     "原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。",
+            question=(str(inventory_question.get("text")) if inventory_question else
+                      f"靶場要重建 {name} 的哪個版本？{'請選受 ' + ', '.join(cves) + ' 影響的版本；' if cves else ''}"
+                      "原文沒有寫的話，請從資產清單核對或明確選擇替代版本，不要由產品名稱猜測。"),
             affects=affects,
             known=known,
-            suggestions=["填入來源或資產清單記載的確切版本", "選用隔離靶場可取得的替代版本並標記為替代", "無法確認；保留為未知"],
+            suggestions=(list(inventory_question.get("suggestions") or []) if inventory_question else
+                         ["填入來源或資產清單記載的確切版本", "選用隔離靶場可取得的替代版本並標記為替代", "無法確認；保留為未知"]),
             evidence_refs=refs,
             anchor_terms=[name],
             target={"collection": "services", "id": service_id, "field": "version"},

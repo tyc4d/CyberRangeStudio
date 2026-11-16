@@ -99,3 +99,44 @@ def get_topology(scenario_id: str):
     if errors:
         raise HTTPException(status_code=409, detail={"message": "Stored topology is invalid", "errors": errors})
     return plan
+
+
+# --- Inventory read endpoints (module 4 pre-check / substitute transparency) ---
+# inv-gui frontend calls these. The POST override endpoint is a documented follow-up
+# (needs an IR schema field + inv-map/inv-missing to honour it); the panel degrades
+# gracefully (404 -> "unimplemented") until it exists.
+from app.planner import inventory as _inv  # noqa: E402
+
+
+def _inventory_items(ir: dict[str, Any]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for s in ir.get("services", []) or []:
+        if not isinstance(s, dict):
+            continue
+        cve = s.get("cve")
+        cves = [str(c) for c in cve] if isinstance(cve, list) else ([str(cve)] if cve else [])
+        tech = s.get("attack_technique")
+        items.append({"ref_kind": "service", "ref_id": s.get("id"), "name": s.get("name"),
+                      "version": s.get("version"), "cves": cves, "attack_technique": tech,
+                      "resolution": _inv.resolve(s.get("name"), s.get("version"), cves, tech),
+                      "auto_resolution": None, "override": s.get("inventory_override")})
+    for h in ir.get("hosts", []) or []:
+        if not isinstance(h, dict) or not h.get("os"):
+            continue
+        items.append({"ref_kind": "host", "ref_id": h.get("id"), "name": h.get("os"),
+                      "version": h.get("os_version"), "cves": [], "attack_technique": None,
+                      "resolution": _inv.resolve(h.get("os"), h.get("os_version"), None, None),
+                      "auto_resolution": None, "override": h.get("inventory_override")})
+    return items
+
+
+@router.get("/inventory")
+def get_inventory():
+    """Full inventory (have/obtainable/unavailable) for the 'use another component' picker."""
+    return {"entries": _inv.inventory_entries()}
+
+
+@router.get("/{scenario_id}/inventory")
+def get_scenario_inventory(scenario_id: str):
+    """Per-service/host inventory resolution for this scenario (substitute transparency)."""
+    return {"items": _inventory_items(_get_or_404(scenario_id))}

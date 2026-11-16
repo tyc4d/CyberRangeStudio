@@ -96,6 +96,62 @@ export function extractScenarioId(resp: any): string | null {
 
 const enc = encodeURIComponent;
 
+/* ---------- inventory (docs/inventory/DESIGN.md, Resolution contract). Route names: reports/inventory/requests/inv-gui.md ---------- */
+export type InventoryTier = "have" | "obtainable" | "unavailable";
+export type InventoryVersionBasis = "stated" | "assumed" | "substituted" | "user_supplied";
+/** Output of app.planner.inventory.resolve, as the backend decided it. The UI renders it; it never re-derives it. */
+export interface InventoryResolution {
+  tier: InventoryTier;
+  component_id: string | null;
+  is_substitute: boolean;
+  version_basis: InventoryVersionBasis;
+  reproduces_cve: string[];
+  substitute_of: string | null;
+  reason: string;
+  needs_question: boolean;
+  question?: { field: string; text: string; suggestions: string[] };
+}
+/** One row of app.planner.inventory.inventory_entries(). */
+export interface InventoryEntry {
+  id: string;
+  name?: string | null;
+  kind?: string;
+  runtime?: string | null;
+  version?: string | null;
+  tier: InventoryTier;
+  reproduces_cve: string[];
+  substitute_for?: { products: string[]; cves: string[]; techniques: string[] };
+  obtainability?: { source?: string; pullable?: boolean; est_cost_usd?: number | null; ref?: string; note?: string } | null;
+}
+/** What the user decided for one component. Stored by the backend on the scenario; absent = automatic resolution stands. */
+export interface InventoryOverride {
+  action: "accept" | "replace" | "version";
+  component_id?: string | null;
+  version?: string | null;
+  at?: string;
+}
+/** One extracted component of a scenario and how it resolved. `resolution` is the effective one (after any override). */
+export interface InventoryItem {
+  ref_kind: "service" | "host";
+  ref_id: string;
+  name: string;
+  version?: string | null;
+  cves?: string[];
+  attack_technique?: string | null;
+  resolution: InventoryResolution;
+  /** The automatic proposal, when an override changed it (so the UI can show what was replaced). */
+  auto_resolution?: InventoryResolution | null;
+  override?: InventoryOverride | null;
+}
+export interface InventoryOverrideRequest {
+  ref_id: string;
+  /** accept = keep the auto-proposed substitute (user confirmed); replace = use component_id; version = use `version` (user_supplied); clear = drop the override. */
+  action: "accept" | "replace" | "version" | "clear";
+  component_id?: string;
+  version?: string;
+}
+export interface ScenarioInventory { items: InventoryItem[] }
+
 export const api = {
   health: () => req<{ status: string }>("/api/health"),
   budget: () => req<Budget>("/api/budget"),
@@ -164,6 +220,15 @@ export const api = {
   /** Human approval gate: deploy/up answers 409 until the current topology is approved. Returns the updated environment_plan. */
   approveTopology: (id: string, note?: string) =>
     post<any>(`/api/planning/${enc(id)}/topology/approve`, { approved: true, approved_by: "user", ...(note ? { note } : {}) }),
+
+  // inventory: what the platform can stand up, and how each extracted component resolved against it
+  /** Every inventory entry with its tier (have / obtainable / unavailable). */
+  inventory: () => req<{ entries: InventoryEntry[] }>("/api/planning/inventory"),
+  /** Per-component resolution for this scenario (services and hosts), including any user override. */
+  scenarioInventory: (id: string) => req<ScenarioInventory>(`/api/planning/${enc(id)}/inventory`),
+  /** Accept / replace / version-supply / clear for one component. Returns the new items and, when the IR changed, the scenario. */
+  overrideInventory: (id: string, body: InventoryOverrideRequest) =>
+    post<ScenarioInventory & { scenario?: unknown }>(`/api/planning/${enc(id)}/inventory/override`, body),
 
   // module 6 IaC
   getIac: (id: string) => req<any>(`/api/iac/${enc(id)}`),

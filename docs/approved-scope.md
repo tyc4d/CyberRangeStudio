@@ -27,3 +27,10 @@
 - **探針一律實跑**：不論部署的是原產品還是替代品，驗證都要依「實際部署的服務」把對應的攻擊探針真的跑一遍；不再以假設或推論代替執行。（取代先前「不對替代靶標跑原產品探針」的做法。）報告如實寫明「在什麼上面實際測了什麼、結果如何」：同產品同漏洞＝該行為重現（版本為假設時註明）；跨產品替代＝在替代靶標上實測到該技術，不宣稱為原產品的重現。隔離守門仍須先通過。
 - **情資未寫 CVE 編號**：產品名稱與目錄中的漏洞產品相符、且原文寫明該產品弱點被利用時，提出該產品的漏洞練習映像供使用者確認；不自動套用，CVE 與版本標為假設。
 - **推定入口**：情資未寫對外主機時，依初始入侵步驟推定入口主機，標「推定入口・待確認」，核准前可改。
+
+## Inventory feature (owner-approved 2026-11-16)
+An **Inventory** concept: before analysis, check what OS/service versions are locally available or obtainable
+within budget; when the report names something unavailable, auto-propose a same-CVE/technique substitute
+(flagged, user-overridable) instead of blocking with version questions; keep genuine questions. Full scope
+(services + OS + tools). Design: `docs/inventory/DESIGN.md`. Built via Herdr workers on branch `agent/inventory`.
+Honesty rules unchanged (flag substitutes, epistemic_status/version_basis, never claim the original reproduced).

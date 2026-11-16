@@ -12,6 +12,7 @@ from app.cti.citations import evidence_record, grade_quote, strip_attack_tags
 from app.cti.missing import calculate_missing_items, is_communication_description
 from app.cti.parser import SourceUnit
 from app.llm.client import complete
+from app.planner.inventory import inventory_summary, resolve as resolve_inventory
 
 
 METHODS = {"single_pass", "staged", "staged_review"}
@@ -700,6 +701,7 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
     if review:
         rules += " Keep valid draft claims, remove unsupported factual detail only by marking it insufficient and retaining its evidence. Return the corrected full analysis object."
     user_payload: dict[str, Any] = {"task": task, "rules": rules, "source_units": source_payload}
+    user_payload["inventory_availability"] = inventory_summary()
     if extracted is not None:
         user_payload["extracted_facts"] = extracted
     if draft is not None:
@@ -1007,14 +1009,30 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
         service["epistemic_status"] = settle_status(item, _refs)
         services.append(service)
 
-    # A CVE the source names in the same sentence as a recorded product belongs to that product.
-    sentences = [sentence for unit in units for sentence in re.split(r"(?<=[.!?])\s+|\n+", unit.text)]
+    # Propagate only CVEs found in evidence cited by this service. A CVE elsewhere in
+    # the report, or a catalogue mapping, is not evidence that this product is affected.
+    evidence_by_id = {str(item.get("id")): item for item in evidence if isinstance(item, dict)}
+    unit_by_id = {(unit.get("id") if isinstance(unit, dict) else unit.id):
+                  (unit.get("text", "") if isinstance(unit, dict) else unit.text) for unit in units}
     for service in services:
-        service_name = str(service.get("name") or "").casefold().strip()
-        if len(service_name) < 4:
-            continue
-        found = [re.sub(r"\s+", "", match).upper() for sentence in sentences if service_name in sentence.casefold()
-                 for match in _CVE_RE.findall(sentence)]
+        cited_quotes = [str(evidence_by_id[str(ref)].get("quote") or "")
+                        for ref in service.get("evidence_refs", []) or []
+                        if str(ref) in evidence_by_id]
+        cited_locators = {str(evidence_by_id[str(ref)].get("locator") or "")
+                          for ref in service.get("evidence_refs", []) or []
+                          if str(ref) in evidence_by_id}
+        service_name = str(service.get("name") or "").casefold()
+        cited_locator_keys = {json.dumps(evidence_by_id[str(ref)].get("locator"), sort_keys=True)
+                              for ref in service.get("evidence_refs", []) or [] if str(ref) in evidence_by_id}
+        relevant_text = list(cited_quotes)
+        relevant_text.extend(sentence for unit in units
+                              if json.dumps(unit.get("locator") if isinstance(unit, dict) else unit.locator,
+                                            sort_keys=True) in cited_locator_keys
+                              for sentence in re.split(r"(?<=[.!?])\s+|\n+",
+                                                        unit.get("text", "") if isinstance(unit, dict) else unit.text)
+                              if service_name and service_name in sentence.casefold())
+        found = [re.sub(r"\s+", "", match).upper()
+                 for quote in relevant_text for match in _CVE_RE.findall(quote)]
         merged = list(dict.fromkeys([*service.get("cve", []), *found]))
         if merged != service.get("cve", []):
             service["cve"] = merged
