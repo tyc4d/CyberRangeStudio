@@ -622,6 +622,10 @@ def _collect_candidates(ir: dict[str, Any], hosts: dict[str, dict[str, Any]]) ->
         else:
             target["cve"] = list(dict.fromkeys([*target.get("cve", []), *candidate.get("cve", [])]))
             target["port"] = target.get("port") or candidate.get("port")
+            if candidate.get("matched_text"):
+                prior = target.get("matched_text")
+                prior_values = prior if isinstance(prior, list) else ([prior] if prior else [])
+                target["matched_text"] = list(dict.fromkeys([*prior_values, candidate["matched_text"]]))
             if candidate.get("from_supplement"):
                 target.setdefault("from_supplement", candidate["from_supplement"])
                 if candidate.get("lab_version"):
@@ -645,7 +649,10 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         else:
             for key, value in existing_host.items():
                 if key != "id":
-                    hosts[hid].setdefault(key, copy.deepcopy(value))
+                    if key == "role" and hosts[hid].get(key) in {None, "", "target"}:
+                        hosts[hid][key] = copy.deepcopy(value)
+                    else:
+                        hosts[hid].setdefault(key, copy.deepcopy(value))
     _infer_action_host_refs(actions, hosts)
     candidates = _collect_candidates(result, hosts)
     # Preserve role/vulnerability mentions as matching evidence without turning them
@@ -654,7 +661,7 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
     for action in actions:
         text = " ".join(str(action.get(key, "")) for key in ("name", "description"))
         for phrase in ("Log4Shell", "domain controller"):
-            if _mentions(text, phrase):
+            if _mentions(text, phrase) or phrase.casefold() in text.casefold():
                 role_mentions.setdefault(str(action.get("target_host_ref") or ""), []).append(phrase)
     for host_ref, phrases in role_mentions.items():
         target_service = next((service for service in result.get("services", []) or []
@@ -663,15 +670,16 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             prior = target_service.get("matched_text")
             prior = ", ".join(prior) if isinstance(prior, list) else str(prior or "")
             target_service["matched_text"] = ", ".join(dict.fromkeys([part for part in [prior, *phrases] if part]))
-    # If an attack action names only the vulnerability nickname, retain the affected
-    # software name (Log4j) with the nickname as evidence. This does not assert a CVE.
-    for host_ref, phrases in role_mentions.items():
-        if "Log4Shell" not in phrases and not any(s.get("host_ref") == host_ref for s in result.get("services", []) or []):
-            continue
-        if not any(s.get("host_ref") == host_ref for s in result.get("services", []) or []) and "Log4Shell" in phrases:
-            result.setdefault("services", []).append({"id": f"svc-log4j-{_slug(host_ref)}", "name": "Log4j",
-                "host_ref": host_ref, "matched_text": ["Log4Shell"], "source": "program",
-                "epistemic_status": "inferred", "cve": []})
+        if target_service is None and "domain controller" in phrases and not any(
+                service.get("host_ref") == host_ref and service.get("catalogue_component") == "unsupported-ad-ds"
+                for service in result.get("services", []) or []):
+            result.setdefault("services", []).append({"id": f"svc-unsupported-ad-ds-{_slug(host_ref)}",
+                "name": "Active Directory", "matched_text": "domain controller", "host_ref": host_ref,
+                "catalogue_component": "unsupported-ad-ds", "is_substitute": False,
+                "tier": "unavailable", "not_reproducible": True,
+                "not_reproducible_reason": "Active Directory Domain Services is unavailable in this runtime.",
+                "version_basis": "assumed", "reproduces_cve": [],
+                "epistemic_status": "inferred", "source": "program"})
     for host in hosts.values():
         role = str(host.get("role") or "")
         if any(term in role.casefold() for term in ("horizon", "active directory", "domain controller")):
@@ -953,7 +961,39 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if _is_attacker_role(role):
             continue
         host_refs = set(host.get("service_refs", [])) | set(generated_host_refs.get(hid, []))
-        if any(service.get("id") in host_refs or service.get("host_ref") == hid for service in services):
+        if any((service.get("id") in host_refs or service.get("host_ref") == hid)
+               and service.get("catalogue_component")
+               and not str(service.get("catalogue_component")).startswith("unsupported-")
+               for service in services):
+            continue
+        # Known unsupported external platforms still need a service record so the
+        # topology builder can use the catalogue runtime (external_platform).
+        resolution = resolve_inventory(role)
+        role_component, _ = _match_component(role)
+        unsupported = next((entry for entry in load_components()
+                           if entry.get("id", "").startswith("unsupported-")
+                           and entry.get("tier") == "unavailable"
+                           and (resolution.get("component_id") == entry.get("id")
+                                or (role_component or {}).get("id") == entry.get("id")
+                                or (role_component or {}).get("runtime") == "external_platform"
+                                   and role_component.get("id") == entry.get("id")
+                                or any(_mentions(role, alias) or role.casefold().startswith(str(alias).casefold() + " ")
+                                       for alias in entry.get("aliases", [])))), None)
+        if unsupported:
+            service_id = f"svc-{unsupported['id']}-{hid}"
+            original_phrase = next((phrase for phrase in role_mentions.get(hid, [])
+                                    if phrase.casefold() in {"domain controller", "log4shell"}), None)
+            service_name = "Active Directory" if unsupported["id"] == "unsupported-ad-ds" else role
+            if original_phrase == "Log4Shell":
+                service_name = "Log4j"
+            services.append({"id": service_id, "name": service_name, "matched_text": original_phrase or role,
+                             "host_ref": hid,
+                             "catalogue_component": unsupported["id"], "is_substitute": False,
+                             "tier": "unavailable", "not_reproducible": True,
+                             "not_reproducible_reason": resolution.get("reason") or unsupported.get("fidelity"),
+                             "version_basis": "assumed", "reproduces_cve": [],
+                             "epistemic_status": "inferred", "source": "program"})
+            generated_host_refs.setdefault(hid, []).append(service_id)
             continue
         matched = [component for component in load_components()
                    if component.get("id") != "oss-attacker"
@@ -1046,16 +1086,6 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
             portless[0].setdefault("field_sources", {})["port"] = "source_quote"
 
     # Keep user-defined hosts intact; remove only links to module-4 generated services from the prior run.
-    for host_ref, phrases in role_mentions.items():
-        if "Log4Shell" in phrases and not any(service.get("host_ref") == host_ref for service in services):
-            service_id = f"svc-log4j-{_slug(host_ref)}"
-            services.append({"id": service_id, "name": "Log4j", "host_ref": host_ref,
-                             "matched_text": "Log4Shell", "source": "program", "epistemic_status": "inferred",
-                             "cve": [], "no_component": True, "is_substitute": False,
-                             "tier": "unavailable", "version_basis": "assumed", "reproduces_cve": [],
-                             "not_reproducible": True,
-                             "not_reproducible_reason": "Log4Shell is a vulnerability nickname, not a software product."})
-            generated_host_refs.setdefault(host_ref, []).append(service_id)
     old_hosts = result.get("hosts", [])
     by_id: dict[str, dict[str, Any]] = {host.get("id"): copy.deepcopy(host) for host in old_hosts if host.get("id")}
     old_generated_ids = {item.get("id") for item in result.get("services", []) if item.get("source") == "program"}
@@ -1083,6 +1113,27 @@ def plan_dependencies(ir: dict[str, Any]) -> dict[str, Any]:
         if original.get("id") not in present:
             services.append(copy.deepcopy(original))
             present.add(original.get("id"))
+    # Reinsert this run's explicit unsupported platform records and nickname-resolved
+    # Log4j records after the general stale planner-output cleanup.
+    for host_ref, phrases in role_mentions.items():
+        if "Log4Shell" in phrases and not any(service.get("host_ref") == host_ref for service in services):
+            service_id = f"svc-log4j-{_slug(host_ref)}"
+            service = {"id": service_id, "name": "Log4j", "host_ref": host_ref,
+                       "matched_text": "Log4Shell", "source": "program", "epistemic_status": "inferred",
+                       "cve": [], "no_component": True, "is_substitute": False, "tier": "unavailable",
+                       "version_basis": "assumed", "reproduces_cve": [], "not_reproducible": True,
+                       "not_reproducible_reason": "Log4Shell is a vulnerability nickname, not a software product."}
+            services.append(service)
+            generated_host_refs.setdefault(host_ref, []).append(service_id)
+        if "domain controller" in phrases and not any(service.get("host_ref") == host_ref for service in services):
+            service_id = f"svc-unsupported-ad-ds-{_slug(host_ref)}"
+            services.append({"id": service_id, "name": "Active Directory", "host_ref": host_ref,
+                             "matched_text": "domain controller", "catalogue_component": "unsupported-ad-ds",
+                             "source": "program", "epistemic_status": "inferred", "is_substitute": False,
+                             "tier": "unavailable", "not_reproducible": True,
+                             "not_reproducible_reason": "Active Directory Domain Services is unavailable in this runtime.",
+                             "version_basis": "assumed", "reproduces_cve": []})
+            generated_host_refs.setdefault(host_ref, []).append(service_id)
     # One host is one image. When its services map to different catalogue components only one
     # can be deployed there; say which, and raise it here rather than letting IaC fail later.
     by_host: dict[str, list[dict[str, Any]]] = {}
