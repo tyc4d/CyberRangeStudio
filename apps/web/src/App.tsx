@@ -93,8 +93,27 @@ function Topbar() {
 }
 
 function StageStrip() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { ir, runtime } = useScenario();
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    const nav = document.querySelector<HTMLElement>(".stages");
+    if (!nav) return;
+    const revealActive = () => {
+      const active = nav.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      if (!active) return;
+      const navRect = nav.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      if (activeRect.left < navRect.left || activeRect.right > navRect.right) {
+        nav.scrollTo({ left: active.offsetLeft - nav.offsetLeft, behavior: "instant" });
+      }
+    };
+    revealActive();
+    window.addEventListener("resize", revealActive);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(revealActive);
+    observer?.observe(nav);
+    return () => { window.removeEventListener("resize", revealActive); observer?.disconnect(); };
+  }, [pathname, locale]);
   return (
     <nav className="stages" aria-label={t("shell.workflow")}>
       {STAGES.map((s, i) => {

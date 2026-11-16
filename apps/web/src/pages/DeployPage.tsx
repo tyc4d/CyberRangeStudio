@@ -56,6 +56,14 @@ function ContainerTable({ containers, roleOf }: { containers: any[]; roleOf: (sv
  *  Show the cause once, keep the rest folded, so the current status below stays in view. Other errors use the generic notice. */
 function CommandFailure({ error, what }: { error: ApiError | null; what: string }) {
   const d = error?.data as any;
+  if (d && typeof d === "object" && d.code === "approval_stale") {
+    return (
+      <Notice kind="err" title={t("dp.approval.staleRejected")}>
+        <p style={{ margin: 0 }}>{t("dp.approval.staleRejectedBody")}</p>
+        <Link to="/topology"><button className="primary small">{t("dp.n.toTopology")}</button></Link>
+      </Notice>
+    );
+  }
   const cmd = d && typeof d === "object" && !Array.isArray(d) ? d.command_result ?? (typeof d.returncode === "number" ? d : null) : null;
   if (!error || !cmd) return <ApiNotice error={error} what={what} />;
   const stderr = String(cmd.stderr ?? d.error ?? "").trim();
@@ -86,6 +94,38 @@ function recordOutput(d: any): string | undefined {
   if (!d || typeof d !== "object") return undefined;
   const parts = [["stderr", d.stderr], ["stdout", d.stdout]].filter(([, v]) => typeof v === "string" && v.trim()).map(([k, v]) => `[${k}]\n${String(v).trim()}`);
   return parts.length ? parts.join("\n\n") : undefined;
+}
+
+// These codes come from topology_approval_state. Translate only known system verdicts;
+// unknown messages (including user notes and source text) remain unchanged.
+const APPROVAL_MESSAGE: Record<string, MsgKey> = {
+  no_plan: "dp.approval.noPlan",
+  not_approved: "dp.approval.notApproved",
+  approval_metadata_invalid: "dp.approval.metadataInvalid",
+  scenario_changed: "dp.approval.scenarioChanged",
+  topology_changed: "dp.approval.topologyChanged",
+  approved: "dp.approval.approved",
+};
+type ApprovalGateState = { code?: unknown; approved?: unknown; deployable?: unknown; message?: unknown; versioned?: unknown };
+function currentApprovalGate(statusApproval: unknown, preflightApproval: unknown) {
+  const states = [statusApproval, preflightApproval].filter((value): value is ApprovalGateState => !!value && typeof value === "object" && !Array.isArray(value));
+  const refusal = states.find((state) => state.deployable === false);
+  return { states, refusal };
+}
+function approvalReadConfirmsDeployable(read: { data: unknown; error: unknown; loading: boolean }): boolean {
+  if (read.error || read.loading || !read.data || typeof read.data !== "object") return false;
+  const approval = (read.data as any).approval;
+  return !!approval && typeof approval === "object" && approval.deployable === true;
+}
+function staleApproval409Blocks(errorCode: unknown, statusRead: { data: unknown; error: unknown; loading: boolean }, preflightRead: { data: unknown; error: unknown; loading: boolean }): boolean {
+  return errorCode === "approval_stale" && !approvalReadConfirmsDeployable(statusRead) && !approvalReadConfirmsDeployable(preflightRead);
+}
+function approvalMessage(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const state = value as { code?: unknown; message?: unknown; versioned?: unknown };
+  if (state.code === "approved" && state.versioned === false) return t("dp.approval.approvedLegacy");
+  const key = typeof state.code === "string" ? APPROVAL_MESSAGE[state.code] : undefined;
+  return key ? t(key) : typeof state.message === "string" ? state.message : undefined;
 }
 const REASON: Record<string, string> = live(() => ({
   "topology not approved": t("dp.r.notApproved"),
@@ -149,7 +189,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
   }, [pollable, status.reload, health.reload]);
   useEffect(() => { if (status.data && !status.loading) setLastAt(new Date()); }, [status.data, status.loading]);
 
-  const after = async () => { await Promise.all([status.reload(true), preflight.reload(true), health.reload(true), records.reload(true)]); void reloadIr(); };
+  const after = async () => { await Promise.all([status.reload(), preflight.reload(), health.reload(true), records.reload(true)]); void reloadIr(); };
   // Refresh even when the action fails: a refused or failed attempt is still written to the audit trail.
   const up = useAction(async () => { try { await api.deployUp(ir.id); } finally { await after(); } });
   const down = useAction(async () => { try { await api.deployDown(ir.id); } finally { await after(); } });
@@ -163,12 +203,24 @@ function Body({ ir }: { ir: ScenarioIR }) {
 
   const s = status.data;
   const pf = preflight.data && typeof preflight.data === "object" ? preflight.data : null;
+  const statusApproval = s && typeof s === "object" && !Array.isArray(s) ? (s as any).approval : undefined;
+  const preflightApproval = preflight.data && typeof preflight.data === "object" ? (preflight.data as any).approval : undefined;
+  const { refusal: approvalRefusal } = currentApprovalGate(statusApproval, preflightApproval);
+  const refusalCode = typeof approvalRefusal?.code === "string" ? approvalRefusal.code : undefined;
+  const staleApprovalState = approvalRefusal && refusalCode !== "no_plan" && refusalCode !== "not_approved" ? approvalRefusal : undefined;
+  const authoritativeApproval = approvalRefusal ?? statusApproval ?? preflightApproval;
+  const approvalBackendRefused = !!approvalRefusal;
   const backend = s && typeof s === "object" ? s.backend : pf?.backend;
   const isProxmox = backend === "proxmox" || pf?.backend === "proxmox";
   // Proxmox only: a preflight that loaded (no request error) and explicitly reports not-ready. A failed or pending request
   // is NOT a confirmed refusal and must not be shown as one; the backend still re-checks capacity on "up".
   const pveUnavailable = isProxmox && !!pf && !preflight.error ? pveBlockReason(pf) : undefined;
-  const upBlock = !approved ? t("dp.block.approve") : iacMissing ? t("dp.block.files") : iacBlocked ? t("dp.block.check")
+  const preventiveStaleCopy = t("dp.approval.stalePreventive");
+  const staleApprovalRejected = (up.error?.data as any)?.code === "approval_stale";
+  const stale409Recovered = staleApprovalRejected && !approvalBackendRefused && !staleApproval409Blocks("approval_stale", status, preflight);
+  const upBlock = staleApprovalRejected && !stale409Recovered ? preventiveStaleCopy : approvalBackendRefused
+    ? staleApprovalState ? preventiveStaleCopy : t("dp.block.approve")
+    : !approved ? t("dp.block.approve") : iacMissing ? t("dp.block.files") : iacBlocked ? t("dp.block.check")
     : pveUnavailable ? t("dp.block.runtime", { reason: pveUnavailable.label }) : undefined;
   const stateRaw = s && typeof s === "object" ? s.state ?? s.status : typeof s === "string" ? s : undefined;
   const state = typeof stateRaw === "string" ? stateRaw : undefined;
@@ -178,6 +230,10 @@ function Body({ ir }: { ir: ScenarioIR }) {
   const rest = s && typeof s === "object" && !Array.isArray(s)
     ? Object.fromEntries(Object.entries(s).filter(([k]) => !["state", "status", "containers", "services", "backend", "placement"].includes(k)))
     : null;
+  if (rest?.approval && typeof rest.approval === "object") {
+    const translated = approvalMessage(rest.approval);
+    if (translated) rest.approval = { ...rest.approval, message: translated };
+  }
   // The status endpoint answers state=error with this text when no compose file exists. That is "nothing to deploy yet", not a fault.
   const noCompose = (v: any) => !!v && typeof v === "object" && v.error === "compose file has not been generated" && !(Array.isArray(v.containers) && v.containers.length);
   const ACTION: Record<string, string> = { up: t("dp.act.up"), down: t("dp.act.down") };
@@ -200,8 +256,13 @@ function Body({ ir }: { ir: ScenarioIR }) {
         <button className="danger" disabled={busy || !!downBlock} title={downBlock} onClick={() => { if (window.confirm(t("dp.confirmDown"))) void down.run(); }}>{t("dp.act.down")}</button>
       </PageHead>
 
-      {!approved && (
-        <Notice kind="warn" title={ir.environment_plan ? t("dp.n.notApproved") : t("dp.n.noPlan")}
+      {staleApprovalState && (!staleApprovalRejected || stale409Recovered) && (
+        <Notice kind="warn" title={preventiveStaleCopy} action={<Link to="/topology"><button className="primary small">{t("dp.n.toTopology")}</button></Link>}>
+          {approvalMessage(authoritativeApproval) ?? t("dp.approval.stalePreventiveBody")}
+        </Notice>
+      )}
+      {(refusalCode === "no_plan" || refusalCode === "not_approved" || (!approved && !approvalBackendRefused)) && (
+        <Notice kind="warn" title={refusalCode === "no_plan" || (!ir.environment_plan && !approvalBackendRefused) ? t("dp.n.noPlan") : t("dp.n.notApproved")}
           action={<Link to="/topology"><button className="primary small">{t("dp.n.toTopology")}</button></Link>}>
           {t("dp.n.approveBody")}
         </Notice>
@@ -234,7 +295,7 @@ function Body({ ir }: { ir: ScenarioIR }) {
       )}
       {up.busy && <div className="card"><Busy label={t("dp.busyUp")} elapsed={up.elapsed} /></div>}
       {down.busy && <div className="card"><Busy label={t("dp.busyDown")} elapsed={down.elapsed} /></div>}
-      <CommandFailure error={up.error} what={t("dp.upWhat")} />
+      {up.error && !(staleApprovalRejected && stale409Recovered) && <CommandFailure error={up.error} what={t("dp.upWhat")} />}
       <CommandFailure error={down.error} what={t("dp.downWhat")} />
       {status.error && <ApiNotice error={status.error} what={t("dp.statusWhat")} onRetry={() => status.reload()} />}
 
