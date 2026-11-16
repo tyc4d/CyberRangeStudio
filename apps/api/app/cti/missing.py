@@ -439,6 +439,9 @@ def _software_version_questions(ir: dict[str, Any], hosts: list[dict[str, Any]],
         resolution_version = next((str(subject.get("version")) for subject in matched_services
                                    if _present(subject.get("version"))), None)
         resolution = resolve_inventory(product, resolution_version, resolution_cves)
+        # The product-specific legacy questions are also used for entities that
+        # have not yet passed through Module 2; resolve them directly so known
+        # unavailable products (for example Horizon) do not get moot questions.
         if resolution.get("component_id") or resolution.get("tier") == "unavailable":
             continue
         inventory_question = resolution.get("question") if resolution.get("needs_question") else None
@@ -553,7 +556,13 @@ def _generic_service_version_questions(ir: dict[str, Any], services: list[dict[s
         linked = [action for action in actions if str(action.get("id")) in linked_ids]
         cves = [str(cve) for cve in (service.get("cve") or [])]
         resolution = resolve_inventory(name, service.get("version"), cves)
-        if resolution.get("component_id") or resolution.get("tier") == "unavailable":
+        # Preserve write-back questions for raw IR services. Module 2 may have
+        # already resolved these; only suppress when that resolution is carried
+        # on the service or is directly deployable. This keeps the stable
+        # missing-service-<id>-version target for answers from the UI.
+        has_inventory_resolution = any(key in service for key in
+                                       ("inventory_resolution", "inventory_tier", "version_basis"))
+        if resolution.get("component_id") or (has_inventory_resolution and resolution.get("tier") == "unavailable"):
             continue
         inventory_question = resolution.get("question") if resolution.get("needs_question") else None
         # The release matters when the service is what gets exploited. A service that is merely
