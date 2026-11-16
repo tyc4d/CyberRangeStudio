@@ -33,6 +33,20 @@
 
 產品修正後，需在本機更新有效分析服務憑證、重啟候選 API，重新跑成功分析的完整情境流程，才可開始有效評分。整體驗收仍要求連續兩輪總分／Instructor／Administrator ≥90 且無未解 High/Critical。
 
+### Round 3 UI finding follow-up（不構成新一輪 QA）
+
+Round 3 的 ImportPage、手機導覽與部署核准狀態 findings 已在候選 `agent/acceptance-lead` 修正，並整合為 `13589ab`、`d4ab84f`。這些是針對 findings 的修正與聚焦檢查，沒有重跑成功分析或完整 QA，因此 Round 3 仍為 BLOCKED，沒有新增有效分數。
+
+| Finding | 修正與驗證 | 限制 |
+|---|---|---|
+| UX-01 認證錯誤只建議重試 | 只辨識已觀察到的 502／上游 401／AuthenticationError／API key expired 組合；用中英文說明請管理員更新憑證，再重新分析。折疊診斷不顯示任意錯誤細節或金鑰。 | 未更新憑證，也未重送分析。 |
+| UX-02 導覽返回遺失草稿 | ImportPage 草稿在 SPA 頁面切換後保留；「新增情境」會清空舊草稿；成功分析後清除。真實瀏覽器確認返回保留草稿、新增情境清空。 | 草稿存在頁面工作階段記憶體；重新整理或關閉分頁不保證保留。 |
+| UX-03 手機深連結目前步驟在導覽視窗外 | 路由、語言或視窗尺寸變更後，水平步驟導覽會把目前步驟捲入可見範圍；390px 手機直接連結及站內導覽檢查通過。 | 未重跑所有五種尺寸與十頁矩陣。 |
+| Instructor PDF 成功提示未翻譯 | PDF 擷取提示保存翻譯鍵與參數；真實 extract endpoint + Chromium 確認切換英文後同一提示更新為英文。 | 只執行 PDF extract，沒有分析。 |
+| Admin 英文部署狀態殘留中文 | Deploy 核准狀態改按固定後端 code 翻譯；未知訊息保留原文。stale 409 需 status 或 preflight 後續成功確認可部署，且沒有任一目前拒絕，才解除按鈕與隱藏錯誤。獨立只讀複審 APPROVE。 | 未呼叫部署 API；核准恢復只做純狀態檢查。 |
+
+修正報告：`reports/overnight/worker-reports/ui-import-draft-r3.md`、`reports/overnight/worker-reports/ui-nav-status-r3.md`。整合後候選的 `typecheck`、`i18n:check` 與 production build 通過；i18n 檢查為 1411 keys、0 hard-coded strings，另列 3 個既有無 literal reference 的 keys。Vite build 有一個大於 500 kB 的 chunk 警告。ImportPage 有真實瀏覽器局部檢查；Deploy gate 沒有呼叫 API，並經純狀態檢查及獨立只讀複審。這些結果只完成 UI findings 的聚焦驗證；完整 QA 仍須等分析服務憑證恢復。
+
 ## UI 專項：講師部署與連線資訊（Round 3c candidate；獨立於整體 QA）
 
 目標：本 UI 專項至少 70/100。版本：`agent/acceptance-lead` 的未發布候選；三位評分者使用真實介面及情境 `scn_fa2301161837`，以 zh-TW/en、1440px 桌面與 390px 手機盲測。所有 API 請求均為 GET；沒有部署、清除、探針或 PVE 寫入。
