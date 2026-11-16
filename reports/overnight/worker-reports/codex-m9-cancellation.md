@@ -4,12 +4,15 @@ Implemented a per-probe operation ID and a durable start/cancel fence in the sha
 
 Follow-up race correction: each worker reservation has a generation ID. Successful deployment records carry that ID, and a POC job captures its worker identity before running actions. The PVE launch reservation must match the job's VMID, host, and generation, so a delayed job cannot attach to a replacement worker even when PVE reuses the same VMID. A `reserved` ledger row is committed before the operation is attached to the job and blocks `down`/`reset`; cancellation scans that ledger to reconcile a process crash in the attachment gap. Jobs in `error` with an unresolved operation remain eligible for cancellation.
 
+Migration follow-up: ledgers created before job IDs were persisted can still have `job_id=NULL`. Cancellation now binds such a row only under the shared placement lock and only when operation ID, scenario, host, VMID, service, target, and generation all match. It conditionally updates the null field, rereads the committed row, then proceeds with cancel; mismatched rows remain unbound and fail closed.
+
 Validation:
 
-- Focused runner/backend suite: 79 passed, 2 existing `jsonschema.RefResolver` deprecation warnings.
+- Focused runner/backend suite: 81 passed, 2 existing `jsonschema.RefResolver` deprecation warnings.
 - `py_compile` on all changed Python files: passed.
 - `git diff --check`: passed.
 - Deterministic regression: a reserved operation blocks `down`/`reset`; after a simulated same-VMID redeploy with a new generation, the old pinned start is rejected before QGA.
+- Deterministic regressions: an exact legacy row with a null job ID binds and cancels; a service/target identity mismatch remains unbound and is rejected before QGA.
 - Guest supervisor checks use a fake Docker CLI that launches only harmless local `sleep` processes. They are not PVE/QGA/Docker deployment acceptance.
 
 Limits: no PVE, QGA, Docker daemon, vulnerable image, or attack probe was invoked. Live PVE behavior, installed worker-template dependencies, API-worker shared database mounting, and cancellation under real QGA/network failures remain unverified and require the authorized PVE validation step.

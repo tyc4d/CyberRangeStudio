@@ -126,6 +126,56 @@ def test_cancel_first_writes_durable_tombstone_and_late_start_is_refused(tmp_pat
         assert _active_probe_for_worker(db, VMID) is None
 
 
+def test_cancel_binds_legacy_operation_to_job_when_full_identity_matches(tmp_path: Path) -> None:
+    db_path = tmp_path / "reservations.sqlite3"
+    generation_id = reserve(db_path)
+    with _placement_lock(str(db_path)) as db:
+        _create_probe_operation(
+            db, operation_id=OPERATION, scenario_id=SID, host_id=HOST, vmid=VMID,
+            service_id=SERVICE, target_name=f"cr-demo-{SID}-{SERVICE}",
+            generation_id=generation_id, state="running")
+    backend = backend_for(db_path)
+    calls: list[str] = []
+
+    def guest_exec(vmid, command, **kwargs):
+        action = command[2]
+        calls.append(action)
+        assert action == "cancel"
+        return response("cancelled", True)
+
+    backend._guest_exec = guest_exec
+    cancelled = cancel_operation(backend, {"generation_id": generation_id}, job_id=JOB_ID)
+
+    assert cancelled["state"] == "cancelled" and cancelled["resource_absent"] is True
+    assert calls == ["cancel"]
+    with _placement_lock(str(db_path)) as db:
+        operation = _probe_operation(db, OPERATION)
+        assert operation and operation["job_id"] == JOB_ID
+        assert operation["state"] == "cancelled"
+
+
+def test_cancel_does_not_bind_legacy_operation_when_identity_mismatches(tmp_path: Path) -> None:
+    db_path = tmp_path / "reservations.sqlite3"
+    generation_id = reserve(db_path)
+    with _placement_lock(str(db_path)) as db:
+        _create_probe_operation(
+            db, operation_id=OPERATION, scenario_id=SID, host_id=HOST, vmid=VMID,
+            service_id=SERVICE, target_name=f"cr-demo-{SID}-{SERVICE}",
+            generation_id=generation_id, state="running")
+    backend = backend_for(db_path)
+    backend._guest_exec = Mock(side_effect=AssertionError("mismatched identity must not reach QGA"))
+
+    with pytest.raises(ProxmoxBackendError, match="identity does not match"):
+        cancel_operation(backend, {"generation_id": generation_id}, job_id=JOB_ID,
+                         service_id="different-service")
+
+    backend._guest_exec.assert_not_called()
+    with _placement_lock(str(db_path)) as db:
+        operation = _probe_operation(db, OPERATION)
+        assert operation and operation["job_id"] is None
+        assert operation["state"] == "running"
+
+
 def test_probe_mode_blocks_before_recording_or_calling_guest(tmp_path: Path) -> None:
     db_path = tmp_path / "reservations.sqlite3"
     reserve(db_path)

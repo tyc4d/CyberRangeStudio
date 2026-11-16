@@ -211,6 +211,31 @@ def _probe_operation(connection: sqlite3.Connection, operation_id: str) -> dict[
             "generation_id": row[11]}
 
 
+def _bind_legacy_probe_job(connection: sqlite3.Connection, *, operation_id: str,
+                            scenario_id: str, host_id: str, vmid: int, service_id: str,
+                            target_name: str, generation_id: str, job_id: str) -> dict[str, Any]:
+    """Bind an older operation row only when its complete pinned identity matches."""
+    cursor = connection.execute(
+        "UPDATE pve_probe_operations SET job_id=?, updated_at=? "
+        "WHERE operation_id=? AND scenario_id=? AND host_id=? AND vmid=? AND service_id=? "
+        "AND target_name=? AND generation_id=? AND job_id IS NULL",
+        (job_id, datetime.now(timezone.utc).isoformat(), operation_id, scenario_id, host_id,
+         vmid, service_id, target_name, generation_id),
+    )
+    if cursor.rowcount != 1:
+        raise ProxmoxBackendError("legacy probe operation cannot be bound to this job identity")
+    connection.commit()
+    connection.execute("BEGIN EXCLUSIVE")
+    operation = _probe_operation(connection, operation_id)
+    expected = (scenario_id, host_id, vmid, service_id, target_name, generation_id)
+    if (operation is None or (operation["scenario_id"], operation["host_id"], operation["vmid"],
+                              operation["service_id"], operation["target_name"],
+                              operation.get("generation_id")) != expected
+            or operation.get("job_id") != job_id):
+        raise ProxmoxBackendError("legacy probe operation job binding could not be confirmed")
+    return operation
+
+
 def _create_probe_operation(connection: sqlite3.Connection, *, operation_id: str,
                             scenario_id: str, host_id: str, vmid: int, service_id: str,
                             target_name: str, generation_id: str, state: str,
@@ -1365,7 +1390,12 @@ class ProxmoxBackend:
             if operation and (operation["scenario_id"], operation["host_id"], operation["vmid"],
                               operation["service_id"], operation["target_name"],
                               operation.get("generation_id")) == expected:
-                if job_id is not None and operation.get("job_id") != job_id:
+                if job_id is not None and operation.get("job_id") is None:
+                    operation = _bind_legacy_probe_job(
+                        reservation_db, operation_id=operation_id, scenario_id=scenario_id,
+                        host_id=host_id, vmid=vmid, service_id=service_id,
+                        target_name=target_name, generation_id=generation_id, job_id=job_id)
+                elif job_id is not None and operation.get("job_id") != job_id:
                     raise ProxmoxBackendError("probe cancellation job identity does not match its durable operation")
                 if operation["state"] in _PROBE_TERMINAL_STATES:
                     return {"state": operation["state"], "resource_absent": True,
