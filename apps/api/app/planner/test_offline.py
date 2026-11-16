@@ -81,9 +81,11 @@ def test_missing_software_version_is_recorded_explicitly():
     version_items = [item for item in result["missing_items"]
                      if item.get("category") == "version" and "nginx" in str(item.get("field", "")).lower()]
     assert version_items, "the missing nginx version must still be recorded explicitly"
-    item = version_items[0]
-    assert item.get("question") is None, "a catalogue-resolvable version must not block with a user question"
-    assert "1.31.8" in str(item.get("reason", "")), "the disclosure must state the catalogue version used"
+    # Catalogue-resolvable: never block the user with a question, and disclose the version used.
+    assert all(item.get("question") is None for item in version_items), \
+        "a catalogue-resolvable version must not block with a user question"
+    assert any("1.31.8" in str(item.get("reason", "")) for item in version_items), \
+        "the disclosure must state the catalogue version used"
 
 
 def test_user_service_is_mapped_without_losing_its_source_or_host_link():
