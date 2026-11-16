@@ -59,3 +59,14 @@ After independent QA (CHANGES REQUESTED, 15 findings / 26 repro tests), fix roun
 - Sole remaining failure: #5 deploy-layer guaranteed-cancel (honest fail-closed). Round-6 FINAL gate pending;
   if round 6 still finds an export edge after the structural fix, escalate to owner (product decision on the
   export guarantee) rather than loop further.
+
+## Fix round 6 complete (58c4dc0) — Module 9 substantively complete
+- R6-01 (P1) export now FAIL-CLOSED & sound by construction: verify_bundle/final-scan parse emitted YAML/JSON
+  (safe_load resolves all tags/encodings incl. !!str/!!binary/alias/merge), flag any secret-named key with a
+  non-empty resolved value, redact on parsed structure, REFUSE export on parse-failure/unprovable secret.
+  R6-02 (P2) GUI: snapshot reads stamped with execute generation at START, rejected if an execute was in flight.
+- Full backend suite: **285 passed**. Review Python: 57/1, 89/0, 34/0, 59/0, 24/0, 49/0. Frontend: 4/6/9/10/7/8.
+- **36 findings across 6 independent adversarial QA rounds fixed, zero regressions.** Sole remaining failing
+  test: #5 deploy-layer guaranteed-cancel (honest fail-closed; needs the shared deploy cancellable-transport API).
+- OWNER DECISIONS PENDING: (1) export posture A/B/C [A=fail-closed applied]; (2) PVE real-exploit run;
+  (3) deploy-layer #5 coordination. Then: demo video.
