@@ -29,8 +29,18 @@ def test_version_mismatch_response_is_not_pass() -> None:
         proof_id=STRUTS_S2045_PROOF_ID,
     )
     with patch("app.poc.runner.runner.assert_target_owned", return_value={"service_ref": "web"}), \
-         patch("app.poc.runner.runner.manager.probe_in_service",
-               return_value={"returncode": 0, "stdout": "VULHUB_HEADER=None", "stderr": ""}):
+         patch("app.poc.runner.runner.manager.deploy_backend", return_value="proxmox"), \
+         patch("app.poc.runner.runner.manager.probe_worker_identity", return_value={
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32}), \
+         patch("app.poc.runner.runner.manager.reserve_probe_operation", side_effect=lambda sid, service, opid, jobid, identity: {
+             "state": "reserved", "resource_absent": True, "operation_id": opid,
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32,
+             "job_id": jobid}), \
+         patch("app.poc.runner.runner.manager.start_probe_operation",
+               return_value={"state": "running", "resource_absent": False}), \
+         patch("app.poc.runner.runner.manager.wait_probe_operation",
+               return_value={"state": "completed", "resource_absent": True,
+                             "exitcode": 0, "stdout": "VULHUB_HEADER=None", "stderr": ""}):
         result = SandboxRunner().execute(request)
     assert result.status == "FAIL"
     assert result.status != "PASS"
@@ -82,14 +92,27 @@ def test_cancel_during_probe_requests_best_effort_helper_cleanup() -> None:
     )
     def wait_for_cancel(*_args, **_kwargs):
         request.cancel.wait(1)
-        return {"returncode": 124, "stdout": "", "stderr": "timed out"}
+        return {"state": "running", "resource_absent": False}
 
     timer = threading.Timer(0.1, request.cancel.set)
-    with patch("app.poc.runner.runner.manager.probe_in_service", side_effect=wait_for_cancel) as probe, \
-         patch("app.poc.runner.runner._cleanup_probe", return_value="timed-out sandbox helper removed") as cleanup:
+    with patch("app.poc.runner.runner.manager.deploy_backend", return_value="proxmox"), \
+         patch("app.poc.runner.runner.manager.probe_worker_identity", return_value={
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32}), \
+         patch("app.poc.runner.runner.manager.reserve_probe_operation", side_effect=lambda sid, service, opid, jobid, identity: {
+             "state": "reserved", "resource_absent": True, "operation_id": opid,
+             "vmid": 900100, "host_id": "worker", "generation_id": "a" * 32,
+             "job_id": jobid}), \
+         patch("app.poc.runner.runner.manager.start_probe_operation",
+               return_value={"state": "running", "resource_absent": False}) as start, \
+         patch("app.poc.runner.runner.manager.wait_probe_operation", side_effect=wait_for_cancel) as wait, \
+         patch("app.poc.runner.runner.manager.cancel_probe_operation",
+               return_value={"state": "cancelled", "resource_absent": True}) as cancel, \
+         patch("app.poc.runner.runner.manager.join_probe_operation",
+               side_effect=AssertionError("cancel already confirmed terminal absence")):
         timer.start()
         result, cleanup_note = _probe_with_cancel(request, payload, timeout=2)
     assert result["returncode"] == 125
-    assert "removed" in cleanup_note
-    probe.assert_called_once()
-    cleanup.assert_called_once()
+    assert "absent" in cleanup_note
+    start.assert_called_once()
+    wait.assert_called_once()
+    cancel.assert_called_once()

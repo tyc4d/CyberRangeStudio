@@ -33,6 +33,7 @@ def lab(monkeypatch, tmp_path):
     monkeypatch.setattr(runner.poc_store, "_DB", tmp_path / "poc.db")
     monkeypatch.setattr(runner.scenario_store, "get", lambda sid: ir if sid == SID else None)
     monkeypatch.setattr(runner.manager, "_lifecycle_records", lambda sid: [record] if sid == SID else [])
+    monkeypatch.setattr(runner.manager, "active_probe_operations", lambda sid: [])
     monkeypatch.setattr(runner, "assert_target_owned", lambda *args: dict(ownership))
     monkeypatch.setattr("subprocess.run", Mock(side_effect=AssertionError("no real subprocess")))
     monkeypatch.setattr("urllib.request.urlopen", Mock(side_effect=AssertionError("no real HTTP")))
@@ -237,13 +238,14 @@ def test_cancel_one_batch_stops_every_later_independent_action(lab):
         return {"returncode": 125, "stdout": "", "stderr": "cancelled before delivery"}, None
     transport.side_effect = cancel_during_first
     runs = runner.run_job(SID, [req, replace(req, action_id="a2"), replace(req, action_id="a3")])
-    assert cancellations == [{"cancelled": True}]
+    assert cancellations == [{"cancelled": True, "joined": True,
+                              "uncertain": False, "operations": 0}]
     transport.assert_called_once()
     assert [(run["action_id"], run["status"]) for run in runs] == [("a1", "BLOCKED")]
     job = assert_one_persisted_job(runs)
     assert job["state"] == "cancelled" and job["cancel"] == 1
     assert runner.execution_status(SID)["job_state"] == "cancelled"
-    assert runner.cancel_execution(SID) == {"cancelled": False}
+    assert runner.cancel_execution(SID)["cancelled"] is False
 
 
 def test_overlapping_same_action_status_and_tail_belong_to_newest_job(lab):
@@ -296,14 +298,14 @@ def test_cancel_flags_all_active_execute_jobs_without_touching_other_jobs(lab):
     ):
         runner.poc_store.create_job(job_id, scenario, kind)
         runner.poc_store.set_job_state(job_id, state)
-    assert runner.cancel_execution(SID) == {"cancelled": True}
+    assert runner.cancel_execution(SID)["cancelled"] is True
     for job_id in ("old-pending", "old-running"):
         assert runner.poc_store.get_job(job_id)["cancel"] == 1
     for job_id in ("other-scenario", "other-kind", "newer-done"):
         assert runner.poc_store.get_job(job_id)["cancel"] == 0
     for job_id in ("old-pending", "old-running"):
         runner.poc_store.set_job_state(job_id, "cancelled")
-    assert runner.cancel_execution(SID) == {"cancelled": False}
+    assert runner.cancel_execution(SID)["cancelled"] is False
 
 
 def test_idle_status_exposes_no_selected_or_active_job(lab):
@@ -333,7 +335,7 @@ def test_status_tracks_cancelled_job_identity_through_its_own_terminal_transitio
     assert before["active_jobs"] == [{"job_id": older_id, "state": older_state, "cancel_requested": False}]
     assert before["per_action"] == [{"action_id": "a1", "stages": newer["stages"]}]
 
-    assert runner.cancel_execution(SID) == {"cancelled": True}
+    assert runner.cancel_execution(SID)["cancelled"] is True
     requested = runner.execution_status(SID)
     assert requested["job_id"] == newer_id
     assert requested["selected_job_state"] == "done"
