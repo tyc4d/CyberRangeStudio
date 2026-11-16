@@ -1,0 +1,587 @@
+{
+ "items": [
+  {
+   "ref_kind": "service",
+   "ref_id": "svc_horizon",
+   "name": "VMware Horizon",
+   "version": null,
+   "cves": [
+    "CVE-2021-44228"
+   ],
+   "attack_technique": null,
+   "resolution": {
+    "tier": "have",
+    "component_id": "vuln-log4shell-solr",
+    "is_substitute": true,
+    "version_basis": "substituted",
+    "reproduces_cve": [
+     "CVE-2021-44228"
+    ],
+    "substitute_of": "VMware Horizon",
+    "reason": "VMware Horizon itself is not reproducible here; substitute Apache Solr 8.11.0 with Log4j 2.14.1 (vuln-log4shell-solr) reproduces the same CVE-2021-44228. It is a flagged stand-in, never the original product.",
+    "needs_question": false
+   },
+   "override": null
+  },
+  {
+   "ref_kind": "service",
+   "ref_id": "svc_ad",
+   "name": "Active Directory",
+   "version": null,
+   "cves": [],
+   "attack_technique": null,
+   "resolution": {
+    "tier": "unavailable",
+    "component_id": null,
+    "is_substitute": false,
+    "version_basis": "assumed",
+    "reproduces_cve": [],
+    "substitute_of": null,
+    "reason": "Active Directory is unavailable (unsupported-ad-ds): not currently reproducible; requires versioned isolated DC/member topology. No substitute in inventory; not reproducible.",
+    "needs_question": false
+   },
+   "override": null
+  },
+  {
+   "ref_kind": "host",
+   "ref_id": "host_dc",
+   "name": "Windows Server",
+   "version": null,
+   "cves": [],
+   "attack_technique": null,
+   "resolution": {
+    "tier": "obtainable",
+    "component_id": null,
+    "is_substitute": false,
+    "version_basis": "assumed",
+    "reproduces_cve": [],
+    "substitute_of": null,
+    "reason": "Windows Server has 3 deployable versions with different behaviour; a choice is needed.",
+    "needs_question": true,
+    "question": {
+     "field": "version for Windows Server",
+     "text": "Windows Server 有多個可部署版本，請選擇實驗室要用哪一個：Windows Server 2016 Evaluation、Windows Server 2019 Evaluation、Windows Server 2022 Evaluation。",
+     "suggestions": [
+      "Windows Server 2016 Evaluation",
+      "Windows Server 2019 Evaluation",
+      "Windows Server 2022 Evaluation"
+     ]
+    }
+   },
+   "override": null
+  },
+  {
+   "ref_kind": "service",
+   "ref_id": "svc_web",
+   "name": "nginx",
+   "version": "1.31.8",
+   "cves": [],
+   "attack_technique": null,
+   "resolution": {
+    "tier": "have",
+    "component_id": "oss-nginx",
+    "is_substitute": false,
+    "version_basis": "stated",
+    "reproduces_cve": [],
+    "substitute_of": null,
+    "reason": "NGINX 1.31.8 (oss-nginx) matches the stated version 1.31.8.",
+    "needs_question": false
+   },
+   "override": null
+  }
+ ],
+ "entries": [
+  {
+   "id": "oss-nginx",
+   "name": "NGINX",
+   "kind": "component",
+   "runtime": "container",
+   "version": "1.31.8",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [
+     "iis",
+     "microsoft iis",
+     "internet information services",
+     "microsoft internet information services"
+    ],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/nginx"
+   }
+  },
+  {
+   "id": "oss-httpd",
+   "name": "Apache HTTP Server",
+   "kind": "component",
+   "runtime": "container",
+   "version": "2.4.71",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/httpd"
+   }
+  },
+  {
+   "id": "oss-postgres",
+   "name": "PostgreSQL",
+   "kind": "component",
+   "runtime": "container",
+   "version": "16.16",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/postgres"
+   }
+  },
+  {
+   "id": "oss-attacker",
+   "name": "Alpine attacker toolbox base",
+   "kind": "component",
+   "runtime": "container",
+   "version": "3.22",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/alpine"
+   }
+  },
+  {
+   "id": "oss-mysql",
+   "name": "MySQL",
+   "kind": "component",
+   "runtime": "container",
+   "version": "8.0.46",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/mysql"
+   }
+  },
+  {
+   "id": "oss-mariadb",
+   "name": "MariaDB",
+   "kind": "component",
+   "runtime": "container",
+   "version": "11.4.13",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/mariadb"
+   }
+  },
+  {
+   "id": "oss-redis",
+   "name": "Redis",
+   "kind": "component",
+   "runtime": "container",
+   "version": "7.4.12",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/redis"
+   }
+  },
+  {
+   "id": "oss-tomcat",
+   "name": "Apache Tomcat",
+   "kind": "component",
+   "runtime": "container",
+   "version": "9.0.124",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/tomcat"
+   }
+  },
+  {
+   "id": "oss-wordpress",
+   "name": "WordPress",
+   "kind": "component",
+   "runtime": "container",
+   "version": "7.1.4",
+   "tier": "have",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/_/wordpress"
+   }
+  },
+  {
+   "id": "vuln-struts2-s2-045",
+   "name": "Apache Struts 2.3.30 showcase (CVE-2017-5638 / S2-045 exercise target)",
+   "kind": "component",
+   "runtime": "container",
+   "version": "2.3.30",
+   "tier": "have",
+   "reproduces_cve": [
+    "CVE-2017-5638"
+   ],
+   "substitute_for": {
+    "products": [],
+    "cves": [
+     "CVE-2017-5638"
+    ],
+    "techniques": [
+     "T1190"
+    ]
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/r/vulhub/struts2"
+   }
+  },
+  {
+   "id": "vuln-log4shell-solr",
+   "name": "Apache Solr 8.11.0 with Log4j 2.14.1 (CVE-2021-44228 exercise target)",
+   "kind": "component",
+   "runtime": "container",
+   "version": "8.11.0",
+   "tier": "have",
+   "reproduces_cve": [
+    "CVE-2021-44228"
+   ],
+   "substitute_for": {
+    "products": [
+     "log4shell"
+    ],
+    "cves": [
+     "CVE-2021-44228"
+    ],
+    "techniques": [
+     "T1190"
+    ]
+   },
+   "obtainability": {
+    "source": "docker_hub",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://hub.docker.com/r/vulhub/solr"
+   }
+  },
+  {
+   "id": "windows-server-eval-vm",
+   "name": "Windows Server Evaluation VM (user supplied media)",
+   "kind": "component",
+   "runtime": "vm",
+   "version": null,
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "microsoft_evaluation_center",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://www.microsoft.com/evalcenter/",
+    "note": "Capability record; the concrete releases are the os-windows-server-* base images."
+   }
+  },
+  {
+   "id": "unsupported-ad-ds",
+   "name": "Active Directory Domain Services (unsupported pending fixture)",
+   "kind": "component",
+   "runtime": "vm",
+   "version": null,
+   "tier": "unavailable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": null,
+    "pullable": false,
+    "est_cost_usd": null
+   }
+  },
+  {
+   "id": "unsupported-vmware-horizon",
+   "name": "VMware Horizon (external platform required)",
+   "kind": "component",
+   "runtime": "external_platform",
+   "version": null,
+   "tier": "unavailable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": null,
+    "pullable": false,
+    "est_cost_usd": null
+   }
+  },
+  {
+   "id": "unsupported-log4j-unspecified",
+   "name": "Log4j application (version/fixture unspecified)",
+   "kind": "component",
+   "runtime": "unsupported",
+   "version": null,
+   "tier": "unavailable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": null,
+    "pullable": false,
+    "est_cost_usd": null
+   }
+  },
+  {
+   "id": "os-windows-server-2022-eval",
+   "name": "Windows Server 2022 Evaluation",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "2022",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "microsoft_evaluation_center",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://www.microsoft.com/evalcenter/",
+    "license": "Microsoft evaluation terms (~180 days); not redistributed",
+    "note": "Unattended template build from the eval ISO validated in B4 (local libvirt)."
+   }
+  },
+  {
+   "id": "os-windows-server-2019-eval",
+   "name": "Windows Server 2019 Evaluation",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "2019",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "microsoft_evaluation_center",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://www.microsoft.com/evalcenter/",
+    "license": "Microsoft evaluation terms (~180 days); not redistributed"
+   }
+  },
+  {
+   "id": "os-windows-server-2016-eval",
+   "name": "Windows Server 2016 Evaluation",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "2016",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "microsoft_evaluation_center",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://www.microsoft.com/evalcenter/",
+    "license": "Microsoft evaluation terms (~180 days); not redistributed"
+   }
+  },
+  {
+   "id": "os-windows-11-enterprise-eval",
+   "name": "Windows 11 Enterprise Evaluation",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "11",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "microsoft_evaluation_center",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://www.microsoft.com/evalcenter/",
+    "license": "Microsoft evaluation terms (~90 days); not redistributed"
+   }
+  },
+  {
+   "id": "os-windows-legacy",
+   "name": "Legacy Windows (2012 R2 and older, Windows 7/8/XP)",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": null,
+   "tier": "unavailable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": null,
+    "pullable": false,
+    "est_cost_usd": null,
+    "note": "No current official evaluation download; licensed media exceeds the $50 budget."
+   }
+  },
+  {
+   "id": "os-ubuntu-24.04",
+   "name": "Ubuntu Server 24.04 LTS (cloud image)",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "24.04",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "ubuntu_cloud_images",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://cloud-images.ubuntu.com/noble/current/"
+   }
+  },
+  {
+   "id": "os-ubuntu-22.04",
+   "name": "Ubuntu Server 22.04 LTS (cloud image)",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "22.04",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "ubuntu_cloud_images",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://cloud-images.ubuntu.com/jammy/current/"
+   }
+  },
+  {
+   "id": "os-debian-12",
+   "name": "Debian 12 (cloud image)",
+   "kind": "os_base",
+   "runtime": "vm",
+   "version": "12",
+   "tier": "obtainable",
+   "reproduces_cve": [],
+   "substitute_for": {
+    "products": [],
+    "cves": [],
+    "techniques": []
+   },
+   "obtainability": {
+    "source": "debian_cloud_images",
+    "pullable": true,
+    "est_cost_usd": 0,
+    "ref": "https://cloud.debian.org/images/cloud/bookworm/latest/"
+   }
+  }
+ ],
+ "after_version": {
+  "tier": "obtainable",
+  "component_id": "os-windows-server-2019-eval",
+  "is_substitute": false,
+  "version_basis": "user_supplied",
+  "reproduces_cve": [],
+  "substitute_of": null,
+  "reason": "Windows Server 2019 Evaluation (os-windows-server-2019-eval) matches the user_supplied version 2019.",
+  "needs_question": false
+ }
+}

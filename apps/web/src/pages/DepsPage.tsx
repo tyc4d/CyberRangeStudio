@@ -5,6 +5,7 @@ import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
 import { BasisTag, basisOf, type Versioned } from "../components/VersionBasis";
 import { RefIssuesNotice } from "../components/RefIssues";
+import { InventoryPanel } from "../components/InventoryPanel";
 import { ApiNotice, Busy, DataView, Empty, EpistemicBadge, Metric, NextStep, Notice, PageHead, ScenarioGate, SourceTag } from "../components/ui";
 
 function ServiceRow({ s, hosts }: { s: ServiceItem; hosts?: string[] }) {
@@ -140,6 +141,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
           </div>
         </>
       )}
+
+      {has && <InventoryPanel ir={ir} />}
 
       <div className="card flush">
         <div className="card-head"><h2>可用元件 catalogue</h2>{catItems && <span className="muted" style={{ fontSize: 12 }}>{catItems.length}</span>}</div>
