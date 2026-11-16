@@ -13,7 +13,9 @@ import yaml
 from cr_contracts import iter_errors
 
 from app import config, store
+from app.cti.missing import is_attacker_role
 from app.planner.catalogue import component_by_id
+from app.planner.inventory import resolve as resolve_inventory
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
 _PORT_MIN = 1
@@ -221,7 +223,129 @@ def unconfirmed_inventory_substitutes(ir: Any) -> list[dict[str, str]]:
 
 
 def inventory_confirmation_message(blocked: list[dict[str, str]]) -> str:
-    return "Inventory confirmation required: " + " ".join(item["message"] for item in blocked)
+    return "Inventory selection or topology needs review: " + " ".join(item["message"] for item in blocked)
+
+
+def _host_key(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "").casefold()).strip("_")
+
+
+def _service_plan_hosts(ir: dict[str, Any], service: dict[str, Any], target_host_ids: set[str]) -> set[str]:
+    refs: set[str] = set()
+    if service.get("host_ref"):
+        refs.add(_host_key(service["host_ref"]))
+    service_id = service.get("id")
+    for host in ir.get("hosts", []) or []:
+        if isinstance(host, dict) and service_id in (host.get("service_refs") or []):
+            refs.add(_host_key(host.get("id")))
+    matched = refs & target_host_ids
+    # Topology assigns an unbound service to the only target when the scenario has one.
+    if not matched and len(target_host_ids) == 1:
+        return set(target_host_ids)
+    return matched
+
+
+def inventory_plan_blockers(ir: Any) -> list[dict[str, str]]:
+    """Reject substitute decisions or image plans that no longer agree with source IR.
+
+    Inventory overrides are only authoritative after dependency planning writes the selected
+    component to the service and topology planning writes that same component to the host image.
+    This also protects old scenarios whose service was removed while an approved topology remains.
+    """
+    if not isinstance(ir, dict):
+        return []
+    blockers: list[dict[str, str]] = []
+
+    def add(code: str, message: str, *, service_id: Any = None, host_id: Any = None,
+            selected_component: Any = None, plan_component: Any = None) -> None:
+        blocker = {"code": code, "message": message}
+        for key, value in (("service_id", service_id), ("host_id", host_id),
+                           ("selected_component", selected_component), ("plan_component", plan_component)):
+            if value is not None:
+                blocker[key] = str(value)
+        if blocker not in blockers:
+            blockers.append(blocker)
+
+    for item in unconfirmed_inventory_substitutes(ir):
+        add("inventory_confirmation_required", item["message"], service_id=item.get("service_id"),
+            selected_component=item.get("selected_component"))
+
+    services = [item for item in ir.get("services", []) or [] if isinstance(item, dict)]
+    plan = ir.get("environment_plan")
+    plan_hosts = [item for item in plan.get("hosts", []) or [] if isinstance(item, dict)] if isinstance(plan, dict) else []
+    scenario_hosts = [host for host in plan_hosts if not is_attacker_role(host.get("role"))]
+    target_hosts = [host for host in scenario_hosts if not not_deployed_marker(host)]
+    target_host_ids = {_host_key(host.get("id")) for host in scenario_hosts if host.get("id")}
+    plan_hosts_by_id = {_host_key(host.get("id")): host for host in plan_hosts if host.get("id")}
+
+    assignments = {str(service.get("id") or ""): _service_plan_hosts(ir, service, target_host_ids)
+                   for service in services}
+
+    # A persisted user decision cannot silently disagree with either the chosen service image
+    # or the actual image on its topology host. `replace` carries the requested component id;
+    # `accept` must still resolve to the component the user accepted.
+    for service in services:
+        override = service.get("inventory_override")
+        explicit_choice = bool(
+            (isinstance(override, dict) and override.get("action") in {"accept", "replace", "version"})
+            or (service.get("field_sources") or {}).get("catalogue_component") == "user"
+            or service.get("substitute_basis") == "user_chosen"
+        )
+        if not explicit_choice or (service.get("placement") == "conflict" or service.get("lab_enabled") is False):
+            continue
+
+        selected = str(service.get("catalogue_component") or "")
+        name = str(service.get("name") or service.get("id") or "unnamed service")
+        override_action = override.get("action") if isinstance(override, dict) else None
+        if override_action == "replace":
+            requested = str(override.get("component_id") or "")
+            if not requested or requested != selected:
+                add("inventory_plan_mismatch",
+                    f"{name} has a replacement choice for {requested or 'no component'}, but dependency planning "
+                    f"currently selects {selected or 'no component'}. Re-run dependency analysis before generating IaC or deploying.",
+                    service_id=service.get("id"), selected_component=requested, plan_component=selected)
+        elif override_action == "accept":
+            cve = service.get("cve")
+            cves = [str(value) for value in cve] if isinstance(cve, list) else ([str(cve)] if cve else [])
+            technique = next((action.get("attack_technique") for action in ir.get("actions", []) or []
+                              if isinstance(action, dict) and action.get("target_host_ref") == service.get("host_ref")
+                              and action.get("attack_technique")), None)
+            automatic = resolve_inventory(service.get("name"), service.get("version"), cves, technique)
+            if not automatic.get("is_substitute") or automatic.get("component_id") != selected:
+                add("inventory_plan_mismatch",
+                    f"{name} no longer resolves to the substitute that was accepted. Re-run dependency analysis and confirm the current recommendation.",
+                    service_id=service.get("id"), selected_component=selected,
+                    plan_component=automatic.get("component_id"))
+
+        host_ids = assignments.get(str(service.get("id") or ""), set())
+        matching_hosts = [plan_hosts_by_id[host_id] for host_id in host_ids if host_id in plan_hosts_by_id]
+        if not selected or not any(str(host.get("image_hint") or "").strip() == selected for host in matching_hosts):
+            actual = ", ".join(sorted({str(host.get("image_hint") or "") for host in matching_hosts})) or "no topology host"
+            add("inventory_plan_mismatch",
+                f"{name} is selected as {selected or 'no component'}, but its current topology uses {actual}. "
+                "Re-run dependency analysis and topology planning before generating IaC or deploying.",
+                service_id=service.get("id"), selected_component=selected, plan_component=actual)
+
+    # Every deployable image in the topology must still be backed by a current service on that
+    # host. This catches a stale plan after a service was deleted or moved.
+    for host in target_hosts:
+        image_hint = str(host.get("image_hint") or "").strip()
+        if not image_hint:
+            continue
+        host_id = _host_key(host.get("id"))
+        current = [service for service in services
+                   if host_id in assignments.get(str(service.get("id") or ""), set())
+                   and service.get("placement") != "conflict" and service.get("lab_enabled") is not False
+                   and service.get("catalogue_component")]
+        if any(str(service.get("catalogue_component")) == image_hint for service in current):
+            continue
+        current_components = ", ".join(sorted({str(service.get("catalogue_component")) for service in current})) or "none"
+        add("inventory_plan_mismatch",
+            f"Topology host {host.get('id')} uses {image_hint}, but no current source service on that host selects it "
+            f"(current service components: {current_components}). Re-run dependency analysis and topology, or remove the stale host.",
+            host_id=host.get("id"), selected_component=current_components, plan_component=image_hint)
+
+    return blockers
 
 
 def validate_id(scenario_id: str) -> str:
@@ -966,12 +1090,11 @@ def generate(scenario_id: str) -> dict[str, Any]:
     ir = store.get(scenario_id)
     if ir is None:
         raise KeyError(scenario_id)
-    unconfirmed = unconfirmed_inventory_substitutes(ir)
-    if unconfirmed:
-        messages = [item["message"] for item in unconfirmed]
+    blockers = inventory_plan_blockers(ir)
+    if blockers:
+        messages = [item["message"] for item in blockers]
         raise PlanError(messages, {"deployable": False, "components": [], "errors": messages,
-                                   "blockers": [{"code": "inventory_confirmation_required", **item}
-                                                for item in unconfirmed]})
+                                   "blockers": blockers})
     plan = ir.get("environment_plan")
     _, report = inspect_plan(plan, scenario_id)
     if not report["deployable"]:
@@ -994,12 +1117,11 @@ def get_generated(scenario_id: str) -> dict[str, Any]:
     ir = store.get(scenario_id)
     if ir is None:
         raise FileNotFoundError(scenario_id)
-    unconfirmed = unconfirmed_inventory_substitutes(ir)
-    if unconfirmed:
-        messages = [item["message"] for item in unconfirmed]
+    blockers = inventory_plan_blockers(ir)
+    if blockers:
+        messages = [item["message"] for item in blockers]
         raise PlanError(messages, {"deployable": False, "components": [], "errors": messages,
-                                   "blockers": [{"code": "inventory_confirmation_required", **item}
-                                                for item in unconfirmed]})
+                                   "blockers": blockers})
     expected = compose_document(ir.get("environment_plan"), scenario_id)
     if content != expected:
         raise PlanError(["generated compose content differs from the current validated environment plan"])

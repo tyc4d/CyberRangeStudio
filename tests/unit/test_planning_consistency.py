@@ -180,14 +180,20 @@ class InventoryOverrides(unittest.TestCase):
 
     def test_generated_program_service_override_survives_replanning_and_clear_restores_auto(self):
         ir = base_ir(
-            actions=[action("a1", "Exploit Apache HTTP Server affected by CVE-2024-12345 on the portal", "h1",
+            actions=[action("a1", "Exploit Apache HTTP Server on the portal", "h1",
                             attack_technique="T1190")],
             hosts=[{"id": "h1", "role": "web server", "epistemic_status": "supported", "source": "llm"}],
+            indicators=[{"id": "i1", "type": "cve", "value": "CVE-2024-12345"}],
+            missing_items=[{"id": "m1", "field": "affected software for CVE-2024-12345",
+                            "category": "software", "reason": "The CVE is not linked to a source service.",
+                            "status": "open"}],
         )
         generated = plan_dependencies(ir)
         service = generated["services"][0]
         self.assertEqual(service["source"], "program")
-        self.assertEqual(service["cve"], ["CVE-2024-12345"])
+        self.assertEqual(service["cve"], [])
+        self.assertEqual(generated["indicators"], ir["indicators"])
+        self.assertEqual(next(item for item in generated["missing_items"] if item["id"] == "m1")["status"], "open")
         service["inventory_override"] = {
             "action": "replace", "component_id": "vuln-struts2-s2-045",
             "at": "2026-11-16T00:00:00+00:00",
@@ -198,12 +204,14 @@ class InventoryOverrides(unittest.TestCase):
         self.assertEqual(chosen["source"], "program")
         self.assertEqual(chosen["catalogue_component"], "vuln-struts2-s2-045")
         self.assertTrue(chosen["is_substitute"])
-        self.assertEqual(chosen["cve"], ["CVE-2024-12345"])
+        self.assertEqual(chosen["cve"], [])
         self.assertEqual(chosen["reproduces_cve"], [])
+        self.assertEqual(selected["indicators"], ir["indicators"])
+        self.assertEqual(next(item for item in selected["missing_items"] if item["id"] == "m1")["status"], "open")
 
         again = plan_dependencies(selected)
         self.assertEqual(again["services"][0]["catalogue_component"], "vuln-struts2-s2-045")
-        self.assertEqual(again["services"][0]["cve"], ["CVE-2024-12345"])
+        self.assertEqual(again["services"][0]["cve"], [])
 
         again["services"][0].pop("inventory_override", None)
         cleared = plan_dependencies(again)
@@ -211,7 +219,9 @@ class InventoryOverrides(unittest.TestCase):
         self.assertEqual(restored["catalogue_component"], "oss-httpd")
         self.assertFalse(restored["is_substitute"])
         self.assertNotIn("substitute_of", restored)
-        self.assertEqual(restored["cve"], ["CVE-2024-12345"])
+        self.assertEqual(restored["cve"], [])
+        self.assertEqual(cleared["indicators"], ir["indicators"])
+        self.assertEqual(next(item for item in cleared["missing_items"] if item["id"] == "m1")["status"], "open")
 
 
 class MentionNaming(unittest.TestCase):
