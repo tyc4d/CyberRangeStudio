@@ -599,6 +599,7 @@ const zhTW = {
   "fl.hostPh": "還沒有主機，可直接輸入",
   "fl.basis": "依據",
   "fl.technique": "ATT&CK 技術",
+  "fl.tech.inferred": "系統推測,非報告原文,可修改或清除。",
   "fl.unnamed": "（未命名）",
   "fl.noTarget": "沒有目標主機",
   "fl.requires": "{n} 項前置",

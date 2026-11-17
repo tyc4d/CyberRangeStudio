@@ -100,7 +100,9 @@ function ActionNode({ data, selected }: NodeProps<ActionNodeData>) {
           <span className="node-number">STEP {String(data.index + 1).padStart(2, "0")}</span>
           {data.start && <span className="start-flag"><Flag size={11} />{t("fl.startFlag")}</span>}
           {data.looped && <span className="badge insufficient" title={t("fl.loop.hint")}>{t("fl.loop")}</span>}
-          {a.attack_technique && <span className="badge technique">{a.attack_technique}</span>}
+          {a.attack_technique && (((a as { field_sources?: Record<string, string> }).field_sources?.attack_technique === "inferred")
+            ? <span className="badge technique inferred" title={t("fl.tech.inferred")}>{a.attack_technique} ~</span>
+            : <span className="badge technique">{a.attack_technique}</span>)}
         </div>
         {selected ? (
           // Edit the core fields right here. Everything carries nodrag/nopan; description, tactic and evidence stay in the dock.

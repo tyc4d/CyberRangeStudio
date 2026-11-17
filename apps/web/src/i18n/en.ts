@@ -600,6 +600,7 @@ const en: Messages = {
   "fl.hostPh": "No hosts yet. Type a name.",
   "fl.basis": "Basis",
   "fl.technique": "ATT&CK technique",
+  "fl.tech.inferred": "Inferred by the system, not stated in the report. Edit or clear it.",
   "fl.unnamed": "(No name)",
   "fl.noTarget": "No target host",
   "fl.requires": { one: "{n} prerequisite", other: "{n} prerequisites" },

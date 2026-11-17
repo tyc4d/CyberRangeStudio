@@ -159,6 +159,45 @@ def _inline_technique(quotes: list[str], unit_texts: list[str]) -> str | None:
     return technique_id
 
 
+# Ordered ATT&CK inference rules: the first rule whose any trigger is a substring of the
+# lowered action text wins. These are SUGGESTIONS marked 'inferred', never claimed as stated;
+# every id is validated against the catalogue before use, and the user can override or clear it.
+_INFER_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("web shell", "webshell"), "T1505"),
+    (("scan", "probe", "susceptib", "reconnaissance", "vulnerable server", "vulnerable system"), "T1595"),
+    (("exploit", "remote code", "public-facing", "public facing", "deserializ", "code execution vulnerab"), "T1190"),
+    (("unencrypted password", "unsecured credential", "plaintext", "cleartext", "unencrypted username", "unencrypted credential"), "T1552"),
+    (("credential dump", "dump credential", "mimikatz", "lsass"), "T1003"),
+    (("valid account", "stolen credential", "these credentials", "leverage", "compromised account", "expand their access", "expand access", "reused credential"), "T1078"),
+    (("encrypted communication channel", "protocol tunnel", "tunnel"), "T1572"),
+    (("command",), "T1059"),
+    (("lateral", "pivot", "move laterally", "moved laterally", "remote service"), "T1021"),
+    (("data repository", "information repository", "queries", "queried", "query to", "search for sensitive data", "extract pii", "databases to search"), "T1213"),
+    (("file and director", "directory discovery", "locate", "enumerate"), "T1083"),
+    (("network service", "remote system discovery", "discover server", "identify server"), "T1046"),
+    (("encrypted web protocol", "alternative protocol", "standard encrypted web", "standard web protocol"), "T1048"),
+    (("disguise", "blend in", "normal network traffic", "normal traffic", "without being detected", "evade detection", "avoid detection"), "T1070"),
+    (("exfiltrat", "remove the data", "removed the data", "removed extracted", "steal data", "small increments", "data theft"), "T1041"),
+    (("obfuscat", "encode"), "T1027"),
+)
+
+
+def _suggest_technique(text: str) -> str | None:
+    """Infer one ATT&CK technique id from an action's wording, or None when nothing matches.
+
+    Conservative: it suggests only on a clear keyword signal and never forces a guess.
+    """
+    lowered = (text or "").casefold()
+    if not lowered.strip():
+        return None
+    for triggers, technique_id in _INFER_RULES:
+        if any(trigger in lowered for trigger in triggers):
+            validated, _ = _validated_attack_technique(technique_id)
+            if validated:
+                return validated
+    return None
+
+
 def _technique_stated_for(technique_id: str, action_name: str, quotes: list[str], cited_units: list[str],
                           units: list[SourceUnit], input_kind: str) -> bool:
     """Whether the report gives this technique id for this behaviour.
@@ -486,14 +525,22 @@ _CONTEXT_RULES = (
     "hosts: one entry for each distinct machine, system, database or explicitly described group of machines that the listed "
     "attacker actions targeted, used or moved through. Never merge differently named or differently described machines and "
     "never add a catch-all entry for unidentified hosts. Fields: id (h1, h2, ...; never 'unknown'), name (hostname or label if "
-    "given), role (the report's words), and os, os_version, network_placement only when stated. "
+    "given), role (a short label for the host's function in Simplified Technical English: an active, single-meaning noun "
+    "phrase of at most four words, for example 'dispute portal server' or 'secondary PII database'. Restate the report's "
+    "meaning. Add no fact the source does not state. Keep the report's exact wording in the evidence quote, not here. Do not "
+    "copy a full source clause as the label. A short label must still keep differently-described machines apart: when the "
+    "source separates two groups (for example the databases tied to the dispute portal and the separate unrelated "
+    "databases), keep them as separate hosts and give each a distinct short label. A short label is never a reason to merge "
+    "hosts. When the source states how many machines a group holds (for example '48 unrelated databases'), keep that count "
+    "in the label, because the count is a fact, for example '48 secondary PII databases'), and os, os_version, network_placement only when stated. "
     "services: each product, application, protocol service or security product on those machines that an action exploits, logs "
     "in to, queries, disables or otherwise depends on. A service is software or a named protocol service (for example RDP, "
     "SMB, SSH) present on a target machine; a description of how traffic flowed ('encrypted communication channels', "
     "'standard web protocols', 'normal network traffic') is not a service and must not be listed. When the report says an "
     "action queried or accessed databases, list the database as a service of the machine that hosts it, named in the "
-    "report's words. Fields: id (s1, ...), name (the report's words; a vulnerability nickname "
-    "or CVE id is not a name: name the affected product), host_ref (a host id above), and version, port (integer), protocol "
+    "report's words. Fields: id (s1, ...), name (name the affected product; a vulnerability nickname "
+    "or CVE id is not a name. When the report names no product, use a short Simplified Technical English label of at most "
+    "four words, for example 'dispute portal database', not a full clause), host_ref (a host id above), and version, port (integer), protocol "
     "(tcp/udp), cve (array of CVE ids) only when the report states them. "
     "artifacts: each tool, malware family, script, file, scheduled task or account the report names as used, created or "
     "dropped. Fields: id, name, type (tool, malware, file, script, account or other). "
@@ -641,7 +688,11 @@ def _messages(task: str, source_payload: list[dict[str, Any]], *, extracted: dic
         "if the edge is a reasonable inference from the source but has no direct relation quote, mark that edge 'inferred'. "
         "Relations must form a directed acyclic graph (DAG): no self edges and no cycles such as a6->a8->a9->a6. "
         "For every action, fill target_host_ref with the id of the host entry it took effect on; use 'unknown' when the source "
-        "does not identify the machine."
+        "does not identify the machine. "
+        "STYLE: write every role, name and description in Simplified Technical English (ASD-STE100): short active phrases, "
+        "one meaning per term, no full source clause copied as a label. This changes the wording only, never the facts: "
+        "restate the source faithfully, keep every hedge (for example 'may have', 'appears to'), and add nothing the source "
+        "does not state. The exact source text belongs in the evidence quote, not in the label."
     )
     if extraction:
         rules += " Return {\"observations\":[{\"claim\":string,\"quote\":string,\"source_ref\":string,\"epistemic_status\":string}]}"
@@ -839,6 +890,19 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
                 # The report itself tags this sentence; the model merely did not copy the id.
                 action["attack_technique"] = tagged
                 action.setdefault("field_sources", {})["attack_technique"] = "source_quote"
+        if "attack_technique" not in action:
+            # No stated technique: offer one as a clearly-marked inference the user can override.
+            guess = _suggest_technique(f"{action['name']} {action.get('description', '')}")
+            if guess:
+                guess_id, guess_info = _validated_attack_technique(guess)
+                if guess_id:
+                    action["attack_technique"] = guess_id
+                    action.setdefault("field_sources", {})["attack_technique"] = "inferred"
+                    guess_tactics = (guess_info or {}).get("tactics") or []
+                    guess_tactic = _validated_attack_tactic(guess_tactics[0] if guess_tactics else None, guess_info)
+                    if guess_tactic:
+                        action["attack_tactic"] = guess_tactic
+                        action.setdefault("field_sources", {})["attack_tactic"] = "inferred"
         outcome = _stated_outcome(str(item.get("outcome") or ""), cited_quotes, cited_units)
         if outcome:
             action["outcome"] = outcome
