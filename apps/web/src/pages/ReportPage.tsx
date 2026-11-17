@@ -3,6 +3,7 @@ import { live, t, type MsgKey } from "../i18n";
 import { Link } from "react-router-dom";
 import type { CheckStatus, ScenarioIR, ValidationCheck, ValidationReport } from "@contracts";
 import { SubstituteCard, VersionBasisCard } from "../components/VersionBasis";
+import { AttackReplay } from "../components/AttackReplay";
 import { api } from "../lib/api";
 import { useAction, useLoad } from "../lib/hooks";
 import { useScenario } from "../lib/scenario";
@@ -194,6 +195,8 @@ function Body({ ir }: { ir: ScenarioIR }) {
           {report.levels.env_build === "PASS" && report.levels.full_chain !== "PASS" && (
             <Notice kind="warn">{t("rp.chainWarn", { status: t(`check.${report.levels.full_chain === "NOT_TESTED" || report.levels.full_chain === "PARTIAL" ? report.levels.full_chain : "FAIL"}` as MsgKey) })}</Notice>
           )}
+
+          <AttackReplay ir={ir} report={report} />
 
           <VersionBasisCard ir={ir} context="report" />
           <SubstituteCard ir={ir} context="report" />

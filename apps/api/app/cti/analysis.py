@@ -892,7 +892,7 @@ def _build_ir(result: dict[str, Any], *, input_kind: str, content: str, source_n
                 action.setdefault("field_sources", {})["attack_technique"] = "source_quote"
         if "attack_technique" not in action:
             # No stated technique: offer one as a clearly-marked inference the user can override.
-            guess = _suggest_technique(f"{action['name']} {action.get('description', '')}")
+            guess = _suggest_technique(action["name"]) or _suggest_technique(f"{action['name']} {action.get('description', '')}")
             if guess:
                 guess_id, guess_info = _validated_attack_technique(guess)
                 if guess_id:

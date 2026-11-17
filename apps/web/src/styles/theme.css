@@ -718,3 +718,34 @@ details.card.deploy-more:not(.flush) > :not(summary) { margin: 12px 16px; }
 .topo .react-flow__controls-button { background: var(--t-card); border-bottom-color: var(--t-card-border); }
 .topo .react-flow__controls { border-color: var(--t-card-border); border-radius: 8px; }
 @media (max-width: 760px) { .topo { border-radius: 8px; } .thost-name { font-size: 15px; } }
+
+/* ---- Attack Replay (Report page): animated topology using status tokens + navy topo look ---- */
+.ar-stage { position: relative; }
+.ar-svg { display:block; width:100%; height:auto; background: radial-gradient(120% 120% at 80% -10%, rgba(143,140,255,.10), transparent 55%), #141a33; border:1px solid var(--border); border-radius: var(--radius); }
+.ar-zone { fill:#171f3d; stroke:#232b4f; stroke-width:1.2; }
+.ar-zone.sc { fill:#141b36; }
+.ar-zlabel { fill:#8394a4; font-family: var(--sans); font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; }
+.ar-boundary { stroke:#8f8cff; stroke-width:1.4; stroke-dasharray:3 7; opacity:.55; }
+.ar-edge { stroke:#3a4568; stroke-width:2; fill:none; transition: stroke .3s; }
+.ar-edge.dash { stroke-dasharray:5 6; }
+.ar-edge.on { stroke:#8f8cff; }
+.ar-packet { fill: var(--accent); opacity:0; }
+.ar-packet.idle { fill:#8394a4; }
+.ar-packet.run { animation: ar-travel 1.1s cubic-bezier(.5,0,.6,1) forwards; }
+@keyframes ar-travel { 0%{opacity:0;transform:translate(0,0)} 12%{opacity:1} 88%{opacity:1} 100%{opacity:1;transform:translate(var(--dx),var(--dy))} }
+.ar-node .ar-box { fill:#101828; stroke: var(--c); stroke-width:1.6; transition: stroke .4s; }
+.ar-node .ar-dot { fill: var(--c); transition: fill .4s; }
+.ar-node .ar-role { fill: var(--text); font-family: var(--sans); font-size:12px; font-weight:600; }
+.ar-node .ar-sub { fill:#8394a4; font-family: var(--mono, monospace); font-size:11px; }
+.ar-glow { fill:none; stroke: var(--accent); stroke-width:2; opacity:.5; animation: ar-breathe 1.4s ease-in-out infinite; }
+@keyframes ar-breathe { 0%,100%{opacity:.22} 50%{opacity:.7} }
+.ar-ripple { fill:none; stroke: var(--c); stroke-width:2; opacity:0; animation: ar-ripple 1.5s ease-out infinite; }
+@keyframes ar-ripple { 0%{opacity:.6;transform:scale(1)} 100%{opacity:0;transform:scale(1.5)} }
+.ar-badge rect { fill: var(--ok); opacity:.16; }
+.ar-badge text { fill: var(--ok); font-family: var(--mono, monospace); font-size:11px; font-weight:700; }
+.ar-cap { position:absolute; left:14px; bottom:12px; display:flex; align-items:center; gap:8px; background:rgba(8,12,22,.72); border:1px solid var(--border); border-radius:999px; padding:6px 13px; font-family: var(--sans); font-size:12px; color: var(--text); }
+.ar-cap-dot { width:8px;height:8px;border-radius:50%; background: var(--accent); box-shadow:0 0 0 4px rgba(190,255,59,.16); }
+.ar-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; padding:0 2px; }
+.ar-leg { display:flex; align-items:center; gap:7px; font-size:12px; color: var(--muted); }
+.ar-leg i { width:11px;height:11px;border-radius:3px; display:inline-block; }
+@media (prefers-reduced-motion: reduce){ .ar-packet,.ar-glow,.ar-ripple{animation:none!important} }
